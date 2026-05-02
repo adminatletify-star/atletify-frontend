@@ -7,7 +7,7 @@ import MetricaMedidaPicker from '../components/MetricaMedidaPicker';
 import NivelRecomendadoPicker from '../components/NivelRecomendadoPicker';
 import '../assets/css/DiccionarioEjercicios.css';
 
-const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
+const API_BASE = import.meta.env.VITE_API_URL;;
 
 export default function DiccionarioEjercicios() {
   const navigate = useNavigate();

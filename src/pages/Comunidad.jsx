@@ -4,7 +4,7 @@ import BackButton from '../components/BackButton';
 import WolfLanyard from '../components/ReactBits/WolfLanyard';
 import '../assets/css/Comunidad.css';
 
-const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
+const API_BASE = import.meta.env.VITE_API_URL;;
 
 export default function Comunidad() {
   const navigate = useNavigate();

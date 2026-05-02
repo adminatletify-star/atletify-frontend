@@ -4,7 +4,7 @@ import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import BackButton from '../components/BackButton';
 import '../assets/css/CalendarioWods.css';
 
-const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
+const API_BASE = import.meta.env.VITE_API_URL;;
 
 export default function CalendarioWods() {
   const navigate = useNavigate();
@@ -121,8 +121,8 @@ export default function CalendarioWods() {
             {wodPizarra.bloques?.map((bloque, index) => (
               <div key={index} className="col-12 col-xl-10">
                 <div className={`cw-pizarra-bloque ${bloque.tipoBloque === 'Warm-Up' ? 'cw-pizarra-bloque--warmup' :
-                    bloque.tipoBloque === 'WOD' ? 'cw-pizarra-bloque--wod' :
-                      'cw-pizarra-bloque--other'
+                  bloque.tipoBloque === 'WOD' ? 'cw-pizarra-bloque--wod' :
+                    'cw-pizarra-bloque--other'
                   }`}>
                   <p className="cw-pizarra-bloque-tipo">{bloque.tipoBloque}</p>
 

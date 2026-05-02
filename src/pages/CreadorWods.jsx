@@ -13,7 +13,7 @@ import TimeInputMMSS from '../components/TimeInputMMSS';
 import { api } from '../services/api';
 import '../assets/css/CreadorWods.css';
 
-const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
+const API_BASE = import.meta.env.VITE_API_URL;;
 
 const getFechaLocalString = () => {
   const hoy = new Date();

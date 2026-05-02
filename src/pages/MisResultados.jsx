@@ -5,7 +5,7 @@ import MesPicker from '../components/MesPicker';
 import AñoPicker from '../components/AñoPicker';
 import '../assets/css/MisResultados.css';
 
-const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
+const API_BASE = import.meta.env.VITE_API_URL;;
 
 export default function MisResultados() {
   const navigate = useNavigate();

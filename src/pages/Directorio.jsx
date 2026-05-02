@@ -8,7 +8,7 @@ import FiltroMultiplePicker from '../components/FiltroMultiplePicker';
 import ModalVerExpediente from '../components/ModalVerExpediente';
 import '../assets/css/Directorio.css';
 
-const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
+const API_BASE = import.meta.env.VITE_API_URL;;
 
 const TALLAS_OPCIONES = [
   { valor: 'XS', desc: 'Extra Small' },

@@ -6,7 +6,7 @@ import UnidadPRPicker from '../components/UnidadPRPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import '../assets/css/CalendarioAtleta.css';
 
-const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
+const API_BASE = import.meta.env.VITE_API_URL;;
 
 const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -340,8 +340,8 @@ export default function CalendarioAtleta() {
                     <>
                       {asistenciaHoy && (
                         <div className={`cal-asistencia-card ${asistenciaHoy.estado === 'Asistió' ? 'cal-asistencia-card--gold' :
-                            asistenciaHoy.estado === 'Faltó' ? 'cal-asistencia-card--red' :
-                              'cal-asistencia-card--blue'}`}>
+                          asistenciaHoy.estado === 'Faltó' ? 'cal-asistencia-card--red' :
+                            'cal-asistencia-card--blue'}`}>
                           <div className="cal-asistencia-icon">
                             {asistenciaHoy.estado === 'Asistió' && <i className="fas fa-fire"></i>}
                             {asistenciaHoy.estado === 'Faltó' && <i className="fas fa-times"></i>}

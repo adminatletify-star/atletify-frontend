@@ -14,7 +14,7 @@ import { api } from '../services/api';
 import '../assets/css/CreadorWods.css';
 import '../assets/css/EditarWod.css';
 
-const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
+const API_BASE = import.meta.env.VITE_API_URL;;
 
 const normalizarTexto = (texto = '') => texto
   .toString()

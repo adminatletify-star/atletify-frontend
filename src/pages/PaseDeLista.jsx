@@ -8,7 +8,7 @@ import '../assets/css/PaseDeLista.css';
 import BotonSeguro from '../components/BotonSeguro';
 import TimeInputMMSS from '../components/TimeInputMMSS';
 
-const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
+const API_BASE = import.meta.env.VITE_API_URL;;
 
 const getFechaLocalString = () => {
   const hoy = new Date();

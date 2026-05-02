@@ -17,7 +17,7 @@ import PasswordRulesHint from '../components/PasswordRulesHint';
 import usePasswordStrength from '../hooks/usePasswordStrength';
 import '../assets/css/MiPerfil.css';
 
-const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
+const API_BASE = import.meta.env.VITE_API_URL;;
 
 export default function MiPerfil() {
   const navigate = useNavigate();

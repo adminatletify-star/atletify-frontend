@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import '../assets/css/ListaCompetencias.css';
 import BackButton from '../components/BackButton';
 
-const API_BASE_URL = 'import.meta.env.VITE_API_URL:7149/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL;;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },

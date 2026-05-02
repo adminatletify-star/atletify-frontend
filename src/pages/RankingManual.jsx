@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import '../assets/css/RankingManual.css';
 
-const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
+const API_BASE = import.meta.env.VITE_API_URL;;
 
 export default function RankingManual() {
   const { idEntrenamiento } = useParams();

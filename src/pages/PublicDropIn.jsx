@@ -4,7 +4,7 @@ import DarkVeil from '../components/ReactBits/DarkVeil';
 import BotonSeguro from '../components/BotonSeguro';
 import '../assets/css/public-dropin.css';
 
-const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
+const API_BASE = import.meta.env.VITE_API_URL;;
 
 export default function PublicDropIn() {
     const navigate = useNavigate();

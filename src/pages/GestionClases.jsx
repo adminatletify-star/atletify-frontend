@@ -7,7 +7,7 @@ import TimeWheelPicker from '../components/TimeWheelPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import '../assets/css/GestionClases.css';
 
-const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
+const API_BASE = import.meta.env.VITE_API_URL;;
 
 export default function GestionClases() {
   const navigate = useNavigate();
