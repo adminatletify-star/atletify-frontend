@@ -344,7 +344,7 @@ export default function AdminCompetencias() {
                                           </div>
                                           <div className="d-flex gap-1 align-items-center">
                                             {pago.comprobanteUrl && pago.comprobanteUrl.includes('uploads') && (
-                                              <a href={`\${import.meta.env.VITE_API_URL}${pago.comprobanteUrl}`} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-info rounded-circle p-1" style={{ width: '28px', height: '28px' }} title="Ver comprobante"><i className="fas fa-image"></i></a>
+                                              <a href={`${import.meta.env.VITE_API_URL}${pago.comprobanteUrl}`} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-info rounded-circle p-1" style={{ width: '28px', height: '28px' }} title="Ver comprobante"><i className="fas fa-image"></i></a>
                                             )}
                                             {pago.estatus === 'PendienteVerificacion' && (
                                               <BotonSeguro onClick={() => aprobarPago(pago.idPago)} className="btn btn-sm btn-success rounded-circle p-1" style={{ width: '28px', height: '28px' }} title="Aprobar" textoProcesando="">

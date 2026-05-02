@@ -28,7 +28,7 @@ export default function TerminosCondiciones() {
     setLoading(true);
 
     try {
-      const res = await fetch(`\${import.meta.env.VITE_API_URL}/api/usuarios/${usuario.id || usuario.idUsuario}/aceptar-terminos`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/${usuario.id || usuario.idUsuario}/aceptar-terminos`, {
         method: 'PUT'
       });
 

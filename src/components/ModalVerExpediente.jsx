@@ -7,7 +7,7 @@ export default function ModalVerExpediente({ atleta, onClose }) {
 
   useEffect(() => {
     const idUsuario = atleta.idUsuario || atleta.IdUsuario;
-    fetch(`\${import.meta.env.VITE_API_URL}/api/ExpedienteMedico/usuario/${idUsuario}`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/ExpedienteMedico/usuario/${idUsuario}`)
       .then(res => res.json())
       .then(data => {
         setDatos(data);
