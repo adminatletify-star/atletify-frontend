@@ -17,7 +17,7 @@ export default function CompletarExpediente() {
     comprobante: null // Aquí iría el archivo en un escenario real
   });
 
-  const API_URL = 'https://localhost:7149/api';
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('usuario'));
@@ -117,7 +117,7 @@ export default function CompletarExpediente() {
         <div className="card text-white border-0" style={cupertinoCard}>
           <div className="card-body p-4 p-md-5">
             <form onSubmit={handleSubmit}>
-              
+
               <h5 className="text-danger fw-bold mb-3"><i className="fas fa-dumbbell me-2"></i>Tus Datos Físicos</h5>
               <div className="row mb-4">
                 <div className="col-md-6 mb-3">
@@ -151,9 +151,9 @@ export default function CompletarExpediente() {
 
               <h5 className="text-danger fw-bold mb-3"><i className="far fa-calendar-check me-2"></i>Tu Clase Fija</h5>
               <p className="small text-secondary mb-3">Elige el horario al que asistirás regularmente. No te preocupes, como atleta podrás reservar horas extras después.</p>
-              
+
               <div className="mb-4">
-                <select name="idClaseBase" className="form-select shadow-none fs-5 py-3" style={{...cupertinoInput, borderColor: '#dc3545'}} value={formData.idClaseBase} onChange={handleChange} required>
+                <select name="idClaseBase" className="form-select shadow-none fs-5 py-3" style={{ ...cupertinoInput, borderColor: '#dc3545' }} value={formData.idClaseBase} onChange={handleChange} required>
                   <option value="">-- Elige tu horario --</option>
                   {clases.map(c => (
                     <option key={c.idClase} value={c.idClase}>{c.nombre} ({c.horarioInicio} - {c.horarioFin})</option>

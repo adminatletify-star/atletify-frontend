@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import './ModalAdminBox.css';
 
 export default function ModalAdminBox({ abierto, datosBox, onClose, onSuccess }) {
-  const API_URL = 'https://localhost:7149/api';
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // Estado del formulario
   const [form, setForm] = useState({
@@ -267,10 +267,10 @@ export default function ModalAdminBox({ abierto, datosBox, onClose, onSuccess })
                   <input
                     type="text"
                     className={`form-control form-control-lg bg-dark text-white border-secondary ${usernameDisponible === true
-                        ? 'border-success'
-                        : usernameDisponible === false
-                          ? 'border-danger'
-                          : ''
+                      ? 'border-success'
+                      : usernameDisponible === false
+                        ? 'border-danger'
+                        : ''
                       }`}
                     name="username"
                     value={form.username}

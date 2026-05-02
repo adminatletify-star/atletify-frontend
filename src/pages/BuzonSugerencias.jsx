@@ -14,7 +14,7 @@ const CATEGORIAS = [
   { id: 'Otro', emoji: '❓', label: 'Otro' },
 ];
 
-const API_URL = 'https://localhost:7149/api';
+const API_URL = import.meta.env.VITE_API_URL;
 const MAX_CHARS = 1000;
 
 export default function BuzonSugerencias() {

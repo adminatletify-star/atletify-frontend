@@ -20,7 +20,7 @@ export default function CrearClaseAdminBox() {
   });
 
   // Reemplaza esto con tu URL real si es diferente
-  const API_URL = 'https://localhost:7149/api';
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));
@@ -119,27 +119,27 @@ export default function CrearClaseAdminBox() {
           <BackButton />
           <h2 className="fw-bold mb-0">Aperturar <span className="text-danger">Clase</span></h2>
         </div>
-        
+
         <div className="card border-0 p-4 p-md-5" style={{ background: 'rgba(30, 30, 30, 0.6)', backdropFilter: 'blur(15px)', borderRadius: '24px' }}>
           <form onSubmit={handleSubmit}>
-            
+
             <div className="mb-4">
               <label className="small fw-bold text-secondary mb-2">NOMBRE DE LA CLASE</label>
-              <input type="text" className="form-control shadow-none" style={inputStyle} 
-                     placeholder="Ej: WOD 6:00 AM - RX" required
-                     value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})} />
+              <input type="text" className="form-control shadow-none" style={inputStyle}
+                placeholder="Ej: WOD 6:00 AM - RX" required
+                value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} />
             </div>
 
             <div className="row mb-4">
               <div className="col-6">
                 <label className="small fw-bold text-secondary mb-2">HORA INICIO</label>
                 <input type="time" className="form-control shadow-none" style={inputStyle} required
-                       value={form.horarioInicio} onChange={e => setForm({...form, horarioInicio: e.target.value})} />
+                  value={form.horarioInicio} onChange={e => setForm({ ...form, horarioInicio: e.target.value })} />
               </div>
               <div className="col-6">
                 <label className="small fw-bold text-secondary mb-2">HORA FIN</label>
                 <input type="time" className="form-control shadow-none" style={inputStyle} required
-                       value={form.horarioFin} onChange={e => setForm({...form, horarioFin: e.target.value})} />
+                  value={form.horarioFin} onChange={e => setForm({ ...form, horarioFin: e.target.value })} />
               </div>
             </div>
 
@@ -160,20 +160,20 @@ export default function CrearClaseAdminBox() {
               <div className="col-md-6 mb-3 mb-md-0">
                 <label className="small fw-bold text-secondary mb-2">CAPACIDAD MÁXIMA</label>
                 <input type="number" className="form-control shadow-none" style={inputStyle} min="1" required
-                       value={form.maximoAtletas} onChange={e => setForm({...form, maximoAtletas: e.target.value})} />
+                  value={form.maximoAtletas} onChange={e => setForm({ ...form, maximoAtletas: e.target.value })} />
               </div>
               <div className="col-md-6">
                 <label className="small fw-bold text-secondary mb-2">CIERRE INSCRIPCIÓN (MIN)</label>
                 <input type="number" className="form-control shadow-none" style={inputStyle} min="0" required
-                       value={form.minutosCierreInscripcion} onChange={e => setForm({...form, minutosCierreInscripcion: e.target.value})} />
-                <small className="text-muted" style={{fontSize: '11px'}}>Minutos antes para cerrar reservas</small>
+                  value={form.minutosCierreInscripcion} onChange={e => setForm({ ...form, minutosCierreInscripcion: e.target.value })} />
+                <small className="text-muted" style={{ fontSize: '11px' }}>Minutos antes para cerrar reservas</small>
               </div>
             </div>
 
             <div className="mb-5">
               <label className="small fw-bold text-secondary mb-2">COACH ASIGNADO</label>
-              <select className="form-select shadow-none" style={inputStyle} 
-                      value={form.idCoach} onChange={e => setForm({...form, idCoach: e.target.value})}>
+              <select className="form-select shadow-none" style={inputStyle}
+                value={form.idCoach} onChange={e => setForm({ ...form, idCoach: e.target.value })}>
                 <option value="">-- Sin Coach Asignado (Open Box) --</option>
                 {coaches.map(c => (
                   <option key={c.idUsuario} value={c.idUsuario}>{c.nombre}</option>

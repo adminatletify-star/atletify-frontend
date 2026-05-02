@@ -4,7 +4,7 @@ import BackButton from '../components/BackButton';
 import BotonSeguro from '../components/BotonSeguro';
 import '../assets/css/UserResenas.css';
 
-const API_URL = 'https://localhost:7149/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function UserResenas() {
   const navigate = useNavigate();
@@ -49,8 +49,8 @@ export default function UserResenas() {
         const id = coach.idUsuario || coach.id || coach.IdUsuario;
         try {
           const [resEsp, resEval] = await Promise.all([
-             fetch(`${API_URL}/especialidades/coach/${id}`),
-             fetch(`${API_URL}/evaluaciones/coach/${id}`)
+            fetch(`${API_URL}/especialidades/coach/${id}`),
+            fetch(`${API_URL}/evaluaciones/coach/${id}`)
           ]);
           const dataEsp = await resEsp.json();
           const dataEval = resEval.ok ? await resEval.json() : { promedio: 0, total: 0, resenas: [] };
@@ -135,16 +135,16 @@ export default function UserResenas() {
           <div className="ur-grid">
             {coaches.map(coach => (
               <div key={coach.idUsuario || coach.id} className="ur-card">
-                
+
                 <div className="ur-avatar-container">
                   <span className="ur-avatar-initial">
                     {coach.nombre.charAt(0).toUpperCase()}
                   </span>
                 </div>
-                
+
                 <h3 className="ur-coach-name">{coach.nombre}</h3>
                 <span className="ur-coach-role">Coach</span>
-                
+
                 <div className="ur-rating-display">
                   <i className="fas fa-star"></i>
                   <span className="ur-rating-score">{coach.evaluaciones?.promedio || 0}</span>
@@ -189,16 +189,16 @@ export default function UserResenas() {
               <div className="text-center mb-3 text-muted">
                 ¿Qué tal tu experiencia entrenando con {coachSeleccionado.nombre.split(' ')[0]}?
               </div>
-              
+
               {/* Estrellas (1 a 5) invertidas para el selector CSS */}
               <div className="ur-stars-input">
                 {[5, 4, 3, 2, 1].map(num => (
                   <React.Fragment key={num}>
-                    <input 
-                      type="radio" 
-                      id={`star${num}`} 
-                      name="rating" 
-                      value={num} 
+                    <input
+                      type="radio"
+                      id={`star${num}`}
+                      name="rating"
+                      value={num}
                       className="ur-star-radio"
                       checked={estrellas === num}
                       onChange={() => setEstrellas(num)}
@@ -210,16 +210,16 @@ export default function UserResenas() {
                 ))}
               </div>
 
-              <textarea 
-                className="ur-textarea" 
+              <textarea
+                className="ur-textarea"
                 placeholder="Escribe tu opinión o sugerencia aquí... (Opcional)"
                 value={comentario}
                 onChange={e => setComentario(e.target.value)}
               ></textarea>
 
-              <BotonSeguro 
-                className="ur-submit-btn" 
-                onClick={enviarResena} 
+              <BotonSeguro
+                className="ur-submit-btn"
+                onClick={enviarResena}
                 textoProcesando="Enviando..."
                 disabled={estrellas === 0}
               >

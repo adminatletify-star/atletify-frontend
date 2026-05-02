@@ -13,7 +13,7 @@ export default function GestionSolicitudesAtletas() {
   const [modalRechazo, setModalRechazo] = useState({ visible: false, idUsuario: null, motivo: '' });
   const [comprobanteViendo, setComprobanteViendo] = useState(null); // NUEVO: Para ver la foto
 
-  const API_URL = 'https://localhost:7149/api';
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));

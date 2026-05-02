@@ -26,7 +26,7 @@ export default function GestionStaff() {
   // ⭐ Estados para Evaluaciones
   const [modalResenasVisible, setModalResenasVisible] = useState(false);
 
-  const API_URL = 'https://localhost:7149/api';
+  const API_URL = import.meta.env.VITE_API_URL;
 
 
   // 🏖️ Estados para Ausencias
@@ -39,21 +39,21 @@ export default function GestionStaff() {
     setFormPermiso({ fechaInicio: '', fechaFin: '', motivo: '', conGoceDeSueldo: false });
     setModalPermisoVisible(true);
     try {
-        const res = await fetch(`${API_URL}/nomina/permisos/${coach.idUsuario || coach.id}`);
-        if(res.ok) setHistorialPermisos(await res.json());
-    } catch(e) {}
+      const res = await fetch(`${API_URL}/nomina/permisos/${coach.idUsuario || coach.id}`);
+      if (res.ok) setHistorialPermisos(await res.json());
+    } catch (e) { }
   };
 
   const guardarPermiso = async () => {
-      if(!formPermiso.fechaInicio || !formPermiso.fechaFin || !formPermiso.motivo) return alert("Llena todos los campos");
-      try {
-          const payload = { ...formPermiso, IdUsuario: coachSeleccionado.idUsuario || coachSeleccionado.id };
-          const res = await fetch(`${API_URL}/nomina/permisos`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-          if(res.ok) {
-              alert("Ausencia registrada. ✅");
-              abrirModalPermiso(coachSeleccionado); // Recargar la lista
-          }
-      } catch(e) { alert("Error"); }
+    if (!formPermiso.fechaInicio || !formPermiso.fechaFin || !formPermiso.motivo) return alert("Llena todos los campos");
+    try {
+      const payload = { ...formPermiso, IdUsuario: coachSeleccionado.idUsuario || coachSeleccionado.id };
+      const res = await fetch(`${API_URL}/nomina/permisos`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (res.ok) {
+        alert("Ausencia registrada. ✅");
+        abrirModalPermiso(coachSeleccionado); // Recargar la lista
+      }
+    } catch (e) { alert("Error"); }
   };
 
   useEffect(() => {
@@ -101,13 +101,13 @@ export default function GestionStaff() {
       );
 
       // 4. A cada Coach le buscamos sus especialidades
-     // 4. A cada Coach le buscamos sus especialidades y sus calificaciones
+      // 4. A cada Coach le buscamos sus especialidades y sus calificaciones
       const coachesArmados = await Promise.all(soloCoaches.map(async (coach) => {
         const id = coach.idUsuario || coach.id || coach.IdUsuario;
         try {
           const [resEsp, resEval] = await Promise.all([
-             fetch(`${API_URL}/especialidades/coach/${id}`),
-             fetch(`${API_URL}/evaluaciones/coach/${id}`)
+            fetch(`${API_URL}/especialidades/coach/${id}`),
+            fetch(`${API_URL}/evaluaciones/coach/${id}`)
           ]);
           const dataEsp = await resEsp.json();
           const dataEval = resEval.ok ? await resEval.json() : { promedio: 0, total: 0, resenas: [] };
@@ -195,17 +195,17 @@ export default function GestionStaff() {
       const idCoach = coach.idUsuario || coach.id;
       // 1. Traer el Contrato
       const resContrato = await fetch(`${API_URL}/nomina/contrato/${idCoach}`);
-      if(resContrato.ok) {
+      if (resContrato.ok) {
         const data = await resContrato.json();
         setFormContrato({ tipoPago: data.tipoPago, monto: data.monto, diaCorte: data.diaCorte });
       }
       // 2. Traer el cálculo de Nómina de este mes
       const hoy = new Date();
       const resNomina = await fetch(`${API_URL}/nomina/calcular/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`);
-      if(resNomina.ok) {
+      if (resNomina.ok) {
         setNominaActual(await resNomina.json());
       }
-    } catch(e) { console.error("Error al cargar finanzas", e); }
+    } catch (e) { console.error("Error al cargar finanzas", e); }
   };
 
   const guardarContrato = async () => {
@@ -217,7 +217,7 @@ export default function GestionStaff() {
       const res = await fetch(`${API_URL}/nomina/contrato`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
       });
-      if(res.ok) {
+      if (res.ok) {
         alert("Contrato financiero actualizado. 💸");
         setModalContratoVisible(false);
       }
@@ -241,7 +241,7 @@ export default function GestionStaff() {
       } else {
         alert("No se pudo eliminar la reseña.");
       }
-    } catch(e) { alert("Error de conexión"); }
+    } catch (e) { alert("Error de conexión"); }
   };
 
   return (
@@ -269,7 +269,7 @@ export default function GestionStaff() {
             <div className="spinner-wp"></div>
           </div>
 
-        /* ── EMPTY STATE ── */
+          /* ── EMPTY STATE ── */
         ) : coaches.length === 0 ? (
           <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
             <div className="staff-empty-card">
@@ -281,7 +281,7 @@ export default function GestionStaff() {
             </div>
           </div>
 
-        /* ── GRID DE COACHES ── */
+          /* ── GRID DE COACHES ── */
         ) : (
           <div className="row g-3 g-md-4 justify-content-start">
             {coaches.map(coach => (
@@ -481,8 +481,8 @@ export default function GestionStaff() {
                         <div className="staff-resena-fecha">
                           {new Date(r.fechaEvaluacion).toLocaleDateString()}
                         </div>
-                        <button 
-                          className="btn btn-sm btn-outline-danger border-0" 
+                        <button
+                          className="btn btn-sm btn-outline-danger border-0"
                           onClick={() => eliminarResena(r.idEvaluacion)}
                           title="Eliminar Reseña"
                         >
@@ -526,7 +526,7 @@ export default function GestionStaff() {
                     <label className="staff-form-label">Día de Inicio</label>
                     <RedGrayDatePicker
                       value={formPermiso.fechaInicio}
-                      onChange={val => setFormPermiso({...formPermiso, fechaInicio: val})}
+                      onChange={val => setFormPermiso({ ...formPermiso, fechaInicio: val })}
                       placeholder="dd/mm/aaaa"
                     />
                   </div>
@@ -534,7 +534,7 @@ export default function GestionStaff() {
                     <label className="staff-form-label">Día Final</label>
                     <RedGrayDatePicker
                       value={formPermiso.fechaFin}
-                      onChange={val => setFormPermiso({...formPermiso, fechaFin: val})}
+                      onChange={val => setFormPermiso({ ...formPermiso, fechaFin: val })}
                       placeholder="dd/mm/aaaa"
                       min={formPermiso.fechaInicio || undefined}
                     />
@@ -546,7 +546,7 @@ export default function GestionStaff() {
                       className="staff-modal-input"
                       placeholder="Ej. Permiso por enfermedad, Vacaciones..."
                       value={formPermiso.motivo}
-                      onChange={e => setFormPermiso({...formPermiso, motivo: e.target.value})}
+                      onChange={e => setFormPermiso({ ...formPermiso, motivo: e.target.value })}
                     />
                   </div>
                   <div className="col-12">
@@ -557,7 +557,7 @@ export default function GestionStaff() {
                         role="switch"
                         id="goce-sueldo"
                         checked={formPermiso.conGoceDeSueldo}
-                        onChange={e => setFormPermiso({...formPermiso, conGoceDeSueldo: e.target.checked})}
+                        onChange={e => setFormPermiso({ ...formPermiso, conGoceDeSueldo: e.target.checked })}
                       />
                       <label className="staff-form-label mb-0" htmlFor="goce-sueldo">
                         Con Goce de Sueldo (No descontar de nómina)
@@ -631,7 +631,7 @@ export default function GestionStaff() {
                   <label className="staff-form-label">Tipo de Salario</label>
                   <TipoPagoPicker
                     valor={formContrato.tipoPago}
-                    onCambiar={val => setFormContrato({...formContrato, tipoPago: val})}
+                    onCambiar={val => setFormContrato({ ...formContrato, tipoPago: val })}
                   />
                 </div>
                 <div className="col-md-3">
@@ -640,7 +640,7 @@ export default function GestionStaff() {
                     type="number"
                     className="staff-modal-input"
                     value={formContrato.monto}
-                    onChange={e => setFormContrato({...formContrato, monto: e.target.value})}
+                    onChange={e => setFormContrato({ ...formContrato, monto: e.target.value })}
                   />
                 </div>
                 <div className="col-md-3">
@@ -651,7 +651,7 @@ export default function GestionStaff() {
                     min="1"
                     className="staff-modal-input"
                     value={formContrato.diaCorte}
-                    onChange={e => setFormContrato({...formContrato, diaCorte: e.target.value})}
+                    onChange={e => setFormContrato({ ...formContrato, diaCorte: e.target.value })}
                   />
                 </div>
                 <div className="col-12">

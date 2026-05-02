@@ -8,7 +8,7 @@ import '../assets/css/Register.css';
 export function Register() {
   const navigate = useNavigate();
   const { idBox } = useParams();
-  const API_URL = 'https://localhost:7149/api';
+  const API_URL = import.meta.env.VITE_API_URL;
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -27,13 +27,13 @@ export function Register() {
 
   useEffect(() => {
     if (!idBox) return;
- 
+
     // Cargar datos del box
     fetch(`${API_URL}/box/${idBox}`)
       .then(res => res.ok ? res.json() : null)
       .then(setBoxSeleccionado)
       .catch(() => showAlert("Error al cargar el Box"));
- 
+
     // Cargar planes VISIBLES (filtramos los ocultos)
     fetch(`${API_URL}/finanzas/planes/${idBox}`)
       .then(res => res.ok ? res.json() : [])
@@ -43,7 +43,7 @@ export function Register() {
         setPlanesList(visibles);
       })
       .catch(() => console.log("Sin planes"));
- 
+
     // Cargar configuración financiera del box (para la inscripción)
     fetch(`${API_URL}/configuracionbox/${idBox}`)
       .then(res => res.ok ? res.json() : null)
@@ -71,10 +71,10 @@ export function Register() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
+
     // El username no puede tener espacios
     if (name === 'username' && value.includes(' ')) return;
-    
+
     setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
@@ -112,7 +112,7 @@ export function Register() {
       const response = await fetch(`${API_URL}/usuarios/registro`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData, rol: 'Atleta', 
+          ...formData, rol: 'Atleta',
           idBoxPredeterminado: parseInt(formData.idBoxPredeterminado),
           idPlan: parseInt(formData.idPlan)
         })
@@ -120,8 +120,8 @@ export function Register() {
 
       const data = await response.json();
       if (response.ok) {
-        showAlert(formData.esMudanza 
-          ? '¡Mudanza solicitada! Espera a que tu Coach active tu cuenta.' 
+        showAlert(formData.esMudanza
+          ? '¡Mudanza solicitada! Espera a que tu Coach active tu cuenta.'
           : '¡Cuenta creada! Tu Coach revisará tu pago pronto.', 'success');
         setTimeout(() => navigate('/login'), 4000);
       } else showAlert(data.mensaje || 'Error al registrar.');
@@ -155,39 +155,39 @@ export function Register() {
 
       <div className="reg-card">
         <form onSubmit={handleSubmit}>
-          
+
           {/* SECCIÓN 1: DATOS PERSONALES */}
           <p className="reg-section-label"><i className="fas fa-user"></i> Datos Personales</p>
           <div className="row g-3 mb-4">
             <div className="col-12 col-md-6">
-                <label className="reg-label">Nombre(s)</label>
-                <input type="text" name="nombre" className="reg-input" value={formData.nombre} onChange={handleChange} required />
+              <label className="reg-label">Nombre(s)</label>
+              <input type="text" name="nombre" className="reg-input" value={formData.nombre} onChange={handleChange} required />
             </div>
             <div className="col-12 col-md-6">
-                <label className="reg-label">Apellido(s)</label>
-                <input type="text" name="apellidos" className="reg-input" value={formData.apellidos} onChange={handleChange} required />
+              <label className="reg-label">Apellido(s)</label>
+              <input type="text" name="apellidos" className="reg-input" value={formData.apellidos} onChange={handleChange} required />
             </div>
             <div className="col-12 col-md-6">
-                <label className="reg-label">Correo Electrónico</label>
-                <input type="email" name="correo" className="reg-input" value={formData.correo} onChange={handleChange} required />
+              <label className="reg-label">Correo Electrónico</label>
+              <input type="email" name="correo" className="reg-input" value={formData.correo} onChange={handleChange} required />
             </div>
             <div className="col-12 col-md-6">
-                <label className="reg-label d-flex justify-content-between">
-                  <span>Username (Alias)</span>
-                  {usernameDisponible === true && <span className="text-success"><i className="fas fa-check-circle"></i> Disponible</span>}
-                  {usernameDisponible === false && <span className="text-danger"><i className="fas fa-times-circle"></i> Ocupado</span>}
-                </label>
-                <input type="text" name="username" className={`reg-input ${usernameDisponible === false ? 'border-danger' : ''}`} value={formData.username} onChange={handleChange} placeholder="Ej. lobo99" required />
+              <label className="reg-label d-flex justify-content-between">
+                <span>Username (Alias)</span>
+                {usernameDisponible === true && <span className="text-success"><i className="fas fa-check-circle"></i> Disponible</span>}
+                {usernameDisponible === false && <span className="text-danger"><i className="fas fa-times-circle"></i> Ocupado</span>}
+              </label>
+              <input type="text" name="username" className={`reg-input ${usernameDisponible === false ? 'border-danger' : ''}`} value={formData.username} onChange={handleChange} placeholder="Ej. lobo99" required />
             </div>
             <div className="col-12">
-                <label className="reg-label">Género de Competencia</label>
-                <GeneroPicker valor={formData.genero} onCambiar={v => setFormData(prev => ({ ...prev, genero: v }))} />
+              <label className="reg-label">Género de Competencia</label>
+              <GeneroPicker valor={formData.genero} onCambiar={v => setFormData(prev => ({ ...prev, genero: v }))} />
             </div>
           </div>
 
           {/* SECCIÓN 2: PLAN Y MUDANZA */}
           <p className="reg-section-label"><i className="fas fa-id-card"></i> Tu Membresía</p>
-          
+
           <div className="form-check form-switch mb-3 p-3 rounded" style={{ backgroundColor: 'rgba(52, 152, 219, 0.1)', border: '1px solid rgba(52, 152, 219, 0.3)' }}>
             <input className="form-check-input bg-info border-info ms-1" type="checkbox" id="checkMudanza" name="esMudanza" checked={formData.esMudanza} onChange={handleChange} />
             <label className="form-check-label text-info ms-3 fw-bold" htmlFor="checkMudanza">
@@ -198,7 +198,7 @@ export function Register() {
           <div className="row g-3 mb-4">
             <div className="col-12">
               <label className="reg-label text-warning fw-bold">Selecciona tu Plan de Entrenamiento</label>
-                 <select name="idPlan" className="reg-input bg-dark text-white border-warning border-opacity-50" value={formData.idPlan} onChange={handleChange} required>
+              <select name="idPlan" className="reg-input bg-dark text-white border-warning border-opacity-50" value={formData.idPlan} onChange={handleChange} required>
                 <option value="">-- Elige un Plan --</option>
                 {planesList.map(plan => (
                   <option key={plan.idPlan} value={plan.idPlan}>
@@ -207,7 +207,7 @@ export function Register() {
                   </option>
                 ))}
               </select>
- 
+
               {/* Descripción del plan seleccionado */}
               {planSeleccionadoObj && (
                 <div className="mt-2 p-2 rounded" style={{ background: 'rgba(243,156,18,0.08)', border: '1px solid rgba(243,156,18,0.2)' }}>
@@ -258,7 +258,7 @@ export function Register() {
                       Incluye ${montoInscripcion} de inscripción anual
                     </p>
                   )}
-                </div>                
+                </div>
                 <label className="reg-label">¿Cómo vas a pagar?</label>
                 <select name="metodoPago" className="reg-input mb-3" value={formData.metodoPago} onChange={handleChange}>
                   <option value="Efectivo">💵 Efectivo en Recepción (Pagaré al llegar)</option>
@@ -270,7 +270,7 @@ export function Register() {
                   <div className="p-3 bg-black rounded border border-secondary animate__animated animate__fadeIn">
                     <label className="reg-label text-info"><i className="fas fa-cloud-upload-alt me-2"></i>Sube la foto de tu comprobante</label>
                     <input type="file" accept="image/*" className="d-none" ref={fileInputRef} onChange={handleFileUpload} />
-                    
+
                     <button type="button" className="btn btn-outline-info w-100 mb-2" onClick={() => fileInputRef.current.click()}>
                       {nombreArchivo ? 'Cambiar Foto' : 'Seleccionar Imagen'}
                     </button>
@@ -285,12 +285,12 @@ export function Register() {
           <p className="reg-section-label"><i className="fas fa-lock"></i> Seguridad</p>
           <div className="row g-3 mb-4">
             <div className="col-12 col-md-6">
-                <label className="reg-label">Contraseña</label>
-                <input type="password" name="contrasena" className="reg-input" value={formData.contrasena} onChange={handleChange} required />
+              <label className="reg-label">Contraseña</label>
+              <input type="password" name="contrasena" className="reg-input" value={formData.contrasena} onChange={handleChange} required />
             </div>
             <div className="col-12 col-md-6">
-                <label className="reg-label">Confirmar Contraseña</label>
-                <input type="password" name="confirmarContrasena" className="reg-input" value={formData.confirmarContrasena} onChange={handleChange} required />
+              <label className="reg-label">Confirmar Contraseña</label>
+              <input type="password" name="confirmarContrasena" className="reg-input" value={formData.confirmarContrasena} onChange={handleChange} required />
             </div>
           </div>
 

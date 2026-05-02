@@ -8,23 +8,23 @@ export default function MisClases() {
   const [clases, setClases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
-  
+
   // Por defecto, carga la fecha de HOY
   const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date().toISOString().split('T')[0]);
 
-  const API_URL = 'https://localhost:7149/api';
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('usuario'));
-    
+
     // EL CHISMEADOR: Esto imprimirá en tu consola (F12) exactamente qué datos tiene el usuario
-    console.log("DATOS DEL USUARIO EN MEMORIA:", u); 
+    console.log("DATOS DEL USUARIO EN MEMORIA:", u);
 
     if (!u || u.rol !== 'Atleta') {
       navigate('/login');
       return;
     }
-    
+
     setUser(u);
 
     // TRIPLE SEGURO ANTI-UNDEFINED: Buscamos el ID sin importar si está en mayúscula, minúscula o recortado
@@ -43,7 +43,7 @@ export default function MisClases() {
     cargarClasesDelDia(u.idBoxPredeterminado, userId, fechaSeleccionada);
   }, [navigate, fechaSeleccionada]);
   // Le ponemos este seguro: que tome el idUsuario, y si no existe, que tome el id normal
-    
+
 
   async function cargarClasesDelDia(idBox, idUsuario, fecha) {
     setLoading(true);
@@ -95,7 +95,7 @@ export default function MisClases() {
 
   return (
     <div className="bg-dark text-white min-vh-100 pb-5" style={{ background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%)' }}>
-      
+
       <nav className="navbar navbar-dark sticky-top px-4 py-3 mb-4" style={{ background: 'rgba(15, 15, 15, 0.8)', backdropFilter: 'blur(20px)' }}>
         <div className="d-flex align-items-center">
           <BackButton />
@@ -107,7 +107,7 @@ export default function MisClases() {
       </nav>
 
       <div className="container" style={{ maxWidth: '800px' }}>
-        
+
         {/* SELECTOR DE FECHA */}
         <div className="card border-0 p-3 mb-4" style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '16px' }}>
           <div className="d-flex align-items-center justify-content-between">
@@ -134,7 +134,7 @@ export default function MisClases() {
             {clases.map(clase => {
               const estaLleno = clase.inscritos >= clase.maximoAtletas;
               const porcentajeLleno = (clase.inscritos / clase.maximoAtletas) * 100;
-              
+
               return (
                 <div key={clase.idClase} className="card text-white border-0 p-4" style={{ ...glassCard, borderLeft: clase.usuarioInscrito ? '5px solid #198754' : '1px solid rgba(255,255,255,0.1)' }}>
                   <div className="d-flex justify-content-between align-items-center mb-2">
@@ -144,7 +144,7 @@ export default function MisClases() {
                       {clase.horarioInicio} - {clase.horarioFin}
                     </span>
                   </div>
-                  
+
                   <div className="text-secondary small mb-3">
                     <i className="fas fa-user-ninja me-2"></i>Coach: {clase.coach}
                   </div>
@@ -158,8 +158,8 @@ export default function MisClases() {
                       </span>
                     </div>
                     <div className="progress" style={{ height: '8px', background: 'rgba(255,255,255,0.1)' }}>
-                      <div className={`progress-bar ${estaLleno ? 'bg-danger' : 'bg-primary'}`} 
-                           style={{ width: `${porcentajeLleno}%` }}></div>
+                      <div className={`progress-bar ${estaLleno ? 'bg-danger' : 'bg-primary'}`}
+                        style={{ width: `${porcentajeLleno}%` }}></div>
                     </div>
                   </div>
 

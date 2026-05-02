@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 export default function ModalCobroV3({ atleta, suscripcion, onClose, onSuccess }) {
-  const API_URL = 'https://localhost:7149/api';
+  const API_URL = import.meta.env.VITE_API_URL;
   const precioBase = suscripcion?.totalAPagar || 0; // El precio del plan
   const saldoAtleta = atleta?.saldoAFavor || 0;
 
@@ -9,13 +9,13 @@ export default function ModalCobroV3({ atleta, suscripcion, onClose, onSuccess }
   const [cobrarInscripcion, setCobrarInscripcion] = useState(false);
   const [precioInscripcion, setPrecioInscripcion] = useState(300); // Lo que cobres de inscripción
   const [usarSaldo, setUsarSaldo] = useState(false);
-  
+
   const [metodo1, setMetodo1] = useState('Efectivo');
   const [monto1, setMonto1] = useState('');
-  
+
   const [metodo2, setMetodo2] = useState('');
   const [monto2, setMonto2] = useState('');
-  
+
   const [notas, setNotas] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -97,14 +97,14 @@ export default function ModalCobroV3({ atleta, suscripcion, onClose, onSuccess }
 
           <div className="modal-body">
             <h6 className="text-info fw-bold mb-3">Atleta: {atleta?.nombre}</h6>
-            
+
             {/* RESUMEN DEL COBRO */}
             <div className="bg-black p-3 rounded mb-3 border border-secondary">
               <div className="d-flex justify-content-between mb-1">
                 <span>Plan Mensual:</span>
                 <span className="fw-bold">${precioBase}</span>
               </div>
-              
+
               <div className="form-check form-switch mb-1 text-warning">
                 <input className="form-check-input bg-warning border-warning" type="checkbox" checked={cobrarInscripcion} onChange={(e) => setCobrarInscripcion(e.target.checked)} />
                 <label className="form-check-label d-flex justify-content-between w-100">
