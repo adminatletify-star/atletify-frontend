@@ -101,6 +101,7 @@ const CAT_BADGE_STYLE = {
 const FORM_INIT = {
   id: 0,
   nombre: '',
+  subnombre: '',
   categoria: 'Full Body',
   icono: CAT_DEFAULT_ICON['Full Body'],
   color: CAT_COLOR['Full Body'],
@@ -109,6 +110,7 @@ const FORM_INIT = {
   esLevantamientoOlimpico: false,
   categoriaRecomendada: 'Todos',
   instruccion: '',
+  videoUrl: '',
 };
 
 import { useNavigate } from 'react-router-dom';
@@ -147,6 +149,31 @@ export default function AdminEjercicios() {
       setLoading(false);
     }
   }
+
+  const abrirWidgetCloudinary = () => {
+    if (!window.cloudinary) {
+      setError('El widget de Cloudinary no ha cargado. Revisa tu conexión a internet.');
+      return;
+    }
+
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
+        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
+        sources: ['local', 'url', 'camera'],
+        resourceType: 'video',
+        clientAllowedFormats: ['mp4', 'mov', 'webm', 'mkv'],
+        maxFileSize: 104857600, // 100MB max
+        theme: 'minimal'
+      },
+      (err, result) => {
+        if (!err && result && result.event === 'success') {
+          setForm(f => ({ ...f, videoUrl: result.info.secure_url }));
+        }
+      }
+    );
+    widget.open();
+  };
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -196,6 +223,8 @@ export default function AdminEjercicios() {
       metricaPrincipal: ej.metricaPrincipal || 'Repeticiones',
       esLevantamientoOlimpico: Boolean(ej.esLevantamientoOlimpico),
       categoriaRecomendada: ej.categoriaRecomendada || 'Todos',
+      subnombre: ej.subnombre || '',
+      videoUrl: ej.videoUrl || '',
     });
     setEditando(true);
     setIconoAuto(false);
@@ -234,7 +263,8 @@ export default function AdminEjercicios() {
   }
 
   const filtrados = ejercicios.filter(ej => {
-    const matchNombre = ej.nombre.toLowerCase().includes(busqueda.toLowerCase());
+    const matchNombre = ej.nombre.toLowerCase().includes(busqueda.toLowerCase()) || 
+                        (ej.subnombre && ej.subnombre.toLowerCase().includes(busqueda.toLowerCase()));
     const matchCat = filtroCategoria === 'Todas' || ej.categoria === filtroCategoria;
     return matchNombre && matchCat;
   });
@@ -293,6 +323,19 @@ export default function AdminEjercicios() {
                       value={form.nombre}
                       onChange={handleChange}
                       placeholder="Ej: Air Squat, Deadlift..."
+                      autoComplete="off"
+                    />
+                  </div>
+
+                  {/* Subnombre */}
+                  <div>
+                    <label className="ae-label">Subnombre o alternativo (Opcional)</label>
+                    <input
+                      className="ae-input"
+                      name="subnombre"
+                      value={form.subnombre}
+                      onChange={handleChange}
+                      placeholder="Ej: Squat (si el nombre es Sentadilla)"
                       autoComplete="off"
                     />
                   </div>
@@ -396,6 +439,27 @@ export default function AdminEjercicios() {
                       onChange={handleChange}
                       placeholder="Describe la técnica correcta del movimiento..."
                     />
+                  </div>
+
+                  {/* Video URL */}
+                  <div>
+                    <label className="ae-label">Video de Ejemplo</label>
+                    <div className="d-flex flex-column gap-2">
+                      <button type="button" className="ae-btn-ghost w-100" onClick={abrirWidgetCloudinary} style={{ borderStyle: 'dashed' }}>
+                        <i className="fas fa-cloud-upload-alt me-2" />
+                        {form.videoUrl ? 'Cambiar Video en Cloudinary' : 'Subir Video a Cloudinary'}
+                      </button>
+                      {form.videoUrl && (
+                        <div className="d-flex align-items-center justify-content-between p-2" style={{ background: 'rgba(79, 195, 247, 0.1)', border: '1px solid rgba(79, 195, 247, 0.3)', borderRadius: '8px' }}>
+                          <span className="text-truncate" style={{ fontSize: '0.8rem', color: '#4FC3F7', maxWidth: '80%' }}>
+                            <i className="fas fa-video me-2"></i>Video cargado correctamente
+                          </span>
+                          <button type="button" className="btn btn-sm btn-link text-danger p-0" onClick={() => setForm(f => ({ ...f, videoUrl: '' }))}>
+                            <i className="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {error && (
@@ -505,6 +569,11 @@ export default function AdminEjercicios() {
                               </div>
                               <span className="ae-table-nombre">{ej.nombre}</span>
                             </div>
+                            {ej.subnombre && (
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem', marginTop: '-0.3rem' }}>
+                                Alt: {ej.subnombre}
+                              </div>
+                            )}
                             <span
                               className="ae-cat-badge mb-2 d-inline-block"
                               style={{ background: cat.bg, color: cat.color }}
@@ -564,6 +633,9 @@ export default function AdminEjercicios() {
               </div>
               <div>
                 <h3 className="ae-detail-nombre">{ejDetalle.nombre}</h3>
+                {ejDetalle.subnombre && (
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>Alt: {ejDetalle.subnombre}</p>
+                )}
                 <span
                   className="ae-cat-badge"
                   style={{
@@ -595,6 +667,11 @@ export default function AdminEjercicios() {
             </div>
             <div className="ae-detail-divider" />
             <p className="ae-detail-texto">{ejDetalle.instruccion}</p>
+            {ejDetalle.videoUrl && (
+               <div className="mt-3">
+                 <video src={ejDetalle.videoUrl} controls style={{ width: '100%', borderRadius: '8px', border: `1px solid ${ejDetalle.color}40` }}></video>
+               </div>
+            )}
           </div>
         </div>
       )}

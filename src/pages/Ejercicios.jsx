@@ -34,7 +34,8 @@ export default function Ejercicios() {
   const categorias = [...CATEGORIAS_BASE, ...new Set(ejercicios.map(e => e.categoria))];
 
   const filtrados = ejercicios.filter(ej => {
-    const matchNombre = ej.nombre.toLowerCase().includes(busqueda.toLowerCase());
+    const matchNombre = ej.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+                        (ej.subnombre && ej.subnombre.toLowerCase().includes(busqueda.toLowerCase()));
     const matchCategoria = categoriaActiva === 'Todas' || ej.categoria === categoriaActiva;
     return matchNombre && matchCategoria;
   });
@@ -171,6 +172,7 @@ export default function Ejercicios() {
                           </div>
                           <div className="flex-grow-1 min-w-0">
                             <h3 className="ej-nombre mb-0">{ej.nombre}</h3>
+                            {ej.subnombre && <p style={{margin:0, fontSize:'0.8rem', color:'var(--text-muted)'}}>Alt: {ej.subnombre}</p>}
                             <span className="ej-categoria">{ej.categoria}</span>
                           </div>
                         </div>
@@ -239,6 +241,7 @@ export default function Ejercicios() {
                 </div>
                 <div className="flex-grow-1 min-w-0" style={{ paddingRight: '2rem' }}>
                   <h3 className="ej-modal-nombre">{seleccionado.nombre}</h3>
+                  {seleccionado.subnombre && <p style={{margin:0, fontSize:'0.9rem', color:'var(--text-muted)', marginBottom:'0.3rem'}}>Alt: {seleccionado.subnombre}</p>}
                   <span className="ej-categoria" style={{ '--ej-color': seleccionado.color }}>
                     {seleccionado.categoria}
                   </span>
@@ -249,6 +252,25 @@ export default function Ejercicios() {
 
               {/* Instrucción completa */}
               <p className="ej-modal-texto">{seleccionado.instruccion}</p>
+
+              {/* Contenedor de Video */}
+              <div className="ej-modal-video-container mt-4">
+                <h4 style={{fontSize: '1rem', color: 'var(--secondary)', marginBottom: '1rem'}}>
+                  <i className="fas fa-video me-2"></i>Ejemplo de Ejecución
+                </h4>
+                {seleccionado.videoUrl ? (
+                  <video 
+                    src={seleccionado.videoUrl} 
+                    controls 
+                    style={{ width: '100%', borderRadius: '8px', border: `1px solid ${seleccionado.color}40`, background: '#000' }}
+                  ></video>
+                ) : (
+                  <div className="d-flex flex-column align-items-center justify-content-center p-4" style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                    <i className="fas fa-film fa-2x mb-2" style={{ color: 'var(--text-muted)', opacity: 0.5 }}></i>
+                    <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem' }}>Contenido de ejemplo aún no disponible.</p>
+                  </div>
+                )}
+              </div>
             </motion.div>
           </motion.div>
         )}
