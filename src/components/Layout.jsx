@@ -49,7 +49,7 @@ export default function Layout() {
   const verificarExpediente = async (idUsuario) => {
     try {
       // Ajusta la URL base si es diferente en tu entorno
-      const res = await fetch(`import.meta.env.VITE_API_URL:7149/api/ExpedienteMedico/usuario/${idUsuario}/status`);
+      const res = await fetch(`\${import.meta.env.VITE_API_URL}/api/ExpedienteMedico/usuario/${idUsuario}/status`);
       if (res.ok) {
         const data = await res.json();
         setStatusExpediente(data);

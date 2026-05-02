@@ -4,7 +4,7 @@ import BackButton from '../components/BackButton';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import '../assets/css/WolfBeneficios.css';
 
-const API_BASE = 'import.meta.env.VITE_API_URL:7149/api/finanzas';
+const API_BASE = `\${import.meta.env.VITE_API_URL}/api/finanzas`;
 const todayISO = new Date().toISOString().split('T')[0];
 
 export default function WolfBeneficios() {

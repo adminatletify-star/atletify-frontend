@@ -38,7 +38,7 @@ export default function EditarUsuario() {
       const idBox = JSON.parse(localStorage.getItem('box'))?.idBox;
       if (idBox) {
         try {
-          const resClases = await fetch(`import.meta.env.VITE_API_URL:7149/api/clases/box/${idBox}`);
+          const resClases = await fetch(`\${import.meta.env.VITE_API_URL}/api/clases/box/${idBox}`);
           const dataClases = await resClases.json();
           setClases(dataClases);
         } catch (err) {

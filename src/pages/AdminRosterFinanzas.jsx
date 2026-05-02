@@ -417,7 +417,7 @@ export default function AdminRosterFinanzas() {
                                     </p>
                                     <div className="arf-pago-btns">
                                       {p.comprobanteUrl && (
-                                        <a href={`import.meta.env.VITE_API_URL:7149${p.comprobanteUrl}`} target="_blank" rel="noreferrer" className="arf-btn-ver-foto">
+                                        <a href={`\${import.meta.env.VITE_API_URL}${p.comprobanteUrl}`} target="_blank" rel="noreferrer" className="arf-btn-ver-foto">
                                           <i className="fas fa-image"></i> Ver foto
                                         </a>
                                       )}

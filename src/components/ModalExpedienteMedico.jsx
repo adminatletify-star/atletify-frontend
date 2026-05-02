@@ -65,7 +65,7 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
         const u = JSON.parse(localStorage.getItem('usuario'));
         setUsuarioData(u);
 
-        const res = await fetch(`import.meta.env.VITE_API_URL:7149/api/ExpedienteMedico/usuario/${idUsuario}`);
+        const res = await fetch(`\${import.meta.env.VITE_API_URL}/api/ExpedienteMedico/usuario/${idUsuario}`);
         if (res.ok) {
           const data = await res.json();
           // Pre-llenar form con lo que ya tenga en Usuario
@@ -209,7 +209,7 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
         suplementosVitaminas: form.suplementosVitaminas
       };
 
-      const res = await fetch(`import.meta.env.VITE_API_URL:7149/api/ExpedienteMedico`, {
+      const res = await fetch(`\${import.meta.env.VITE_API_URL}/api/ExpedienteMedico`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

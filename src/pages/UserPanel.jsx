@@ -7,7 +7,7 @@ import BotonSeguro from '../components/BotonSeguro';
 import logoAtletify from './Atketify System/logo.png';
 import '../assets/css/user-panel.css';
 
-const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
+const API_BASE = `\${import.meta.env.VITE_API_URL}/api`;
 
 const getFechaHoyString = () => {
   const hoy = new Date();
