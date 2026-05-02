@@ -106,13 +106,16 @@ export default function ModalAdminBox({ abierto, datosBox, onClose, onSuccess })
     }
 
     setLoading(true);
-
+    //comentario de que se debe de hacer despues, deben de cambiar el header de la pagina, no chinguen
     try {
       // PASO 1: Crear el Box primero
       const resBox = await fetch(`${API_URL}/box`, {
         method: 'POST',
+
         headers: { 'Content-Type': 'application/json' },
+
         body: JSON.stringify({
+
           nombre: datosBox.nombre.trim(),
           ubicacion: datosBox.ubicacion.trim(),
           activo: true,

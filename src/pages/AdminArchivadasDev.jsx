@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import '../assets/css/ListaCompetencias.css';
 import BackButton from '../components/BackButton';
 
-const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -110,7 +110,7 @@ export default function AdminArchivadasDev() {
                   >
                     <div style={{ width: '70px', height: '70px', borderRadius: '50%', overflow: 'hidden', background: '#000', flexShrink: 0 }}>
                       {b.logo ? (
-                        <img src={`${import.meta.env.VITE_API_URL}${b.logo}`} alt={b.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={`import.meta.env.VITE_API_URL:7149${b.logo}`} alt={b.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
                         <div className="w-100 h-100 d-flex align-items-center justify-content-center">
                           <i className="fas fa-warehouse text-secondary fs-4"></i>

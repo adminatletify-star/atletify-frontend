@@ -23,7 +23,9 @@ export default function DiccionarioEjercicios() {
     equipamiento: 'Libre',
     metricaPrincipal: 'Repeticiones',
     esLevantamientoOlimpico: false,
-    categoriaRecomendada: 'Todos'
+    categoriaRecomendada: 'Todos',
+    subnombre: '',
+    videoUrl: ''
   });
 
   useEffect(() => {
@@ -48,6 +50,31 @@ export default function DiccionarioEjercicios() {
       setLoading(false);
     }
   }
+
+  const abrirWidgetCloudinary = () => {
+    if (!window.cloudinary) {
+      alert('El widget de Cloudinary no ha cargado. Revisa tu conexión a internet.');
+      return;
+    }
+
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
+        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
+        sources: ['local', 'url', 'camera'],
+        resourceType: 'video',
+        clientAllowedFormats: ['mp4', 'mov', 'webm', 'mkv'],
+        maxFileSize: 104857600, // 100MB max
+        theme: 'minimal'
+      },
+      (err, result) => {
+        if (!err && result && result.event === 'success') {
+          setForm(f => ({ ...f, videoUrl: result.info.secure_url }));
+        }
+      }
+    );
+    widget.open();
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -82,7 +109,9 @@ export default function DiccionarioEjercicios() {
       equipamiento: ej.equipamiento,
       metricaPrincipal: ej.metricaPrincipal,
       esLevantamientoOlimpico: ej.esLevantamientoOlimpico,
-      categoriaRecomendada: ej.categoriaRecomendada
+      categoriaRecomendada: ej.categoriaRecomendada,
+      subnombre: ej.subnombre || '',
+      videoUrl: ej.videoUrl || ''
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -91,7 +120,8 @@ export default function DiccionarioEjercicios() {
     setEditandoId(null);
     setForm({
       nombre: '', descripcion: '', equipamiento: 'Libre',
-      metricaPrincipal: 'Repeticiones', esLevantamientoOlimpico: false, categoriaRecomendada: 'Todos'
+      metricaPrincipal: 'Repeticiones', esLevantamientoOlimpico: false, categoriaRecomendada: 'Todos',
+      subnombre: '', videoUrl: ''
     });
   };
 
@@ -104,7 +134,8 @@ export default function DiccionarioEjercicios() {
   };
 
   const filtrados = ejercicios.filter(e =>
-    e.nombre.toLowerCase().includes(busqueda.toLowerCase())
+    e.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+    (e.subnombre && e.subnombre.toLowerCase().includes(busqueda.toLowerCase()))
   );
 
   if (loading) return (
@@ -163,6 +194,17 @@ export default function DiccionarioEjercicios() {
                   </div>
 
                   <div className="mb-3">
+                    <label className="diccionario-field-label">Subnombre o alternativo (Opcional)</label>
+                    <input
+                      type="text"
+                      className="diccionario-input"
+                      placeholder="Ej: Squat (si el nombre es Sentadilla)"
+                      value={form.subnombre}
+                      onChange={e => setForm({ ...form, subnombre: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="mb-3">
                     <label className="diccionario-field-label">Descripción / Notas</label>
                     <textarea
                       className="diccionario-textarea"
@@ -171,6 +213,27 @@ export default function DiccionarioEjercicios() {
                       value={form.descripcion}
                       onChange={e => setForm({ ...form, descripcion: e.target.value })}
                     />
+                  </div>
+
+                  {/* Video URL */}
+                  <div className="mb-3">
+                    <label className="diccionario-field-label">Video de Ejemplo</label>
+                    <div className="d-flex flex-column gap-2">
+                      <button type="button" className="btn btn-outline-secondary w-100" onClick={abrirWidgetCloudinary} style={{ borderStyle: 'dashed' }}>
+                        <i className="fas fa-cloud-upload-alt me-2" />
+                        {form.videoUrl ? 'Cambiar Video en Cloudinary' : 'Subir Video a Cloudinary'}
+                      </button>
+                      {form.videoUrl && (
+                        <div className="d-flex align-items-center justify-content-between p-2" style={{ background: 'rgba(79, 195, 247, 0.1)', border: '1px solid rgba(79, 195, 247, 0.3)', borderRadius: '8px' }}>
+                          <span className="text-truncate" style={{ fontSize: '0.8rem', color: 'var(--accent)', maxWidth: '80%' }}>
+                            <i className="fas fa-video me-2"></i>Video cargado correctamente
+                          </span>
+                          <button type="button" className="btn btn-sm btn-link text-danger p-0" onClick={() => setForm(f => ({ ...f, videoUrl: '' }))}>
+                            <i className="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="row g-2 mb-3">
@@ -273,7 +336,10 @@ export default function DiccionarioEjercicios() {
 
                         {/* Nombre + acciones */}
                         <div className="diccionario-card-top">
-                          <h3 className="diccionario-card-nombre">{ej.nombre}</h3>
+                          <div className="flex-grow-1 min-w-0">
+                            <h3 className="diccionario-card-nombre mb-0">{ej.nombre}</h3>
+                            {ej.subnombre && <p style={{margin:0, fontSize:'0.8rem', color:'var(--text-muted)'}}>Alt: {ej.subnombre}</p>}
+                          </div>
                           <div className="diccionario-card-acciones">
                             <button
                               className="diccionario-btn-icono diccionario-btn-icono--editar"
@@ -297,6 +363,12 @@ export default function DiccionarioEjercicios() {
                         <p className="diccionario-card-desc">
                           {ej.descripcion || 'Sin descripción adicional.'}
                         </p>
+                        
+                        {ej.videoUrl && (
+                          <div className="mb-3">
+                            <video src={ej.videoUrl} controls style={{ width: '100%', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}></video>
+                          </div>
+                        )}
 
                         {/* Tags */}
                         <div className="diccionario-tags">

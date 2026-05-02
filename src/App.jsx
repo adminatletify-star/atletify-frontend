@@ -13,6 +13,7 @@ import TiendaBox from './pages/TiendaBox';
 import CookieBanner from './components/CookieBanner';
 import CrearBox from './pages/CrearBox';
 import Dashboard from './pages/Dashboard';
+import CompletarRegistro from './pages/CompletarRegistro';
 import RegistroManual from './pages/RegistroManual';
 import UserPanel from './pages/UserPanel';
 import AdminBoxPanel from './pages/AdminBoxPanel';
@@ -38,6 +39,7 @@ import HistorialCompetenciasPublico from './pages/HistorialCompetenciasPublico';
 import HistorialBoxDetalle from './pages/HistorialBoxDetalle';
 import AdminArchivadasDev from './pages/AdminArchivadasDev';
 import AdminArchivadasDevDetalle from './pages/AdminArchivadasDevDetalle';
+import AdminPreregistros from './pages/AdminPreregistros';
 import PortalCompetencias from './pages/PortalCompetencias';
 import PortalLeaderboard from './pages/PortalLeaderboard';
 import PortalAtleta from './pages/PortalAtleta';
@@ -198,7 +200,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/terminos" element={<TerminosCondiciones />} />
           <Route path="/politica-cookies" element={<PoliticaCookies />} />
-          <Route path="/registro/:idBox" element={<Register />} /> // Ruta de registro con ID de box
+          <Route path="/registro/:idBox" element={<Register />} /> 
+          <Route path="/completar-registro" element={<CompletarRegistro />} />
         <Route path="/portal-competencias/:id" element={<PortalCompetencias />} />
         <Route path="/leaderboard/:id" element={<PortalLeaderboard />} />
         <Route path="/juez/:id" element={<PortalJuez />} />
@@ -224,6 +227,7 @@ function App() {
             {/* --- ZONA DEVELOPER --- */}
             <Route path="/registro-manual" element={<RegistroManual />} />
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['Developer']}><Dashboard /></ProtectedRoute>} />
+            <Route path="/admin-preregistros" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AdminPreregistros /></ProtectedRoute>} />
             <Route path="/crear-box" element={<ProtectedRoute allowedRoles={['Developer']}><CrearBox /></ProtectedRoute>} />
             <Route path="/admin-competencias" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><AdminCompetencias /></ProtectedRoute>} />
             <Route path="/admin-competencias/historial" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><AdminCompetenciasHistorial /></ProtectedRoute>} />

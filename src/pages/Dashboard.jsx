@@ -141,6 +141,12 @@ export default function Dashboard() {
                     <span className="dash-nuevo-box-text">Administrar Competencias</span>
                   </Link>
                 </div>
+                <div className="col-12 col-md-12">
+                  <Link to="/admin-preregistros" className="dash-nuevo-box d-flex align-items-center justify-content-center gap-2 p-3 text-decoration-none h-100" style={{ '--dash-nuevo-color': '#3498db' }}>
+                    <i className="fas fa-envelope-open-text"></i>
+                    <span className="dash-nuevo-box-text">Centro de Pre-registros (Mágicos)</span>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
