@@ -7,9 +7,9 @@ import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import '../assets/css/PerfilAtletaAdmin.css';
 import BotonSeguro from '../components/BotonSeguro';
 
-const API_USUARIOS = 'https://localhost:7149/api/usuarios';
-const API_COBRANZA = 'https://localhost:7149/api/cobranza';
-const API_PRECIO = 'https://localhost:7149/api/precioespecial';
+const API_USUARIOS = 'import.meta.env.VITE_API_URL:7149/api/usuarios';
+const API_COBRANZA = 'import.meta.env.VITE_API_URL:7149/api/cobranza';
+const API_PRECIO = 'import.meta.env.VITE_API_URL:7149/api/precioespecial';
 
 export default function PerfilAtletaAdmin() {
   const { idUsuario } = useParams();
@@ -30,17 +30,17 @@ export default function PerfilAtletaAdmin() {
 
   // MODALES V3 - MÁS COMPLETOS Y CON VALIDACIONES
   const [showModalPago, setShowModalPago] = useState(false);
-  const [formPago, setFormPago] = useState({ 
-    monto1: '', metodo1: 'Efectivo', 
-    monto2: '', metodo2: '', 
-    notas: '', usarSaldoAFavor: false, idDescuento: '', cobrarInscripcion: false, montoInscripcion: '300' 
+  const [formPago, setFormPago] = useState({
+    monto1: '', metodo1: 'Efectivo',
+    monto2: '', metodo2: '',
+    notas: '', usarSaldoAFavor: false, idDescuento: '', cobrarInscripcion: false, montoInscripcion: '300'
   });
-  
+
   const [showModalCongelar, setShowModalCongelar] = useState(false);
   const [formCongelar, setFormCongelar] = useState({ dias: '15', motivo: '' });
   const [showModalEditar, setShowModalEditar] = useState(false);
   const [formEditar, setFormEditar] = useState({ nuevaFechaVencimiento: '', motivoAjuste: '', nuevoEstatus: '' });
-   const [precioEspecial, setPrecioEspecial] = useState(null);
+  const [precioEspecial, setPrecioEspecial] = useState(null);
   const [showModalPrecio, setShowModalPrecio] = useState(false);
   const [formPrecio, setFormPrecio] = useState({
     tipoDescuento: 'PrecioFijo',
@@ -62,17 +62,17 @@ export default function PerfilAtletaAdmin() {
       const [resAtleta, resFinanzas, resDescuentos] = await Promise.all([
         fetch(`${API_USUARIOS}/${idUsuario}`, { headers: headersGet }),
         fetch(`${API_COBRANZA}/atleta/${idUsuario}`, { headers: headersGet }),
-        fetch(`https://localhost:7149/api/finanzas/descuentos/${b.idBox}`, { headers: headersGet })
+        fetch(`import.meta.env.VITE_API_URL:7149/api/finanzas/descuentos/${b.idBox}`, { headers: headersGet })
       ]);
-      
+
 
       if (resAtleta.ok) setAtleta(await resAtleta.json());
       if (resDescuentos.ok) setDescuentosActivos((await resDescuentos.json()).filter(d => d.activo));
-      
+
       if (resFinanzas.ok) {
         const dataFinanzas = await resFinanzas.json();
         setFinanzas(dataFinanzas);
-        if(dataFinanzas.suscripcion) {
+        if (dataFinanzas.suscripcion) {
           setFormEditar({
             nuevaFechaVencimiento: new Date(dataFinanzas.suscripcion.fechaVencimiento).toISOString().split('T')[0],
             motivoAjuste: '', nuevoEstatus: dataFinanzas.suscripcion.estatus
@@ -84,31 +84,31 @@ export default function PerfilAtletaAdmin() {
 
   useEffect(() => { cargarDatos(); }, [cargarDatos]);
 
-    // --- PUNTO DE VENTA V4 (Conectado a la Calculadora del Backend) ---
+  // --- PUNTO DE VENTA V4 (Conectado a la Calculadora del Backend) ---
   const precioBase = calculoActivo?.precioBase || 0;
   const precioConDescuento = calculoActivo?.precioFinal || precioBase;
   const montoDescuentoAuto = calculoActivo?.montoDescuento || 0;
   const descuentoTexto = calculoActivo?.descuentoAplicado || 'Ninguno';
- 
+
   // Inscripción: la calculadora ya nos dice si debe o no
   const inscripcionAutomatica = calculoActivo?.debeInscripcion || false;
   const montoInscripcionAuto = calculoActivo?.montoInscripcion || 0;
- 
+
   // La Coach puede agregar una promo ADICIONAL del box (Buen Fin, etc.)
   const descSeleccionado = descuentosActivos.find(d => d.idDescuento === parseInt(formPago.idDescuento));
   const descuentoPromoExtra = descSeleccionado ? (precioConDescuento * (descSeleccionado.porcentaje / 100)) : 0;
- 
+
   // Inscripción: si la calculadora dice que debe, se activa automáticamente.
   // La Coach puede desactivarlo manualmente si quiere perdonar la inscripción.
   const cobrarInscripcionFinal = formPago.cobrarInscripcion ? (parseFloat(formPago.montoInscripcion) || montoInscripcionAuto) : 0;
- 
+
   // Saldo a favor
   const saldoAplicado = formPago.usarSaldoAFavor ? (atleta?.saldoAFavor || 0) : 0;
- 
+
   // TOTAL FINAL: precio con descuento personal - promo extra + inscripción - saldo
   const totalACobrar = Math.max(0, (precioConDescuento - descuentoPromoExtra) + cobrarInscripcionFinal - saldoAplicado);
   const restante = totalACobrar - (parseFloat(formPago.monto1) || 0);
- 
+
   // Auto-calcular el segundo método de pago
   useEffect(() => {
     if (restante > 0 && formPago.monto1 !== '') {
@@ -117,7 +117,7 @@ export default function PerfilAtletaAdmin() {
       setFormPago(prev => ({ ...prev, monto2: '', metodo2: '' }));
     }
   }, [restante, formPago.monto1]);
- 
+
   // Cuando se abre el modal, pre-activar inscripción si la calculadora dice que debe
   useEffect(() => {
     if (showModalPago && calculoActivo) {
@@ -142,9 +142,9 @@ export default function PerfilAtletaAdmin() {
     e.preventDefault();
     const m1 = parseFloat(formPago.monto1) || 0;
     const m2 = parseFloat(formPago.monto2) || 0;
-    
+
     if ((m1 + m2) < totalACobrar) {
-        return alert(`Faltan $${totalACobrar - (m1 + m2)}. El sistema V3 exige el pago completo.`);
+      return alert(`Faltan $${totalACobrar - (m1 + m2)}. El sistema V3 exige el pago completo.`);
     }
 
     try {
@@ -190,7 +190,7 @@ export default function PerfilAtletaAdmin() {
 
   const editarSuscripcionManual = async (e) => {
     e.preventDefault();
-    if(!window.confirm("¿Estás seguro de modificar este plan manualmente?")) return;
+    if (!window.confirm("¿Estás seguro de modificar este plan manualmente?")) return;
     try {
       const res = await fetch(`${API_COBRANZA}/editar-suscripcion/${finanzas.suscripcion.idSuscripcion}`, {
         method: 'PUT', headers: headersPost,
@@ -201,15 +201,15 @@ export default function PerfilAtletaAdmin() {
   };
 
   const eliminarTransaccion = async (idTransaccion) => {
-    if(!window.confirm("¿Seguro que deseas eliminar este recibo?")) return;
+    if (!window.confirm("¿Seguro que deseas eliminar este recibo?")) return;
     try {
       const res = await fetch(`${API_COBRANZA}/transaccion/${idTransaccion}`, { method: 'DELETE', headers: headersGet });
-      if(res.ok) cargarDatos();
-    } catch(e) { alert("Error al eliminar"); }
+      if (res.ok) cargarDatos();
+    } catch (e) { alert("Error al eliminar"); }
   };
 
   const darDeBaja = async () => {
-    if(!window.confirm(`🚨 ¿Dar de BAJA a ${atleta.nombre}? Perderá su acceso.`)) return;
+    if (!window.confirm(`🚨 ¿Dar de BAJA a ${atleta.nombre}? Perderá su acceso.`)) return;
     try {
       const res = await fetch(`${API_COBRANZA}/dardebaja/${idUsuario}`, { method: 'PUT', headers: headersGet });
       if (res.ok) navigate('/gestion-finanzas');
@@ -237,13 +237,13 @@ export default function PerfilAtletaAdmin() {
   };
 
 
-   const guardarPrecioEspecial = async () => {
+  const guardarPrecioEspecial = async () => {
     const b = JSON.parse(localStorage.getItem('box'));
-    
+
     if (!formPrecio.valorDescuento || parseFloat(formPrecio.valorDescuento) < 0) {
       return alert('Ingresa un valor válido para el descuento.');
     }
- 
+
     try {
       const res = await fetch(`${API_PRECIO}`, {
         method: 'POST',
@@ -259,7 +259,7 @@ export default function PerfilAtletaAdmin() {
           fechaExpiracion: formPrecio.fechaExpiracion ? new Date(formPrecio.fechaExpiracion).toISOString() : null
         })
       });
- 
+
       if (res.ok) {
         alert('¡Precio especial asignado con éxito!');
         setShowModalPrecio(false);
@@ -271,11 +271,11 @@ export default function PerfilAtletaAdmin() {
       }
     } catch (e) { alert('Error de conexión.'); }
   };
- 
+
   const quitarPrecioEspecial = async () => {
     if (!precioEspecial?.idPrecioEspecial) return;
     if (!window.confirm('¿Quitar el precio especial? El atleta volverá a pagar el precio normal del plan.')) return;
- 
+
     try {
       const res = await fetch(`${API_PRECIO}/desactivar/${precioEspecial.idPrecioEspecial}`, {
         method: 'PUT', headers: headersGet
@@ -287,10 +287,10 @@ export default function PerfilAtletaAdmin() {
     } catch (e) { alert('Error al quitar precio especial.'); }
   };
 
-   const calcularPrecioReal = useCallback(async () => {
+  const calcularPrecioReal = useCallback(async () => {
     if (!finanzas?.suscripcion) return;
     const b = JSON.parse(localStorage.getItem('box'));
- 
+
     try {
       const res = await fetch(
         `${API_PRECIO}/calcular/${idUsuario}/box/${b.idBox}/plan/${finanzas.suscripcion.idPlan}`,
@@ -304,7 +304,7 @@ export default function PerfilAtletaAdmin() {
       console.error('Error al calcular precio:', e);
     }
   }, [finanzas, idUsuario]);
- 
+
   // Disparar el cálculo cada vez que cambien las finanzas
   useEffect(() => {
     if (finanzas?.suscripcion) calcularPrecioReal();
@@ -316,10 +316,10 @@ export default function PerfilAtletaAdmin() {
   return (
     <div className="paa-page">
       <header className="paa-header">
-          <div className="d-flex align-items-center gap-3">
-            <BackButton />
-            <h1 className="paa-header-title">Expediente del Atleta</h1>
-          </div>
+        <div className="d-flex align-items-center gap-3">
+          <BackButton />
+          <h1 className="paa-header-title">Expediente del Atleta</h1>
+        </div>
       </header>
 
       <div className="container px-3 mt-4">
@@ -343,11 +343,11 @@ export default function PerfilAtletaAdmin() {
 
               {/*  LA TARJETA DORADA DE VIP  */}
               {atleta.exentoDePago ? (
-                 <div className="mb-3 p-3 text-center rounded" style={{ background: 'linear-gradient(45deg, rgba(241, 196, 15, 0.1), rgba(243, 156, 18, 0.2))', border: '1px solid var(--warning)' }}>
-                   <i className="fas fa-crown text-warning fs-1 mb-2"></i>
-                   <h6 className="text-warning fw-bold mb-0">PASE LIBRE ACTIVO</h6>
-                   <small className="text-light opacity-75">Acceso vitalicio sin cobros.</small>
-                 </div>
+                <div className="mb-3 p-3 text-center rounded" style={{ background: 'linear-gradient(45deg, rgba(241, 196, 15, 0.1), rgba(243, 156, 18, 0.2))', border: '1px solid var(--warning)' }}>
+                  <i className="fas fa-crown text-warning fs-1 mb-2"></i>
+                  <h6 className="text-warning fw-bold mb-0">PASE LIBRE ACTIVO</h6>
+                  <small className="text-light opacity-75">Acceso vitalicio sin cobros.</small>
+                </div>
               ) : (
                 finanzas?.nombrePlan && (
                   <div className="paa-medical-item mb-3" style={{ background: 'rgba(231,76,60,0.06)', border: '1px solid rgba(231,76,60,0.2)', borderRadius: '10px', padding: '10px 14px' }}>
@@ -374,7 +374,7 @@ export default function PerfilAtletaAdmin() {
                 <label className="paa-toggle-label" htmlFor="switchConfianza"><i className="fas fa-handshake text-info me-1"></i>Atleta de Confianza (Fiado)</label>
               </div>
 
-                      {/*  PRECIO ESPECIAL  */}
+              {/*  PRECIO ESPECIAL  */}
               <div className="mb-3 mt-4 p-3 rounded" style={{ background: 'rgba(155, 89, 182, 0.06)', border: '1px solid rgba(155, 89, 182, 0.25)', borderRadius: '12px' }}>
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <p className="fw-bold mb-0" style={{ color: '#9b59b6', fontSize: '0.85rem', fontFamily: 'var(--font-heading)' }}>
@@ -386,7 +386,7 @@ export default function PerfilAtletaAdmin() {
                     </button>
                   ) : null}
                 </div>
- 
+
                 {precioEspecial ? (
                   <div>
                     <div className="d-flex align-items-baseline gap-2 mb-1">
@@ -449,7 +449,7 @@ export default function PerfilAtletaAdmin() {
                 <div className="text-center py-5">
                   <i className="fas fa-gem fs-1 text-warning mb-3 opacity-75"></i>
                   <h4 className="text-warning fw-bold">ATLETA VIP</h4>
-                  <p className="text-secondary">Este atleta tiene acceso libre a las instalaciones.<br/>No se requiere renovar ni cobrar membresías.</p>
+                  <p className="text-secondary">Este atleta tiene acceso libre a las instalaciones.<br />No se requiere renovar ni cobrar membresías.</p>
                 </div>
               ) : !finanzas?.suscripcion ? (
                 <div className="text-center py-4" style={{ color: 'var(--text-muted)' }}>
@@ -552,19 +552,19 @@ export default function PerfilAtletaAdmin() {
         </div>
       </div>
 
-    {/* MODAL PUNTO DE VENTA V4 — CON CALCULADORA INTEGRADA */}
+      {/* MODAL PUNTO DE VENTA V4 — CON CALCULADORA INTEGRADA */}
       {showModalPago && (
         <div className="paa-modal-overlay">
           <div className="paa-modal" style={{ maxWidth: '480px' }}>
             <p className="paa-modal-title text-success"><i className="fas fa-cash-register me-2"></i>Punto de Venta</p>
- 
+
             {/* ── DESGLOSE AUTOMÁTICO ── */}
             <div className="mb-3 p-3 rounded" style={{ background: 'rgba(46,204,113,0.06)', border: '1px solid rgba(46,204,113,0.2)' }}>
               <div className="d-flex justify-content-between mb-1">
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Plan: {calculoActivo?.nombrePlan || finanzas?.nombrePlan}</span>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>${precioBase.toFixed(2)}</span>
               </div>
- 
+
               {montoDescuentoAuto > 0 && (
                 <div className="d-flex justify-content-between mb-1">
                   <span style={{ fontSize: '0.8rem', color: '#9b59b6' }}>
@@ -573,7 +573,7 @@ export default function PerfilAtletaAdmin() {
                   <span style={{ fontSize: '0.8rem', color: '#9b59b6', fontWeight: 600 }}>-${montoDescuentoAuto.toFixed(2)}</span>
                 </div>
               )}
- 
+
               {descuentoPromoExtra > 0 && (
                 <div className="d-flex justify-content-between mb-1">
                   <span style={{ fontSize: '0.8rem', color: 'var(--warning)' }}>
@@ -582,7 +582,7 @@ export default function PerfilAtletaAdmin() {
                   <span style={{ fontSize: '0.8rem', color: 'var(--warning)', fontWeight: 600 }}>-${descuentoPromoExtra.toFixed(2)}</span>
                 </div>
               )}
- 
+
               {cobrarInscripcionFinal > 0 && (
                 <div className="d-flex justify-content-between mb-1">
                   <span style={{ fontSize: '0.8rem', color: 'var(--warning)' }}>
@@ -591,7 +591,7 @@ export default function PerfilAtletaAdmin() {
                   <span style={{ fontSize: '0.8rem', color: 'var(--warning)', fontWeight: 600 }}>+${cobrarInscripcionFinal.toFixed(2)}</span>
                 </div>
               )}
- 
+
               {saldoAplicado > 0 && (
                 <div className="d-flex justify-content-between mb-1">
                   <span style={{ fontSize: '0.8rem', color: 'var(--accent-cool)' }}>
@@ -600,16 +600,16 @@ export default function PerfilAtletaAdmin() {
                   <span style={{ fontSize: '0.8rem', color: 'var(--accent-cool)', fontWeight: 600 }}>-${saldoAplicado.toFixed(2)}</span>
                 </div>
               )}
- 
+
               <hr style={{ borderColor: 'rgba(46,204,113,0.3)', margin: '8px 0' }} />
               <div className="d-flex justify-content-between">
                 <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--success)' }}>TOTAL A COBRAR</span>
                 <span style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--success)', fontFamily: 'var(--font-stats)' }}>${totalACobrar.toFixed(2)}</span>
               </div>
             </div>
- 
+
             <form onSubmit={registrarPago}>
- 
+
               {/* Promo adicional del box */}
               <div className="mb-3">
                 <label className="etiqueta-campo">Promoción Adicional del Box</label>
@@ -624,7 +624,7 @@ export default function PerfilAtletaAdmin() {
                   </small>
                 )}
               </div>
- 
+
               {/* Inscripción */}
               <div className="form-check form-switch mb-2 p-2 rounded" style={{ background: inscripcionAutomatica ? 'rgba(243,156,18,0.08)' : 'transparent', border: inscripcionAutomatica ? '1px solid rgba(243,156,18,0.25)' : '1px solid transparent' }}>
                 <input className="form-check-input bg-warning border-warning ms-1" type="checkbox" id="checkInsc" checked={formPago.cobrarInscripcion} onChange={e => setFormPago({ ...formPago, cobrarInscripcion: e.target.checked })} />
@@ -633,7 +633,7 @@ export default function PerfilAtletaAdmin() {
                   {inscripcionAutomatica && <span className="badge bg-warning text-dark ms-2" style={{ fontSize: '0.6rem' }}>PENDIENTE</span>}
                 </label>
               </div>
- 
+
               {formPago.cobrarInscripcion && (
                 <div className="mb-3 ps-4">
                   <label className="etiqueta-campo text-warning" style={{ fontSize: '0.75rem' }}>Costo de Inscripción ($)</label>
@@ -645,7 +645,7 @@ export default function PerfilAtletaAdmin() {
                   )}
                 </div>
               )}
- 
+
               {/* Saldo a favor */}
               {(atleta?.saldoAFavor || 0) > 0 && (
                 <div className="form-check form-switch mb-3 p-2 rounded" style={{ background: 'rgba(52,152,219,0.08)', border: '1px solid rgba(52,152,219,0.25)' }}>
@@ -655,7 +655,7 @@ export default function PerfilAtletaAdmin() {
                   </label>
                 </div>
               )}
- 
+
               {/* Métodos de pago */}
               <div className="row g-2 mb-3">
                 <div className="col-6">
@@ -669,7 +669,7 @@ export default function PerfilAtletaAdmin() {
                   <input type="number" step="0.01" className="entrada-oscura fw-bold" required value={formPago.monto1} onChange={e => setFormPago({ ...formPago, monto1: e.target.value })} placeholder="Ej. 500" />
                 </div>
               </div>
- 
+
               {restante > 0 && formPago.monto1 !== '' && (
                 <div className="row g-2 mb-3 p-2 rounded" style={{ backgroundColor: 'rgba(52, 152, 219, 0.1)', border: '1px solid rgba(52, 152, 219, 0.3)' }}>
                   <div className="col-12"><small className="text-info fw-bold"><i className="fas fa-split me-1"></i>Falta cubrir ${restante.toFixed(2)}</small></div>
@@ -684,12 +684,12 @@ export default function PerfilAtletaAdmin() {
                   <div className="col-6"><input type="number" className="entrada-oscura fw-bold border-info text-info" value={formPago.monto2} readOnly title="Calculado automáticamente" /></div>
                 </div>
               )}
- 
+
               <div className="mb-4">
                 <label className="etiqueta-campo">Notas (Opcional)</label>
                 <input type="text" className="entrada-oscura" placeholder="Comentarios..." value={formPago.notas} onChange={e => setFormPago({ ...formPago, notas: e.target.value })} />
               </div>
- 
+
               <div className="d-flex gap-2">
                 <button type="button" onClick={() => setShowModalPago(false)} className="paa-modal-btn paa-modal-btn-cancel w-50">Cancelar</button>
                 <BotonSeguro type="submit" className="btn btn-success w-50 fw-bold" textoProcesando="Activando..."><i className="fas fa-check me-1"></i>Activar Plan</BotonSeguro>
@@ -699,13 +699,13 @@ export default function PerfilAtletaAdmin() {
         </div>
       )}
 
-     {/* MODAL EDICIÓN CAMALEÓNICO V3 */}
+      {/* MODAL EDICIÓN CAMALEÓNICO V3 */}
       {showModalEditar && finanzas?.suscripcion && (
         <div className="paa-modal-overlay">
           <div className="paa-modal" style={{ maxWidth: '400px' }}>
             <p className="paa-modal-title text-accent"><i className="fas fa-wrench"></i>Ajuste de Membresía</p>
             <form onSubmit={editarSuscripcionManual}>
-              
+
               <div className="mb-3">
                 <label className="etiqueta-campo">Acción a realizar</label>
                 <select className="paa-select" value={formEditar.nuevoEstatus} onChange={e => setFormEditar({ ...formEditar, nuevoEstatus: e.target.value })}>
@@ -751,18 +751,18 @@ export default function PerfilAtletaAdmin() {
             <p className="paa-modal-title text-info"><i className="fas fa-snowflake"></i>Congelar Plan</p>
             <div>
               <div className="mb-3"><label className="etiqueta-campo">Días a Congelar</label>
-              <DiasCongelarPicker valor={formCongelar.dias} onCambiar={v => setFormCongelar({ ...formCongelar, dias: v })} />
+                <DiasCongelarPicker valor={formCongelar.dias} onCambiar={v => setFormCongelar({ ...formCongelar, dias: v })} />
 
               </div>
               <div className="mb-4">
                 <label className="etiqueta-campo">Motivo</label>
                 <input type="text" className="entrada-oscura" value={formCongelar.motivo} onChange={e => setFormCongelar({ ...formCongelar, motivo: e.target.value })} />
-                </div>
+              </div>
               <div className="d-flex gap-2">
                 <button type="button" onClick={() => setShowModalCongelar(false)} className="paa-modal-btn paa-modal-btn-cancel">Cancelar</button>
                 <BotonSeguro type="button" onClick={congelarPlan} className="paa-modal-btn paa-modal-btn-info" textoProcesando="Congelando...">
                   <i className="fas fa-snowflake"></i>Congelar</BotonSeguro>
-                  </div>
+              </div>
             </div>
           </div>
         </div>
@@ -774,7 +774,7 @@ export default function PerfilAtletaAdmin() {
             <p className="paa-modal-title" style={{ color: '#9b59b6' }}>
               <i className="fas fa-gem me-2"></i>Precio Especial para {atleta?.nombre}
             </p>
- 
+
             <div className="mb-3">
               <label className="etiqueta-campo">Tipo de Descuento</label>
               <select className="paa-select" value={formPrecio.tipoDescuento} onChange={e => setFormPrecio({ ...formPrecio, tipoDescuento: e.target.value })}>
@@ -783,7 +783,7 @@ export default function PerfilAtletaAdmin() {
                 <option value="DescuentoPorcentaje">Descuento Porcentual (%)</option>
               </select>
             </div>
- 
+
             <div className="mb-3">
               <label className="etiqueta-campo">
                 {formPrecio.tipoDescuento === 'PrecioFijo' && 'Precio que pagará ($)'}
@@ -798,7 +798,7 @@ export default function PerfilAtletaAdmin() {
                 placeholder={formPrecio.tipoDescuento === 'PrecioFijo' ? 'Ej. 500' : formPrecio.tipoDescuento === 'DescuentoPesos' ? 'Ej. 100' : 'Ej. 20'}
               />
             </div>
- 
+
             <div className="mb-3">
               <label className="etiqueta-campo">Motivo (visible para ti)</label>
               <input
@@ -809,7 +809,7 @@ export default function PerfilAtletaAdmin() {
                 placeholder="Ej. Antigüedad 5 años, Familiar de Coach..."
               />
             </div>
- 
+
             <div className="mb-3">
               <label className="etiqueta-campo">Fecha de Expiración (Opcional)</label>
               <input
@@ -820,14 +820,14 @@ export default function PerfilAtletaAdmin() {
               />
               <small className="text-secondary" style={{ fontSize: '0.7rem' }}>Déjalo vacío para que sea permanente.</small>
             </div>
- 
+
             <div className="form-check form-switch mb-4 p-2 rounded" style={{ background: 'rgba(243,156,18,0.08)', border: '1px solid rgba(243,156,18,0.25)' }}>
               <input className="form-check-input bg-warning border-warning ms-1" type="checkbox" id="checkExentoInsc" checked={formPrecio.exentoInscripcion} onChange={e => setFormPrecio({ ...formPrecio, exentoInscripcion: e.target.checked })} />
               <label className="form-check-label text-warning ms-3" htmlFor="checkExentoInsc" style={{ fontSize: '0.85rem' }}>
                 <i className="fas fa-star me-1"></i>Exento de inscripción anual
               </label>
             </div>
- 
+
             <div className="d-flex gap-2">
               <button type="button" onClick={() => setShowModalPrecio(false)} className="paa-modal-btn paa-modal-btn-cancel w-50">Cancelar</button>
               <BotonSeguro onClick={guardarPrecioEspecial} className="btn w-50 fw-bold" style={{ background: '#9b59b6', color: '#fff', border: 'none' }} textoProcesando="Guardando...">

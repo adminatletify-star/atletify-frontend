@@ -7,7 +7,7 @@ export default function ModalVerExpediente({ atleta, onClose }) {
 
   useEffect(() => {
     const idUsuario = atleta.idUsuario || atleta.IdUsuario;
-    fetch(`https://localhost:7149/api/ExpedienteMedico/usuario/${idUsuario}`)
+    fetch(`import.meta.env.VITE_API_URL:7149/api/ExpedienteMedico/usuario/${idUsuario}`)
       .then(res => res.json())
       .then(data => {
         setDatos(data);
@@ -64,7 +64,7 @@ export default function ModalVerExpediente({ atleta, onClose }) {
   return (
     <div className="directorio-modal-overlay" style={{ zIndex: 10000, overflowY: 'auto', padding: '20px 0' }} onClick={onClose}>
       <div className="directorio-modal" style={{ maxWidth: '700px', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
-        
+
         <button onClick={onClose} className="directorio-modal-close" style={{ top: '15px', right: '15px', zIndex: 10001 }}>
           <i className="fas fa-times"></i>
         </button>
@@ -82,7 +82,7 @@ export default function ModalVerExpediente({ atleta, onClose }) {
         </div>
 
         <div className="directorio-modal-body p-4">
-          
+
           {!datos || (!datos.idExpediente) ? (
             <div className="alert alert-warning text-center">
               <i className="fas fa-exclamation-triangle fs-3 mb-2 d-block"></i>
@@ -94,8 +94,8 @@ export default function ModalVerExpediente({ atleta, onClose }) {
               <div className="text-end mb-4">
                 <span className="badge bg-secondary">
                   <i className="fas fa-clock me-1"></i>
-                  Última actualización: {datos.fechaActualizacion 
-                    ? new Date(datos.fechaActualizacion).toLocaleDateString() 
+                  Última actualización: {datos.fechaActualizacion
+                    ? new Date(datos.fechaActualizacion).toLocaleDateString()
                     : (datos.fechaRegistro ? new Date(datos.fechaRegistro).toLocaleDateString() : 'Original')}
                 </span>
               </div>
@@ -176,7 +176,7 @@ export default function ModalVerExpediente({ atleta, onClose }) {
 
               {/* PREGUNTAS ABIERTAS */}
               <h5 className="border-bottom pb-2 mb-3 text-danger"><i className="fas fa-prescription-bottle-alt me-2"></i> Detalles Adicionales</h5>
-              
+
               {datos.alergias && (
                 <div className="mb-3">
                   <div className="text-muted small">Descripción de Alergias:</div>

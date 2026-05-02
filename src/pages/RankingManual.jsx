@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import '../assets/css/RankingManual.css';
 
-const API_BASE = 'https://localhost:7149/api';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
 
 export default function RankingManual() {
   const { idEntrenamiento } = useParams();
@@ -62,9 +62,9 @@ export default function RankingManual() {
           // Si ya tenía un valor guardado previamente en manual, lo recuperamos
           if (p.tipoMedida === "MANUAL_TIME") {
             // Si es 9999, lo mostramos en blanco para no asustar a la coach
-            valorActual = p.valorOrdenamiento === 9999 ? '' : p.valorOrdenamiento; 
+            valorActual = p.valorOrdenamiento === 9999 ? '' : p.valorOrdenamiento;
           }
-        } catch(e) { scoreObj = { [metricasParsed[0]]: a.resultadoWod }; }
+        } catch (e) { scoreObj = { [metricasParsed[0]]: a.resultadoWod }; }
 
         return { ...a, scoreObj, posicionAsignada: valorActual };
       });
@@ -83,10 +83,10 @@ export default function RankingManual() {
   };
 
   // 🔥 EL BOTÓN NUCLEAR: Guarda y hace visible la Pizarra
-// 🔥 EL BOTÓN NUCLEAR: Guarda y hace visible/invisible la Pizarra
+  // 🔥 EL BOTÓN NUCLEAR: Guarda y hace visible/invisible la Pizarra
   const handleGuardarYPublicar = async (publicar) => {
     if (publicar && !await window.wpConfirm("¿Estás seguro de PUBLICAR la Pizarra? Todos los atletas recibirán una notificación silenciosa con sus medallas.")) return;
-    
+
     setGuardando(true);
     try {
       const box = JSON.parse(localStorage.getItem('box'));
@@ -94,29 +94,29 @@ export default function RankingManual() {
       // 1. Guardar la posición de cada atleta en su Score JSON
       const promesasScores = atletas.map(a => {
         let oldScore = {};
-        try { oldScore = JSON.parse(a.resultadoWod); } catch(e){}
+        try { oldScore = JSON.parse(a.resultadoWod); } catch (e) { }
 
         const pos = parseInt(a.posicionAsignada);
-        
+
         // 👈 REPARACIÓN 1: Generamos el texto visible para la Pizarra Pública
         let textoVisible = isNaN(pos) ? '--' : `LUGAR ${pos}`;
-        
+
         // (Opcional) Si quieres que se vea la métrica principal junto al lugar:
         if (!isNaN(pos) && metricasBase.length > 0 && oldScore[metricasBase[0]]) {
-           textoVisible = `LUGAR ${pos} (${oldScore[metricasBase[0]]})`;
+          textoVisible = `LUGAR ${pos} (${oldScore[metricasBase[0]]})`;
         }
 
         const newScore = {
           ...oldScore,
-          valorOrdenamiento: isNaN(pos) ? 9999 : pos, 
-          tipoMedida: "MANUAL_TIME", 
+          valorOrdenamiento: isNaN(pos) ? 9999 : pos,
+          tipoMedida: "MANUAL_TIME",
           textoDisplay: textoVisible,
-          nombreWod: wod.titulo 
+          nombreWod: wod.titulo
         };
 
         return fetch(`${API_BASE}/asistencias/score/${a.idAsistencia}`, {
           method: 'PUT',
-          headers: {'Content-Type': 'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ resultadoWod: JSON.stringify(newScore), esRx: a.esRx })
         });
       });
@@ -145,7 +145,7 @@ export default function RankingManual() {
       };
 
       const resWod = await fetch(`${API_BASE}/entrenamientos/${wod.idEntrenamiento}`, {
-        method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payloadWod)
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadWod)
       });
 
       if (!resWod.ok) throw new Error("Error al actualizar estado del WOD");

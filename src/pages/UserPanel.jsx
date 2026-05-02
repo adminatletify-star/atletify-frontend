@@ -7,7 +7,7 @@ import BotonSeguro from '../components/BotonSeguro';
 import logoAtletify from './Atketify System/logo.png';
 import '../assets/css/user-panel.css';
 
-const API_BASE = 'https://localhost:7149/api';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
 
 const getFechaHoyString = () => {
   const hoy = new Date();
@@ -256,7 +256,7 @@ export default function UserPanel() {
     if (clase.nivelRequerido && clase.nivelRequerido !== "Cualquiera" && !clase.usuarioInscrito) {
       const jerarquia = { "novato": 1, "principiante": 2, "intermedio": 3, "rx": 4 };
       const nivelAtletaVal = jerarquia[nivelAtleta.trim().toLowerCase()] || 1;
-      
+
       let nivelClaseVal = 0;
       Object.keys(jerarquia).forEach(nivel => {
         if (clase.nivelRequerido.toLowerCase().includes(nivel)) {
@@ -563,7 +563,7 @@ export default function UserPanel() {
                                 }
                                 lastValor = res.valorOrdenamiento;
                                 lastRx = res.esRx;
-                                
+
                                 const posicionReal = currentRank;
                                 return (
                                   <tr key={index} className="border-bottom border-secondary border-opacity-10">
@@ -962,12 +962,12 @@ export default function UserPanel() {
                   const esMiClaseBase = clase.idClase === user.idClasePredeterminada;
                   const categoriaAtleta = user.categoriaBase || 'Novato';
                   const nivelesClase = clase.nivelesPermitidos || 'Todos';
-                  
+
                   let nivelNoPermitido = false;
                   if (nivelesClase !== 'Todos') {
                     const jerarquia = { "novato": 1, "principiante": 2, "intermedio": 3, "rx": 4 };
                     const nivelAtletaVal = jerarquia[categoriaAtleta.trim().toLowerCase()] || 1;
-                    
+
                     let nivelClaseVal = 0;
                     Object.keys(jerarquia).forEach(nivel => {
                       if (nivelesClase.toLowerCase().includes(nivel)) {
@@ -1021,12 +1021,12 @@ export default function UserPanel() {
 
                   return (
                     <div key={clase.idClase} className={`p-3 rounded-4 border position-relative ${claseYaFinalizo && !clase.usuarioInscrito
-                        ? 'border-secondary border-opacity-25 bg-secondary bg-opacity-10 opacity-60'
-                        : clase.usuarioInscrito
-                          ? 'border-danger bg-danger bg-opacity-10'
-                          : esMiClaseBase
-                            ? 'border-warning bg-warning bg-opacity-10'
-                            : 'border-secondary border-opacity-25 bg-dark bg-opacity-50'
+                      ? 'border-secondary border-opacity-25 bg-secondary bg-opacity-10 opacity-60'
+                      : clase.usuarioInscrito
+                        ? 'border-danger bg-danger bg-opacity-10'
+                        : esMiClaseBase
+                          ? 'border-warning bg-warning bg-opacity-10'
+                          : 'border-secondary border-opacity-25 bg-dark bg-opacity-50'
                       }`}>
 
                       {esMiClaseBase && !clase.usuarioInscrito && (

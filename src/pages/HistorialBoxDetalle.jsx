@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import '../assets/css/ListaCompetencias.css';
 import BackButton from '../components/BackButton';
 
-const API_BASE_URL = 'https://localhost:7149/api';
+const API_BASE_URL = 'import.meta.env.VITE_API_URL:7149/api';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -24,7 +24,7 @@ export default function HistorialBoxDetalle() {
     fetch(`${API_BASE_URL}/box/${idBox}`)
       .then(r => r.json())
       .then(data => setBoxData(data))
-      .catch(() => {});
+      .catch(() => { });
 
     // Obtener competencias históricas
     fetch(`${API_BASE_URL}/competencias/box/${idBox}/historial-publico`)
@@ -34,7 +34,7 @@ export default function HistorialBoxDetalle() {
       .finally(() => setCargandoComp(false));
   }, [idBox]);
 
-  const compsFiltradas = competencias.filter(c => 
+  const compsFiltradas = competencias.filter(c =>
     c.nombre?.toLowerCase().includes(busqueda.toLowerCase())
   );
 
@@ -64,10 +64,10 @@ export default function HistorialBoxDetalle() {
               <span className="input-group-text bg-dark border-secondary text-secondary">
                 <i className="fas fa-search"></i>
               </span>
-              <input 
-                type="text" 
-                className="form-control bg-dark border-secondary text-white" 
-                placeholder="Buscar competencia por nombre..." 
+              <input
+                type="text"
+                className="form-control bg-dark border-secondary text-white"
+                placeholder="Buscar competencia por nombre..."
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
                 style={{ boxShadow: 'none' }}
@@ -97,7 +97,7 @@ export default function HistorialBoxDetalle() {
           )}
 
           {!cargandoComp && competencias.length > 0 && compsFiltradas.length === 0 && (
-             <motion.div className="lc-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <motion.div className="lc-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <i className="fas fa-search lc-empty-icon"></i>
               <p className="lc-empty-titulo">No se encontraron resultados</p>
               <p className="lc-empty-sub">Intenta con otro término de búsqueda.</p>

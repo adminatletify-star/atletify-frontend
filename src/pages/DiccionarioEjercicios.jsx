@@ -7,7 +7,7 @@ import MetricaMedidaPicker from '../components/MetricaMedidaPicker';
 import NivelRecomendadoPicker from '../components/NivelRecomendadoPicker';
 import '../assets/css/DiccionarioEjercicios.css';
 
-const API_BASE = 'https://localhost:7149/api';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
 
 export default function DiccionarioEjercicios() {
   const navigate = useNavigate();
@@ -53,7 +53,7 @@ export default function DiccionarioEjercicios() {
     e.preventDefault();
     const payload = { ...form, idBox: box.idBox };
 
-    const url    = editandoId ? `${API_BASE}/ejercicios/${editandoId}` : `${API_BASE}/ejercicios`;
+    const url = editandoId ? `${API_BASE}/ejercicios/${editandoId}` : `${API_BASE}/ejercicios`;
     const method = editandoId ? 'PUT' : 'POST';
 
     try {

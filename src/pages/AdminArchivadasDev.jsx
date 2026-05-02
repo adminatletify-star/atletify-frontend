@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import '../assets/css/ListaCompetencias.css';
 import BackButton from '../components/BackButton';
 
-const API_BASE_URL = 'https://localhost:7149/api';
+const API_BASE_URL = 'import.meta.env.VITE_API_URL:7149/api';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -35,8 +35,8 @@ export default function AdminArchivadasDev() {
       .finally(() => setCargandoBoxes(false));
   }, []);
 
-  const boxesFiltrados = boxes.filter(b => 
-    b.nombre?.toLowerCase().includes(busqueda.toLowerCase()) || 
+  const boxesFiltrados = boxes.filter(b =>
+    b.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
     b.ubicacion?.toLowerCase().includes(busqueda.toLowerCase())
   );
 
@@ -64,10 +64,10 @@ export default function AdminArchivadasDev() {
               <span className="input-group-text bg-dark border-secondary text-secondary">
                 <i className="fas fa-search"></i>
               </span>
-              <input 
-                type="text" 
-                className="form-control bg-dark border-secondary text-white" 
-                placeholder="Buscar box por nombre o ubicación..." 
+              <input
+                type="text"
+                className="form-control bg-dark border-secondary text-white"
+                placeholder="Buscar box por nombre o ubicación..."
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
                 style={{ boxShadow: 'none' }}
@@ -88,7 +88,7 @@ export default function AdminArchivadasDev() {
           )}
 
           {!cargandoBoxes && boxesFiltrados.length === 0 && (
-             <motion.div className="lc-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <motion.div className="lc-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <i className="fas fa-search lc-empty-icon text-danger"></i>
               <p className="lc-empty-titulo text-white">No se encontraron resultados</p>
             </motion.div>
@@ -98,7 +98,7 @@ export default function AdminArchivadasDev() {
             <div className="row g-4">
               {boxesFiltrados.map((b, i) => (
                 <div key={b.idBox} className="col-12 col-md-6">
-                  <motion.div 
+                  <motion.div
                     className="lc-card h-100 p-4 d-flex align-items-center gap-3"
                     custom={i}
                     variants={fadeUp}
@@ -110,7 +110,7 @@ export default function AdminArchivadasDev() {
                   >
                     <div style={{ width: '70px', height: '70px', borderRadius: '50%', overflow: 'hidden', background: '#000', flexShrink: 0 }}>
                       {b.logo ? (
-                        <img src={`https://localhost:7149${b.logo}`} alt={b.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={`import.meta.env.VITE_API_URL:7149${b.logo}`} alt={b.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
                         <div className="w-100 h-100 d-flex align-items-center justify-content-center">
                           <i className="fas fa-warehouse text-secondary fs-4"></i>

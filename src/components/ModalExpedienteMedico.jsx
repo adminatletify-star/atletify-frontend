@@ -4,7 +4,7 @@ import '../assets/css/Directorio.css'; // Reutilizamos estilos
 export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage = false }) {
   const [loadingDatos, setLoadingDatos] = useState(true);
   const [enviando, setEnviando] = useState(false);
-  
+
   const [form, setForm] = useState({
     estatura: '',
     estadoCivil: '',
@@ -16,11 +16,11 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
     correo: '',
     telefono: '',
     fechaNacimiento: '',
-    
+
     tieneExperiencia: false,
     deporteExperiencia: '',
     tieneDiscapacidad: '',
-    
+
     // Booleanos
     hipertension: false,
     problemasHabla: false,
@@ -65,7 +65,7 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
         const u = JSON.parse(localStorage.getItem('usuario'));
         setUsuarioData(u);
 
-        const res = await fetch(`https://localhost:7149/api/ExpedienteMedico/usuario/${idUsuario}`);
+        const res = await fetch(`import.meta.env.VITE_API_URL:7149/api/ExpedienteMedico/usuario/${idUsuario}`);
         if (res.ok) {
           const data = await res.json();
           // Pre-llenar form con lo que ya tenga en Usuario
@@ -82,13 +82,13 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
             tieneExperiencia: data.tieneExperiencia || false,
             deporteExperiencia: data.deporteExperiencia || '',
             tieneDiscapacidad: data.tieneDiscapacidad || '',
-            
+
             // Si ya tuviera algo de expediente guardado, pre-llenar todo:
             estatura: data.estatura || '',
             estadoCivil: data.estadoCivil || '',
             medicamentoControlado: data.medicamentoControlado || '',
             suplementosVitaminas: data.suplementosVitaminas || '',
-            
+
             hipertension: data.hipertension || false,
             problemasHabla: data.problemasHabla || false,
             problemasExtremidad: data.problemasExtremidad || false,
@@ -130,7 +130,7 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
+
     // Validación especial para teléfonos (solo números, max 10)
     if ((name === 'telefono' || name === 'contactoEmergenciaTelefono')) {
       const numericValue = value.replace(/\D/g, '');
@@ -209,7 +209,7 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
         suplementosVitaminas: form.suplementosVitaminas
       };
 
-      const res = await fetch(`https://localhost:7149/api/ExpedienteMedico`, {
+      const res = await fetch(`import.meta.env.VITE_API_URL:7149/api/ExpedienteMedico`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -271,7 +271,7 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
   return (
     <div className={isPage ? "" : "directorio-modal-overlay"} style={isPage ? {} : { zIndex: 9999, overflowY: 'auto', padding: '20px 0' }}>
       <div className="directorio-modal" style={isPage ? { maxWidth: '100%', margin: '0', boxShadow: 'none' } : { maxWidth: '800px', cursor: 'default' }}>
-        
+
         <div className="directorio-modal-header bg-danger text-white p-4" style={{ borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}>
           <h3 className="mb-0 text-white"><i className="fas fa-notes-medical me-2"></i> {isPage ? "Mi Expediente Médico" : "Expediente Médico Obligatorio"}</h3>
           <p className="mb-0 text-white opacity-75 mt-1">
@@ -281,7 +281,7 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
 
         <div className="directorio-modal-body p-4">
           <form onSubmit={handleSubmit}>
-            
+
             {/* DATOS PERSONALES */}
             <h5 className="border-bottom pb-2 mb-3 text-danger"><i className="fas fa-user-circle me-2"></i> Datos Personales</h5>
             <div className="row g-3 mb-4">
@@ -359,13 +359,13 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
             <div className="row g-3 mb-4">
               <div className="col-md-4">
                 <div className="form-check custom-checkbox mt-4">
-                  <input 
-                    className="form-check-input" 
-                    type="checkbox" 
-                    name="tieneExperiencia" 
-                    id="tieneExperiencia" 
-                    checked={form.tieneExperiencia} 
-                    onChange={handleChange} 
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    name="tieneExperiencia"
+                    id="tieneExperiencia"
+                    checked={form.tieneExperiencia}
+                    onChange={handleChange}
                     style={{ cursor: 'pointer' }}
                   />
                   <label className="form-check-label text-light fw-bold" htmlFor="tieneExperiencia" style={{ cursor: 'pointer' }}>
@@ -392,13 +392,13 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
               {padMedic.map(pad => (
                 <div key={pad.name} className="col-md-4 col-sm-6">
                   <div className="form-check custom-checkbox">
-                    <input 
-                      className="form-check-input" 
-                      type="checkbox" 
-                      name={pad.name} 
-                      id={pad.name} 
-                      checked={form[pad.name]} 
-                      onChange={handleChange} 
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      name={pad.name}
+                      id={pad.name}
+                      checked={form[pad.name]}
+                      onChange={handleChange}
                       style={{ cursor: 'pointer' }}
                     />
                     <label className="form-check-label text-light small" htmlFor={pad.name} style={{ cursor: 'pointer' }}>
@@ -411,7 +411,7 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
 
             {/* PREGUNTAS FINALES */}
             <h5 className="border-bottom pb-2 mb-3 text-danger"><i className="fas fa-prescription-bottle-alt me-2"></i> Adicionales</h5>
-            
+
             {form.alergias && (
               <div className="mb-3">
                 <label className="etiqueta-campo text-danger">Mencionaste tener Alergias. Especifíca a qué: *</label>

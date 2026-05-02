@@ -292,7 +292,7 @@ export default function AdminCompetenciasHistorial() {
                                           </div>
                                           <div className="d-flex gap-1 align-items-center">
                                             {pago.comprobanteUrl && pago.comprobanteUrl.includes('uploads') && (
-                                              <a href={`https://localhost:7149${pago.comprobanteUrl}`} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-info rounded-circle p-1" style={{ width: '28px', height: '28px' }} title="Ver comprobante"><i className="fas fa-image"></i></a>
+                                              <a href={`import.meta.env.VITE_API_URL:7149${pago.comprobanteUrl}`} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-info rounded-circle p-1" style={{ width: '28px', height: '28px' }} title="Ver comprobante"><i className="fas fa-image"></i></a>
                                             )}
                                             {pago.estatus === 'PendienteVerificacion' && (
                                               <BotonSeguro onClick={() => aprobarPago(pago.idPago)} className="btn btn-sm btn-success rounded-circle p-1" style={{ width: '28px', height: '28px' }} title="Aprobar" textoProcesando="">
@@ -352,25 +352,25 @@ export default function AdminCompetenciasHistorial() {
       </header>
 
       <div className="container-xl px-3 px-md-4 pb-5">
-        
+
         {/* Filtros */}
         <div className="d-flex gap-2 mb-4">
-          <button 
-            className={`btn btn-sm ${filtroEstatus === 'Todos' ? 'btn-danger text-white' : 'btn-outline-secondary'}`} 
+          <button
+            className={`btn btn-sm ${filtroEstatus === 'Todos' ? 'btn-danger text-white' : 'btn-outline-secondary'}`}
             style={{ borderRadius: '20px', padding: '0.25rem 1rem' }}
             onClick={() => setFiltroEstatus('Todos')}
           >
             Todos
           </button>
-          <button 
-            className={`btn btn-sm ${filtroEstatus === 'Historial' ? 'btn-danger text-white' : 'btn-outline-secondary'}`} 
+          <button
+            className={`btn btn-sm ${filtroEstatus === 'Historial' ? 'btn-danger text-white' : 'btn-outline-secondary'}`}
             style={{ borderRadius: '20px', padding: '0.25rem 1rem' }}
             onClick={() => setFiltroEstatus('Historial')}
           >
             <i className="fas fa-history me-1"></i>Historial
           </button>
-          <button 
-            className={`btn btn-sm ${filtroEstatus === 'Archivada' ? 'btn-danger text-white' : 'btn-outline-secondary'}`} 
+          <button
+            className={`btn btn-sm ${filtroEstatus === 'Archivada' ? 'btn-danger text-white' : 'btn-outline-secondary'}`}
             style={{ borderRadius: '20px', padding: '0.25rem 1rem' }}
             onClick={() => setFiltroEstatus('Archivada')}
           >
@@ -503,13 +503,13 @@ export default function AdminCompetenciasHistorial() {
                           {/* Receta */}
                           {(() => {
                             const integrantes = Number(formCat.cantidadIntegrantes) || 1;
-                            const totalSexo  = Number(formCat.cupoHombres)   + Number(formCat.cupoMujeres);
-                            const totalNivel = Number(formCat.cupoAvanzado)  + Number(formCat.cupoIntermedio)
-                                             + Number(formCat.cupoPrincipiante) + Number(formCat.cupoNovato);
-                            const sexoOk     = totalSexo  === integrantes;
-                            const nivelOk    = totalNivel === integrantes;
-                            const recetaOk   = sexoOk && nivelOk;
-                            const estadoSexo  = sexoOk ? 'ok'  : totalSexo  > integrantes ? 'over' : 'pending';
+                            const totalSexo = Number(formCat.cupoHombres) + Number(formCat.cupoMujeres);
+                            const totalNivel = Number(formCat.cupoAvanzado) + Number(formCat.cupoIntermedio)
+                              + Number(formCat.cupoPrincipiante) + Number(formCat.cupoNovato);
+                            const sexoOk = totalSexo === integrantes;
+                            const nivelOk = totalNivel === integrantes;
+                            const recetaOk = sexoOk && nivelOk;
+                            const estadoSexo = sexoOk ? 'ok' : totalSexo > integrantes ? 'over' : 'pending';
                             const estadoNivel = nivelOk ? 'ok' : totalNivel > integrantes ? 'over' : 'pending';
                             return (
                               <>

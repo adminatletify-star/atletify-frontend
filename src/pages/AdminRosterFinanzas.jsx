@@ -413,11 +413,11 @@ export default function AdminRosterFinanzas() {
                                   <div key={p.idPago} className="arf-pago-pendiente">
                                     <p className="arf-pago-label" style={{ lineHeight: '1.2' }}>
                                       <span className="d-block mb-1"><i className="fas fa-clock me-1"></i>En revisión: <strong>${p.montoAbonado}</strong></span>
-                                      <span className="text-secondary" style={{fontSize: '0.8rem'}}><i className="fas fa-user-circle me-1"></i>{p.nombrePagador}</span>
+                                      <span className="text-secondary" style={{ fontSize: '0.8rem' }}><i className="fas fa-user-circle me-1"></i>{p.nombrePagador}</span>
                                     </p>
                                     <div className="arf-pago-btns">
                                       {p.comprobanteUrl && (
-                                        <a href={`https://localhost:7149${p.comprobanteUrl}`} target="_blank" rel="noreferrer" className="arf-btn-ver-foto">
+                                        <a href={`import.meta.env.VITE_API_URL:7149${p.comprobanteUrl}`} target="_blank" rel="noreferrer" className="arf-btn-ver-foto">
                                           <i className="fas fa-image"></i> Ver foto
                                         </a>
                                       )}
@@ -437,7 +437,7 @@ export default function AdminRosterFinanzas() {
                                     </div>
                                     <span className="d-block text-secondary mt-1 text-truncate" style={{ fontSize: '0.75rem' }}><i className="fas fa-user-circle me-1"></i>{p.nombrePagador}</span>
                                     {p.fechaAprobacionPago && (
-                                      <span className="d-block text-success mt-1" style={{ fontSize: '0.7rem' }}><i className="fas fa-calendar-check me-1"></i>Aprobado: {new Date(p.fechaAprobacionPago).toLocaleDateString('es-MX')} {new Date(p.fechaAprobacionPago).toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'})}</span>
+                                      <span className="d-block text-success mt-1" style={{ fontSize: '0.7rem' }}><i className="fas fa-calendar-check me-1"></i>Aprobado: {new Date(p.fechaAprobacionPago).toLocaleDateString('es-MX')} {new Date(p.fechaAprobacionPago).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</span>
                                     )}
                                   </div>
                                 ))}
@@ -477,32 +477,32 @@ export default function AdminRosterFinanzas() {
       {mostrarDetallesAtleta && atletaDetalle && (() => {
         let edad = "N/A";
         if (atletaDetalle.fechaNacimiento) {
-            const diff = Date.now() - new Date(atletaDetalle.fechaNacimiento).getTime();
-            edad = new Date(diff).getUTCFullYear() - 1970;
+          const diff = Date.now() - new Date(atletaDetalle.fechaNacimiento).getTime();
+          edad = new Date(diff).getUTCFullYear() - 1970;
         }
 
         const getLvlVal = (s) => {
-          const l = (s||'').toLowerCase();
-          if(l.includes('master')) return 4;
-          if(l.includes('avanzado') || l.includes('rx')) return 3;
-          if(l.includes('intermedio')) return 2;
-          if(l.includes('principiante')) return 1;
+          const l = (s || '').toLowerCase();
+          if (l.includes('master')) return 4;
+          if (l.includes('avanzado') || l.includes('rx')) return 3;
+          if (l.includes('intermedio')) return 2;
+          if (l.includes('principiante')) return 1;
           return 0;
         };
 
         let escalo = false;
         let catNivelStr = "";
         if (!atletaDetalle.esEquipo && atletaDetalle.reqCategoria) {
-            const c = atletaDetalle.reqCategoria;
-            const athLvl = getLvlVal(atletaDetalle.nivelHabilidad);
-            let catLvl = 0;
-            if (c.cupoMaster > 0) { catLvl = 4; catNivelStr = "Master"; }
-            else if (c.cupoAvanzado > 0) { catLvl = 3; catNivelStr = "Avanzado/RX"; }
-            else if (c.cupoIntermedio > 0) { catLvl = 2; catNivelStr = "Intermedio"; }
-            else if (c.cupoPrincipiante > 0) { catLvl = 1; catNivelStr = "Principiante"; }
-            else { catNivelStr = "Novato"; }
-            
-            if (athLvl < catLvl) escalo = true;
+          const c = atletaDetalle.reqCategoria;
+          const athLvl = getLvlVal(atletaDetalle.nivelHabilidad);
+          let catLvl = 0;
+          if (c.cupoMaster > 0) { catLvl = 4; catNivelStr = "Master"; }
+          else if (c.cupoAvanzado > 0) { catLvl = 3; catNivelStr = "Avanzado/RX"; }
+          else if (c.cupoIntermedio > 0) { catLvl = 2; catNivelStr = "Intermedio"; }
+          else if (c.cupoPrincipiante > 0) { catLvl = 1; catNivelStr = "Principiante"; }
+          else { catNivelStr = "Novato"; }
+
+          if (athLvl < catLvl) escalo = true;
         }
 
         return (

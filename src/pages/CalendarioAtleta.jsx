@@ -6,7 +6,7 @@ import UnidadPRPicker from '../components/UnidadPRPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import '../assets/css/CalendarioAtleta.css';
 
-const API_BASE = 'https://localhost:7149/api';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
 
 const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -14,7 +14,7 @@ const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', '
 export default function CalendarioAtleta() {
   const navigate = useNavigate();
   const [usuario, setUsuario] = useState(null);
-  
+
   const [fechaActual, setFechaActual] = useState(new Date());
   const [diaSeleccionado, setDiaSeleccionado] = useState(new Date());
   const [loading, setLoading] = useState(false);
@@ -23,7 +23,7 @@ export default function CalendarioAtleta() {
   const [formCalificar, setFormCalificar] = useState({ idCoach: null, estrellas: 5, comentario: '' });
 
   const [datosMes, setDatosMes] = useState({
-      eventos: [], asistencias: [], wods: [], suscripcion: null, prs: [], cumples: []
+    eventos: [], asistencias: [], wods: [], suscripcion: null, prs: [], cumples: []
   });
 
   const [mostrarFormPR, setMostrarFormPR] = useState(false);
@@ -33,43 +33,43 @@ export default function CalendarioAtleta() {
 
   // 🎟️ CONFIRMAR ASISTENCIA A EVENTOS
   const handleToggleRSVP = async (idEvento) => {
-      const userId = usuario.id || usuario.idUsuario || usuario.IdUsuario;
-      try {
-          const res = await fetch(`${API_BASE}/calendario/evento/${idEvento}/rsvp`, {
-              method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(userId)
-          });
-          if(res.ok) {
-              const data = await res.json();
-              // Actualizamos el botón instantáneamente sin recargar la pantalla
-              setDatosMes(prev => ({
-                  ...prev,
-                  eventos: prev.eventos.map(e => e.idEvento === idEvento ? {...e, yaConfirmo: data.confirmado} : e)
-              }));
-          }
-      } catch (e) { alert("Error de conexión."); }
+    const userId = usuario.id || usuario.idUsuario || usuario.IdUsuario;
+    try {
+      const res = await fetch(`${API_BASE}/calendario/evento/${idEvento}/rsvp`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(userId)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Actualizamos el botón instantáneamente sin recargar la pantalla
+        setDatosMes(prev => ({
+          ...prev,
+          eventos: prev.eventos.map(e => e.idEvento === idEvento ? { ...e, yaConfirmo: data.confirmado } : e)
+        }));
+      }
+    } catch (e) { alert("Error de conexión."); }
   };
 
   const abrirModalCalificar = (idCoach) => {
-      if(!idCoach) return alert("Esta clase no tiene un Coach asignado en el sistema.");
-      setFormCalificar({ idCoach, estrellas: 5, comentario: '' });
-      setModalCalificarVisible(true);
+    if (!idCoach) return alert("Esta clase no tiene un Coach asignado en el sistema.");
+    setFormCalificar({ idCoach, estrellas: 5, comentario: '' });
+    setModalCalificarVisible(true);
   };
 
   const guardarCalificacion = async () => {
-      try {
-          const userId = usuario.id || usuario.idUsuario || usuario.IdUsuario;
-          const payload = { IdCoach: formCalificar.idCoach, IdAtleta: userId, Estrellas: formCalificar.estrellas, Comentario: formCalificar.comentario };
-          const res = await fetch(`${API_BASE}/evaluaciones`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-          if(res.ok) {
-              alert("¡Retroalimentación enviada! Gracias por ayudar a mejorar el Box. ⭐");
-              setModalCalificarVisible(false);
-          }
-      } catch(e) { alert("Error al enviar calificación."); }
+    try {
+      const userId = usuario.id || usuario.idUsuario || usuario.IdUsuario;
+      const payload = { IdCoach: formCalificar.idCoach, IdAtleta: userId, Estrellas: formCalificar.estrellas, Comentario: formCalificar.comentario };
+      const res = await fetch(`${API_BASE}/evaluaciones`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (res.ok) {
+        alert("¡Retroalimentación enviada! Gracias por ayudar a mejorar el Box. ⭐");
+        setModalCalificarVisible(false);
+      }
+    } catch (e) { alert("Error al enviar calificación."); }
   };
 
   const getFechaLocalString = (fecha) => {
-      const offset = fecha.getTimezoneOffset() * 60000;
-      return new Date(fecha.getTime() - offset).toISOString().split('T')[0];
+    const offset = fecha.getTimezoneOffset() * 60000;
+    return new Date(fecha.getTime() - offset).toISOString().split('T')[0];
   };
 
   useEffect(() => {
@@ -83,79 +83,79 @@ export default function CalendarioAtleta() {
 
     // 👇 Cargar el Glosario de Ejercicios para los PRs 👇
     const b = JSON.parse(localStorage.getItem('box'));
-    if(b) {
-        const boxId = b.idBox || b.IdBox;
-        fetch(`${API_BASE}/marcaspersonales/ejercicios-olimpicos/${boxId}`)
-          .then(res => res.json())
-          .then(data => setListaEjercicios(data))
-          .catch(e => console.error(e));
+    if (b) {
+      const boxId = b.idBox || b.IdBox;
+      fetch(`${API_BASE}/marcaspersonales/ejercicios-olimpicos/${boxId}`)
+        .then(res => res.json())
+        .then(data => setListaEjercicios(data))
+        .catch(e => console.error(e));
     }
   }, [navigate, fechaActual]);
 
   const cargarMiCalendario = async (idUsuario, anio, mes) => {
-      setLoading(true);
-      try {
-          const res = await fetch(`${API_BASE}/calendario/atleta/${idUsuario}/mes/${anio}/${mes + 1}`);
-          if (res.ok) {
-              const data = await res.json();
-              data.eventos = data.eventos.map(e => ({...e, fechaInicio: new Date(e.fechaInicio), fechaFin: new Date(e.fechaFin)}));
-              data.asistencias = data.asistencias.map(a => ({...a, fecha: new Date(a.fecha)}));
-              data.wods = data.wods.map(w => ({...w, fechaProgramada: new Date(w.fechaProgramada)}));
-              data.prs = data.prs.map(p => ({...p, fechaLogro: new Date(p.fechaLogro)}));
-              if(data.suscripcion?.fechaVencimiento) data.suscripcion.fechaVencimiento = new Date(data.suscripcion.fechaVencimiento);
-              
-              setDatosMes({
-                  eventos: data.eventos, asistencias: data.asistencias, wods: data.wods,
-                  suscripcion: data.suscripcion, prs: data.prs, cumples: data.cumplesDelMes
-              });
-          }
-      } catch (error) { console.error("Error al cargar tu calendario:", error); }
-      finally { setLoading(false); }
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/calendario/atleta/${idUsuario}/mes/${anio}/${mes + 1}`);
+      if (res.ok) {
+        const data = await res.json();
+        data.eventos = data.eventos.map(e => ({ ...e, fechaInicio: new Date(e.fechaInicio), fechaFin: new Date(e.fechaFin) }));
+        data.asistencias = data.asistencias.map(a => ({ ...a, fecha: new Date(a.fecha) }));
+        data.wods = data.wods.map(w => ({ ...w, fechaProgramada: new Date(w.fechaProgramada) }));
+        data.prs = data.prs.map(p => ({ ...p, fechaLogro: new Date(p.fechaLogro) }));
+        if (data.suscripcion?.fechaVencimiento) data.suscripcion.fechaVencimiento = new Date(data.suscripcion.fechaVencimiento);
+
+        setDatosMes({
+          eventos: data.eventos, asistencias: data.asistencias, wods: data.wods,
+          suscripcion: data.suscripcion, prs: data.prs, cumples: data.cumplesDelMes
+        });
+      }
+    } catch (error) { console.error("Error al cargar tu calendario:", error); }
+    finally { setLoading(false); }
   };
 
   const handleGuardarPR = async () => {
-      if(!formPR.idEjercicio || !formPR.valor) return alert("Selecciona un ejercicio y pon un peso válido.");
-      try {
-          const userId = usuario.id || usuario.idUsuario || usuario.IdUsuario;
-          const payload = {
-              idMarca: formPR.idMarca || 0,
-              idUsuario: userId,
-              idEjercicio: parseInt(formPR.idEjercicio),
-              valor: parseFloat(formPR.valor),
-              unidad: formPR.unidad,
-              fechaLogro: getFechaLocalString(diaSeleccionado) + 'T12:00:00Z',
-              notas: formPR.notas
-          };
-          
-          const url = formPR.idMarca ? `${API_BASE}/marcaspersonales/${formPR.idMarca}` : `${API_BASE}/marcaspersonales`;
-          const method = formPR.idMarca ? 'PUT' : 'POST';
+    if (!formPR.idEjercicio || !formPR.valor) return alert("Selecciona un ejercicio y pon un peso válido.");
+    try {
+      const userId = usuario.id || usuario.idUsuario || usuario.IdUsuario;
+      const payload = {
+        idMarca: formPR.idMarca || 0,
+        idUsuario: userId,
+        idEjercicio: parseInt(formPR.idEjercicio),
+        valor: parseFloat(formPR.valor),
+        unidad: formPR.unidad,
+        fechaLogro: getFechaLocalString(diaSeleccionado) + 'T12:00:00Z',
+        notas: formPR.notas
+      };
 
-          const res = await fetch(url, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-          if(res.ok) {
-              alert("¡Récord Personal guardado en la bóveda! 🐺🏆");
-              setMostrarFormPR(false);
-              setFormPR({ idMarca: null, idEjercicio: '', valor: '', unidad: 'lbs', notas: '' });
-              cargarMiCalendario(userId, fechaActual.getFullYear(), fechaActual.getMonth());
-          }
-      } catch (e) { alert("Error al guardar PR."); }
+      const url = formPR.idMarca ? `${API_BASE}/marcaspersonales/${formPR.idMarca}` : `${API_BASE}/marcaspersonales`;
+      const method = formPR.idMarca ? 'PUT' : 'POST';
+
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (res.ok) {
+        alert("¡Récord Personal guardado en la bóveda! 🐺🏆");
+        setMostrarFormPR(false);
+        setFormPR({ idMarca: null, idEjercicio: '', valor: '', unidad: 'lbs', notas: '' });
+        cargarMiCalendario(userId, fechaActual.getFullYear(), fechaActual.getMonth());
+      }
+    } catch (e) { alert("Error al guardar PR."); }
   };
 
   const handleEliminarPR = async (idMarca) => {
-      if(!window.confirm("¿Seguro que deseas borrar este récord histórico?")) return;
-      try {
-          const res = await fetch(`${API_BASE}/marcaspersonales/${idMarca}`, { method: 'DELETE' });
-          if(res.ok) {
-              const userId = usuario.id || usuario.idUsuario || usuario.IdUsuario;
-              cargarMiCalendario(userId, fechaActual.getFullYear(), fechaActual.getMonth());
-          }
-      } catch (e) { alert("Error al borrar PR."); }
+    if (!window.confirm("¿Seguro que deseas borrar este récord histórico?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/marcaspersonales/${idMarca}`, { method: 'DELETE' });
+      if (res.ok) {
+        const userId = usuario.id || usuario.idUsuario || usuario.IdUsuario;
+        cargarMiCalendario(userId, fechaActual.getFullYear(), fechaActual.getMonth());
+      }
+    } catch (e) { alert("Error al borrar PR."); }
   };
 
   const getDiasDelMes = (anio, mes) => new Date(anio, mes + 1, 0).getDate();
   const getPrimerDiaDelMes = (anio, mes) => new Date(anio, mes, 1).getDay();
   const diasEnMes = getDiasDelMes(fechaActual.getFullYear(), fechaActual.getMonth());
   const primerDia = getPrimerDiaDelMes(fechaActual.getFullYear(), fechaActual.getMonth());
-  
+
   const cambiarMes = (direccion) => { setFechaActual(new Date(fechaActual.getFullYear(), fechaActual.getMonth() + direccion, 1)); setDiaSeleccionado(null); };
   const esMismoDia = (d1, d2) => d1 && d2 && d1.getDate() === d2.getDate() && d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear();
 
@@ -174,9 +174,9 @@ export default function CalendarioAtleta() {
       const wodHoy = datosMes.wods.find(w => esMismoDia(w.fechaProgramada, fechaIteracion));
       const prsHoy = datosMes.prs.filter(p => esMismoDia(p.fechaLogro, fechaIteracion));
       const eventoHoy = datosMes.eventos.find(e => {
-        const dIter = new Date(fechaIteracion).setHours(0,0,0,0);
-        const dIni = new Date(e.fechaInicio).setHours(0,0,0,0);
-        const dFin = new Date(e.fechaFin).setHours(23,59,59,999);
+        const dIter = new Date(fechaIteracion).setHours(0, 0, 0, 0);
+        const dIni = new Date(e.fechaInicio).setHours(0, 0, 0, 0);
+        const dFin = new Date(e.fechaFin).setHours(23, 59, 59, 999);
         return dIter >= dIni && dIter <= dFin;
       });
       const cumpleHoy = datosMes.cumples.find(c => c.dia === dia);
@@ -195,13 +195,13 @@ export default function CalendarioAtleta() {
 
           <div className="cal-dia-dots">
             {pagoHoy && <span className="cal-dot cal-dot--green" title="Día de Pago"></span>}
-            {asistenciaHoy?.estado === 'Asistió'  && <span className="cal-dot cal-dot--gold"  title="Asistencia"></span>}
-            {asistenciaHoy?.estado === 'Faltó'    && <span className="cal-dot cal-dot--red"   title="Falta"></span>}
-            {asistenciaHoy?.estado === 'Cancelada'&& <span className="cal-dot cal-dot--blue"  title="Racha Protegida"></span>}
-            {wodHoy && !asistenciaHoy             && <span className="cal-dot cal-dot--gray"  title="WOD Publicado"></span>}
-            {prsHoy.length > 0                    && <span className="cal-dot cal-dot--trophy" title="PR Roto"></span>}
-            {eventoHoy                            && <span className="cal-dot cal-dot--primary" title={eventoHoy.titulo}></span>}
-            {cumpleHoy                            && <span className="cal-dot cal-dot--purple" title={`Cumple de ${cumpleHoy.nombre}`}></span>}
+            {asistenciaHoy?.estado === 'Asistió' && <span className="cal-dot cal-dot--gold" title="Asistencia"></span>}
+            {asistenciaHoy?.estado === 'Faltó' && <span className="cal-dot cal-dot--red" title="Falta"></span>}
+            {asistenciaHoy?.estado === 'Cancelada' && <span className="cal-dot cal-dot--blue" title="Racha Protegida"></span>}
+            {wodHoy && !asistenciaHoy && <span className="cal-dot cal-dot--gray" title="WOD Publicado"></span>}
+            {prsHoy.length > 0 && <span className="cal-dot cal-dot--trophy" title="PR Roto"></span>}
+            {eventoHoy && <span className="cal-dot cal-dot--primary" title={eventoHoy.titulo}></span>}
+            {cumpleHoy && <span className="cal-dot cal-dot--purple" title={`Cumple de ${cumpleHoy.nombre}`}></span>}
           </div>
         </div>
       );
@@ -301,9 +301,9 @@ export default function CalendarioAtleta() {
 
                 {/* Eventos */}
                 {datosMes.eventos.filter(e => {
-                  const dIter = new Date(diaSeleccionado).setHours(0,0,0,0);
-                  const dIni = new Date(e.fechaInicio).setHours(0,0,0,0);
-                  const dFin = new Date(e.fechaFin).setHours(23,59,59,999);
+                  const dIter = new Date(diaSeleccionado).setHours(0, 0, 0, 0);
+                  const dIni = new Date(e.fechaInicio).setHours(0, 0, 0, 0);
+                  const dFin = new Date(e.fechaFin).setHours(23, 59, 59, 999);
                   return dIter >= dIni && dIter <= dFin;
                 }).map(ev => (
                   <div key={ev.idEvento} className={`cal-event-card ${ev.bloqueaClases ? 'cal-event-card--red' : 'cal-event-card--blue'}`}>
@@ -313,7 +313,7 @@ export default function CalendarioAtleta() {
                     <div className="cal-event-content">
                       <p className="cal-event-title">{ev.titulo}</p>
                       {ev.bloqueaClases && <span className="cal-badge cal-badge--red">Box Cerrado</span>}
-                      {ev.descripcion && <p className="cal-event-desc" style={{whiteSpace:'pre-wrap'}}>{ev.descripcion}</p>}
+                      {ev.descripcion && <p className="cal-event-desc" style={{ whiteSpace: 'pre-wrap' }}>{ev.descripcion}</p>}
                       {ev.requiereRSVP && (
                         <BotonSeguro onClick={() => handleToggleRSVP(ev.idEvento)}
                           className={`cal-rsvp-btn ${ev.yaConfirmo ? 'cal-rsvp-btn--cancel' : 'cal-rsvp-btn--confirm'}`}
@@ -339,19 +339,18 @@ export default function CalendarioAtleta() {
                   return (
                     <>
                       {asistenciaHoy && (
-                        <div className={`cal-asistencia-card ${
-                          asistenciaHoy.estado === 'Asistió'   ? 'cal-asistencia-card--gold' :
-                          asistenciaHoy.estado === 'Faltó'     ? 'cal-asistencia-card--red'  :
-                                                                  'cal-asistencia-card--blue'}`}>
+                        <div className={`cal-asistencia-card ${asistenciaHoy.estado === 'Asistió' ? 'cal-asistencia-card--gold' :
+                            asistenciaHoy.estado === 'Faltó' ? 'cal-asistencia-card--red' :
+                              'cal-asistencia-card--blue'}`}>
                           <div className="cal-asistencia-icon">
-                            {asistenciaHoy.estado === 'Asistió'   && <i className="fas fa-fire"></i>}
-                            {asistenciaHoy.estado === 'Faltó'     && <i className="fas fa-times"></i>}
+                            {asistenciaHoy.estado === 'Asistió' && <i className="fas fa-fire"></i>}
+                            {asistenciaHoy.estado === 'Faltó' && <i className="fas fa-times"></i>}
                             {asistenciaHoy.estado === 'Cancelada' && <i className="fas fa-shield-alt"></i>}
                           </div>
                           <div className="cal-asistencia-content">
                             <p className="cal-asistencia-status">
-                              {asistenciaHoy.estado === 'Asistió'   && 'Entrenamiento Completado'}
-                              {asistenciaHoy.estado === 'Faltó'     && 'Falta · Strike'}
+                              {asistenciaHoy.estado === 'Asistió' && 'Entrenamiento Completado'}
+                              {asistenciaHoy.estado === 'Faltó' && 'Falta · Strike'}
                               {asistenciaHoy.estado === 'Cancelada' && 'Racha Protegida'}
                             </p>
                             <p className="cal-asistencia-clase">{asistenciaHoy.nombreClase}</p>
@@ -378,7 +377,7 @@ export default function CalendarioAtleta() {
 
                 {/* PRs */}
                 {(() => {
-                  const esFuturo = new Date(diaSeleccionado).setHours(0,0,0,0) > new Date().setHours(0,0,0,0);
+                  const esFuturo = new Date(diaSeleccionado).setHours(0, 0, 0, 0) > new Date().setHours(0, 0, 0, 0);
                   return (
                     <div className="cal-pr-section">
                       <div className="cal-pr-header">
@@ -401,27 +400,27 @@ export default function CalendarioAtleta() {
                               <EjercicioOlimpicoPicker
                                 ejercicios={listaEjercicios}
                                 valor={formPR.idEjercicio}
-                                onCambiar={v => setFormPR({...formPR, idEjercicio: v})}
+                                onCambiar={v => setFormPR({ ...formPR, idEjercicio: v })}
                               />
                             </div>
                             <div className="col-6">
                               <label className="cal-pr-label">Valor</label>
-                              <input type="number" className="cal-input" placeholder="Ej. 225" value={formPR.valor} onChange={e => setFormPR({...formPR, valor: e.target.value})} />
+                              <input type="number" className="cal-input" placeholder="Ej. 225" value={formPR.valor} onChange={e => setFormPR({ ...formPR, valor: e.target.value })} />
                             </div>
                             <div className="col-6">
                               <label className="cal-pr-label">Unidad</label>
                               <UnidadPRPicker
                                 valor={formPR.unidad}
-                                onCambiar={v => setFormPR({...formPR, unidad: v})}
+                                onCambiar={v => setFormPR({ ...formPR, unidad: v })}
                               />
                             </div>
                             <div className="col-12">
                               <label className="cal-pr-label">Notas (Opcional)</label>
-                              <textarea className="cal-input" placeholder="Ej. Nuevo máximo, buen día..." rows="2" value={formPR.notas} onChange={e => setFormPR({...formPR, notas: e.target.value})}></textarea>
+                              <textarea className="cal-input" placeholder="Ej. Nuevo máximo, buen día..." rows="2" value={formPR.notas} onChange={e => setFormPR({ ...formPR, notas: e.target.value })}></textarea>
                             </div>
                           </div>
                           <div className="d-flex gap-2 mt-2">
-                            <button onClick={() => { setMostrarFormPR(false); setFormPR({idMarca:null, idEjercicio:'', valor:'', unidad:'lbs', notas:''}); }} className="cal-btn-cancel w-50">Cancelar</button>
+                            <button onClick={() => { setMostrarFormPR(false); setFormPR({ idMarca: null, idEjercicio: '', valor: '', unidad: 'lbs', notas: '' }); }} className="cal-btn-cancel w-50">Cancelar</button>
                             <BotonSeguro onClick={handleGuardarPR} className="cal-btn-save w-50" textoProcesando={<><i className="fas fa-spinner fa-spin me-1" />Guardando...</>}>Guardar PR</BotonSeguro>
                           </div>
                         </div>
@@ -439,7 +438,7 @@ export default function CalendarioAtleta() {
                             {pr.notas && <p className="cal-pr-notas">"{pr.notas}"</p>}
                           </div>
                           <div className="cal-pr-actions">
-                            <button onClick={() => { setFormPR({...pr, idEjercicio: pr.idEjercicio}); setMostrarFormPR(true); }} className="cal-icon-btn cal-icon-btn--edit"><i className="fas fa-edit"></i></button>
+                            <button onClick={() => { setFormPR({ ...pr, idEjercicio: pr.idEjercicio }); setMostrarFormPR(true); }} className="cal-icon-btn cal-icon-btn--edit"><i className="fas fa-edit"></i></button>
                             <BotonSeguro onClick={() => handleEliminarPR(pr.idMarca)} className="cal-icon-btn cal-icon-btn--del" textoProcesando=""><i className="fas fa-trash"></i></BotonSeguro>
                           </div>
                         </div>
@@ -462,14 +461,14 @@ export default function CalendarioAtleta() {
             <h4 className="cal-modal-title">¿Qué tal la clase?</h4>
             <p className="cal-modal-sub">Tu Coach valora tu retroalimentación.</p>
             <div className="cal-stars">
-              {[1,2,3,4,5].map(num => (
+              {[1, 2, 3, 4, 5].map(num => (
                 <i key={num}
                   className={`fas fa-star cal-star ${num <= formCalificar.estrellas ? 'cal-star--on' : 'cal-star--off'}`}
-                  onClick={() => setFormCalificar({...formCalificar, estrellas: num})}>
+                  onClick={() => setFormCalificar({ ...formCalificar, estrellas: num })}>
                 </i>
               ))}
             </div>
-            <textarea className="cal-input mb-3" rows="3" placeholder="Comentario opcional... Ej: ¡Excelente clase!" value={formCalificar.comentario} onChange={e => setFormCalificar({...formCalificar, comentario: e.target.value})}></textarea>
+            <textarea className="cal-input mb-3" rows="3" placeholder="Comentario opcional... Ej: ¡Excelente clase!" value={formCalificar.comentario} onChange={e => setFormCalificar({ ...formCalificar, comentario: e.target.value })}></textarea>
             <BotonSeguro onClick={guardarCalificacion} className="cal-btn-submit" textoProcesando={<><i className="fas fa-spinner fa-spin me-1" />Enviando...</>}>
               <i className="fas fa-paper-plane me-1"></i>Enviar
             </BotonSeguro>
@@ -499,9 +498,9 @@ export default function CalendarioAtleta() {
 
             <div className="cal-anuncios-body">
               {datosMes.eventos.filter(e => {
-                const dIter = new Date(diaSeleccionado).setHours(0,0,0,0);
-                const dIni  = new Date(e.fechaInicio).setHours(0,0,0,0);
-                const dFin  = new Date(e.fechaFin).setHours(23,59,59,999);
+                const dIter = new Date(diaSeleccionado).setHours(0, 0, 0, 0);
+                const dIni = new Date(e.fechaInicio).setHours(0, 0, 0, 0);
+                const dFin = new Date(e.fechaFin).setHours(23, 59, 59, 999);
                 return dIter >= dIni && dIter <= dFin;
               }).map(ev => (
                 <div key={ev.idEvento} className={`cal-anuncio-item ${ev.bloqueaClases ? 'cal-anuncio-item--cerrado' : 'cal-anuncio-item--normal'}`}>

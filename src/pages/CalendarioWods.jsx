@@ -4,7 +4,7 @@ import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import BackButton from '../components/BackButton';
 import '../assets/css/CalendarioWods.css';
 
-const API_BASE = 'https://localhost:7149/api';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
 
 export default function CalendarioWods() {
   const navigate = useNavigate();
@@ -41,11 +41,11 @@ export default function CalendarioWods() {
   }
 
   const eliminarWod = async (id) => {
-    if(!await window.wpConfirm("¿Seguro que deseas eliminar este WOD?")) return;
+    if (!await window.wpConfirm("¿Seguro que deseas eliminar este WOD?")) return;
     try {
       const res = await fetch(`${API_BASE}/entrenamientos/${id}`, { method: 'DELETE' });
-      if(res.ok) cargarEntrenamientos(box.idBox);
-    } catch(err) { alert("Error de conexión"); }
+      if (res.ok) cargarEntrenamientos(box.idBox);
+    } catch (err) { alert("Error de conexión"); }
   };
 
   // --- LÓGICA DEL CALENDARIO ---
@@ -120,11 +120,10 @@ export default function CalendarioWods() {
           <div className="row g-4 flex-grow-1 align-items-start justify-content-center">
             {wodPizarra.bloques?.map((bloque, index) => (
               <div key={index} className="col-12 col-xl-10">
-                <div className={`cw-pizarra-bloque ${
-                  bloque.tipoBloque === 'Warm-Up' ? 'cw-pizarra-bloque--warmup' :
-                  bloque.tipoBloque === 'WOD' ? 'cw-pizarra-bloque--wod' :
-                  'cw-pizarra-bloque--other'
-                }`}>
+                <div className={`cw-pizarra-bloque ${bloque.tipoBloque === 'Warm-Up' ? 'cw-pizarra-bloque--warmup' :
+                    bloque.tipoBloque === 'WOD' ? 'cw-pizarra-bloque--wod' :
+                      'cw-pizarra-bloque--other'
+                  }`}>
                   <p className="cw-pizarra-bloque-tipo">{bloque.tipoBloque}</p>
 
                   {bloque.descripcionLibre && (
@@ -170,16 +169,16 @@ export default function CalendarioWods() {
           HEADER
       ══════════════════════════════════ */}
       <header className="cw-header">
-          <div className="d-flex align-items-center gap-3">
-            <BackButton to="/admin-box-panel" />
-            <h1 className="cw-header-title me-auto">
-              Calendario de <span style={{ color: 'var(--primary)' }}>WODs</span>
-            </h1>
-            <Link to="/creador-wods" className="cw-nuevo-btn">
-              <i className="fas fa-plus"></i>
-              <span className="d-none d-sm-inline">Nuevo WOD</span>
-            </Link>
-          </div>
+        <div className="d-flex align-items-center gap-3">
+          <BackButton to="/admin-box-panel" />
+          <h1 className="cw-header-title me-auto">
+            Calendario de <span style={{ color: 'var(--primary)' }}>WODs</span>
+          </h1>
+          <Link to="/creador-wods" className="cw-nuevo-btn">
+            <i className="fas fa-plus"></i>
+            <span className="d-none d-sm-inline">Nuevo WOD</span>
+          </Link>
+        </div>
       </header>
 
       <div className="container-fluid px-3 px-md-4" style={{ maxWidth: '1400px' }}>

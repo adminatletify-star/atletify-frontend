@@ -5,7 +5,7 @@ import MesPicker from '../components/MesPicker';
 import AñoPicker from '../components/AñoPicker';
 import '../assets/css/MisResultados.css';
 
-const API_BASE = 'https://localhost:7149/api';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
 
 export default function MisResultados() {
   const navigate = useNavigate();
@@ -60,7 +60,7 @@ export default function MisResultados() {
             } else if (item.resultadoWod) {
               metricas = { "Score": item.resultadoWod };
             }
-          } catch(e) { metricas = { "Score": item.resultadoWod || '--' }; }
+          } catch (e) { metricas = { "Score": item.resultadoWod || '--' }; }
           return { ...item, metricas, nombreRealWod };
         });
 
@@ -82,14 +82,14 @@ export default function MisResultados() {
   };
 
   const eliminarScore = async (idAsistencia) => {
-    if(!window.confirm("¿Seguro que deseas eliminar este score?")) return;
+    if (!window.confirm("¿Seguro que deseas eliminar este score?")) return;
     try {
       const res = await fetch(`${API_BASE}/asistencias/score/${idAsistencia}`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resultadoWod: null, esRx: false })
       });
       if (res.ok) setHistorial(prev => prev.filter(item => item.idAsistencia !== idAsistencia));
-    } catch(err) { alert("Error de conexión"); }
+    } catch (err) { alert("Error de conexión"); }
   };
 
   // 👇 LA MAGIA CORREGIDA: Buscamos por Fecha Y por Título Exacto 👇
@@ -111,13 +111,13 @@ export default function MisResultados() {
 
         // 3. Fallback de seguridad (por si el Coach le cambió el nombre al WOD después)
         if (!wodCorrecto && wodsEseDia.length > 0) {
-            wodCorrecto = wodsEseDia[0];
+          wodCorrecto = wodsEseDia[0];
         }
 
         if (wodCorrecto) setWodSeleccionado(wodCorrecto);
         else alert("Los detalles de este WOD ya no están disponibles en la base de datos.");
       }
-    } catch(error) { alert("Error al buscar el WOD."); }
+    } catch (error) { alert("Error al buscar el WOD."); }
     finally { setLoadingWod(false); }
   };
 
@@ -138,10 +138,10 @@ export default function MisResultados() {
     <div className="mr-page">
 
       <nav className="mr-navbar">
-          <BackButton to="/user-panel" />
-          <span className="mr-navbar-brand">
-            <i className="fas fa-book-open"></i> Diario de Batalla
-          </span>
+        <BackButton to="/user-panel" />
+        <span className="mr-navbar-brand">
+          <i className="fas fa-book-open"></i> Diario de Batalla
+        </span>
       </nav>
 
       <div className="container py-4" style={{ maxWidth: '800px' }}>

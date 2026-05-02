@@ -11,7 +11,7 @@ import PromocionPicker from '../components/PromocionPicker';
 import MetodoPagoPicker from '../components/MetodoPagoPicker';
 import '../assets/css/GestionFinanzas.css';
 
-const API_BASE = 'https://localhost:7149/api/finanzas';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api/finanzas';
 
 export default function GestionFinanzas() {
   const navigate = useNavigate();
@@ -112,8 +112,8 @@ export default function GestionFinanzas() {
       if (tipo && tipo !== 'Todos') params.append('tipo', tipo);
       const qs = params.toString() ? `?${params}` : '';
       const [resMov, resResumen] = await Promise.all([
-        fetch(`https://localhost:7149/api/movimientos/box/${idBox}${qs}`, { headers: headersGet }),
-        fetch(`https://localhost:7149/api/movimientos/box/${idBox}/resumen${qs}`, { headers: headersGet }),
+        fetch(`import.meta.env.VITE_API_URL:7149/api/movimientos/box/${idBox}${qs}`, { headers: headersGet }),
+        fetch(`import.meta.env.VITE_API_URL:7149/api/movimientos/box/${idBox}/resumen${qs}`, { headers: headersGet }),
       ]);
       if (resMov.ok) setMovimientos(await resMov.json());
       if (resResumen.ok) setResumenMov(await resResumen.json());
@@ -326,7 +326,7 @@ export default function GestionFinanzas() {
       const b = JSON.parse(localStorage.getItem('box'));
       const token = localStorage.getItem('token');
       const res = await fetch(
-        `https://localhost:7149/api/precioespecial/calcular/${atletaARenovar.idUsuario}/box/${b.idBox}/plan/${planSeleccionado}`,
+        `import.meta.env.VITE_API_URL:7149/api/precioespecial/calcular/${atletaARenovar.idUsuario}/box/${b.idBox}/plan/${planSeleccionado}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       if (res.ok) {
@@ -390,7 +390,7 @@ export default function GestionFinanzas() {
       const dataRenovar = await resRenovar.json();
 
       // 2. Activamos y Cobramos (V3)
-      const resPago = await fetch('https://localhost:7149/api/cobranza/pagar', {
+      const resPago = await fetch('import.meta.env.VITE_API_URL:7149/api/cobranza/pagar', {
         method: 'POST',
         headers: headersPost,
         body: JSON.stringify({
@@ -459,9 +459,9 @@ export default function GestionFinanzas() {
   const movimientosFiltrados = movimientos.filter(m => {
     if (!busquedaMov) return true;
     const term = busquedaMov.toLowerCase();
-    return m.nombreAtleta?.toLowerCase().includes(term) || 
-           m.tipo?.toLowerCase().includes(term) || 
-           m.metodoPago?.toLowerCase().includes(term);
+    return m.nombreAtleta?.toLowerCase().includes(term) ||
+      m.tipo?.toLowerCase().includes(term) ||
+      m.metodoPago?.toLowerCase().includes(term);
   });
 
   return (
@@ -531,16 +531,16 @@ export default function GestionFinanzas() {
                 <div className="finanzas-card-titulo d-flex justify-content-between align-items-center flex-wrap gap-2">
                   <span><i className="fas fa-traffic-light" style={{ color: 'var(--success)' }}></i> Estado de Atletas</span>
                   <div className="d-flex gap-2 flex-wrap">
-                    <input 
-                      type="text" 
-                      className="finanzas-input mb-0 py-1 px-2" 
-                      placeholder="Buscar por nombre o teléfono..." 
+                    <input
+                      type="text"
+                      className="finanzas-input mb-0 py-1 px-2"
+                      placeholder="Buscar por nombre o teléfono..."
                       style={{ width: '250px', fontSize: '0.9rem' }}
                       value={busquedaSemaforo}
                       onChange={(e) => setBusquedaSemaforo(e.target.value)}
                     />
-                    <select 
-                      className="finanzas-input mb-0 py-1 px-2" 
+                    <select
+                      className="finanzas-input mb-0 py-1 px-2"
                       style={{ width: 'auto', fontSize: '0.9rem' }}
                       value={ordenSemaforo}
                       onChange={(e) => setOrdenSemaforo(e.target.value)}

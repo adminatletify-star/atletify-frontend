@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import '../assets/css/DetallePlanUser.css';
 
-const API_BASE = 'https://localhost:7149/api';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
 const ITEMS_POR_PAGINA = 8;
 
 function formatFecha(dateStr) {
@@ -227,10 +227,9 @@ export default function DetallePlanUser() {
                   {membresias.map(m => (
                     <div
                       key={m.idSuscripcion}
-                      className={`dpu-mb-card ${
-                        m.esFutura ? 'dpu-mb-futura' :
-                        m.estatus === 'Congelada' ? 'dpu-mb-congelada' : 'dpu-mb-activa'
-                      }`}
+                      className={`dpu-mb-card ${m.esFutura ? 'dpu-mb-futura' :
+                          m.estatus === 'Congelada' ? 'dpu-mb-congelada' : 'dpu-mb-activa'
+                        }`}
                     >
                       <div className="d-flex align-items-center justify-content-between mb-2">
                         <span className="dpu-mb-name">{m.nombrePlan}</span>

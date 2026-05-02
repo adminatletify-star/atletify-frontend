@@ -14,7 +14,7 @@ import { api } from '../services/api';
 import '../assets/css/CreadorWods.css';
 import '../assets/css/EditarWod.css';
 
-const API_BASE = 'https://localhost:7149/api';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
 
 const normalizarTexto = (texto = '') => texto
   .toString()
@@ -62,11 +62,11 @@ export default function EditarWod() {
 
       const ejerciciosMovimientos = Array.isArray(ejerciciosDiccionario)
         ? ejerciciosDiccionario.map(ej => ({
-            idEjercicio: ej.id,
-            nombre: ej.nombre,
-            equipamiento: ej.equipamiento,
-            categoria: ej.categoria,
-          }))
+          idEjercicio: ej.id,
+          nombre: ej.nombre,
+          equipamiento: ej.equipamiento,
+          categoria: ej.categoria,
+        }))
         : [];
 
       setGlosarioEjercicios(ejerciciosMovimientos);
@@ -170,7 +170,7 @@ export default function EditarWod() {
       };
     });
 
-  // 👈 MANDAMOS LA FECHA COMO TEXTO PURO (Ej. "2026-03-21"), SIN ZONAS HORARIAS
+    // 👈 MANDAMOS LA FECHA COMO TEXTO PURO (Ej. "2026-03-21"), SIN ZONAS HORARIAS
     const payload = {
       idBox: box.idBox,
       titulo,
@@ -200,10 +200,10 @@ export default function EditarWod() {
 
   // Mapa de tipoBloque → clase CSS
   const bloqueColorClass = (tipo) => ({
-    'WOD':         'crw-bloque--wod',
-    'Warm-Up':     'crw-bloque--warmup',
-    'Fuerza/Skill':'crw-bloque--fuerza',
-    'Cash-Out':    'crw-bloque--cashout'
+    'WOD': 'crw-bloque--wod',
+    'Warm-Up': 'crw-bloque--warmup',
+    'Fuerza/Skill': 'crw-bloque--fuerza',
+    'Cash-Out': 'crw-bloque--cashout'
   }[tipo] || 'crw-bloque--warmup');
 
   if (loading) return (
@@ -219,15 +219,15 @@ export default function EditarWod() {
           HEADER
       ══════════════════════════════════ */}
       <header className="crw-header">
-          <div className="d-flex align-items-center gap-3 flex-wrap">
-            <BackButton to="/calendario-wods" />
-            <h1 className="crw-header-title">
-              Editar <span style={{ color: 'var(--primary)' }}>WOD</span>
-            </h1>
-            <span className="ew-edit-badge ms-auto">
-              <i className="fas fa-circle"></i>Modo Edición
-            </span>
-          </div>
+        <div className="d-flex align-items-center gap-3 flex-wrap">
+          <BackButton to="/calendario-wods" />
+          <h1 className="crw-header-title">
+            Editar <span style={{ color: 'var(--primary)' }}>WOD</span>
+          </h1>
+          <span className="ew-edit-badge ms-auto">
+            <i className="fas fa-circle"></i>Modo Edición
+          </span>
+        </div>
       </header>
 
       <div className="container px-3" style={{ maxWidth: '1000px' }}>

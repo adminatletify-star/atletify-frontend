@@ -49,7 +49,7 @@ export default function Layout() {
   const verificarExpediente = async (idUsuario) => {
     try {
       // Ajusta la URL base si es diferente en tu entorno
-      const res = await fetch(`https://localhost:7149/api/ExpedienteMedico/usuario/${idUsuario}/status`);
+      const res = await fetch(`import.meta.env.VITE_API_URL:7149/api/ExpedienteMedico/usuario/${idUsuario}/status`);
       if (res.ok) {
         const data = await res.json();
         setStatusExpediente(data);
@@ -152,9 +152,9 @@ export default function Layout() {
   // Ruta de inicio según rol (para el tab Inicio del MobileNavBar)
   const homeRoute = useMemo(() => {
     if (!user) return '/';
-    if (user.rol === 'Developer')                          return '/dashboard';
-    if (user.rol === 'AdminBox' || user.rol === 'Coach')   return '/admin-box-panel';
-    if (user.rol === 'Atleta'   || user.rol === 'Usuario') return '/user-panel';
+    if (user.rol === 'Developer') return '/dashboard';
+    if (user.rol === 'AdminBox' || user.rol === 'Coach') return '/admin-box-panel';
+    if (user.rol === 'Atleta' || user.rol === 'Usuario') return '/user-panel';
     return '/';
   }, [user]);
 
@@ -195,7 +195,7 @@ export default function Layout() {
 
       {/* MODAL GLOBAL DE FIRMA DE REGLAMENTO */}
       {statusReglamento?.requiereFirma && statusReglamento?.reglamentoHtml && (
-        <ModalFirmaReglamento 
+        <ModalFirmaReglamento
           idBox={box?.idBox}
           idUsuario={user?.idUsuario || user?.id}
           reglamentoHtml={statusReglamento.reglamentoHtml}
@@ -209,7 +209,7 @@ export default function Layout() {
 
       {/* MODAL GLOBAL DE EXPEDIENTE MÉDICO */}
       {statusExpediente?.requiereExpediente && (
-        <ModalExpedienteMedico 
+        <ModalExpedienteMedico
           idUsuario={user?.idUsuario || user?.id}
           onCompletado={() => {
             setStatusExpediente({ requiereExpediente: false });

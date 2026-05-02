@@ -8,13 +8,13 @@ import '../assets/css/PaseDeLista.css';
 import BotonSeguro from '../components/BotonSeguro';
 import TimeInputMMSS from '../components/TimeInputMMSS';
 
-const API_BASE = 'https://localhost:7149/api';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
 
 const getFechaLocalString = () => {
   const hoy = new Date();
   return hoy.getFullYear() + '-' +
-         String(hoy.getMonth() + 1).padStart(2, '0') + '-' +
-         String(hoy.getDate()).padStart(2, '0');
+    String(hoy.getMonth() + 1).padStart(2, '0') + '-' +
+    String(hoy.getDate()).padStart(2, '0');
 };
 
 export default function PaseDeLista() {
@@ -47,11 +47,11 @@ export default function PaseDeLista() {
     if (!wodActivo || !wodActivo.bloques || wodActivo.bloques.length === 0) return { esEquipo: false, maxPermitidos: 1 };
     const b = wodActivo.bloques.find(bl => bl.tipoBloque === 'WOD') || wodActivo.bloques[0];
     const modo = (b.modalidadEquipo || "Individual").toLowerCase();
-    
+
     if (modo.includes("pareja")) return { esEquipo: true, maxPermitidos: 2 };
     if (modo.includes("trío") || modo.includes("trio")) return { esEquipo: true, maxPermitidos: 3 };
     if (modo.includes("squad")) return { esEquipo: true, maxPermitidos: 4 };
-    
+
     return { esEquipo: false, maxPermitidos: 1 };
   };
 
@@ -102,11 +102,11 @@ export default function PaseDeLista() {
   const forzarCambioWod = async (idAsistencia, idNuevoWod) => {
     try {
       const res = await fetch(`${API_BASE}/asistencias/${idAsistencia}/cambiar-wod`, {
-        method: 'PUT', headers: {'Content-Type':'application/json'},
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ IdWodElegido: parseInt(idNuevoWod) })
       });
       if (res.ok) {
-        setAsistentes(prev => prev.map(a => a.idAsistencia === idAsistencia ? {...a, idWodElegido: idNuevoWod} : a));
+        setAsistentes(prev => prev.map(a => a.idAsistencia === idAsistencia ? { ...a, idWodElegido: idNuevoWod } : a));
       }
     } catch (e) { alert("Error al forzar el cambio"); }
   };
@@ -156,7 +156,7 @@ export default function PaseDeLista() {
               } else if (a.resultadoWod) {
                 scoreObj[plantillaBase[0]] = a.resultadoWod;
               }
-            } catch(e) { scoreObj[plantillaBase[0]] = a.resultadoWod || ''; }
+            } catch (e) { scoreObj[plantillaBase[0]] = a.resultadoWod || ''; }
 
             plantillaBase.forEach(metrica => {
               if (scoreObj[metrica] === undefined) scoreObj[metrica] = '';
@@ -181,7 +181,7 @@ export default function PaseDeLista() {
       });
       if (res.ok) {
         setAsistentes(prev => prev.map(a => a.idAsistencia === idAsistencia ? { ...a, estado: nuevoEstado } : a));
-        
+
         // Auto-seleccionar si es WOD de equipo y apenas asiste
         if (nuevoEstado === 'Asistió' && esEquipo) {
           // Calculamos el límite dinámico usando los asistentes actuales + este nuevo (porque el estado se actualizará en breve)
@@ -205,7 +205,7 @@ export default function PaseDeLista() {
   const toggleSeleccionEquipo = (idAsistencia, maxPermitidos) => {
     setEquipoSeleccionado(prev => {
       if (prev.includes(idAsistencia)) return prev.filter(id => id !== idAsistencia);
-      
+
       const numAsistentes = asistentes.filter(a => a.estado === 'Asistió' && !a.esVisitaDropIn).length;
       const sobrantes = numAsistentes % maxPermitidos;
       const limiteDinamico = sobrantes === 0 ? maxPermitidos : maxPermitidos + sobrantes;
@@ -218,7 +218,7 @@ export default function PaseDeLista() {
         }
         return prev;
       }
-      
+
       return [...prev, idAsistencia];
     });
   };
@@ -235,11 +235,11 @@ export default function PaseDeLista() {
   const guardarScoreEquipo = async () => {
     if (equipoSeleccionado.length === 0) return;
     setLoading(true);
-    
+
     // Disparar las promesas para guardar el score idéntico en todos los seleccionados
     const promesas = equipoSeleccionado.map(id => guardarScore(id, scoreEquipoTemporal, esRxEquipo, true));
     await Promise.all(promesas);
-    
+
     setLoading(false);
     setEquipoSeleccionado([]);
     setModalEquipoAbierto(false);
@@ -256,7 +256,7 @@ export default function PaseDeLista() {
       } else {
         alert("Error al mover al atleta.");
       }
-    } catch(e) { alert("Error de conexión"); }
+    } catch (e) { alert("Error de conexión"); }
   };
 
   async function guardarScore(idAsistencia, scoreObj, esRx, silencioso = false) {
@@ -318,12 +318,12 @@ export default function PaseDeLista() {
         if (!silencioso) alert("¡Score validado en la Pizarra Oficial! 🏆");
         setAsistentes(prev => prev.map(a => a.idAsistencia === idAsistencia ? { ...a, resultadoWod: scoreJSON, scoreObj: metricasLimpias, esRx: esRx, nombreWodGuardado: wodActivo.titulo } : a));
       }
-    } catch (error) { if(!silencioso) alert("Error al guardar score"); }
+    } catch (error) { if (!silencioso) alert("Error al guardar score"); }
   }
 
   const guardarTodosLosScores = async (e) => {
     e.stopPropagation();
-    if(!await window.wpConfirm("¿Guardar y enviar todos los scores que hayas llenado en esta clase?")) return;
+    if (!await window.wpConfirm("¿Guardar y enviar todos los scores que hayas llenado en esta clase?")) return;
 
     setLoading(true);
     const promesas = asistentes.filter(a => {
@@ -338,7 +338,7 @@ export default function PaseDeLista() {
   };
 
   async function limpiarScore(idAsistencia) {
-    if(!await window.wpConfirm("¿Eliminar este score por completo de la base de datos?")) return;
+    if (!await window.wpConfirm("¿Eliminar este score por completo de la base de datos?")) return;
     try {
       const res = await fetch(`${API_BASE}/asistencias/score/${idAsistencia}`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resultadoWod: null, esRx: false })
@@ -346,15 +346,15 @@ export default function PaseDeLista() {
       if (res.ok) {
         alert("Score eliminado 🗑️");
         setAsistentes(prev => prev.map(a => {
-          if(a.idAsistencia === idAsistencia) {
-             const objLimpio = {};
-             plantillaBase.forEach(m => objLimpio[m] = '');
-             return { ...a, resultadoWod: null, scoreObj: objLimpio, rxInput: false };
+          if (a.idAsistencia === idAsistencia) {
+            const objLimpio = {};
+            plantillaBase.forEach(m => objLimpio[m] = '');
+            return { ...a, resultadoWod: null, scoreObj: objLimpio, rxInput: false };
           }
           return a;
         }));
       }
-    } catch(e) { alert("Error al eliminar"); }
+    } catch (e) { alert("Error al eliminar"); }
   }
 
   const handleScoreObjChange = (idAsistencia, metrica, valor) => {
@@ -400,7 +400,7 @@ export default function PaseDeLista() {
             </div>
             <div>
               <p className="pdl-clase-nombre">
-                {clase.horaInicio.substring(0,5)} — {clase.nombre}
+                {clase.horaInicio.substring(0, 5)} — {clase.nombre}
               </p>
               <p className="pdl-clase-coach">
                 <i className="fas fa-user-tie opacity-50"></i> {clase.coach}
@@ -487,9 +487,9 @@ export default function PaseDeLista() {
                       <div className="d-flex align-items-center gap-3">
                         {esEquipo && !a.esVisitaDropIn && a.estado === 'Asistió' && (
                           <div className="form-check m-0 pdl-team-checkbox">
-                            <input 
-                              className="form-check-input" 
-                              type="checkbox" 
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
                               style={{ transform: 'scale(1.5)', cursor: 'pointer' }}
                               checked={equipoSeleccionado.includes(a.idAsistencia)}
                               onChange={(e) => { e.stopPropagation(); toggleSeleccionEquipo(a.idAsistencia, maxPermitidos); }}
@@ -501,19 +501,19 @@ export default function PaseDeLista() {
                           {a.nombreUsuario.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                       <div className="d-flex align-items-center gap-2">
-                        <p className="pdl-atleta-nombre mb-0">{a.nombreUsuario}</p>
-                        
-                        {a.esVisitaDropIn && (
-                            <span className="badge bg-danger text-white rounded-pill px-2 shadow-sm border border-danger border-opacity-50" style={{fontSize: '0.6rem'}}><i className="fas fa-plane-arrival me-1"></i> TURISTA</span>
-                        )}
+                          <div className="d-flex align-items-center gap-2">
+                            <p className="pdl-atleta-nombre mb-0">{a.nombreUsuario}</p>
 
-                        {!a.esVisitaDropIn && a.idWodElegido === null ? (
-                            <span className="badge bg-warning text-dark rounded-pill px-2" style={{fontSize: '0.6rem'}}><i className="fas fa-headphones"></i> OPEN GYM</span>
-                        ) : !a.esVisitaDropIn && (
-                            <span className="badge bg-info text-dark rounded-pill px-2" style={{fontSize: '0.6rem'}}><i className="fas fa-dumbbell"></i> WOD</span>
-                        )}
-                      </div>
+                            {a.esVisitaDropIn && (
+                              <span className="badge bg-danger text-white rounded-pill px-2 shadow-sm border border-danger border-opacity-50" style={{ fontSize: '0.6rem' }}><i className="fas fa-plane-arrival me-1"></i> TURISTA</span>
+                            )}
+
+                            {!a.esVisitaDropIn && a.idWodElegido === null ? (
+                              <span className="badge bg-warning text-dark rounded-pill px-2" style={{ fontSize: '0.6rem' }}><i className="fas fa-headphones"></i> OPEN GYM</span>
+                            ) : !a.esVisitaDropIn && (
+                              <span className="badge bg-info text-dark rounded-pill px-2" style={{ fontSize: '0.6rem' }}><i className="fas fa-dumbbell"></i> WOD</span>
+                            )}
+                          </div>
                           {!a.esVisitaDropIn && (
                             <div>
                               {a.estado === 'Asistió' && (
@@ -568,15 +568,15 @@ export default function PaseDeLista() {
                     </div>
 
                     {/* Zona de score (solo si asistió y hay WOD activo) */}
-                     {/* Zona de score */}
+                    {/* Zona de score */}
                     {a.estado === 'Asistió' && (() => {
-                      
+
                       // 🛡️ BLOQUEO POR TURISMO (Drop-In Fase 2)
                       if (a.esVisitaDropIn) {
                         return (
                           <div className="pdl-bloqueado p-3 rounded-4 bg-black bg-opacity-25 border border-danger border-opacity-25 mt-3 d-flex flex-column align-items-center gap-2 text-center">
                             <i className="fas fa-camera text-danger bg-danger bg-opacity-10 p-3 rounded-circle fs-4 mb-2"></i>
-                            <p className="text-secondary small m-0 px-md-5">Al ser un atleta visitante, sus puntuaciones no ingresarán al pizarrón local por el momento. <br/><br/><strong className="text-white">¡Asegúrate que tenga la mejor experiencia, Coach! 🐺</strong></p>
+                            <p className="text-secondary small m-0 px-md-5">Al ser un atleta visitante, sus puntuaciones no ingresarán al pizarrón local por el momento. <br /><br /><strong className="text-white">¡Asegúrate que tenga la mejor experiencia, Coach! 🐺</strong></p>
                           </div>
                         );
                       }
@@ -623,11 +623,11 @@ export default function PaseDeLista() {
                                 const bloquePrincipal = wodActivo.bloques.find(b => b.tipoBloque === 'WOD') || wodActivo.bloques[0];
                                 tipoMedida = wodActivo.modoRanking === 'Auto' ? wodActivo.metricaPrincipal : (bloquePrincipal.tipoModalidad || "For Time");
                               }
-                              
+
                               const mLower = metrica.toLowerCase();
                               const isMainMetric = metrica === plantillaBase[0];
-                              const esTiempo = mLower.includes('time') || mLower.includes('tiempo') || 
-                                               (isMainMetric && tipoMedida && (tipoMedida.toLowerCase().includes('time') || tipoMedida.toLowerCase().includes('tiempo')));
+                              const esTiempo = mLower.includes('time') || mLower.includes('tiempo') ||
+                                (isMainMetric && tipoMedida && (tipoMedida.toLowerCase().includes('time') || tipoMedida.toLowerCase().includes('tiempo')));
 
                               return (
                                 <div key={metrica} className="col-12 col-md-6 col-lg-4">
@@ -708,21 +708,21 @@ export default function PaseDeLista() {
           HEADER
       ══════════════════════════════════ */}
       <header className="pdl-header">
-          <div className="d-flex align-items-center justify-content-between gap-3">
-            <div className="d-flex align-items-center gap-3">
-              <BackButton to="/admin-box-panel" />
-              <div className="pdl-header-icon d-none d-sm-flex">
-                <i className="fas fa-gavel"></i>
-              </div>
-              <h1 className="pdl-header-title">
-                Modo <span>Juez</span>
-              </h1>
+        <div className="d-flex align-items-center justify-content-between gap-3">
+          <div className="d-flex align-items-center gap-3">
+            <BackButton to="/admin-box-panel" />
+            <div className="pdl-header-icon d-none d-sm-flex">
+              <i className="fas fa-gavel"></i>
             </div>
-            <RedGrayDatePicker
-              value={fecha}
-              onChange={(value) => { setFecha(value); cargarDatosDelDia(box.idBox, value); }}
-            />
+            <h1 className="pdl-header-title">
+              Modo <span>Juez</span>
+            </h1>
           </div>
+          <RedGrayDatePicker
+            value={fecha}
+            onChange={(value) => { setFecha(value); cargarDatosDelDia(box.idBox, value); }}
+          />
+        </div>
       </header>
 
       <div className="container-xl px-3 px-md-4">
@@ -775,19 +775,19 @@ export default function PaseDeLista() {
 
               {/* Input de nueva métrica */}
               <div className="col-12 col-lg-5">
-              <div className="d-flex gap-2 align-items-center w-100">
-                <input
-                  type="text"
-                  className="pdl-nueva-metrica-input"
-                  placeholder="Nueva métrica..."
-                  value={nuevaMetrica}
-                  onChange={(e) => setNuevaMetrica(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && agregarMetricaATodos()}
-                />
-                <button onClick={agregarMetricaATodos} className="pdl-agregar-metrica-btn">
-                  <i className="fas fa-plus me-1"></i>Agregar
-                </button>
-              </div>
+                <div className="d-flex gap-2 align-items-center w-100">
+                  <input
+                    type="text"
+                    className="pdl-nueva-metrica-input"
+                    placeholder="Nueva métrica..."
+                    value={nuevaMetrica}
+                    onChange={(e) => setNuevaMetrica(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && agregarMetricaATodos()}
+                  />
+                  <button onClick={agregarMetricaATodos} className="pdl-agregar-metrica-btn">
+                    <i className="fas fa-plus me-1"></i>Agregar
+                  </button>
+                </div>
               </div>
 
             </div>
@@ -867,7 +867,7 @@ export default function PaseDeLista() {
                     >
                       <span>
                         <i className="far fa-clock me-2"></i>
-                        {String(c.horarioInicio || c.horaInicio || '').substring(0,5)} — {c.nombre}
+                        {String(c.horarioInicio || c.horaInicio || '').substring(0, 5)} — {c.nombre}
                       </span>
                       <span className="pdl-modal-clase-badge">{c.inscritos}/{c.maximoAtletas}</span>
                     </BotonSeguro>
@@ -894,7 +894,7 @@ export default function PaseDeLista() {
                 <i className="fas fa-times"></i>
               </button>
             </div>
-            
+
             <div className="pdl-modal-body">
               <p className="pdl-modal-sub text-center mb-4">
                 Estás a punto de calificar a <strong>{equipoSeleccionado.length} atletas</strong> al mismo tiempo. ¡Todos recibirán este score!
@@ -907,11 +907,11 @@ export default function PaseDeLista() {
                     const bloquePrincipal = wodActivo.bloques.find(b => b.tipoBloque === 'WOD') || wodActivo.bloques[0];
                     tipoMedida = wodActivo.modoRanking === 'Auto' ? wodActivo.metricaPrincipal : (bloquePrincipal.tipoModalidad || "For Time");
                   }
-                  
+
                   const mLower = metrica.toLowerCase();
                   const isMainMetric = metrica === plantillaBase[0];
-                  const esTiempo = mLower.includes('time') || mLower.includes('tiempo') || 
-                                    (isMainMetric && tipoMedida && (tipoMedida.toLowerCase().includes('time') || tipoMedida.toLowerCase().includes('tiempo')));
+                  const esTiempo = mLower.includes('time') || mLower.includes('tiempo') ||
+                    (isMainMetric && tipoMedida && (tipoMedida.toLowerCase().includes('time') || tipoMedida.toLowerCase().includes('tiempo')));
 
                   return (
                     <div key={metrica} className="col-12">
@@ -920,7 +920,7 @@ export default function PaseDeLista() {
                         <div className="pdl-team-input-container">
                           <TimeInputMMSS
                             value={scoreEquipoTemporal[metrica] || ''}
-                            onChange={(val) => setScoreEquipoTemporal(prev => ({...prev, [metrica]: val}))}
+                            onChange={(val) => setScoreEquipoTemporal(prev => ({ ...prev, [metrica]: val }))}
                             className="pdl-score-input pdl-score-input--team border-0 bg-transparent p-0 w-100"
                           />
                         </div>
@@ -929,7 +929,7 @@ export default function PaseDeLista() {
                           type="text"
                           className="pdl-score-input pdl-score-input--team"
                           value={scoreEquipoTemporal[metrica] || ''}
-                          onChange={(e) => setScoreEquipoTemporal(prev => ({...prev, [metrica]: e.target.value}))}
+                          onChange={(e) => setScoreEquipoTemporal(prev => ({ ...prev, [metrica]: e.target.value }))}
                           placeholder="..."
                         />
                       )}

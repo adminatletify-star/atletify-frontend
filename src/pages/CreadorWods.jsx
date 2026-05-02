@@ -13,7 +13,7 @@ import TimeInputMMSS from '../components/TimeInputMMSS';
 import { api } from '../services/api';
 import '../assets/css/CreadorWods.css';
 
-const API_BASE = 'https://localhost:7149/api';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
 
 const getFechaLocalString = () => {
   const hoy = new Date();
@@ -77,11 +77,11 @@ export default function CreadorWods() {
 
       const ejerciciosMovimientos = Array.isArray(ejerciciosDiccionario)
         ? ejerciciosDiccionario.map(ej => ({
-            idEjercicio: ej.id,
-            nombre: ej.nombre,
-            equipamiento: ej.equipamiento,
-            categoria: ej.categoria,
-          }))
+          idEjercicio: ej.id,
+          nombre: ej.nombre,
+          equipamiento: ej.equipamiento,
+          categoria: ej.categoria,
+        }))
         : [];
 
       setGlosarioEjercicios(ejerciciosMovimientos);
@@ -223,12 +223,12 @@ export default function CreadorWods() {
           HEADER
       ══════════════════════════════════ */}
       <header className="crw-header">
-          <div className="d-flex align-items-center gap-3">
-            <BackButton to="/calendario-wods" />
-            <h1 className="crw-header-title">
-              Armar <span style={{ color: 'var(--primary)' }}>WOD</span>
-            </h1>
-          </div>
+        <div className="d-flex align-items-center gap-3">
+          <BackButton to="/calendario-wods" />
+          <h1 className="crw-header-title">
+            Armar <span style={{ color: 'var(--primary)' }}>WOD</span>
+          </h1>
+        </div>
       </header>
 
       <div className="container px-3" style={{ maxWidth: '1000px' }}>

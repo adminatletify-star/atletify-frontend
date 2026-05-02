@@ -2,14 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import DarkVeil from '../components/ReactBits/DarkVeil';
 import BotonSeguro from '../components/BotonSeguro';
-import '../assets/css/public-dropin.css'; 
+import '../assets/css/public-dropin.css';
 
-const API_BASE = 'https://localhost:7149/api';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
 
 export default function PublicDropIn() {
     const navigate = useNavigate();
-    const params = useParams(); 
-    const idBox = params.idBox; 
+    const params = useParams();
+    const idBox = params.idBox;
 
     const [boxesDirectorate, setBoxesDirectorate] = useState([]);
     const [box, setBox] = useState(null);
@@ -20,9 +20,9 @@ export default function PublicDropIn() {
     const [modoVista, setModoVista] = useState('RESERVAR'); // 'RESERVAR' | 'STATUS'
 
     // ESTADO PARA RESERVAS (MOTOR V2)
-    const [paso, setPaso] = useState(1); 
-    const [form, setForm] = useState({ 
-        nombre: '', email: '', telefono: '', nivelAtleta: 'Principiante', visitas: [] 
+    const [paso, setPaso] = useState(1);
+    const [form, setForm] = useState({
+        nombre: '', email: '', telefono: '', nivelAtleta: 'Principiante', visitas: []
     });
 
     // ESTADO PARA CONSULTA DE STATUS MÁGICA
@@ -57,7 +57,7 @@ export default function PublicDropIn() {
         try {
             const [resBox, resPlanes, resClases] = await Promise.all([
                 fetch(`${API_BASE}/box/${idBox}`),
-                fetch(`${API_BASE}/finanzas/planes-publicos/${idBox}`), 
+                fetch(`${API_BASE}/finanzas/planes-publicos/${idBox}`),
                 fetch(`${API_BASE}/publicdropin/clases-disponibles/${idBox}`)
             ]);
             if (resBox.ok) setBox(await resBox.json());
@@ -74,7 +74,7 @@ export default function PublicDropIn() {
         const dias = [];
         const hoy = new Date();
         const offset = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1; // 0=Lun ... 6=Dom
-        
+
         for (let i = offset; i < 7; i++) {
             const d = new Date(hoy);
             d.setDate(hoy.getDate() + (i - offset));
@@ -106,7 +106,7 @@ export default function PublicDropIn() {
     const isClaseHabilitadaParaDia = (c, fechaIso) => {
         if (!c.dias) return true; // Si no tiene días configurados asume diario
         const dName = getNombreDiaSemana(fechaIso);
-        
+
         // Mapear nombre del día al código usado en backend: L, M, X, J, V, S, D
         const mapDias = {
             'Lunes': 'L',
@@ -180,7 +180,7 @@ export default function PublicDropIn() {
             const res = await fetch(`${API_BASE}/publicdropin/status?idBox=${idBox}&correo=${encodeURIComponent(consultaCorreo)}`);
             const data = await res.json();
             setStatusResult(data);
-        } catch(e) {
+        } catch (e) {
             alert("Error al consultar el estatus.");
         }
     };
@@ -232,7 +232,7 @@ export default function PublicDropIn() {
             </div>
 
             <div className="container py-4 position-relative" style={{ zIndex: 1, maxWidth: '900px' }}>
-                
+
                 {/* CABECERA */}
                 <header className="text-center mb-4">
                     <h2 className="text-white fw-bold">{box?.nombre?.toUpperCase()}</h2>
@@ -271,7 +271,7 @@ export default function PublicDropIn() {
                 {/* MODO: RESERVAR (V2) */}
                 {modoVista === 'RESERVAR' && (
                     <div className="bg-dark p-4 rounded-4 border border-secondary border-opacity-25 shadow-lg">
-                        
+
                         {/* PASO 1: DATOS */}
                         {paso === 1 && (
                             <div>
@@ -279,15 +279,15 @@ export default function PublicDropIn() {
                                 <div className="row g-3">
                                     <div className="col-12 col-md-6">
                                         <label className="text-secondary small">Nombre Completo</label>
-                                        <input type="text" className="form-control bg-black text-white" value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})} />
+                                        <input type="text" className="form-control bg-black text-white" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} />
                                     </div>
                                     <div className="col-12 col-md-6">
                                         <label className="text-secondary small">Correo Electrónico (Para consultar el WOD)</label>
-                                        <input type="email" className="form-control bg-black text-white" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+                                        <input type="email" className="form-control bg-black text-white" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
                                     </div>
                                     <div className="col-12">
                                         <label className="text-secondary small">Nivel de Atleta (Obligatorio para seguridad)</label>
-                                        <select className="form-select bg-black text-white" value={form.nivelAtleta} onChange={e => setForm({...form, nivelAtleta: e.target.value})}>
+                                        <select className="form-select bg-black text-white" value={form.nivelAtleta} onChange={e => setForm({ ...form, nivelAtleta: e.target.value })}>
                                             <option value="Novato">Novato (Primeros meses)</option>
                                             <option value="Principiante">Principiante (Escalo movimientos)</option>
                                             <option value="Intermedio">Intermedio (Domino mayoría de pesos RX)</option>
@@ -295,7 +295,7 @@ export default function PublicDropIn() {
                                         </select>
                                     </div>
                                 </div>
-                                <button onClick={() => { if(form.nombre && form.email) setPaso(2); else alert("Nombre y correo son requeridos."); }} className="btn btn-danger w-100 fw-bold py-3 mt-4">IR AL CARRITO MULTIDÍA <i className="fas fa-arrow-right ms-2"></i></button>
+                                <button onClick={() => { if (form.nombre && form.email) setPaso(2); else alert("Nombre y correo son requeridos."); }} className="btn btn-danger w-100 fw-bold py-3 mt-4">IR AL CARRITO MULTIDÍA <i className="fas fa-arrow-right ms-2"></i></button>
                             </div>
                         )}
 
@@ -309,13 +309,13 @@ export default function PublicDropIn() {
 
                                 <div className="p-3 bg-black rounded mb-4">
                                     <h6 className="text-secondary text-uppercase fw-bold">Días Agregados:</h6>
-                                    {form.visitas.length === 0 ? <p className="text-secondary small mb-0">No has agregado nada. Selecciona abajo.</p> : 
+                                    {form.visitas.length === 0 ? <p className="text-secondary small mb-0">No has agregado nada. Selecciona abajo.</p> :
                                         <ul className="list-group list-group-flush bg-transparent">
                                             {form.visitas.map((v, idx) => (
                                                 <li key={idx} className="list-group-item bg-transparent text-white border-secondary d-flex justify-content-between align-items-center">
                                                     <div>
                                                         <span className="badge bg-danger me-2">{v.fecha}</span>
-                                                        {v.tipoVisita === 'Clase' ? `Clase (${clases.find(c=>c.idClase==v.idClase)?.nombre || '?'})` : 'Open Gym'}
+                                                        {v.tipoVisita === 'Clase' ? `Clase (${clases.find(c => c.idClase == v.idClase)?.nombre || '?'})` : 'Open Gym'}
                                                     </div>
                                                     <button onClick={() => quitarVisita(idx)} className="btn btn-sm btn-outline-secondary border-0"><i className="fas fa-times text-danger"></i></button>
                                                 </li>
@@ -326,7 +326,7 @@ export default function PublicDropIn() {
 
                                 {/* GENERADOR DE FECHAS */}
                                 <h6 className="text-warning small fw-bold mb-3">CLASES DISPONIBLES ESTA SEMANA (Selecciona para agregar):</h6>
-                                {dDiasPermitidos.map(dia => { 
+                                {dDiasPermitidos.map(dia => {
                                     const clasesDelDia = clases.filter(c => isClaseHabilitadaParaDia(c, dia));
                                     const clasesManana = clasesDelDia.filter(c => esManana(c.horarioInicio));
                                     const clasesTarde = clasesDelDia.filter(c => !esManana(c.horarioInicio));
@@ -334,14 +334,14 @@ export default function PublicDropIn() {
                                     return (
                                         <div key={dia} className="border border-secondary border-opacity-25 p-3 rounded mb-3">
                                             <div className="d-flex justify-content-between align-items-center mb-3">
-                                                <h6 className="text-white fw-bold mb-0">{new Date(dia+'T00:00:00').toLocaleDateString('es-MX', {weekday: 'long', day:'numeric', month:'short'}).toUpperCase()}</h6>
+                                                <h6 className="text-white fw-bold mb-0">{new Date(dia + 'T00:00:00').toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'short' }).toUpperCase()}</h6>
                                                 {box?.costoVisitaGym > 0 && (
                                                     <button onClick={() => agregarVisita(dia, 'SoloGym')} className="btn btn-sm btn-outline-warning">
                                                         <i className="fas fa-dumbbell me-1"></i> Open Gym Visita (${box.costoVisitaGym})
                                                     </button>
                                                 )}
                                             </div>
-                                            
+
                                             {clasesDelDia.length === 0 ? (
                                                 <p className="text-secondary small fst-italic mb-0">No hay clases programadas para este día.</p>
                                             ) : (
@@ -369,7 +369,7 @@ export default function PublicDropIn() {
                                                                     }
                                                                     return (
                                                                         <button key={c.idClase} disabled={nivelNoPermitido} onClick={() => agregarVisita(dia, 'Clase', c.idClase)} className={`btn btn-sm ${nivelNoPermitido ? 'btn-dark text-secondary border-secondary' : 'btn-outline-danger'}`}>
-                                                                            {c.nombre} {nivelesClase !== 'Todos' && <span className="badge bg-secondary bg-opacity-25 ms-1 border border-secondary border-opacity-50 fw-normal" style={{ fontSize: '0.65rem' }}>{nivelesClase}</span>} <br/>
+                                                                            {c.nombre} {nivelesClase !== 'Todos' && <span className="badge bg-secondary bg-opacity-25 ms-1 border border-secondary border-opacity-50 fw-normal" style={{ fontSize: '0.65rem' }}>{nivelesClase}</span>} <br />
                                                                             <small className={nivelNoPermitido ? "opacity-50" : "opacity-75"}>{nivelNoPermitido ? `SOLO ${nivelesClase.toUpperCase()}` : `${c.horarioInicio} (${c.inscritos}/${c.maximoAtletas})`}</small>
                                                                         </button>
                                                                     );
@@ -400,7 +400,7 @@ export default function PublicDropIn() {
                                                                     }
                                                                     return (
                                                                         <button key={c.idClase} disabled={nivelNoPermitido} onClick={() => agregarVisita(dia, 'Clase', c.idClase)} className={`btn btn-sm ${nivelNoPermitido ? 'btn-dark text-secondary border-secondary' : 'btn-outline-danger'}`}>
-                                                                            {c.nombre} {nivelesClase !== 'Todos' && <span className="badge bg-secondary bg-opacity-25 ms-1 border border-secondary border-opacity-50 fw-normal" style={{ fontSize: '0.65rem' }}>{nivelesClase}</span>} <br/>
+                                                                            {c.nombre} {nivelesClase !== 'Todos' && <span className="badge bg-secondary bg-opacity-25 ms-1 border border-secondary border-opacity-50 fw-normal" style={{ fontSize: '0.65rem' }}>{nivelesClase}</span>} <br />
                                                                             <small className={nivelNoPermitido ? "opacity-50" : "opacity-75"}>{nivelNoPermitido ? `SOLO ${nivelesClase.toUpperCase()}` : `${c.horarioInicio} (${c.inscritos}/${c.maximoAtletas})`}</small>
                                                                         </button>
                                                                     );
@@ -426,11 +426,11 @@ export default function PublicDropIn() {
                             <div className="text-center">
                                 <i className="fas fa-bolt text-danger display-1 mb-3"></i>
                                 <h2 className="text-white fw-bold">TOTAL: ${getCostoTotal()} MXN</h2>
-                                
+
                                 {!enableStripe && getCostoTotal() > 0 && (
                                     <div className="alert alert-warning text-dark text-start mt-4 border-0">
                                         <i className="fas fa-exclamation-circle me-2"></i>
-                                        El monto mínimo para pago en línea de este Box es de <strong>${box?.compraMinimaTarjeta} MXN</strong>. <br/>
+                                        El monto mínimo para pago en línea de este Box es de <strong>${box?.compraMinimaTarjeta} MXN</strong>. <br />
                                         Por favor reserva localmente y paga en mostrador, o regresa y agrega más días a tu pase.
                                     </div>
                                 )}

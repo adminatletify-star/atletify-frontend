@@ -38,7 +38,7 @@ export default function EditarUsuario() {
       const idBox = JSON.parse(localStorage.getItem('box'))?.idBox;
       if (idBox) {
         try {
-          const resClases = await fetch(`https://localhost:7149/api/clases/box/${idBox}`);
+          const resClases = await fetch(`import.meta.env.VITE_API_URL:7149/api/clases/box/${idBox}`);
           const dataClases = await resClases.json();
           setClases(dataClases);
         } catch (err) {
@@ -109,15 +109,15 @@ export default function EditarUsuario() {
           HEADER
       ══════════════════════════════════ */}
       <header className="eu-header">
-          <div className="d-flex align-items-center gap-3">
-            <BackButton to={rutaRegreso} />
-            <div>
-              <h1 className="eu-header-title">
-                Editar <span style={{ color: 'var(--primary)' }}>Perfil</span>
-              </h1>
-              <p className="eu-header-sub">Modifica los datos del atleta</p>
-            </div>
+        <div className="d-flex align-items-center gap-3">
+          <BackButton to={rutaRegreso} />
+          <div>
+            <h1 className="eu-header-title">
+              Editar <span style={{ color: 'var(--primary)' }}>Perfil</span>
+            </h1>
+            <p className="eu-header-sub">Modifica los datos del atleta</p>
           </div>
+        </div>
       </header>
 
       <div className="container px-3" style={{ maxWidth: '640px' }}>

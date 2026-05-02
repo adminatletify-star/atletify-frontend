@@ -344,7 +344,7 @@ export default function AdminCompetencias() {
                                           </div>
                                           <div className="d-flex gap-1 align-items-center">
                                             {pago.comprobanteUrl && pago.comprobanteUrl.includes('uploads') && (
-                                              <a href={`https://localhost:7149${pago.comprobanteUrl}`} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-info rounded-circle p-1" style={{ width: '28px', height: '28px' }} title="Ver comprobante"><i className="fas fa-image"></i></a>
+                                              <a href={`import.meta.env.VITE_API_URL:7149${pago.comprobanteUrl}`} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-info rounded-circle p-1" style={{ width: '28px', height: '28px' }} title="Ver comprobante"><i className="fas fa-image"></i></a>
                                             )}
                                             {pago.estatus === 'PendienteVerificacion' && (
                                               <BotonSeguro onClick={() => aprobarPago(pago.idPago)} className="btn btn-sm btn-success rounded-circle p-1" style={{ width: '28px', height: '28px' }} title="Aprobar" textoProcesando="">
@@ -733,7 +733,7 @@ export default function AdminCompetencias() {
                   <div className="d-flex flex-wrap gap-2 mb-4">
                     {(categoriaDetalle.cupoHombres > 0 || categoriaDetalle.CupoHombres > 0) && <span className="badge bg-info bg-opacity-25 text-info border border-info px-3 py-2"><i className="fas fa-male me-1"></i>Hombres: {categoriaDetalle.cupoHombres || categoriaDetalle.CupoHombres}</span>}
                     {(categoriaDetalle.cupoMujeres > 0 || categoriaDetalle.CupoMujeres > 0) && <span className="badge bg-danger bg-opacity-25 text-danger border border-danger px-3 py-2"><i className="fas fa-female me-1"></i>Mujeres: {categoriaDetalle.cupoMujeres || categoriaDetalle.CupoMujeres}</span>}
-                    
+
                     {(categoriaDetalle.cupoAvanzado > 0 || categoriaDetalle.CupoAvanzado > 0) && <span className="badge bg-secondary text-light border border-secondary px-3 py-2">Avanzado: {categoriaDetalle.cupoAvanzado || categoriaDetalle.CupoAvanzado}</span>}
                     {(categoriaDetalle.cupoIntermedio > 0 || categoriaDetalle.CupoIntermedio > 0) && <span className="badge bg-secondary text-light border border-secondary px-3 py-2">Intermedio: {categoriaDetalle.cupoIntermedio || categoriaDetalle.CupoIntermedio}</span>}
                     {(categoriaDetalle.cupoPrincipiante > 0 || categoriaDetalle.CupoPrincipiante > 0) && <span className="badge bg-secondary text-light border border-secondary px-3 py-2">Principiante: {categoriaDetalle.cupoPrincipiante || categoriaDetalle.CupoPrincipiante}</span>}
@@ -759,32 +759,32 @@ export default function AdminCompetencias() {
         {mostrarDetallesAtleta && atletaDetalle && (() => {
           let edad = "N/A";
           if (atletaDetalle.fechaNacimiento) {
-             const diff = Date.now() - new Date(atletaDetalle.fechaNacimiento).getTime();
-             edad = new Date(diff).getUTCFullYear() - 1970;
+            const diff = Date.now() - new Date(atletaDetalle.fechaNacimiento).getTime();
+            edad = new Date(diff).getUTCFullYear() - 1970;
           }
 
           const getLvlVal = (s) => {
-            const l = (s||'').toLowerCase();
-            if(l.includes('master')) return 4;
-            if(l.includes('avanzado') || l.includes('rx')) return 3;
-            if(l.includes('intermedio')) return 2;
-            if(l.includes('principiante')) return 1;
+            const l = (s || '').toLowerCase();
+            if (l.includes('master')) return 4;
+            if (l.includes('avanzado') || l.includes('rx')) return 3;
+            if (l.includes('intermedio')) return 2;
+            if (l.includes('principiante')) return 1;
             return 0;
           };
 
           let escalo = false;
           let catNivelStr = "";
           if (!atletaDetalle.esEquipo && atletaDetalle.reqCategoria) {
-             const c = atletaDetalle.reqCategoria;
-             const athLvl = getLvlVal(atletaDetalle.nivelHabilidad);
-             let catLvl = 0;
-             if (c.cupoMaster > 0) { catLvl = 4; catNivelStr = "Master"; }
-             else if (c.cupoAvanzado > 0) { catLvl = 3; catNivelStr = "Avanzado/RX"; }
-             else if (c.cupoIntermedio > 0) { catLvl = 2; catNivelStr = "Intermedio"; }
-             else if (c.cupoPrincipiante > 0) { catLvl = 1; catNivelStr = "Principiante"; }
-             else { catNivelStr = "Novato"; }
-             
-             if (athLvl < catLvl) escalo = true;
+            const c = atletaDetalle.reqCategoria;
+            const athLvl = getLvlVal(atletaDetalle.nivelHabilidad);
+            let catLvl = 0;
+            if (c.cupoMaster > 0) { catLvl = 4; catNivelStr = "Master"; }
+            else if (c.cupoAvanzado > 0) { catLvl = 3; catNivelStr = "Avanzado/RX"; }
+            else if (c.cupoIntermedio > 0) { catLvl = 2; catNivelStr = "Intermedio"; }
+            else if (c.cupoPrincipiante > 0) { catLvl = 1; catNivelStr = "Principiante"; }
+            else { catNivelStr = "Novato"; }
+
+            if (athLvl < catLvl) escalo = true;
           }
 
           return (
@@ -860,7 +860,7 @@ export default function AdminCompetencias() {
                         </>
                       )}
                     </div>
-                    
+
                   </div>
                   <div className="modal-footer border-top border-secondary border-opacity-25">
                     <button className="btn btn-secondary w-100" onClick={() => setMostrarDetallesAtleta(false)}>Cerrar</button>

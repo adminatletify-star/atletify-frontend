@@ -16,7 +16,7 @@ export default function ForgotPassword() {
     setMensaje('');
 
     try {
-      const response = await fetch('https://localhost:7149/api/usuarios/forgot-password', {
+      const response = await fetch('import.meta.env.VITE_API_URL:7149/api/usuarios/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ correo })
@@ -44,7 +44,7 @@ export default function ForgotPassword() {
       <div className="login-content-wrapper">
         <div className="login-card">
           <div className="login-back-nav"><BackButton onClick={() => navigate('/login')} /></div>
-          
+
           <div className="login-header">
             <div className="login-logo-circle"><i className="fas fa-key login-logo-icon"></i></div>
             <h1 className="login-title">Recuperar Acceso</h1>

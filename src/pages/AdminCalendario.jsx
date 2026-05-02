@@ -6,7 +6,7 @@ import TipoEventoPicker from '../components/TipoEventoPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import '../assets/css/AdminCalendario.css';
 
-const API_BASE = 'https://localhost:7149/api';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
 
 const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -38,33 +38,33 @@ export default function AdminCalendario() {
   const [diaPopup, setDiaPopup] = useState(null); // Popup de eventos al hacer click en una celda
 
   const getFechaLocalString = (fecha) => {
-      const offset = fecha.getTimezoneOffset() * 60000;
-      return new Date(fecha.getTime() - offset).toISOString().split('T')[0];
+    const offset = fecha.getTimezoneOffset() * 60000;
+    return new Date(fecha.getTime() - offset).toISOString().split('T')[0];
   };
 
   const initialFormEvento = {
-      idEvento: null, titulo: '', descripcion: '', tipoEvento: 'Social',
-      fechaInicio: getFechaLocalString(new Date()), fechaFin: getFechaLocalString(new Date()),
-      esTodoElDia: true, horaInicio: '08:00', horaFin: '10:00',
-      bloqueaClases: false, protegeRacha: true, esPublico: true, requiereRSVP: false
+    idEvento: null, titulo: '', descripcion: '', tipoEvento: 'Social',
+    fechaInicio: getFechaLocalString(new Date()), fechaFin: getFechaLocalString(new Date()),
+    esTodoElDia: true, horaInicio: '08:00', horaFin: '10:00',
+    bloqueaClases: false, protegeRacha: true, esPublico: true, requiereRSVP: false
   };
 
   const cargarAsistentes = async (idEvento) => {
-      // Si ya están visibles, cerramos la lista (Toggle visual)
-      if(listaAsistentes[idEvento]) {
-          const nuevaLista = {...listaAsistentes};
-          delete nuevaLista[idEvento];
-          setListaAsistentes(nuevaLista);
-          return;
+    // Si ya están visibles, cerramos la lista (Toggle visual)
+    if (listaAsistentes[idEvento]) {
+      const nuevaLista = { ...listaAsistentes };
+      delete nuevaLista[idEvento];
+      setListaAsistentes(nuevaLista);
+      return;
+    }
+    // Si no, vamos a la base de datos por los chismosos
+    try {
+      const res = await fetch(`${API_BASE}/calendario/evento/${idEvento}/asistentes`);
+      if (res.ok) {
+        const data = await res.json();
+        setListaAsistentes(prev => ({ ...prev, [idEvento]: data }));
       }
-      // Si no, vamos a la base de datos por los chismosos
-      try {
-          const res = await fetch(`${API_BASE}/calendario/evento/${idEvento}/asistentes`);
-          if(res.ok) {
-              const data = await res.json();
-              setListaAsistentes(prev => ({...prev, [idEvento]: data}));
-          }
-      } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); }
   };
 
   const [formEvento, setFormEvento] = useState(initialFormEvento);
@@ -82,129 +82,129 @@ export default function AdminCalendario() {
   }, [navigate, fechaActual]);
 
   useEffect(() => {
-      if(box && diaSeleccionado && vistaPrincipal === 'operacion') {
-          cargarClasesDelDia(box.idBox, diaSeleccionado);
-      }
+    if (box && diaSeleccionado && vistaPrincipal === 'operacion') {
+      cargarClasesDelDia(box.idBox, diaSeleccionado);
+    }
   }, [diaSeleccionado, vistaPrincipal]);
 
   useEffect(() => {
-      if(box && vistaPrincipal === 'francotirador' && atletaSeleccionado) {
-          cargarDatosFrancotirador(box.idBox, atletaSeleccionado.idUsuario, fechaActual.getFullYear(), fechaActual.getMonth());
-      }
+    if (box && vistaPrincipal === 'francotirador' && atletaSeleccionado) {
+      cargarDatosFrancotirador(box.idBox, atletaSeleccionado.idUsuario, fechaActual.getFullYear(), fechaActual.getMonth());
+    }
   }, [atletaSeleccionado, vistaPrincipal, fechaActual]);
 
   // 📊 NUEVO: Cargar Métricas al abrir la pestaña
   useEffect(() => {
-      if(box && vistaPrincipal === 'metricas') {
-          cargarMetricas(box.idBox, fechaActual.getFullYear(), fechaActual.getMonth());
-      }
+    if (box && vistaPrincipal === 'metricas') {
+      cargarMetricas(box.idBox, fechaActual.getFullYear(), fechaActual.getMonth());
+    }
   }, [vistaPrincipal, fechaActual]);
 
   const cargarDatosDelMes = async (idBox, anio, mes) => {
     try {
       const res = await fetch(`${API_BASE}/calendario/box/${idBox}/mes/${anio}/${mes + 1}`);
       if (res.ok) {
-          const data = await res.json();
-          setEventos(data.eventos.map(e => ({...e, fechaInicio: new Date(e.fechaInicio), fechaFin: new Date(e.fechaFin)})));
-          setExcepciones(data.excepciones.map(ex => ({...ex, fechaExacta: new Date(ex.fechaExacta)})));
-          setCumpleanos(data.cumpleanos.map(c => ({...c, fechaVisual: new Date(c.fechaVisual)})));
+        const data = await res.json();
+        setEventos(data.eventos.map(e => ({ ...e, fechaInicio: new Date(e.fechaInicio), fechaFin: new Date(e.fechaFin) })));
+        setExcepciones(data.excepciones.map(ex => ({ ...ex, fechaExacta: new Date(ex.fechaExacta) })));
+        setCumpleanos(data.cumpleanos.map(c => ({ ...c, fechaVisual: new Date(c.fechaVisual) })));
       }
     } catch (error) { console.error(error); }
   };
 
   const cargarClasesDelDia = async (idBox, fechaObj) => {
-      const fechaStr = fechaObj.toISOString().split('T')[0];
-      try {
-          const res = await fetch(`${API_BASE}/asistencias/box/${idBox}/fecha/${fechaStr}?idUsuario=0`);
-          if(res.ok) setClasesDelDia(await res.json());
-      } catch (error) { console.error(error); }
+    const fechaStr = fechaObj.toISOString().split('T')[0];
+    try {
+      const res = await fetch(`${API_BASE}/asistencias/box/${idBox}/fecha/${fechaStr}?idUsuario=0`);
+      if (res.ok) setClasesDelDia(await res.json());
+    } catch (error) { console.error(error); }
   };
 
   const cargarDatosFrancotirador = async (idBox, idUsuario, anio, mes) => {
-      setLoading(true);
-      try {
-          const res = await fetch(`${API_BASE}/calendario/box/${idBox}/atleta/${idUsuario}/mes/${anio}/${mes + 1}`);
-          if (res.ok) {
-              const data = await res.json();
-              if(data.suscripcion?.fechaVencimiento) data.suscripcion.fechaVencimiento = new Date(data.suscripcion.fechaVencimiento);
-              data.asistencias = data.asistencias.map(a => ({...a, fecha: new Date(a.fecha)}));
-              setDatosAtleta(data);
-          }
-      } catch (error) { console.error(error); }
-      finally { setLoading(false); }
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/calendario/box/${idBox}/atleta/${idUsuario}/mes/${anio}/${mes + 1}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.suscripcion?.fechaVencimiento) data.suscripcion.fechaVencimiento = new Date(data.suscripcion.fechaVencimiento);
+        data.asistencias = data.asistencias.map(a => ({ ...a, fecha: new Date(a.fecha) }));
+        setDatosAtleta(data);
+      }
+    } catch (error) { console.error(error); }
+    finally { setLoading(false); }
   };
 
   // 📊 NUEVO: Fetch de Métricas
   const cargarMetricas = async (idBox, anio, mes) => {
-      setLoading(true);
-      try {
-          const res = await fetch(`${API_BASE}/calendario/box/${idBox}/metricas/${anio}/${mes + 1}`);
-          if(res.ok) setMetricas(await res.json());
-      } catch(error) { console.error(error); }
-      finally { setLoading(false); }
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/calendario/box/${idBox}/metricas/${anio}/${mes + 1}`);
+      if (res.ok) setMetricas(await res.json());
+    } catch (error) { console.error(error); }
+    finally { setLoading(false); }
   };
 
   const handleGuardarEvento = async () => {
-      if(!formEvento.titulo) return alert("Ponle un título al evento.");
-      let fInicioStr = formEvento.fechaInicio;
-      let fFinStr = formEvento.fechaFin;
+    if (!formEvento.titulo) return alert("Ponle un título al evento.");
+    let fInicioStr = formEvento.fechaInicio;
+    let fFinStr = formEvento.fechaFin;
 
-      if (formEvento.esTodoElDia) { fInicioStr += 'T00:00:00'; fFinStr += 'T23:59:59'; }
-      else { fInicioStr += `T${formEvento.horaInicio}:00`; fFinStr += `T${formEvento.horaFin}:00`; }
+    if (formEvento.esTodoElDia) { fInicioStr += 'T00:00:00'; fFinStr += 'T23:59:59'; }
+    else { fInicioStr += `T${formEvento.horaInicio}:00`; fFinStr += `T${formEvento.horaFin}:00`; }
 
-      if(new Date(fFinStr) < new Date(fInicioStr)) return alert("Error: La fecha/hora de fin es anterior a la de inicio.");
+    if (new Date(fFinStr) < new Date(fInicioStr)) return alert("Error: La fecha/hora de fin es anterior a la de inicio.");
 
-      setLoading(true);
-      try {
-          const payload = {
-              idEvento: formEvento.idEvento || 0, idBox: box.idBox, titulo: formEvento.titulo, descripcion: formEvento.descripcion,
-              tipoEvento: formEvento.tipoEvento, fechaInicio: new Date(fInicioStr).toISOString(), fechaFin: new Date(fFinStr).toISOString(),
-              esTodoElDia: formEvento.esTodoElDia, esPublico: formEvento.esPublico, requiereRSVP: formEvento.requiereRSVP,
-              bloqueaClases: formEvento.bloqueaClases, protegeRacha: formEvento.protegeRacha
-          };
-          const res = await fetch(formEvento.idEvento ? `${API_BASE}/calendario/evento/${formEvento.idEvento}` : `${API_BASE}/calendario/evento`,
-            { method: formEvento.idEvento ? 'PUT' : 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+    setLoading(true);
+    try {
+      const payload = {
+        idEvento: formEvento.idEvento || 0, idBox: box.idBox, titulo: formEvento.titulo, descripcion: formEvento.descripcion,
+        tipoEvento: formEvento.tipoEvento, fechaInicio: new Date(fInicioStr).toISOString(), fechaFin: new Date(fFinStr).toISOString(),
+        esTodoElDia: formEvento.esTodoElDia, esPublico: formEvento.esPublico, requiereRSVP: formEvento.requiereRSVP,
+        bloqueaClases: formEvento.bloqueaClases, protegeRacha: formEvento.protegeRacha
+      };
+      const res = await fetch(formEvento.idEvento ? `${API_BASE}/calendario/evento/${formEvento.idEvento}` : `${API_BASE}/calendario/evento`,
+        { method: formEvento.idEvento ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
 
-          if(res.ok) {
-              alert(formEvento.idEvento ? "¡Actualizado!" : "¡Agregado!");
-              setFormEvento(initialFormEvento); setModoPanel('agenda');
-              cargarDatosDelMes(box.idBox, fechaActual.getFullYear(), fechaActual.getMonth());
-          }
-      } catch (error) { alert("Error al guardar."); }
-      finally { setLoading(false); }
+      if (res.ok) {
+        alert(formEvento.idEvento ? "¡Actualizado!" : "¡Agregado!");
+        setFormEvento(initialFormEvento); setModoPanel('agenda');
+        cargarDatosDelMes(box.idBox, fechaActual.getFullYear(), fechaActual.getMonth());
+      }
+    } catch (error) { alert("Error al guardar."); }
+    finally { setLoading(false); }
   };
 
   const handleEditarEvento = (ev) => {
-      const pad = (n) => n < 10 ? '0'+n : n;
-      setFormEvento({
-          idEvento: ev.idEvento, titulo: ev.titulo, descripcion: ev.descripcion || '', tipoEvento: ev.tipoEvento,
-          fechaInicio: getFechaLocalString(ev.fechaInicio), fechaFin: getFechaLocalString(ev.fechaFin),
-          esTodoElDia: ev.esTodoElDia !== undefined ? ev.esTodoElDia : true,
-          horaInicio: `${pad(ev.fechaInicio.getHours())}:${pad(ev.fechaInicio.getMinutes())}`,
-          horaFin: `${pad(ev.fechaFin.getHours())}:${pad(ev.fechaFin.getMinutes())}`,
-          esPublico: ev.esPublico, requiereRSVP: ev.requiereRSVP, bloqueaClases: ev.bloqueaClases, protegeRacha: ev.protegeRacha
-      });
-      setModoPanel('nuevoEvento');
+    const pad = (n) => n < 10 ? '0' + n : n;
+    setFormEvento({
+      idEvento: ev.idEvento, titulo: ev.titulo, descripcion: ev.descripcion || '', tipoEvento: ev.tipoEvento,
+      fechaInicio: getFechaLocalString(ev.fechaInicio), fechaFin: getFechaLocalString(ev.fechaFin),
+      esTodoElDia: ev.esTodoElDia !== undefined ? ev.esTodoElDia : true,
+      horaInicio: `${pad(ev.fechaInicio.getHours())}:${pad(ev.fechaInicio.getMinutes())}`,
+      horaFin: `${pad(ev.fechaFin.getHours())}:${pad(ev.fechaFin.getMinutes())}`,
+      esPublico: ev.esPublico, requiereRSVP: ev.requiereRSVP, bloqueaClases: ev.bloqueaClases, protegeRacha: ev.protegeRacha
+    });
+    setModoPanel('nuevoEvento');
   };
 
   const handleEliminarEvento = async (idEvento) => {
-      if(!window.confirm("¿Seguro?")) return;
-      try {
-          const res = await fetch(`${API_BASE}/calendario/evento/${idEvento}`, { method: 'DELETE' });
-          if(res.ok) cargarDatosDelMes(box.idBox, fechaActual.getFullYear(), fechaActual.getMonth());
-      } catch (error) { alert("Error."); }
+    if (!window.confirm("¿Seguro?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/calendario/evento/${idEvento}`, { method: 'DELETE' });
+      if (res.ok) cargarDatosDelMes(box.idBox, fechaActual.getFullYear(), fechaActual.getMonth());
+    } catch (error) { alert("Error."); }
   };
 
   const handleCancelarClase = async (idClase, nombreClase, cancelar) => {
-      if(!window.confirm(`¿Seguro que deseas ${cancelar ? "cancelar" : "restaurar"} la clase de ${nombreClase}?`)) return;
-      try {
-          const payload = { idClase: idClase, fechaExacta: new Date(diaSeleccionado.setHours(12,0,0,0)).toISOString(), estaCancelada: cancelar, motivo: cancelar ? "Emergencia / Clima" : "Restaurada", protegeRacha: cancelar };
-          const res = await fetch(`${API_BASE}/calendario/excepcion-clase`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-          if(res.ok) {
-              alert(`¡Clase ${cancelar ? 'cancelada 🚫' : 'restaurada ✅'}!`);
-              cargarDatosDelMes(box.idBox, fechaActual.getFullYear(), fechaActual.getMonth());
-          }
-      } catch (error) { alert("Error."); }
+    if (!window.confirm(`¿Seguro que deseas ${cancelar ? "cancelar" : "restaurar"} la clase de ${nombreClase}?`)) return;
+    try {
+      const payload = { idClase: idClase, fechaExacta: new Date(diaSeleccionado.setHours(12, 0, 0, 0)).toISOString(), estaCancelada: cancelar, motivo: cancelar ? "Emergencia / Clima" : "Restaurada", protegeRacha: cancelar };
+      const res = await fetch(`${API_BASE}/calendario/excepcion-clase`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (res.ok) {
+        alert(`¡Clase ${cancelar ? 'cancelada 🚫' : 'restaurada ✅'}!`);
+        cargarDatosDelMes(box.idBox, fechaActual.getFullYear(), fechaActual.getMonth());
+      }
+    } catch (error) { alert("Error."); }
   };
 
   const getDiasDelMes = (anio, mes) => new Date(anio, mes + 1, 0).getDate();
@@ -217,44 +217,44 @@ export default function AdminCalendario() {
 
   // 📊 Función Helper para el Heatmap
   const renderHeatmap = () => {
-      if(!metricas || metricas.heatmap.length === 0) return (
-        <p className="ac-empty-text text-center p-4">No hay suficientes datos de asistencia este mes.</p>
-      );
+    if (!metricas || metricas.heatmap.length === 0) return (
+      <p className="ac-empty-text text-center p-4">No hay suficientes datos de asistencia este mes.</p>
+    );
 
-      const maxAsistencias = Math.max(...metricas.heatmap.map(h => h.cantidad)) || 1;
-      const horasUnicas = [...new Set(metricas.heatmap.map(h => h.horaString))].sort();
+    const maxAsistencias = Math.max(...metricas.heatmap.map(h => h.cantidad)) || 1;
+    const horasUnicas = [...new Set(metricas.heatmap.map(h => h.horaString))].sort();
 
-      return (
-          <div className="table-responsive">
-              <table className="table table-dark table-bordered border-secondary border-opacity-25 text-center small mb-0" style={{fontSize:'0.75rem'}}>
-                  <thead>
-                      <tr>
-                          <th style={{background:'var(--bg-elevated)', color:'var(--secondary)', fontFamily:'var(--font-heading-alt)', fontSize:'0.65rem', letterSpacing:'0.5px'}}>Hora / Día</th>
-                          {['L','M','M','J','V','S','D'].map((d,i) => (
-                            <th key={i} style={{background:'var(--bg-elevated)', color:'var(--secondary)', fontFamily:'var(--font-heading-alt)', fontSize:'0.65rem'}}>{d}</th>
-                          ))}
-                      </tr>
-                  </thead>
-                  <tbody>
-                      {horasUnicas.map(hora => (
-                          <tr key={hora}>
-                              <td style={{background:'var(--bg-elevated)', fontFamily:'var(--font-stats)', fontWeight:700, color:'var(--text-primary)'}}>{hora}</td>
-                              {[1,2,3,4,5,6,0].map(diaInt => {
-                                  const celda = metricas.heatmap.find(h => h.diaSemana === diaInt && h.horaString === hora);
-                                  const cant = celda ? celda.cantidad : 0;
-                                  const alpha = cant === 0 ? 0 : 0.15 + ((cant / maxAsistencias) * 0.85);
-                                  return (
-                                      <td key={diaInt} style={{ backgroundColor: `rgba(230, 57, 70, ${alpha})`, minWidth: '36px', height: '36px' }} title={`${cant} asistencias`}>
-                                          <span style={{fontFamily:'var(--font-stats)', fontWeight:700, color: cant > 0 ? '#fff' : 'transparent'}}>{cant || ''}</span>
-                                      </td>
-                                  );
-                              })}
-                          </tr>
-                      ))}
-                  </tbody>
-              </table>
-          </div>
-      );
+    return (
+      <div className="table-responsive">
+        <table className="table table-dark table-bordered border-secondary border-opacity-25 text-center small mb-0" style={{ fontSize: '0.75rem' }}>
+          <thead>
+            <tr>
+              <th style={{ background: 'var(--bg-elevated)', color: 'var(--secondary)', fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem', letterSpacing: '0.5px' }}>Hora / Día</th>
+              {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
+                <th key={i} style={{ background: 'var(--bg-elevated)', color: 'var(--secondary)', fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem' }}>{d}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {horasUnicas.map(hora => (
+              <tr key={hora}>
+                <td style={{ background: 'var(--bg-elevated)', fontFamily: 'var(--font-stats)', fontWeight: 700, color: 'var(--text-primary)' }}>{hora}</td>
+                {[1, 2, 3, 4, 5, 6, 0].map(diaInt => {
+                  const celda = metricas.heatmap.find(h => h.diaSemana === diaInt && h.horaString === hora);
+                  const cant = celda ? celda.cantidad : 0;
+                  const alpha = cant === 0 ? 0 : 0.15 + ((cant / maxAsistencias) * 0.85);
+                  return (
+                    <td key={diaInt} style={{ backgroundColor: `rgba(230, 57, 70, ${alpha})`, minWidth: '36px', height: '36px' }} title={`${cant} asistencias`}>
+                      <span style={{ fontFamily: 'var(--font-stats)', fontWeight: 700, color: cant > 0 ? '#fff' : 'transparent' }}>{cant || ''}</span>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
   };
 
   const renderCuadricula = () => {
@@ -271,70 +271,70 @@ export default function AdminCalendario() {
       let contenidoDia = null;
 
       if (vistaPrincipal === 'operacion') {
-          const eventosDelDia = eventos.filter(e => {
-              const dIter = new Date(fechaIteracion).setHours(0,0,0,0);
-              const dIni = new Date(e.fechaInicio).setHours(0,0,0,0);
-              const dFin = new Date(e.fechaFin).setHours(23,59,59,999);
-              return dIter >= dIni && dIter <= dFin;
-          });
-          const excepcionesDelDia = excepciones.filter(ex => esMismoDia(ex.fechaExacta, fechaIteracion));
-          const cumplesHoy = cumpleanos.filter(c => esMismoDia(c.fechaVisual, fechaIteracion));
+        const eventosDelDia = eventos.filter(e => {
+          const dIter = new Date(fechaIteracion).setHours(0, 0, 0, 0);
+          const dIni = new Date(e.fechaInicio).setHours(0, 0, 0, 0);
+          const dFin = new Date(e.fechaFin).setHours(23, 59, 59, 999);
+          return dIter >= dIni && dIter <= dFin;
+        });
+        const excepcionesDelDia = excepciones.filter(ex => esMismoDia(ex.fechaExacta, fechaIteracion));
+        const cumplesHoy = cumpleanos.filter(c => esMismoDia(c.fechaVisual, fechaIteracion));
 
-          contenidoDia = (
-            <div className="ac-day-events">
-              {cumplesHoy.map(c =>
-                  <div key={`c-${c.idUsuario}`} className="ac-day-event ac-day-event--birthday">
-                      <i className="fas fa-birthday-cake me-1" />{c.nombre}
-                  </div>
-              )}
-              {eventosDelDia.map(ev =>
-                  <div key={ev.idEvento} className={`ac-day-event ${ev.bloqueaClases ? 'ac-day-event--danger' : ev.esPublico ? 'ac-day-event--primary' : 'ac-day-event--secondary'}`}>
-                      {!ev.esPublico && <i className="fas fa-lock me-1" />}
-                      {ev.requiereRSVP && <i className="fas fa-envelope-open-text me-1" />}
-                      {!ev.esTodoElDia && <span className="me-1 opacity-75">{ev.fechaInicio.toTimeString().substring(0,5)}</span>}
-                      {ev.titulo}
-                  </div>
-              )}
-              {excepcionesDelDia.length > 0 && (
-                <div className="ac-day-event ac-day-event--exception">
-                  <i className="fas fa-exclamation-triangle me-1" />{excepcionesDelDia.length} Mod.
-                </div>
-              )}
-            </div>
-          );
+        contenidoDia = (
+          <div className="ac-day-events">
+            {cumplesHoy.map(c =>
+              <div key={`c-${c.idUsuario}`} className="ac-day-event ac-day-event--birthday">
+                <i className="fas fa-birthday-cake me-1" />{c.nombre}
+              </div>
+            )}
+            {eventosDelDia.map(ev =>
+              <div key={ev.idEvento} className={`ac-day-event ${ev.bloqueaClases ? 'ac-day-event--danger' : ev.esPublico ? 'ac-day-event--primary' : 'ac-day-event--secondary'}`}>
+                {!ev.esPublico && <i className="fas fa-lock me-1" />}
+                {ev.requiereRSVP && <i className="fas fa-envelope-open-text me-1" />}
+                {!ev.esTodoElDia && <span className="me-1 opacity-75">{ev.fechaInicio.toTimeString().substring(0, 5)}</span>}
+                {ev.titulo}
+              </div>
+            )}
+            {excepcionesDelDia.length > 0 && (
+              <div className="ac-day-event ac-day-event--exception">
+                <i className="fas fa-exclamation-triangle me-1" />{excepcionesDelDia.length} Mod.
+              </div>
+            )}
+          </div>
+        );
       } else if (vistaPrincipal === 'francotirador' && datosAtleta) {
-          const asistenciasHoy = datosAtleta.asistencias.filter(a => esMismoDia(a.fecha, fechaIteracion));
-          const pagoHoy = datosAtleta.suscripcion && esMismoDia(datosAtleta.suscripcion.fechaVencimiento, fechaIteracion);
+        const asistenciasHoy = datosAtleta.asistencias.filter(a => esMismoDia(a.fecha, fechaIteracion));
+        const pagoHoy = datosAtleta.suscripcion && esMismoDia(datosAtleta.suscripcion.fechaVencimiento, fechaIteracion);
 
-          contenidoDia = (
-            <div className="ac-day-events">
-               {pagoHoy && <div className="ac-day-event ac-day-event--primary"><i className="fas fa-dollar-sign me-1" />PAGO</div>}
-               {asistenciasHoy.map((asist, idx) => (
-                  <div key={idx} className={`ac-day-event ${asist.estado === 'Asistió' ? 'ac-day-event--primary' : asist.estado === 'Faltó' ? 'ac-day-event--danger' : 'ac-day-event--secondary'}`}>
-                     {asist.estado === 'Asistió' ? <i className="fas fa-check me-1" /> : asist.estado === 'Faltó' ? <i className="fas fa-times me-1" /> : <i className="fas fa-clock me-1" />}
-                     {asist.nombreClase}
-                  </div>
-               ))}
-            </div>
-          );
+        contenidoDia = (
+          <div className="ac-day-events">
+            {pagoHoy && <div className="ac-day-event ac-day-event--primary"><i className="fas fa-dollar-sign me-1" />PAGO</div>}
+            {asistenciasHoy.map((asist, idx) => (
+              <div key={idx} className={`ac-day-event ${asist.estado === 'Asistió' ? 'ac-day-event--primary' : asist.estado === 'Faltó' ? 'ac-day-event--danger' : 'ac-day-event--secondary'}`}>
+                {asist.estado === 'Asistió' ? <i className="fas fa-check me-1" /> : asist.estado === 'Faltó' ? <i className="fas fa-times me-1" /> : <i className="fas fa-clock me-1" />}
+                {asist.nombreClase}
+              </div>
+            ))}
+          </div>
+        );
       }
 
       dias.push(
         <div
           key={dia}
           onClick={() => {
-              if(vistaPrincipal === 'operacion') {
-                  setDiaSeleccionado(fechaIteracion); setModoPanel('agenda');
-                  setFormEvento({...initialFormEvento, fechaInicio: getFechaLocalString(fechaIteracion), fechaFin: getFechaLocalString(fechaIteracion)});
-                  // Si el día tiene eventos o cumpleaños, abrir popup
-                  const tieneEventos = eventos.some(e => {
-                      const dIter = new Date(fechaIteracion).setHours(0,0,0,0);
-                      const dIni = new Date(e.fechaInicio).setHours(0,0,0,0);
-                      const dFin = new Date(e.fechaFin).setHours(23,59,59,999);
-                      return dIter >= dIni && dIter <= dFin;
-                  }) || cumpleanos.some(c => esMismoDia(c.fechaVisual, fechaIteracion));
-                  if(tieneEventos) setDiaPopup(fechaIteracion);
-              }
+            if (vistaPrincipal === 'operacion') {
+              setDiaSeleccionado(fechaIteracion); setModoPanel('agenda');
+              setFormEvento({ ...initialFormEvento, fechaInicio: getFechaLocalString(fechaIteracion), fechaFin: getFechaLocalString(fechaIteracion) });
+              // Si el día tiene eventos o cumpleaños, abrir popup
+              const tieneEventos = eventos.some(e => {
+                const dIter = new Date(fechaIteracion).setHours(0, 0, 0, 0);
+                const dIni = new Date(e.fechaInicio).setHours(0, 0, 0, 0);
+                const dFin = new Date(e.fechaFin).setHours(23, 59, 59, 999);
+                return dIter >= dIni && dIter <= dFin;
+              }) || cumpleanos.some(c => esMismoDia(c.fechaVisual, fechaIteracion));
+              if (tieneEventos) setDiaPopup(fechaIteracion);
+            }
           }}
           className={`ac-day-cell ${seleccionado && vistaPrincipal === 'operacion' ? 'ac-day-cell--selected' : ''} ${hoy && (!seleccionado || vistaPrincipal !== 'operacion') ? 'ac-day-cell--today' : ''} ${vistaPrincipal !== 'operacion' ? 'ac-day-cell--no-cursor' : ''}`}
         >
@@ -464,7 +464,7 @@ export default function AdminCalendario() {
                           <div className="d-flex gap-2 mb-4">
                             <button
                               onClick={() => {
-                                setFormEvento({...initialFormEvento, fechaInicio: getFechaLocalString(diaSeleccionado), fechaFin: getFechaLocalString(diaSeleccionado)});
+                                setFormEvento({ ...initialFormEvento, fechaInicio: getFechaLocalString(diaSeleccionado), fechaFin: getFechaLocalString(diaSeleccionado) });
                                 setModoPanel('nuevoEvento');
                               }}
                               className="ac-btn-primary flex-grow-1"
@@ -494,17 +494,17 @@ export default function AdminCalendario() {
                           {/* Eventos del día */}
                           <p className="ac-section-label"><i className="fas fa-flag" /> Eventos y Recordatorios</p>
                           {eventos.filter(e => {
-                            const dIter = new Date(diaSeleccionado).setHours(0,0,0,0);
-                            const dIni  = new Date(e.fechaInicio).setHours(0,0,0,0);
-                            const dFin  = new Date(e.fechaFin).setHours(23,59,59,999);
+                            const dIter = new Date(diaSeleccionado).setHours(0, 0, 0, 0);
+                            const dIni = new Date(e.fechaInicio).setHours(0, 0, 0, 0);
+                            const dFin = new Date(e.fechaFin).setHours(23, 59, 59, 999);
                             return dIter >= dIni && dIter <= dFin;
                           }).length === 0 ? (
                             <p className="ac-empty-text fst-italic ms-3">Agenda limpia.</p>
                           ) : (
                             eventos.filter(e => {
-                              const dIter = new Date(diaSeleccionado).setHours(0,0,0,0);
-                              const dIni  = new Date(e.fechaInicio).setHours(0,0,0,0);
-                              const dFin  = new Date(e.fechaFin).setHours(23,59,59,999);
+                              const dIter = new Date(diaSeleccionado).setHours(0, 0, 0, 0);
+                              const dIni = new Date(e.fechaInicio).setHours(0, 0, 0, 0);
+                              const dFin = new Date(e.fechaFin).setHours(23, 59, 59, 999);
                               return dIter >= dIni && dIter <= dFin;
                             }).map(ev => (
                               <div
@@ -526,11 +526,11 @@ export default function AdminCalendario() {
                                 {!ev.esTodoElDia && (
                                   <p className="ac-event-hora mb-0">
                                     <i className="far fa-clock" />
-                                    {ev.fechaInicio.toTimeString().substring(0,5)} — {ev.fechaFin.toTimeString().substring(0,5)}
+                                    {ev.fechaInicio.toTimeString().substring(0, 5)} — {ev.fechaFin.toTimeString().substring(0, 5)}
                                   </p>
                                 )}
                                 {ev.descripcion && (
-                                  <p className="ac-event-desc mt-2 mb-0" style={{whiteSpace:'pre-wrap'}}>{ev.descripcion}</p>
+                                  <p className="ac-event-desc mt-2 mb-0" style={{ whiteSpace: 'pre-wrap' }}>{ev.descripcion}</p>
                                 )}
 
                                 <div className="d-flex gap-2 flex-wrap mt-2">
@@ -543,7 +543,7 @@ export default function AdminCalendario() {
                                 </div>
 
                                 {ev.requiereRSVP && (
-                                  <div className="mt-3 pt-2" style={{borderTop:'1px solid var(--border)'}}>
+                                  <div className="mt-3 pt-2" style={{ borderTop: '1px solid var(--border)' }}>
                                     <button onClick={() => cargarAsistentes(ev.idEvento)} className="ac-btn-secondary w-100">
                                       <i className="fas fa-users" /> Ver Confirmados
                                     </button>
@@ -554,9 +554,9 @@ export default function AdminCalendario() {
                                         ) : (
                                           <div className="d-flex flex-column gap-2">
                                             {listaAsistentes[ev.idEvento].map((a, i) => (
-                                              <div key={a.idUsuario} className="d-flex align-items-center gap-2 pb-1" style={{borderBottom:'1px solid var(--border)'}}>
-                                                <span className="ac-rank-num">{i+1}.</span>
-                                                <i className="fas fa-check-circle" style={{color:'var(--success)'}} />
+                                              <div key={a.idUsuario} className="d-flex align-items-center gap-2 pb-1" style={{ borderBottom: '1px solid var(--border)' }}>
+                                                <span className="ac-rank-num">{i + 1}.</span>
+                                                <i className="fas fa-check-circle" style={{ color: 'var(--success)' }} />
                                                 <span className="ac-atleta-nombre">{a.nombre}</span>
                                               </div>
                                             ))}
@@ -586,22 +586,22 @@ export default function AdminCalendario() {
                                 type="text"
                                 className="ac-input"
                                 value={formEvento.titulo}
-                                onChange={e => setFormEvento({...formEvento, titulo: e.target.value})}
+                                onChange={e => setFormEvento({ ...formEvento, titulo: e.target.value })}
                                 placeholder="Ej. Murph Day, Pedir Agua..."
                               />
                             </div>
 
                             <div className="ac-toggle-group mb-3">
                               <div className="form-check form-switch mb-3">
-                                <input className="form-check-input" type="checkbox" checked={formEvento.esTodoElDia} onChange={e => setFormEvento({...formEvento, esTodoElDia: e.target.checked})} />
-                                <label className="form-check-label ac-switch-label" style={{color:'var(--accent)'}}>Evento de todo el día</label>
+                                <input className="form-check-input" type="checkbox" checked={formEvento.esTodoElDia} onChange={e => setFormEvento({ ...formEvento, esTodoElDia: e.target.checked })} />
+                                <label className="form-check-label ac-switch-label" style={{ color: 'var(--accent)' }}>Evento de todo el día</label>
                               </div>
                               <div className="row g-2 mb-3">
                                 <div className="col-6">
                                   <label className="ac-label">Fecha Inicio</label>
                                   <RedGrayDatePicker
                                     value={formEvento.fechaInicio}
-                                    onChange={v => setFormEvento({...formEvento, fechaInicio: v || formEvento.fechaInicio})}
+                                    onChange={v => setFormEvento({ ...formEvento, fechaInicio: v || formEvento.fechaInicio })}
                                     placeholder="Inicio"
                                   />
                                 </div>
@@ -609,7 +609,7 @@ export default function AdminCalendario() {
                                   <label className="ac-label">Fecha Fin</label>
                                   <RedGrayDatePicker
                                     value={formEvento.fechaFin}
-                                    onChange={v => setFormEvento({...formEvento, fechaFin: v || formEvento.fechaFin})}
+                                    onChange={v => setFormEvento({ ...formEvento, fechaFin: v || formEvento.fechaFin })}
                                     placeholder="Fin"
                                     min={formEvento.fechaInicio}
                                   />
@@ -619,11 +619,11 @@ export default function AdminCalendario() {
                                 <div className="row g-2">
                                   <div className="col-6">
                                     <label className="ac-label">Hora Inicio</label>
-                                    <input type="time" className="ac-input text-center" value={formEvento.horaInicio} onChange={e => setFormEvento({...formEvento, horaInicio: e.target.value})} />
+                                    <input type="time" className="ac-input text-center" value={formEvento.horaInicio} onChange={e => setFormEvento({ ...formEvento, horaInicio: e.target.value })} />
                                   </div>
                                   <div className="col-6">
                                     <label className="ac-label">Hora Fin</label>
-                                    <input type="time" className="ac-input text-center" value={formEvento.horaFin} onChange={e => setFormEvento({...formEvento, horaFin: e.target.value})} />
+                                    <input type="time" className="ac-input text-center" value={formEvento.horaFin} onChange={e => setFormEvento({ ...formEvento, horaFin: e.target.value })} />
                                   </div>
                                 </div>
                               )}
@@ -633,7 +633,7 @@ export default function AdminCalendario() {
                               <label className="ac-label">Tipo</label>
                               <TipoEventoPicker
                                 valor={formEvento.tipoEvento}
-                                onCambiar={v => setFormEvento({...formEvento, tipoEvento: v})}
+                                onCambiar={v => setFormEvento({ ...formEvento, tipoEvento: v })}
                               />
                             </div>
 
@@ -643,30 +643,30 @@ export default function AdminCalendario() {
                                 className="ac-input ac-textarea"
                                 rows="2"
                                 value={formEvento.descripcion}
-                                onChange={e => setFormEvento({...formEvento, descripcion: e.target.value})}
+                                onChange={e => setFormEvento({ ...formEvento, descripcion: e.target.value })}
                                 placeholder="Instrucciones..."
                               />
                             </div>
 
                             <div className="ac-toggle-group mb-4">
                               <div className="form-check form-switch mb-3">
-                                <input className="form-check-input" type="checkbox" checked={formEvento.esPublico} onChange={e => setFormEvento({...formEvento, esPublico: e.target.checked})} disabled={formEvento.bloqueaClases} />
+                                <input className="form-check-input" type="checkbox" checked={formEvento.esPublico} onChange={e => setFormEvento({ ...formEvento, esPublico: e.target.checked })} disabled={formEvento.bloqueaClases} />
                                 <label className="form-check-label ac-switch-label">Público (Visible en la App)</label>
                               </div>
                               {formEvento.esPublico && (
                                 <div className="form-check form-switch mb-3">
-                                  <input className="form-check-input" type="checkbox" checked={formEvento.requiereRSVP} onChange={e => setFormEvento({...formEvento, requiereRSVP: e.target.checked})} />
-                                  <label className="form-check-label ac-switch-label" style={{color:'var(--accent-cool)'}}>Requiere Confirmación (RSVP)</label>
+                                  <input className="form-check-input" type="checkbox" checked={formEvento.requiereRSVP} onChange={e => setFormEvento({ ...formEvento, requiereRSVP: e.target.checked })} />
+                                  <label className="form-check-label ac-switch-label" style={{ color: 'var(--accent-cool)' }}>Requiere Confirmación (RSVP)</label>
                                 </div>
                               )}
                               <div className="form-check form-switch">
                                 <input className="form-check-input" type="checkbox" checked={formEvento.bloqueaClases}
                                   onChange={e => {
                                     const cierraBox = e.target.checked;
-                                    setFormEvento({...formEvento, bloqueaClases: cierraBox, esPublico: cierraBox ? true : formEvento.esPublico});
+                                    setFormEvento({ ...formEvento, bloqueaClases: cierraBox, esPublico: cierraBox ? true : formEvento.esPublico });
                                   }}
                                 />
-                                <label className="form-check-label ac-switch-label" style={{color:'var(--danger)'}}>Cerrar el Box (Bloquear clases)</label>
+                                <label className="form-check-label ac-switch-label" style={{ color: 'var(--danger)' }}>Cerrar el Box (Bloquear clases)</label>
                               </div>
                             </div>
 
@@ -684,7 +684,7 @@ export default function AdminCalendario() {
                       {/* SUB-PANEL: CANCELAR CLASE */}
                       {modoPanel === 'cancelarClase' && (
                         <div className="flex-grow-1 overflow-auto pe-1">
-                          <h5 className="ac-form-title mb-2" style={{color:'var(--danger)'}}>
+                          <h5 className="ac-form-title mb-2" style={{ color: 'var(--danger)' }}>
                             <i className="fas fa-exclamation-triangle" /> Emergencia Operativa
                           </h5>
                           <p className="ac-empty-text mb-4">Cancela clases específicas o restáuralas si el clima mejora.</p>
@@ -696,7 +696,7 @@ export default function AdminCalendario() {
                               return (
                                 <div key={clase.idClase} className={`ac-clase-card mb-3 ${estaCancelada ? 'ac-clase-card--cancelada' : ''}`}>
                                   <span className={`ac-event-titulo d-block mb-2 ${estaCancelada ? 'text-decoration-line-through' : ''}`}>
-                                    {String(clase.horaInicio || clase.horarioInicio || '').substring(0,5)} — {clase.nombre}
+                                    {String(clase.horaInicio || clase.horarioInicio || '').substring(0, 5)} — {clase.nombre}
                                   </span>
                                   {!estaCancelada ? (
                                     <BotonSeguro onClick={() => handleCancelarClase(clase.idClase, clase.nombre, true)} className="ac-btn-outline-danger w-100" textoProcesando="Cancelando...">
@@ -760,24 +760,24 @@ export default function AdminCalendario() {
                           <i className="fas fa-arrow-left" /> Buscar otro
                         </button>
                         {loading ? (
-                          <div className="text-center py-4"><div className="ac-spinner" style={{margin:'0 auto'}} /></div>
+                          <div className="text-center py-4"><div className="ac-spinner" style={{ margin: '0 auto' }} /></div>
                         ) : datosAtleta && (
                           <>
                             <h6 className="d-flex align-items-center gap-2 mb-4 ac-atleta-nombre">
-                              <i className="fas fa-user-circle fs-4" style={{color:'var(--accent-cool)'}} />
+                              <i className="fas fa-user-circle fs-4" style={{ color: 'var(--accent-cool)' }} />
                               {datosAtleta.atleta.nombre}
                             </h6>
                             <div className="row g-3 mb-4">
                               <div className="col-6">
                                 <div className="ac-kpi-card text-center">
-                                  <i className="fas fa-fire ac-kpi-icon" style={{color:'var(--accent)'}} />
+                                  <i className="fas fa-fire ac-kpi-icon" style={{ color: 'var(--accent)' }} />
                                   <div className="ac-kpi-valor">{datosAtleta.atleta.rachaActual}</div>
                                   <div className="ac-kpi-label">Racha (Días)</div>
                                 </div>
                               </div>
                               <div className="col-6">
                                 <div className="ac-kpi-card text-center">
-                                  <i className="fas fa-times-circle ac-kpi-icon" style={{color:'var(--danger)'}} />
+                                  <i className="fas fa-times-circle ac-kpi-icon" style={{ color: 'var(--danger)' }} />
                                   <div className="ac-kpi-valor">{datosAtleta.atleta.strikesDelMes}</div>
                                   <div className="ac-kpi-label">Strikes del Mes</div>
                                 </div>
@@ -792,14 +792,14 @@ export default function AdminCalendario() {
                                 {datosAtleta.suscripcion ? (
                                   <>
                                     <p className="ac-event-titulo mb-1">
-                                      Vencimiento: <span style={{color:'var(--accent-cool)'}}>{datosAtleta.suscripcion.fechaVencimiento.toLocaleDateString()}</span>
+                                      Vencimiento: <span style={{ color: 'var(--accent-cool)' }}>{datosAtleta.suscripcion.fechaVencimiento.toLocaleDateString()}</span>
                                     </p>
                                     <p className="ac-event-sub mb-0">
-                                      Mensualidad: <span style={{color:'var(--success)'}}>${datosAtleta.suscripcion.totalAPagar}</span>
+                                      Mensualidad: <span style={{ color: 'var(--success)' }}>${datosAtleta.suscripcion.totalAPagar}</span>
                                     </p>
                                   </>
                                 ) : (
-                                  <p className="ac-event-titulo mb-0" style={{color:'var(--danger)'}}>Sin membresía activa.</p>
+                                  <p className="ac-event-titulo mb-0" style={{ color: 'var(--danger)' }}>Sin membresía activa.</p>
                                 )}
                               </div>
                             </div>
@@ -834,7 +834,7 @@ export default function AdminCalendario() {
             </div>
 
             {loading ? (
-              <div className="text-center py-5"><div className="ac-spinner" style={{margin:'0 auto'}} /></div>
+              <div className="text-center py-5"><div className="ac-spinner" style={{ margin: '0 auto' }} /></div>
             ) : metricas && (
               <div className="row g-4">
 
@@ -843,7 +843,7 @@ export default function AdminCalendario() {
                   <div className="row g-3">
                     <div className="col-12 col-md-4">
                       <div className="ac-kpi-card-big">
-                        <div className="ac-kpi-card-icon" style={{background:'rgba(79,195,247,0.12)', color:'var(--accent-cool)'}}>
+                        <div className="ac-kpi-card-icon" style={{ background: 'rgba(79,195,247,0.12)', color: 'var(--accent-cool)' }}>
                           <i className="fas fa-user-check" />
                         </div>
                         <div>
@@ -854,7 +854,7 @@ export default function AdminCalendario() {
                     </div>
                     <div className="col-12 col-md-4">
                       <div className="ac-kpi-card-big">
-                        <div className="ac-kpi-card-icon" style={{background:'rgba(230,57,70,0.12)', color:'var(--danger)'}}>
+                        <div className="ac-kpi-card-icon" style={{ background: 'rgba(230,57,70,0.12)', color: 'var(--danger)' }}>
                           <i className="fas fa-user-times" />
                         </div>
                         <div>
@@ -865,7 +865,7 @@ export default function AdminCalendario() {
                     </div>
                     <div className="col-12 col-md-4">
                       <div className="ac-kpi-card-big">
-                        <div className="ac-kpi-card-icon" style={{background:'rgba(245,166,35,0.12)', color:'var(--accent)'}}>
+                        <div className="ac-kpi-card-icon" style={{ background: 'rgba(245,166,35,0.12)', color: 'var(--accent)' }}>
                           <i className="fas fa-cloud-showers-heavy" />
                         </div>
                         <div>
@@ -881,7 +881,7 @@ export default function AdminCalendario() {
                 <div className="col-12 col-xl-8">
                   <div className="ac-panel h-100">
                     <h5 className="ac-form-title mb-1">
-                      <i className="fas fa-fire-alt" style={{color:'var(--primary)'}} /> Mapa de Tráfico (Heatmap)
+                      <i className="fas fa-fire-alt" style={{ color: 'var(--primary)' }} /> Mapa de Tráfico (Heatmap)
                     </h5>
                     <p className="ac-empty-text mb-4">Identifica los horarios saturados y los muertos para optimizar las horas de tu Staff.</p>
                     {renderHeatmap()}
@@ -893,7 +893,7 @@ export default function AdminCalendario() {
 
                   {/* Top Lobos */}
                   <div className="ac-panel">
-                    <h5 className="ac-form-title mb-1" style={{color:'var(--accent)'}}>
+                    <h5 className="ac-form-title mb-1" style={{ color: 'var(--accent)' }}>
                       <i className="fas fa-trophy" /> Top Lobos (Lealtad)
                     </h5>
                     <p className="ac-empty-text mb-4">Atletas con 0 faltas y rachas altas.</p>
@@ -914,7 +914,7 @@ export default function AdminCalendario() {
 
                   {/* Radar de Deserción */}
                   <div className="ac-panel">
-                    <h5 className="ac-form-title mb-1" style={{color:'var(--danger)'}}>
+                    <h5 className="ac-form-title mb-1" style={{ color: 'var(--danger)' }}>
                       <i className="fas fa-ghost" /> Radar de Deserción
                     </h5>
                     <p className="ac-empty-text mb-4">Atletas con 3 o más faltas (Strikes).</p>
@@ -923,10 +923,10 @@ export default function AdminCalendario() {
                     ) : (
                       <div className="d-flex flex-column gap-3">
                         {metricas.fantasmas.map(fantasma => (
-                          <div key={fantasma.idUsuario} className="d-flex align-items-center justify-content-between gap-2 pb-2" style={{borderBottom:'1px solid var(--border)'}}>
+                          <div key={fantasma.idUsuario} className="d-flex align-items-center justify-content-between gap-2 pb-2" style={{ borderBottom: '1px solid var(--border)' }}>
                             <div className="text-truncate flex-grow-1">
                               <div className="ac-atleta-nombre text-truncate">{fantasma.nombre}</div>
-                              <span className="ac-event-sub" style={{color:'var(--danger)'}}>
+                              <span className="ac-event-sub" style={{ color: 'var(--danger)' }}>
                                 <i className="fas fa-times-circle me-1" />{fantasma.strikesDelMes} Faltas
                               </span>
                             </div>
@@ -986,9 +986,9 @@ export default function AdminCalendario() {
 
               {/* Eventos */}
               {eventos.filter(e => {
-                const dIter = new Date(diaPopup).setHours(0,0,0,0);
-                const dIni = new Date(e.fechaInicio).setHours(0,0,0,0);
-                const dFin = new Date(e.fechaFin).setHours(23,59,59,999);
+                const dIter = new Date(diaPopup).setHours(0, 0, 0, 0);
+                const dIni = new Date(e.fechaInicio).setHours(0, 0, 0, 0);
+                const dFin = new Date(e.fechaFin).setHours(23, 59, 59, 999);
                 return dIter >= dIni && dIter <= dFin;
               }).map(ev => (
                 <div key={ev.idEvento} className={`ac-event-card mb-3 ${ev.bloqueaClases ? 'ac-event-card--danger' : ev.esPublico ? 'ac-event-card--primary' : 'ac-event-card--secondary'}`}>
@@ -1019,11 +1019,11 @@ export default function AdminCalendario() {
                   {!ev.esTodoElDia && (
                     <p className="ac-event-hora mb-0">
                       <i className="far fa-clock" />
-                      {ev.fechaInicio.toTimeString().substring(0,5)} — {ev.fechaFin.toTimeString().substring(0,5)}
+                      {ev.fechaInicio.toTimeString().substring(0, 5)} — {ev.fechaFin.toTimeString().substring(0, 5)}
                     </p>
                   )}
                   {ev.descripcion && (
-                    <p className="ac-event-desc mt-2 mb-0" style={{whiteSpace:'pre-wrap'}}>{ev.descripcion}</p>
+                    <p className="ac-event-desc mt-2 mb-0" style={{ whiteSpace: 'pre-wrap' }}>{ev.descripcion}</p>
                   )}
                   <div className="d-flex gap-2 flex-wrap mt-2">
                     <span className="ac-tag">{ev.tipoEvento}</span>
@@ -1038,7 +1038,7 @@ export default function AdminCalendario() {
               <button
                 className="ac-btn-primary flex-grow-1"
                 onClick={() => {
-                  setFormEvento({...initialFormEvento, fechaInicio: getFechaLocalString(diaPopup), fechaFin: getFechaLocalString(diaPopup)});
+                  setFormEvento({ ...initialFormEvento, fechaInicio: getFechaLocalString(diaPopup), fechaFin: getFechaLocalString(diaPopup) });
                   setModoPanel('nuevoEvento');
                   setDiaPopup(null);
                 }}

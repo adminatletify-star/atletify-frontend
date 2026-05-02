@@ -4,7 +4,7 @@ import BackButton from '../components/BackButton';
 import WolfLanyard from '../components/ReactBits/WolfLanyard';
 import '../assets/css/Comunidad.css';
 
-const API_BASE = 'https://localhost:7149/api';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
 
 export default function Comunidad() {
   const navigate = useNavigate();
@@ -89,13 +89,13 @@ export default function Comunidad() {
     <div className="com-page">
 
       <nav className="com-navbar">
-          <BackButton to="/user-panel" />
-          <span className="com-brand">
-            <i className="fas fa-users"></i> COMUNIDAD
-          </span>
-          {!loading && (
-            <span className="com-member-count ms-auto">{comunidad.length} LOBOS</span>
-          )}
+        <BackButton to="/user-panel" />
+        <span className="com-brand">
+          <i className="fas fa-users"></i> COMUNIDAD
+        </span>
+        {!loading && (
+          <span className="com-member-count ms-auto">{comunidad.length} LOBOS</span>
+        )}
       </nav>
 
       <section className="com-hero">

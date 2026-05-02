@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import '../assets/css/ListaCompetencias.css';
 import BackButton from '../components/BackButton';
 
-const API_BASE_URL = 'https://localhost:7149/api';
+const API_BASE_URL = 'import.meta.env.VITE_API_URL:7149/api';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -40,7 +40,7 @@ export default function AdminArchivadasDevDetalle() {
     fetch(`${API_BASE_URL}/box/${idBox}`)
       .then(r => r.json())
       .then(data => setBoxData(data))
-      .catch(() => {});
+      .catch(() => { });
 
     cargarArchivadas();
   }, [idBox]);
@@ -75,7 +75,7 @@ export default function AdminArchivadasDevDetalle() {
     }
   };
 
-  const compsFiltradas = competencias.filter(c => 
+  const compsFiltradas = competencias.filter(c =>
     c.nombre?.toLowerCase().includes(busqueda.toLowerCase())
   );
 
@@ -103,10 +103,10 @@ export default function AdminArchivadasDevDetalle() {
               <span className="input-group-text bg-dark border-secondary text-secondary">
                 <i className="fas fa-search"></i>
               </span>
-              <input 
-                type="text" 
-                className="form-control bg-dark border-secondary text-white" 
-                placeholder="Buscar competencia archivada..." 
+              <input
+                type="text"
+                className="form-control bg-dark border-secondary text-white"
+                placeholder="Buscar competencia archivada..."
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
                 style={{ boxShadow: 'none' }}
@@ -135,7 +135,7 @@ export default function AdminArchivadasDevDetalle() {
           )}
 
           {!cargandoComp && compsFiltradas.length === 0 && competencias.length > 0 && (
-             <motion.div className="lc-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <motion.div className="lc-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <i className="fas fa-search lc-empty-icon text-danger"></i>
               <p className="lc-empty-titulo text-white">No se encontraron resultados</p>
             </motion.div>
@@ -176,8 +176,8 @@ export default function AdminArchivadasDevDetalle() {
                         ID DB: #{c.idCompetencia}
                       </p>
 
-                      <button 
-                        className="btn w-100 btn-danger fw-bold" 
+                      <button
+                        className="btn w-100 btn-danger fw-bold"
                         onClick={() => eliminarDefinitivamente(c.idCompetencia, c.nombre)}
                         style={{ borderRadius: '8px', padding: '12px' }}
                       >

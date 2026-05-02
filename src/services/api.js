@@ -1,4 +1,4 @@
-﻿const API_BASE_URL = 'https://localhost:7149/api';
+﻿const API_BASE_URL = 'import.meta.env.VITE_API_URL:7149/api';
 
 // Helper para manejar respuestas del servidor
 const handleResponse = async (response) => {
@@ -177,7 +177,7 @@ export const api = {
           IdClase: idClase
         })
       });
-      
+
       // Si no es 200-299, algo saliÃ³ mal
       if (!response.ok) {
         const text = await response.text();
@@ -190,7 +190,7 @@ export const api = {
         }
         throw new Error(errorData.mensaje || `Error ${response.status}`);
       }
-      
+
       return response.json();
     } catch (error) {
       console.error('solicitarInscripcionClase error:', error);

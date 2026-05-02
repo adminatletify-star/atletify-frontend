@@ -8,23 +8,23 @@ import FiltroMultiplePicker from '../components/FiltroMultiplePicker';
 import ModalVerExpediente from '../components/ModalVerExpediente';
 import '../assets/css/Directorio.css';
 
-const API_BASE = 'https://localhost:7149/api';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
 
 const TALLAS_OPCIONES = [
   { valor: 'XS', desc: 'Extra Small' },
-  { valor: 'S',  desc: 'Small'       },
-  { valor: 'M',  desc: 'Medium'      },
-  { valor: 'L',  desc: 'Large'       },
+  { valor: 'S', desc: 'Small' },
+  { valor: 'M', desc: 'Medium' },
+  { valor: 'L', desc: 'Large' },
   { valor: 'XL', desc: 'Extra Large' },
 ];
 
 const TIPOS_SANGRE = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 
 const NIVELES_OPCIONES = [
-  { valor: 'Novato',       etiqueta: 'Novato',       desc: 'Clase técnica — aprendizaje', icono: 'fas fa-seedling' },
-  { valor: 'Principiante', etiqueta: 'Principiante', desc: 'Movimientos modificados',     icono: 'fas fa-chart-line' },
-  { valor: 'Intermedio',   etiqueta: 'Intermedio',   desc: 'Movimientos estándar',        icono: 'fas fa-fire' },
-  { valor: 'RX',           etiqueta: 'RX',           desc: 'Pesos y movimientos completos',icono: 'fas fa-medal' },
+  { valor: 'Novato', etiqueta: 'Novato', desc: 'Clase técnica — aprendizaje', icono: 'fas fa-seedling' },
+  { valor: 'Principiante', etiqueta: 'Principiante', desc: 'Movimientos modificados', icono: 'fas fa-chart-line' },
+  { valor: 'Intermedio', etiqueta: 'Intermedio', desc: 'Movimientos estándar', icono: 'fas fa-fire' },
+  { valor: 'RX', etiqueta: 'RX', desc: 'Pesos y movimientos completos', icono: 'fas fa-medal' },
 ];
 
 export default function Directorio() {
@@ -105,21 +105,21 @@ export default function Directorio() {
           if (resSub.ok) {
             const dataSub = await resSub.json();
             console.log(`[DEBUG] Usuario ${idUsuario}:`, dataSub); // DEBUG
-            
+
             // El backend devuelve:
             // - nombrePlan: nombre del plan (puede ser "Ninguno" si no hay suscripción)
             // - membresias: array de membresías con estatus "Activa" o "Congelada"
-            
+
             // Si el backend nos dice que su último plan no es "Ninguno", ese es su plan (aunque esté vencido/pendiente)
             let nombrePlan = 'Sin membresía';
             const planDelBackend = dataSub.nombrePlan || dataSub.NombrePlan;
-            
+
             if (planDelBackend && planDelBackend !== 'Ninguno') {
               nombrePlan = planDelBackend;
             }
-            
+
             console.log(`[DEBUG] ${idUsuario} → nombrePlan final: "${nombrePlan}"`); // DEBUG
-            
+
             suscripciones[idUsuario] = {
               nombrePlan: nombrePlan,
               estatus: dataSub.suscripcion ? (dataSub.suscripcion.estatus || dataSub.suscripcion.Estatus) : 'Vencida'
@@ -201,7 +201,7 @@ export default function Directorio() {
       const pesoAtleta = parseFloat(a.peso || a.Peso || 0);
       const pMinStr = filtroPesoMin;
       const pMaxStr = filtroPesoMax;
-      
+
       if (pMinStr !== '' && pMaxStr !== '') {
         const pMin = parseFloat(pMinStr);
         const pMax = parseFloat(pMaxStr);
@@ -211,7 +211,7 @@ export default function Directorio() {
         const pMin = parseFloat(pMinStr);
         pesoMatches = pesoAtleta === pMin;
       } else if (pMaxStr !== '') {
-         // (Opcional) Si solo ponen maximo, buscamos desde 0 a maximo
+        // (Opcional) Si solo ponen maximo, buscamos desde 0 a maximo
         const pMax = parseFloat(pMaxStr);
         pesoMatches = pesoAtleta <= pMax;
       }
@@ -608,9 +608,9 @@ export default function Directorio() {
 
       {/* MODAL EXPEDIENTE MÉDICO COMPLETO */}
       {modalExpedienteAbierto && atletaSeleccionado && (
-        <ModalVerExpediente 
-          atleta={atletaSeleccionado} 
-          onClose={() => setModalExpedienteAbierto(false)} 
+        <ModalVerExpediente
+          atleta={atletaSeleccionado}
+          onClose={() => setModalExpedienteAbierto(false)}
         />
       )}
 

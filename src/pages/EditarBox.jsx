@@ -5,7 +5,7 @@ import BackButton from '../components/BackButton';
 import BotonSeguro from '../components/BotonSeguro';
 import '../assets/css/EditarBox.css';
 
-const API_BASE = 'https://localhost:7149/api';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
 
 const initialForm = {
   idBox: '', nombre: '', ubicacion: '', logo: '',
@@ -27,7 +27,7 @@ const initialConfig = {
   cantidadVisitasPaquete: 4,
   precioMinimoMensualidad: 100,
   permitirPagoMixto: true,
-   modeloCorte: 'Individual',
+  modeloCorte: 'Individual',
   diaCorte: '',
   diasGracia: 0,
   prorratearNuevos: false,
@@ -49,11 +49,11 @@ const MESES = [
 ];
 
 const TABS = [
-  { id: 'identidad', label: 'Identidad',              icon: 'fas fa-id-card'        },
-  { id: 'contacto',  label: 'Contacto y Ubicación',   icon: 'fas fa-map-marker-alt' },
-  { id: 'politicas', label: 'Leyes de la Manada',     icon: 'fas fa-balance-scale'  },
-  { id: 'horarios',  label: 'Horarios y Reservas',    icon: 'fas fa-clock'          },
-  { id: 'finanzas',  label: 'Configuración Financiera', icon: 'fas fa-cogs'         },
+  { id: 'identidad', label: 'Identidad', icon: 'fas fa-id-card' },
+  { id: 'contacto', label: 'Contacto y Ubicación', icon: 'fas fa-map-marker-alt' },
+  { id: 'politicas', label: 'Leyes de la Manada', icon: 'fas fa-balance-scale' },
+  { id: 'horarios', label: 'Horarios y Reservas', icon: 'fas fa-clock' },
+  { id: 'finanzas', label: 'Configuración Financiera', icon: 'fas fa-cogs' },
 ];
 
 export default function EditarBox() {
@@ -72,12 +72,12 @@ export default function EditarBox() {
   );
 
   const token = localStorage.getItem('token');
-  const headersGet  = { 'Authorization': `Bearer ${token}` };
+  const headersGet = { 'Authorization': `Bearer ${token}` };
   const headersPost = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('usuario'));
-    const storedBox  = JSON.parse(localStorage.getItem('box'));
+    const storedBox = JSON.parse(localStorage.getItem('box'));
 
     if (!storedUser || !storedBox) { navigate('/login'); return; }
     if (storedUser.rol !== 'AdminBox' && storedUser.rol !== 'Developer') { navigate('/admin-box-panel'); return; }
@@ -136,7 +136,7 @@ export default function EditarBox() {
           cantidadVisitasPaquete: data.cantidadVisitasPaquete ?? 4,
           precioMinimoMensualidad: data.precioMinimoMensualidad ?? 100,
           permitirPagoMixto: data.permitirPagoMixto ?? true,
-           modeloCorte: data.modeloCorte ?? 'Individual',
+          modeloCorte: data.modeloCorte ?? 'Individual',
           diaCorte: data.diaCorte ?? '',
           diasGracia: data.diasGracia ?? 0,
           prorratearNuevos: data.prorratearNuevos ?? false,
@@ -151,7 +151,7 @@ export default function EditarBox() {
         if (data.horariosApertura) {
           try {
             setHorarios(JSON.parse(data.horariosApertura));
-          } catch(e) { console.error('Error parseando horarios:', e); }
+          } catch (e) { console.error('Error parseando horarios:', e); }
         }
       }
     } catch (err) { console.error('Error cargando configuración:', err); }
@@ -190,14 +190,14 @@ export default function EditarBox() {
 
     const targetId = form.idBox || boxLocal?.idBox || boxLocal?.IdBox;
     if (!targetId) {
-        alert("Error crítico: Se perdió el ID del Box en la memoria.");
-        setSaving(false);
-        return;
+      alert("Error crítico: Se perdió el ID del Box en la memoria.");
+      setSaving(false);
+      return;
     }
 
     try {
       const response = await fetch(`${BOXES_ENDPOINT}/${targetId}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({...form, idBox: targetId})
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, idBox: targetId })
       });
       if (!response.ok) throw new Error('No se pudo actualizar el box.');
 
@@ -228,7 +228,7 @@ export default function EditarBox() {
           cantidadVisitasPaquete: config.cantidadVisitasPaquete ? parseInt(config.cantidadVisitasPaquete) : null,
           precioMinimoMensualidad: config.precioMinimoMensualidad ? parseFloat(config.precioMinimoMensualidad) : null,
           permitirPagoMixto: config.permitirPagoMixto,
-            modeloCorte: config.modeloCorte,
+          modeloCorte: config.modeloCorte,
           diaCorte: config.diaCorte ? parseInt(config.diaCorte) : null,
           diasGracia: parseInt(config.diasGracia) || 0,
           prorratearNuevos: config.prorratearNuevos,
@@ -276,8 +276,8 @@ export default function EditarBox() {
   );
 
   const esLogoArchivo = String(form.logo).startsWith('data:');
-  const precioPorVisita = config.costoPaqueteVisitas && config.cantidadVisitasPaquete 
-    ? (parseFloat(config.costoPaqueteVisitas) / parseInt(config.cantidadVisitasPaquete)).toFixed(2) 
+  const precioPorVisita = config.costoPaqueteVisitas && config.cantidadVisitasPaquete
+    ? (parseFloat(config.costoPaqueteVisitas) / parseInt(config.cantidadVisitasPaquete)).toFixed(2)
     : '—';
 
   return (
@@ -469,7 +469,7 @@ export default function EditarBox() {
                   <div className="eb-section-title">
                     <i className="fas fa-clock" /> Horarios de Apertura y Reservas
                   </div>
-                  
+
                   <div className="eb-info-box mb-4">
                     <i className="fas fa-calendar-alt me-2" />
                     Define a qué hora abre y cierra el Box cada día. El sistema usará esto para bloquear la creación de clases fuera de horario y para el Portal de Turistas.
@@ -542,7 +542,7 @@ export default function EditarBox() {
                       <p className="fw-bold mb-0" style={{ color: '#6772E5', fontFamily: 'var(--font-heading)', fontSize: '0.9rem' }}>
                         <i className="fab fa-stripe fa-lg me-2"></i>Pagos en Línea (Stripe Connect)
                       </p>
-                      
+
                       {!config.stripeAccountId ? (
                         <button type="button" onClick={conectarStripe} className="btn btn-sm text-white fw-bold px-3 py-2" style={{ background: '#6772E5', border: 'none', borderRadius: '8px' }}>
                           <i className="fas fa-link me-2"></i>Vincular Banco Mío
@@ -658,7 +658,7 @@ export default function EditarBox() {
                     </div>
                   </div>
 
-                            {/* ── REGLAS GENERALES ── */}
+                  {/* ── REGLAS GENERALES ── */}
                   <div className="mb-4 p-3 rounded" style={{ background: 'rgba(155, 89, 182, 0.06)', border: '1px solid rgba(155, 89, 182, 0.2)' }}>
                     <p className="fw-bold mb-3" style={{ color: '#9b59b6', fontFamily: 'var(--font-heading)', fontSize: '0.9rem' }}>
                       <i className="fas fa-sliders-h me-2"></i>Reglas Generales
@@ -680,13 +680,13 @@ export default function EditarBox() {
                       </div>
                     </div>
                   </div>
- 
+
                   {/* ── DÍAS DE CORTE ── */}
                   <div className="mb-4 p-3 rounded" style={{ background: 'rgba(231, 76, 60, 0.06)', border: '1px solid rgba(231, 76, 60, 0.2)' }}>
                     <p className="fw-bold mb-3" style={{ color: 'var(--danger)', fontFamily: 'var(--font-heading)', fontSize: '0.9rem' }}>
                       <i className="fas fa-calendar-day me-2"></i>Modelo de Días de Corte
                     </p>
- 
+
                     <div className="row g-3 mb-3">
                       <div className="col-12">
                         <div className="d-flex gap-2 flex-wrap">
@@ -700,13 +700,13 @@ export default function EditarBox() {
                           </button>
                         </div>
                         <small className="text-secondary d-block mt-2" style={{ fontSize: '0.7rem' }}>
-                          {config.modeloCorte === 'Individual' 
-                            ? 'Cada atleta tiene su propia fecha de corte basada en cuándo pagó. Más justo para el cliente, más personalizado.' 
+                          {config.modeloCorte === 'Individual'
+                            ? 'Cada atleta tiene su propia fecha de corte basada en cuándo pagó. Más justo para el cliente, más personalizado.'
                             : 'Todos los atletas cortan el mismo día del mes. Más orden administrativo, requiere prorrateo para nuevos ingresos.'}
                         </small>
                       </div>
                     </div>
- 
+
                     {config.modeloCorte === 'Fijo' && (
                       <div className="row g-3 mb-3">
                         <div className="col-12 col-md-6">
@@ -724,7 +724,7 @@ export default function EditarBox() {
                         </div>
                       </div>
                     )}
- 
+
                     <div className="row g-3">
                       <div className="col-12 col-md-6">
                         <label className="eb-label">Días de Gracia (0-15)</label>
@@ -758,8 +758,8 @@ export default function EditarBox() {
                   {/* ── ACCESO RÁPIDO AL CENTRO FINANCIERO ── */}
                   <div className="d-flex flex-column flex-sm-row gap-3 align-items-stretch mb-4">
                     <button type="button" className="eb-btn-guardar-form flex-grow-1" onClick={guardarConfiguracion} disabled={savingConfig}>
-                      {savingConfig 
-                        ? <><i className="fas fa-spinner fa-spin me-2"></i>Guardando...</> 
+                      {savingConfig
+                        ? <><i className="fas fa-spinner fa-spin me-2"></i>Guardando...</>
                         : <><i className="fas fa-save me-2"></i>Guardar Configuración Financiera</>
                       }
                     </button>

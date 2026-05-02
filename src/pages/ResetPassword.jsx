@@ -23,7 +23,7 @@ export default function ResetPassword() {
     setMensaje('');
 
     try {
-      const response = await fetch('https://localhost:7149/api/usuarios/reset-password', {
+      const response = await fetch('import.meta.env.VITE_API_URL:7149/api/usuarios/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, nuevaContrasena })
@@ -91,7 +91,7 @@ export default function ResetPassword() {
             </form>
           ) : (
             <div className="text-center py-4">
-              <i className="fas fa-check-circle text-success" style={{fontSize: '4rem'}}></i>
+              <i className="fas fa-check-circle text-success" style={{ fontSize: '4rem' }}></i>
               <h4 className="text-white fw-bold mt-3">¡Misión Cumplida!</h4>
               <p className="text-secondary">{mensaje}</p>
               <p className="small text-info mt-3"><i className="fas fa-spinner fa-spin me-2"></i>Redirigiendo al Login...</p>

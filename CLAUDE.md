@@ -21,7 +21,7 @@ npm run preview   # Preview built version
 ```bash
 cd WolfPack.API
 dotnet build
-dotnet run        # HTTPS at https://localhost:7149, Swagger at /swagger
+dotnet run        # HTTPS at import.meta.env.VITE_API_URL:7149, Swagger at /swagger
 ```
 
 ### Database (EF Core / PostgreSQL)
@@ -42,7 +42,7 @@ Frontend (React 19 + Vite)  ──HTTP/REST──▶  Backend (.NET 8 ASP.NET Co
 ```
 
 ### Frontend Structure
-- **`src/services/api.js`** — Centralized fetch wrapper. All API calls go through named methods here (e.g. `api.crearUsuario()`, `api.obtenerClasesDelBox()`). Uses `API_BASE_URL = https://localhost:7149/api`.
+- **`src/services/api.js`** — Centralized fetch wrapper. All API calls go through named methods here (e.g. `api.crearUsuario()`, `api.obtenerClasesDelBox()`). Uses `API_BASE_URL = import.meta.env.VITE_API_URL:7149/api`.
 - **`src/context/AuthContext.jsx`** — Global auth state: user object, JWT token, active box. Persisted in `localStorage` under `usuario`, `token`, `boxActivo`.
 - **`src/App.jsx`** — All routes + `ProtectedRoute` HOC. After login, routes to `/dashboard` (Developer), `/admin-box-panel` (AdminBox/Coach), or `/user-panel` (others).
 - **`src/pages/`** — 50+ page components organized by module.

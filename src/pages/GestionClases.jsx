@@ -7,7 +7,7 @@ import TimeWheelPicker from '../components/TimeWheelPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import '../assets/css/GestionClases.css';
 
-const API_BASE = 'https://localhost:7149/api';
+const API_BASE = 'import.meta.env.VITE_API_URL:7149/api';
 
 export default function GestionClases() {
   const navigate = useNavigate();
@@ -77,13 +77,13 @@ export default function GestionClases() {
       }
 
       if (resCoaches.ok) setCoaches(await resCoaches.json());
-      
+
       if (resConfig.ok) {
         const cfg = await resConfig.json();
         if (cfg?.horariosApertura) {
           try {
             setHorariosConfig(JSON.parse(cfg.horariosApertura));
-          } catch(e) { console.error("Error parseando horarios de Box"); }
+          } catch (e) { console.error("Error parseando horarios de Box"); }
         }
       }
     } catch (error) {
@@ -194,12 +194,12 @@ export default function GestionClases() {
     <div className="gc-page">
 
       <header className="gc-header">
-          <div className="d-flex align-items-center gap-3">
-            <BackButton to="/admin-box-panel" />
-            <h1 className="gc-header-title">
-              Gestión de <span>Clases</span>
-            </h1>
-          </div>
+        <div className="d-flex align-items-center gap-3">
+          <BackButton to="/admin-box-panel" />
+          <h1 className="gc-header-title">
+            Gestión de <span>Clases</span>
+          </h1>
+        </div>
       </header>
 
       <div className="container-xl px-3 px-md-4">
@@ -243,7 +243,7 @@ export default function GestionClases() {
                     placeholder="Ej. CrossFit 6:00 PM"
                     required
                     value={form.nombre}
-                    onChange={e => setForm({...form, nombre: e.target.value})}
+                    onChange={e => setForm({ ...form, nombre: e.target.value })}
                   />
                 </div>
 
@@ -318,7 +318,7 @@ export default function GestionClases() {
                       className="entrada-oscura"
                       required
                       value={form.maximoAtletas}
-                      onChange={e => setForm({...form, maximoAtletas: e.target.value})}
+                      onChange={e => setForm({ ...form, maximoAtletas: e.target.value })}
                     />
                   </div>
                   <div className="col-6">
@@ -334,16 +334,16 @@ export default function GestionClases() {
 
                 <div className="mb-4">
                   <div className="form-check form-switch d-flex align-items-center gap-2">
-                    <input 
-                      className="form-check-input m-0" 
-                      type="checkbox" 
-                      role="switch" 
+                    <input
+                      className="form-check-input m-0"
+                      type="checkbox"
+                      role="switch"
                       style={{ width: '40px', height: '20px', cursor: 'pointer' }}
-                      checked={form.cuentaParaRacha} 
-                      onChange={e => setForm({...form, cuentaParaRacha: e.target.checked})} 
+                      checked={form.cuentaParaRacha}
+                      onChange={e => setForm({ ...form, cuentaParaRacha: e.target.checked })}
                     />
-                    <label className="form-check-label text-white small" style={{ cursor: 'pointer' }} onClick={() => setForm({...form, cuentaParaRacha: !form.cuentaParaRacha})}>
-                      ¿Asistencia obligatoria para la Racha 🔥? 
+                    <label className="form-check-label text-white small" style={{ cursor: 'pointer' }} onClick={() => setForm({ ...form, cuentaParaRacha: !form.cuentaParaRacha })}>
+                      ¿Asistencia obligatoria para la Racha 🔥?
                     </label>
                   </div>
                 </div>
@@ -353,7 +353,7 @@ export default function GestionClases() {
                     <i className="fas fa-plane-arrival" style={{ color: 'var(--success)' }} />
                     <span style={{ color: 'var(--success)' }}>CATEGORÍAS Y DROP-INS</span>
                   </div>
-                  
+
                   <div className="d-flex justify-content-between align-items-center mb-3">
                     <label className="text-white fw-bold mb-0">Permitir Turistas / Drop-Ins 🌍</label>
                     <div className="form-check form-switch p-0 m-0" style={{ width: '45px', height: '24px' }}>
@@ -375,17 +375,17 @@ export default function GestionClases() {
                         className="entrada-oscura"
                         placeholder="Ej. 2 lugares"
                         value={form.cupoVisitantes}
-                        onChange={e => setForm({...form, cupoVisitantes: e.target.value})}
+                        onChange={e => setForm({ ...form, cupoVisitantes: e.target.value })}
                       />
                     </div>
                   )}
 
                   <div className="mb-2">
                     <label className="etiqueta-campo">Nivel Sugerido o Requerido</label>
-                    <select 
-                      className="entrada-oscura" 
-                      value={form.nivelesPermitidos} 
-                      onChange={e => setForm({...form, nivelesPermitidos: e.target.value})}
+                    <select
+                      className="entrada-oscura"
+                      value={form.nivelesPermitidos}
+                      onChange={e => setForm({ ...form, nivelesPermitidos: e.target.value })}
                     >
                       <option value="Todos">📊 Todas las categorías</option>
                       <option value="Novato">🐣 Novato</option>
@@ -482,16 +482,16 @@ export default function GestionClases() {
                             <span className="gc-meta-badge" style={{
                               background: clase.nivelesPermitidos === 'RX'
                                 ? 'rgba(255,193,7,0.15)' : clase.nivelesPermitidos === 'Intermedio'
-                                ? 'rgba(13,202,240,0.15)' : clase.nivelesPermitidos === 'Principiante'
-                                ? 'rgba(25,135,84,0.15)' : 'rgba(108,117,125,0.15)',
+                                  ? 'rgba(13,202,240,0.15)' : clase.nivelesPermitidos === 'Principiante'
+                                    ? 'rgba(25,135,84,0.15)' : 'rgba(108,117,125,0.15)',
                               color: clase.nivelesPermitidos === 'RX'
                                 ? '#ffc107' : clase.nivelesPermitidos === 'Intermedio'
-                                ? '#0dcaf0' : clase.nivelesPermitidos === 'Principiante'
-                                ? '#198754' : '#adb5bd',
+                                  ? '#0dcaf0' : clase.nivelesPermitidos === 'Principiante'
+                                    ? '#198754' : '#adb5bd',
                               border: '1px solid currentColor',
                               borderRadius: '20px', padding: '2px 8px', fontSize: '0.7rem', fontWeight: '700'
                             }}>
-                              <i className="fas fa-layer-group me-1" style={{fontSize:'0.65rem'}} />
+                              <i className="fas fa-layer-group me-1" style={{ fontSize: '0.65rem' }} />
                               {clase.nivelesPermitidos}
                             </span>
                           )}
