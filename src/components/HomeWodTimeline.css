@@ -1,0 +1,146 @@
+/* ============================================================
+   WOLFPACK — HOME WOD TIMELINE
+   Paleta: Arctic Wolf — DESIGN_SYSTEM.md
+   ============================================================ */
+
+.wod-tl-seccion {
+  padding: 6rem 0;
+  background: var(--home-bg-card);
+  position: relative;
+}
+
+.wod-tl-seccion::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--home-primary), transparent);
+}
+
+/* ── Wrapper del timeline ── */
+.wod-tl-wrapper {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* ── Eje vertical central (solo desktop) ── */
+.wod-tl-axis {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--home-primary) 15%,
+    var(--home-accent) 50%,
+    var(--home-success) 85%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Fila de cada fase ── */
+.wod-tl-entry {
+  min-height: 140px;
+  padding-bottom: 1.5rem;
+}
+
+/* ── Tarjeta de fase ── */
+.wod-tl-card {
+  background: var(--home-bg);
+  border: 1px solid var(--home-border);
+  border-left: 3px solid var(--fase-color, #E63946);
+  border-radius: 18px;
+  padding: 1.5rem;
+  position: relative;
+  transition: var(--home-transition);
+}
+
+.wod-tl-card:hover {
+  border-color: var(--fase-color, #E63946);
+  transform: translateY(-4px);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.3),
+    0 0 0 1px color-mix(in srgb, var(--fase-color, #E63946) 18%, transparent);
+  background: var(--home-bg-card-hover);
+}
+
+/* ── Ícono dentro de la tarjeta ── */
+.wod-tl-icono {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--fase-color, #E63946) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fase-color, #E63946) 28%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fase-color, #E63946);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+/* ── Número y duración ── */
+.wod-tl-num {
+  font-family: var(--font-stats);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--fase-color, #E63946);
+  line-height: 1;
+  display: block;
+}
+
+.wod-tl-duracion {
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--home-text-muted);
+}
+
+/* ── Título y descripción ── */
+.wod-tl-titulo {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--home-text);
+  margin-bottom: 0.5rem;
+}
+
+.wod-tl-desc {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--home-secondary);
+  line-height: 1.75;
+}
+
+/* ── Dot central ── */
+.wod-tl-dot {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--home-bg);
+  border: 2px solid var(--fase-color, #E63946);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fase-color, #E63946);
+  font-size: 1.1rem;
+  box-shadow: 0 0 22px color-mix(in srgb, var(--fase-color, #E63946) 35%, transparent);
+  position: relative;
+  z-index: 2;
+  transition: var(--home-transition);
+}
+
+.wod-tl-dot:hover {
+  transform: scale(1.12);
+}

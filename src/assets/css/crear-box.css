@@ -1,0 +1,71 @@
+/* ============================================
+   WOLFPACK SYSTEM - CREAR BOX
+   Usa variables de global.css + componentes.css
+   ============================================ */
+
+/* === PÁGINA === */
+.crearbox-page {
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+
+/* === HEADER BAR === */
+.crearbox-header {
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+}
+
+.crearbox-header-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.crearbox-header-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+}
+
+.crearbox-header-accent {
+  color: var(--primary);
+}
+
+/* === TÍTULO === */
+
+.crearbox-subtitle {
+  font-family: var(--font-heading-alt);
+  font-weight: 500;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--secondary);
+  margin: 0;
+}
+
+/* === BOTÓN CANCELAR === */
+.crearbox-btn-cancel {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--secondary);
+  font-weight: 500;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.crearbox-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+}

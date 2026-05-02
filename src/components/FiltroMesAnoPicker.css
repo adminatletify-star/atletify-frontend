@@ -1,0 +1,221 @@
+/* =============================================
+   FILTRO MES-AÑO PICKER — Arctic Wolf
+   Namespace: fmap-*
+   ============================================= */
+
+/* ── TRIGGER ── */
+.fmap-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.52rem 0.9rem;
+  border-radius: 10px;
+  border: 1.5px solid rgba(230,57,70,0.3);
+  background: rgba(230,57,70,0.06);
+  color: var(--primary, #e63946);
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.18s, transform 0.18s;
+  white-space: nowrap;
+  width: 100%;
+  text-align: left;
+}
+.fmap-trigger--vacio {
+  color: var(--text-muted, #888);
+  border-color: rgba(168,178,209,0.3);
+  background: rgba(168,178,209,0.06);
+  border-style: dashed;
+}
+.fmap-trigger:hover { filter: brightness(1.15); transform: translateY(-1px); }
+
+.fmap-trigger-left { display: flex; align-items: center; gap: 0.5rem; }
+.fmap-trigger-icon { font-size: 0.78rem; opacity: 0.8; }
+.fmap-trigger-label {
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.fmap-chevron { font-size: 0.6rem; opacity: 0.6; flex-shrink: 0; }
+
+/* ── OVERLAY ── */
+.fmap-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  animation: fmap-fade 0.18s ease;
+}
+@keyframes fmap-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── PANEL ── */
+.fmap-panel {
+  background: var(--bg-card, #1c1c26);
+  border: 1px solid var(--border, rgba(255,255,255,0.1));
+  border-radius: 20px;
+  width: 100%;
+  max-width: 380px;
+  overflow: hidden;
+  animation: fmap-up 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 28px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+}
+@keyframes fmap-up {
+  from { opacity: 0; transform: translateY(28px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── HEADER ── */
+.fmap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+}
+.fmap-title {
+  font-family: var(--font-heading, 'Oswald', sans-serif);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.fmap-title i { color: var(--primary); }
+.fmap-close {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted);
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 0.75rem;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.fmap-close:hover { background: rgba(230,57,70,0.15); color: var(--primary); }
+
+/* ── TODOS LOS MESES ── */
+.fmap-todos-wrap { padding: 0.75rem 1rem 0; }
+.fmap-todos-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  border: 1.5px dashed rgba(168,178,209,0.3);
+  background: rgba(168,178,209,0.04);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.fmap-todos-btn:hover {
+  background: rgba(168,178,209,0.08);
+  border-color: rgba(168,178,209,0.5);
+  color: var(--text-primary);
+}
+.fmap-todos-btn--activo {
+  background: rgba(230,57,70,0.08);
+  border-color: rgba(230,57,70,0.35);
+  color: var(--primary);
+  border-style: solid;
+}
+.fmap-check { color: var(--primary); font-size: 0.7rem; }
+
+/* ── NAVEGACIÓN DE AÑO ── */
+.fmap-año-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.85rem 1rem 0.4rem;
+}
+.fmap-año-btn {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 0.7rem;
+  transition: background 0.15s, color 0.15s;
+}
+.fmap-año-btn:hover:not(:disabled) { background: rgba(230,57,70,0.1); color: var(--primary); border-color: rgba(230,57,70,0.3); }
+.fmap-año-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+.fmap-año-label {
+  font-family: var(--font-stats, 'Rajdhani', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 64px;
+  text-align: center;
+}
+
+/* ── GRID 3×4 ── */
+.fmap-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+  padding: 0.5rem 1rem 1rem;
+}
+.fmap-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.75rem 0.35rem;
+  border-radius: 12px;
+  border: 1.5px solid transparent;
+  background: rgba(255,255,255,0.03);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.12s;
+  position: relative;
+}
+.fmap-item:hover:not(.fmap-item--futuro) {
+  background: rgba(230,57,70,0.06);
+  border-color: rgba(230,57,70,0.2);
+  transform: translateY(-2px);
+}
+.fmap-item--activo {
+  background: rgba(230,57,70,0.1);
+  border-color: rgba(230,57,70,0.5);
+}
+.fmap-item--futuro { opacity: 0.2; cursor: not-allowed; }
+.fmap-item-icon {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  transition: color 0.15s;
+}
+.fmap-item--activo .fmap-item-icon { color: var(--primary); }
+.fmap-item-nombre {
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-primary);
+}
+.fmap-item--activo .fmap-item-nombre { color: var(--primary); }
+.fmap-item-check {
+  position: absolute;
+  top: 4px; right: 6px;
+  font-size: 0.52rem;
+  color: var(--primary);
+}

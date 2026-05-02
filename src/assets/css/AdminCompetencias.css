@@ -1,0 +1,1226 @@
+/* =============================================
+   ADMIN COMPETENCIAS — Paleta: Arctic Wolf
+   ============================================= */
+
+/* === CONTAINER === */
+.acomp-container {
+  background: linear-gradient(160deg, var(--bg-base) 0%, var(--bg-elevated) 100%);
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+/* === NAVBAR COMPARTIDA === */
+.acomp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.8rem 1.25rem 0.8rem 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.acomp-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.acomp-nav-icono {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.acomp-nav-icono--gold {
+  background: rgba(245, 166, 35, 0.1);
+  border-color: rgba(245, 166, 35, 0.3);
+  color: var(--accent);
+}
+
+.acomp-nav-titulo {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.acomp-nav-titulo span { color: var(--primary); }
+.acomp-nav-titulo--gold { color: var(--accent); }
+
+.acomp-nav-sub {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--secondary);
+  margin: 0;
+}
+
+.acomp-nav-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--secondary);
+  cursor: pointer;
+  transition: all 0.18s;
+  flex-shrink: 0;
+}
+
+.acomp-nav-back:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+/* === BOTÓN NUEVA COMPETENCIA === */
+.acomp-btn-nueva {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1rem;
+  border-radius: 20px;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.18s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.acomp-btn-nueva:hover { background: var(--primary-dark); }
+.acomp-btn-nueva--cancelar { background: rgba(255, 255, 255, 0.07); border: 1px solid var(--border); color: var(--secondary); }
+.acomp-btn-nueva--cancelar:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-primary); }
+
+/* === FORM CREAR COMPETENCIA === */
+.acomp-form-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  border-radius: 16px;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.acomp-form-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(230, 57, 70, 0.05);
+}
+
+.acomp-form-titulo {
+  font-family: var(--font-heading);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.acomp-form-body { padding: 1.25rem 1.5rem; }
+
+/* === LABELS E INPUTS COMPARTIDOS === */
+.acomp-label {
+  display: block;
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--secondary);
+  margin-bottom: 0.4rem;
+}
+
+.acomp-input,
+.acomp-select {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  padding: 0.6rem 0.9rem;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.acomp-input:focus,
+.acomp-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.acomp-input::placeholder { color: var(--text-muted); }
+
+.acomp-select option { background: var(--bg-card); color: var(--text-primary); }
+
+/* === BOTONES DE FORMULARIO === */
+.acomp-btn-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 1.5rem;
+  border-radius: 20px;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.acomp-btn-submit:hover { background: var(--primary-dark); }
+.acomp-btn-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.acomp-btn-cancel-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--secondary);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.acomp-btn-cancel-sm:hover { border-color: var(--border-hover); color: var(--text-primary); }
+
+/* === EMPTY STATE === */
+.acomp-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.acomp-empty i {
+  font-size: 3rem;
+  opacity: 0.2;
+  color: var(--secondary);
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.acomp-empty h5 {
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  color: var(--secondary);
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* === TARJETA DE COMPETENCIA === */
+.acomp-comp-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.acomp-comp-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--secondary);
+  opacity: 0.3;
+  transition: opacity 0.25s;
+  z-index: 1;
+}
+
+.acomp-comp-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 8px 36px rgba(0, 0, 0, 0.5);
+}
+
+.acomp-comp-card:hover::before { opacity: 1; }
+
+/* Accent lines por estatus */
+.acomp-comp-card--success::before { background: var(--success); opacity: 0.8; }
+.acomp-comp-card--danger::before  { background: var(--primary); opacity: 0.9; }
+.acomp-comp-card--info::before    { background: var(--accent-cool); opacity: 0.8; }
+.acomp-comp-card--secondary::before { background: var(--secondary); opacity: 0.3; }
+
+/* Header de la tarjeta */
+.acomp-comp-header {
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.acomp-comp-nombre {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: color 0.18s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.25rem;
+}
+
+.acomp-comp-nombre:hover { color: var(--primary); }
+.acomp-comp-nombre i { font-size: 0.65rem; opacity: 0.45; }
+
+.acomp-comp-fechas {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--secondary);
+  margin: 0;
+}
+
+/* Status select dinámico */
+.acomp-estatus-select {
+  border: none;
+  border-radius: 20px;
+  padding: 0.3rem 0.85rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: opacity 0.18s;
+}
+
+.acomp-estatus-select:hover { opacity: 0.85; }
+.acomp-estatus-select option { font-family: var(--font-body); font-size: 0.9rem; text-transform: none; }
+
+.acomp-estatus-select--secondary  { background: rgba(168, 178, 209, 0.15); color: var(--secondary);   border: 1px solid rgba(168,178,209,0.3); }
+.acomp-estatus-select--success    { background: rgba(46, 204, 113, 0.15); color: var(--success);    border: 1px solid rgba(46,204,113,0.3); }
+.acomp-estatus-select--danger     { background: rgba(230, 57, 70, 0.15);  color: var(--primary);    border: 1px solid rgba(230,57,70,0.3); }
+.acomp-estatus-select--info       { background: rgba(79, 195, 247, 0.15); color: var(--accent-cool); border: 1px solid rgba(79,195,247,0.3); }
+
+/* Franja roster */
+.acomp-roster-strip {
+  padding: 0.6rem 1.25rem;
+  border-bottom: 1px solid rgba(245, 166, 35, 0.2);
+  background: rgba(245, 166, 35, 0.05);
+}
+
+.acomp-btn-roster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(245, 166, 35, 0.4);
+  background: rgba(245, 166, 35, 0.1);
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.acomp-btn-roster:hover {
+  background: rgba(245, 166, 35, 0.2);
+  border-color: var(--accent);
+}
+
+/* Sección de categorías */
+.acomp-cat-section {
+  padding: 1.1rem 1.25rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.acomp-cat-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.acomp-cat-toolbar-titulo {
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.acomp-btn-add-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem 0.75rem;
+  border-radius: 20px;
+  border: 1px solid rgba(230, 57, 70, 0.4);
+  background: rgba(230, 57, 70, 0.08);
+  color: var(--primary);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.acomp-btn-add-cat:hover { background: rgba(230, 57, 70, 0.16); }
+
+/* Formulario inline de categoría */
+.acomp-cat-form {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.acomp-cat-form-titulo {
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--primary);
+  margin-bottom: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Receta */
+.acomp-receta-group {
+  background: rgba(245, 166, 35, 0.04);
+  border: 1px solid rgba(245, 166, 35, 0.15);
+  border-radius: 10px;
+  padding: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.acomp-receta-titulo {
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  margin-bottom: 0.3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.acomp-receta-hint {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.acomp-receta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+@media (min-width: 576px) {
+  .acomp-receta-grid { grid-template-columns: repeat(6, 1fr); }
+}
+
+.acomp-receta-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-muted);
+  text-align: center;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.acomp-receta-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-stats);
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 0.45rem 0.25rem;
+  text-align: center;
+  width: 100%;
+  transition: border-color 0.18s;
+  -moz-appearance: textfield;
+}
+.acomp-receta-input::-webkit-outer-spin-button,
+.acomp-receta-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.acomp-receta-input:focus { outline: none; border-color: var(--primary); }
+.acomp-receta-input--hombres  { color: var(--accent-cool); border-color: rgba(79,195,247,0.2); }
+.acomp-receta-input--mujeres  { color: #ff7fa8; border-color: rgba(231,76,60,0.2); }
+
+/* Totales de receta */
+.acomp-receta-totales {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.acomp-receta-total {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  border: 1px solid;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.acomp-receta-total--ok {
+  background: rgba(46, 204, 113, 0.12);
+  border-color: rgba(46, 204, 113, 0.35);
+  color: var(--success);
+}
+
+.acomp-receta-total--over {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: rgba(230, 57, 70, 0.35);
+  color: var(--primary);
+}
+
+.acomp-receta-total--pending {
+  background: rgba(243, 156, 18, 0.1);
+  border-color: rgba(243, 156, 18, 0.25);
+  color: var(--warning);
+}
+
+/* Tabla de categorías */
+.acomp-cat-tabla-wrapper {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  flex: 1;
+}
+
+.acomp-cat-tabla { width: 100%; border-collapse: collapse; }
+
+.acomp-cat-tabla thead th {
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  padding: 0.55rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.acomp-cat-tabla tbody tr { transition: background 0.15s; }
+.acomp-cat-tabla tbody tr:hover { background: rgba(255,255,255,0.025); }
+.acomp-cat-tabla tbody td {
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+.acomp-cat-tabla tbody tr:last-child td { border-bottom: none; }
+
+.acomp-cat-nombre-text { font-weight: 600; font-size: 0.82rem; }
+.acomp-cat-tipo-text   { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.1rem; }
+.acomp-cat-costo       { font-family: var(--font-stats); font-weight: 700; color: var(--success); }
+.acomp-cat-cupo        { font-family: var(--font-stats); font-weight: 700; color: var(--text-primary); }
+
+.acomp-btn-tabla-edit   { background: none; border: none; color: var(--accent); cursor: pointer; padding: 0.2rem 0.35rem; transition: opacity 0.18s; font-size: 0.82rem; }
+.acomp-btn-tabla-delete { background: none; border: none; color: var(--danger); cursor: pointer; padding: 0.2rem 0.35rem; transition: opacity 0.18s; font-size: 0.82rem; }
+.acomp-btn-tabla-edit:hover, .acomp-btn-tabla-delete:hover { opacity: 0.65; }
+
+.acomp-cat-empty { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); }
+.acomp-cat-empty i { display: block; font-size: 2rem; opacity: 0.2; margin-bottom: 0.5rem; }
+.acomp-cat-empty p { font-family: var(--font-body); font-size: 0.82rem; margin: 0; }
+
+/* =============================================
+   VISTA ROSTER — Cuarto de Guerra
+   ============================================= */
+
+.acomp-roster-container {
+  background: linear-gradient(160deg, var(--bg-base) 0%, var(--bg-elevated) 100%);
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+.acomp-roster-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(245, 166, 35, 0.2);
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+/* Encabezado de categoría en roster */
+.acomp-cat-roster-header {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.acomp-cat-roster-nombre {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.acomp-tipo-badge {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--secondary);
+  background: rgba(168,178,209,0.1);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.18rem 0.6rem;
+  text-transform: none;
+}
+
+.acomp-cat-roster-costo {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--secondary);
+  margin-bottom: 0.65rem;
+}
+
+.acomp-cat-roster-costo strong { color: var(--success); font-family: var(--font-stats); }
+
+/* Tags de receta en roster */
+.acomp-receta-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.acomp-receta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 20px;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.acomp-receta-tag--hombres  { background: rgba(79,195,247,0.1);  border: 1px solid rgba(79,195,247,0.3);  color: var(--accent-cool); }
+.acomp-receta-tag--mujeres  { background: rgba(231,76,60,0.1);   border: 1px solid rgba(231,76,60,0.3);   color: #ff7fa8; }
+.acomp-receta-tag--nivel    { background: rgba(255,255,255,0.05); border: 1px solid var(--border);         color: var(--secondary); }
+
+.acomp-cat-equipos-count {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.2rem 0.6rem;
+}
+
+/* TARJETA DE EQUIPO */
+.acomp-equipo-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.acomp-equipo-header {
+  padding: 0.85rem 1.1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.acomp-equipo-header--pagado { background: rgba(46,204,113,0.07); border-bottom-color: rgba(46,204,113,0.2); }
+.acomp-equipo-header--deuda  { background: rgba(231,76,60,0.07);  border-bottom-color: rgba(231,76,60,0.2);  }
+
+.acomp-equipo-nombre {
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.acomp-equipo-codigo {
+  font-family: var(--font-stats);
+  font-size: 0.75rem;
+  color: var(--accent);
+  margin: 0;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.acomp-btn-copiar {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.65rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+}
+.acomp-btn-copiar:hover {
+  background: var(--accent);
+  color: #fff;
+}
+.acomp-btn-copiar--ok {
+  background: var(--success, #22c55e);
+  border-color: var(--success, #22c55e);
+  color: #fff;
+}
+
+.acomp-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 20px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+
+.acomp-status-badge--pagado { background: rgba(46,204,113,0.15); border: 1px solid rgba(46,204,113,0.3); color: var(--success); }
+.acomp-status-badge--deuda  { background: rgba(231,76,60,0.15);  border: 1px solid rgba(231,76,60,0.3);  color: var(--danger); }
+
+/* Cuerpo del equipo */
+.acomp-equipo-body {
+  padding: 1rem 1.1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.acomp-seccion-titulo {
+  font-family: var(--font-heading-alt);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.acomp-seccion-titulo--gold { color: var(--accent); }
+
+/* Lista de atletas */
+.acomp-roster-list {
+  background: rgba(0,0,0,0.35);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.acomp-atleta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.85rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  gap: 0.5rem;
+}
+
+.acomp-atleta-row:last-child { border-bottom: none; }
+
+.acomp-atleta-info { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+
+.acomp-atleta-nombre {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.acomp-atleta-actions { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
+
+.acomp-nivel-badge {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.12rem 0.45rem;
+  white-space: nowrap;
+}
+
+.acomp-wa-link { color: var(--success); font-size: 0.88rem; text-decoration: none; transition: opacity 0.18s; }
+.acomp-wa-link:hover { opacity: 0.7; }
+
+.acomp-roster-empty {
+  text-align: center;
+  padding: 0.85rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Estado de cuenta (3 mini-stats) */
+.acomp-cuenta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.acomp-cuenta-stat {
+  text-align: center;
+  padding: 0.55rem 0.4rem;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+}
+
+.acomp-cuenta-stat-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.acomp-cuenta-stat-valor {
+  font-family: var(--font-stats);
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: block;
+}
+
+.acomp-cuenta-stat--total  .acomp-cuenta-stat-label  { color: var(--text-muted); }
+.acomp-cuenta-stat--total  .acomp-cuenta-stat-valor  { color: var(--text-primary); }
+.acomp-cuenta-stat--pagado { background: rgba(46,204,113,0.08); border-color: rgba(46,204,113,0.2); }
+.acomp-cuenta-stat--pagado .acomp-cuenta-stat-label  { color: var(--success); }
+.acomp-cuenta-stat--pagado .acomp-cuenta-stat-valor  { color: var(--success); }
+.acomp-cuenta-stat--restante-deuda { background: rgba(231,76,60,0.08); border-color: rgba(231,76,60,0.2); }
+.acomp-cuenta-stat--restante-deuda .acomp-cuenta-stat-label { color: var(--danger); }
+.acomp-cuenta-stat--restante-deuda .acomp-cuenta-stat-valor { color: var(--danger); }
+.acomp-cuenta-stat--restante-ok .acomp-cuenta-stat-label { color: var(--text-muted); }
+.acomp-cuenta-stat--restante-ok .acomp-cuenta-stat-valor { color: var(--text-primary); }
+
+/* Filas de pagos */
+.acomp-pago-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.55rem 0.85rem;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  gap: 0.5rem;
+}
+
+.acomp-pago-info { display: flex; align-items: center; gap: 0.55rem; min-width: 0; }
+
+.acomp-pago-monto {
+  font-family: var(--font-stats);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.acomp-pago-metodo {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.acomp-pago-meta {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  display: block;
+}
+
+.acomp-pago-actions { display: flex; gap: 0.35rem; flex-shrink: 0; }
+
+.acomp-btn-comp {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(79,195,247,0.3);
+  background: rgba(79,195,247,0.08);
+  color: var(--accent-cool);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.acomp-btn-comp:hover { background: rgba(79,195,247,0.18); }
+
+.acomp-btn-aprobar {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(46,204,113,0.3);
+  background: rgba(46,204,113,0.1);
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.acomp-btn-aprobar:hover { background: rgba(46,204,113,0.22); }
+
+/* Botón patrocinio */
+.acomp-btn-patrocinio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  border: 1px dashed rgba(245,166,35,0.4);
+  background: rgba(245,166,35,0.05);
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  margin-top: auto;
+}
+.acomp-btn-patrocinio:hover { background: rgba(245,166,35,0.12); border-color: var(--accent); }
+
+/* Roster loading/empty */
+.acomp-roster-loading { text-align: center; padding: 5rem 2rem; }
+.acomp-roster-global-empty { text-align: center; padding: 5rem 2rem; color: var(--text-muted); }
+.acomp-roster-global-empty i { font-size: 3rem; opacity: 0.2; display: block; margin-bottom: 1rem; }
+.acomp-roster-global-empty h5 { font-family: var(--font-heading); text-transform: uppercase; font-size: 1rem; color: var(--secondary); margin: 0; }
+
+/* === FILTRO DE CATEGORÍAS ROSTER === */
+.acomp-cat-filtro-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid rgba(245, 166, 35, 0.08);
+  background: rgba(0, 0, 0, 0.5);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.acomp-cat-filtro-strip::-webkit-scrollbar { display: none; }
+
+.acomp-cat-filtro-pill {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 0.32rem 0.85rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  transition: all 0.18s;
+  flex-shrink: 0;
+}
+
+.acomp-cat-filtro-pill:hover {
+  border-color: rgba(245, 166, 35, 0.35);
+  color: var(--accent);
+}
+
+.acomp-cat-filtro-pill--activo {
+  background: rgba(245, 166, 35, 0.12);
+  border-color: rgba(245, 166, 35, 0.5);
+  color: var(--accent);
+}
+
+/* === BUSCADOR ROSTER === */
+.acomp-roster-searchbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid rgba(245, 166, 35, 0.1);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.acomp-roster-search-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.acomp-roster-search-icon {
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+.acomp-roster-search-input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(245, 166, 35, 0.15);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 0.55rem 0.9rem 0.55rem 2.2rem;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.acomp-roster-search-input:focus {
+  outline: none;
+  border-color: rgba(245, 166, 35, 0.4);
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.08);
+}
+
+.acomp-roster-search-input::placeholder { color: var(--text-muted); }
+
+.acomp-roster-filtro-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid rgba(231, 76, 60, 0.25);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.acomp-roster-filtro-btn:hover {
+  border-color: rgba(231, 76, 60, 0.5);
+  color: var(--danger);
+}
+
+.acomp-roster-filtro-btn--activo {
+  background: rgba(231, 76, 60, 0.12);
+  border-color: rgba(231, 76, 60, 0.5);
+  color: var(--danger);
+}
+
+/* === STATUS SELECT — dot wrapper === */
+.acomp-estatus-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.acomp-estatus-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: absolute;
+  left: 0.75rem;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.acomp-estatus-wrapper .acomp-estatus-select {
+  padding-left: 1.65rem;
+}
+
+.acomp-estatus-wrapper--secondary .acomp-estatus-dot { background: var(--secondary); }
+.acomp-estatus-wrapper--success   .acomp-estatus-dot { background: var(--success); }
+.acomp-estatus-wrapper--danger    .acomp-estatus-dot { background: var(--primary); }
+.acomp-estatus-wrapper--info      .acomp-estatus-dot { background: var(--accent-cool); }
+
+/* === STATS BAR === */
+.acomp-stats-bar {
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid var(--border);
+  padding: 0.55rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+
+.acomp-stats-bar::-webkit-scrollbar { display: none; }
+
+.acomp-stats-bar--gold {
+  border-bottom-color: rgba(245, 166, 35, 0.12);
+}
+
+.acomp-stats-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  padding: 0.25rem 1.1rem 0.25rem 0;
+}
+
+.acomp-stats-item i {
+  font-size: 0.7rem;
+  color: var(--primary);
+}
+
+.acomp-stats-bar--gold .acomp-stats-item i {
+  color: var(--accent);
+}
+
+.acomp-stats-num {
+  font-family: var(--font-stats);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.acomp-stats-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  flex-shrink: 0;
+  margin-right: 1.1rem;
+}
+
+/* === SPINNER === */
+.spinner-wp {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin-wp 0.7s linear infinite;
+}
+
+@keyframes spin-wp {
+  to { transform: rotate(360deg); }
+}
+
+/* === RESPONSIVE IMPROVEMENTS === */
+@media (max-width: 575.98px) {
+  .acomp-nav { padding: 0.7rem 1rem; }
+  .acomp-form-body { padding: 1rem; }
+  .acomp-comp-header { padding: 0.9rem 1rem; }
+  .acomp-cat-section { padding: 0.9rem 1rem; }
+  .acomp-equipo-body { padding: 0.85rem; }
+  .acomp-equipo-header { padding: 0.75rem 0.9rem; }
+  .acomp-cat-roster-header { padding: 0.85rem 1rem; }
+  .acomp-roster-searchbar { padding: 0.7rem 1rem; gap: 0.5rem; }
+  .acomp-cat-filtro-strip { padding: 0.65rem 1rem; }
+  .acomp-stats-bar { padding: 0.5rem 1rem; }
+}

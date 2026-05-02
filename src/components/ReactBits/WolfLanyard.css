@@ -1,0 +1,442 @@
+﻿/* ============================================
+   WOLFLANYARD -- Draggable ID Badge
+   Arctic Wolf Design System
+   ============================================ */
+
+/* --- Overlay --- */
+.wl-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.86);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 1060;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 16px 16px 48px;
+  overflow-y: auto;
+}
+
+/* --- Wrapper (entrance animation) --- */
+.wl-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 390px;
+  animation: wl-fade-scale 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes wl-fade-scale {
+  from { opacity: 0; transform: scale(0.88) translateY(-16px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+/* --- Draggable container --- */
+.wl-draggable {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  /* Rotar desde el clip (tope de la tarjeta) -- la cuerda siempre conecta */
+  transform-origin: 50% 0;
+  will-change: transform;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+/* --- Lanyard clip --- */
+.wl-clip {
+  width: 22px;
+  height: 11px;
+  background: linear-gradient(135deg, #bbb 0%, #555 50%, #aaa 100%);
+  border-radius: 3px 3px 5px 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  align-self: center;
+  flex-shrink: 0;
+  margin-bottom: -1px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Badge card ─────────────────────────── */
+.wl-card {
+  position: relative;
+  width: 100%;
+  background: rgba(14, 14, 24, 0.98);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow:
+    0 28px 72px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 0 50px rgba(230, 57, 70, 0.07);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.wl-card-atleta { border-top: 3px solid var(--primary); }
+.wl-card-coach  { border-top: 3px solid var(--accent-cool); }
+
+/* Drag hint pill */
+.wl-drag-hint {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0 0;
+  cursor: grab;
+}
+
+.wl-drag-pill {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Close button */
+.wl-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: var(--transition);
+  z-index: 10;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.wl-close-btn:hover {
+  background: rgba(230, 57, 70, 0.18);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* ─── Header strip ───────────────────────── */
+.wl-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+  cursor: grab;
+}
+
+.wl-logo-icon { color: var(--primary); font-size: 0.82rem; }
+
+.wl-logo-text {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  color: var(--text-primary);
+  flex-grow: 1;
+}
+
+.wl-role-tag {
+  font-family: var(--font-heading-alt);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  padding: 0.16rem 0.55rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.wl-role-atleta { background: rgba(230, 57, 70, 0.12);  color: var(--primary);     border: 1px solid rgba(230, 57, 70, 0.25); }
+.wl-role-coach  { background: rgba(79, 195, 247, 0.12); color: var(--accent-cool); border: 1px solid rgba(79, 195, 247, 0.25); }
+
+/* ─── Scrollable body ────────────────────── */
+.wl-scroll-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  flex: 1;
+  cursor: default;
+}
+
+.wl-scroll-body::-webkit-scrollbar { width: 4px; }
+.wl-scroll-body::-webkit-scrollbar-track { background: transparent; }
+.wl-scroll-body::-webkit-scrollbar-thumb { background: rgba(230, 57, 70, 0.3); border-radius: 2px; }
+
+/* ─── Avatar section ─────────────────────── */
+.wl-avatar-section {
+  padding: 1.3rem 1.1rem 0.7rem;
+  text-align: center;
+}
+
+.wl-avatar {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-hero);
+  font-size: 2.8rem;
+  color: white;
+  margin: 0 auto 0.9rem;
+}
+
+.wl-avatar-atleta {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border: 3px solid rgba(230, 57, 70, 0.4);
+  box-shadow: 0 0 30px rgba(230, 57, 70, 0.3), 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.wl-avatar-coach {
+  background: linear-gradient(135deg, #0dcaf0 0%, #0a8fa7 100%);
+  border: 3px solid rgba(79, 195, 247, 0.4);
+  box-shadow: 0 0 30px rgba(79, 195, 247, 0.3), 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.wl-crown {
+  position: absolute;
+  top: -8px;
+  right: -2px;
+  font-size: 0.88rem;
+  color: var(--accent);
+  filter: drop-shadow(0 0 5px rgba(245, 166, 35, 0.8));
+}
+
+.wl-fire-badge {
+  position: absolute;
+  bottom: 1px;
+  right: -2px;
+  width: 24px;
+  height: 24px;
+  background: #111;
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  color: var(--primary);
+}
+
+.wl-name {
+  font-family: var(--font-hero);
+  font-size: 1.75rem;
+  letter-spacing: 2px;
+  color: var(--text-primary);
+  margin-bottom: 0.2rem;
+  line-height: 1;
+}
+
+.wl-apodo {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.92rem;
+  margin: 0;
+}
+
+/* ─── Badges row ─────────────────────────── */
+.wl-badges-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0 1.1rem 1rem;
+}
+
+.wl-badge {
+  font-family: var(--font-heading-alt);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.wl-badge-rx     { background: rgba(230, 57, 70, 0.14);  color: var(--primary);     border: 1px solid rgba(230, 57, 70, 0.28); }
+.wl-badge-scaled { background: rgba(168, 178, 209, 0.08); color: var(--secondary);  border: 1px solid rgba(168, 178, 209, 0.18); }
+.wl-badge-level  { background: rgba(245, 166, 35, 0.1);   color: var(--accent);     border: 1px solid rgba(245, 166, 35, 0.22); font-family: var(--font-stats); }
+.wl-badge-estado { background: rgba(255, 255, 255, 0.04); color: var(--secondary);  border: 1px solid rgba(255, 255, 255, 0.08); }
+.wl-badge-racha  { background: rgba(230, 57, 70, 0.08);   color: var(--primary);    border: 1px solid rgba(230, 57, 70, 0.18); }
+
+/* ─── Sections ───────────────────────────── */
+.wl-section {
+  padding: 0 1.1rem 1rem;
+}
+
+.wl-section-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 0.85rem;
+}
+
+.wl-section-title i { color: var(--accent); font-size: 0.7rem; }
+
+.wl-empty-text {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+/* ─── PRs grid ───────────────────────────── */
+.wl-prs-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.wl-pr-card {
+  flex: 1 1 110px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(245, 166, 35, 0.14);
+  border-radius: 12px;
+  padding: 0.65rem;
+}
+
+.wl-pr-exercise {
+  font-family: var(--font-heading-alt);
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wl-pr-value {
+  font-family: var(--font-stats);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 0.4rem;
+}
+
+.wl-pr-unit {
+  font-size: 0.7rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.wl-reactions {
+  display: flex;
+  gap: 0.2rem;
+  justify-content: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 0.4rem;
+}
+
+.wl-react-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  transition: transform 0.12s ease, background 0.15s;
+  padding: 0;
+}
+
+.wl-react-btn:hover  { transform: scale(1.35); background: rgba(255, 255, 255, 0.09); }
+.wl-react-btn:active { transform: scale(0.88); }
+
+/* ─── ADN Deportivo ──────────────────────── */
+.wl-adn-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+}
+
+.wl-adn-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+}
+
+.wl-adn-fav  { background: rgba(230, 57, 70, 0.05);   border: 1px solid rgba(230, 57, 70, 0.1); }
+.wl-adn-hate { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); }
+
+.wl-adn-fav  i { color: var(--primary);    font-size: 0.82rem; }
+.wl-adn-hate i { color: var(--text-muted); font-size: 0.82rem; }
+
+.wl-adn-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  margin-bottom: 0.12rem;
+}
+
+.wl-adn-value {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+/* ─── CTA Button ─────────────────────────── */
+.wl-cta-wrap {
+  padding: 0 1.1rem 1.1rem;
+}
+
+.wl-cta-btn {
+  display: block;
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid rgba(230, 57, 70, 0.38);
+  background: rgba(230, 57, 70, 0.08);
+  color: var(--primary);
+  font-family: var(--font-heading);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.wl-cta-btn:hover {
+  background: rgba(230, 57, 70, 0.16);
+  border-color: rgba(230, 57, 70, 0.55);
+  box-shadow: 0 0 22px rgba(230, 57, 70, 0.14);
+}
+
+.wl-cta-btn:active { transform: scale(0.98); }

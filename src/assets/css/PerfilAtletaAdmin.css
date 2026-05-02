@@ -1,0 +1,786 @@
+/* ============================================
+   PERFIL ATLETA ADMIN — WolfPack Design System
+   Reutiliza de componentes.css (global):
+   .tarjeta-panel, .tarjeta-vidrio, .etiqueta-campo,
+   .entrada-oscura, .separador, .avatar-inicial,
+   .badge-estado-*, .spinner-wp
+   ============================================ */
+
+/* === PÁGINA === */
+.paa-page {
+  background: var(--bg-base);
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+/* === HEADER STICKY === */
+.paa-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.5rem 0.85rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+
+.paa-back-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+  font-size: 0.8rem;
+}
+
+.paa-back-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+}
+
+.paa-header-title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+/* === AVATAR GRANDE (extiende .avatar-inicial) === */
+.paa-avatar-lg {
+  width: 88px;
+  height: 88px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 2.2rem;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 8px 24px var(--primary-glow);
+}
+
+.paa-avatar-img {
+  width: 88px;
+  height: 88px;
+  border-radius: 20px;
+  object-fit: cover;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* === NOMBRE Y DATOS DEL ATLETA === */
+.paa-atleta-nombre {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.paa-atleta-dato {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.paa-atleta-dato i {
+  color: var(--secondary);
+  width: 14px;
+  text-align: center;
+}
+
+/* === SALDO A FAVOR === */
+.paa-saldo {
+  background: rgba(46, 204, 113, 0.08);
+  border: 1px solid rgba(46, 204, 113, 0.25);
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.paa-saldo-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--success);
+}
+
+.paa-saldo-amount {
+  font-family: var(--font-stats);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+/* === PASE LIBRE TOGGLE === */
+.paa-toggle-row {
+  background: rgba(245, 166, 35, 0.06);
+  border: 1px solid rgba(245, 166, 35, 0.2);
+  border-radius: 12px;
+  padding: 0.6rem 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.paa-toggle-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0;
+}
+
+/* === SECTION LABEL (dentro de cards) === */
+.paa-section-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* === DATOS DEL EXPEDIENTE MÉDICO === */
+.paa-medical-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.paa-medical-item:last-child {
+  border-bottom: none;
+}
+
+.paa-medical-key {
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.paa-medical-val {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+/* === BOTÓN DAR DE BAJA === */
+.paa-btn-baja {
+  width: 100%;
+  padding: 0.6rem;
+  background: rgba(231, 76, 60, 0.08);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  border-radius: 10px;
+  color: var(--danger);
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.paa-btn-baja:hover {
+  background: rgba(231, 76, 60, 0.18);
+  border-color: rgba(231, 76, 60, 0.6);
+}
+
+/* === TARJETA FINANCIERA === */
+.paa-finance-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.paa-plan-name {
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 0.2rem;
+}
+
+.paa-plan-value {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--success);
+  margin: 0;
+}
+
+/* === DEUDA === */
+.paa-deuda-block {
+  background: var(--bg-elevated);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+
+.paa-deuda-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.paa-deuda-amount {
+  font-family: var(--font-stats);
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* === BOTONES DE ACCIÓN FINANCIERA === */
+.paa-action-btn {
+  flex: 1;
+  padding: 0.6rem 0.5rem;
+  border-radius: 10px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.paa-action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.paa-action-btn-cobrar {
+  background: rgba(46, 204, 113, 0.12);
+  border-color: rgba(46, 204, 113, 0.35);
+  color: var(--success);
+}
+
+.paa-action-btn-cobrar:hover:not(:disabled) {
+  background: rgba(46, 204, 113, 0.22);
+  border-color: rgba(46, 204, 113, 0.6);
+}
+
+.paa-action-btn-congelar {
+  background: rgba(79, 195, 247, 0.08);
+  border-color: rgba(79, 195, 247, 0.25);
+  color: var(--accent-cool);
+}
+
+.paa-action-btn-congelar:hover:not(:disabled) {
+  background: rgba(79, 195, 247, 0.18);
+  border-color: rgba(79, 195, 247, 0.5);
+}
+
+.paa-action-btn-descongelar {
+  background: rgba(230, 57, 70, 0.08);
+  border-color: rgba(230, 57, 70, 0.25);
+  color: var(--primary);
+}
+
+.paa-action-btn-descongelar:hover:not(:disabled) {
+  background: rgba(230, 57, 70, 0.18);
+  border-color: rgba(230, 57, 70, 0.5);
+}
+
+.paa-mb-btn-descongelar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent-cool);
+  background: rgba(79, 195, 247, 0.07);
+  border: 1px solid rgba(79, 195, 247, 0.25);
+  border-radius: 8px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s;
+}
+
+.paa-mb-btn-descongelar:hover {
+  background: rgba(79, 195, 247, 0.17);
+  border-color: rgba(79, 195, 247, 0.5);
+}
+
+.paa-action-btn-editar {
+  background: rgba(245, 166, 35, 0.08);
+  border-color: rgba(245, 166, 35, 0.25);
+  color: var(--accent);
+}
+
+.paa-action-btn-editar:hover:not(:disabled) {
+  background: rgba(245, 166, 35, 0.18);
+  border-color: rgba(245, 166, 35, 0.5);
+}
+
+/* === TABLA DE TRANSACCIONES === */
+.paa-table {
+  margin: 0;
+  color: var(--text-primary);
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--text-primary);
+  --bs-table-border-color: var(--border);
+  --bs-table-hover-bg: var(--bg-card-hover);
+  --bs-table-hover-color: var(--text-primary);
+  --bs-table-striped-bg: transparent;
+  font-size: 0.83rem;
+}
+
+.paa-table thead th {
+  background: rgba(0, 0, 0, 0.3);
+  border: none !important;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.paa-table tbody tr {
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.paa-table tbody td {
+  background: transparent;
+  border-color: var(--border) !important;
+  padding: 0.7rem 1rem;
+  vertical-align: middle;
+  color: var(--text-primary);
+}
+
+.paa-table tbody tr:hover td {
+  background: var(--bg-card-hover);
+}
+
+/* === PAGINACIÓN === */
+.paa-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.paa-page-btn {
+  padding: 0.4rem 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--secondary);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.paa-page-btn:hover:not(:disabled) {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.paa-page-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.paa-page-info {
+  font-family: var(--font-stats);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* === MODALES === */
+.paa-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 1050;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+.paa-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1.75rem;
+  width: 100%;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.paa-modal-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.paa-modal-sub {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+  margin-top: -0.75rem;
+}
+
+/* === SELECT EN MODALES === */
+.paa-select {
+  width: 100%;
+  padding: 0.75rem 2.25rem 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  transition: var(--transition);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23A8B2D1' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.paa-select:focus {
+  border-color: rgba(230, 57, 70, 0.5);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.paa-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* === TOTAL EN MODAL DE PAGO === */
+.paa-total-box {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  text-align: right;
+  margin-bottom: 1rem;
+}
+
+.paa-total-original {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.paa-total-amount {
+  font-family: var(--font-stats);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--success);
+  line-height: 1;
+}
+
+/* === ALERTA DE CAMBIO === */
+.paa-cambio-alert {
+  background: rgba(245, 166, 35, 0.08);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.paa-cambio-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.paa-cambio-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.paa-cambio-amount {
+  font-family: var(--font-stats);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* === BOTONES DE MODAL === */
+.paa-modal-btn {
+  flex: 1;
+  padding: 0.7rem;
+  border-radius: 10px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.paa-modal-btn-cancel {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--secondary);
+}
+
+.paa-modal-btn-cancel:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.paa-modal-btn-success {
+  background: rgba(46, 204, 113, 0.15);
+  border-color: rgba(46, 204, 113, 0.4);
+  color: var(--success);
+}
+
+.paa-modal-btn-success:hover {
+  background: rgba(46, 204, 113, 0.25);
+}
+
+.paa-modal-btn-warning {
+  background: rgba(245, 166, 35, 0.12);
+  border-color: rgba(245, 166, 35, 0.4);
+  color: var(--accent);
+}
+
+.paa-modal-btn-warning:hover {
+  background: rgba(245, 166, 35, 0.22);
+}
+
+.paa-modal-btn-info {
+  background: rgba(79, 195, 247, 0.1);
+  border-color: rgba(79, 195, 247, 0.35);
+  color: var(--accent-cool);
+}
+
+.paa-modal-btn-info:hover {
+  background: rgba(79, 195, 247, 0.2);
+}
+
+/* === SWITCH SALDO A FAVOR === */
+.paa-saldo-switch {
+  background: rgba(46, 204, 113, 0.06);
+  border: 1px solid rgba(46, 204, 113, 0.2);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+/* === LOADING === */
+.paa-loading {
+  background: var(--bg-base);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.paa-not-found {
+  background: var(--bg-base);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 1rem;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+}
+
+/* === MEMBRESÍAS CARDS === */
+.paa-mb-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 4px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 1rem 1.1rem 0.9rem;
+  font-family: var(--font-body);
+}
+
+.paa-mb-activa  { border-left-color: var(--success); }
+.paa-mb-alerta  { border-left-color: #F5A623; }
+.paa-mb-congelada { border-left-color: var(--accent-cool); }
+.paa-mb-futura  { border-left-color: rgba(240, 240, 245, 0.25); }
+
+/* Top row: name + badge + days */
+.paa-mb-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.55rem;
+}
+
+.paa-mb-nombre {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.paa-mb-dias {
+  font-family: var(--font-numbers);
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--success);
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid rgba(46, 204, 113, 0.25);
+  border-radius: 20px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+.paa-mb-dias--alerta {
+  color: #F5A623;
+  background: rgba(245, 166, 35, 0.1);
+  border-color: rgba(245, 166, 35, 0.3);
+}
+
+/* Dates row */
+.paa-mb-fechas {
+  display: flex;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 0.6rem;
+}
+
+.paa-mb-fechas span {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.paa-mb-fechas i {
+  opacity: 0.6;
+  font-size: 0.7rem;
+}
+
+/* Progress bar */
+.paa-mb-barra-bg {
+  height: 5px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.paa-mb-barra-fill {
+  height: 100%;
+  background: var(--success);
+  border-radius: 10px;
+  transition: width 0.4s ease;
+}
+
+.paa-mb-barra-fill--alerta {
+  background: #F5A623;
+}
+
+/* Debt warning */
+.paa-mb-deuda {
+  font-size: 0.77rem;
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.08);
+  border: 1px solid rgba(230, 57, 70, 0.2);
+  border-radius: 6px;
+  padding: 3px 9px;
+  margin-top: 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}

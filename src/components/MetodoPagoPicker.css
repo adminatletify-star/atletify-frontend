@@ -1,0 +1,182 @@
+/* ══════════════════════════════════════
+   MetodoPagoPicker — Ventana emergente
+   Paleta Arctic Wolf · Design System
+   ══════════════════════════════════════ */
+
+/* ── Trigger ── */
+.mpp-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #1C1C26;
+  border: 1px solid #2a2a3a;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  color: #F0F0F5;
+}
+
+.mpp-trigger:hover {
+  border-color: #E63946;
+  background: #1f1f2e;
+}
+
+.mpp-trigger-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.mpp-trigger-left i {
+  color: #E63946;
+  font-size: 1rem;
+}
+
+.mpp-chevron {
+  font-size: 0.7rem;
+  opacity: 0.45;
+  transition: transform 0.2s;
+}
+
+/* ── Overlay ── */
+.mpp-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+/* ── Panel ── */
+.mpp-panel {
+  background: #1C1C26;
+  border: 1px solid #2a2a3a;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  overflow: hidden;
+  animation: mppSlideIn 0.18s ease;
+}
+
+@keyframes mppSlideIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+/* ── Header ── */
+.mpp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #2a2a3a;
+}
+
+.mpp-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #F0F0F5;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mpp-title i { color: #E63946; }
+
+.mpp-close {
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: color 0.2s, background 0.2s;
+}
+
+.mpp-close:hover {
+  color: #E63946;
+  background: #E6394614;
+}
+
+/* ── Options list ── */
+.mpp-options {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mpp-option {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  background: #0B0B0F;
+  border: 1px solid #2a2a3a;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.mpp-option:hover {
+  border-color: #E6394660;
+  background: #E6394608;
+}
+
+.mpp-option--activo {
+  border-color: #E6394680;
+  background: #E6394612;
+}
+
+.mpp-option-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #E6394618;
+  color: #E63946;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.mpp-option-info {
+  flex: 1;
+}
+
+.mpp-option-nombre {
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #F0F0F5;
+}
+
+.mpp-option-desc {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  color: #888;
+  margin-top: 0.1rem;
+}
+
+.mpp-check {
+  color: #E63946;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}

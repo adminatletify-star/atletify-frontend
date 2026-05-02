@@ -1,0 +1,36 @@
+.curved-loop-jacket {
+  /* ¡Le quitamos el min-height: 100vh que escondía las letras! */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding-top: 2rem; 
+}
+
+.curved-loop-svg {
+  user-select: none;
+  width: 100%;
+  aspect-ratio: 100 / 12;
+  overflow: visible;
+  display: block;
+  font-size: 4rem; /* Un poco más pequeño para que quepa bien bajo el menú */
+  fill: #ffffff;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* Efecto sólido y limpio */
+.texto-wolfpack {
+  fill: #ffffff;
+  transition: fill 0.3s ease;
+  cursor: grab;
+}
+
+.texto-wolfpack:active {
+  cursor: grabbing;
+}
+
+.texto-wolfpack:hover {
+  fill: #dc3545; /* Rojo Wolfpack al pasar el mouse */
+}

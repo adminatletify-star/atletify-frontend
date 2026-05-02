@@ -1,0 +1,421 @@
+/* ============================================
+   WOLFPACK SYSTEM - ESTILOS GLOBALES
+   Paleta: Arctic Wolf — ver DESIGN_SYSTEM.md
+   ============================================ */
+
+:root {
+  /* === FONDOS === */
+  --bg-base: #0B0B0F;
+  --bg-elevated: #14141A;
+  --bg-card: #1C1C26;
+  --bg-card-hover: #252533;
+  --bg-input: #1A1A24;
+
+  /* === PRIMARIOS === */
+  --primary: #E63946;
+  --primary-dark: #B82D38;
+  --primary-glow: rgba(230, 57, 70, 0.25);
+
+  /* === SECUNDARIOS Y ACENTOS === */
+  --secondary: #A8B2D1;
+  --accent: #F5A623;
+  --accent-cool: #4FC3F7;
+
+  /* === ESTADOS === */
+  --success: #2ECC71;
+  --warning: #F39C12;
+  --danger: #E74C3C;
+
+  /* === TEXTO === */
+  --text-primary: #F0F0F5;
+  --text-muted: #6B7280;
+
+  /* === BORDES Y GLASS === */
+  --border: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(230, 57, 70, 0.4);
+  --glass-bg: rgba(20, 20, 30, 0.85);
+
+  /* === FUENTES === */
+  --font-heading: 'Oswald', sans-serif;
+  --font-heading-alt: 'Barlow Condensed', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-stats: 'Rajdhani', sans-serif;
+  --font-hero: 'Bebas Neue', sans-serif;
+
+  /* === TRANSICIÓN GLOBAL === */
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-body);
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+body {
+  background-color: var(--bg-base);
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+}
+
+/* Fondos */
+.bg-dark {
+  background-color: var(--bg-elevated) !important;
+}
+
+.bg-darker {
+  background-color: var(--bg-base) !important;
+}
+
+.bg-danger-dark {
+  background-color: var(--primary-dark) !important;
+}
+
+/* Navbar */
+.navbar {
+  box-shadow: 0 2px 10px rgba(230, 57, 70, 0.2);
+}
+
+.navbar-brand {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  letter-spacing: 1px;
+  transition: var(--transition);
+}
+
+.navbar-brand:hover {
+  color: var(--primary) !important;
+  transform: scale(1.05);
+}
+
+/* Card Dark */
+.card-dark {
+  background: linear-gradient(135deg, var(--bg-card-hover) 0%, var(--bg-card) 100%);
+  border-radius: 15px;
+}
+
+/* Form Control Dark */
+.form-control-dark,
+.form-select.form-control-dark {
+  background-color: var(--bg-input);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  transition: var(--transition);
+  border-radius: 8px;
+}
+
+.form-control-dark:focus,
+.form-select.form-control-dark:focus {
+  background-color: var(--bg-card);
+  border-color: var(--primary);
+  color: var(--text-primary);
+  box-shadow: 0 0 0 0.2rem var(--primary-glow);
+}
+
+.form-select.form-control-dark option {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.form-control-dark::placeholder {
+  color: var(--text-muted);
+}
+
+/* Form Labels */
+.form-label {
+  color: var(--text-primary);
+  margin-bottom: 0.8rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Form Text */
+.form-text {
+  color: var(--text-muted) !important;
+  font-size: 0.9rem;
+}
+
+/* Alertas */
+.alert {
+  border-radius: 10px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.alert-dark {
+  background-color: var(--bg-card) !important;
+  border-color: var(--primary) !important;
+}
+
+.alert-success {
+  background-color: rgba(46, 204, 113, 0.12) !important;
+  border-color: var(--success) !important;
+  color: var(--text-primary) !important;
+}
+
+.alert-danger {
+  background-color: rgba(230, 57, 70, 0.12) !important;
+  border-color: var(--primary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Botones */
+.btn {
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  transition: var(--transition);
+  letter-spacing: 0.5px;
+}
+
+.btn-danger {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-danger:hover {
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px var(--primary-glow);
+}
+
+.btn-outline-danger {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-outline-danger:hover {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.btn-lg {
+  padding: 0.8rem 2rem;
+  font-size: 1.15rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Checkbox / Switch */
+.form-check-input {
+  width: 1.3rem;
+  height: 1.3rem;
+  margin-top: 0.35rem;
+  background-color: var(--bg-input);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.form-check-input:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.25rem var(--primary-glow);
+}
+
+.form-check-label {
+  margin-left: 0.5rem;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Modal */
+.modal-content {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid var(--border-hover);
+}
+
+.modal-header {
+  border-bottom-color: var(--border-hover);
+}
+
+.modal-body {
+  color: var(--text-primary);
+}
+
+.spinner-border {
+  border: 0.3rem solid rgba(255, 255, 255, 0.15);
+  border-right-color: var(--primary);
+}
+
+/* Footer */
+footer {
+  background-color: var(--bg-elevated) !important;
+  margin-top: auto;
+}
+
+@media (min-height: 100vh) {
+  body {
+    display: flex;
+    flex-direction: column;
+  }
+  footer {
+    margin-top: auto;
+  }
+}
+
+/* Animaciones */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Colores de texto */
+.text-danger {
+  color: var(--primary) !important;
+}
+
+.text-success {
+  color: var(--success) !important;
+}
+
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+.text-decoration-none {
+  text-decoration: none !important;
+}
+
+/* Links */
+a {
+  transition: var(--transition);
+}
+
+a.text-danger:hover {
+  text-shadow: 0 0 10px rgba(230, 57, 70, 0.5);
+}
+
+/* Bordes */
+.border-danger {
+  border-color: var(--primary) !important;
+}
+
+/* Preview de foto */
+.foto-preview {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--bg-card-hover) 0%, var(--bg-card) 100%);
+  border-radius: 12px;
+  border: 2px solid var(--primary);
+  text-align: center;
+  box-shadow: 0 4px 15px var(--primary-glow);
+}
+
+.foto-preview img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease;
+}
+
+.foto-preview img:hover {
+  transform: scale(1.05);
+}
+
+/* Input de archivo */
+.form-control[type="file"] {
+  padding: 0.75rem;
+  border: 2px dashed rgba(255, 255, 255, 0.12);
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.form-control[type="file"]:hover {
+  border-color: var(--primary);
+  background-color: rgba(230, 57, 70, 0.05);
+}
+
+.form-control[type="file"]::file-selector-button {
+  background-color: var(--primary);
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 1rem;
+  transition: var(--transition);
+}
+
+.form-control[type="file"]::file-selector-button:hover {
+  background-color: var(--primary-dark);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+/* Input Group */
+.input-group .btn {
+  border-radius: 0 8px 8px 0;
+}
+
+.input-group .form-select {
+  border-radius: 8px 0 0 8px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-dark);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 2rem 1.5rem !important;
+  }
+  .form-label {
+    font-size: 0.8rem;
+  }
+  .btn-lg {
+    padding: 0.7rem 1.5rem;
+    font-size: 1rem;
+  }
+  .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  .display-4 {
+    font-size: 2rem;
+  }
+  .display-3 {
+    font-size: 1.5rem;
+  }
+}

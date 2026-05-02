@@ -1,0 +1,72 @@
+/* ============================================
+   EDITAR WOD — Extensión de CreadorWods.css
+   Solo estilos exclusivos del editor:
+   · badge de modo edición en el header
+   · footer dual (Actualizar + Clonar)
+   · variante outline para el botón Actualizar
+   Reutiliza todas las clases de CreadorWods.css
+   ============================================ */
+
+/* === BADGE DE EDICIÓN EN EL HEADER === */
+.ew-edit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.85rem;
+  background: rgba(79, 195, 247, 0.1);
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  border-radius: 50px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent-cool);
+  white-space: nowrap;
+}
+
+.ew-edit-badge i {
+  font-size: 0.6rem;
+  animation: pulso-ew 2s infinite;
+}
+
+@keyframes pulso-ew {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* === BLOQUE FOOTER — ACCIONES DUALES === */
+.ew-footer-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (max-width: 575px) {
+  .ew-footer-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .ew-footer-actions .crw-save-btn {
+    flex: 1;
+    justify-content: center;
+    min-width: 0;
+  }
+}
+
+/* === BOTÓN ACTUALIZAR ORIGINAL (outline cyan) === */
+.ew-save-btn--update {
+  background: transparent !important;
+  border: 1px solid rgba(79, 195, 247, 0.4) !important;
+  color: var(--accent-cool) !important;
+  box-shadow: none !important;
+}
+
+.ew-save-btn--update:hover:not(:disabled) {
+  background: rgba(79, 195, 247, 0.1) !important;
+  border-color: var(--accent-cool) !important;
+  box-shadow: 0 4px 16px rgba(79, 195, 247, 0.18) !important;
+  transform: translateY(-1px) !important;
+}

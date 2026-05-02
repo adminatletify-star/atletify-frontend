@@ -1,0 +1,380 @@
+.fmp-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background-color: var(--wp-bg-card, #1a1c23);
+  border: 1px solid var(--wp-border, #2a2d35);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 140px;
+}
+
+.fmp-trigger:hover {
+  background-color: var(--wp-bg-hover, #23252d);
+  border-color: #4a4d55;
+}
+
+.fmp-trigger--activo {
+  border-color: var(--wp-danger, #e53e3e);
+  background-color: rgba(229, 62, 62, 0.1);
+}
+
+.fmp-trigger-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fmp-trigger-left i {
+  color: var(--wp-text-muted, #9ca3af);
+}
+
+.fmp-trigger--activo .fmp-trigger-left i {
+  color: var(--wp-danger, #e53e3e);
+}
+
+.fmp-badge {
+  background-color: var(--wp-danger, #e53e3e);
+  color: white;
+  border-radius: 12px;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.fmp-chevron {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* Modal Overlay */
+.fmp-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.7);
+  z-index: 1060;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.fmp-panel {
+  background-color: var(--wp-bg-card, #1a1c23);
+  width: 100%;
+  max-width: 400px;
+  max-height: 80vh;
+  border-radius: 12px;
+  border: 1px solid var(--wp-border, #2a2d35);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  animation: fmpFadeInUp 0.25s ease forwards;
+}
+
+@keyframes fmpFadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fmp-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--wp-border, #2a2d35);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fmp-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fmp-close {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s ease;
+}
+
+.fmp-close:hover {
+  color: #fff;
+}
+
+.fmp-body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+/* Footer Buttons */
+.fmp-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--wp-border, #2a2d35);
+  display: flex;
+  gap: 12px;
+}
+
+.fmp-btn-limpiar {
+  background-color: transparent;
+  border: 1px solid var(--wp-border, #2a2d35);
+  color: #d1d5db;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  flex: 1;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.fmp-btn-limpiar:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.fmp-btn-listo {
+  background-color: var(--wp-danger, #e53e3e);
+  border: none;
+  color: white;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  flex: 2;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.fmp-btn-listo:hover {
+  background-color: #c53030;
+}
+
+/* ==============================
+   VARIANTE: LISTA (MEMBRESÍAS)
+============================== */
+.fmp-variant-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fmp-option-btn {
+  background-color: var(--wp-bg-base, #111827);
+  border: 1px solid var(--wp-border, #2a2d35);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: #fff;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fmp-option-btn:hover {
+  background-color: var(--wp-bg-hover, #23252d);
+  border-color: #4a4d55;
+}
+
+.fmp-option-btn--activo {
+  background-color: rgba(229, 62, 62, 0.1);
+  border-color: var(--wp-danger, #e53e3e);
+  color: #fff;
+}
+
+.fmp-option-icon {
+  opacity: 0;
+  color: var(--wp-danger, #e53e3e);
+  transform: scale(0.5);
+  transition: all 0.2s ease;
+}
+
+.fmp-option-btn--activo .fmp-option-icon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ==============================
+   VARIANTE: TALLA (PLAYERA)
+============================== */
+.fmp-variant-talla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 12px;
+}
+
+.fmp-talla-btn {
+  background-color: var(--wp-bg-base, #111827);
+  border: 1px solid var(--wp-border, #2a2d35);
+  border-radius: 8px;
+  padding: 16px 8px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.fmp-talla-btn:hover {
+  border-color: #4a4d55;
+  transform: translateY(-2px);
+}
+
+.fmp-talla-btn--activo {
+  background-color: rgba(229, 62, 62, 0.1);
+  border-color: var(--wp-danger, #e53e3e);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.2);
+}
+
+.fmp-talla-label {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.fmp-talla-desc {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+}
+
+.fmp-talla-btn--activo .fmp-talla-desc {
+  color: var(--wp-danger, #e53e3e);
+}
+
+/* ==============================
+   VARIANTE: SANGRE
+============================== */
+.fmp-variant-sangre {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.fmp-sangre-btn {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  background-color: var(--wp-bg-base, #111827);
+  border: 2px solid var(--wp-border, #2a2d35);
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fmp-sangre-btn:hover {
+  background-color: var(--wp-bg-hover, #23252d);
+  border-color: #6b7280;
+  transform: scale(1.05);
+}
+
+.fmp-sangre-btn--activo {
+  border-color: var(--wp-danger, #e53e3e);
+  background-color: rgba(229, 62, 62, 0.2);
+  color: #ff8a8a;
+  box-shadow: 0 0 15px rgba(229, 62, 62, 0.3);
+}
+
+/* ==============================
+   VARIANTE: NIVEL
+============================== */
+.fmp-variant-nivel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fmp-nivel-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: var(--wp-bg-base, #111827);
+  border: 1px solid var(--wp-border, #2a2d35);
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  position: relative;
+}
+
+.fmp-nivel-btn:hover {
+  border-color: #4a4d55;
+  background-color: var(--wp-bg-hover, #23252d);
+}
+
+.fmp-nivel-btn--activo {
+  border-color: var(--wp-danger, #e53e3e);
+  background-color: rgba(229, 62, 62, 0.1);
+}
+
+.fmp-nivel-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #9ca3af;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.fmp-nivel-btn--activo .fmp-nivel-icon {
+  background-color: var(--wp-danger, #e53e3e);
+  color: #fff;
+}
+
+.fmp-nivel-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.fmp-nivel-nombre {
+  color: #fff;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.fmp-nivel-desc {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+.fmp-nivel-check {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%) scale(0);
+  color: var(--wp-danger, #e53e3e);
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+}
+
+.fmp-nivel-btn--activo .fmp-nivel-check {
+  transform: translateY(-50%) scale(1);
+}

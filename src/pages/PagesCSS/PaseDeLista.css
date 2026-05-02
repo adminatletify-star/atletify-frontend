@@ -1,0 +1,124 @@
+/* =============================================
+   PASE DE LISTA - Estilos mejorados
+   ============================================= */
+
+/* === WOD INFO CARD === */
+.wod-info-card {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.15) 0%, rgba(0, 0, 0, 0.8) 100%) !important;
+  border: 1px solid rgba(220, 53, 69, 0.4) !important;
+  border-radius: 20px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 8px 32px rgba(220, 53, 69, 0.15);
+}
+
+.wod-info-title {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.wod-info-title i {
+  color: #dc3545;
+}
+
+.wod-info-title span {
+  color: #ff6b6b;
+  font-weight: 800;
+}
+
+.wod-info-subtitle {
+  color: #b0b0b0;
+  font-size: 0.85rem;
+}
+
+/* === GRID DE CLASES === */
+.clases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+/* Tablets - 2 columnas */
+@media (min-width: 576px) and (max-width: 991px) {
+  .clases-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Desktop - 3 o más columnas */
+@media (min-width: 992px) {
+  .clases-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+/* Móvil pequeño - 1 columna */
+@media (max-width: 400px) {
+  .clases-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === TARJETAS DE CLASE === */
+.clase-card {
+  background: rgba(30, 30, 30, 0.6) !important;
+  backdrop-filter: blur(15px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.clase-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.clase-card.activa {
+  background: rgba(220, 53, 69, 0.2) !important;
+  border: 2px solid #dc3545 !important;
+  box-shadow: 0 10px 25px rgba(220, 53, 69, 0.25);
+}
+
+.clase-card-hora {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.clase-card-nombre {
+  color: #e0e0e0;
+  font-weight: 600;
+}
+
+.clase-card-coach {
+  color: #a0a0a0;
+  font-size: 0.85rem;
+}
+
+.clase-card.activa .clase-card-hora,
+.clase-card.activa .clase-card-nombre {
+  color: #ffffff;
+}
+
+.clase-card.activa .clase-card-coach {
+  color: #f0f0f0;
+}
+
+/* === INPUT MÉTRICA === */
+.metrica-input {
+  background: rgba(30, 30, 30, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  border-radius: 8px;
+}
+
+.metrica-input::placeholder {
+  color: #888888 !important;
+}
+
+.metrica-input:focus {
+  border-color: rgba(220, 53, 69, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1) !important;
+}

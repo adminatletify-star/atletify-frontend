@@ -1,0 +1,41 @@
+/* c:\proyectos\boxes app\BOXES\WolfPackSystem\WolfPack.Frontend\WolfPack.Frontend\src\assets\css\public-dropin.css */
+
+.public-dropin-root {
+    position: relative;
+    min-height: 100vh;
+    background-color: #111; /* Fallback check */
+    overflow-x: hidden;
+}
+
+/* El DarkVeil normalmente se expande a width/height 100% pero 
+   para garantizar que no empuje los elementos hacia abajo 
+   y se dibuje literalmente "como un papel tapiz", fijamos su contendor: */
+.public-dropin-root > div:first-child {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0; /* Lo empujamos hasta atrás */
+    pointer-events: none; /* Que el usuario no pueda clickear el fondo */
+}
+
+/* El contenedor principal donde están los forms debe resaltar en el DOM */
+.public-dropin-root .container {
+    position: relative;
+    z-index: 10;
+}
+
+/* Estetica custom extra */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.transition-all {
+    transition: all 0.2s ease-in-out;
+}
+
+.transition-all:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 0, 0, 0.2);
+}

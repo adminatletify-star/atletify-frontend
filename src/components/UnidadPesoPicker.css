@@ -1,0 +1,32 @@
+/* =============================================
+   UNIDAD PESO PICKER — Arctic Wolf Design System
+   Namespace: upp-*
+   ============================================= */
+.upp-trigger { display:inline-flex; align-items:center; justify-content:space-between; gap:.4rem; padding:.52rem .9rem; border-radius:10px; border:1.5px solid rgba(168,178,209,.3); background:rgba(168,178,209,.06); color:var(--secondary,#a8b2d1); font-family:var(--font-body,'Inter',sans-serif); font-size:.84rem; font-weight:600; cursor:pointer; transition:filter .18s,transform .18s; white-space:nowrap; width:100%; text-align:left; }
+.upp-trigger:hover { filter:brightness(1.15); transform:translateY(-1px); }
+.upp-trigger-left { display:flex; align-items:center; gap:.4rem; }
+.upp-trigger-valor { font-family:var(--font-stats,'Rajdhani',sans-serif); font-weight:700; font-size:.95rem; text-transform:uppercase; letter-spacing:1px; }
+.upp-chevron { font-size:.6rem; opacity:.6; flex-shrink:0; }
+
+.upp-overlay { position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.72); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:1.25rem; animation:upp-fade .18s ease; }
+@keyframes upp-fade { from{opacity:0} to{opacity:1} }
+
+.upp-panel { background:var(--bg-card,#1c1c26); border:1px solid var(--border,rgba(255,255,255,.1)); border-radius:20px; width:100%; max-width:320px; overflow:hidden; animation:upp-up .22s cubic-bezier(.34,1.56,.64,1); box-shadow:0 28px 64px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.04); }
+@keyframes upp-up { from{opacity:0;transform:translateY(28px) scale(.94)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+.upp-header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid var(--border,rgba(255,255,255,.08)); }
+.upp-title { font-family:var(--font-heading,'Oswald',sans-serif); font-size:.82rem; font-weight:700; color:var(--text-muted,#888); text-transform:uppercase; letter-spacing:1.2px; display:flex; align-items:center; gap:.45rem; }
+.upp-title i { color:var(--secondary,#a8b2d1); }
+.upp-close { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); color:var(--text-muted,#888); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:.75rem; transition:background .15s,color .15s; flex-shrink:0; }
+.upp-close:hover { background:rgba(168,178,209,.15); color:var(--secondary,#a8b2d1); }
+
+.upp-options { padding:.75rem 1rem 1rem; display:flex; flex-direction:column; gap:.4rem; }
+.upp-option { display:flex; align-items:center; gap:.85rem; width:100%; padding:.85rem 1rem; border-radius:12px; border:1.5px solid transparent; background:rgba(255,255,255,.025); color:var(--text-primary,#f0f0f5); cursor:pointer; transition:background .15s,transform .15s,border-color .15s; text-align:left; }
+.upp-option:hover { background:rgba(168,178,209,.06); border-color:rgba(168,178,209,.2); transform:translateX(4px); }
+.upp-option--activo { background:rgba(168,178,209,.08); border-color:rgba(168,178,209,.4); }
+.upp-opt-icon { width:36px; height:36px; border-radius:10px; background:rgba(168,178,209,.1); color:var(--secondary,#a8b2d1); display:flex; align-items:center; justify-content:center; font-size:.9rem; flex-shrink:0; }
+.upp-opt-info { display:flex; flex-direction:column; flex:1; min-width:0; }
+.upp-opt-nombre { font-family:var(--font-heading-alt,'Barlow Condensed',sans-serif); font-size:.88rem; font-weight:700; text-transform:uppercase; letter-spacing:.3px; }
+.upp-option--activo .upp-opt-nombre { color:var(--secondary,#a8b2d1); }
+.upp-opt-desc { font-family:var(--font-stats,'Rajdhani',sans-serif); font-size:.75rem; font-weight:700; color:var(--text-muted,#888); }
+.upp-check { font-size:.75rem; color:var(--secondary,#a8b2d1); flex-shrink:0; }

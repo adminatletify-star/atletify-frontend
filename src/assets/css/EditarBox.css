@@ -1,0 +1,386 @@
+/* =============================================
+   EDITAR BOX — Arctic Wolf Design System
+   Namespace: eb-*
+   ============================================= */
+
+/* ---- PÁGINA ---- */
+.eb-page {
+  background: var(--bg-base);
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+/* ---- HEADER STICKY ---- */
+.eb-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.5rem 0.85rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  margin-bottom: 1.5rem;
+}
+
+.eb-header-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+.eb-header-title {
+  font-family: var(--font-heading);
+  font-size: clamp(0.9rem, 3vw, 1.25rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: clamp(120px, 35vw, 400px);
+}
+
+.eb-header-title span { color: var(--primary); }
+
+/* ---- BOTÓN GUARDAR (header) ---- */
+.eb-btn-guardar {
+  background: var(--primary);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.6rem 1.25rem;
+  cursor: pointer;
+  transition: background 0.18s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.eb-btn-guardar:hover:not(:disabled) { background: var(--primary-dark); }
+.eb-btn-guardar:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ---- TABS PANEL ---- */
+.eb-tabs-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 0.6rem;
+}
+
+.eb-tabs-list {
+  display: flex;
+  flex-direction: row;
+  gap: 0.3rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.eb-tabs-list::-webkit-scrollbar { display: none; }
+
+@media (min-width: 992px) {
+  .eb-tabs-panel {
+    position: sticky;
+    top: 80px;
+  }
+  .eb-tabs-list {
+    flex-direction: column;
+    overflow-x: unset;
+  }
+}
+
+.eb-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--secondary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+  text-align: left;
+  width: 100%;
+}
+.eb-tab-btn i { font-size: 0.82rem; width: 16px; text-align: center; flex-shrink: 0; }
+.eb-tab-btn:hover { background: rgba(255,255,255,0.04); color: var(--text-primary); }
+.eb-tab-btn.active {
+  background: rgba(230, 57, 70, 0.1);
+  border-color: rgba(230, 57, 70, 0.25);
+  color: var(--primary);
+  font-weight: 600;
+}
+.eb-tab-btn.active i { color: var(--primary); }
+
+/* ---- CONTENT PANEL ---- */
+.eb-content-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+@media (min-width: 992px) {
+  .eb-content-panel { padding: 2rem 2.25rem; }
+}
+
+/* ---- SECTION TITLE ---- */
+.eb-section-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.eb-section-title i { color: var(--primary); opacity: 0.85; }
+
+/* ---- LABEL ---- */
+.eb-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--secondary);
+  margin-bottom: 0.45rem;
+}
+
+/* ---- INPUT / TEXTAREA ---- */
+.eb-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 0.7rem 1rem;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  resize: vertical;
+}
+.eb-input:focus {
+  border-color: rgba(230, 57, 70, 0.5);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+.eb-input::placeholder { color: var(--text-muted); }
+.eb-input:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ---- PRECIO ---- */
+.eb-price-group { display: flex; align-items: stretch; }
+.eb-price-prefix {
+  display: flex;
+  align-items: center;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  padding: 0.7rem 0.85rem;
+  font-family: var(--font-stats);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--success);
+  flex-shrink: 0;
+}
+.eb-price-input { border-radius: 0 10px 10px 0 !important; border-left: none !important; }
+.eb-price-input:focus { box-shadow: 0 0 0 3px var(--primary-glow); }
+
+/* ---- LOGO ---- */
+.eb-logo-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.eb-logo-preview {
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.eb-logo-controls { flex: 1; min-width: 180px; }
+
+.eb-btn-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.9rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  color: var(--secondary);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.eb-btn-upload:hover {
+  border-color: rgba(230,57,70,0.4);
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.07);
+}
+.eb-btn-quitar {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--danger);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: opacity 0.18s;
+}
+.eb-btn-quitar:hover { opacity: 0.75; }
+.eb-logo-ok {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--success);
+  margin: 0;
+}
+
+/* ---- INFO BOX ---- */
+.eb-info-box {
+  background: rgba(79, 195, 247, 0.06);
+  border: 1px solid rgba(79, 195, 247, 0.18);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--secondary);
+  line-height: 1.5;
+}
+.eb-info-box i { color: var(--accent-cool); }
+
+/* ---- FINANZAS CARD ---- */
+.eb-finanzas-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+.eb-finanzas-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+  font-size: 1.6rem;
+  color: var(--primary);
+}
+.eb-finanzas-titulo {
+  font-family: var(--font-heading-alt);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+.eb-finanzas-desc {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--secondary);
+  max-width: 480px;
+  margin: 0 auto 1.75rem;
+  line-height: 1.65;
+}
+.eb-btn-abrir {
+  background: var(--primary);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.75rem 2rem;
+  cursor: pointer;
+  transition: background 0.18s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.eb-btn-abrir:hover { background: var(--primary-dark); }
+
+/* ---- FORM ACTIONS ---- */
+.eb-form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding-top: 1.5rem;
+  margin-top: 2rem;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.eb-btn-cancelar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--secondary);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.18s;
+  text-decoration: none;
+}
+.eb-btn-cancelar:hover { border-color: rgba(230,57,70,0.4); color: var(--text-primary); }
+.eb-btn-guardar-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.75rem;
+  border-radius: 10px;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.eb-btn-guardar-form:hover:not(:disabled) { background: var(--primary-dark); }
+.eb-btn-guardar-form:disabled { opacity: 0.55; cursor: not-allowed; }

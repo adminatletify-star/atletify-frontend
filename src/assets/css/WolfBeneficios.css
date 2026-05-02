@@ -1,0 +1,565 @@
+/* ================================================
+   WOLF BENEFICIOS — WolfPack Design System
+   Reutiliza de componentes.css: .spinner-wp
+   ================================================ */
+
+/* === PÁGINA === */
+.wb-page {
+  background: var(--bg-base);
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+/* === HEADER STICKY === */
+.wb-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.25rem 0.85rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  margin-bottom: 1.5rem;
+}
+
+.wb-header-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+.wb-header-title {
+  font-family: var(--font-heading);
+  font-size: clamp(0.95rem, 3vw, 1.2rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wb-header-title span {
+  color: var(--primary);
+}
+
+.wb-nuevo-btn {
+  background: var(--primary);
+  border: none;
+  border-radius: 20px;
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.45rem 1.1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.wb-nuevo-btn:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 14px var(--primary-glow);
+}
+
+/* === EMPTY STATE === */
+.wb-empty {
+  text-align: center;
+  padding: 5rem 1rem;
+  color: var(--text-muted);
+}
+
+.wb-empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  display: block;
+  opacity: 0.25;
+}
+
+.wb-empty-text {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+}
+
+/* === TARJETA DE PLAN === */
+.wb-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.wb-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(230, 57, 70, 0.35);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+}
+
+.wb-card--futuro {
+  opacity: 0.7;
+  border-color: rgba(168, 178, 209, 0.15);
+}
+
+.wb-card--oculto {
+  border-style: dashed;
+}
+
+/* Tira de color superior */
+.wb-card-stripe {
+  height: 3px;
+  background: var(--primary);
+  flex-shrink: 0;
+}
+
+.wb-card--futuro .wb-card-stripe {
+  background: var(--secondary);
+}
+
+/* Badges absolutos */
+.wb-badge-abs {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+}
+
+.wb-badge-abs--oculto {
+  background: rgba(107, 114, 128, 0.15);
+  border: 1px solid rgba(107, 114, 128, 0.3);
+  color: var(--text-muted);
+}
+
+.wb-badge-abs--futuro {
+  background: rgba(79, 195, 247, 0.12);
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  color: var(--accent-cool);
+}
+
+/* Cuerpo */
+.wb-card-body {
+  padding: 1rem 1.1rem 0.75rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.wb-plan-nombre {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.5rem;
+  padding-right: 2.5rem;
+  line-height: 1.2;
+}
+
+/* Precio */
+.wb-precio-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.wb-precio-monto {
+  font-family: var(--font-stats);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.wb-precio-periodo {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Badge ahorro */
+.wb-ahorro-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid rgba(46, 204, 113, 0.28);
+  color: var(--success);
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  margin-bottom: 0.75rem;
+  align-self: flex-start;
+}
+
+.wb-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0.6rem 0;
+}
+
+/* Lista de features */
+.wb-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.wb-feature-item {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  line-height: 1.3;
+}
+
+.wb-feature-item i {
+  width: 14px;
+  text-align: center;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+}
+
+.wb-bullet-dot {
+  font-size: 0.35rem !important;
+  color: var(--primary) !important;
+  vertical-align: middle;
+}
+
+/* Alerta de precio programado */
+.wb-alerta-precio {
+  background: rgba(243, 156, 18, 0.07);
+  border: 1px solid rgba(243, 156, 18, 0.22);
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  color: var(--warning);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin-top: auto;
+  margin-bottom: 0.5rem;
+}
+
+.wb-alerta-precio i {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Footer del card */
+.wb-card-footer {
+  padding: 0.7rem 1.1rem 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.wb-btn-configurar {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--secondary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.wb-btn-configurar:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.05);
+}
+
+/* ================================================
+   MODAL MAESTRO
+   ================================================ */
+.wb-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.wb-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  width: 100%;
+  max-width: 780px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  animation: wb-modal-in 0.2s ease;
+}
+
+@keyframes wb-modal-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+.wb-modal-header {
+  background: var(--bg-elevated);
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-radius: 18px 18px 0 0;
+}
+
+.wb-modal-titulo {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.wb-modal-titulo i {
+  color: var(--primary);
+}
+
+.wb-modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  flex-shrink: 0;
+  font-size: 0.75rem;
+}
+
+.wb-modal-close:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.wb-modal-body {
+  padding: 1.25rem;
+  flex: 1;
+}
+
+.wb-modal-footer {
+  padding: 0.85rem 1.25rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg-elevated);
+  position: sticky;
+  bottom: 0;
+  border-radius: 0 0 18px 18px;
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Etiquetas de sección del modal */
+.wb-section-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wb-section-label--rojo  { color: var(--primary);     }
+.wb-section-label--verde { color: var(--success);     }
+.wb-section-label--warn  { color: var(--warning);     }
+.wb-section-label--info  { color: var(--accent-cool); }
+
+/* Inputs */
+.wb-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  resize: vertical;
+}
+
+.wb-input:focus {
+  border-color: rgba(230, 57, 70, 0.45);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.wb-input option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.wb-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.wb-helper {
+  font-family: var(--font-body);
+  font-size: 0.67rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  line-height: 1.4;
+}
+
+/* Switches box */
+.wb-switches-box {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.5rem;
+}
+
+/* Programador box */
+.wb-prog-box {
+  background: rgba(79, 195, 247, 0.04);
+  border: 1px solid rgba(79, 195, 247, 0.13);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.wb-prog-sublabel {
+  font-family: var(--font-heading-alt);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.65rem;
+  display: block;
+}
+
+/* Botones del footer modal */
+.wb-btn-cancel {
+  flex: 1;
+  padding: 0.6rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--secondary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.wb-btn-cancel:hover {
+  border-color: rgba(168, 178, 209, 0.4);
+  color: var(--text-primary);
+}
+
+.wb-btn-save {
+  flex: 2;
+  padding: 0.6rem;
+  background: var(--primary);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.wb-btn-save:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 14px var(--primary-glow);
+}

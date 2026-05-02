@@ -1,0 +1,298 @@
+/* ============================================
+   WOLFPACK SYSTEM - COMPONENTES COMPARTIDOS
+   Patrones reutilizables del Design System.
+   Importado globalmente en main.jsx.
+   ============================================ */
+
+/* ==========================================
+   TARJETA DE VIDRIO (Glassmorphism)
+   Uso: paneles, modales flotantes, cards
+   ========================================== */
+.tarjeta-vidrio {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.tarjeta-vidrio:hover {
+  border-color: var(--border-hover);
+}
+
+/* ==========================================
+   TARJETA DE PANEL (Panel oscuro estándar)
+   Uso: secciones internas de páginas
+   ========================================== */
+.tarjeta-panel {
+  background: rgba(28, 28, 38, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* ==========================================
+   ESTADO VACÍO
+   Uso: cuando no hay datos que mostrar
+   ========================================== */
+.estado-vacio,
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-muted);
+}
+
+.estado-vacio i,
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+  opacity: 0.4;
+}
+
+.estado-vacio p,
+.empty-state p {
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* ==========================================
+   ETIQUETA DE CAMPO (Label uppercase)
+   Uso: labels de formulario estilo admin
+   ========================================== */
+.etiqueta-campo {
+  display: block;
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--secondary);
+  margin-bottom: 0.5rem;
+}
+
+/* ==========================================
+   ENTRADA OSCURA (Input estilo dark panel)
+   Uso: formularios dentro de paneles
+   ========================================== */
+.entrada-oscura {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  transition: var(--transition);
+}
+
+.entrada-oscura::placeholder {
+  color: var(--text-muted);
+}
+
+.entrada-oscura:focus {
+  outline: none;
+  border-color: rgba(230, 57, 70, 0.5);
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.entrada-oscura option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* ==========================================
+   ALERTAS INLINE
+   Uso: mensajes de éxito / error dentro de vistas
+   ========================================== */
+.alerta-inline {
+  padding: 0.9rem 1.25rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.alerta-exito {
+  background: rgba(46, 204, 113, 0.12);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  color: #6ee09b;
+}
+
+.alerta-error {
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  color: #f08090;
+}
+
+.alerta-advertencia {
+  background: rgba(245, 166, 35, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  color: #f8c770;
+}
+
+.alerta-info {
+  background: rgba(79, 195, 247, 0.1);
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  color: #82d0f5;
+}
+
+/* ==========================================
+   TÍTULO DE SECCIÓN CON ÍCONO
+   Uso: encabezados internos de paneles
+   ========================================== */
+.titulo-seccion {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.titulo-seccion i {
+  color: var(--primary);
+}
+
+/* ==========================================
+   BADGE DE ESTADO
+   Uso: indicadores de estado en tarjetas
+   ========================================== */
+.badge-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: var(--font-heading-alt);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-estado-activo {
+  background: rgba(46, 204, 113, 0.15);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  color: #6ee09b;
+}
+
+.badge-estado-inactivo {
+  background: rgba(107, 114, 128, 0.15);
+  border: 1px solid rgba(107, 114, 128, 0.3);
+  color: var(--text-muted);
+}
+
+.badge-estado-pendiente {
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  color: #f8c770;
+}
+
+.badge-estado-primario {
+  background: rgba(230, 57, 70, 0.15);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  color: #f08090;
+}
+
+/* ==========================================
+   SPINNER WOLFPACK
+   Uso: indicador de carga
+   ========================================== */
+.spinner-wp {
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(230, 57, 70, 0.2);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: girar 0.9s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+/* ==========================================
+   SEPARADOR DE SECCIÓN
+   ========================================== */
+.separador {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0;
+}
+
+/* ==========================================
+   AVATAR INICIAL
+   Uso: avatar circular con inicial del nombre
+   ========================================== */
+.avatar-inicial {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* ==========================================
+   BARRA DE NAVEGACIÓN DE VISTAS (Tabs panel)
+   Uso: selector de sección dentro de paneles
+   ========================================== */
+.nav-panel {
+  display: flex;
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.nav-panel::-webkit-scrollbar {
+  display: none;
+}
+
+.nav-panel-tab {
+  flex: 1;
+  min-width: max-content;
+  padding: 0.9rem 1.25rem;
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border: none;
+  background: transparent;
+  color: rgba(240, 240, 245, 0.5);
+  transition: var(--transition);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.nav-panel-tab:hover {
+  color: var(--text-primary);
+  background: rgba(230, 57, 70, 0.08);
+}
+
+.nav-panel-tab.activo {
+  background: var(--primary);
+  color: #fff;
+}

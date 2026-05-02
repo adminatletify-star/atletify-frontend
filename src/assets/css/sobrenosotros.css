@@ -1,0 +1,354 @@
+/* =========================================
+   SOBRE NOSOTROS — Estilos de la página
+   Paleta: Arctic Wolf — DESIGN_SYSTEM.md
+   ========================================= */
+
+.sobre-nosotros-wrapper {
+  min-height: 100vh;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+/* Navbar */
+.sn-navbar {
+  background: rgba(11, 11, 15, 0.85) !important;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-bottom: 1px solid rgba(230, 57, 70, 0.2);
+  padding: 0.8rem 0;
+}
+
+/* Hero Section */
+.sn-hero {
+  position: relative;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 0 80px;
+  background: linear-gradient(135deg, var(--bg-base) 0%, #1a050a 50%, var(--bg-base) 100%);
+  overflow: hidden;
+}
+
+.sn-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23E63946' fill-opacity='0.05'%3E%3Cpath d='m36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm-6 6v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.sn-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 30%, var(--bg-base) 100%);
+  pointer-events: none;
+}
+
+.sn-hero-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.sn-main-title {
+  font-family: var(--font-hero);
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+}
+
+.sn-subtitle-container {
+  text-align: center;
+}
+
+.sn-subtitle {
+  font-family: var(--font-body);
+  font-size: clamp(1rem, 3vw, 1.5rem);
+  color: rgba(240, 240, 245, 0.65);
+  font-weight: 300;
+  letter-spacing: 2px;
+}
+
+/* Secciones */
+.sn-section {
+  padding: 80px 0;
+  background: var(--bg-base);
+}
+
+.sn-section-alt {
+  background: linear-gradient(180deg, var(--bg-base) 0%, #1a050a 50%, var(--bg-base) 100%);
+}
+
+.sn-section-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.sn-section-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  font-size: 2rem;
+  color: #fff;
+  box-shadow: 0 10px 40px rgba(230, 57, 70, 0.3);
+}
+
+.sn-section-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Cards principales */
+.sn-card {
+  height: 100%;
+}
+
+.sn-card-inner {
+  background: rgba(28, 28, 38, 0.5);
+  border: 1px solid rgba(230, 57, 70, 0.18);
+  border-radius: 16px;
+  padding: 2rem;
+  height: 100%;
+  transition: var(--transition);
+}
+
+.sn-card-inner:hover {
+  border-color: rgba(230, 57, 70, 0.45);
+  transform: translateY(-5px);
+  box-shadow: 0 20px 60px rgba(230, 57, 70, 0.12);
+}
+
+.sn-card-title {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.sn-card-text {
+  font-family: var(--font-body);
+  color: rgba(240, 240, 245, 0.8);
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+.sn-card-text:last-child {
+  margin-bottom: 0;
+}
+
+/* Feature Cards */
+.sn-feature-card {
+  background: rgba(20, 20, 26, 0.8);
+  border: 1px solid rgba(230, 57, 70, 0.12);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  height: 100%;
+  transition: var(--transition);
+}
+
+.sn-feature-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-8px);
+  box-shadow: 0 15px 50px rgba(230, 57, 70, 0.18);
+}
+
+.sn-feature-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(230, 57, 70, 0.18) 0%, rgba(184, 45, 56, 0.25) 100%);
+  border: 2px solid rgba(230, 57, 70, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  font-size: 1.8rem;
+  color: var(--primary);
+  transition: var(--transition);
+}
+
+.sn-feature-card:hover .sn-feature-icon {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.sn-feature-title {
+  font-family: var(--font-heading-alt);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.sn-feature-text {
+  font-family: var(--font-body);
+  color: rgba(240, 240, 245, 0.55);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Value Cards */
+.sn-value-card {
+  background: rgba(28, 28, 38, 0.4);
+  border: 1px solid rgba(230, 57, 70, 0.12);
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.sn-value-card:hover {
+  border-color: rgba(230, 57, 70, 0.38);
+  transform: translateY(-5px);
+  box-shadow: 0 20px 50px rgba(230, 57, 70, 0.12);
+}
+
+.sn-value-number {
+  font-family: var(--font-hero);
+  font-size: 4rem;
+  font-weight: 400;
+  color: rgba(230, 57, 70, 0.12);
+  position: absolute;
+  top: -10px;
+  right: 20px;
+  line-height: 1;
+}
+
+.sn-value-title {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.sn-value-text {
+  font-family: var(--font-body);
+  color: rgba(240, 240, 245, 0.65);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* CTA Section */
+.sn-cta-section {
+  padding: 100px 0;
+  background: linear-gradient(180deg, var(--bg-base) 0%, #1a050a 100%);
+  position: relative;
+}
+
+.sn-cta-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--primary) 50%, transparent 100%);
+}
+
+.sn-cta-content {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.sn-cta-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.sn-cta-text {
+  font-family: var(--font-body);
+  color: rgba(240, 240, 245, 0.65);
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+
+.sn-cta-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.sn-cta-buttons .btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: var(--transition);
+}
+
+.sn-cta-buttons .btn-danger {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border: none;
+  box-shadow: 0 10px 30px rgba(230, 57, 70, 0.3);
+}
+
+.sn-cta-buttons .btn-danger:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 40px rgba(230, 57, 70, 0.4);
+}
+
+.sn-cta-buttons .btn-outline-light {
+  border-width: 2px;
+}
+
+.sn-cta-buttons .btn-outline-light:hover {
+  background: var(--text-primary);
+  color: var(--bg-base);
+  transform: translateY(-3px);
+}
+
+/* Footer */
+.sn-footer {
+  background: var(--bg-base);
+  border-top: 1px solid rgba(230, 57, 70, 0.12);
+  color: var(--text-muted);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sn-hero { min-height: 50vh; padding: 100px 0 60px; }
+  .sn-section { padding: 60px 0; }
+  .sn-section-icon { width: 60px; height: 60px; font-size: 1.5rem; }
+  .sn-card-inner { padding: 1.5rem; }
+  .sn-feature-card { padding: 1.5rem; }
+  .sn-cta-section { padding: 60px 0; }
+  .sn-cta-buttons { flex-direction: column; }
+  .sn-cta-buttons .btn { width: 100%; }
+}

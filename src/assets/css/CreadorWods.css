@@ -1,0 +1,520 @@
+/* ============================================
+   CREADOR WODS — WolfPack Design System
+   Reutiliza de componentes.css:
+   .tarjeta-panel, .etiqueta-campo, .entrada-oscura,
+   .separador, .spinner-wp, .titulo-seccion
+   ============================================ */
+
+/* === PÁGINA === */
+.crw-page {
+  background: var(--bg-base);
+  min-height: 100vh;
+  padding-bottom: 5rem;
+}
+
+/* === HEADER STICKY === */
+.crw-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.5rem 0.85rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  margin-bottom: 2rem;
+}
+
+.crw-header-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+/* === LABEL DE SECCIÓN INTERNA === */
+.crw-section-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.crw-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.crw-section-label--gold {
+  color: var(--accent);
+}
+
+/* === INPUT TÍTULO (grande, rojo) === */
+.crw-titulo-input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--primary);
+  font-family: var(--font-heading);
+  font-size: clamp(1.1rem, 3vw, 1.5rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: var(--transition);
+}
+
+.crw-titulo-input::placeholder {
+  color: rgba(230, 57, 70, 0.35);
+  font-weight: 400;
+}
+
+.crw-titulo-input:focus {
+  outline: none;
+  border-color: rgba(230, 57, 70, 0.5);
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* === SELECT ESTILO OSCURO === */
+.crw-select {
+  width: 100%;
+  padding: 0.75rem 2.25rem 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  transition: var(--transition);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23A8B2D1' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.crw-select:focus {
+  border-color: rgba(230, 57, 70, 0.5);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+.crw-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* Select pequeño para filas de ejercicio */
+.crw-select--sm {
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  border-radius: 8px;
+}
+
+/* === SELECTOR DE CLASES === */
+.crw-clases-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.85rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1.5px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.crw-clase-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--secondary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.crw-clase-chip:hover {
+  border-color: rgba(79, 195, 247, 0.35);
+  color: var(--accent-cool);
+  background: rgba(79, 195, 247, 0.06);
+}
+
+.crw-clase-chip--active {
+  background: rgba(79, 195, 247, 0.12);
+  border-color: rgba(79, 195, 247, 0.4);
+  color: var(--accent-cool);
+  box-shadow: 0 2px 10px rgba(79, 195, 247, 0.1);
+}
+
+.crw-select-all-btn {
+  padding: 0.35rem 0.85rem;
+  background: rgba(79, 195, 247, 0.08);
+  border: 1px solid rgba(79, 195, 247, 0.25);
+  border-radius: 20px;
+  color: var(--accent-cool);
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.crw-select-all-btn:hover {
+  background: rgba(79, 195, 247, 0.18);
+  border-color: rgba(79, 195, 247, 0.45);
+}
+
+.crw-empty-text {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 0;
+  opacity: 0.6;
+}
+
+/* === CARD DE LEADERBOARD (borde dorado izquierdo) === */
+.crw-leaderboard-card {
+  border-left: 3px solid rgba(245, 166, 35, 0.5) !important;
+}
+
+/* === INFO TEXT === */
+.crw-info-text {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* === BLOQUE DE ENTRENAMIENTO === */
+.crw-bloque {
+  position: relative;
+  border-top: 4px solid transparent;
+}
+
+.crw-bloque--wod     { border-top-color: var(--primary) !important; }
+.crw-bloque--warmup  { border-top-color: var(--accent-cool) !important; }
+.crw-bloque--fuerza  { border-top-color: var(--accent) !important; }
+.crw-bloque--cashout { border-top-color: var(--success) !important; }
+
+/* === BOTÓN ELIMINAR BLOQUE === */
+.crw-delete-bloque-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(231, 76, 60, 0.08);
+  border: 1px solid rgba(231, 76, 60, 0.25);
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.8rem;
+}
+
+.crw-delete-bloque-btn:hover {
+  background: rgba(231, 76, 60, 0.2);
+  border-color: rgba(231, 76, 60, 0.5);
+}
+
+/* === SUBLABEL DENTRO DEL BLOQUE === */
+.crw-sub-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--secondary);
+  margin: 0;
+}
+
+/* === ZONA DE MOVIMIENTOS (inset oscuro) === */
+.crw-movimientos-zone {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem;
+}
+
+/* === FILA DE EJERCICIO === */
+.crw-ejercicio-row {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 0.4rem 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+/* === INPUT REPS (cyan) === */
+.crw-reps-input {
+  width: 100%;
+  padding: 0.45rem 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--accent-cool);
+  font-family: var(--font-stats);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: center;
+  transition: var(--transition);
+}
+
+.crw-reps-input::placeholder { color: rgba(79, 195, 247, 0.35); }
+
+.crw-reps-input:focus {
+  outline: none;
+  border-color: rgba(79, 195, 247, 0.4);
+  box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.1);
+}
+
+/* === INPUT PESO (dorado) === */
+.crw-peso-input {
+  width: 100%;
+  padding: 0.45rem 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--accent);
+  font-family: var(--font-stats);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: center;
+  transition: var(--transition);
+}
+
+.crw-peso-input::placeholder { color: rgba(245, 166, 35, 0.35); }
+
+.crw-peso-input:focus {
+  outline: none;
+  border-color: rgba(245, 166, 35, 0.4);
+  box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.1);
+}
+
+/* === BOTÓN AGREGAR EJERCICIO === */
+.crw-add-ejercicio-btn {
+  padding: 0.35rem 0.85rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--secondary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.crw-add-ejercicio-btn:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* === BOTÓN ELIMINAR EJERCICIO === */
+.crw-delete-ej-btn {
+  background: none;
+  border: none;
+  color: rgba(231, 76, 60, 0.5);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.crw-delete-ej-btn:hover { color: var(--danger); }
+
+/* === PLANTILLA DE JUECEO MANUAL (verde) === */
+.crw-jueceo-manual {
+  background: rgba(46, 204, 113, 0.06);
+  border: 1.5px solid rgba(46, 204, 113, 0.25);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.crw-jueceo-manual-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--success);
+  margin: 0 0 0.35rem;
+}
+
+/* === EVALUACIÓN AUTOMÁTICA (azul) === */
+.crw-jueceo-auto {
+  background: rgba(79, 195, 247, 0.05);
+  border: 1.5px dashed rgba(79, 195, 247, 0.22);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+}
+
+.crw-jueceo-auto-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent-cool);
+  margin: 0 0 0.25rem;
+}
+
+/* === TAG DE MÉTRICA === */
+.crw-metrica-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.75rem;
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  border-radius: 20px;
+  color: var(--success);
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.crw-metrica-tag i {
+  cursor: pointer;
+  color: rgba(231, 76, 60, 0.6);
+  transition: var(--transition);
+}
+
+.crw-metrica-tag i:hover { color: var(--danger); }
+
+/* === BOTÓN AGREGAR MÉTRICA === */
+.crw-add-metrica-btn {
+  padding: 0.5rem 0.85rem;
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  border-radius: 8px;
+  color: var(--success);
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.crw-add-metrica-btn:hover {
+  background: rgba(46, 204, 113, 0.2);
+  border-color: rgba(46, 204, 113, 0.5);
+}
+
+/* === BOTÓN AGREGAR SECCIÓN (dashed, full-width) === */
+.crw-add-bloque-btn {
+  width: 100%;
+  padding: 0.9rem;
+  background: transparent;
+  border: 2px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-bottom: 2rem;
+}
+
+.crw-add-bloque-btn:hover {
+  border-color: rgba(230, 57, 70, 0.3);
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.03);
+}
+
+/* === BARRA DE PIE (publicar + guardar) === */
+.crw-footer-bar {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* === TOGGLE PUBLICADO === */
+.crw-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.crw-toggle-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* === BOTÓN GUARDAR === */
+.crw-save-btn {
+  padding: 0.75rem 2rem;
+  background: var(--primary);
+  border: none;
+  border-radius: 20px;
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+}
+
+.crw-save-btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 20px var(--primary-glow);
+}
+
+.crw-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

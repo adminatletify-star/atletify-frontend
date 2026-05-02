@@ -1,0 +1,473 @@
+/* ========================================
+   BUZÓN DE SUGERENCIAS — WolfPack Dark Premium
+   ======================================== */
+
+.buzon-page {
+  min-height: 100vh;
+  background: #050505;
+  color: #e8e8e8;
+  padding-bottom: 120px;
+}
+
+/* ── HEADER ── */
+.buzon-header {
+  padding: 2rem 0 1.2rem;
+}
+.buzon-header-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 0;
+  color: #fff;
+}
+.buzon-header-sub {
+  color: #888;
+  font-size: 0.85rem;
+  margin: 0.2rem 0 0;
+}
+
+/* ── CATEGORÍA PICKER ── */
+.buzon-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+@media (min-width: 576px) {
+  .buzon-cat-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.buzon-cat-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.03);
+  color: #999;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: left;
+}
+.buzon-cat-btn:hover {
+  border-color: rgba(220, 53, 69, 0.3);
+  background: rgba(220, 53, 69, 0.06);
+  color: #ccc;
+}
+.buzon-cat-btn.active {
+  border-color: #dc3545;
+  background: rgba(220, 53, 69, 0.12);
+  color: #fff;
+  box-shadow: 0 0 20px rgba(220, 53, 69, 0.1);
+}
+.buzon-cat-btn .cat-emoji {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+/* ── TEXTAREA ── */
+.buzon-textarea {
+  width: 100%;
+  min-height: 140px;
+  padding: 1rem;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: #e8e8e8;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.3s;
+  outline: none;
+}
+.buzon-textarea:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+.buzon-textarea::placeholder {
+  color: #555;
+}
+.buzon-char-count {
+  text-align: right;
+  font-size: 0.72rem;
+  color: #555;
+  margin-top: 0.3rem;
+}
+.buzon-char-count.warn {
+  color: #e67e22;
+}
+.buzon-char-count.danger {
+  color: #dc3545;
+}
+
+/* ── BOTÓN ENVIAR ── */
+.buzon-btn-enviar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.9rem 1.5rem;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #dc3545, #b02a37);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.3px;
+}
+.buzon-btn-enviar:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(220, 53, 69, 0.35);
+}
+.buzon-btn-enviar:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── FORMULARIO PANEL ── */
+.buzon-form-panel {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 20px;
+  padding: 1.5rem;
+}
+
+/* ── SECCIÓN LABEL ── */
+.buzon-section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #666;
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.buzon-section-label i {
+  color: #dc3545;
+  font-size: 0.8rem;
+}
+
+/* ── HISTORIAL PERSONAL ── */
+.buzon-historial-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 1rem 1.2rem;
+  transition: border-color 0.2s;
+}
+.buzon-historial-card:hover {
+  border-color: rgba(255,255,255,0.12);
+}
+.buzon-historial-msg {
+  color: #ccc;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.buzon-historial-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+  flex-wrap: wrap;
+}
+.buzon-badge-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  border: 1px solid rgba(220, 53, 69, 0.2);
+}
+.buzon-badge-estatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.buzon-badge-estatus.pendiente {
+  background: rgba(243, 156, 18, 0.1);
+  color: #f39c12;
+  border: 1px solid rgba(243, 156, 18, 0.2);
+}
+.buzon-badge-estatus.leido {
+  background: rgba(46, 204, 113, 0.1);
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.2);
+}
+.buzon-badge-estatus.archivado {
+  background: rgba(150, 150, 150, 0.1);
+  color: #999;
+  border: 1px solid rgba(150, 150, 150, 0.2);
+}
+.buzon-historial-fecha {
+  font-size: 0.7rem;
+  color: #555;
+  margin-left: auto;
+}
+
+/* ── EMPTY STATE ── */
+.buzon-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #555;
+}
+.buzon-empty i {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+.buzon-empty h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #777;
+  margin-bottom: 0.3rem;
+}
+.buzon-empty p {
+  font-size: 0.8rem;
+  color: #555;
+}
+
+/* ── SEPARADOR ── */
+.buzon-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.05);
+  margin: 1.5rem 0;
+  border: none;
+}
+
+/* ── SUCCESS ANIMATION ── */
+.buzon-success-msg {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.2rem;
+  border-radius: 14px;
+  background: rgba(46, 204, 113, 0.08);
+  border: 1px solid rgba(46, 204, 113, 0.2);
+  color: #2ecc71;
+  font-size: 0.85rem;
+  font-weight: 600;
+  animation: buzon-fade-in 0.4s ease;
+}
+@keyframes buzon-fade-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── DEV PANEL (para Dashboard.jsx) ── */
+.buzon-dev-panel {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.buzon-dev-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+.buzon-dev-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.buzon-dev-title i {
+  color: #dc3545;
+}
+.buzon-dev-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  background: #dc3545;
+  color: #fff;
+  padding: 0 6px;
+}
+.buzon-dev-filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.buzon-dev-filter {
+  padding: 0.35rem 0.8rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: #888;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.buzon-dev-filter:hover {
+  border-color: rgba(220, 53, 69, 0.3);
+  color: #ccc;
+}
+.buzon-dev-filter.active {
+  background: rgba(220, 53, 69, 0.12);
+  border-color: #dc3545;
+  color: #fff;
+}
+.buzon-dev-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.buzon-dev-tab {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+.buzon-dev-tab:hover {
+  color: #aaa;
+}
+.buzon-dev-tab.active {
+  color: #dc3545;
+  border-bottom-color: #dc3545;
+}
+.buzon-dev-body {
+  padding: 1rem 1.2rem;
+  max-height: 500px;
+  overflow-y: auto;
+}
+.buzon-dev-item {
+  display: flex;
+  gap: 0.8rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  align-items: flex-start;
+}
+.buzon-dev-item:last-child {
+  border-bottom: none;
+}
+.buzon-dev-prio {
+  width: 4px;
+  min-height: 40px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  align-self: stretch;
+}
+.buzon-dev-prio.prio-1 { background: #dc3545; }
+.buzon-dev-prio.prio-2 { background: #e67e22; }
+.buzon-dev-prio.prio-3 { background: #f1c40f; }
+.buzon-dev-prio.prio-4 { background: #555; }
+.buzon-dev-content {
+  flex: 1;
+  min-width: 0;
+}
+.buzon-dev-sender {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #ccc;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.buzon-dev-msg-text {
+  font-size: 0.82rem;
+  color: #999;
+  margin: 0.3rem 0 0.4rem;
+  line-height: 1.5;
+}
+.buzon-dev-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  align-self: center;
+}
+.buzon-dev-action-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.03);
+  color: #666;
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.buzon-dev-action-btn:hover {
+  border-color: rgba(220, 53, 69, 0.3);
+  color: #dc3545;
+  background: rgba(220, 53, 69, 0.08);
+}
+.buzon-dev-action-btn.btn-check:hover {
+  border-color: rgba(46, 204, 113, 0.3);
+  color: #2ecc71;
+  background: rgba(46, 204, 113, 0.08);
+}
+.buzon-dev-action-btn.btn-archive:hover {
+  border-color: rgba(243, 156, 18, 0.3);
+  color: #f39c12;
+  background: rgba(243, 156, 18, 0.08);
+}
+.buzon-badge-rol {
+  display: inline-flex;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.buzon-badge-rol.adminbox {
+  background: rgba(220, 53, 69, 0.12);
+  color: #dc3545;
+}
+.buzon-badge-rol.coach {
+  background: rgba(230, 126, 34, 0.12);
+  color: #e67e22;
+}
+.buzon-badge-rol.atleta {
+  background: rgba(241, 196, 15, 0.12);
+  color: #f1c40f;
+}
+.buzon-badge-rol.publico {
+  background: rgba(150, 150, 150, 0.1);
+  color: #888;
+}

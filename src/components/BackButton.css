@@ -1,0 +1,25 @@
+.back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.3rem;
+  font-weight: 300;
+  line-height: 1;
+  padding: 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+  cursor: pointer;
+}
+
+.back-btn:hover {
+  background: rgba(230, 57, 70, 0.15);
+  color: #E63946;
+}
+
+.back-btn:active {
+  transform: scale(0.92);
+}

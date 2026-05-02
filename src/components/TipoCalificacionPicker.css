@@ -1,0 +1,242 @@
+/* =============================================
+   TIPO CALIFICACION PICKER — Arctic Wolf
+   Namespace: tcp-*
+   ============================================= */
+
+/* ── TRIGGER ── */
+.tcp-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.52rem 0.9rem;
+  border-radius: 10px;
+  border: 1.5px solid;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.18s, transform 0.18s;
+  white-space: nowrap;
+  width: 100%;
+  text-align: left;
+  justify-content: space-between;
+}
+
+.tcp-trigger:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.tcp-trigger--fortime {
+  background: rgba(79, 195, 247, 0.08);
+  border-color: rgba(79, 195, 247, 0.35);
+  color: var(--accent-cool, #4fc3f7);
+}
+
+.tcp-trigger--amrap {
+  background: rgba(230, 57, 70, 0.08);
+  border-color: rgba(230, 57, 70, 0.35);
+  color: var(--primary, #e63946);
+}
+
+.tcp-trigger--peso {
+  background: rgba(245, 166, 35, 0.08);
+  border-color: rgba(245, 166, 35, 0.35);
+  color: var(--accent, #f5a623);
+}
+
+.tcp-trigger-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tcp-chevron { font-size: 0.6rem; opacity: 0.6; }
+
+/* ── OVERLAY ── */
+.tcp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  animation: tcp-fade-in 0.18s ease;
+}
+
+@keyframes tcp-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── PANEL ── */
+.tcp-panel {
+  background: var(--bg-card, #1c1c26);
+  border: 1px solid var(--border, rgba(255,255,255,0.1));
+  border-radius: 20px;
+  width: 100%;
+  max-width: 380px;
+  overflow: hidden;
+  animation: tcp-slide-up 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+@keyframes tcp-slide-up {
+  from { opacity: 0; transform: translateY(28px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── HEADER ── */
+.tcp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+}
+
+.tcp-title {
+  font-family: var(--font-heading, 'Oswald', sans-serif);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.tcp-close {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted, #888);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.tcp-close:hover {
+  background: rgba(230, 57, 70, 0.15);
+  color: var(--primary, #e63946);
+}
+
+/* ── OPCIONES ── */
+.tcp-options {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.tcp-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  border: 1.5px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary, #f0f0f5);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s, border-color 0.15s;
+  text-align: left;
+}
+
+.tcp-option:hover {
+  background: rgba(255, 255, 255, 0.07);
+  transform: translateX(4px);
+}
+
+.tcp-option--activo { font-weight: 700; }
+
+.tcp-option--activo.tcp-option--fortime {
+  border-color: rgba(79, 195, 247, 0.4);
+  background: rgba(79, 195, 247, 0.07);
+}
+
+.tcp-option--activo.tcp-option--amrap {
+  border-color: rgba(230, 57, 70, 0.4);
+  background: rgba(230, 57, 70, 0.07);
+}
+
+.tcp-option--activo.tcp-option--peso {
+  border-color: rgba(245, 166, 35, 0.4);
+  background: rgba(245, 166, 35, 0.07);
+}
+
+/* Icono */
+.tcp-option-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.tcp-option--fortime .tcp-option-icon-wrap {
+  background: rgba(79, 195, 247, 0.1);
+  color: var(--accent-cool, #4fc3f7);
+}
+
+.tcp-option--amrap .tcp-option-icon-wrap {
+  background: rgba(230, 57, 70, 0.1);
+  color: var(--primary, #e63946);
+}
+
+.tcp-option--peso .tcp-option-icon-wrap {
+  background: rgba(245, 166, 35, 0.1);
+  color: var(--accent, #f5a623);
+}
+
+/* Textos */
+.tcp-option-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.tcp-option-nombre {
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.tcp-option--fortime .tcp-option-nombre { color: var(--accent-cool, #4fc3f7); }
+.tcp-option--amrap   .tcp-option-nombre { color: var(--primary, #e63946); }
+.tcp-option--peso    .tcp-option-nombre { color: var(--accent, #f5a623); }
+
+.tcp-option-desc {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.72rem;
+  color: var(--text-muted, #888);
+  margin-top: 0.1rem;
+}
+
+/* Check */
+.tcp-check {
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}
+
+.tcp-option--fortime .tcp-check { color: var(--accent-cool, #4fc3f7); }
+.tcp-option--amrap   .tcp-check { color: var(--primary, #e63946); }
+.tcp-option--peso    .tcp-check { color: var(--accent, #f5a623); }

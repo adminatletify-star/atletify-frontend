@@ -1,0 +1,189 @@
+/* =============================================
+   MOVER CATEGORIA MODAL — Arctic Wolf
+   Namespace: mcm-*
+   ============================================= */
+
+/* ── TRIGGER ── */
+.mcm-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(79, 195, 247, 0.07);
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  color: var(--accent-cool, #4fc3f7);
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, transform 0.18s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mcm-trigger:hover {
+  background: rgba(79, 195, 247, 0.15);
+  border-color: rgba(79, 195, 247, 0.55);
+  transform: translateY(-1px);
+}
+
+.mcm-trigger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.mcm-chevron { font-size: 0.58rem; opacity: 0.7; }
+
+/* ── OVERLAY ── */
+.mcm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  animation: mcm-fade-in 0.18s ease;
+}
+
+@keyframes mcm-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── PANEL ── */
+.mcm-panel {
+  background: var(--bg-card, #1c1c26);
+  border: 1px solid var(--border, rgba(255,255,255,0.1));
+  border-top: 2px solid var(--accent-cool, #4fc3f7);
+  border-radius: 18px;
+  width: 100%;
+  max-width: 360px;
+  overflow: hidden;
+  animation: mcm-slide-up 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+@keyframes mcm-slide-up {
+  from { opacity: 0; transform: translateY(24px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── HEADER ── */
+.mcm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+}
+
+.mcm-title {
+  font-family: var(--font-heading, 'Oswald', sans-serif);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent-cool, #4fc3f7);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.mcm-close {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-muted, #888);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.7rem;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.mcm-close:hover {
+  background: rgba(230, 57, 70, 0.12);
+  color: var(--primary, #e63946);
+}
+
+/* ── OPCIONES ── */
+.mcm-options {
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.mcm-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text-primary, #f0f0f5);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s, border-color 0.15s;
+  text-align: left;
+}
+
+.mcm-option:hover {
+  background: rgba(79, 195, 247, 0.07);
+  border-color: rgba(79, 195, 247, 0.25);
+  transform: translateX(3px);
+}
+
+.mcm-option-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-cool, #4fc3f7);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.mcm-option-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.mcm-option-nombre {
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.87rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-primary, #f0f0f5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mcm-option-costo {
+  font-family: var(--font-stats, 'Rajdhani', sans-serif);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--success, #2ecc71);
+  margin-top: 0.05rem;
+}
+
+.mcm-arrow {
+  font-size: 0.7rem;
+  color: var(--accent-cool, #4fc3f7);
+  opacity: 0.5;
+  flex-shrink: 0;
+}

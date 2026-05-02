@@ -1,0 +1,457 @@
+/* =============================================
+   REGISTRO MANUAL — Paleta: Arctic Wolf
+   ============================================= */
+
+/* === DATE WHEEL OVERLAY — Centrado en pantalla === */
+.dwp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: dwp-fade-in 0.2s ease;
+  padding: 12px;
+  /* Empujar hacia arriba para que la navbar no lo tape */
+  padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+}
+
+@keyframes dwp-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.dwp-modal {
+  width: 100%;
+  max-width: 420px;
+  /* Nunca más alto que la pantalla menos la navbar */
+  max-height: calc(100dvh - 110px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: linear-gradient(
+    160deg,
+    rgba(22, 22, 32, 0.99) 0%,
+    rgba(12, 12, 18, 1) 100%
+  );
+  backdrop-filter: blur(30px) saturate(1.6);
+  -webkit-backdrop-filter: blur(30px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.7),
+    0 8px 24px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  animation: dwp-pop-in 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+@keyframes dwp-pop-in {
+  from { transform: scale(0.88) translateY(12px); opacity: 0; }
+  to   { transform: scale(1)    translateY(0);    opacity: 1; }
+}
+
+/* El picker hereda el fondo del modal */
+.dwp-modal .date-wheel-picker {
+  max-width: 100%;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 16px 20px 20px;
+}
+
+/* Móvil pequeño (ancho o altura): reducir tamaños para que todo quepa sin scroll */
+@media (max-width: 480px), (max-height: 720px) {
+  .dwp-overlay {
+    padding: 8px;
+    padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .dwp-modal {
+    max-height: calc(100dvh - 100px);
+    border-radius: 22px;
+  }
+
+  .dwp-modal .date-wheel-picker {
+    padding: 12px 14px 16px;
+  }
+}
+
+/* Contenedor principal */
+.registro-manual-container {
+  background: linear-gradient(135deg, var(--bg-base) 0%, var(--bg-elevated) 100%);
+  min-height: 100vh;
+  padding: 0;
+}
+
+.registro-manual-container > .container {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+/* === CARDS === */
+.registro-card {
+  background: rgba(28, 28, 38, 0.6) !important;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 24px;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.registro-card-security {
+  background: rgba(230, 57, 70, 0.04) !important;
+  border: 1px solid rgba(230, 57, 70, 0.18) !important;
+}
+
+/* === LABELS === */
+.registro-label {
+  font-family: var(--font-heading-alt);
+  color: var(--secondary) !important;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* === INPUTS === */
+.registro-input {
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-body);
+  padding: 12px 16px;
+  font-size: 1rem;
+  transition: var(--transition);
+}
+
+.registro-input:focus {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-color: rgba(230, 57, 70, 0.5) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
+  outline: none;
+}
+
+.registro-input::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 1;
+}
+
+.registro-input option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* === TÍTULOS DE SECCIÓN === */
+.registro-section-title {
+  font-family: var(--font-heading);
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1.25rem;
+}
+
+/* === HEADER === */
+.registro-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.5rem 0.85rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.registro-header-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+.registro-header-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.registro-header-subtitle {
+  font-family: var(--font-body);
+  color: var(--secondary);
+  margin-bottom: 0;
+  font-size: 0.9rem;
+}
+
+/* === BOTONES === */
+.registro-btn {
+  border-radius: 14px;
+  padding: 12px 24px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  border: none;
+  transition: var(--transition);
+}
+
+.registro-btn-submit {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 15px var(--primary-glow);
+}
+
+.registro-btn-submit:hover {
+  background: var(--primary-dark);
+}
+
+.registro-btn-back {
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+/* === PANEL DE SEGURIDAD === */
+.registro-security-icon {
+  width: 80px;
+  height: 80px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.1);
+  margin-bottom: 1rem;
+}
+
+.registro-security-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 1.3rem;
+  text-transform: uppercase;
+}
+
+.registro-security-desc {
+  font-family: var(--font-body);
+  color: var(--secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.registro-password-box {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+
+.registro-password-label {
+  font-family: var(--font-heading-alt);
+  color: var(--secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+}
+
+.registro-password-value {
+  font-family: var(--font-stats);
+  color: var(--success);
+  font-weight: 700;
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+/* PIN Input */
+.registro-pin-container {
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+
+.registro-pin-input {
+  font-family: var(--font-stats);
+  font-size: 1.5rem;
+  text-align: center;
+  letter-spacing: 8px;
+  color: var(--text-primary);
+}
+
+/* === FECHA TRIGGER BUTTON === */
+.registro-fecha-btn {
+  display: flex;
+  align-items: center;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-body);
+  padding: 12px 16px;
+  font-size: 1rem;
+  transition: var(--transition);
+  text-align: left;
+  cursor: pointer;
+}
+
+.registro-fecha-btn:hover {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-color: rgba(230, 57, 70, 0.4) !important;
+}
+
+.registro-fecha-btn--open {
+  border-color: rgba(230, 57, 70, 0.5) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
+}
+
+.registro-fecha-placeholder {
+  color: var(--text-muted);
+}
+
+/* === SEPARADORES === */
+.registro-divider {
+  border-color: var(--border);
+  margin: 1.5rem 0;
+}
+
+/* === SECCIÓN DE MEMBRESÍA === */
+.registro-total-box {
+  background: rgba(70, 130, 180, 0.05);
+  border: 1px solid rgba(70, 130, 180, 0.2);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.registro-total-box small {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+}
+
+/* === MODAL STYLES (Reutilizado de GestionFinanzas) === */
+.finanzas-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1050;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+.finanzas-modal {
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  animation: finanzasModalIn 0.22s ease-out;
+}
+
+@keyframes finanzasModalIn {
+  from { transform: scale(0.95) translateY(10px); opacity: 0; }
+  to   { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.finanzas-pdv-titulo {
+  color: var(--success);
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.finanzas-modal-sub {
+  font-family: var(--font-body);
+  color: var(--secondary);
+  font-size: 0.9rem;
+}
+
+.finanzas-pdv-total-box {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(46, 204, 113, 0.2) !important;
+}
+
+.finanzas-pdv-total-amount {
+  font-family: var(--font-stats);
+}
+
+.etiqueta-campo {
+  font-family: var(--font-heading-alt);
+  color: var(--secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.entrada-oscura {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: var(--text-primary) !important;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+}
+
+.entrada-oscura:focus {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-color: var(--primary) !important;
+  outline: none;
+}
+
+.finanzas-modal-btns {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.finanzas-modal-btn-cancel {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--secondary);
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.finanzas-modal-btn-cancel:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+}

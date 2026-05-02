@@ -1,0 +1,398 @@
+/* =========================================
+   LISTA COMPETENCIAS — Estilos de la página
+   Paleta: Arctic Wolf — DESIGN_SYSTEM.md
+   ========================================= */
+
+/* ── WRAPPER ──────────────────────────────── */
+.lc-wrapper {
+  min-height: 100vh;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+/* ── BOTÓN VOLVER (posición fija top-left) ── */
+.lc-back-fixed {
+  position: fixed;
+  top: 1.4rem;
+  left: 1.4rem;
+  z-index: 1200;
+}
+
+.lc-back-btn {
+  position: fixed;
+  top: 1.4rem;
+  left: 1.4rem;
+  z-index: 1200;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-bg);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: var(--transition);
+  text-decoration: none;
+}
+
+.lc-back-btn:hover {
+  border-color: var(--border-hover);
+  background: rgba(230, 57, 70, 0.12);
+  color: var(--primary);
+  transform: translateX(-3px);
+}
+
+/* ── HERO SECTION ─────────────────────────── */
+.lc-hero {
+  position: relative;
+  min-height: 52vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 100px 1rem 70px;
+  background: linear-gradient(160deg, #0f0006 0%, var(--bg-base) 55%, #0d000d 100%);
+  overflow: hidden;
+}
+
+/* Patrón de fondo */
+.lc-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23E63946' fill-opacity='0.04'%3E%3Cpath d='m36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm-6 6v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* Glow central */
+.lc-hero::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(230, 57, 70, 0.14) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.lc-hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.lc-hero-tag {
+  display: block;
+  font-family: var(--font-heading-alt);
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 1rem;
+}
+
+.lc-hero-titulo {
+  font-family: var(--font-hero);
+  font-size: clamp(3.5rem, 10vw, 7rem);
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  line-height: 0.95;
+  margin: 0;
+}
+
+.lc-hero-titulo span {
+  color: var(--primary);
+}
+
+.lc-hero-linea {
+  width: 70px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), transparent);
+  margin: 1.4rem auto 0;
+  border-radius: 2px;
+}
+
+.lc-hero-sub {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--secondary);
+  margin-top: 1rem;
+  letter-spacing: 0.5px;
+}
+
+/* ── SECCIÓN DE GRID ──────────────────────── */
+.lc-grid-section {
+  padding: 3rem 0 5rem;
+}
+
+/* ── ESTADO VACÍO ─────────────────────────── */
+.lc-empty {
+  text-align: center;
+  padding: 4rem 1rem;
+}
+
+.lc-empty-icon {
+  font-size: 3.5rem;
+  color: rgba(230, 57, 70, 0.2);
+  display: block;
+  margin-bottom: 1.2rem;
+}
+
+.lc-empty-titulo {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--secondary);
+  margin-bottom: 0.5rem;
+}
+
+.lc-empty-sub {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+/* ── LOADER ───────────────────────────────── */
+.lc-loader {
+  text-align: center;
+  padding: 5rem 1rem;
+}
+
+.lc-loader-spinner {
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 3px solid var(--bg-card);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: lc-spin 0.75s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes lc-spin {
+  to { transform: rotate(360deg); }
+}
+
+.lc-loader-texto {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--secondary);
+}
+
+/* ── TARJETA DE COMPETENCIA ───────────────── */
+.lc-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.lc-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), transparent);
+  opacity: 0;
+  transition: var(--transition);
+  z-index: 1;
+}
+
+.lc-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 20px 50px rgba(230, 57, 70, 0.15);
+  transform: translateY(-6px);
+}
+
+.lc-card:hover::before {
+  opacity: 1;
+}
+
+/* Banner superior */
+.lc-card-banner {
+  position: relative;
+  height: 190px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1a0005 0%, #0d0d0d 100%);
+}
+
+.lc-card-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lc-card-banner-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lc-card-banner-placeholder i {
+  font-size: 3.5rem;
+  color: rgba(230, 57, 70, 0.18);
+}
+
+/* Degradado sobre el banner */
+.lc-card-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, var(--bg-card) 0%, transparent 55%);
+}
+
+/* Badge de estatus */
+.lc-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-family: var(--font-heading-alt);
+  font-weight: 600;
+  font-size: 0.62rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 0.22rem 0.6rem;
+  border-radius: 6px;
+  z-index: 2;
+}
+
+.lc-badge--activa {
+  background: rgba(230, 57, 70, 0.2);
+  color: var(--primary);
+  border: 1px solid rgba(230, 57, 70, 0.45);
+}
+
+.lc-badge--inscripciones {
+  background: rgba(245, 166, 35, 0.13);
+  color: var(--accent);
+  border: 1px solid rgba(245, 166, 35, 0.4);
+}
+
+/* Cuerpo de la tarjeta */
+.lc-card-body {
+  padding: 1.3rem 1.4rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 0.5rem;
+}
+
+.lc-card-nombre {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.lc-card-fecha {
+  font-family: var(--font-stats);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--secondary);
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.lc-card-fecha i {
+  color: var(--primary);
+  font-size: 0.75rem;
+}
+
+/* Chips de categorías */
+.lc-card-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.2rem;
+}
+
+.lc-cat-chip {
+  font-family: var(--font-heading-alt);
+  font-weight: 600;
+  font-size: 0.58rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.18rem 0.5rem;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  color: var(--secondary);
+  border: 1px solid var(--border);
+}
+
+.lc-cat-mas {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  align-self: center;
+}
+
+/* CTA */
+.lc-card-cta {
+  margin-top: auto;
+  padding-top: 1rem;
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border-hover);
+  border-radius: 10px;
+  color: var(--primary);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding-block: 0.6rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.lc-card-cta:hover {
+  background: rgba(230, 57, 70, 0.1);
+  gap: 0.8rem;
+}
+
+/* ── RESPONSIVE ───────────────────────────── */
+@media (max-width: 576px) {
+  .lc-hero {
+    padding: 80px 1rem 50px;
+  }
+
+  .lc-back-btn {
+    top: 1rem;
+    left: 1rem;
+  }
+
+  .lc-card-banner {
+    height: 160px;
+  }
+}

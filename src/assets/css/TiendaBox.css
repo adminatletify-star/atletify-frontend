@@ -1,0 +1,207 @@
+.tienda-atleta-page {
+  min-height: 100vh;
+  background-color: #0a0a0a;
+}
+
+.tienda-header {
+  background: linear-gradient(135deg, rgba(220,53,69,0.1) 0%, rgba(10,10,10,1) 100%);
+  border-bottom: 1px solid rgba(220,53,69,0.2);
+  padding: 1.5rem;
+}
+
+.tienda-header-icon {
+  width: 50px;
+  height: 50px;
+  background-color: rgba(220,53,69,0.15);
+  color: #dc3545;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.tienda-header-title {
+  color: #fff;
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.75rem;
+}
+
+.tienda-header-title span {
+  color: #dc3545;
+}
+
+/* Pills Apartados */
+.apartados-pills {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+.apartado-pill {
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  color: #ccc;
+  padding: 8px 16px;
+  border-radius: 20px;
+  white-space: nowrap;
+  transition: all 0.3s;
+}
+.apartado-pill:hover {
+  background-color: #2c1214;
+  color: #fff;
+}
+.apartado-pill.active {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: #fff;
+  font-weight: bold;
+}
+
+/* Producto Card */
+.catalogo-title, .carrito-title {
+  color: #fff;
+  font-weight: 600;
+  border-bottom: 1px solid #333;
+  padding-bottom: 10px;
+}
+
+.producto-card {
+  background-color: #1a1a1a;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #2a2a2a;
+  transition: transform 0.2s, box-shadow 0.2s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.producto-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(220,53,69,0.15);
+  border-color: rgba(220,53,69,0.3);
+}
+
+.producto-img-wrapper {
+  height: 180px;
+  background-color: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.producto-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.producto-img-placeholder {
+  font-size: 3rem;
+  color: #333;
+}
+.badge-agotado {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(0,0,0,0.8);
+  color: #dc3545;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  border: 1px solid #dc3545;
+}
+
+.producto-info {
+  padding: 15px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+.producto-nombre {
+  color: #fff;
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+}
+.producto-precio {
+  color: #dc3545;
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-bottom: 5px;
+}
+
+/* Carrito */
+.carrito-container {
+  background-color: #1a1a1a;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #2a2a2a;
+  position: sticky;
+  top: 20px;
+}
+.carrito-item {
+  border-bottom: 1px solid #333;
+  padding: 15px 0;
+}
+.carrito-item-info {
+  display: flex;
+  color: #fff;
+}
+.cant-controls {
+  display: flex;
+  align-items: center;
+  background-color: #0a0a0a;
+  border-radius: 6px;
+  border: 1px solid #333;
+  overflow: hidden;
+}
+.btn-cant {
+  background: transparent;
+  border: none;
+  color: #fff;
+  padding: 5px 12px;
+}
+.btn-cant:hover:not(:disabled) {
+  background-color: #2c1214;
+  color: #dc3545;
+}
+.btn-cant:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.cant-value {
+  color: #fff;
+  min-width: 30px;
+  text-align: center;
+  font-weight: bold;
+}
+.btn-remove {
+  background: transparent;
+  border: 1px solid #dc3545;
+  color: #dc3545;
+  border-radius: 6px;
+  padding: 5px 10px;
+  transition: all 0.2s;
+}
+.btn-remove:hover {
+  background-color: #dc3545;
+  color: #fff;
+}
+.carrito-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  font-size: 1.2rem;
+}
+.total-amount {
+  font-weight: 800;
+  color: #dc3545;
+  font-size: 1.5rem;
+}
+.carrito-warning {
+  background-color: rgba(13, 202, 240, 0.1);
+  border: 1px dashed rgba(13, 202, 240, 0.4);
+  border-radius: 8px;
+}

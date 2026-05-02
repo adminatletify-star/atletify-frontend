@@ -1,0 +1,186 @@
+/* =============================================
+   CATEGORIA BASE MASTER PICKER — Arctic Wolf
+   Namespace: cbp-*
+   ============================================= */
+
+/* ── TRIGGER ── */
+.cbp-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.52rem 0.9rem;
+  border-radius: 10px;
+  border: 1.5px solid;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.18s, transform 0.18s;
+  white-space: nowrap;
+  width: 100%;
+  text-align: left;
+}
+
+.cbp-trigger:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.cbp-trigger-left { display: flex; align-items: center; gap: 0.5rem; }
+.cbp-chevron      { font-size: 0.6rem; opacity: 0.6; }
+
+.cbp-trigger--novato    { background: rgba(173,181,189,0.08); border-color: rgba(173,181,189,0.3); color: #adb5bd; }
+.cbp-trigger--escalado  { background: rgba(79,195,247,0.08);  border-color: rgba(79,195,247,0.3);  color: var(--accent-cool, #4fc3f7); }
+.cbp-trigger--intermedio{ background: rgba(245,166,35,0.08);  border-color: rgba(245,166,35,0.3);  color: var(--accent, #f5a623); }
+.cbp-trigger--rx        { background: rgba(46,204,113,0.08);  border-color: rgba(46,204,113,0.3);  color: var(--success, #2ecc71); }
+.cbp-trigger--master    { background: rgba(155,89,182,0.08);  border-color: rgba(155,89,182,0.3);  color: #9b59b6; }
+
+/* ── OVERLAY ── */
+.cbp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  animation: cbp-fade 0.18s ease;
+}
+
+@keyframes cbp-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── PANEL ── */
+.cbp-panel {
+  background: var(--bg-card, #1c1c26);
+  border: 1px solid var(--border, rgba(255,255,255,0.1));
+  border-radius: 20px;
+  width: 100%;
+  max-width: 380px;
+  overflow: hidden;
+  animation: cbp-up 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 28px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+@keyframes cbp-up {
+  from { opacity: 0; transform: translateY(28px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── HEADER ── */
+.cbp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+}
+
+.cbp-title {
+  font-family: var(--font-heading, 'Oswald', sans-serif);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.cbp-close {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted, #888);
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 0.75rem;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.cbp-close:hover { background: rgba(230,57,70,0.15); color: var(--primary, #e63946); }
+
+/* ── OPCIONES ── */
+.cbp-options {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.cbp-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1.5px solid transparent;
+  background: rgba(255,255,255,0.025);
+  color: var(--text-primary, #f0f0f5);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s, border-color 0.15s;
+  text-align: left;
+}
+
+.cbp-option:hover { background: rgba(255,255,255,0.06); transform: translateX(4px); }
+.cbp-option--activo { font-weight: 700; }
+
+.cbp-option--activo.cbp-option--novato    { border-color: rgba(173,181,189,0.4); background: rgba(173,181,189,0.07); }
+.cbp-option--activo.cbp-option--escalado  { border-color: rgba(79,195,247,0.4);  background: rgba(79,195,247,0.07); }
+.cbp-option--activo.cbp-option--intermedio{ border-color: rgba(245,166,35,0.4);  background: rgba(245,166,35,0.07); }
+.cbp-option--activo.cbp-option--rx        { border-color: rgba(46,204,113,0.4);  background: rgba(46,204,113,0.07); }
+.cbp-option--activo.cbp-option--master    { border-color: rgba(155,89,182,0.4);  background: rgba(155,89,182,0.07); }
+
+/* Icono */
+.cbp-icon-wrap {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.cbp-option--novato     .cbp-icon-wrap { background: rgba(173,181,189,0.1); color: #adb5bd; }
+.cbp-option--escalado   .cbp-icon-wrap { background: rgba(79,195,247,0.1);  color: var(--accent-cool, #4fc3f7); }
+.cbp-option--intermedio .cbp-icon-wrap { background: rgba(245,166,35,0.1);  color: var(--accent, #f5a623); }
+.cbp-option--rx         .cbp-icon-wrap { background: rgba(46,204,113,0.1);  color: var(--success, #2ecc71); }
+.cbp-option--master     .cbp-icon-wrap { background: rgba(155,89,182,0.1);  color: #9b59b6; }
+
+/* Textos */
+.cbp-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+
+.cbp-nombre {
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.cbp-option--novato     .cbp-nombre { color: #adb5bd; }
+.cbp-option--escalado   .cbp-nombre { color: var(--accent-cool, #4fc3f7); }
+.cbp-option--intermedio .cbp-nombre { color: var(--accent, #f5a623); }
+.cbp-option--rx         .cbp-nombre { color: var(--success, #2ecc71); }
+.cbp-option--master     .cbp-nombre { color: #9b59b6; }
+
+.cbp-desc {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #b0b0c0;
+  margin-top: 0.1rem;
+}
+
+/* Check */
+.cbp-check { font-size: 0.78rem; flex-shrink: 0; }
+.cbp-option--novato     .cbp-check { color: #adb5bd; }
+.cbp-option--escalado   .cbp-check { color: var(--accent-cool, #4fc3f7); }
+.cbp-option--intermedio .cbp-check { color: var(--accent, #f5a623); }
+.cbp-option--rx         .cbp-check { color: var(--success, #2ecc71); }
+.cbp-option--master     .cbp-check { color: #9b59b6; }

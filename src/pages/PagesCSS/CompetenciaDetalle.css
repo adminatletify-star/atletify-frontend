@@ -1,0 +1,33 @@
+.competencia-staggered-menu.staggered-menu-wrapper.fixed-wrapper {
+  z-index: 1100;
+}
+
+.competencia-staggered-menu .staggered-menu-header {
+  top: 2em;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 800px;
+  height: 60px;
+  padding: 0 0.55rem 0 1.1rem;
+  box-sizing: border-box;
+  z-index: 1200;
+}
+
+.competencia-staggered-menu .sm-toggle {
+  margin-left: auto;
+  transform: translateX(-1rem);
+}
+
+@media (max-width: 768px) {
+  .competencia-staggered-menu .staggered-menu-header {
+    top: 1.2em;
+    width: 90%;
+    padding: 0 0.45rem 0 0.9rem;
+  }
+
+  /* Move the menu button slightly to the left on responsive/mobile. */
+  .competencia-staggered-menu .sm-toggle {
+    transform: translateX(-5rem);
+  }
+}

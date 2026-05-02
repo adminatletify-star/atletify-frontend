@@ -1,0 +1,213 @@
+/* =============================================
+   CompDetalleSideMenu — Panel lateral animado
+   Paleta: Arctic Wolf (rojo / oscuro)
+   ============================================= */
+
+/* Backdrop semitransparente */
+.cdm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 1098;
+  pointer-events: none;
+  transition: background 0.35s ease;
+}
+
+.cdm-backdrop--visible {
+  background: rgba(0, 0, 0, 0.62);
+  pointer-events: auto;
+}
+
+/* Wrapper fijo del overlay (no bloquea clicks cuando cerrado) */
+.cdm-wrapper {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  z-index: 1099;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Pre-layers de animación */
+.cdm-prelayers {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: clamp(300px, 42vw, 520px);
+  pointer-events: none;
+  z-index: 1100;
+}
+
+.cdm-prelayer {
+  position: absolute;
+  top: 0; right: 0;
+  height: 100%; width: 100%;
+}
+
+/* Panel principal */
+.cdm-panel {
+  position: absolute;
+  top: 0; right: 0;
+  width: clamp(300px, 42vw, 520px);
+  height: 100%;
+  background: linear-gradient(160deg, #0d0d0d 0%, #1a0000 55%, #0b0000 100%);
+  border-left: 1px solid rgba(230, 57, 70, 0.3);
+  display: flex;
+  flex-direction: column;
+  padding: 5.5rem 2.5rem 2.5rem;
+  overflow-y: auto;
+  z-index: 1105;
+  pointer-events: auto;
+}
+
+/* Inner del panel */
+.cdm-panel-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Lista de ítems */
+.cdm-list {
+  list-style: none;
+  margin: 0; padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cdm-item-wrap {
+  border-bottom: 1px solid rgba(230, 57, 70, 0.1);
+  padding: 0.95rem 0;
+  overflow: hidden;
+}
+
+.cdm-item-wrap:first-child { padding-top: 0.3rem; }
+.cdm-item-wrap:last-child  { border-bottom: none; }
+
+/* Botón ítem */
+.cdm-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(1.45rem, 3vw, 2.3rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  line-height: 1.2;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+  transition: color 0.25s, padding-left 0.25s;
+}
+
+/* Línea acento izquierda */
+.cdm-item::before {
+  content: '';
+  width: 0; height: 3px;
+  background: var(--primary, #E63946);
+  border-radius: 2px;
+  transition: width 0.25s;
+  flex-shrink: 0;
+}
+
+.cdm-item:hover {
+  color: rgba(255, 255, 255, 0.9);
+  padding-left: 0.4rem;
+}
+
+.cdm-item:hover::before {
+  width: 22px;
+  margin-right: 0.5rem;
+}
+
+/* Ítem activo */
+.cdm-item--active {
+  color: var(--primary, #E63946);
+}
+
+.cdm-item--active::before {
+  width: 18px;
+  margin-right: 0.5rem;
+}
+
+/* Ícono */
+.cdm-item-icon {
+  font-size: 0.85rem;
+  opacity: 0.4;
+  flex-shrink: 0;
+  width: 1.1rem;
+  text-align: center;
+  transition: opacity 0.25s;
+}
+
+.cdm-item--active .cdm-item-icon,
+.cdm-item:hover .cdm-item-icon {
+  opacity: 1;
+  color: var(--primary, #E63946);
+}
+
+/* Label animado con GSAP */
+.cdm-item-label {
+  display: inline-block;
+  will-change: transform;
+  transform-origin: 50% 100%;
+  flex: 1;
+}
+
+/* Número de ítem */
+.cdm-item-num {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(230, 57, 70, 0.4);
+  border: 1px solid rgba(230, 57, 70, 0.18);
+  background: rgba(230, 57, 70, 0.05);
+  border-radius: 6px;
+  padding: 0.15rem 0.45rem;
+  flex-shrink: 0;
+  letter-spacing: 0;
+  transition: color 0.25s, border-color 0.25s, background 0.25s;
+}
+
+.cdm-item--active .cdm-item-num {
+  color: var(--primary, #E63946);
+  border-color: rgba(230, 57, 70, 0.4);
+  background: rgba(230, 57, 70, 0.12);
+}
+
+/* === RESPONSIVE === */
+
+/* Tablet: panel ocupa 60% */
+@media (max-width: 1024px) {
+  .cdm-panel,
+  .cdm-prelayers {
+    width: 60vw;
+  }
+}
+
+/* Móvil: panel full width */
+@media (max-width: 640px) {
+  .cdm-panel,
+  .cdm-prelayers {
+    width: 100%;
+    border-left: none;
+  }
+
+  .cdm-panel {
+    padding: 5rem 1.5rem 2rem;
+  }
+
+  .cdm-item {
+    font-size: 1.6rem;
+    letter-spacing: 1px;
+    gap: 0.65rem;
+  }
+
+  .cdm-item-wrap {
+    padding: 0.75rem 0;
+  }
+}

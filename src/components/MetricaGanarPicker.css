@@ -1,0 +1,95 @@
+/* =============================================
+   METRICA GANAR PICKER — Arctic Wolf
+   Namespace: mgp-*
+   ============================================= */
+
+.mgp-trigger {
+  display: inline-flex; align-items: center; justify-content: space-between;
+  gap: 0.5rem; padding: 0.52rem 0.9rem; border-radius: 10px; border: 1.5px solid;
+  font-family: var(--font-body, 'Inter', sans-serif); font-size: 0.84rem; font-weight: 600;
+  cursor: pointer; transition: filter 0.18s, transform 0.18s;
+  white-space: nowrap; width: 100%; text-align: left;
+}
+.mgp-trigger:hover { filter: brightness(1.15); transform: translateY(-1px); }
+.mgp-trigger-left { display: flex; align-items: center; gap: 0.5rem; }
+.mgp-chevron { font-size: 0.6rem; opacity: 0.6; }
+
+.mgp-trigger--tiempo { background: rgba(79,195,247,0.08);  border-color: rgba(79,195,247,0.3);  color: var(--accent-cool, #4fc3f7); }
+.mgp-trigger--peso   { background: rgba(245,166,35,0.08);  border-color: rgba(245,166,35,0.3);  color: var(--accent, #f5a623); }
+.mgp-trigger--reps   { background: rgba(46,204,113,0.08);  border-color: rgba(46,204,113,0.3);  color: var(--success, #2ecc71); }
+
+/* OVERLAY */
+.mgp-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center; padding: 1.25rem;
+  animation: mgp-fade 0.18s ease;
+}
+@keyframes mgp-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.mgp-panel {
+  background: var(--bg-card, #1c1c26); border: 1px solid var(--border, rgba(255,255,255,0.1));
+  border-radius: 20px; width: 100%; max-width: 380px; overflow: hidden;
+  animation: mgp-up 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 28px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+}
+@keyframes mgp-up {
+  from { opacity: 0; transform: translateY(28px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.mgp-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+}
+.mgp-title {
+  font-family: var(--font-heading, 'Oswald', sans-serif);
+  font-size: 0.82rem; font-weight: 700; color: var(--text-muted, #888);
+  text-transform: uppercase; letter-spacing: 1.2px; display: flex; align-items: center; gap: 0.45rem;
+}
+.mgp-close {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted, #888); width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 0.75rem; transition: background 0.15s, color 0.15s; flex-shrink: 0;
+}
+.mgp-close:hover { background: rgba(230,57,70,0.15); color: var(--primary, #e63946); }
+
+.mgp-options { padding: 0.75rem; display: flex; flex-direction: column; gap: 0.4rem; }
+
+.mgp-option {
+  display: flex; align-items: center; gap: 1rem; width: 100%;
+  padding: 0.9rem 1rem; border-radius: 12px; border: 1.5px solid transparent;
+  background: rgba(255,255,255,0.025); color: var(--text-primary, #f0f0f5);
+  cursor: pointer; transition: background 0.15s, transform 0.15s, border-color 0.15s; text-align: left;
+}
+.mgp-option:hover { background: rgba(255,255,255,0.06); transform: translateX(4px); }
+.mgp-option--activo { font-weight: 700; }
+
+.mgp-option--activo.mgp-option--tiempo { border-color: rgba(79,195,247,0.4);  background: rgba(79,195,247,0.07); }
+.mgp-option--activo.mgp-option--peso   { border-color: rgba(245,166,35,0.4);  background: rgba(245,166,35,0.07); }
+.mgp-option--activo.mgp-option--reps   { border-color: rgba(46,204,113,0.4);  background: rgba(46,204,113,0.07); }
+
+.mgp-icon-wrap {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0;
+}
+.mgp-option--tiempo .mgp-icon-wrap { background: rgba(79,195,247,0.1);  color: var(--accent-cool, #4fc3f7); }
+.mgp-option--peso   .mgp-icon-wrap { background: rgba(245,166,35,0.1);  color: var(--accent, #f5a623); }
+.mgp-option--reps   .mgp-icon-wrap { background: rgba(46,204,113,0.1);  color: var(--success, #2ecc71); }
+
+.mgp-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.mgp-nombre {
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.92rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+}
+.mgp-option--tiempo .mgp-nombre { color: var(--accent-cool, #4fc3f7); }
+.mgp-option--peso   .mgp-nombre { color: var(--accent, #f5a623); }
+.mgp-option--reps   .mgp-nombre { color: var(--success, #2ecc71); }
+
+.mgp-desc { font-family: var(--font-body, 'Inter', sans-serif); font-size: 0.72rem; color: var(--text-muted, #888); margin-top: 0.1rem; }
+
+.mgp-check { font-size: 0.78rem; flex-shrink: 0; }
+.mgp-option--tiempo .mgp-check { color: var(--accent-cool, #4fc3f7); }
+.mgp-option--peso   .mgp-check { color: var(--accent, #f5a623); }
+.mgp-option--reps   .mgp-check { color: var(--success, #2ecc71); }

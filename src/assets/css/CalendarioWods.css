@@ -1,0 +1,514 @@
+/* ============================================
+   CALENDARIO WODS — WolfPack Design System
+   Reutiliza de componentes.css:
+   .spinner-wp
+   ============================================ */
+
+/* === PÁGINA === */
+.cw-page {
+  background: var(--bg-base);
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+/* === HEADER STICKY === */
+.cw-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.5rem 0.85rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  margin-bottom: 1.5rem;
+}
+
+.cw-header-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.cw-nuevo-btn {
+  background: var(--primary);
+  border: none;
+  border-radius: 20px;
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 0.5rem 1.1rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.cw-nuevo-btn:hover {
+  background: var(--primary-dark);
+  color: #fff;
+  box-shadow: 0 4px 16px var(--primary-glow);
+}
+
+/* === NAVEGADOR DE SEMANA === */
+.cw-week-navigator {
+  background: var(--bg-elevated);
+  border: 1px solid rgba(230, 57, 70, 0.2);
+  border-radius: 16px;
+  padding: 0.9rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  transition: var(--transition);
+}
+
+.cw-week-navigator:hover {
+  border-color: rgba(230, 57, 70, 0.4);
+  box-shadow: 0 0 20px rgba(230, 57, 70, 0.08);
+}
+
+.cw-nav-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+  font-size: 0.85rem;
+}
+
+.cw-nav-btn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 0 16px var(--primary-glow);
+  transform: scale(1.08);
+}
+
+.cw-nav-btn:active {
+  transform: scale(0.95);
+}
+
+.cw-week-label {
+  font-family: var(--font-heading-alt);
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.cw-week-sub {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* === COLUMNAS DE DÍAS === */
+.cw-day-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+}
+
+/* === CABECERA DEL DÍA === */
+.cw-day-header {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  border-left: 3px solid rgba(230, 57, 70, 0.25);
+  padding: 0.6rem 0.5rem;
+  text-align: center;
+  transition: var(--transition);
+}
+
+.cw-day-header--today {
+  background: linear-gradient(135deg, rgba(230, 57, 70, 0.85) 0%, rgba(200, 40, 55, 0.75) 100%);
+  border-color: var(--primary);
+  border-left-color: var(--accent);
+}
+
+.cw-day-name {
+  font-family: var(--font-heading-alt);
+  font-size: clamp(0.6rem, 1.3vw, 0.75rem);
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--secondary);
+  margin: 0;
+  line-height: 1;
+}
+
+.cw-day-header--today .cw-day-name {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.cw-day-number {
+  font-family: var(--font-stats);
+  font-size: clamp(1.3rem, 2.5vw, 1.65rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.15;
+  display: block;
+}
+
+.cw-day-header--today .cw-day-number {
+  color: #fff;
+}
+
+/* === CUERPO DEL DÍA (zona de WOD cards) === */
+.cw-day-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.5rem;
+  background: rgba(28, 28, 38, 0.35);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  min-height: 240px;
+  transition: var(--transition);
+}
+
+.cw-day-body:hover {
+  border-color: rgba(230, 57, 70, 0.25);
+  background: rgba(28, 28, 38, 0.55);
+}
+
+/* === ESTADO VACÍO DEL DÍA === */
+.cw-day-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 1.5rem 0.5rem;
+  opacity: 0.3;
+  gap: 0.3rem;
+}
+
+.cw-day-empty i {
+  font-size: 1.4rem;
+  color: var(--text-muted);
+}
+
+.cw-day-empty p {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* === TARJETA DE WOD === */
+.cw-wod-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--secondary);
+  border-radius: 10px;
+  transition: var(--transition);
+}
+
+.cw-wod-card--published {
+  border-left-color: var(--success);
+}
+
+.cw-wod-card--draft {
+  border-left-color: var(--text-muted);
+}
+
+.cw-wod-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(230, 57, 70, 0.15);
+  border-color: rgba(230, 57, 70, 0.3);
+}
+
+.cw-wod-body {
+  padding: 0.55rem 0.7rem;
+}
+
+.cw-wod-title {
+  font-family: var(--font-heading-alt);
+  font-size: clamp(0.7rem, 1.3vw, 0.85rem);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.3px;
+}
+
+/* === MENÚ 3 PUNTOS === */
+.cw-menu-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 0.15rem 0.4rem;
+  cursor: pointer;
+  transition: var(--transition);
+  border-radius: 6px;
+  flex-shrink: 0;
+  line-height: 1;
+  font-size: 0.8rem;
+}
+
+.cw-menu-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* === DROPDOWN POSICIONADO HACIA ARRIBA === */
+.cw-dropdown-menu {
+  bottom: 100% !important;
+  top: auto !important;
+  z-index: 1050 !important;
+  min-width: 200px !important;
+  margin-bottom: 4px !important;
+}
+
+/* === BADGES DEL WOD === */
+.cw-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-heading-alt);
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+.cw-badge-published {
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid rgba(46, 204, 113, 0.28);
+  color: var(--success);
+}
+
+.cw-badge-draft {
+  background: rgba(168, 178, 209, 0.07);
+  border: 1px solid rgba(168, 178, 209, 0.18);
+  color: var(--secondary);
+}
+
+.cw-badge-clases {
+  background: rgba(79, 195, 247, 0.07);
+  border: 1px solid rgba(79, 195, 247, 0.18);
+  color: var(--accent-cool);
+}
+
+.cw-badge-box {
+  background: rgba(79, 195, 247, 0.05);
+  border: 1px solid rgba(79, 195, 247, 0.14);
+  color: var(--accent-cool);
+}
+
+/* === BOTÓN MODO PIZARRA (dentro de la card) === */
+.cw-pizarra-quick-btn {
+  width: 100%;
+  padding: 0.3rem;
+  background: rgba(79, 195, 247, 0.05);
+  border: 1px solid rgba(79, 195, 247, 0.18);
+  border-radius: 6px;
+  color: var(--accent-cool);
+  font-family: var(--font-heading-alt);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.cw-pizarra-quick-btn:hover {
+  background: rgba(79, 195, 247, 0.14);
+  border-color: rgba(79, 195, 247, 0.38);
+}
+
+/* === BOTÓN AGREGAR WOD (+) === */
+.cw-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+  border: 1.5px dashed var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: var(--transition);
+  margin-top: auto;
+  opacity: 0.45;
+}
+
+.cw-add-btn:hover {
+  opacity: 1;
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.04);
+}
+
+/* === LOADING === */
+.cw-loading {
+  background: var(--bg-base);
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* === MODO PIZARRA TV === */
+.cw-pizarra-page {
+  background: #000;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-heading);
+}
+
+.cw-pizarra-close-btn {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 1rem;
+}
+
+.cw-pizarra-close-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.cw-pizarra-wod-title {
+  font-family: var(--font-hero);
+  font-size: clamp(3rem, 8vw, 5rem);
+  text-transform: uppercase;
+  letter-spacing: 5px;
+  color: var(--primary);
+  margin: 0;
+  line-height: 1;
+}
+
+.cw-pizarra-bloque {
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  background: rgba(20, 20, 20, 0.85);
+}
+
+.cw-pizarra-bloque--warmup { border-left: 8px solid var(--accent-cool); }
+.cw-pizarra-bloque--wod    { border-left: 8px solid var(--primary); }
+.cw-pizarra-bloque--other  { border-left: 8px solid var(--success); }
+
+.cw-pizarra-bloque-tipo {
+  font-family: var(--font-heading-alt);
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--secondary);
+  margin: 0 0 0.75rem;
+}
+
+.cw-pizarra-desc {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: pre-line;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.cw-pizarra-ejercicio-item {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  list-style: none;
+  padding: 0;
+}
+
+.cw-pizarra-reps {
+  color: var(--accent-cool);
+}
+
+.cw-pizarra-peso {
+  color: var(--accent);
+  font-size: 0.6em;
+  margin-left: auto;
+}
+
+.cw-pizarra-footer {
+  text-align: center;
+  margin-top: auto;
+  opacity: 0.2;
+  padding-bottom: 1.5rem;
+}
+
+.cw-pizarra-footer i {
+  font-size: 3rem;
+  color: var(--primary);
+  display: block;
+}
+
+.cw-pizarra-footer p {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0.5rem 0 0;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 575px) {
+  .cw-day-col { min-height: 260px; }
+}
+
+@media (min-width: 576px) and (max-width: 991px) {
+  .cw-day-col { min-height: 280px; }
+}
+
+@media (min-width: 992px) {
+  .cw-day-col { min-height: 330px; }
+  .cw-day-body { gap: 0.55rem; }
+}

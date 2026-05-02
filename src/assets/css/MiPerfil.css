@@ -1,0 +1,642 @@
+/* ============================================
+   MI PERFIL (PLAYER CARD) — mp-* namespace
+   Arctic Wolf Design System
+   ============================================ */
+
+.mp-page {
+  min-height: 100vh;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  padding-bottom: 5rem;
+}
+
+/* ─── Loading ────────────────────────────── */
+.mp-loading {
+  min-height: 100vh;
+  background: var(--bg-base);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mp-spinner {
+  color: var(--primary);
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+/* ─── Navbar ─────────────────────────────── */
+.mp-navbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 1.5rem 0.9rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+
+.mp-navbar-brand {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+
+.mp-navbar-brand span { color: var(--primary); }
+
+/* ─── Hero Card ──────────────────────────── */
+.mp-hero {
+  background: linear-gradient(135deg, var(--bg-elevated) 0%, rgba(42, 8, 8, 0.85) 100%);
+  border: 1px solid rgba(230, 57, 70, 0.2);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.mp-hero-body {
+  padding: 2rem 1.5rem;
+  position: relative;
+}
+
+.mp-hero-avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border: 3px solid rgba(230, 57, 70, 0.4);
+  box-shadow: 0 0 28px rgba(230, 57, 70, 0.2), 0 8px 24px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-hero);
+  font-size: 3rem;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.mp-hero-level-badge {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-stats);
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: var(--accent);
+  color: #111;
+  border: 2px solid var(--bg-base);
+  border-radius: 20px;
+  padding: 0.18rem 0.65rem;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+
+.mp-foto-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem 0.85rem;
+  border-radius: 50px;
+  border: 1px solid rgba(230, 57, 70, 0.28);
+  background: rgba(230, 57, 70, 0.06);
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: 0.5rem;
+}
+
+.mp-foto-btn:hover {
+  background: rgba(230, 57, 70, 0.13);
+  color: var(--primary);
+  border-color: rgba(230, 57, 70, 0.5);
+}
+
+.mp-hero-name {
+  font-family: var(--font-heading);
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  margin: 0 0 0.2rem;
+  line-height: 1.1;
+}
+
+.mp-hero-realname {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--secondary);
+  margin: 0 0 0.85rem;
+}
+
+.mp-hero-badge {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.mp-hero-badge i { color: var(--primary); }
+
+/* ─── Progress bar ───────────────────────── */
+.mp-progress-bar-wrap {
+  background: rgba(0, 0, 0, 0.5);
+  border-top: 1px solid rgba(230, 57, 70, 0.15);
+  padding: 0.65rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.mp-progress-label {
+  font-family: var(--font-stats);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+
+.mp-progress-track {
+  flex: 1;
+  height: 7px;
+  background: var(--bg-card);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.mp-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-dark), var(--primary));
+  border-radius: 10px;
+  transition: width 0.6s ease;
+  box-shadow: 0 0 8px var(--primary-glow);
+}
+
+/* ─── Cards ──────────────────────────────── */
+.mp-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.mp-card-body {
+  padding: 1.5rem;
+}
+
+.mp-card-body-lg {
+  padding: 2rem 1.75rem;
+}
+
+/* ─── Section Titles ─────────────────────── */
+.mp-section-title {
+  font-family: var(--font-heading);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.25rem;
+}
+
+.mp-section-title--identity { color: var(--accent);      border-bottom-color: rgba(245, 166, 35, 0.2); }
+.mp-section-title--data     { color: var(--primary);     border-bottom-color: rgba(230, 57, 70, 0.2); }
+.mp-section-title--physical { color: var(--primary);     border-bottom-color: rgba(230, 57, 70, 0.2); }
+.mp-section-title--prs      { color: var(--accent);      border-bottom-color: rgba(245, 166, 35, 0.2); }
+.mp-section-title--medical  { color: var(--accent-cool); border-bottom-color: rgba(79, 195, 247, 0.2); }
+.mp-section-title--security { color: var(--secondary);   border-bottom-color: rgba(168, 178, 209, 0.2); }
+
+/* ─── Labels ─────────────────────────────── */
+.mp-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--secondary);
+  margin-bottom: 0.35rem;
+  display: block;
+}
+
+/* ─── Inputs / Selects ───────────────────── */
+.mp-input,
+.mp-select {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  outline: none;
+  transition: var(--transition);
+}
+
+.mp-input:focus,
+.mp-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.1);
+  background: var(--bg-card-hover);
+}
+
+.mp-input::placeholder { color: var(--text-muted); }
+
+.mp-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* Variante acento dorado (apodo) */
+.mp-input--accent {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Variante objetivo */
+.mp-select--objetivo {
+  border-color: rgba(245, 166, 35, 0.2);
+  background: rgba(245, 166, 35, 0.04);
+}
+.mp-select--objetivo:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.08);
+}
+
+/* Variante médica */
+.mp-input--medical {
+  border-color: rgba(79, 195, 247, 0.18);
+  background: rgba(79, 195, 247, 0.03);
+}
+.mp-input--medical:focus {
+  border-color: var(--accent-cool);
+  box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.08);
+}
+
+/* ─── Switch label ───────────────────────── */
+.mp-switch-label {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+/* ─── PR Display ─────────────────────────── */
+.mp-pr-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.mp-pr-card {
+  background: var(--bg-elevated);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  text-align: center;
+  min-width: 110px;
+  flex: 1 1 auto;
+  max-width: 190px;
+  transition: var(--transition);
+}
+
+.mp-pr-card:hover {
+  border-color: rgba(245, 166, 35, 0.5);
+  background: var(--bg-card);
+}
+
+.mp-pr-name {
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.mp-pr-value {
+  font-family: var(--font-stats);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  display: block;
+}
+
+.mp-pr-unit {
+  font-family: var(--font-stats);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-left: 0.15rem;
+}
+
+/* PR vacío */
+.mp-pr-empty {
+  background: var(--bg-elevated);
+  border: 1px dashed rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+
+.mp-pr-empty i {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 0.6rem;
+  opacity: 0.2;
+}
+
+/* ─── PR Form Wrapper ────────────────────── */
+.mp-pr-form-wrap {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.1rem 1rem;
+}
+
+.mp-pr-form-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.mp-btn-pr {
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  width: 100%;
+  height: 50px;
+  color: #111;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mp-btn-pr:hover:not(:disabled) {
+  background: #d4891c;
+  transform: translateY(-2px);
+}
+
+.mp-btn-pr:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── Calculadora ────────────────────────── */
+.mp-calc-wrap {
+  background: var(--bg-elevated);
+  border: 1px solid rgba(79, 195, 247, 0.15);
+  border-radius: 14px;
+  padding: 1.1rem 1rem;
+}
+
+.mp-calc-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent-cool);
+  margin: 0 0 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.mp-calc-sub {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0 0 1rem;
+}
+
+.mp-calc-select {
+  width: 100%;
+  background: rgba(79, 195, 247, 0.04);
+  border: 1px solid rgba(79, 195, 247, 0.22);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  outline: none;
+  transition: var(--transition);
+}
+
+.mp-calc-select:focus {
+  border-color: var(--accent-cool);
+  box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.08);
+}
+
+.mp-calc-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.mp-calc-results {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.mp-calc-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.5rem 0.6rem;
+  text-align: center;
+  flex: 1 1 auto;
+  min-width: 68px;
+}
+
+.mp-calc-pct {
+  display: block;
+  font-family: var(--font-heading-alt);
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--accent-cool);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mp-calc-val {
+  display: block;
+  font-family: var(--font-stats);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.mp-calc-unit {
+  font-size: 0.5rem;
+  color: var(--text-muted);
+}
+
+/* ─── Nota médica ────────────────────────── */
+.mp-medical-note {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* ─── Botones ────────────────────────────── */
+.mp-btn-save {
+  display: block;
+  width: 100%;
+  background: var(--primary);
+  border: none;
+  border-radius: 50px;
+  padding: 0.9rem 2rem;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: white;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 20px rgba(230, 57, 70, 0.3);
+}
+
+.mp-btn-save:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(230, 57, 70, 0.4);
+}
+
+.mp-btn-security {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--secondary);
+  border-radius: 50px;
+  padding: 0.8rem 2rem;
+  font-family: var(--font-heading);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.mp-btn-security:hover:not(:disabled) {
+  background: rgba(168, 178, 209, 0.07);
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+}
+
+.mp-btn-security:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: rgba(168, 178, 209, 0.2);
+  color: rgba(168, 178, 209, 0.4);
+}
+
+/* ─── Sidebar sticky ─────────────────────── */
+.mp-sidebar-sticky {
+  position: sticky;
+  top: 80px;
+}
+
+/* ─── Date picker trigger ────────────────── */
+.mp-date-trigger {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mp-date-trigger:hover {
+  border-color: var(--primary);
+  background: var(--bg-card-hover);
+}
+
+.mp-date-trigger i { color: var(--primary); }
+
+.mp-date-trigger--empty { color: var(--text-muted); }
+
+/* ─── Date picker overlay ────────────────── */
+.mp-date-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.mp-date-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  max-width: 420px;
+  width: 100%;
+}

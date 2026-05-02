@@ -1,0 +1,380 @@
+/* ============================================
+   GESTIÓN DE CLASES — WolfPack Design System
+   Reutiliza de componentes.css:
+   .tarjeta-panel, .etiqueta-campo,
+   .entrada-oscura, .spinner-wp, .empty-state
+   ============================================ */
+
+/* === PÁGINA === */
+.gc-page {
+  background: var(--bg-base);
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+/* === HEADER STICKY === */
+.gc-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.5rem 0.85rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  margin-bottom: 2rem;
+}
+
+.gc-header-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.gc-header-title span {
+  color: var(--primary);
+}
+
+/* === TÍTULOS DE SECCIÓN === */
+.gc-section-title {
+  font-family: var(--font-heading);
+  font-size: clamp(0.8rem, 2vw, 0.9rem);
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gc-section-title i {
+  color: var(--primary);
+  font-size: 0.85em;
+}
+
+.gc-section-title--editing {
+  color: var(--accent);
+}
+
+.gc-section-title--editing i {
+  color: var(--accent);
+}
+
+/* === FORMULARIO === */
+.gc-form-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: var(--transition);
+}
+
+.gc-form-card--editing {
+  border-top-color: var(--accent);
+}
+
+/* === SELECTOR DE DÍAS === */
+.gc-dias-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.gc-dia-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gc-dia-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.06);
+}
+
+.gc-dia-btn--active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 0 12px var(--primary-glow);
+}
+
+/* === BOTONES DEL FORMULARIO === */
+.gc-save-btn {
+  flex: 1;
+  background: var(--primary);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.gc-save-btn:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 16px var(--primary-glow);
+}
+
+.gc-save-btn--editing {
+  background: var(--accent);
+  color: #111;
+}
+
+.gc-save-btn--editing:hover {
+  background: #e09510;
+  box-shadow: 0 4px 16px rgba(245, 166, 35, 0.35);
+}
+
+.gc-cancel-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.gc-cancel-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.06);
+}
+
+/* === TARJETA DE CLASE === */
+.gc-clase-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid rgba(230, 57, 70, 0.4);
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+  transition: var(--transition);
+}
+
+.gc-clase-card:hover {
+  border-color: rgba(230, 57, 70, 0.3);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.gc-clase-card--editing {
+  background: rgba(245, 166, 35, 0.05);
+  border-color: rgba(245, 166, 35, 0.35);
+  border-left-color: var(--accent);
+  box-shadow: 0 0 20px rgba(245, 166, 35, 0.08);
+}
+
+.gc-clase-nombre {
+  font-family: var(--font-heading-alt);
+  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.5rem;
+}
+
+.gc-clase-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.25rem;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.gc-clase-meta i {
+  color: var(--secondary);
+  width: 14px;
+  text-align: center;
+}
+
+/* === BADGE RACHA === */
+.gc-badge-racha {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  color: var(--accent);
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+}
+.gc-badge-racha i { font-size: 0.7em; }
+
+/* === META BADGES === */
+.gc-meta-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+}
+
+.gc-meta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+}
+
+.gc-meta-badge--time {
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.28);
+  color: #ff8896;
+}
+.gc-meta-badge--time i { color: var(--primary); }
+
+.gc-meta-badge--cupo {
+  background: rgba(79, 195, 247, 0.1);
+  border: 1px solid rgba(79, 195, 247, 0.25);
+  color: var(--accent-cool);
+}
+
+.gc-meta-badge--coach {
+  background: rgba(168, 178, 209, 0.07);
+  border: 1px solid rgba(168, 178, 209, 0.18);
+  color: var(--text-muted);
+  padding-left: 0.35rem;
+}
+
+.gc-coach-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(168, 178, 209, 0.15);
+  border: 1px solid rgba(168, 178, 209, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-stats);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+/* === PILDORAS DE DÍAS === */
+.gc-dias-pips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0;
+}
+
+.gc-dia-pip {
+  height: 22px;
+  border-radius: 6px;
+  padding: 0 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  transition: var(--transition);
+}
+
+.gc-dia-pip--active {
+  background: rgba(230, 57, 70, 0.15);
+  border: 1px solid rgba(230, 57, 70, 0.38);
+  color: #f08090;
+}
+
+.gc-dia-pip--inactive {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  opacity: 0.3;
+}
+
+/* === BOTONES DE ACCIÓN EN TARJETA === */
+.gc-action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}
+
+.gc-action-btn--edit {
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  color: var(--accent);
+}
+
+.gc-action-btn--edit:hover {
+  background: rgba(245, 166, 35, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 10px rgba(245, 166, 35, 0.2);
+}
+
+.gc-action-btn--delete {
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  color: var(--primary);
+}
+
+.gc-action-btn--delete:hover {
+  background: rgba(230, 57, 70, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+/* === LOADING === */
+.gc-loading {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-base);
+}

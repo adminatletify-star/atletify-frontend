@@ -1,0 +1,180 @@
+/* ============================================================
+   WOLFPACK — HOME MITOS VS REALIDAD
+   Paleta: Arctic Wolf — DESIGN_SYSTEM.md
+   ============================================================ */
+
+.mitos-seccion {
+  padding: 6rem 0;
+  background: linear-gradient(180deg, var(--home-bg-card) 0%, #09090d 100%);
+}
+
+/* ── Flip Card: contenedor externo ── */
+.mito-flip-container {
+  perspective: 1200px;
+  height: 300px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ── Flip Card: capa interna con preserve-3d ── */
+.mito-flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mito-flip-container--flipped .mito-flip-inner {
+  transform: rotateY(180deg);
+}
+
+/* ── Cara común ── */
+.mito-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 20px;
+  padding: 2rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.75rem;
+  overflow: hidden;
+}
+
+/* ── Cara delantera (MITO) ── */
+.mito-face--front {
+  background: linear-gradient(
+    145deg,
+    rgba(230, 57, 70, 0.12) 0%,
+    rgba(230, 57, 70, 0.04) 100%
+  );
+  border: 1px solid rgba(230, 57, 70, 0.3);
+}
+
+.mito-face--front::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 15%,
+    rgba(230, 57, 70, 0.08) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+}
+
+/* ── Cara trasera (REALIDAD) ── */
+.mito-face--back {
+  background: linear-gradient(
+    145deg,
+    rgba(46, 204, 113, 0.1) 0%,
+    rgba(28, 28, 38, 0.95) 100%
+  );
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  transform: rotateY(180deg);
+}
+
+.mito-face--back::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 15%,
+    rgba(46, 204, 113, 0.07) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+}
+
+/* ── Hover glow en cara delantera ── */
+.mito-flip-container:not(.mito-flip-container--flipped):hover .mito-face--front {
+  border-color: rgba(230, 57, 70, 0.5);
+  box-shadow: 0 0 35px rgba(230, 57, 70, 0.12);
+}
+
+/* ── Ícono ── */
+.mito-icono {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.mito-icono--mito {
+  background: rgba(230, 57, 70, 0.14);
+  border: 2px solid rgba(230, 57, 70, 0.35);
+  color: var(--home-primary);
+}
+
+.mito-icono--realidad {
+  background: rgba(46, 204, 113, 0.12);
+  border: 2px solid rgba(46, 204, 113, 0.35);
+  color: var(--home-success);
+}
+
+/* ── Etiquetas ── */
+.mito-etiqueta {
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  padding: 0.25rem 0.9rem;
+  border-radius: 30px;
+}
+
+.mito-etiqueta--mito {
+  color: var(--home-primary);
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+}
+
+.mito-etiqueta--realidad {
+  color: var(--home-success);
+  background: rgba(46, 204, 113, 0.08);
+  border: 1px solid rgba(46, 204, 113, 0.25);
+}
+
+/* ── Textos ── */
+.mito-texto {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--home-text);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.mito-realidad-texto {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--home-secondary);
+  line-height: 1.75;
+  margin: 0;
+}
+
+/* ── Hint ── */
+.mito-hint {
+  font-family: var(--font-heading-alt);
+  font-size: 0.67rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(230, 57, 70, 0.55);
+  font-weight: 600;
+  margin-top: auto;
+}
+
+.mito-hint--back {
+  color: rgba(46, 204, 113, 0.55);
+}

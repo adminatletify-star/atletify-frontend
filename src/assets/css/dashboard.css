@@ -1,0 +1,171 @@
+/* ============================================
+   WOLFPACK SYSTEM - DASHBOARD DEV
+   Usa variables de global.css + componentes.css
+   ============================================ */
+
+/* === PÁGINA === */
+.dash-page {
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+
+/* === HERO === */
+.dash-hero {
+  background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-base) 100%);
+  border-bottom: 1px solid var(--border);
+}
+
+.dash-hero-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+/* === HEADING === */
+.dash-heading {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.dash-subheading {
+  font-family: var(--font-heading-alt);
+  font-weight: 500;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--secondary);
+}
+
+/* === STAT CARD (hero) === */
+.dash-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: var(--transition);
+}
+
+.dash-stat-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+/* === NUEVO BOX CARD === */
+.dash-nuevo-box {
+  background: rgba(230, 57, 70, 0.08);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  border-radius: 12px;
+  color: var(--primary);
+  transition: var(--transition);
+  font-size: 1.1rem;
+}
+
+.dash-nuevo-box:hover {
+  background: rgba(230, 57, 70, 0.18);
+  border-color: var(--primary);
+  box-shadow: 0 0 20px var(--primary-glow);
+  color: var(--text-primary);
+  transform: translateY(-2px);
+}
+
+.dash-nuevo-box-text {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* === FILTERS === */
+.dash-filters {
+  width: 100%;
+  max-width: 420px;
+}
+
+.dash-filter-select {
+  width: 130px;
+  min-width: 130px;
+  max-width: 130px;
+  cursor: pointer;
+  appearance: auto;
+  font-size: 0.88rem;
+  padding: 0.6rem 0.75rem;
+}
+
+/* === SEARCH === */
+.dash-search-wrapper {
+  position: relative;
+  min-width: 0;
+}
+
+.dash-search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.dash-search-input {
+  padding-left: 2.5rem !important;
+}
+
+/* === TEXTO MUTED === */
+.dash-text-muted {
+  color: var(--secondary);
+}
+
+/* === ACTION BUTTONS === */
+.dash-action-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+}
+
+.dash-action-edit:hover {
+  background: rgba(79, 195, 247, 0.15);
+  border-color: var(--accent-cool);
+  color: var(--accent-cool);
+}
+
+.dash-action-delete:hover {
+  background: rgba(230, 57, 70, 0.15);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* === USER CARD (Mobile) === */
+.dash-user-card {
+  background: rgba(28, 28, 38, 0.5);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: var(--transition);
+}
+
+.dash-user-card:hover {
+  border-color: var(--border-hover);
+}

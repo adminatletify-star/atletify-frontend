@@ -1,0 +1,223 @@
+/* ============================================
+   EDITAR USUARIO — WolfPack Design System
+   Reutiliza de componentes.css (global):
+   .etiqueta-campo, .entrada-oscura, .tarjeta-panel,
+   .separador, .avatar-inicial
+   ============================================ */
+
+/* === PÁGINA === */
+.eu-page {
+  background: var(--bg-base);
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+/* === HEADER === */
+.eu-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.5rem 0.85rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  margin-bottom: 2rem;
+}
+
+.eu-back-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: var(--transition);
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.eu-back-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.eu-header-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.1rem, 4vw, 1.4rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.eu-header-sub {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* === TARJETA DE IDENTIDAD (nombre + email arriba del form) === */
+.eu-identity {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.eu-identity-name {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.eu-identity-email {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* === SECCIÓN DEL FORMULARIO === */
+.eu-section-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.eu-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* === SELECTS (extiende .entrada-oscura para dropdown) === */
+.eu-select {
+  width: 100%;
+  padding: 0.75rem 2.25rem 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  transition: var(--transition);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23A8B2D1' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.eu-select:focus {
+  outline: none;
+  border-color: rgba(230, 57, 70, 0.5);
+  background-color: rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.eu-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* === TEXTO DE AYUDA (visible, no invisible) === */
+.eu-help-text {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--secondary);
+  margin-top: 0.4rem;
+  display: block;
+  line-height: 1.5;
+}
+
+.eu-help-text i {
+  color: var(--accent-cool);
+}
+
+/* === BOTÓN GUARDAR === */
+.eu-btn-guardar {
+  width: 100%;
+  padding: 0.85rem;
+  background: var(--primary);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.eu-btn-guardar:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 20px var(--primary-glow);
+}
+
+.eu-btn-cancelar {
+  width: 100%;
+  padding: 0.7rem;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  transition: var(--transition);
+  cursor: pointer;
+  text-decoration: none;
+  display: block;
+  text-align: center;
+}
+
+.eu-btn-cancelar:hover {
+  color: var(--text-primary);
+}
+
+/* === LOADING === */
+.eu-loading {
+  background: var(--bg-base);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.eu-loading p {
+  font-family: var(--font-body);
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  margin: 0;
+}

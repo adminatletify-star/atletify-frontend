@@ -1,0 +1,159 @@
+/* ═══════════════════════════════════════════
+   PromocionPicker — Ventana emergente
+   Paleta Arctic Wolf · Design System
+   ═══════════════════════════════════════════ */
+
+/* ── Trigger ── */
+.promp-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #1C1C26;
+  border: 1px solid #2a2a3a;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  color: #F0F0F5;
+}
+.promp-trigger:hover {
+  border-color: #F5A623;
+  background: #1f1f2e;
+}
+.promp-trigger-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.promp-trigger-left i { color: #F5A623; font-size: 0.95rem; }
+.promp-chevron { font-size: 0.7rem; opacity: 0.45; transition: transform 0.2s; }
+
+/* ── Overlay ── */
+.promp-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+/* ── Panel ── */
+.promp-panel {
+  background: #1C1C26;
+  border: 1px solid #2a2a3a;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  overflow: hidden;
+  animation: prompSlideIn 0.18s ease;
+}
+@keyframes prompSlideIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+/* ── Header ── */
+.promp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #2a2a3a;
+}
+.promp-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #F0F0F5;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.promp-title i { color: #F5A623; }
+.promp-close {
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: color 0.2s, background 0.2s;
+}
+.promp-close:hover { color: #E63946; background: #E6394614; }
+
+/* ── Options ── */
+.promp-options {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.promp-option {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  background: #0B0B0F;
+  border: 1px solid #2a2a3a;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s, background 0.2s;
+}
+.promp-option:hover { border-color: rgba(245,166,35,0.5); background: rgba(245,166,35,0.05); }
+.promp-option--activo { border-color: rgba(245,166,35,0.7); background: rgba(245,166,35,0.1); }
+.promp-option--none:hover { border-color: rgba(136,136,136,0.4); background: rgba(136,136,136,0.04); }
+.promp-option--none.promp-option--activo { border-color: rgba(136,136,136,0.5); background: rgba(136,136,136,0.08); }
+
+.promp-option-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(245,166,35,0.15);
+  color: #F5A623;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.promp-option-icon--none {
+  background: rgba(136,136,136,0.12);
+  color: #888;
+}
+.promp-option-info { flex: 1; }
+.promp-option-nombre {
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #F0F0F5;
+}
+.promp-option-desc {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  color: #888;
+  margin-top: 0.1rem;
+}
+.promp-check { color: #F5A623; font-size: 0.875rem; flex-shrink: 0; }
+
+.promp-empty {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  color: #666;
+  text-align: center;
+  padding: 0.75rem;
+  margin: 0;
+}

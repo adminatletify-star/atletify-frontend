@@ -1,0 +1,60 @@
+.time-input-mmss-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  background-color: var(--dark-bg, #1a1a1a);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+  padding: 0.3rem 0.5rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  max-width: 140px; /* Tamaño contenido por defecto */
+}
+
+.time-input-mmss-container:focus-within {
+  border-color: var(--primary, #ff1e1e);
+  box-shadow: 0 0 0 2px rgba(255, 30, 30, 0.2);
+}
+
+.time-input-part {
+  background: transparent;
+  border: none;
+  color: white;
+  font-family: var(--font-heading, monospace);
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+  width: 45px;
+  padding: 0;
+  outline: none;
+  border-radius: 4px;
+}
+
+.time-input-part::placeholder {
+  color: #666;
+  font-weight: 400;
+}
+
+.time-input-part:focus {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.time-input-separator {
+  color: var(--text-secondary, #999);
+  font-weight: bold;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+/* Remover flechas nativas del input numérico, aunque usamos tel pero por si a caso */
+.time-input-part::-webkit-outer-spin-button,
+.time-input-part::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.time-input-part[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

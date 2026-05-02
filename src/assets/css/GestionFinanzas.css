@@ -1,0 +1,729 @@
+/* =============================================
+   GESTION FINANZAS — Paleta: Arctic Wolf
+   ============================================= */
+
+/* === CONTAINER === */
+.finanzas-container {
+  background: linear-gradient(160deg, var(--bg-base) 0%, var(--bg-elevated) 100%);
+  min-height: 100vh;
+}
+
+/* === NAVBAR === */
+.finanzas-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.25rem 0.85rem 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.finanzas-nav-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--secondary);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  flex-shrink: 0;
+}
+.finanzas-nav-back:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.finanzas-nav-icono {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(46, 204, 113, 0.12);
+  border: 1px solid rgba(46, 204, 113, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--success);
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.finanzas-nav-titulo {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+/* === TABS === */
+.finanzas-tabs-wrapper {
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.finanzas-tabs-wrapper::-webkit-scrollbar { display: none; }
+
+.finanzas-badge--azul { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+
+.finanzas-badge--vip { background: rgba(155, 89, 182, 0.2); color: #9b59b6; }
+
+.finanzas-badge--gris { background: rgba(149, 165, 166, 0.2); color: #95a5a6; }
+
+.finanzas-tabs {
+  display: flex;
+  gap: 0.2rem;
+  padding: 0.3rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  min-width: max-content;
+}
+
+.finanzas-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--secondary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.finanzas-tab:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+.finanzas-tab.activo {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: rgba(230, 57, 70, 0.3);
+  color: var(--primary);
+}
+
+/* === CARDS === */
+.finanzas-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  height: 100%;
+}
+.finanzas-card--peligro {
+  border-left: 4px solid var(--danger);
+}
+
+.finanzas-card-titulo {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* === STAT PRINCIPAL (Dashboard) === */
+.finanzas-stat-principal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--success);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+}
+.finanzas-stat-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--secondary);
+  margin-bottom: 0.5rem;
+}
+.finanzas-stat-valor {
+  font-family: var(--font-stats);
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: var(--success);
+  line-height: 1;
+  margin-bottom: 0.35rem;
+}
+.finanzas-stat-nota {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* === FILAS DE SALUD (Dashboard) === */
+.finanzas-salud-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.finanzas-salud-row:last-child { border-bottom: none; }
+
+.finanzas-salud-label {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.finanzas-salud-cnt {
+  font-family: var(--font-stats);
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: 20px;
+}
+.finanzas-salud-cnt--verde  { color: var(--success);     background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.2); }
+.finanzas-salud-cnt--rojo   { color: var(--danger);      background: rgba(231, 76, 60, 0.1);  border: 1px solid rgba(231, 76, 60, 0.2);  }
+.finanzas-salud-cnt--azul   { color: var(--accent-cool); background: rgba(79, 195, 247, 0.1); border: 1px solid rgba(79, 195, 247, 0.2); }
+
+/* === LISTA MOROSOS (Dashboard) === */
+.finanzas-moroso-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.finanzas-moroso-item:last-child { border-bottom: none; }
+.finanzas-moroso-nombre { font-family: var(--font-body); font-size: 0.88rem; font-weight: 600; color: var(--text-primary); }
+.finanzas-moroso-fecha  { font-family: var(--font-body); font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem; }
+.finanzas-moroso-deuda  { font-family: var(--font-stats); font-size: 1rem; font-weight: 700; color: var(--danger); }
+
+/* === TABLA SEMÁFORO === */
+.finanzas-table-wrapper { overflow-x: auto; }
+
+.finanzas-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.finanzas-table thead th {
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+.finanzas-table tbody tr { transition: background 0.15s; }
+.finanzas-table tbody tr:hover { background: rgba(255, 255, 255, 0.025); }
+.finanzas-table tbody td {
+  padding: 0.85rem 1rem;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+}
+.finanzas-atleta-nombre { font-weight: 600; }
+.finanzas-atleta-tel    { font-size: 0.75rem; color: var(--secondary); margin-top: 0.15rem; }
+
+/* === BADGES DE ESTADO === */
+.finanzas-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.7rem;
+  border-radius: 20px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+.finanzas-badge--verde    { color: var(--success);     background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.25); }
+.finanzas-badge--amarillo { color: var(--warning);     background: rgba(243, 156, 18, 0.1); border: 1px solid rgba(243, 156, 18, 0.25); }
+.finanzas-badge--rojo     { color: var(--danger);      background: rgba(231, 76, 60, 0.1);  border: 1px solid rgba(231, 76, 60, 0.25);  }
+.finanzas-badge--default  { color: var(--secondary);   background: rgba(168, 178, 209, 0.08); border: 1px solid var(--border); }
+.finanzas-badge--activo   { color: var(--success);     background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.2); }
+.finanzas-badge--inactivo { color: var(--text-muted);  background: rgba(107, 114, 128, 0.1); border: 1px solid var(--border); }
+
+/* === BOTONES DE ACCIÓN (tabla) === */
+.finanzas-btn-accion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 20px;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s;
+  text-decoration: none;
+}
+.finanzas-btn-accion--renovar  { background: rgba(46, 204, 113, 0.1); border-color: rgba(46, 204, 113, 0.3); color: var(--success); }
+.finanzas-btn-accion--renovar:hover  { background: rgba(46, 204, 113, 0.2); }
+.finanzas-btn-accion--perfil   { background: rgba(79, 195, 247, 0.1); border-color: rgba(79, 195, 247, 0.3); color: var(--accent-cool); }
+.finanzas-btn-accion--perfil:hover   { background: rgba(79, 195, 247, 0.2); }
+.finanzas-btn-accion--editar   { background: rgba(245, 166, 35, 0.1); border-color: rgba(245, 166, 35, 0.3); color: var(--accent); }
+.finanzas-btn-accion--editar:hover   { background: rgba(245, 166, 35, 0.2); }
+.finanzas-btn-accion--eliminar { background: rgba(231, 76, 60, 0.1);  border-color: rgba(231, 76, 60, 0.3);  color: var(--danger); }
+.finanzas-btn-accion--eliminar:hover { background: rgba(231, 76, 60, 0.2); }
+
+/* === INPUTS Y SELECTS === */
+.finanzas-input,
+.finanzas-select {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 0.65rem 1rem;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.finanzas-input:focus,
+.finanzas-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+.finanzas-input::placeholder { color: var(--text-muted); }
+
+/* === BOTONES DE FORMULARIO === */
+.finanzas-btn-submit {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem 1.5rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s;
+}
+.finanzas-btn-submit:hover { background: var(--primary-dark); }
+.finanzas-btn-submit--success { background: var(--success); }
+.finanzas-btn-submit--success:hover { background: #27ae60; }
+.finanzas-btn-submit--warning { background: var(--accent); color: #1a1a1a; }
+.finanzas-btn-submit--warning:hover { background: #e09000; }
+
+/* === PLANES === */
+.finanzas-plan-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.finanzas-plan-item:last-child { border-bottom: none; }
+.finanzas-plan-nombre { font-family: var(--font-body); font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
+.finanzas-plan-dias   { font-family: var(--font-body); font-size: 0.75rem; color: var(--secondary); }
+.finanzas-plan-precio {
+  font-family: var(--font-stats);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--success);
+  padding: 0.2rem 0.65rem;
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid rgba(46, 204, 113, 0.2);
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* === PLANES — Botones de acción === */
+.finanzas-plan-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+.finanzas-plan-btn:hover { background: var(--bg-card-hover); }
+.finanzas-plan-btn--edit:hover { color: var(--accent-cool); border-color: var(--accent-cool); }
+.finanzas-plan-btn--delete:hover { color: var(--danger); border-color: var(--danger); }
+.finanzas-plan-btn--save { color: var(--success); border-color: rgba(46, 204, 113, 0.3); }
+.finanzas-plan-btn--save:hover { background: rgba(46, 204, 113, 0.15); border-color: var(--success); }
+.finanzas-plan-btn--cancel { color: var(--text-muted); }
+.finanzas-plan-btn--cancel:hover { color: var(--danger); border-color: var(--danger); }
+
+.finanzas-plan-edit-row { width: 100%; }
+.finanzas-plan-edit-bottom {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+.finanzas-plan-edit-field { flex: 1; min-width: 0; }
+.finanzas-plan-edit-actions {
+  display: flex;
+  gap: 0.35rem;
+  align-items: flex-end;
+  padding-bottom: 2px;
+  flex-shrink: 0;
+}
+.finanzas-input--sm { padding: 0.35rem 0.55rem; font-size: 0.8rem; }
+
+/* === PROMOS / DESCUENTOS === */
+.finanzas-promo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.finanzas-promo-item:last-child { border-bottom: none; }
+.finanzas-promo-nombre { font-family: var(--font-body); font-weight: 600; font-size: 0.95rem; color: var(--text-primary); }
+.finanzas-promo-pct    { font-family: var(--font-stats); font-weight: 700; color: var(--primary); margin-left: 0.3rem; }
+
+/* === DROP-IN === */
+.finanzas-dropin-wrapper { max-width: 480px; margin: 0 auto; }
+.finanzas-dropin-icono {
+  display: block;
+  font-size: 2.75rem;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+/* === MODAL DE RENOVACIÓN === */
+.finanzas-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1050;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+.finanzas-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  animation: finanzasModalIn 0.22s ease-out;
+}
+@keyframes finanzasModalIn {
+  from { opacity: 0; transform: scale(0.94) translateY(16px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+.finanzas-modal-titulo {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--success);
+  margin-bottom: 0.25rem;
+}
+.finanzas-modal-sub {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--secondary);
+  margin-bottom: 1.25rem;
+}
+.finanzas-modal-sub strong { color: var(--text-primary); }
+.finanzas-modal-btns { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+.finanzas-modal-btn-cancel {
+  flex: 1;
+  padding: 0.65rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--secondary);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.finanzas-modal-btn-cancel:hover { border-color: var(--border-hover); color: var(--text-primary); }
+.finanzas-modal-btn-cobrar {
+  flex: 1;
+  padding: 0.65rem;
+  background: var(--success);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: opacity 0.18s;
+}
+.finanzas-modal-btn-cobrar:disabled { opacity: 0.45; cursor: not-allowed; }
+.finanzas-modal-btn-cobrar:not(:disabled):hover { opacity: 0.85; }
+
+/* ══════════════════════════════════
+   PUNTO DE VENTA (modal cobro al renovar)
+══════════════════════════════════ */
+.finanzas-pdv-titulo {
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.finanzas-pdv-select {
+  width: 100%;
+  padding: 0.75rem 2.25rem 0.75rem 1rem;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23A8B2D1' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  transition: var(--transition);
+}
+.finanzas-pdv-select:focus { border-color: rgba(230, 57, 70, 0.5); box-shadow: 0 0 0 3px var(--primary-glow); }
+.finanzas-pdv-select option { background: var(--bg-card); color: var(--text-primary); }
+
+.finanzas-pdv-total-box {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  text-align: right;
+  margin-bottom: 1rem;
+}
+.finanzas-pdv-total-original { font-family: var(--font-body); font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.2rem; }
+.finanzas-pdv-total-amount { font-family: var(--font-stats); font-size: 1.8rem; font-weight: 700; color: var(--success); line-height: 1; }
+
+.finanzas-pdv-cambio-alert {
+  background: rgba(245, 166, 35, 0.08);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+}
+.finanzas-pdv-cambio-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; }
+.finanzas-pdv-cambio-label { font-family: var(--font-heading-alt); font-size: 0.72rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); }
+.finanzas-pdv-cambio-amount { font-family: var(--font-stats); font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+
+/* === EMPTY STATE FINANZAS === */
+.finanzas-empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--text-muted);
+}
+.finanzas-empty i {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+  display: block;
+  opacity: 0.3;
+}
+.finanzas-empty p { font-family: var(--font-body); font-size: 0.9rem; margin: 0; }
+
+/* ──────────────────────────────────────────────────────────────────
+   TAB: MOVIMIENTOS
+────────────────────────────────────────────────────────────────── */
+.mov-section { display: flex; flex-direction: column; gap: 1.25rem; }
+
+/* Resumen de totales */
+.mov-resumen-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+}
+.mov-resumen-total {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  border-right: 1px solid var(--border);
+  padding-right: 1.25rem;
+  min-width: 130px;
+}
+.mov-resumen-total-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.mov-resumen-total-valor {
+  font-family: var(--font-stats);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--success);
+}
+.mov-resumen-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex: 1;
+}
+.mov-resumen-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid;
+}
+.mov-resumen-chip-tipo  { font-family: var(--font-heading-alt); font-size: 0.65rem; letter-spacing: 0.8px; text-transform: uppercase; }
+.mov-resumen-chip-monto { font-family: var(--font-stats); font-weight: 700; font-size: 0.85rem; }
+.mov-resumen-chip-cnt   { font-family: var(--font-body); font-size: 0.7rem; opacity: 0.7; }
+
+/* Filtros */
+.mov-filtros {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem;
+}
+.mov-search-wrapper { position: relative; }
+.mov-search-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+.mov-search-input { padding-left: 2.2rem !important; }
+
+/* Contador */
+.mov-contador {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+.mov-contador strong { color: var(--text-primary); }
+
+/* Tipo badges */
+.mov-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.mov-badge--mensualidad { color: var(--success);     background: rgba(46,204,113,0.08);  border-color: rgba(46,204,113,0.25);  }
+.mov-badge--abono       { color: var(--accent-cool); background: rgba(79,195,247,0.08);  border-color: rgba(79,195,247,0.25);  }
+.mov-badge--dropin      { color: var(--accent);      background: rgba(245,166,35,0.08);  border-color: rgba(245,166,35,0.25);  }
+.mov-badge--ajuste      { color: var(--warning);     background: rgba(243,156,18,0.08);  border-color: rgba(243,156,18,0.25);  }
+.mov-badge--saldo       { color: #a78bfa;             background: rgba(167,139,250,0.08); border-color: rgba(167,139,250,0.25); }
+.mov-badge--default     { color: var(--secondary);   background: rgba(168,178,209,0.08); border-color: var(--border);          }
+
+/* Monto highlight */
+.mov-monto {
+  font-family: var(--font-stats);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--success);
+  white-space: nowrap;
+}
+
+/* Cards mobile */
+.mov-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: background 0.15s;
+}
+.mov-card:hover { background: var(--bg-card-hover); }
+.mov-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.mov-card-nombre { font-family: var(--font-body); font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
+.mov-card-plan   { font-family: var(--font-body); font-size: 0.75rem; color: var(--secondary); margin-top: 0.1rem; }
+.mov-card-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+.mov-card-meta {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.mov-card-notas {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.03);
+  border-radius: 7px;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--border);
+}
+

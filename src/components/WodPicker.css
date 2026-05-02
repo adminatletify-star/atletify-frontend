@@ -1,0 +1,142 @@
+/* =============================================
+   WOD PICKER — Arctic Wolf
+   Namespace: wdp-*
+   ============================================= */
+
+/* ── TRIGGER ── */
+.wdp-trigger {
+  display: inline-flex; align-items: center; justify-content: space-between;
+  gap: 0.5rem; padding: 0.6rem 1rem; border-radius: 12px;
+  border: 1.5px solid rgba(230,57,70,0.3); background: rgba(230,57,70,0.06);
+  color: var(--text-primary, #f0f0f5);
+  font-family: var(--font-body, 'Inter', sans-serif); font-size: 0.88rem; font-weight: 600;
+  cursor: pointer; transition: border-color 0.18s, background 0.18s, transform 0.18s;
+  width: 100%; text-align: left;
+}
+.wdp-trigger:hover { border-color: rgba(230,57,70,0.5); background: rgba(230,57,70,0.1); transform: translateY(-1px); }
+.wdp-trigger--vacio { color: var(--text-muted, #888); border-style: dashed; border-color: rgba(168,178,209,0.3); background: rgba(168,178,209,0.06); }
+
+.wdp-trigger-left { display: flex; align-items: center; gap: 0.6rem; min-width: 0; overflow: hidden; }
+.wdp-trigger-left i { color: var(--primary, #e63946); font-size: 1rem; flex-shrink: 0; }
+.wdp-chevron { font-size: 0.6rem; opacity: 0.6; flex-shrink: 0; }
+
+/* ── OVERLAY ── */
+.wdp-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center; padding: 1.25rem;
+  animation: wdp-fade 0.18s ease;
+}
+@keyframes wdp-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── PANEL ── */
+.wdp-panel {
+  background: var(--bg-card, #1c1c26); border: 1px solid var(--border, rgba(255,255,255,0.1));
+  border-radius: 20px; width: 100%; max-width: 420px; max-height: 70vh;
+  display: flex; flex-direction: column; overflow: hidden;
+  animation: wdp-up 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 28px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+}
+@keyframes wdp-up {
+  from { opacity: 0; transform: translateY(28px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── HEADER ── */
+.wdp-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+  flex-shrink: 0;
+}
+.wdp-title {
+  font-family: var(--font-heading, 'Oswald', sans-serif);
+  font-size: 0.82rem; font-weight: 700; color: var(--text-muted, #888);
+  text-transform: uppercase; letter-spacing: 1.2px;
+  display: flex; align-items: center; gap: 0.45rem;
+}
+.wdp-close {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted, #888); width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 0.75rem; transition: background 0.15s, color 0.15s; flex-shrink: 0;
+}
+.wdp-close:hover { background: rgba(230,57,70,0.15); color: var(--primary, #e63946); }
+
+/* ── SEARCH ── */
+.wdp-search-wrap {
+  position: relative; padding: 0.75rem 1rem; flex-shrink: 0;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.06));
+}
+.wdp-search-icon {
+  position: absolute; left: 1.7rem; top: 50%; transform: translateY(-50%);
+  color: var(--text-muted, #888); font-size: 0.75rem;
+}
+.wdp-search {
+  width: 100%; padding: 0.55rem 0.75rem 0.55rem 2rem;
+  border-radius: 10px; border: 1.5px solid rgba(168,178,209,0.2);
+  background: rgba(255,255,255,0.04); color: var(--text-primary, #f0f0f5);
+  font-family: var(--font-body, 'Inter', sans-serif); font-size: 0.82rem;
+  outline: none; transition: border-color 0.15s;
+}
+.wdp-search:focus { border-color: rgba(230,57,70,0.4); }
+.wdp-search::placeholder { color: var(--text-muted, #888); }
+
+/* ── LIST ── */
+.wdp-list {
+  overflow-y: auto; padding: 0.75rem; flex: 1;
+  display: flex; flex-direction: column; gap: 0.4rem;
+}
+
+.wdp-item {
+  display: flex; align-items: center; gap: 1rem; width: 100%;
+  padding: 0.9rem 1rem; border-radius: 14px; border: 1.5px solid transparent;
+  background: rgba(255,255,255,0.025); color: var(--text-primary, #f0f0f5);
+  cursor: pointer; transition: background 0.15s, transform 0.15s, border-color 0.15s;
+  text-align: left;
+}
+.wdp-item:hover { background: rgba(255,255,255,0.06); transform: translateX(4px); }
+.wdp-item--activo {
+  border-color: rgba(230,57,70,0.4); background: rgba(230,57,70,0.07); font-weight: 700;
+}
+
+/* Icon */
+.wdp-item-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+  background: rgba(230,57,70,0.1); color: var(--primary, #e63946);
+}
+.wdp-item--activo .wdp-item-icon {
+  background: rgba(230,57,70,0.2);
+}
+
+/* Info */
+.wdp-item-info { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 0.3rem; }
+
+.wdp-item-name {
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.wdp-item-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+
+.wdp-tag {
+  display: inline-flex; align-items: center; gap: 0.25rem;
+  padding: 0.1rem 0.4rem; border-radius: 5px;
+  font-family: var(--font-body, 'Inter', sans-serif); font-size: 0.6rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.3px;
+}
+.wdp-tag--modalidad { background: rgba(79,195,247,0.12); color: var(--accent-cool, #4fc3f7); }
+.wdp-tag--equipo    { background: rgba(245,166,35,0.12); color: var(--accent, #f5a623); }
+.wdp-tag--auto      { background: rgba(46,204,113,0.12); color: var(--success, #2ecc71); }
+.wdp-tag--manual    { background: rgba(245,166,35,0.12); color: var(--accent, #f5a623); }
+
+/* Check */
+.wdp-item-check { color: var(--primary, #e63946); font-size: 0.85rem; flex-shrink: 0; }
+
+/* Empty */
+.wdp-empty {
+  text-align: center; padding: 2rem 0; color: var(--text-muted, #888);
+  font-family: var(--font-body, 'Inter', sans-serif); font-size: 0.85rem;
+}

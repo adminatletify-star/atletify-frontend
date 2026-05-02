@@ -1,0 +1,292 @@
+/* ============================================
+   DIRECTORIO BOXES — WolfPack Design System
+   ============================================ */
+
+/* ---- Página Wrapper ---- */
+.directorio-boxes-page {
+  min-height: 100vh;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+/* ---- Botón Volver (posición fija top-left) ---- */
+.db-back-fixed {
+  position: fixed;
+  top: 1.4rem;
+  left: 1.4rem;
+  z-index: 1200;
+}
+
+/* ---- Hero ---- */
+.db-hero {
+  position: relative;
+  padding: 100px 0 70px;
+  background: linear-gradient(
+    180deg,
+    #0f0007 0%,
+    var(--bg-base) 100%
+  );
+  overflow: hidden;
+}
+
+.db-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(230, 57, 70, 0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.db-hero-overlay {
+  display: none; /* reservado */
+}
+
+.db-hero-eyebrow {
+  font-family: var(--font-heading-alt);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.db-hero-title {
+  font-family: var(--font-hero);
+  font-size: clamp(2.8rem, 8vw, 6rem);
+  letter-spacing: 3px;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+}
+
+.db-hero-sub {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  color: var(--secondary);
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+/* ---- Grid Section ---- */
+.db-grid-section {
+  padding: 60px 0 100px;
+}
+
+/* ---- Estado: loading / error / empty ---- */
+.db-status {
+  padding: 80px 0;
+}
+
+.db-status-text {
+  font-family: var(--font-body);
+  color: var(--secondary);
+  font-size: 1rem;
+}
+
+.db-spinner {
+  color: var(--primary);
+  width: 2.5rem;
+  height: 2.5rem;
+  border-width: 3px;
+}
+
+.db-error-icon,
+.db-empty-icon {
+  font-size: 2.5rem;
+  color: var(--text-muted);
+}
+
+.db-error-icon {
+  color: var(--warning);
+}
+
+/* ---- Card ---- */
+.db-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: var(--transition);
+  position: relative;
+}
+
+.db-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  transition: border-color 0.3s ease;
+  pointer-events: none;
+}
+
+.db-card:hover {
+  background: var(--bg-card-hover);
+  transform: translateY(-6px);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.5),
+    0 0 0 1px var(--border-hover),
+    0 0 28px var(--primary-glow);
+}
+
+.db-card:hover::before {
+  border-color: var(--border-hover);
+}
+
+/* Logo */
+.db-card-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px 20px;
+  background: linear-gradient(
+    180deg,
+    rgba(230, 57, 70, 0.07) 0%,
+    transparent 100%
+  );
+  border-bottom: 1px solid var(--border);
+}
+
+.db-card-logo {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg-elevated);
+  transition: var(--transition);
+}
+
+.db-card:hover .db-card-logo {
+  border-color: var(--primary);
+  box-shadow: 0 0 16px var(--primary-glow);
+}
+
+/* Body */
+.db-card-body {
+  padding: 20px 20px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.db-card-name {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.db-card-slogan {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--secondary);
+  font-style: italic;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.db-card-location,
+.db-card-contact {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--secondary);
+  line-height: 1.4;
+}
+
+.db-card-location-icon {
+  color: var(--primary);
+  font-size: 0.8rem;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.db-card-contact-icon {
+  color: var(--accent-cool);
+  font-size: 0.8rem;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+/* Footer */
+.db-card-footer {
+  padding: 16px 20px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.db-btn-saber-mas {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: var(--transition);
+  text-transform: uppercase;
+}
+
+.db-btn-saber-mas:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 20px var(--primary-glow);
+  transform: scale(1.02);
+}
+
+.db-btn-saber-mas:active {
+  transform: scale(0.98);
+}
+
+.db-btn-unirme {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  margin-top: 8px;
+  background: transparent;
+  color: #2ecc71;
+  border: 1.5px solid #2ecc71;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: var(--transition);
+  text-transform: uppercase;
+}
+
+.db-btn-unirme:hover {
+  background: #2ecc71;
+  color: #0B0B0F;
+  box-shadow: 0 4px 20px rgba(46, 204, 113, 0.3);
+  transform: scale(1.02);
+}
+
+.db-btn-unirme:active {
+  transform: scale(0.98);
+}

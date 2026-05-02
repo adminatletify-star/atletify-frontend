@@ -1,0 +1,511 @@
+/* ============================================
+   DETALLE PLAN USER — WolfPack Design System
+   Prefijo: dpu-
+   ============================================ */
+
+/* === PÁGINA === */
+.dpu-page {
+  background: var(--bg-base);
+  min-height: 100vh;
+  padding-bottom: 5rem;
+  color: var(--text-primary);
+}
+
+/* === NAVBAR STICKY (glassmorphism) === */
+.dpu-navbar {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.5rem 0.85rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dpu-navbar-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.dpu-navbar-brand {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.dpu-navbar-brand span {
+  color: var(--primary);
+}
+
+/* === HERO CARD === */
+.dpu-hero {
+  background: linear-gradient(135deg, var(--bg-elevated) 0%, rgba(46, 204, 113, 0.05) 100%);
+  border: 1px solid rgba(46, 204, 113, 0.12);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.dpu-plan-name {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.2;
+}
+
+.dpu-vencimiento {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0.6rem 0 0 0;
+}
+
+.dpu-vencimiento i {
+  margin-right: 0.3rem;
+  opacity: 0.6;
+}
+
+/* === BIG DAYS NUMBER === */
+.dpu-days-big {
+  font-family: var(--font-stats);
+  font-size: clamp(3rem, 8vw, 4.5rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.dpu-days-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 0.25rem;
+}
+
+/* === STATUS BADGE === */
+.dpu-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.22rem 0.65rem;
+  border-radius: 20px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  border: 1px solid;
+}
+
+.dpu-status--activa {
+  background: rgba(46, 204, 113, 0.1);
+  border-color: rgba(46, 204, 113, 0.3);
+  color: var(--success);
+}
+
+.dpu-status--congelada {
+  background: rgba(79, 195, 247, 0.1);
+  border-color: rgba(79, 195, 247, 0.3);
+  color: var(--accent-cool);
+}
+
+.dpu-status--vencida {
+  background: rgba(231, 76, 60, 0.1);
+  border-color: rgba(231, 76, 60, 0.3);
+  color: var(--danger);
+}
+
+.dpu-status--exento {
+  background: rgba(245, 166, 35, 0.1);
+  border-color: rgba(245, 166, 35, 0.3);
+  color: var(--accent);
+}
+
+/* === PROGRESS BAR === */
+.dpu-progress-wrap {
+  padding: 0 1.25rem 1.25rem 1.25rem;
+}
+
+.dpu-progress-pct {
+  font-family: var(--font-stats);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: block;
+  text-align: right;
+  margin-bottom: 0.3rem;
+}
+
+.dpu-progress-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.dpu-progress-fill {
+  height: 100%;
+  background: var(--success);
+  border-radius: 10px;
+  transition: width 0.6s ease;
+}
+
+.dpu-progress-fill--alerta {
+  background: var(--warning);
+}
+
+.dpu-progress-fill--vencida {
+  background: var(--danger);
+}
+
+/* === FREEZE CARD === */
+.dpu-freeze-card {
+  background: rgba(79, 195, 247, 0.04);
+  border: 1px solid rgba(79, 195, 247, 0.15);
+  border-left: 4px solid var(--accent-cool);
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.dpu-freeze-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent-cool);
+}
+
+.dpu-freeze-motivo {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  margin: 0.5rem 0 0.3rem 0;
+}
+
+.dpu-freeze-dates {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* === INFO CARDS (Deuda / Saldo) === */
+.dpu-info-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.dpu-stat-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.dpu-stat-value {
+  font-family: var(--font-stats);
+  font-size: 1.65rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* === EXENTO / PASE LIBRE === */
+.dpu-exento-badge {
+  background: rgba(245, 166, 35, 0.08);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  border-radius: 12px;
+  padding: 0.7rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.dpu-exento-badge i {
+  font-size: 0.9rem;
+}
+
+/* === CLASSES REMAINING === */
+.dpu-clases-badge {
+  background: rgba(79, 195, 247, 0.08);
+  border: 1px solid rgba(79, 195, 247, 0.2);
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dpu-clases-badge i {
+  color: var(--accent-cool);
+  font-size: 0.9rem;
+}
+
+.dpu-clases-num {
+  font-family: var(--font-stats);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent-cool);
+}
+
+.dpu-clases-text {
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* === SECTION LABEL === */
+.dpu-section-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* === MEMBERSHIP CARDS (multiple subs) === */
+.dpu-mb-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 4px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+}
+
+.dpu-mb-activa { border-left-color: var(--success); }
+.dpu-mb-congelada { border-left-color: var(--accent-cool); }
+.dpu-mb-futura { border-left-color: rgba(240, 240, 245, 0.25); }
+
+.dpu-mb-name {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+}
+
+.dpu-mb-dates {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dpu-mb-dates i {
+  opacity: 0.6;
+  font-size: 0.7rem;
+  margin-right: 0.25rem;
+}
+
+.dpu-mb-days {
+  font-family: var(--font-stats);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--success);
+  background: rgba(46, 204, 113, 0.08);
+  border: 1px solid rgba(46, 204, 113, 0.2);
+  border-radius: 20px;
+  padding: 0.15rem 0.6rem;
+  white-space: nowrap;
+}
+
+/* === HISTORY TABLE === */
+.dpu-table {
+  margin: 0;
+  color: var(--text-primary) !important;
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--text-primary);
+  --bs-table-striped-bg: transparent;
+  --bs-table-hover-bg: var(--bg-card-hover);
+  --bs-table-hover-color: var(--text-primary);
+  --bs-table-border-color: var(--border);
+}
+
+.dpu-table thead th {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border: none !important;
+  padding: 0.7rem 0.85rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted) !important;
+  white-space: nowrap;
+}
+
+.dpu-table tbody tr {
+  background: transparent !important;
+  transition: background 0.15s ease;
+}
+
+.dpu-table tbody td {
+  background: transparent !important;
+  border-color: var(--border) !important;
+  padding: 0.65rem 0.85rem;
+  vertical-align: middle;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-primary) !important;
+}
+
+.dpu-table tbody tr:hover td {
+  background: var(--bg-card-hover) !important;
+}
+
+.dpu-table-monto {
+  font-family: var(--font-stats);
+  font-weight: 700;
+  color: var(--success);
+}
+
+.dpu-table-tipo {
+  font-family: var(--font-heading-alt);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.dpu-table-metodo {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* === PAGINATION === */
+.dpu-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+}
+
+.dpu-page-btn {
+  padding: 0.4rem 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--secondary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.dpu-page-btn:hover:not(:disabled) {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.dpu-page-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.dpu-page-info {
+  font-family: var(--font-stats);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* === EMPTY STATE === */
+.dpu-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.dpu-empty i {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 0.75rem;
+  opacity: 0.2;
+  color: var(--text-muted);
+}
+
+.dpu-empty-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.dpu-empty-text {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* === LOADING SPINNER === */
+.dpu-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+}
+
+.dpu-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: dpu-spin 0.7s linear infinite;
+}
+
+@keyframes dpu-spin {
+  to { transform: rotate(360deg); }
+}

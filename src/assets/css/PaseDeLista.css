@@ -1,0 +1,835 @@
+/* ============================================
+   PASE DE LISTA — WolfPack Design System
+   Reutiliza de componentes.css:
+   .tarjeta-panel, .entrada-oscura, .spinner-wp
+   ============================================ */
+
+/* === PÁGINA === */
+.pdl-page {
+  background: var(--bg-base);
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+/* === HEADER STICKY === */
+.pdl-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.5rem 0.85rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  margin-bottom: 1.5rem;
+}
+
+.pdl-header-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+.pdl-header-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.pdl-header-title span {
+  color: var(--primary);
+}
+
+/* === TARJETA DE SELECCIÓN DE WOD === */
+.pdl-wod-card {
+  background: var(--bg-elevated);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  border-left: 4px solid var(--accent);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 32px rgba(245, 166, 35, 0.06);
+  transition: var(--transition);
+}
+
+.pdl-wod-card:hover {
+  border-color: rgba(245, 166, 35, 0.5);
+  box-shadow: 0 8px 32px rgba(245, 166, 35, 0.12);
+}
+
+.pdl-wod-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent-cool);
+  margin-bottom: 0.4rem;
+  display: block;
+}
+
+.pdl-wod-select {
+  background: var(--bg-card);
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  border-radius: 10px;
+  color: var(--accent);
+  font-family: var(--font-heading-alt);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.5rem 2.25rem 0.5rem 0.85rem;
+  width: 100%;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23F5A623' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  transition: var(--transition);
+}
+
+.pdl-wod-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15);
+}
+
+.pdl-wod-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* === BADGES DE RANKING === */
+.pdl-badge-auto {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(79, 195, 247, 0.1);
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  color: var(--accent-cool);
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+}
+
+.pdl-badge-manual {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(245, 166, 35, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  color: var(--accent);
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+}
+
+.pdl-jueceo-btn {
+  background: rgba(230, 57, 70, 0.08);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  color: var(--primary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 0.3rem 0.85rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.pdl-jueceo-btn:hover {
+  background: rgba(230, 57, 70, 0.18);
+  border-color: var(--primary);
+  box-shadow: 0 0 12px var(--primary-glow);
+}
+
+.pdl-metricas-count {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0 0;
+}
+
+/* === INPUT DE NUEVA MÉTRICA === */
+.pdl-nueva-metrica-input {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  padding: 0.5rem 0.85rem;
+  transition: var(--transition);
+  flex: 1;
+}
+
+.pdl-nueva-metrica-input::placeholder {
+  color: var(--text-muted);
+}
+
+.pdl-nueva-metrica-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.1);
+}
+
+.pdl-agregar-metrica-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  color: #111;
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.5rem 1.1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.pdl-agregar-metrica-btn:hover {
+  background: #e09510;
+  box-shadow: 0 4px 12px rgba(245, 166, 35, 0.35);
+}
+
+/* === SECCIÓN DE CLASES === */
+.pdl-section-label {
+  font-family: var(--font-heading);
+  font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin: 0 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.pdl-section-label i {
+  color: var(--primary);
+  font-size: 0.9em;
+}
+
+.pdl-section-count {
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  background: rgba(168, 178, 209, 0.1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--secondary);
+  letter-spacing: 0.5px;
+}
+
+/* === TARJETA DE CLASE === */
+.pdl-clase-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid transparent;
+  border-radius: 14px;
+  padding: 0.9rem 1.1rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.pdl-clase-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(230, 57, 70, 0.25);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.pdl-clase-card--active {
+  background: rgba(230, 57, 70, 0.08);
+  border-color: var(--primary);
+  border-left-color: var(--primary);
+  box-shadow: 0 6px 24px rgba(230, 57, 70, 0.18);
+}
+
+.pdl-clase-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.pdl-clase-card--active .pdl-clase-icon {
+  background: rgba(230, 57, 70, 0.2);
+  border-color: rgba(230, 57, 70, 0.4);
+}
+
+.pdl-clase-nombre {
+  font-family: var(--font-heading-alt);
+  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.pdl-clase-coach {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.pdl-cap-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-stats);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 12px;
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid rgba(46, 204, 113, 0.28);
+  color: var(--success);
+  white-space: nowrap;
+}
+
+.pdl-cap-badge--full {
+  background: rgba(245, 166, 35, 0.1);
+  border-color: rgba(245, 166, 35, 0.28);
+  color: var(--accent);
+}
+
+.pdl-chevron {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+.pdl-chevron--up {
+  transform: rotate(180deg);
+}
+
+/* === PIZARRA DE CLASE (panel expandible) === */
+.pdl-pizarra {
+  background: var(--bg-elevated);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  border-radius: 14px;
+  overflow: visible;
+  margin-top: 0.75rem;
+}
+
+.pdl-pizarra-header {
+  background: rgba(230, 57, 70, 0.07);
+  border-bottom: 1px solid rgba(230, 57, 70, 0.2);
+  padding: 0.85rem 1.1rem;
+  border-radius: 14px 14px 0 0;
+}
+
+.pdl-pizarra-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pdl-guardar-todos-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 20px;
+  color: #111;
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.pdl-guardar-todos-btn:hover {
+  background: #e09510;
+  box-shadow: 0 4px 14px rgba(245, 166, 35, 0.4);
+}
+
+.pdl-close-pizarra-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.pdl-close-pizarra-btn:hover {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* === TARJETA DE ATLETA === */
+.pdl-atleta-card {
+  background: rgba(11, 11, 15, 0.6);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  transition: var(--transition);
+}
+
+.pdl-atleta-card:hover {
+  border-color: rgba(168, 178, 209, 0.2);
+}
+
+.pdl-atleta-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(168, 178, 209, 0.12);
+  border: 1px solid rgba(168, 178, 209, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-stats);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--secondary);
+  flex-shrink: 0;
+}
+
+.pdl-atleta-nombre {
+  font-family: var(--font-heading-alt);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.2rem;
+  letter-spacing: 0.3px;
+}
+
+/* === BOTONES DE ASISTENCIA === */
+.pdl-asistencia-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.pdl-asistencia-btn--presente {
+  background: rgba(46, 204, 113, 0.15);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.pdl-asistencia-btn--falto {
+  background: rgba(230, 57, 70, 0.15);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.pdl-asistencia-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.pdl-mover-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  background: rgba(79, 195, 247, 0.06);
+  color: var(--accent-cool);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.pdl-mover-btn:hover {
+  background: rgba(79, 195, 247, 0.15);
+  border-color: var(--accent-cool);
+  transform: scale(1.1);
+}
+
+/* === ZONA DE SCORE === */
+.pdl-score-zona {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin-top: 0.75rem;
+}
+
+.pdl-score-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent-cool);
+  margin-bottom: 0.35rem;
+  display: block;
+}
+
+.pdl-score-input {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-stats);
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0.45rem 0.75rem;
+  width: 100%;
+  transition: var(--transition);
+}
+
+.pdl-score-input::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.pdl-score-input:focus {
+  outline: none;
+  border-color: var(--accent-cool);
+  box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.1);
+}
+
+/* === BLOQUEO DE SCORE === */
+.pdl-bloqueado {
+  background: rgba(245, 166, 35, 0.05);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin-top: 0.75rem;
+}
+
+.pdl-bloqueado-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0 0 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pdl-bloqueado-desc {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.pdl-desbloquear-btn {
+  background: none;
+  border: 1px solid rgba(230, 57, 70, 0.4);
+  border-radius: 20px;
+  color: var(--primary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 0.35rem 0.85rem;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.pdl-desbloquear-btn:hover {
+  background: rgba(230, 57, 70, 0.1);
+  border-color: var(--primary);
+}
+
+/* === BOTONES DE ACCIÓN (RX / GUARDAR / DELETE) === */
+.pdl-rx-btn {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: none;
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.pdl-rx-btn--active {
+  background: rgba(245, 166, 35, 0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.pdl-rx-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.pdl-guardar-score-btn {
+  flex: 1;
+  background: var(--primary);
+  border: none;
+  border-radius: 20px;
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.45rem 1.1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.pdl-guardar-score-btn:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 14px var(--primary-glow);
+}
+
+.pdl-delete-score-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.pdl-delete-score-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.06);
+}
+
+/* === ESTADOS VACÍO Y LOADING === */
+.pdl-empty {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.pdl-empty i {
+  font-size: clamp(2.5rem, 5vw, 3rem);
+  color: var(--text-muted);
+  opacity: 0.35;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.pdl-empty p {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.pdl-loading {
+  background: var(--bg-base);
+  min-height: 50vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* === MODAL DE MOVER ATLETA === */
+.pdl-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.pdl-modal {
+  background: linear-gradient(180deg, #111 0%, #080808 100%);
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.pdl-modal-header {
+  padding: 1.1rem 1.4rem;
+  border-bottom: 1px solid rgba(79, 195, 247, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pdl-modal-title {
+  font-family: var(--font-heading-alt);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pdl-modal-title i {
+  color: var(--accent-cool);
+}
+
+.pdl-modal-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.pdl-modal-close-btn:hover {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.pdl-modal-body {
+  padding: 1.25rem 1.4rem;
+}
+
+.pdl-modal-sub {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.pdl-modal-sub strong {
+  color: var(--text-primary);
+}
+
+.pdl-modal-clase-btn {
+  width: 100%;
+  background: none;
+  border: 1px solid rgba(79, 195, 247, 0.25);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.pdl-modal-clase-btn:hover {
+  background: rgba(79, 195, 247, 0.07);
+  border-color: rgba(79, 195, 247, 0.5);
+}
+
+.pdl-modal-clase-badge {
+  font-family: var(--font-stats);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-cool);
+  background: rgba(79, 195, 247, 0.1);
+  border: 1px solid rgba(79, 195, 247, 0.2);
+  border-radius: 8px;
+  padding: 0.15rem 0.5rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}

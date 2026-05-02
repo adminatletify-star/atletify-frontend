@@ -1,0 +1,171 @@
+/* =============================================
+   REGISTRO MANUAL - Contraste de texto mejorado
+   ============================================= */
+
+/* Contenedor principal - mantiene estilo original */
+.registro-manual-container {
+  background: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+
+/* === CARDS - Fondo oscuro forzado === */
+.registro-card {
+  background: rgba(30, 30, 30, 0.6) !important;
+  backdrop-filter: blur(15px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.registro-card-security {
+  background: rgba(220, 53, 69, 0.05) !important;
+  border: 1px solid rgba(220, 53, 69, 0.2) !important;
+}
+
+/* === LABELS - Texto claro para contraste === */
+.registro-label {
+  color: #d0d0d0 !important;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+/* === INPUTS Y SELECTS === */
+.registro-input {
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  padding: 12px 16px;
+  font-size: 1rem;
+}
+
+.registro-input:focus {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-color: rgba(220, 53, 69, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
+  outline: none;
+}
+
+.registro-input::placeholder {
+  color: #aaaaaa !important;
+  opacity: 1;
+}
+
+/* Selects - opciones legibles */
+.registro-input option {
+  background: #2a2a2a;
+  color: #ffffff;
+}
+
+/* === TÍTULOS DE SECCIÓN === */
+.registro-section-title {
+  color: #dc3545;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 1.25rem;
+}
+
+/* === HEADER === */
+.registro-header-title {
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0;
+  font-size: 1.5rem;
+}
+
+.registro-header-subtitle {
+  color: #c0c0c0;
+  margin-bottom: 0;
+  font-size: 0.9rem;
+}
+
+/* === BOTONES === */
+.registro-btn {
+  border-radius: 14px;
+  padding: 12px 24px;
+  font-weight: 600;
+  border: none;
+}
+
+.registro-btn-submit {
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+}
+
+.registro-btn-back {
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+/* === PANEL DE SEGURIDAD === */
+.registro-security-icon {
+  width: 80px;
+  height: 80px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(220, 53, 69, 0.1);
+  margin-bottom: 1rem;
+}
+
+.registro-security-title {
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 1.3rem;
+}
+
+.registro-security-desc {
+  color: #c0c0c0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.registro-password-box {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.registro-password-label {
+  color: #c0c0c0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.registro-password-value {
+  color: #28a745;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+/* PIN Input */
+.registro-pin-container {
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.registro-pin-input {
+  font-size: 1.5rem;
+  text-align: center;
+  letter-spacing: 8px;
+}
+
+/* === SEPARADORES === */
+.registro-divider {
+  border-color: rgba(255, 255, 255, 0.1);
+  margin: 1.5rem 0;
+}

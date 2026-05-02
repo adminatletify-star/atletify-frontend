@@ -1,0 +1,262 @@
+/* =============================================
+   TIPO BARRA PICKER — Arctic Wolf Design System
+   Namespace: tbp-*
+   ============================================= */
+
+/* ── TRIGGER ── */
+.tbp-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.62rem 0.9rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  text-align: left;
+}
+.tbp-trigger:hover {
+  border-color: rgba(230, 57, 70, 0.45);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.tbp-trigger-left {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.tbp-trigger-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.tbp-trigger-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.tbp-trigger-nombre {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tbp-trigger-medida {
+  font-family: var(--font-stats, 'Rajdhani', sans-serif);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--primary, #e63946);
+  letter-spacing: 0.3px;
+}
+
+.tbp-chevron {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ── OVERLAY ── */
+.tbp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: tbp-fade-in 0.18s ease;
+}
+@keyframes tbp-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── PANEL ── */
+.tbp-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(230, 57, 70, 0.3) transparent;
+  animation: tbp-slide-up 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.04);
+}
+@keyframes tbp-slide-up {
+  from { opacity: 0; transform: translateY(28px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── HEADER ── */
+.tbp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  z-index: 1;
+}
+.tbp-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.tbp-header-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 0.8rem;
+}
+.tbp-title {
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+}
+.tbp-unit-badge {
+  font-family: var(--font-stats);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.2);
+  padding: 0.1rem 0.45rem;
+  border-radius: 5px;
+}
+.tbp-close {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.tbp-close:hover { background: rgba(230,57,70,0.15); color: var(--primary); }
+
+/* ── OPCIONES ── */
+.tbp-options {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tbp-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1.5px solid transparent;
+  background: rgba(255,255,255,0.025);
+  color: var(--text-primary, #f0f0f5);
+  cursor: pointer;
+  transition: background 0.18s, transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+  text-align: left;
+}
+.tbp-option:hover {
+  background: rgba(255,255,255,0.06);
+  transform: translateX(3px);
+}
+
+/* ── PESO PROTAGONISTA ── */
+.tbp-opt-peso {
+  width: 68px;
+  height: 58px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.18s, border-color 0.18s;
+  border: 1px solid;
+}
+
+.tbp-peso-numero {
+  font-family: var(--font-stats, 'Rajdhani', sans-serif);
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.5px;
+  color: var(--text-primary, #f0f0f5);
+  transition: color 0.18s;
+}
+
+.tbp-peso-unidad {
+  font-family: var(--font-stats, 'Rajdhani', sans-serif);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-top: -2px;
+}
+
+/* ── NOMBRE ── */
+.tbp-opt-nombre {
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-primary, #f0f0f5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.tbp-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  flex-shrink: 0;
+}

@@ -1,0 +1,460 @@
+/* =============================================
+   ADMIN ROSTER — Bandeja de Pagos y Roster
+   Paleta: Arctic Wolf
+   ============================================= */
+
+/* === CONTENEDOR === */
+.ar-container {
+  background: linear-gradient(160deg, var(--bg-base) 0%, var(--bg-elevated) 100%);
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+/* === HEADER STICKY === */
+.ar-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 1.5rem 0.9rem 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.ar-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.ar-header-icono {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid rgba(46, 204, 113, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--success);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.ar-titulo {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.ar-titulo span { color: var(--primary); }
+
+.ar-subtitulo {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 0;
+  margin-top: 0.1rem;
+}
+
+/* === SELECTOR DE COMPETENCIA === */
+.ar-header-right { flex-shrink: 0; }
+
+.ar-selector-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ar-selector-icon {
+  position: absolute;
+  left: 0.85rem;
+  color: var(--accent);
+  font-size: 0.75rem;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ar-selector {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 0.55rem 0.9rem 0.55rem 2.2rem;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-width: 230px;
+}
+
+.ar-selector:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15);
+}
+
+.ar-selector option { background: var(--bg-card); color: var(--text-primary); }
+
+/* === ÁREA DE CONTENIDO === */
+.ar-content {
+  padding: 1.5rem 1.25rem 4rem;
+}
+
+@media (min-width: 768px)  { .ar-content { padding: 1.75rem 2rem 4rem; } }
+@media (min-width: 1200px) { .ar-content { padding: 2rem 2.5rem 4rem; } }
+
+/* === ESTADO DE CARGA Y VACÍO === */
+.ar-estado-centro {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 35vh;
+}
+
+.ar-empty {
+  text-align: center;
+  padding: 5rem 2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  color: var(--text-muted);
+}
+
+.ar-empty i {
+  font-size: 3rem;
+  opacity: 0.15;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.ar-empty p {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+/* === SECCIÓN DE CATEGORÍA === */
+.ar-cat-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+/* Header de categoría */
+.ar-cat-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ar-cat-nombre {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.ar-tipo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--secondary);
+  background: rgba(168, 178, 209, 0.08);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.18rem 0.6rem;
+}
+
+.ar-cat-count {
+  font-family: var(--font-stats);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.2rem 0.7rem;
+  flex-shrink: 0;
+}
+
+/* Grid de equipos dentro de la sección */
+.ar-cat-equipos {
+  padding: 1.25rem;
+}
+
+.ar-cat-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+}
+
+.ar-cat-empty i { font-size: 2rem; opacity: 0.15; display: block; margin-bottom: 0.5rem; }
+.ar-cat-empty p { font-family: var(--font-body); font-size: 0.82rem; margin: 0; }
+
+/* === TARJETA DE EQUIPO === */
+.ar-equipo-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: border-color 0.22s, box-shadow 0.22s;
+  position: relative;
+}
+
+.ar-equipo-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+}
+
+/* Tira de color superior según estatus */
+.ar-equipo-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  border-radius: 14px 14px 0 0;
+}
+
+.ar-equipo-card--ok::before   { background: var(--success); }
+.ar-equipo-card--mal::before  { background: var(--danger); }
+.ar-equipo-card--pend::before { background: var(--warning); }
+
+/* Header del equipo */
+.ar-equipo-header {
+  padding: 0.85rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.ar-equipo-nombre {
+  font-family: var(--font-heading);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: 0.4px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Badges de pago */
+.ar-pago-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: 20px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.ar-pago-badge--ok   { background: rgba(46,204,113,0.12); border: 1px solid rgba(46,204,113,0.3);  color: var(--success); }
+.ar-pago-badge--mal  { background: rgba(231,76,60,0.12);  border: 1px solid rgba(231,76,60,0.3);   color: var(--danger); }
+.ar-pago-badge--pend { background: rgba(243,156,18,0.12); border: 1px solid rgba(243,156,18,0.3);  color: var(--warning); }
+
+/* Cuerpo del equipo */
+.ar-equipo-body {
+  padding: 0.85rem 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ar-box-origen {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--secondary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.ar-box-origen i { color: var(--accent-cool); font-size: 0.7rem; }
+
+/* Lista de atletas */
+.ar-atletas-label {
+  display: block;
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.ar-atleta-list {
+  list-style: none;
+  margin: 0; padding: 0;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ar-atleta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-primary);
+}
+
+.ar-atleta-item:last-child { border-bottom: none; }
+
+.ar-atleta-dot {
+  font-size: 0.32rem;
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.ar-atleta-nombre {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.ar-atleta-meta {
+  font-family: var(--font-stats);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.04);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+}
+
+/* Footer / Acciones */
+.ar-equipo-footer {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(0,0,0,0.15);
+}
+
+.ar-btn-aprobar,
+.ar-btn-rechazar {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.48rem 0.6rem;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  border: 1px solid transparent;
+}
+
+.ar-btn-aprobar {
+  background: rgba(46, 204, 113, 0.08);
+  border-color: rgba(46, 204, 113, 0.28);
+  color: var(--success);
+}
+
+.ar-btn-aprobar:hover:not(:disabled) {
+  background: rgba(46, 204, 113, 0.18);
+  border-color: var(--success);
+  box-shadow: 0 2px 8px rgba(46,204,113,0.18);
+}
+
+.ar-btn-rechazar {
+  background: rgba(231, 76, 60, 0.07);
+  border-color: rgba(231, 76, 60, 0.25);
+  color: var(--danger);
+}
+
+.ar-btn-rechazar:hover:not(:disabled) {
+  background: rgba(231, 76, 60, 0.16);
+  border-color: var(--danger);
+  box-shadow: 0 2px 8px rgba(231,76,60,0.15);
+}
+
+.ar-btn-aprobar:disabled,
+.ar-btn-rechazar:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* === SPINNER (respaldo local) === */
+.spinner-wp {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--success);
+  border-radius: 50%;
+  animation: ar-spin 0.7s linear infinite;
+}
+
+@keyframes ar-spin { to { transform: rotate(360deg); } }
+
+/* === RESPONSIVE === */
+@media (max-width: 575.98px) {
+  .ar-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.8rem 1rem;
+  }
+  .ar-header-right { width: 100%; }
+  .ar-selector-wrap { width: 100%; }
+  .ar-selector { min-width: 100%; width: 100%; }
+  .ar-cat-header { padding: 0.85rem 1rem; }
+  .ar-cat-equipos { padding: 0.85rem; }
+  .ar-equipo-header { padding: 0.75rem 0.85rem; }
+  .ar-equipo-body { padding: 0.75rem 0.85rem; }
+  .ar-equipo-footer { padding: 0.65rem 0.85rem; }
+}

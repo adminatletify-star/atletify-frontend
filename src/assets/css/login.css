@@ -1,0 +1,22 @@
+/* ============================================
+   WOLFPACK SYSTEM - LOGIN / REGISTRO
+   Solo estilos únicos de este flujo.
+   Las bases están en global.css.
+   ============================================ */
+
+/* Alerta de info (solo en login/registro) */
+.alert-info {
+  background-color: rgba(79, 195, 247, 0.1) !important;
+  border-color: var(--accent-cool) !important;
+  color: var(--text-primary) !important;
+}
+
+.alert-dismissible .btn-close {
+  filter: brightness(0) invert(1);
+}
+
+/* Enlace de hover con glow */
+a.text-danger:hover {
+  text-shadow: 0 0 10px rgba(230, 57, 70, 0.5);
+  color: #f08090 !important;
+}

@@ -1,0 +1,35 @@
+/* =============================================
+   OBJETIVO PICKER — Arctic Wolf Design System
+   Namespace: obp-*
+   ============================================= */
+.obp-trigger { display:inline-flex; align-items:center; justify-content:space-between; gap:.5rem; padding:.52rem .9rem; border-radius:10px; border:1.5px solid rgba(245,166,35,.3); background:rgba(245,166,35,.06); color:var(--accent,#f5a623); font-family:var(--font-body,'Inter',sans-serif); font-size:.84rem; font-weight:600; cursor:pointer; transition:filter .18s,transform .18s; white-space:nowrap; width:100%; text-align:left; }
+.obp-trigger--vacio { color:var(--text-muted,#888); border-color:rgba(168,178,209,.3); background:rgba(168,178,209,.06); border-style:dashed; }
+.obp-trigger:hover { filter:brightness(1.15); transform:translateY(-1px); }
+.obp-trigger-left { display:flex; align-items:center; gap:.5rem; }
+.obp-trigger-emoji { font-size:1.1rem; }
+.obp-trigger-icon { font-size:.8rem; opacity:.6; }
+.obp-trigger-nombre { font-family:var(--font-heading-alt,'Barlow Condensed',sans-serif); font-weight:700; font-size:.88rem; text-transform:uppercase; letter-spacing:.5px; }
+.obp-chevron { font-size:.6rem; opacity:.6; flex-shrink:0; }
+
+.obp-overlay { position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.72); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:1.25rem; animation:obp-fade .18s ease; }
+@keyframes obp-fade { from{opacity:0} to{opacity:1} }
+
+.obp-panel { background:var(--bg-card,#1c1c26); border:1px solid var(--border,rgba(255,255,255,.1)); border-radius:20px; width:100%; max-width:380px; overflow:hidden; animation:obp-up .22s cubic-bezier(.34,1.56,.64,1); box-shadow:0 28px 64px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.04); }
+@keyframes obp-up { from{opacity:0;transform:translateY(28px) scale(.94)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+.obp-header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid var(--border,rgba(255,255,255,.08)); }
+.obp-title { font-family:var(--font-heading,'Oswald',sans-serif); font-size:.82rem; font-weight:700; color:var(--text-muted,#888); text-transform:uppercase; letter-spacing:1.2px; display:flex; align-items:center; gap:.45rem; }
+.obp-title i { color:var(--accent,#f5a623); }
+.obp-close { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); color:var(--text-muted,#888); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:.75rem; transition:background .15s,color .15s; flex-shrink:0; }
+.obp-close:hover { background:rgba(245,166,35,.15); color:var(--accent,#f5a623); }
+
+.obp-options { padding:.75rem 1rem 1rem; display:flex; flex-direction:column; gap:.4rem; }
+.obp-option { display:flex; align-items:center; gap:.85rem; width:100%; padding:.8rem 1rem; border-radius:12px; border:1.5px solid transparent; background:rgba(255,255,255,.025); color:var(--text-primary,#f0f0f5); cursor:pointer; transition:background .15s,transform .15s,border-color .15s; text-align:left; }
+.obp-option:hover { background:rgba(245,166,35,.06); border-color:rgba(245,166,35,.2); transform:translateX(4px); }
+.obp-option--activo { background:rgba(245,166,35,.1); border-color:rgba(245,166,35,.5); }
+.obp-option-emoji { font-size:1.4rem; flex-shrink:0; }
+.obp-option-info { display:flex; flex-direction:column; flex:1; min-width:0; }
+.obp-option-nombre { font-family:var(--font-heading-alt,'Barlow Condensed',sans-serif); font-size:.88rem; font-weight:700; text-transform:uppercase; letter-spacing:.3px; color:var(--text-primary,#f0f0f5); }
+.obp-option--activo .obp-option-nombre { color:var(--accent,#f5a623); }
+.obp-option-desc { font-family:var(--font-body,'Inter',sans-serif); font-size:.7rem; color:var(--text-muted,#888); }
+.obp-check { font-size:.75rem; color:var(--accent,#f5a623); flex-shrink:0; }

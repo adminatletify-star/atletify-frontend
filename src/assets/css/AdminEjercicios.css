@@ -1,0 +1,676 @@
+/* =============================================
+   ADMIN EJERCICIOS — Gestión del Diccionario
+   ============================================= */
+
+/* ---- PÁGINA ---- */
+.ae-page {
+  background: var(--bg-base);
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+/* ---- HEADER STICKY (igual que PaseDeLista) ---- */
+.ae-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.5rem 0.85rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  margin-bottom: 1.5rem;
+}
+.ae-header-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+.ae-header-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+.ae-header-title span { color: var(--primary); }
+.ae-badge-count {
+  background: rgba(230, 57, 70, 0.15);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  color: var(--primary);
+  font-family: var(--font-stats);
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+}
+
+/* ---- PANEL FORMULARIO ---- */
+.ae-form-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+.ae-form-panel.editing {
+  border-color: rgba(245, 166, 35, 0.4);
+  box-shadow: 0 0 0 1px rgba(245, 166, 35, 0.15);
+}
+.ae-panel-title {
+  font-family: var(--font-heading-alt);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+.ae-panel-title i { color: var(--primary); font-size: 0.9rem; }
+.ae-panel-title.editing i { color: var(--accent); }
+
+/* ---- INPUTS ---- */
+.ae-label {
+  font-family: var(--font-heading-alt);
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.4rem;
+  display: block;
+}
+.ae-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 0.6rem 0.9rem;
+  width: 100%;
+  transition: var(--transition);
+  outline: none;
+}
+.ae-input:focus {
+  border-color: rgba(230, 57, 70, 0.5);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+.ae-input::placeholder { color: var(--text-muted); }
+.ae-input-textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.ae-olimpico-switch {
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  cursor: pointer;
+}
+
+.ae-olimpico-switch input[type="checkbox"] {
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  position: relative;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.ae-olimpico-switch input[type="checkbox"]::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--secondary);
+  transition: transform 0.2s, background 0.2s;
+}
+
+.ae-olimpico-switch input[type="checkbox"]:checked {
+  background: rgba(245, 166, 35, 0.25);
+  border-color: rgba(245, 166, 35, 0.5);
+}
+
+.ae-olimpico-switch input[type="checkbox"]:checked::after {
+  transform: translateX(18px);
+  background: var(--accent);
+}
+
+.ae-olimpico-switch strong {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ae-olimpico-switch small {
+  display: block;
+  margin-top: 0.15rem;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.ae-select {
+  background: var(--bg-input) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23A8B2D1' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E") no-repeat right 0.85rem center;
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 2.2rem;
+}
+.ae-select option { background: #1C1C26; }
+
+/* ---- PREVIEW ÍCONO ---- */
+.ae-icon-preview {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+/* ---- SWATCHES DE COLOR ---- */
+.ae-color-swatches {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.ae-swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+.ae-swatch:hover { transform: scale(1.15); }
+.ae-swatch.selected {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.25);
+  transform: scale(1.1);
+}
+
+/* ---- BOTONES ---- */
+.ae-btn-primary {
+  background: var(--primary);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.65rem 1.2rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+.ae-btn-primary:hover { background: var(--primary-dark); }
+.ae-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.ae-btn-accent {
+  background: rgba(245, 166, 35, 0.15);
+  border: 1px solid rgba(245, 166, 35, 0.4);
+  border-radius: 8px;
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.65rem 1.2rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.ae-btn-accent:hover { background: rgba(245, 166, 35, 0.25); }
+
+.ae-btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--secondary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.ae-btn-ghost:hover { border-color: rgba(255,255,255,0.15); color: var(--text-primary); }
+
+/* ---- TABLA DE EJERCICIOS ---- */
+.ae-list-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.ae-list-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.ae-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+}
+.ae-search-icon {
+  position: absolute;
+  left: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+.ae-search-input {
+  padding-left: 2.2rem;
+}
+
+/* tabla */
+.ae-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ae-table thead tr {
+  background: rgba(255,255,255,0.03);
+}
+.ae-table th {
+  font-family: var(--font-heading-alt);
+  font-weight: 600;
+  font-size: 0.72rem;
+  color: var(--secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.75rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.ae-table td {
+  padding: 0.85rem 1.2rem;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  vertical-align: middle;
+}
+.ae-table tbody tr {
+  transition: background 0.15s;
+}
+.ae-table tbody tr:hover {
+  background: var(--bg-card-hover);
+}
+.ae-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* icono de ejercicio en tabla */
+.ae-table-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* nombre */
+.ae-table-nombre {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+.ae-table-instruccion {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--secondary);
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* badge categoría */
+.ae-cat-badge {
+  font-family: var(--font-heading-alt);
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+/* action buttons */
+.ae-action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.78rem;
+}
+.ae-action-edit { color: var(--accent-cool); }
+.ae-action-edit:hover { background: rgba(79, 195, 247, 0.12); border-color: rgba(79, 195, 247, 0.4); }
+.ae-action-delete { color: var(--danger); }
+.ae-action-delete:hover { background: rgba(231, 76, 60, 0.12); border-color: rgba(231, 76, 60, 0.4); }
+
+/* ---- MOBILE CARDS ---- */
+.ae-mobile-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  transition: var(--transition);
+}
+.ae-mobile-card:hover {
+  border-color: rgba(255,255,255,0.1);
+}
+
+/* ---- VACÍO ---- */
+.ae-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+}
+.ae-empty i { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4; }
+.ae-empty p { font-family: var(--font-body); font-size: 0.9rem; margin: 0; }
+
+/* ---- SPINNER ---- */
+.ae-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(230, 57, 70, 0.15);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: aeSpinnerAnim 0.7s linear infinite;
+}
+@keyframes aeSpinnerAnim { to { transform: rotate(360deg); } }
+
+/* ---- COLOR DOT ---- */
+.ae-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ===================================================
+   CARDS DE EJERCICIOS PUBLICADOS
+   =================================================== */
+.ae-ej-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--ej-color, #E63946);
+  border-radius: 14px;
+  padding: 1.1rem 1rem 0.9rem;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  height: 100%;
+  min-height: 230px;
+  display: flex;
+  flex-direction: column;
+}
+.ae-ej-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--ej-color, #E63946);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--ej-color, #E63946) 25%, transparent);
+}
+
+/* Watermark */
+.ae-ej-watermark {
+  position: absolute;
+  bottom: -0.5rem;
+  right: -0.5rem;
+  font-family: var(--font-heading);
+  font-size: clamp(3rem, 8vw, 5rem);
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--ej-color, #E63946);
+  opacity: 0.04;
+  pointer-events: none;
+  line-height: 1;
+  user-select: none;
+  letter-spacing: -2px;
+}
+
+.ae-ej-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.15rem;
+}
+
+.ae-ej-tags--detail {
+  margin-bottom: 0.85rem;
+}
+
+.ae-ej-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 20px;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ae-ej-tag--equipo {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--secondary);
+}
+
+.ae-ej-tag--metrica {
+  background: rgba(79, 195, 247, 0.08);
+  border: 1px solid rgba(79, 195, 247, 0.2);
+  color: var(--accent-cool);
+}
+
+.ae-ej-tag--nivel {
+  background: rgba(168, 178, 209, 0.08);
+  border: 1px solid rgba(168, 178, 209, 0.2);
+  color: var(--secondary);
+}
+
+.ae-ej-tag--pr {
+  background: rgba(245, 166, 35, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  color: var(--accent);
+}
+
+/* Instrucción truncada */
+.ae-ej-instruccion {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--secondary);
+  line-height: 1.55;
+  margin: 0 0 0.6rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex-grow: 1;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* "Ver técnica completa" hint */
+.ae-ej-ver-mas {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--ej-color, #E63946);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.ae-ej-card:hover .ae-ej-ver-mas {
+  opacity: 1;
+}
+
+/* Botones editar / eliminar — esquina superior derecha */
+.ae-ej-actions {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  display: flex;
+  gap: 0.3rem;
+  opacity: 1;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 2;
+}
+.ae-ej-card:hover .ae-ej-actions {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+/* Glow inferior en hover */
+.ae-ej-glow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to top, color-mix(in srgb, var(--ej-color, #E63946) 8%, transparent), transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  border-radius: 0 0 14px 14px;
+}
+.ae-ej-card:hover .ae-ej-glow {
+  opacity: 1;
+}
+
+/* ===================================================
+   MODAL DETALLE DE EJERCICIO
+   =================================================== */
+.ae-detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.ae-detail-modal {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.ae-detail-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: var(--transition);
+  z-index: 1;
+}
+.ae-detail-close:hover {
+  background: rgba(255,255,255,0.06);
+  color: var(--text-primary);
+}
+.ae-detail-icono {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.ae-detail-nombre {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.3rem;
+}
+.ae-detail-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 1.1rem 0;
+}
+.ae-detail-texto {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--secondary);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  margin: 0;
+}

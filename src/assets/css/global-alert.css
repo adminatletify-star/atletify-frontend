@@ -1,0 +1,380 @@
+/* ============================================
+   WOLFPACK SYSTEM - SISTEMA DE ALERTAS GLOBAL
+   Toast de notificaciones + Modal de alerta
+   ============================================ */
+
+/* ===== STACK DE TOASTS ===== */
+.wp-toast-stack {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(420px, calc(100vw - 24px));
+  pointer-events: none;
+}
+
+.wp-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 11px 13px;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: wpToastIn 220ms ease-out;
+}
+
+.wp-toast-icon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  margin-top: 1px;
+  background: var(--bg-card-hover);
+  color: var(--text-muted);
+}
+
+.wp-toast-message {
+  font-family: var(--font-body);
+  font-size: 0.94rem;
+  line-height: 1.34;
+  font-weight: 600;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Éxito */
+.wp-toast-success {
+  border-color: rgba(46, 204, 113, 0.3);
+}
+
+.wp-toast-success .wp-toast-icon {
+  background: rgba(46, 204, 113, 0.2);
+  color: #6ee09b;
+}
+
+/* Error */
+.wp-toast-error {
+  border-color: rgba(230, 57, 70, 0.3);
+}
+
+.wp-toast-error .wp-toast-icon {
+  background: rgba(230, 57, 70, 0.2);
+  color: #f08090;
+}
+
+@keyframes wpToastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) translateX(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateX(0);
+  }
+}
+
+/* ===== OVERLAY DE MODAL ===== */
+.wp-alert-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ===== CARD DEL MODAL ===== */
+.wp-alert-card {
+  width: min(480px, 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background: var(--bg-card);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  padding: 32px 28px 24px;
+  text-align: center;
+}
+
+.wp-alert-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--bg-card-hover);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.wp-alert-message {
+  margin: 0 auto 24px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  line-height: 1.4;
+  max-width: 95%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.wp-alert-button {
+  width: min(320px, 100%);
+  border: 0;
+  border-radius: 12px;
+  height: 52px;
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #fff;
+  background: var(--bg-card-hover);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.wp-alert-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.wp-alert-button:active {
+  background: var(--bg-card);
+}
+
+.wp-alert-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.wp-alert-actions .wp-alert-button {
+  width: 100%;
+  height: 48px;
+  font-size: 1rem;
+}
+
+.wp-alert-button-cancel {
+  background: var(--bg-card-hover);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--secondary);
+}
+
+.wp-alert-button-cancel:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.wp-alert-button-accept {
+  background: var(--primary);
+  color: #fff;
+}
+
+.wp-alert-button-accept:hover {
+  background: var(--primary-dark);
+}
+
+.wp-alert-input {
+  width: 100%;
+  margin: 0 0 18px;
+  height: 48px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0 14px;
+  transition: var(--transition);
+}
+
+.wp-alert-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* ===== Variantes por tipo ===== */
+
+/* ERROR */
+.wp-alert-card.wp-variant-error {
+  border-color: rgba(230, 57, 70, 0.25);
+}
+
+.wp-alert-card.wp-variant-error .wp-alert-icon {
+  background: rgba(230, 57, 70, 0.15);
+  border-color: rgba(230, 57, 70, 0.3);
+  color: #f08090;
+}
+
+.wp-alert-card.wp-variant-error .wp-alert-button {
+  background: rgba(230, 57, 70, 0.2);
+}
+
+.wp-alert-card.wp-variant-error .wp-alert-button:hover {
+  background: rgba(230, 57, 70, 0.3);
+}
+
+/* SUCCESS */
+.wp-alert-card.wp-variant-success {
+  border-color: rgba(46, 204, 113, 0.25);
+}
+
+.wp-alert-card.wp-variant-success .wp-alert-icon {
+  background: rgba(46, 204, 113, 0.15);
+  border-color: rgba(46, 204, 113, 0.3);
+  color: #6ee09b;
+}
+
+.wp-alert-card.wp-variant-success .wp-alert-button {
+  background: rgba(46, 204, 113, 0.2);
+}
+
+.wp-alert-card.wp-variant-success .wp-alert-button:hover {
+  background: rgba(46, 204, 113, 0.3);
+}
+
+/* CONFIRM */
+.wp-alert-card.wp-variant-confirm {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.wp-alert-card.wp-variant-confirm .wp-alert-icon {
+  background: rgba(79, 195, 247, 0.12);
+  border-color: rgba(79, 195, 247, 0.25);
+  color: #82d0f5;
+}
+
+.wp-alert-card.wp-variant-confirm .wp-alert-button-cancel {
+  background: var(--bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--secondary);
+}
+
+.wp-alert-card.wp-variant-confirm .wp-alert-button-accept {
+  background: var(--primary);
+  color: #fff;
+}
+
+.wp-alert-card.wp-variant-confirm .wp-alert-button-accept:hover {
+  background: var(--primary-dark);
+}
+
+/* PROMPT */
+.wp-alert-card.wp-variant-prompt {
+  border-color: rgba(245, 166, 35, 0.2);
+}
+
+.wp-alert-card.wp-variant-prompt .wp-alert-icon {
+  background: rgba(245, 166, 35, 0.12);
+  border-color: rgba(245, 166, 35, 0.25);
+  color: #f8c770;
+}
+
+.wp-alert-card.wp-variant-prompt .wp-alert-input {
+  border-color: rgba(245, 166, 35, 0.2);
+}
+
+.wp-alert-card.wp-variant-prompt .wp-alert-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15);
+}
+
+.wp-alert-card.wp-variant-prompt .wp-alert-button-cancel {
+  background: var(--bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--secondary);
+}
+
+.wp-alert-card.wp-variant-prompt .wp-alert-button-accept {
+  background: rgba(245, 166, 35, 0.2);
+  color: #f8c770;
+}
+
+.wp-alert-card.wp-variant-prompt .wp-alert-button-accept:hover {
+  background: rgba(245, 166, 35, 0.3);
+}
+
+/* INFO */
+.wp-alert-card.wp-variant-info {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.wp-alert-card.wp-variant-info .wp-alert-icon {
+  background: var(--bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--secondary);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .wp-toast-stack {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+    gap: 8px;
+  }
+
+  .wp-toast {
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+
+  .wp-toast-message {
+    font-size: 0.9rem;
+  }
+
+  .wp-alert-card {
+    border-radius: 16px;
+    padding: 24px 18px 18px;
+  }
+
+  .wp-alert-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 26px;
+    margin-bottom: 16px;
+  }
+
+  .wp-alert-message {
+    font-size: 1rem;
+    margin-bottom: 20px;
+  }
+
+  .wp-alert-button {
+    height: 46px;
+    font-size: 1rem;
+    border-radius: 10px;
+  }
+
+  .wp-alert-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .wp-alert-actions .wp-alert-button {
+    font-size: 0.95rem;
+    height: 44px;
+  }
+
+  .wp-alert-input {
+    height: 44px;
+    font-size: 0.95rem;
+  }
+}

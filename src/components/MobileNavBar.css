@@ -1,0 +1,812 @@
+/* ============================================
+   WOLFPACK — LIQUID GLASS MOBILE NAVBAR
+   iOS Dark Mode · Gotita Líquida Vibrante
+   ============================================ */
+
+/* ── Contenedor principal ── */
+.liquid-navbar {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: min(94vw, 380px);
+  gap: 0;
+  padding: 6px 10px;
+  border-radius: 30px;
+  overflow: hidden;
+
+  background: linear-gradient(
+    168deg,
+    rgba(10, 10, 14, 0.92) 0%,
+    rgba(6, 6, 10, 0.95) 50%,
+    rgba(12, 12, 18, 0.92) 100%
+  );
+  backdrop-filter: blur(40px) saturate(1.8) brightness(0.95);
+  -webkit-backdrop-filter: blur(40px) saturate(1.8) brightness(0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 12px 48px rgba(0, 0, 0, 0.65),
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 0 40px rgba(230, 57, 70, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+
+  animation: liquidNavAppear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  overflow: visible;
+  transition: box-shadow 0.4s ease, border-color 0.4s ease;
+}
+
+/* ── Barra iluminada al mantener presionado — tono agua ── */
+.liquid-navbar--pressed {
+  border-color: rgba(140, 200, 255, 0.2);
+  box-shadow:
+    0 12px 48px rgba(0, 0, 0, 0.65),
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 0 25px rgba(140, 200, 255, 0.1),
+    0 0 50px rgba(140, 200, 255, 0.04),
+    inset 0 1px 0 rgba(180, 220, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  background: linear-gradient(
+    168deg,
+    rgba(10, 14, 20, 0.9) 0%,
+    rgba(6, 10, 16, 0.93) 50%,
+    rgba(12, 16, 24, 0.9) 100%
+  );
+}
+
+@keyframes liquidNavAppear {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(40px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+/* ── Reflejo superior del vidrio ── */
+.liquid-navbar::before {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 20px;
+  right: 20px;
+  height: 45%;
+  border-radius: 30px 30px 50% 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.07) 0%,
+    rgba(255, 255, 255, 0.02) 60%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Destellos ambiente (sparkles decorativos) ── */
+.liquid-navbar-sparkle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(1px);
+  animation: sparkleFloat 4s ease-in-out infinite;
+}
+
+.liquid-navbar-sparkle--1 {
+  width: 3px;
+  height: 3px;
+  background: rgba(230, 57, 70, 0.5);
+  top: -8px;
+  left: 25%;
+  animation-delay: 0s;
+}
+
+.liquid-navbar-sparkle--2 {
+  width: 2px;
+  height: 2px;
+  background: rgba(245, 166, 35, 0.45);
+  top: -6px;
+  right: 20%;
+  animation-delay: 1.5s;
+}
+
+.liquid-navbar-sparkle--3 {
+  width: 2.5px;
+  height: 2.5px;
+  background: rgba(230, 57, 70, 0.35);
+  bottom: -5px;
+  left: 55%;
+  animation-delay: 2.8s;
+}
+
+@keyframes sparkleFloat {
+  0%, 100% { opacity: 0.3; transform: translateY(0) scale(1); }
+  50%      { opacity: 0.9; transform: translateY(-3px) scale(1.4); }
+}
+
+/* ═══════════════════════════════════════════════
+   GOTITA / BURBUJA LÍQUIDA DRAGGABLE
+   ═══════════════════════════════════════════════ */
+.liquid-blob {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  overflow: visible;
+  will-change: transform, width, height;
+  transform-origin: top left;
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+
+  /* SIN transiciones CSS — la física lo controla todo */
+  transition: none;
+}
+
+.liquid-blob:active {
+  cursor: grabbing;
+}
+
+/* SVG que define la forma orgánica */
+.liquid-blob-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  filter: drop-shadow(0 0 14px rgba(230, 57, 70, 0.22))
+          drop-shadow(0 0 30px rgba(230, 57, 70, 0.08));
+  transition: filter 0.35s ease;
+}
+
+/* Glow exterior difuso que ilumina el fondo */
+.liquid-blob-glow {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(230, 57, 70, 0.18) 0%,
+    rgba(230, 57, 70, 0.05) 55%,
+    transparent 75%
+  );
+  pointer-events: none;
+  animation: blobGlowPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes blobGlowPulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.1); }
+}
+
+/* Reflejo interno (highlight superior) */
+.liquid-blob-highlight {
+  position: absolute;
+  top: 4px;
+  left: 20%;
+  right: 20%;
+  height: 35%;
+  border-radius: 14px 14px 50% 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 180, 180, 0.12) 0%,
+    rgba(255, 255, 255, 0.03) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  transition: background 0.3s ease;
+}
+
+/* Capa lupa — distorsiona el fondo como agua */
+.liquid-blob-lens {
+  position: absolute;
+  inset: 2px;
+  border-radius: 18px;
+  pointer-events: none;
+  backdrop-filter: blur(0px) brightness(1);
+  -webkit-backdrop-filter: blur(0px) brightness(1);
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.2, 0, 0.2, 1);
+  background: transparent;
+  overflow: hidden;
+}
+
+/* Onda de agua animada dentro del lens */
+.liquid-blob-lens::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  border-radius: 40%;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 40%,
+    rgba(180, 220, 255, 0.07) 0%,
+    rgba(255, 255, 255, 0.03) 30%,
+    transparent 70%
+  );
+  opacity: 0;
+  animation: none;
+}
+
+.liquid-blob-lens::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0);
+  transition: border-color 0.4s ease;
+}
+
+/* ═══════════════════════════════════════════════
+   ESTADO PRESSED — Agua transparente + Refracción
+   ═══════════════════════════════════════════════ */
+.liquid-blob--pressed .liquid-blob-lens {
+  opacity: 1;
+  backdrop-filter: blur(3px) brightness(1.3) saturate(1.6) contrast(1.05);
+  -webkit-backdrop-filter: blur(3px) brightness(1.3) saturate(1.6) contrast(1.05);
+}
+
+.liquid-blob--pressed .liquid-blob-lens::before {
+  opacity: 1;
+  animation: waterWave 2s ease-in-out infinite;
+}
+
+.liquid-blob--pressed .liquid-blob-lens::after {
+  border-color: rgba(180, 220, 255, 0.2);
+}
+
+@keyframes waterWave {
+  0%   { transform: rotate(0deg) scale(1); }
+  25%  { transform: rotate(90deg) scale(1.05); }
+  50%  { transform: rotate(180deg) scale(0.95); }
+  75%  { transform: rotate(270deg) scale(1.03); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.liquid-blob--pressed .liquid-blob-glow {
+  inset: -20px;
+  background: radial-gradient(
+    circle,
+    rgba(140, 200, 255, 0.2) 0%,
+    rgba(180, 220, 255, 0.08) 45%,
+    rgba(255, 255, 255, 0.02) 70%,
+    transparent 100%
+  );
+  animation: waterGlowPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes waterGlowPulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.15); }
+}
+
+.liquid-blob--pressed .liquid-blob-highlight {
+  background: linear-gradient(
+    180deg,
+    rgba(200, 230, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0.06) 40%,
+    transparent 100%
+  );
+}
+
+.liquid-blob--pressed .liquid-blob-svg {
+  filter: drop-shadow(0 0 18px rgba(140, 200, 255, 0.35))
+          drop-shadow(0 0 40px rgba(180, 220, 255, 0.12));
+}
+
+/* ── Cada ítem de navegación ── */
+.liquid-nav-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 58px;
+  gap: 3px;
+  padding: 7px 4px 5px;
+  border-radius: 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.3s ease, background 0.3s ease;
+  color: rgba(160, 163, 180, 0.5);
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  z-index: 2;
+}
+
+.liquid-nav-item i {
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+              color 0.3s ease,
+              filter 0.3s ease;
+}
+
+/* Etiqueta — espacio siempre reservado, solo cambia opacidad */
+.liquid-nav-item span {
+  display: block;
+  width: 100%;
+  height: 11px;
+  text-align: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  flex-shrink: 0;
+  transition: opacity 0.25s ease;
+}
+
+/* ── Hover ── */
+.liquid-nav-item:hover {
+  color: rgba(220, 220, 230, 0.8);
+}
+
+.liquid-nav-item:hover i {
+  transform: scale(1.05);
+}
+
+/* ── Active (seleccionado) ── */
+.liquid-nav-item.active {
+  color: #fff;
+  background: rgba(230, 57, 70, 0.12);
+}
+
+.liquid-nav-item.active i {
+  transform: scale(1.2);
+  color: #fff;
+  filter: drop-shadow(0 0 10px rgba(230, 57, 70, 0.75))
+          drop-shadow(0 0 22px rgba(230, 57, 70, 0.35));
+}
+
+.liquid-nav-item.active span {
+  opacity: 1;
+  color: #E63946;
+}
+
+/* ── Ripple al tap ── */
+.liquid-nav-item::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.25);
+  transform: translate(-50%, -50%);
+  transition: width 0.45s ease, height 0.45s ease, opacity 0.45s ease;
+  opacity: 0;
+  z-index: 0;
+}
+
+.liquid-nav-item:active::before {
+  width: 56px;
+  height: 56px;
+  opacity: 1;
+  transition: width 0.05s, height 0.05s, opacity 0s;
+}
+
+/* ── Dot indicator rojo sobre el ícono activo ── */
+.liquid-nav-item::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #E63946;
+  box-shadow: 0 0 6px rgba(230, 57, 70, 0.8);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  opacity: 0;
+  z-index: 1;
+}
+
+.liquid-nav-item.active::after,
+.liquid-nav-item.drawer-open::after {
+  transform: translateX(-50%) scale(1);
+  opacity: 1;
+}
+
+/* ── Separadores sutiles ── */
+.liquid-nav-divider {
+  width: 1px;
+  height: 16px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.07) 50%,
+    transparent 100%
+  );
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════ */
+
+/* < 360px */
+@media (max-width: 359px) {
+  .liquid-navbar {
+    width: min(96vw, 340px);
+    padding: 5px 8px;
+    bottom: 12px;
+    border-radius: 26px;
+  }
+
+  .liquid-nav-item {
+    height: 52px;
+    gap: 2px;
+    padding: 6px 3px 4px;
+  }
+
+  .liquid-nav-item i {
+    font-size: 1.1rem;
+  }
+
+  .liquid-nav-item span {
+    font-size: 0.48rem;
+  }
+}
+
+/* Tablets */
+@media (min-width: 768px) {
+  .liquid-navbar {
+    width: min(90vw, 420px);
+    padding: 8px 14px;
+    gap: 0;
+    border-radius: 34px;
+    bottom: 24px;
+  }
+
+  .liquid-nav-item {
+    height: 60px;
+    border-radius: 18px;
+  }
+
+  .liquid-nav-item i {
+    font-size: 1.35rem;
+  }
+
+  .liquid-nav-item span {
+    font-size: 0.58rem;
+  }
+}
+
+/* Desktop grande */
+@media (min-width: 1200px) {
+  .liquid-navbar {
+    padding: 10px 16px;
+    bottom: 28px;
+  }
+
+  .liquid-nav-item {
+    height: 62px;
+  }
+
+  .liquid-nav-item i {
+    font-size: 1.4rem;
+  }
+}
+
+/* ── Padding inferior para que el contenido no quede debajo ── */
+.home-wrapper {
+  padding-bottom: 90px;
+}
+
+/* ══════════════════════════════════════════════
+   OPTIMIZACIÓN MÓVIL — Rendimiento
+   Reduce efectos costosos en dispositivos táctiles
+   ══════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  .liquid-navbar {
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .liquid-blob-svg {
+    filter: drop-shadow(0 0 10px rgba(230, 57, 70, 0.18));
+  }
+
+  .liquid-blob--pressed .liquid-blob-svg {
+    filter: drop-shadow(0 0 16px rgba(230, 57, 70, 0.35));
+  }
+
+  .liquid-blob-glow {
+    animation: none;
+    opacity: 0.5;
+  }
+
+  .liquid-blob--pressed .liquid-blob-glow {
+    animation: none;
+    opacity: 0.8;
+  }
+
+  .liquid-navbar-sparkle {
+    display: none;
+  }
+
+  .liquid-blob-lens {
+    transition: all 0.3s ease;
+  }
+
+  .liquid-blob--pressed .liquid-blob-lens {
+    backdrop-filter: blur(2px) brightness(1.2) saturate(1.3);
+    -webkit-backdrop-filter: blur(2px) brightness(1.2) saturate(1.3);
+  }
+
+  .liquid-blob--pressed .liquid-blob-lens::before {
+    animation: waterWave 3s ease-in-out infinite;
+  }
+
+  .liquid-blob-highlight {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-navbar {
+    animation: none;
+  }
+
+  .liquid-blob-glow {
+    animation: none;
+  }
+
+  .liquid-navbar-sparkle {
+    animation: none;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE CRÍTICO — Ocultar en desktop
+   ══════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  .liquid-navbar,
+  .mnav-overlay,
+  .mnav-drawer {
+    display: none !important;
+  }
+}
+
+/* Compensar padding del contenido en rutas con nav mobile */
+@media (max-width: 767px) {
+  .layout-has-nav {
+    padding-top: 0 !important;
+    padding-bottom: 100px;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   DRAWER / BOTTOM SHEET (modo dinámico)
+   ══════════════════════════════════════════════ */
+
+/* Overlay oscuro con blur */
+.mnav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  background: rgba(5, 5, 8, 0.70);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  animation: mnavFadeIn 0.22s ease both;
+}
+
+@keyframes mnavFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Sheet principal */
+.mnav-drawer {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 104px;
+  z-index: 9991;
+  background: linear-gradient(
+    160deg,
+    rgba(18, 18, 26, 0.97) 0%,
+    rgba(11, 11, 18, 0.99) 100%
+  );
+  backdrop-filter: blur(30px) saturate(1.6);
+  -webkit-backdrop-filter: blur(30px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  box-shadow:
+    0 -8px 40px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  max-height: 72vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 6px;
+  animation: mnavSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes mnavSlideUp {
+  from { opacity: 0; transform: translateY(28px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+/* Pill decorativo */
+.mnav-drawer-handle {
+  width: 36px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  margin: 12px auto 6px;
+}
+
+/* Header */
+.mnav-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mnav-drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: rgba(200, 205, 220, 0.65);
+}
+
+.mnav-drawer-title i {
+  color: #E63946;
+  font-size: 1rem;
+  filter: drop-shadow(0 0 6px rgba(230, 57, 70, 0.5));
+}
+
+.mnav-drawer-close {
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: rgba(180, 185, 200, 0.45);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s, background 0.2s;
+  flex-shrink: 0;
+}
+
+.mnav-drawer-close:hover {
+  color: #F0F0F5;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* Lista de links */
+.mnav-drawer-links {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0 10px;
+}
+
+.mnav-drawer-links li {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.mnav-drawer-links li:last-child {
+  border-bottom: none;
+}
+
+.mnav-drawer-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-left: 2px solid transparent;
+  color: rgba(205, 210, 225, 0.82);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 400;
+  text-align: left;
+  padding: 14px 12px 14px 14px;
+  border-radius: 0 10px 10px 0;
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mnav-drawer-link:hover,
+.mnav-drawer-link:active {
+  color: #F0F0F5;
+  border-left-color: #E63946;
+  background: rgba(230, 57, 70, 0.07);
+}
+
+.mnav-drawer-link-arrow {
+  color: rgba(180, 185, 200, 0.25);
+  font-size: 0.72rem;
+  flex-shrink: 0;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.mnav-drawer-link:hover .mnav-drawer-link-arrow,
+.mnav-drawer-link:active .mnav-drawer-link-arrow {
+  color: #E63946;
+  transform: translateX(2px);
+}
+
+/* Footer (logout) */
+.mnav-drawer-footer {
+  padding: 10px 18px 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 6px;
+}
+
+.mnav-drawer-logout {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 12px;
+  background: rgba(230, 57, 70, 0.07);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  color: #E63946;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mnav-drawer-logout:hover {
+  background: rgba(230, 57, 70, 0.15);
+  border-color: #E63946;
+}
+
+/* ── Item con drawer abierto — indicador activo ── */
+.liquid-nav-item.drawer-open i {
+  color: #E63946;
+  filter: drop-shadow(0 0 8px rgba(230, 57, 70, 0.65))
+          drop-shadow(0 0 18px rgba(230, 57, 70, 0.35));
+}
+
+.liquid-nav-item.drawer-open span {
+  opacity: 1;
+  transform: translateY(0);
+  color: rgba(230, 57, 70, 0.85);
+}

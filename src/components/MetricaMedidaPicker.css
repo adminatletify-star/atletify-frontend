@@ -1,0 +1,105 @@
+/* =============================================
+   METRICA MEDIDA PICKER — Arctic Wolf
+   Namespace: mmp-*
+   ============================================= */
+
+.mmp-trigger {
+  display: inline-flex; align-items: center; justify-content: space-between;
+  gap: 0.5rem; padding: 0.52rem 0.9rem; border-radius: 10px; border: 1.5px solid;
+  font-family: var(--font-body, 'Inter', sans-serif); font-size: 0.84rem; font-weight: 600;
+  cursor: pointer; transition: filter 0.18s, transform 0.18s;
+  white-space: nowrap; width: 100%; text-align: left;
+}
+.mmp-trigger:hover { filter: brightness(1.15); transform: translateY(-1px); }
+.mmp-trigger-left { display: flex; align-items: center; gap: 0.5rem; }
+.mmp-chevron { font-size: 0.6rem; opacity: 0.6; }
+
+.mmp-trigger--reps      { background: rgba(46,204,113,0.08);  border-color: rgba(46,204,113,0.3);  color: var(--success, #2ecc71); }
+.mmp-trigger--peso      { background: rgba(245,166,35,0.08);  border-color: rgba(245,166,35,0.3);  color: var(--accent, #f5a623); }
+.mmp-trigger--distancia { background: rgba(79,195,247,0.08);  border-color: rgba(79,195,247,0.3);  color: var(--accent-cool, #4fc3f7); }
+.mmp-trigger--calorias  { background: rgba(230,57,70,0.08);   border-color: rgba(230,57,70,0.3);   color: var(--primary, #e63946); }
+.mmp-trigger--tiempo    { background: rgba(155,89,182,0.08);  border-color: rgba(155,89,182,0.3);  color: #9b59b6; }
+
+/* OVERLAY */
+.mmp-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center; padding: 1.25rem;
+  animation: mmp-fade 0.18s ease;
+}
+@keyframes mmp-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.mmp-panel {
+  background: var(--bg-card, #1c1c26); border: 1px solid var(--border, rgba(255,255,255,0.1));
+  border-radius: 20px; width: 100%; max-width: 380px; overflow: hidden;
+  animation: mmp-up 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 28px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+}
+@keyframes mmp-up {
+  from { opacity: 0; transform: translateY(28px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.mmp-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+}
+.mmp-title {
+  font-family: var(--font-heading, 'Oswald', sans-serif);
+  font-size: 0.82rem; font-weight: 700; color: var(--text-muted, #888);
+  text-transform: uppercase; letter-spacing: 1.2px; display: flex; align-items: center; gap: 0.45rem;
+}
+.mmp-close {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted, #888); width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 0.75rem; transition: background 0.15s, color 0.15s; flex-shrink: 0;
+}
+.mmp-close:hover { background: rgba(230,57,70,0.15); color: var(--primary, #e63946); }
+
+.mmp-options { padding: 0.75rem; display: flex; flex-direction: column; gap: 0.4rem; }
+
+.mmp-option {
+  display: flex; align-items: center; gap: 1rem; width: 100%;
+  padding: 0.85rem 1rem; border-radius: 12px; border: 1.5px solid transparent;
+  background: rgba(255,255,255,0.025); color: var(--text-primary, #f0f0f5);
+  cursor: pointer; transition: background 0.15s, transform 0.15s, border-color 0.15s; text-align: left;
+}
+.mmp-option:hover { background: rgba(255,255,255,0.06); transform: translateX(4px); }
+.mmp-option--activo { font-weight: 700; }
+
+.mmp-option--activo.mmp-option--reps      { border-color: rgba(46,204,113,0.4);  background: rgba(46,204,113,0.07); }
+.mmp-option--activo.mmp-option--peso      { border-color: rgba(245,166,35,0.4);  background: rgba(245,166,35,0.07); }
+.mmp-option--activo.mmp-option--distancia { border-color: rgba(79,195,247,0.4);  background: rgba(79,195,247,0.07); }
+.mmp-option--activo.mmp-option--calorias  { border-color: rgba(230,57,70,0.4);   background: rgba(230,57,70,0.07); }
+.mmp-option--activo.mmp-option--tiempo    { border-color: rgba(155,89,182,0.4);  background: rgba(155,89,182,0.07); }
+
+.mmp-icon-wrap {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0;
+}
+.mmp-option--reps      .mmp-icon-wrap { background: rgba(46,204,113,0.1);  color: var(--success, #2ecc71); }
+.mmp-option--peso      .mmp-icon-wrap { background: rgba(245,166,35,0.1);  color: var(--accent, #f5a623); }
+.mmp-option--distancia .mmp-icon-wrap { background: rgba(79,195,247,0.1);  color: var(--accent-cool, #4fc3f7); }
+.mmp-option--calorias  .mmp-icon-wrap { background: rgba(230,57,70,0.1);   color: var(--primary, #e63946); }
+.mmp-option--tiempo    .mmp-icon-wrap { background: rgba(155,89,182,0.1);  color: #9b59b6; }
+
+.mmp-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.mmp-nombre {
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+}
+.mmp-option--reps      .mmp-nombre { color: var(--success, #2ecc71); }
+.mmp-option--peso      .mmp-nombre { color: var(--accent, #f5a623); }
+.mmp-option--distancia .mmp-nombre { color: var(--accent-cool, #4fc3f7); }
+.mmp-option--calorias  .mmp-nombre { color: var(--primary, #e63946); }
+.mmp-option--tiempo    .mmp-nombre { color: #9b59b6; }
+
+.mmp-desc { font-family: var(--font-body, 'Inter', sans-serif); font-size: 0.7rem; color: var(--text-muted, #888); margin-top: 0.05rem; }
+
+.mmp-check { font-size: 0.78rem; flex-shrink: 0; }
+.mmp-option--reps      .mmp-check { color: var(--success, #2ecc71); }
+.mmp-option--peso      .mmp-check { color: var(--accent, #f5a623); }
+.mmp-option--distancia .mmp-check { color: var(--accent-cool, #4fc3f7); }
+.mmp-option--calorias  .mmp-check { color: var(--primary, #e63946); }
+.mmp-option--tiempo    .mmp-check { color: #9b59b6; }

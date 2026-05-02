@@ -1,0 +1,1043 @@
+/* =============================================
+   GESTION STAFF — Paleta: Arctic Wolf
+   ============================================= */
+
+/* === CONTAINER === */
+.staff-container {
+  background: linear-gradient(160deg, var(--bg-base) 0%, var(--bg-elevated) 100%);
+  min-height: 100vh;
+}
+
+/* === NAVBAR === */
+.staff-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1.25rem 0.75rem 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.staff-nav-icono {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.staff-nav-titulo {
+  font-family: var(--font-heading);
+  font-size: clamp(0.9rem, 2.5vw, 1.05rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.staff-nav-titulo span {
+  color: var(--primary);
+}
+
+.staff-nav-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1;
+}
+
+/* === COACH CARD === */
+.staff-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.staff-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(230, 57, 70, 0.3);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(230, 57, 70, 0.08);
+}
+
+/* === CARD HEADER === */
+.staff-card-header {
+  padding: 1.4rem 1.25rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(180deg, rgba(230, 57, 70, 0.04) 0%, transparent 100%);
+}
+
+.staff-avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.08);
+  border: 2px solid rgba(230, 57, 70, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.06);
+}
+
+.staff-avatar-initial {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* === BADGE ROL === */
+.staff-badge-rol {
+  font-family: var(--font-heading-alt);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.15rem 0.6rem;
+}
+
+.staff-nombre {
+  font-family: var(--font-heading);
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.25;
+}
+
+/* === RATING EN CARD === */
+.staff-rating {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+.staff-rating-star {
+  color: var(--accent);
+  font-size: 0.78rem;
+}
+
+.staff-rating-score {
+  font-family: var(--font-stats);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
+}
+
+.staff-rating-count {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.staff-correo {
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  color: var(--secondary);
+  margin: 0;
+  word-break: break-all;
+}
+
+/* === CARD BODY === */
+.staff-card-body {
+  padding: 1.1rem 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 1rem;
+}
+
+.staff-esp-section {
+  flex: 1;
+}
+
+.staff-esp-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.64rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  margin-bottom: 0.45rem;
+  display: block;
+}
+
+.staff-esp-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-height: 1.8rem;
+}
+
+.staff-esp-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 20px;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(230, 57, 70, 0.08);
+  border: 1px solid rgba(230, 57, 70, 0.28);
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.staff-esp-vacio {
+  text-align: center;
+  padding: 0.4rem 0;
+  color: var(--text-muted);
+}
+
+.staff-esp-vacio i {
+  display: block;
+  font-size: 1.3rem;
+  margin-bottom: 0.3rem;
+  opacity: 0.25;
+}
+
+.staff-esp-vacio p {
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  margin: 0;
+}
+
+/* === GRID DE ACCIONES DE CARD === */
+.staff-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+
+.staff-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.52rem 0.5rem;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: var(--transition);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.staff-action-btn i {
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}
+
+/* Especialidades — azul info */
+.staff-action-btn--esp {
+  background: rgba(79, 195, 247, 0.08);
+  border-color: rgba(79, 195, 247, 0.25);
+  color: var(--accent-cool);
+}
+.staff-action-btn--esp:hover {
+  background: rgba(79, 195, 247, 0.15);
+  border-color: rgba(79, 195, 247, 0.45);
+  box-shadow: 0 4px 12px rgba(79, 195, 247, 0.12);
+}
+
+/* Contrato — verde */
+.staff-action-btn--contrato {
+  background: rgba(46, 204, 113, 0.08);
+  border-color: rgba(46, 204, 113, 0.25);
+  color: var(--success);
+}
+.staff-action-btn--contrato:hover {
+  background: rgba(46, 204, 113, 0.15);
+  border-color: rgba(46, 204, 113, 0.45);
+  box-shadow: 0 4px 12px rgba(46, 204, 113, 0.12);
+}
+
+/* Ausencias — dorado */
+.staff-action-btn--ausencia {
+  background: rgba(245, 166, 35, 0.08);
+  border-color: rgba(245, 166, 35, 0.25);
+  color: var(--accent);
+}
+.staff-action-btn--ausencia:hover {
+  background: rgba(245, 166, 35, 0.15);
+  border-color: rgba(245, 166, 35, 0.45);
+  box-shadow: 0 4px 12px rgba(245, 166, 35, 0.12);
+}
+
+/* Reseñas — secundario */
+.staff-action-btn--resenas {
+  background: rgba(168, 178, 209, 0.07);
+  border-color: rgba(168, 178, 209, 0.2);
+  color: var(--secondary);
+}
+.staff-action-btn--resenas:hover {
+  background: rgba(168, 178, 209, 0.13);
+  border-color: rgba(168, 178, 209, 0.38);
+  color: var(--text-primary);
+}
+
+/* === EMPTY STATE === */
+.staff-empty-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  text-align: center;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.staff-empty-icono {
+  font-size: 3rem;
+  opacity: 0.2;
+  color: var(--secondary);
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.staff-empty-titulo {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.staff-empty-desc {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--secondary);
+  margin: 0;
+}
+
+/* =============================================
+   MODALES
+   ============================================= */
+
+.staff-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 1050;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+.staff-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  animation: staffModalIn 0.2s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+.staff-modal--sm { max-width: 480px; }
+.staff-modal--md { max-width: 600px; }
+
+@keyframes staffModalIn {
+  from { opacity: 0; transform: scale(0.93) translateY(18px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* === MODAL HEADER === */
+.staff-modal-header {
+  padding: 1.1rem 1.4rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+/* Caja de icono en header del modal */
+.staff-modal-icon-box {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.staff-modal-icon-box--accent {
+  background: rgba(245, 166, 35, 0.12);
+  border-color: rgba(245, 166, 35, 0.3);
+  color: var(--accent);
+}
+
+.staff-modal-icon-box--success {
+  background: rgba(46, 204, 113, 0.12);
+  border-color: rgba(46, 204, 113, 0.3);
+  color: var(--success);
+}
+
+.staff-modal-icon-box--cool {
+  background: rgba(79, 195, 247, 0.12);
+  border-color: rgba(79, 195, 247, 0.3);
+  color: var(--accent-cool);
+}
+
+.staff-modal-titulo {
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: 0.3px;
+}
+
+.staff-modal-titulo span {
+  color: var(--primary);
+}
+
+.staff-modal-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1;
+}
+
+.staff-modal-cerrar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.staff-modal-cerrar:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* === MODAL BODY (scrollable) === */
+.staff-modal-body {
+  padding: 1.4rem;
+  overflow-y: auto;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(230, 57, 70, 0.4) transparent;
+}
+
+.staff-modal-body::-webkit-scrollbar { width: 4px; }
+.staff-modal-body::-webkit-scrollbar-thumb { background: rgba(230, 57, 70, 0.4); border-radius: 4px; }
+.staff-modal-body::-webkit-scrollbar-track { background: transparent; }
+
+.staff-modal-desc {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--secondary);
+  margin-bottom: 1.2rem;
+  line-height: 1.5;
+}
+
+/* Título de sección dentro del modal */
+.staff-modal-section-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* === PILLS DE TOGGLE === */
+.staff-pills-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 1.5rem;
+}
+
+.staff-pill-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  padding: 0.36rem 0.8rem;
+  border-radius: 20px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid transparent;
+}
+
+.staff-pill-toggle--activo {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: rgba(230, 57, 70, 0.4);
+  color: var(--primary);
+}
+
+.staff-pill-toggle--inactivo {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border);
+  color: var(--secondary);
+}
+
+.staff-pill-toggle--inactivo:hover {
+  background: rgba(255, 255, 255, 0.075);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+}
+
+.staff-catalogo-vacio {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* === NUEVA ESPECIALIDAD === */
+.staff-nueva-esp {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1.4rem;
+}
+
+.staff-nueva-esp-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 0.55rem;
+  display: block;
+}
+
+.staff-nueva-esp-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+  padding: 0.58rem 0.85rem;
+  flex: 1;
+  min-width: 0;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.staff-nueva-esp-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.staff-nueva-esp-input::placeholder {
+  color: var(--text-muted);
+}
+
+.staff-btn-agregar {
+  background: var(--accent);
+  color: #1a1a1a;
+  border: none;
+  border-radius: 10px;
+  padding: 0.58rem 1rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.18s, transform 0.12s;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.staff-btn-agregar:hover {
+  background: #e09000;
+  transform: translateY(-1px);
+}
+
+/* === BOTÓN GUARDAR MODAL (Especialidades) === */
+.staff-btn-guardar {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.78rem 1.5rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.18s, box-shadow 0.18s, transform 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.staff-btn-guardar:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 6px 20px var(--primary-glow);
+  transform: translateY(-1px);
+}
+
+/* =============================================
+   MODAL RESEÑAS
+   ============================================= */
+
+.staff-rating-hero {
+  text-align: center;
+  padding: 1.2rem 0 1.4rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.2rem;
+}
+
+.staff-rating-hero-score {
+  font-family: var(--font-stats);
+  font-size: 4.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.staff-rating-hero-stars {
+  font-size: 1.5rem;
+  color: var(--accent);
+  letter-spacing: 3px;
+  margin: 0.5rem 0 0.4rem;
+}
+
+.staff-rating-hero-total {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.staff-resenas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(230, 57, 70, 0.3) transparent;
+}
+
+.staff-resenas-vacio {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-align: center;
+  font-style: italic;
+  padding: 1.5rem 0;
+}
+
+.staff-resena-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+}
+
+.staff-resena-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.staff-resena-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(79, 195, 247, 0.15);
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  color: var(--accent-cool);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.staff-resena-nombre {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.staff-resena-estrellas {
+  font-size: 0.78rem;
+  color: var(--accent);
+  letter-spacing: 1.5px;
+}
+
+.staff-resena-comentario {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--secondary);
+  font-style: italic;
+  margin: 0 0 0.45rem;
+  line-height: 1.5;
+}
+
+.staff-resena-fecha {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+/* =============================================
+   MODAL AUSENCIAS
+   ============================================= */
+
+.staff-form-panel {
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.1rem 1.1rem;
+  margin-bottom: 1.4rem;
+}
+
+.staff-form-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.staff-modal-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  padding: 0.58rem 0.85rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+}
+
+.staff-modal-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.staff-modal-input::placeholder { color: var(--text-muted); }
+
+/* Date input calendar icon color fix */
+.staff-modal-input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.6);
+  cursor: pointer;
+}
+
+.staff-modal-select {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  padding: 0.58rem 0.85rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236B7280' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  padding-right: 2.2rem;
+}
+
+.staff-modal-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.staff-modal-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.staff-switch-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.5rem 0;
+}
+
+.staff-switch-row .form-check-input {
+  width: 2.2em;
+  height: 1.15em;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--border);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.staff-switch-row .form-check-input:checked {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Botón aprobar ausencia */
+.staff-btn-aprobar {
+  background: linear-gradient(135deg, var(--accent) 0%, #e09000 100%);
+  color: #1a1100;
+  border: none;
+  border-radius: 11px;
+  padding: 0.72rem 1.2rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: box-shadow 0.18s, transform 0.12s;
+}
+
+.staff-btn-aprobar:hover {
+  box-shadow: 0 6px 18px rgba(245, 166, 35, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Historial de permisos */
+.staff-historial-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.staff-historial-vacio {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 0.8rem 0;
+}
+
+.staff-historial-item {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.65rem 0.9rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.staff-historial-motivo {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.staff-historial-fechas {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-top: 0.18rem;
+}
+
+.staff-badge-pagado {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  background: rgba(46, 204, 113, 0.15);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  color: var(--success);
+  border-radius: 20px;
+  padding: 0.12rem 0.5rem;
+}
+
+/* =============================================
+   MODAL CONTRATO Y NÓMINA
+   ============================================= */
+
+.staff-nomina-card {
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(46, 204, 113, 0.18);
+  border-radius: 14px;
+  padding: 1.1rem 1.2rem;
+  margin-top: 0.5rem;
+}
+
+.staff-nomina-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.staff-nomina-row:last-of-type { border-bottom: none; }
+
+.staff-nomina-note {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  color: var(--accent-cool);
+  text-align: right;
+  margin-top: -0.2rem;
+  margin-bottom: 0.3rem;
+}
+
+.staff-nomina-valor {
+  font-family: var(--font-stats);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.staff-nomina-valor--bono  { color: var(--accent); }
+.staff-nomina-valor--danger { color: var(--danger); }
+
+.staff-nomina-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.9rem;
+  margin-top: 0.4rem;
+  border-top: 1px solid rgba(46, 204, 113, 0.25);
+}
+
+.staff-nomina-total-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+}
+
+.staff-nomina-total-valor {
+  font-family: var(--font-stats);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--success);
+  letter-spacing: 0.5px;
+}
+
+/* Botón guardar contrato */
+.staff-btn-guardar-contrato {
+  background: linear-gradient(135deg, var(--success) 0%, #27ae60 100%);
+  color: #0d2b1a;
+  border: none;
+  border-radius: 11px;
+  padding: 0.72rem 1.2rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: box-shadow 0.18s, transform 0.12s;
+}
+
+.staff-btn-guardar-contrato:hover {
+  box-shadow: 0 6px 18px rgba(46, 204, 113, 0.28);
+  transform: translateY(-1px);
+}

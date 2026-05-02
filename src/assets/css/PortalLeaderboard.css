@@ -1,0 +1,403 @@
+/* ============================================================
+   WOLFPACK — PORTAL LEADERBOARD
+   Paleta Arctic Wolf — ver DESIGN_SYSTEM.md
+   ============================================================ */
+
+/* ---- LAYOUT ---- */
+.lb-root {
+  background-color: var(--bg-base);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-body);
+  color: var(--text-primary);
+}
+
+/* ---- NAVBAR ---- */
+.lb-navbar {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.5rem 0.85rem 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.lb-comp-name {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: clamp(0.9rem, 3vw, 1.3rem);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.lb-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--primary);
+  text-transform: uppercase;
+}
+
+.lb-live-dot {
+  font-size: 0.45rem;
+  animation: lb-blink 1.5s ease-in-out infinite;
+}
+
+@keyframes lb-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ---- PAGE HEADER ---- */
+.lb-page-title {
+  font-family: var(--font-hero);
+  font-size: clamp(2.2rem, 7vw, 4rem);
+  color: var(--text-primary);
+  letter-spacing: 4px;
+  line-height: 1;
+  margin: 0;
+}
+
+.lb-page-title span {
+  color: var(--primary);
+}
+
+.lb-accent-line {
+  width: 56px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), transparent);
+  margin-top: 0.5rem;
+  border-radius: 2px;
+}
+
+/* ---- CATEGORY TABS ---- */
+.lb-cats {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 0.5rem;
+  padding-bottom: 0.75rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.lb-cats::-webkit-scrollbar {
+  display: none;
+}
+
+.lb-cat-btn {
+  flex-shrink: 0;
+  padding: 0.5rem 1.25rem;
+  border-radius: 50px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--secondary);
+  font-family: var(--font-heading-alt);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.lb-cat-btn:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+  background: rgba(230, 57, 70, 0.08);
+}
+
+.lb-cat-btn.activo {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+/* ---- EMPTY STATE ---- */
+.lb-empty {
+  text-align: center;
+  padding: 5rem 1.5rem;
+  color: var(--text-muted);
+}
+
+.lb-empty i {
+  font-size: 3.5rem;
+  display: block;
+  margin-bottom: 1.25rem;
+  opacity: 0.3;
+}
+
+.lb-empty h4 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--secondary);
+  margin-bottom: 0.5rem;
+}
+
+.lb-empty p {
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* ---- TABLE WRAPPER ---- */
+.lb-table-wrapper {
+  background: var(--bg-card);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+/* ---- TABLE ---- */
+.lb-table {
+  color: var(--text-primary);
+  margin: 0;
+  background: transparent;
+  width: 100%;
+}
+
+.lb-table thead tr {
+  background: rgba(0, 0, 0, 0.45);
+  border-bottom: 1px solid var(--border);
+}
+
+.lb-table thead th {
+  font-family: var(--font-heading-alt);
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--secondary);
+  padding: 1rem 1rem;
+  border: none;
+  white-space: nowrap;
+}
+
+.lb-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: var(--transition);
+  border-left: 3px solid transparent;
+}
+
+.lb-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.lb-table tbody tr:hover {
+  background: var(--bg-card-hover);
+}
+
+.lb-table td {
+  padding: 0.85rem 1rem;
+  border: none;
+  vertical-align: middle;
+}
+
+/* ---- PODIUM ROW ACCENTS ---- */
+.lb-row-1 { border-left-color: var(--accent) !important; }
+.lb-row-2 { border-left-color: var(--secondary) !important; }
+.lb-row-3 { border-left-color: #cd7f32 !important; }
+
+/* ---- RANK BADGE ---- */
+.lb-rank {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-stats);
+  font-weight: 700;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.lb-rank-1 {
+  background: linear-gradient(135deg, var(--accent), #d4891b);
+  color: #000;
+  box-shadow: 0 0 14px rgba(245, 166, 35, 0.45);
+}
+
+.lb-rank-2 {
+  background: linear-gradient(135deg, #c0c8dc, #8890a8);
+  color: #000;
+}
+
+.lb-rank-3 {
+  background: linear-gradient(135deg, #cd7f32, #9b5e22);
+  color: #fff;
+}
+
+.lb-rank-other {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.lb-rank-secret {
+  font-size: 1rem;
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  color: var(--primary);
+}
+
+/* ---- TEAM INFO ---- */
+.lb-team-name {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+.lb-team-box {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--secondary);
+  margin-top: 3px;
+}
+
+/* ---- TOTAL POINTS ---- */
+.lb-pts-total {
+  font-family: var(--font-stats);
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+.lb-pts-label {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.lb-pts-secret {
+  font-family: var(--font-stats);
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: var(--text-muted);
+  letter-spacing: 4px;
+}
+
+/* ---- WOD SCORE ---- */
+.lb-wod-nombre {
+  font-family: var(--font-heading-alt);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+}
+
+.lb-wod-tipo {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  color: var(--primary);
+  text-transform: uppercase;
+  margin-top: 3px;
+  letter-spacing: 0.3px;
+}
+
+.lb-wod-score {
+  font-family: var(--font-stats);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--accent-cool);
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+.lb-wod-rank {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.lb-wod-empty {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  opacity: 0.25;
+}
+
+/* ---- TOP SECRET BADGE ---- */
+.lb-secret-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.8rem;
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  border-radius: 20px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+/* ---- SPINNER ---- */
+.lb-spinner-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-base);
+}
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 576px) {
+  .lb-navbar {
+    padding: 0.7rem 1rem 0.7rem 0.6rem;
+  }
+  .lb-comp-name {
+    font-size: 0.85rem;
+  }
+  .lb-page-title {
+    font-size: 2rem;
+  }
+  .lb-pts-total {
+    font-size: 1.1rem;
+  }
+  .lb-wod-score {
+    font-size: 0.9rem;
+  }
+  .lb-team-name {
+    font-size: 0.85rem;
+  }
+  .lb-rank {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+  .lb-table td,
+  .lb-table th {
+    padding: 0.6rem 0.65rem;
+  }
+}

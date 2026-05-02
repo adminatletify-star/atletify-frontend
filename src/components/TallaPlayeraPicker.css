@@ -1,0 +1,175 @@
+/* =============================================
+   TALLA PLAYERA PICKER — Arctic Wolf
+   Namespace: tpp-*
+   ============================================= */
+
+/* ── TRIGGER ── */
+.tpp-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.52rem 0.9rem;
+  border-radius: 10px;
+  border: 1.5px solid rgba(168,178,209,0.3);
+  background: rgba(168,178,209,0.06);
+  color: var(--text-primary, #f0f0f5);
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, transform 0.18s;
+  white-space: nowrap;
+  width: 100%;
+  text-align: left;
+}
+
+.tpp-trigger:hover {
+  border-color: rgba(168,178,209,0.55);
+  background: rgba(168,178,209,0.1);
+  transform: translateY(-1px);
+}
+
+.tpp-trigger--vacio {
+  color: var(--text-muted, #888);
+  border-style: dashed;
+}
+
+.tpp-trigger-left { display: flex; align-items: center; gap: 0.5rem; }
+.tpp-size-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(245,166,35,0.15);
+  border: 1px solid rgba(245,166,35,0.3);
+  color: var(--accent, #f5a623);
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 0 0.35rem;
+}
+
+.tpp-chevron { font-size: 0.6rem; opacity: 0.6; }
+
+/* ── OVERLAY ── */
+.tpp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  animation: tpp-fade 0.18s ease;
+}
+
+@keyframes tpp-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── PANEL ── */
+.tpp-panel {
+  background: var(--bg-card, #1c1c26);
+  border: 1px solid var(--border, rgba(255,255,255,0.1));
+  border-radius: 20px;
+  width: 100%;
+  max-width: 340px;
+  overflow: hidden;
+  animation: tpp-up 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 28px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+@keyframes tpp-up {
+  from { opacity: 0; transform: translateY(28px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── HEADER ── */
+.tpp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+}
+
+.tpp-title {
+  font-family: var(--font-heading, 'Oswald', sans-serif);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.tpp-close {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted, #888);
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 0.75rem;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.tpp-close:hover { background: rgba(230,57,70,0.15); color: var(--primary, #e63946); }
+
+/* ── GRID DE TALLAS ── */
+.tpp-grid {
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.55rem;
+}
+
+.tpp-size-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem 0.25rem;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-muted, #888);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s, color 0.15s;
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-weight: 700;
+  gap: 0.2rem;
+}
+
+.tpp-size-btn:hover {
+  background: rgba(245,166,35,0.08);
+  border-color: rgba(245,166,35,0.3);
+  color: var(--accent, #f5a623);
+  transform: translateY(-2px);
+}
+
+.tpp-size-btn--activo {
+  background: rgba(245,166,35,0.12);
+  border-color: rgba(245,166,35,0.5);
+  color: var(--accent, #f5a623);
+}
+
+.tpp-size-label {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.tpp-size-desc {
+  font-size: 0.55rem;
+  opacity: 0.55;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}

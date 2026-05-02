@@ -1,0 +1,336 @@
+/* ============================================
+   GESTIÓN VENTAS Y PRODUCTOS — WolfPack Design System
+   Reutiliza de componentes.css:
+   .tarjeta-panel, .etiqueta-campo
+   ============================================ */
+
+/* === PÁGINA === */
+.gvp-page {
+  background: var(--bg-base);
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+/* === HEADER STICKY === */
+.gvp-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.5rem 0.85rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  margin-bottom: 2rem;
+}
+
+.gvp-header-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+.gvp-header-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.gvp-header-title span {
+  color: var(--primary);
+}
+
+/* === SELECTOR DE TIENDA === */
+.gvp-tienda-card {
+  background: var(--bg-elevated);
+  border: 1px solid rgba(79, 195, 247, 0.25);
+  border-top: 3px solid var(--accent-cool);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: var(--transition);
+}
+
+.gvp-tienda-card:hover {
+  border-color: rgba(79, 195, 247, 0.4);
+  box-shadow: 0 0 24px rgba(79, 195, 247, 0.07);
+}
+
+.gvp-tienda-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent-cool);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+}
+
+.gvp-tienda-select {
+  background: var(--bg-card);
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font-heading-alt);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.6rem 2.25rem 0.6rem 1rem;
+  width: 100%;
+  max-width: 380px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234FC3F7' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  transition: var(--transition);
+  display: block;
+  margin: 0 auto 0.85rem;
+}
+
+.gvp-tienda-select:focus {
+  outline: none;
+  border-color: var(--accent-cool);
+  box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.12);
+}
+
+.gvp-tienda-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.gvp-tienda-hint {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.gvp-tienda-hint strong {
+  color: var(--accent-cool);
+  font-weight: 600;
+}
+
+/* === TARJETAS DE OPCIONES === */
+.gvp-opcion-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  height: 100%;
+}
+
+.gvp-opcion-card:hover {
+  transform: translateY(-5px);
+}
+
+/* Variante roja — Vender */
+.gvp-opcion-card--red {
+  border-top: 3px solid var(--primary);
+}
+.gvp-opcion-card--red:hover {
+  border-color: rgba(230, 57, 70, 0.5);
+  box-shadow: 0 12px 36px rgba(230, 57, 70, 0.12);
+}
+
+/* Variante dorada — Inventario */
+.gvp-opcion-card--gold {
+  border-top: 3px solid var(--accent);
+}
+.gvp-opcion-card--gold:hover {
+  border-color: rgba(245, 166, 35, 0.5);
+  box-shadow: 0 12px 36px rgba(245, 166, 35, 0.1);
+}
+
+/* Variante cyan — Historial */
+.gvp-opcion-card--cyan {
+  border-top: 3px solid var(--accent-cool);
+}
+.gvp-opcion-card--cyan:hover {
+  border-color: rgba(79, 195, 247, 0.5);
+  box-shadow: 0 12px 36px rgba(79, 195, 247, 0.1);
+}
+
+/* === ICONO DE OPCIÓN === */
+.gvp-opcion-icono {
+  width: clamp(72px, 12vw, 90px);
+  height: clamp(72px, 12vw, 90px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  margin-bottom: 1.25rem;
+  flex-shrink: 0;
+}
+
+.gvp-opcion-icono--red {
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  color: var(--primary);
+}
+
+.gvp-opcion-icono--gold {
+  background: rgba(245, 166, 35, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  color: var(--accent);
+}
+
+.gvp-opcion-icono--cyan {
+  background: rgba(79, 195, 247, 0.08);
+  border: 1px solid rgba(79, 195, 247, 0.22);
+  color: var(--accent-cool);
+}
+
+/* === TEXTO DE OPCIÓN === */
+.gvp-opcion-titulo {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.6rem;
+}
+
+.gvp-opcion-desc {
+  font-family: var(--font-body);
+  font-size: clamp(0.82rem, 1.5vw, 0.9rem);
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0 0 1.5rem;
+  flex-grow: 1;
+}
+
+/* === BOTÓN CTA DE OPCIÓN === */
+.gvp-opcion-btn {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  border: none;
+  font-family: var(--font-heading-alt);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.gvp-opcion-btn--red {
+  background: var(--primary);
+  color: #fff;
+}
+.gvp-opcion-btn--red:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 16px var(--primary-glow);
+}
+
+.gvp-opcion-btn--gold {
+  background: var(--accent);
+  color: #111;
+}
+.gvp-opcion-btn--gold:hover {
+  background: #e09510;
+  box-shadow: 0 4px 16px rgba(245, 166, 35, 0.35);
+}
+
+.gvp-opcion-btn--cyan {
+  background: rgba(79, 195, 247, 0.12);
+  color: var(--accent-cool);
+  border: 1px solid rgba(79, 195, 247, 0.3);
+}
+.gvp-opcion-btn--cyan:hover {
+  background: rgba(79, 195, 247, 0.22);
+  border-color: var(--accent-cool);
+}
+
+/* === ZONA DE PELIGRO === */
+.gvp-danger-zone {
+  border-top: 1px solid var(--border);
+  padding-top: 2rem;
+  margin-top: 2.5rem;
+}
+
+.gvp-danger-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.gvp-danger-btn {
+  background: none;
+  border: 1px solid rgba(230, 57, 70, 0.35);
+  border-radius: 10px;
+  color: var(--primary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 0.55rem 1.1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.gvp-danger-btn:hover {
+  background: rgba(230, 57, 70, 0.08);
+  border-color: var(--primary);
+  box-shadow: 0 0 12px var(--primary-glow);
+}
+
+.gvp-danger-btn--warning {
+  border-color: rgba(245, 166, 35, 0.35);
+  color: var(--accent);
+}
+
+.gvp-danger-btn--warning:hover {
+  background: rgba(245, 166, 35, 0.07);
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(245, 166, 35, 0.2);
+}
+
+.gvp-danger-hint {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0.85rem 0 0;
+}

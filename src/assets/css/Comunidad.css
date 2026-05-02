@@ -1,0 +1,410 @@
+/* ============================================
+   COMUNIDAD PAGE — com-* namespace
+   Arctic Wolf Design System
+   ============================================ */
+
+.com-page {
+  min-height: 100vh;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  position: relative;
+  padding-bottom: 5rem;
+}
+
+/* ─── Navbar ─────────────────────────────── */
+.com-navbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 1.5rem 0.9rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+
+.com-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+
+.com-brand i { color: var(--primary); }
+
+.com-member-count {
+  font-family: var(--font-stats);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ─── Hero ───────────────────────────────── */
+.com-hero {
+  text-align: center;
+  padding: 2.5rem 1.5rem 0.5rem;
+}
+
+.com-hero-title {
+  font-family: var(--font-hero);
+  font-size: clamp(2.8rem, 8vw, 5rem);
+  letter-spacing: 6px;
+  color: var(--text-primary);
+  line-height: 1;
+  margin: 0 0 0.4rem;
+}
+
+.com-hero-line {
+  display: block;
+  width: 60px;
+  height: 2px;
+  background: var(--primary);
+  margin: 0.5rem auto 0.75rem;
+  border-radius: 2px;
+  box-shadow: 0 0 12px var(--primary-glow);
+}
+
+.com-hero-sub {
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* ─── Search + Stats ─────────────────────── */
+.com-search-section {
+  padding: 2rem 1rem 0.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.com-search-wrap {
+  position: relative;
+}
+
+.com-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 1.1rem;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.com-search-input {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 0.85rem 1.25rem 0.85rem 2.8rem;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  outline: none;
+  transition: var(--transition);
+}
+
+.com-search-input:focus {
+  border-color: var(--border-hover);
+  box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.08);
+  background: var(--bg-card-hover);
+}
+
+.com-search-input::placeholder { color: var(--text-muted); }
+
+/* Stats row */
+.com-stats-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  padding: 1.5rem 0 0.5rem;
+  flex-wrap: wrap;
+}
+
+.com-stat { text-align: center; }
+
+.com-stat-value {
+  display: block;
+  font-family: var(--font-stats);
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.com-stat-label {
+  display: block;
+  font-family: var(--font-heading-alt);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-top: 0.25rem;
+}
+
+.com-stat-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--border);
+}
+
+/* ─── Grid ───────────────────────────────── */
+.com-grid-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2rem;
+}
+
+/* ─── Spinner ────────────────────────────── */
+.com-spinner {
+  color: var(--primary);
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+/* ─── Athlete Card ───────────────────────── */
+.com-athlete-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: var(--transition);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.com-athlete-card:hover {
+  transform: translateY(-6px);
+}
+
+.com-card-atleta:hover {
+  border-color: rgba(230, 57, 70, 0.35);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 24px rgba(230, 57, 70, 0.1);
+}
+
+.com-card-coach:hover {
+  border-color: rgba(79, 195, 247, 0.35);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 24px rgba(79, 195, 247, 0.1);
+}
+
+.com-athlete-card:active {
+  transform: scale(0.97);
+}
+
+/* Top color strip */
+.com-card-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.com-card-atleta .com-card-strip { background: rgba(230, 57, 70, 0.07); }
+.com-card-coach  .com-card-strip { background: rgba(79, 195, 247, 0.07); }
+
+.com-card-level {
+  font-family: var(--font-stats);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.com-card-atleta .com-card-level { color: var(--primary); }
+.com-card-coach  .com-card-level { color: var(--accent-cool); }
+
+.com-card-fire {
+  font-size: 0.78rem;
+  color: var(--primary);
+  animation: com-fire-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes com-fire-pulse {
+  0%, 100% { opacity: 1;    transform: scale(1);    }
+  50%       { opacity: 0.65; transform: scale(1.2); }
+}
+
+/* Card body */
+.com-card-body {
+  padding: 1rem 0.75rem 0.75rem;
+  text-align: center;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Avatar */
+.com-avatar {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-hero);
+  font-size: 1.65rem;
+  color: white;
+  margin-bottom: 0.65rem;
+  flex-shrink: 0;
+}
+
+.com-avatar-atleta {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border: 2px solid rgba(230, 57, 70, 0.38);
+  box-shadow: 0 0 18px rgba(230, 57, 70, 0.18), 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.com-avatar-coach {
+  background: linear-gradient(135deg, #0dcaf0 0%, #0a8fa7 100%);
+  border: 2px solid rgba(79, 195, 247, 0.38);
+  box-shadow: 0 0 18px rgba(79, 195, 247, 0.18), 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.com-avatar-crown {
+  position: absolute;
+  top: -7px;
+  right: -3px;
+  font-size: 0.7rem;
+  color: var(--accent);
+  filter: drop-shadow(0 0 5px rgba(245, 166, 35, 0.7));
+}
+
+/* Name + apodo */
+.com-card-name {
+  font-family: var(--font-heading);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--text-primary);
+  margin: 0 0 0.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-transform: uppercase;
+}
+
+.com-card-apodo {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.73rem;
+  color: var(--accent);
+  margin: 0 0 0.6rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+/* Badges */
+.com-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-top: auto;
+  padding-top: 0.4rem;
+}
+
+.com-badge {
+  font-family: var(--font-heading-alt);
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 0.18rem 0.5rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.com-badge-rx     { background: rgba(230, 57, 70, 0.14);  color: var(--primary);     border: 1px solid rgba(230, 57, 70, 0.25); }
+.com-badge-scaled { background: rgba(168, 178, 209, 0.08); color: var(--secondary);   border: 1px solid rgba(168, 178, 209, 0.15); }
+.com-badge-coach  { background: rgba(79, 195, 247, 0.1);   color: var(--accent-cool); border: 1px solid rgba(79, 195, 247, 0.2); }
+
+/* Card footer */
+.com-card-footer {
+  padding: 0.4rem 0.75rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.com-card-estado {
+  font-family: var(--font-body);
+  font-size: 0.67rem;
+  font-style: italic;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+/* ─── Role badge (centered) ─────────────── */
+.com-card-role {
+  font-family: var(--font-heading-alt);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 0.2rem 0.85rem;
+  border-radius: 20px;
+  margin: 0.3rem 0 0.5rem;
+  display: block;
+  text-align: center;
+  width: fit-content;
+  align-self: center;
+}
+
+.com-card-role--atleta {
+  background: rgba(230, 57, 70, 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(230, 57, 70, 0.22);
+}
+
+.com-card-role--coach {
+  background: rgba(79, 195, 247, 0.1);
+  color: var(--accent-cool);
+  border: 1px solid rgba(79, 195, 247, 0.22);
+}
+
+/* ─── Empty state ────────────────────────── */
+.com-empty {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--text-muted);
+}
+
+.com-empty i {
+  font-size: 3.5rem;
+  color: var(--primary);
+  opacity: 0.18;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.com-empty p {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+}

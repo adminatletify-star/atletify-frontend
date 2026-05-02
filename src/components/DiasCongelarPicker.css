@@ -1,0 +1,105 @@
+/* =============================================
+   DÍAS CONGELAR PICKER — Arctic Wolf
+   Namespace: dcp-*
+   ============================================= */
+
+:root {
+  --dcp-semana:   #4FC3F7;
+  --dcp-quincena: #81D4FA;
+  --dcp-mes:      #29B6F6;
+}
+
+.dcp-trigger {
+  display: inline-flex; align-items: center; justify-content: space-between;
+  gap: 0.5rem; padding: 0.52rem 0.9rem; border-radius: 10px;
+  border: 1.5px solid rgba(79,195,247,0.3); background: rgba(79,195,247,0.06);
+  color: var(--dcp-semana);
+  font-family: var(--font-body, 'Inter', sans-serif); font-size: 0.84rem; font-weight: 600;
+  cursor: pointer; transition: filter 0.18s, transform 0.18s;
+  white-space: nowrap; width: 100%; text-align: left;
+}
+.dcp-trigger--semana   { border-color: rgba(79,195,247,0.3);  background: rgba(79,195,247,0.06);  color: var(--dcp-semana);   }
+.dcp-trigger--quincena { border-color: rgba(129,212,250,0.3); background: rgba(129,212,250,0.06); color: var(--dcp-quincena); }
+.dcp-trigger--mes      { border-color: rgba(41,182,246,0.3);  background: rgba(41,182,246,0.06);  color: var(--dcp-mes);      }
+.dcp-trigger:hover { filter: brightness(1.15); transform: translateY(-1px); }
+.dcp-trigger-left { display: flex; align-items: center; gap: 0.5rem; }
+.dcp-chevron { font-size: 0.6rem; opacity: 0.6; }
+
+/* OVERLAY */
+.dcp-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center; padding: 1.25rem;
+  animation: dcp-fade 0.18s ease;
+}
+@keyframes dcp-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.dcp-panel {
+  background: var(--bg-card, #1c1c26); border: 1px solid var(--border, rgba(255,255,255,0.1));
+  border-radius: 20px; width: 100%; max-width: 380px; max-height: 75vh;
+  display: flex; flex-direction: column; overflow: hidden;
+  animation: dcp-up 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 28px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+}
+@keyframes dcp-up {
+  from { opacity: 0; transform: translateY(28px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.dcp-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--border, rgba(255,255,255,0.08)); flex-shrink: 0;
+}
+.dcp-title {
+  font-family: var(--font-heading, 'Oswald', sans-serif);
+  font-size: 0.82rem; font-weight: 700; color: var(--accent-cool, #4FC3F7);
+  text-transform: uppercase; letter-spacing: 1.2px; display: flex; align-items: center; gap: 0.45rem;
+}
+.dcp-close {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted, #888); width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 0.75rem; transition: background 0.15s, color 0.15s; flex-shrink: 0;
+}
+.dcp-close:hover { background: rgba(230,57,70,0.15); color: var(--primary, #e63946); }
+
+.dcp-options { padding: 0.75rem; display: flex; flex-direction: column; gap: 0.35rem; overflow-y: auto; }
+
+.dcp-option {
+  display: flex; align-items: center; gap: 1rem; width: 100%;
+  padding: 0.8rem 1rem; border-radius: 12px; border: 1.5px solid transparent;
+  background: rgba(255,255,255,0.025); color: var(--text-primary, #f0f0f5);
+  cursor: pointer; transition: background 0.15s, transform 0.15s, border-color 0.15s; text-align: left;
+}
+.dcp-option:hover { background: rgba(255,255,255,0.06); transform: translateX(4px); }
+
+/* Activo por variante */
+.dcp-option--semana.dcp-option--activo   { border-color: rgba(79,195,247,0.4);  background: rgba(79,195,247,0.07);  }
+.dcp-option--quincena.dcp-option--activo { border-color: rgba(129,212,250,0.4); background: rgba(129,212,250,0.07); }
+.dcp-option--mes.dcp-option--activo      { border-color: rgba(41,182,246,0.4);  background: rgba(41,182,246,0.07);  }
+
+/* Icon wrap */
+.dcp-icon-wrap {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0;
+}
+.dcp-icon-wrap--semana   { background: rgba(79,195,247,0.1);  color: var(--dcp-semana);   }
+.dcp-icon-wrap--quincena { background: rgba(129,212,250,0.1); color: var(--dcp-quincena); }
+.dcp-icon-wrap--mes      { background: rgba(41,182,246,0.1);  color: var(--dcp-mes);      }
+
+.dcp-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+
+.dcp-nombre {
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+}
+.dcp-nombre--semana   { color: var(--dcp-semana);   }
+.dcp-nombre--quincena { color: var(--dcp-quincena); }
+.dcp-nombre--mes      { color: var(--dcp-mes);      }
+
+.dcp-desc { font-family: var(--font-body, 'Inter', sans-serif); font-size: 0.7rem; color: var(--text-muted, #888); margin-top: 0.05rem; }
+
+.dcp-check { font-size: 0.78rem; flex-shrink: 0; }
+.dcp-check--semana   { color: var(--dcp-semana);   }
+.dcp-check--quincena { color: var(--dcp-quincena); }
+.dcp-check--mes      { color: var(--dcp-mes);      }

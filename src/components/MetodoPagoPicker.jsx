@@ -1,0 +1,73 @@
+import { useState } from 'react';
+import { createPortal } from 'react-dom';
+import './MetodoPagoPicker.css';
+
+const OPCIONES = [
+  { valor: 'Transferencia', nombre: 'Transferencia Bancaria', desc: 'Sube tu comprobante de pago', icono: 'fas fa-university',      key: 'transfer' },
+  { valor: 'Efectivo',      nombre: 'Efectivo en Recepción', desc: 'Paga en caja el día del evento', icono: 'fas fa-money-bill-wave', key: 'efectivo' },
+  { valor: 'Tarjeta',       nombre: 'Tarjeta en Recepción',  desc: 'Pago con terminal bancaria',     icono: 'fas fa-credit-card',     key: 'tarjeta'  },
+];
+
+export default function MetodoPagoPicker({ valor, onCambiar }) {
+  const [abierto, setAbierto] = useState(false);
+  const actual = OPCIONES.find(o => o.valor === valor) || OPCIONES[0];
+
+  const seleccionar = (v) => {
+    setAbierto(false);
+    if (v !== valor) onCambiar(v);
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        className={`mpp-trigger mpp-trigger--${actual.key}`}
+        onClick={() => setAbierto(true)}
+      >
+        <span className="mpp-trigger-left">
+          <i className={actual.icono}></i>
+          {actual.nombre}
+        </span>
+        <i className="fas fa-chevron-down mpp-chevron"></i>
+      </button>
+
+      {abierto && createPortal(
+        <div className="mpp-overlay" onClick={() => setAbierto(false)}>
+          <div className="mpp-panel" onClick={e => e.stopPropagation()}>
+
+            <div className="mpp-header">
+              <span className="mpp-title">
+                <i className="fas fa-wallet"></i> Método de Pago
+              </span>
+              <button type="button" className="mpp-close" onClick={() => setAbierto(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div className="mpp-options">
+              {OPCIONES.map(op => (
+                <button
+                  key={op.valor}
+                  type="button"
+                  className={`mpp-option${op.valor === valor ? ' mpp-option--activo' : ''}`}
+                  onClick={() => seleccionar(op.valor)}
+                >
+                  <div className="mpp-option-icon">
+                    <i className={op.icono}></i>
+                  </div>
+                  <div className="mpp-option-info">
+                    <span className="mpp-option-nombre">{op.nombre}</span>
+                    <span className="mpp-option-desc">{op.desc}</span>
+                  </div>
+                  {op.valor === valor && <i className="fas fa-check mpp-check"></i>}
+                </button>
+              ))}
+            </div>
+
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
