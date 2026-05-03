@@ -141,35 +141,51 @@ const AdminSaaS = () => {
                         <h2 className="text-xl font-bold mb-4 text-emerald-400"><i className="fas fa-tags"></i> Planes de Suscripción</h2>
                         
                         <form onSubmit={handleCrearPlan} className="bg-gray-900/50 p-4 rounded-lg mb-6 border border-gray-700">
-                            <h4 className="text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">Crear Nuevo Plan</h4>
-                            <div className="row g-3">
+                            <h4 className="text-sm font-semibold mb-4 text-gray-300 uppercase tracking-wider border-bottom border-gray-700 pb-2">Crear Nuevo Plan</h4>
+                            <div className="row g-4">
                                 <div className="col-12">
-                                    <input type="text" className="form-control bg-dark text-white border-secondary" placeholder="Nombre (Ej. Pro Box)" required value={nuevoPlan.nombre} onChange={e => setNuevoPlan({...nuevoPlan, nombre: e.target.value})} />
+                                    <label className="form-label text-muted small fw-bold mb-1">Nombre del Plan</label>
+                                    <input type="text" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="Ej. Pro Box" required value={nuevoPlan.nombre} onChange={e => setNuevoPlan({...nuevoPlan, nombre: e.target.value})} />
                                 </div>
-                                <div className="col-6">
-                                    <input type="number" className="form-control bg-dark text-white border-secondary" placeholder="Precio Mensual MXN" required value={nuevoPlan.precioMensual} onChange={e => setNuevoPlan({...nuevoPlan, precioMensual: e.target.value})} />
+                                <div className="col-md-6">
+                                    <label className="form-label text-muted small fw-bold mb-1">Precio Mensual (MXN)</label>
+                                    <div className="input-group">
+                                        <span className="input-group-text bg-dark text-muted border-secondary">$</span>
+                                        <input type="number" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="0" required value={nuevoPlan.precioMensual} onChange={e => setNuevoPlan({...nuevoPlan, precioMensual: e.target.value})} />
+                                    </div>
                                 </div>
-                                <div className="col-6">
-                                    <input type="number" className="form-control bg-dark text-white border-secondary" placeholder="Precio Anual MXN" required value={nuevoPlan.precioAnual} onChange={e => setNuevoPlan({...nuevoPlan, precioAnual: e.target.value})} />
+                                <div className="col-md-6">
+                                    <label className="form-label text-muted small fw-bold mb-1">Precio Anual (MXN)</label>
+                                    <div className="input-group">
+                                        <span className="input-group-text bg-dark text-muted border-secondary">$</span>
+                                        <input type="number" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="0" required value={nuevoPlan.precioAnual} onChange={e => setNuevoPlan({...nuevoPlan, precioAnual: e.target.value})} />
+                                    </div>
                                 </div>
-                                <div className="col-6">
-                                    <input type="number" className="form-control bg-dark text-white border-secondary" placeholder="Límite Atletas" required value={nuevoPlan.limiteAtletas} onChange={e => setNuevoPlan({...nuevoPlan, limiteAtletas: e.target.value})} />
+                                <div className="col-md-6">
+                                    <label className="form-label text-muted small fw-bold mb-1">Límite de Atletas Incluidos</label>
+                                    <input type="number" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="100" required value={nuevoPlan.limiteAtletas} onChange={e => setNuevoPlan({...nuevoPlan, limiteAtletas: e.target.value})} />
                                 </div>
-                                <div className="col-6">
-                                    <input type="number" className="form-control bg-dark text-white border-secondary" placeholder="Costo Atleta Extra MXN" required value={nuevoPlan.costoPorAtletaExtra} onChange={e => setNuevoPlan({...nuevoPlan, costoPorAtletaExtra: e.target.value})} />
+                                <div className="col-md-6">
+                                    <label className="form-label text-muted small fw-bold mb-1">Costo por Atleta Extra (MXN)</label>
+                                    <div className="input-group">
+                                        <span className="input-group-text bg-dark text-muted border-secondary">$</span>
+                                        <input type="number" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="15" required value={nuevoPlan.costoPorAtletaExtra} onChange={e => setNuevoPlan({...nuevoPlan, costoPorAtletaExtra: e.target.value})} />
+                                    </div>
                                 </div>
-                                <div className="col-12 d-flex gap-4">
-                                    <label className="d-flex align-items-center gap-2">
-                                        <input type="checkbox" checked={nuevoPlan.incluyeCompetencias} onChange={e => setNuevoPlan({...nuevoPlan, incluyeCompetencias: e.target.checked})} />
-                                        Módulo Competencias
-                                    </label>
-                                    <label className="d-flex align-items-center gap-2 text-warning">
-                                        <input type="checkbox" checked={nuevoPlan.esRecomendado} onChange={e => setNuevoPlan({...nuevoPlan, esRecomendado: e.target.checked})} />
-                                        Destacado
-                                    </label>
+                                <div className="col-12 pt-2 d-flex flex-wrap gap-4">
+                                    <div className="form-check form-switch">
+                                        <input className="form-check-input cursor-pointer" type="checkbox" id="checkCompetencias" checked={nuevoPlan.incluyeCompetencias} onChange={e => setNuevoPlan({...nuevoPlan, incluyeCompetencias: e.target.checked})} />
+                                        <label className="form-check-label text-white cursor-pointer" htmlFor="checkCompetencias">Incluye Módulo Competencias</label>
+                                    </div>
+                                    <div className="form-check form-switch">
+                                        <input className="form-check-input cursor-pointer" type="checkbox" id="checkDestacado" checked={nuevoPlan.esRecomendado} onChange={e => setNuevoPlan({...nuevoPlan, esRecomendado: e.target.checked})} />
+                                        <label className="form-check-label text-warning cursor-pointer fw-bold" htmlFor="checkDestacado"><i className="fas fa-star me-1"></i> Plan Destacado</label>
+                                    </div>
                                 </div>
-                                <div className="col-12 text-end">
-                                    <button type="submit" className="btn btn-emerald px-4 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-500">Crear Plan</button>
+                                <div className="col-12 text-end mt-4">
+                                    <button type="submit" className="btn px-4 py-2 bg-emerald-600 text-white font-bold rounded shadow hover:bg-emerald-500 transition-all">
+                                        <i className="fas fa-save me-2"></i> Crear Plan
+                                    </button>
                                 </div>
                             </div>
                         </form>
@@ -215,28 +231,36 @@ const AdminSaaS = () => {
                         <h2 className="text-xl font-bold mb-4 text-purple-400"><i className="fas fa-ticket-alt"></i> Códigos de Activación (Magic Tokens)</h2>
                         
                         <form onSubmit={handleCrearCodigo} className="bg-gray-900/50 p-4 rounded-lg mb-6 border border-gray-700">
-                            <h4 className="text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">Generar Nuevo Código</h4>
-                            <div className="row g-3">
-                                <div className="col-8">
-                                    <input type="text" className="form-control bg-dark text-white border-secondary font-monospace" placeholder="Ej. VIP-BOX-2026" required value={nuevoCodigo.codigo} onChange={e => setNuevoCodigo({...nuevoCodigo, codigo: e.target.value.toUpperCase()})} />
+                            <h4 className="text-sm font-semibold mb-4 text-gray-300 uppercase tracking-wider border-bottom border-gray-700 pb-2">Generar Nuevo Código</h4>
+                            <div className="row g-4">
+                                <div className="col-md-8">
+                                    <label className="form-label text-muted small fw-bold mb-1">Token Alfanumérico</label>
+                                    <div className="input-group">
+                                        <input type="text" className="form-control bg-dark text-white border-secondary font-monospace shadow-none" placeholder="Ej. VIP-BOX-2026" required value={nuevoCodigo.codigo} onChange={e => setNuevoCodigo({...nuevoCodigo, codigo: e.target.value.toUpperCase()})} />
+                                        <button type="button" className="btn btn-outline-secondary" onClick={() => setNuevoCodigo({...nuevoCodigo, codigo: 'TOKEN-' + Math.random().toString(36).substring(2, 10).toUpperCase()})}>
+                                            <i className="fas fa-random"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="col-4">
-                                    <button type="button" className="btn btn-outline-secondary w-100" onClick={() => setNuevoCodigo({...nuevoCodigo, codigo: 'TOKEN-' + Math.random().toString(36).substring(2, 10).toUpperCase()})}>Random</button>
+                                <div className="col-md-4">
+                                    <label className="form-label text-muted small fw-bold mb-1">Meses Gratis</label>
+                                    <input type="number" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="1" required value={nuevoCodigo.mesesGratis} onChange={e => setNuevoCodigo({...nuevoCodigo, mesesGratis: e.target.value})} />
                                 </div>
-                                <div className="col-4">
-                                    <input type="number" className="form-control bg-dark text-white border-secondary" placeholder="Meses Gratis" required value={nuevoCodigo.mesesGratis} onChange={e => setNuevoCodigo({...nuevoCodigo, mesesGratis: e.target.value})} />
+                                <div className="col-md-6">
+                                    <label className="form-label text-muted small fw-bold mb-1">Límite de Usos</label>
+                                    <input type="number" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="1" required value={nuevoCodigo.limiteUsos} onChange={e => setNuevoCodigo({...nuevoCodigo, limiteUsos: e.target.value})} />
                                 </div>
-                                <div className="col-4">
-                                    <input type="number" className="form-control bg-dark text-white border-secondary" placeholder="Límite Usos" required value={nuevoCodigo.limiteUsos} onChange={e => setNuevoCodigo({...nuevoCodigo, limiteUsos: e.target.value})} />
-                                </div>
-                                <div className="col-4">
-                                    <select className="form-select bg-dark text-white border-secondary" value={nuevoCodigo.idPlanSaaS} onChange={e => setNuevoCodigo({...nuevoCodigo, idPlanSaaS: e.target.value})}>
-                                        <option value="">Cualquier Plan</option>
+                                <div className="col-md-6">
+                                    <label className="form-label text-muted small fw-bold mb-1">Plan Específico (Opcional)</label>
+                                    <select className="form-select bg-dark text-white border-secondary shadow-none" value={nuevoCodigo.idPlanSaaS} onChange={e => setNuevoCodigo({...nuevoCodigo, idPlanSaaS: e.target.value})}>
+                                        <option value="">Aplica a cualquier Plan</option>
                                         {planes.map(p => <option key={p.idPlan} value={p.idPlan}>{p.nombre}</option>)}
                                     </select>
                                 </div>
-                                <div className="col-12 text-end">
-                                    <button type="submit" className="btn bg-purple-600 text-white px-4 font-bold rounded-lg hover:bg-purple-500">Generar Código</button>
+                                <div className="col-12 text-end mt-4">
+                                    <button type="submit" className="btn py-2 px-4 bg-purple-600 text-white font-bold rounded shadow hover:bg-purple-500 transition-all">
+                                        <i className="fas fa-magic me-2"></i> Generar Token
+                                    </button>
                                 </div>
                             </div>
                         </form>
