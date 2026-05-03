@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { CreditCard, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 
 const SeleccionPlanSaaS = () => {
@@ -25,8 +24,12 @@ const SeleccionPlanSaaS = () => {
             try {
                 const token = localStorage.getItem('token');
                 const config = { headers: { Authorization: `Bearer ${token}` } };
-                const res = await axios.get('/api/saas/planes', config);
-                setPlanes(res.data.filter(p => p.activo));
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/saas/planes`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Error al cargar planes');
+                const data = await res.json();
+                setPlanes(data.filter(p => p.activo));
             } catch (err) {
                 console.error('Error fetching planes:', err);
                 setError('No se pudieron cargar los planes.');
@@ -51,10 +54,19 @@ const SeleccionPlanSaaS = () => {
                 successUrl: window.location.origin + '/admin-box-panel?checkout=success',
                 cancelUrl: window.location.origin + '/seleccion-plan-saas?checkout=cancel'
             };
-            const res = await axios.post('/api/saas/checkout-session', payload, config);
-            window.location.href = res.data.url;
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/saas/checkout-session`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}` 
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.mensaje || 'Error al iniciar el pago.');
+            window.location.href = data.url;
         } catch (err) {
-            setError(err.response?.data?.mensaje || 'Error al iniciar el pago.');
+            setError(err.message || 'Error al iniciar el pago.');
             setProcesando(false);
         }
     };
@@ -67,19 +79,28 @@ const SeleccionPlanSaaS = () => {
             const token = localStorage.getItem('token');
             const config = { headers: { Authorization: `Bearer ${token}` } };
             const payload = { idBox: boxActivo.idBox, codigo };
-            const res = await axios.post('/api/saas/canjear', payload, config);
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/saas/canjear`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}` 
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.mensaje || 'Código inválido o expirado.');
             
             // Actualizar el localstorage con el nuevo estatus
-            const boxActualizado = { ...boxActivo, estatusSaaS: res.data.estatusSaaS };
+            const boxActualizado = { ...boxActivo, estatusSaaS: data.estatusSaaS };
             localStorage.setItem('boxActivo', JSON.stringify(boxActualizado));
             
-            setExito(res.data.mensaje);
+            setExito(data.mensaje);
             setTimeout(() => {
                 navigate('/admin-box-panel');
                 window.location.reload(); // Forzar actualización de guardias
             }, 2000);
         } catch (err) {
-            setError(err.response?.data?.mensaje || 'Código inválido o expirado.');
+            setError(err.message || 'Código inválido o expirado.');
             setProcesando(false);
         }
     };

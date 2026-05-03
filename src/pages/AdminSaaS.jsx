@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 
 const AdminSaaS = () => {
     const [planes, setPlanes] = useState([]);
@@ -28,16 +27,23 @@ const AdminSaaS = () => {
             const token = localStorage.getItem('token');
             const config = { headers: { Authorization: `Bearer ${token}` } };
             
-            const resPlanes = await axios.get('/api/developer/planes', config);
-            setPlanes(resPlanes.data);
+            const resPlanes = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/planes`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (resPlanes.status === 401 || resPlanes.status === 403) {
+                navigate('/dashboard');
+                return;
+            }
+            const dataPlanes = await resPlanes.json();
+            setPlanes(dataPlanes);
 
-            const resCodigos = await axios.get('/api/developer/codigos', config);
-            setCodigos(resCodigos.data);
+            const resCodigos = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/codigos`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const dataCodigos = await resCodigos.json();
+            setCodigos(dataCodigos);
         } catch (error) {
             console.error(error);
-            if (error.response?.status === 401 || error.response?.status === 403) {
-                navigate('/dashboard');
-            }
         } finally {
             setLoading(false);
         }
@@ -47,7 +53,15 @@ const AdminSaaS = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            await axios.post('/api/developer/planes', nuevoPlan, { headers: { Authorization: `Bearer ${token}` } });
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/planes`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}` 
+                },
+                body: JSON.stringify(nuevoPlan)
+            });
+            if (!res.ok) throw new Error();
             alert('Plan creado con éxito');
             cargarData();
         } catch (error) {
@@ -63,7 +77,15 @@ const AdminSaaS = () => {
                 ...nuevoCodigo,
                 idPlanSaaS: nuevoCodigo.idPlanSaaS ? parseInt(nuevoCodigo.idPlanSaaS) : null
             };
-            await axios.post('/api/developer/codigos', payload, { headers: { Authorization: `Bearer ${token}` } });
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/codigos`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}` 
+                },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error();
             alert('Código generado con éxito');
             cargarData();
         } catch (error) {
