@@ -174,6 +174,12 @@ export default function Dashboard() {
                   </Link>
                 </div>
                 <div className="col-6 col-md-4">
+                  <Link to="/admin-saas" className="dash-nuevo-box d-flex align-items-center justify-content-center gap-2 p-3 text-decoration-none h-100" style={{ '--dash-nuevo-color': '#9b59b6' }}>
+                    <i className="fas fa-crown"></i>
+                    <span className="dash-nuevo-box-text">Planes y B2B SaaS</span>
+                  </Link>
+                </div>
+                <div className="col-6 col-md-4">
                   <Link to="/admin-ejercicios" className="dash-nuevo-box d-flex align-items-center justify-content-center gap-2 p-3 text-decoration-none h-100" style={{ '--dash-nuevo-color': '#F5A623' }}>
                     <i className="fas fa-book-open"></i>
                     <span className="dash-nuevo-box-text">Ejercicios</span>
@@ -229,9 +235,32 @@ export default function Dashboard() {
                     <td><span className="badge bg-info text-dark rounded-pill px-3">{b.totalCoaches}</span></td>
                     <td><span className="badge bg-warning text-dark rounded-pill px-3">{b.totalAdmins}</span></td>
                     <td>
-                      <span className={`badge-estado ${b.activo ? 'badge-estado-activo' : 'badge-estado-inactivo'}`}>
-                        {b.activo ? 'Operando' : 'Suspendido'}
-                      </span>
+                      <div className="d-flex flex-column gap-1">
+                        <select 
+                          className={`form-select form-select-sm bg-dark text-white border-secondary ${b.estatusSaaS === 'Activo' ? 'text-success' : b.estatusSaaS === 'Vencido' ? 'text-danger' : 'text-warning'}`}
+                          value={b.estatusSaaS || 'Pendiente'}
+                          onChange={async (e) => {
+                            const newStatus = e.target.value;
+                            try {
+                              const token = localStorage.getItem('token');
+                              await fetch(`${import.meta.env.VITE_API_URL}/api/developer/box-saas/${b.idBox}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                body: JSON.stringify({ estatusSaaS: newStatus, moduloCompetenciasActivo: b.moduloCompetenciasActivo })
+                              });
+                              // window.location.reload(); // En su lugar recargamos datos (o requerimos cargarDataGlobal en el contexto)
+                              alert("Estatus SaaS actualizado");
+                            } catch(err) {
+                              alert("Error al actualizar estatus SaaS");
+                            }
+                          }}
+                        >
+                          <option value="Pendiente">Pendiente</option>
+                          <option value="Activo">Activo</option>
+                          <option value="Gracia">Gracia</option>
+                          <option value="Vencido">Vencido</option>
+                        </select>
+                      </div>
                     </td>
                     <td className="text-center">
                       <button 

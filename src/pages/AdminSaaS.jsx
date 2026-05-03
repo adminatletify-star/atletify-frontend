@@ -93,6 +93,40 @@ const AdminSaaS = () => {
         }
     };
 
+    const handleEliminarPlan = async (id) => {
+        if (!window.confirm("¿Seguro que deseas eliminar este plan?")) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/planes/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.mensaje || 'Error al eliminar');
+            alert(data.mensaje || 'Plan eliminado exitosamente');
+            cargarData();
+        } catch (error) {
+            alert(error.message || 'Error al eliminar plan');
+        }
+    };
+
+    const handleEliminarCodigo = async (id) => {
+        if (!window.confirm("¿Seguro que deseas eliminar este código?")) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/codigos/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.mensaje || 'Error al eliminar');
+            alert(data.mensaje || 'Código eliminado exitosamente');
+            cargarData();
+        } catch (error) {
+            alert(error.message || 'Error al eliminar código');
+        }
+    };
+
     if (loading) return <div className="min-vh-100 d-flex justify-content-center align-items-center"><div className="spinner-border text-info" /></div>;
 
     return (
@@ -149,6 +183,7 @@ const AdminSaaS = () => {
                                         <th>Precio (M/A)</th>
                                         <th>Atletas</th>
                                         <th>Estatus</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -160,6 +195,11 @@ const AdminSaaS = () => {
                                             <td>{p.limiteAtletas} <span className="text-muted small">(+${p.costoPorAtletaExtra})</span></td>
                                             <td>
                                                 <span className={`badge ${p.activo ? 'bg-success' : 'bg-danger'}`}>{p.activo ? 'Activo' : 'Inactivo'}</span>
+                                            </td>
+                                            <td>
+                                                <button onClick={() => handleEliminarPlan(p.idPlan)} className="btn btn-sm btn-outline-danger">
+                                                    <i className="fas fa-trash"></i>
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
@@ -210,6 +250,7 @@ const AdminSaaS = () => {
                                         <th>Usos</th>
                                         <th>Plan Específico</th>
                                         <th>Estatus</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -223,6 +264,11 @@ const AdminSaaS = () => {
                                                 <span className={`badge ${c.activo && c.usosRestantes > 0 ? 'bg-success' : 'bg-danger'}`}>
                                                     {c.activo && c.usosRestantes > 0 ? 'Válido' : 'Agotado'}
                                                 </span>
+                                            </td>
+                                            <td>
+                                                <button onClick={() => handleEliminarCodigo(c.idCodigo)} className="btn btn-sm btn-outline-danger">
+                                                    <i className="fas fa-trash"></i>
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}

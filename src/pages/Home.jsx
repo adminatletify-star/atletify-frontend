@@ -7,6 +7,7 @@ import HomeStaggeredMenu from '../components/ReactBits/HomeStaggeredMenu';
 import HomeWodTimeline from '../components/HomeWodTimeline';
 import HomeMitosRealidad from '../components/HomeMitosRealidad';
 import HomeLegendasArena from '../components/HomeLegendasArena';
+import HomePricingSaaS from '../components/HomePricingSaaS';
 import '../assets/css/home.css';
 
 // Logos Atletify System
@@ -457,6 +458,11 @@ export default function Home() {
           SECCIÓN LEYENDAS DE LA ARENA — ORIGEN DE LOS WODs
           ══════════════════════════════════════════════════════ */}
       <HomeLegendasArena />
+
+      {/* ══════════════════════════════════════════════════════
+          SECCIÓN PRECIOS SAAS B2B
+          ══════════════════════════════════════════════════════ */}
+      <HomePricingSaaS />
 
       {/* ══════════════════════════════════════════════════════
           SECCIÓN CTA — LLAMADA A LA ACCIÓN
