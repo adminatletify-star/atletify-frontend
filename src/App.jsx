@@ -53,6 +53,7 @@ import SalaDeEspera from './pages/SalaDeEspera'; // O la ruta donde lo hayas gua
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import SeleccionPlanSaaS from './pages/SeleccionPlanSaaS';
+import RegistroBoxSaaS from './pages/RegistroBoxSaaS';
 
 // Nuevos Módulos (Edwin)
 import GestionInventario from './pages/GestionInventario';
@@ -248,8 +249,9 @@ function App() {
           <Route path="/box/:id" element={<BoxDetalle />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/public-drop-in" element={<PublicDropIn />} />
-          <Route path="/public-drop-in/:idBox" element={<PublicDropIn />} />
+          <Route path="/seleccionar-plan" element={<SeleccionPlanSaaS />} />
+          <Route path="/registro-b2b/:idPlan" element={<RegistroBoxSaaS />} />
+          <Route path="/public-dropin" element={<PublicDropIn />} />
 
 
           {/* ========================================= */}

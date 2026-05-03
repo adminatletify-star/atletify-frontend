@@ -7,7 +7,16 @@ const AdminSaaS = () => {
     
     // Formulario de Plan
     const [nuevoPlan, setNuevoPlan] = useState({
-        nombre: '', precioMensual: 0, precioAnual: 0, limiteAtletas: 100, costoPorAtletaExtra: 15, incluyeCompetencias: false, activo: true, esRecomendado: false
+        nombre: '', 
+        precio: '', 
+        mesesDuracion: 1, 
+        limiteAtletas: '', 
+        costoPorAtletaExtra: '', 
+        incluyeCompetencias: false,
+        esRecomendado: false,
+        categoria: 'Administración',
+        costoCapacitacion: 0,
+        beneficiosJSON: ''
     });
 
     // Formulario de Código
@@ -53,13 +62,25 @@ const AdminSaaS = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
+            const payload = {
+                nombre: nuevoPlan.nombre,
+                precio: parseFloat(nuevoPlan.precio) || 0,
+                mesesDuracion: parseInt(nuevoPlan.mesesDuracion) || 1,
+                limiteAtletas: parseInt(nuevoPlan.limiteAtletas) || 0,
+                costoPorAtletaExtra: parseFloat(nuevoPlan.costoPorAtletaExtra) || 0,
+                incluyeCompetencias: nuevoPlan.incluyeCompetencias,
+                esRecomendado: nuevoPlan.esRecomendado,
+                categoria: nuevoPlan.categoria,
+                costoCapacitacion: parseFloat(nuevoPlan.costoCapacitacion) || 0,
+                beneficiosJSON: nuevoPlan.beneficiosJSON
+            };
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/planes`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}` 
                 },
-                body: JSON.stringify(nuevoPlan)
+                body: JSON.stringify(payload)
             });
             if (!res.ok) throw new Error();
             alert('Plan creado con éxito');
@@ -148,22 +169,39 @@ const AdminSaaS = () => {
                                     <input type="text" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="Ej. Pro Box" required value={nuevoPlan.nombre} onChange={e => setNuevoPlan({...nuevoPlan, nombre: e.target.value})} />
                                 </div>
                                 <div className="col-md-6">
-                                    <label className="form-label text-muted small fw-bold mb-1">Precio Mensual (MXN)</label>
+                                    <label className="form-label text-muted small fw-bold mb-1">Precio (MXN)</label>
                                     <div className="input-group">
                                         <span className="input-group-text bg-dark text-muted border-secondary">$</span>
-                                        <input type="number" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="0" required value={nuevoPlan.precioMensual} onChange={e => setNuevoPlan({...nuevoPlan, precioMensual: e.target.value})} />
+                                        <input type="number" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="0" required value={nuevoPlan.precio} onChange={e => setNuevoPlan({...nuevoPlan, precio: e.target.value})} />
                                     </div>
                                 </div>
                                 <div className="col-md-6">
-                                    <label className="form-label text-muted small fw-bold mb-1">Precio Anual (MXN)</label>
+                                    <label className="form-label text-muted small fw-bold mb-1">Frecuencia de Cobro</label>
+                                    <select className="form-select bg-dark text-white border-secondary shadow-none" value={nuevoPlan.mesesDuracion} onChange={e => setNuevoPlan({...nuevoPlan, mesesDuracion: parseInt(e.target.value)})}>
+                                        <option value={1}>Mensual (1 mes)</option>
+                                        <option value={3}>Trimestral (3 meses)</option>
+                                        <option value={6}>Semestral (6 meses)</option>
+                                        <option value={12}>Anual (12 meses)</option>
+                                    </select>
+                                </div>
+                                <div className="col-md-6">
+                                    <label className="form-label text-muted small fw-bold mb-1">Categoría</label>
+                                    <select className="form-select bg-dark text-white border-secondary shadow-none" value={nuevoPlan.categoria} onChange={e => setNuevoPlan({...nuevoPlan, categoria: e.target.value})}>
+                                        <option value="Administración">Administración de Box</option>
+                                        <option value="Competencias">Competencias</option>
+                                        <option value="Plataforma Integral">Plataforma Integral</option>
+                                    </select>
+                                </div>
+                                <div className="col-md-6">
+                                    <label className="form-label text-muted small fw-bold mb-1">Costo Capacitación (MXN)</label>
                                     <div className="input-group">
                                         <span className="input-group-text bg-dark text-muted border-secondary">$</span>
-                                        <input type="number" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="0" required value={nuevoPlan.precioAnual} onChange={e => setNuevoPlan({...nuevoPlan, precioAnual: e.target.value})} />
+                                        <input type="number" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="0 (Gratis)" value={nuevoPlan.costoCapacitacion} onChange={e => setNuevoPlan({...nuevoPlan, costoCapacitacion: e.target.value})} />
                                     </div>
                                 </div>
                                 <div className="col-md-6">
                                     <label className="form-label text-muted small fw-bold mb-1">Límite de Atletas Incluidos</label>
-                                    <input type="number" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="100" required value={nuevoPlan.limiteAtletas} onChange={e => setNuevoPlan({...nuevoPlan, limiteAtletas: e.target.value})} />
+                                    <input type="number" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="100 (0=Ilimitado)" required value={nuevoPlan.limiteAtletas} onChange={e => setNuevoPlan({...nuevoPlan, limiteAtletas: e.target.value})} />
                                 </div>
                                 <div className="col-md-6">
                                     <label className="form-label text-muted small fw-bold mb-1">Costo por Atleta Extra (MXN)</label>
@@ -171,6 +209,10 @@ const AdminSaaS = () => {
                                         <span className="input-group-text bg-dark text-muted border-secondary">$</span>
                                         <input type="number" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="15" required value={nuevoPlan.costoPorAtletaExtra} onChange={e => setNuevoPlan({...nuevoPlan, costoPorAtletaExtra: e.target.value})} />
                                     </div>
+                                </div>
+                                <div className="col-12">
+                                    <label className="form-label text-muted small fw-bold mb-1">Beneficios Extras (Separados por coma)</label>
+                                    <input type="text" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="Soporte 24/7, App Móvil, Diseño Personalizado" value={nuevoPlan.beneficiosJSON} onChange={e => setNuevoPlan({...nuevoPlan, beneficiosJSON: e.target.value})} />
                                 </div>
                                 <div className="col-12 pt-2 d-flex flex-wrap gap-4">
                                     <div className="form-check form-switch">

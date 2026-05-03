@@ -43,23 +43,28 @@ const HomePricingSaaS = () => {
                         Elige el plan B2B SaaS que mejor se adapte al tamaño de tu comunidad y comienza a automatizar hoy.
                     </p>
 
-                    <div className="d-flex justify-content-center align-items-center gap-3 mb-5">
-                        <span className={`fw-bold ${!anual ? 'text-white' : 'text-secondary'}`}>Mensual</span>
-                        <div className="form-check form-switch fs-4">
-                            <input 
-                                className="form-check-input bg-danger border-danger cursor-pointer" 
-                                type="checkbox" 
-                                role="switch" 
-                                checked={anual}
-                                onChange={() => setAnual(!anual)} 
-                            />
-                        </div>
-                        <span className={`fw-bold ${anual ? 'text-white' : 'text-secondary'}`}>Anual <span className="badge bg-success ms-1 small">Ahorra ~20%</span></span>
+                    {/* Filtros de Categoría */}
+                    <div className="d-flex justify-content-center align-items-center gap-3 flex-wrap mb-5">
+                        {['Administración', 'Competencias', 'Plataforma Integral'].map(cat => (
+                            <button 
+                                key={cat} 
+                                className={`btn rounded-pill px-4 ${anual === cat ? 'btn-danger' : 'btn-outline-light'}`}
+                                onClick={() => setAnual(cat)}
+                            >
+                                {cat}
+                            </button>
+                        ))}
                     </div>
                 </motion.div>
 
                 <div className="row justify-content-center g-4">
-                    {planes.map((plan, i) => (
+                    {planes.filter(p => !anual || p.categoria === anual || (anual === false && true)).map((plan, i) => {
+                        let beneficios = [];
+                        if (plan.beneficiosJSON) {
+                            beneficios = plan.beneficiosJSON.split(',').map(b => b.trim());
+                        }
+                        
+                        return (
                         <div key={plan.idPlan} className="col-12 col-md-6 col-lg-4">
                             <motion.div
                                 className={`card h-100 bg-dark text-white shadow-lg border-0 position-relative rounded-4 overflow-hidden ${plan.esRecomendado ? 'border-2 border-warning transform scale-105' : ''}`}
@@ -77,40 +82,45 @@ const HomePricingSaaS = () => {
                                 
                                 <div className="card-body p-5">
                                     <h3 className="card-title text-center mb-1 text-2xl font-bold">{plan.nombre}</h3>
+                                    <div className="text-center text-secondary small mb-2">{plan.categoria}</div>
                                     
                                     <div className="text-center my-4">
-                                        <span className="fs-1 fw-bolder">${anual ? plan.precioAnual : plan.precioMensual}</span>
-                                        <span className="text-muted"> MXN / {anual ? 'año' : 'mes'}</span>
+                                        <span className="fs-1 fw-bolder">${plan.precio}</span>
+                                        <span className="text-muted"> MXN / {plan.mesesDuracion === 1 ? 'mes' : plan.mesesDuracion === 12 ? 'año' : plan.mesesDuracion + ' meses'}</span>
                                     </div>
 
                                     <ul className="list-unstyled mb-5">
                                         <li className="mb-3">
                                             <i className="fas fa-check-circle text-success me-2"></i> 
-                                            Hasta <strong>{plan.limiteAtletas} atletas</strong> activos
+                                            Hasta <strong>{plan.limiteAtletas === 0 ? 'Ilimitados' : plan.limiteAtletas} atletas</strong>
                                         </li>
                                         <li className="mb-3">
                                             <i className="fas fa-check-circle text-success me-2"></i> 
-                                            Coaches ilimitados
+                                            Coaches y Admins ilimitados
                                         </li>
-                                        <li className="mb-3">
-                                            <i className="fas fa-check-circle text-success me-2"></i> 
-                                            Costo extra por atleta: <span className="text-info">${plan.costoPorAtletaExtra}</span>
-                                        </li>
-                                        <li className="mb-3">
-                                            <i className={`fas ${plan.incluyeCompetencias ? 'fa-check-circle text-success' : 'fa-times-circle text-danger'} me-2`}></i> 
-                                            Módulo de Competencias {plan.incluyeCompetencias ? 'incluido' : '(Pago Extra)'}
-                                        </li>
+                                        {plan.costoPorAtletaExtra > 0 && (
+                                            <li className="mb-3">
+                                                <i className="fas fa-check-circle text-success me-2"></i> 
+                                                Costo por atleta extra: <span className="text-info">${plan.costoPorAtletaExtra}</span>
+                                            </li>
+                                        )}
+                                        {beneficios.map((ben, idx) => (
+                                            <li key={idx} className="mb-3">
+                                                <i className="fas fa-check-circle text-success me-2"></i> 
+                                                {ben}
+                                            </li>
+                                        ))}
                                     </ul>
 
                                     <div className="text-center mt-auto">
-                                        <a href="/login" className={`btn w-100 py-3 fw-bold rounded-3 ${plan.esRecomendado ? 'btn-warning text-dark' : 'btn-outline-light'}`}>
-                                            Registrar mi Box
+                                        <a href={`/registro-b2b/${plan.idPlan}`} className={`btn w-100 py-3 fw-bold rounded-3 ${plan.esRecomendado ? 'btn-warning text-dark' : 'btn-outline-light'}`}>
+                                            Seleccionar Plan
                                         </a>
                                     </div>
                                 </div>
-                            </motion.div>
+                                </motion.div>
                         </div>
-                    ))}
+                    )})}
                 </div>
             </div>
         </section>

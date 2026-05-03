@@ -222,7 +222,7 @@ export default function Dashboard() {
                   <th>ATLETAS</th>
                   <th>COACHES</th>
                   <th>ADMINS</th>
-                  <th>ESTATUS</th>
+                  <th>SAAS / CONNECT</th>
                   <th className="text-center">COMPETENCIAS</th>
                 </tr>
               </thead>
@@ -235,21 +235,31 @@ export default function Dashboard() {
                     <td><span className="badge bg-info text-dark rounded-pill px-3">{b.totalCoaches}</span></td>
                     <td><span className="badge bg-warning text-dark rounded-pill px-3">{b.totalAdmins}</span></td>
                     <td>
-                      <div className="d-flex flex-column gap-1">
+                      <div className="d-flex flex-column gap-2">
                         <select 
                           className={`form-select form-select-sm bg-dark text-white border-secondary ${b.estatusSaaS === 'Activo' ? 'text-success' : b.estatusSaaS === 'Vencido' ? 'text-danger' : 'text-warning'}`}
                           value={b.estatusSaaS || 'Pendiente'}
                           onChange={async (e) => {
                             const newStatus = e.target.value;
+                            let fechaGracia = null;
+                            if (newStatus === 'Gracia') {
+                              fechaGracia = prompt("Ingresa la fecha de vencimiento/corte del periodo de gracia (YYYY-MM-DD):", new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+                              if (!fechaGracia) return; // Canceló
+                            }
+
                             try {
                               const token = localStorage.getItem('token');
                               await fetch(`${import.meta.env.VITE_API_URL}/api/developer/box-saas/${b.idBox}`, {
                                 method: 'PUT',
                                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                                body: JSON.stringify({ estatusSaaS: newStatus, moduloCompetenciasActivo: b.moduloCompetenciasActivo })
+                                body: JSON.stringify({ 
+                                  estatusSaaS: newStatus, 
+                                  moduloCompetenciasActivo: b.moduloCompetenciasActivo,
+                                  fechaVencimientoSaaS: fechaGracia
+                                })
                               });
-                              // window.location.reload(); // En su lugar recargamos datos (o requerimos cargarDataGlobal en el contexto)
                               alert("Estatus SaaS actualizado");
+                              cargarDataGlobal(); // RECARGAR ESTADO
                             } catch(err) {
                               alert("Error al actualizar estatus SaaS");
                             }
@@ -260,6 +270,12 @@ export default function Dashboard() {
                           <option value="Gracia">Gracia</option>
                           <option value="Vencido">Vencido</option>
                         </select>
+                        <div className="d-flex flex-column" style={{fontSize: '0.75rem'}}>
+                          {b.fechaVencimientoSaaS && <span className="text-muted"><i className="fas fa-calendar-alt"></i> Vence: {new Date(b.fechaVencimientoSaaS).toLocaleDateString()}</span>}
+                          {b.stripeConnectActivo 
+                            ? <span className="text-success fw-bold"><i className="fab fa-stripe-s"></i> Connect OK</span> 
+                            : <span className="text-danger"><i className="fab fa-stripe-s"></i> Sin Connect</span>}
+                        </div>
                       </div>
                     </td>
                     <td className="text-center">
