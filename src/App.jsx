@@ -90,6 +90,25 @@ const originalFetch = window.fetch;
 window.fetch = async function () {
   let [resource, config] = arguments;
   
+  // 0. AUTO-CORRECTOR B2B DE RUTAS (El Enrutador Mágico)
+  // Detecta si a las rutas les falta el /api o tienen doble /api/api debido a configuraciones de entorno mixtas
+  if (typeof resource === 'string') {
+    const rawBase = import.meta.env.VITE_API_URL || '';
+    const cleanBase = rawBase.endsWith('/api') ? rawBase.slice(0, -4) : rawBase;
+    
+    if (cleanBase && resource.startsWith(cleanBase)) {
+      const restString = resource.slice(cleanBase.length);
+      
+      if (restString !== '' && restString !== '/' && !restString.startsWith('/api/') && !restString.startsWith('/api?')) {
+        // Le falta el /api, se lo inyectamos
+        resource = cleanBase + '/api' + (restString.startsWith('/') ? restString : '/' + restString);
+      } else if (restString.startsWith('/api/api/')) {
+        // Tiene doble /api/api, le quitamos uno
+        resource = cleanBase + restString.substring(4);
+      }
+    }
+  }
+  
   // 1. Inyectar el Token JWT si existe
   const token = localStorage.getItem('token');
   if (token) {
