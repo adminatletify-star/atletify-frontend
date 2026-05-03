@@ -40,6 +40,7 @@ import HistorialBoxDetalle from './pages/HistorialBoxDetalle';
 import AdminArchivadasDev from './pages/AdminArchivadasDev';
 import AdminArchivadasDevDetalle from './pages/AdminArchivadasDevDetalle';
 import AdminPreregistros from './pages/AdminPreregistros';
+import AdminSaaS from './pages/AdminSaaS';
 import PortalCompetencias from './pages/PortalCompetencias';
 import PortalLeaderboard from './pages/PortalLeaderboard';
 import PortalAtleta from './pages/PortalAtleta';
@@ -51,6 +52,7 @@ import UserResenas from './pages/UserResenas';
 import SalaDeEspera from './pages/SalaDeEspera'; // O la ruta donde lo hayas guardado
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import SeleccionPlanSaaS from './pages/SeleccionPlanSaaS';
 
 // Nuevos Módulos (Edwin)
 import GestionInventario from './pages/GestionInventario';
@@ -196,6 +198,18 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/user-panel" replace />;
   }
 
+  // 👇 CADENERO SAAS B2B (PAYWALL PARA ADMINS)
+  const storedBoxStr = localStorage.getItem('boxActivo');
+  if (storedBoxStr && (storedUser.rol === 'AdminBox' || storedUser.rol === 'Coach')) {
+    const boxActivo = JSON.parse(storedBoxStr);
+    // Si están vencidos o pendientes, se bloquea su navegación al panel
+    if (window.location.pathname !== '/seleccion-plan-saas' && 
+       (boxActivo.estatusSaaS === 'Pendiente' || boxActivo.estatusSaaS === 'Vencido')) {
+        console.error("CADENERO SAAS: Box bloqueado por falta de pago. Redirigiendo a Paywall.");
+        return <Navigate to="/seleccion-plan-saas" replace />;
+    }
+  }
+
   return children;
 };
 
@@ -245,7 +259,9 @@ function App() {
             
             {/* --- ZONA DEVELOPER --- */}
             <Route path="/registro-manual" element={<RegistroManual />} />
+            <Route path="/seleccion-plan-saas" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach']}><SeleccionPlanSaaS /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['Developer']}><Dashboard /></ProtectedRoute>} />
+            <Route path="/admin-saas" element={<ProtectedRoute allowedRoles={['Developer']}><AdminSaaS /></ProtectedRoute>} />
             <Route path="/admin-preregistros" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AdminPreregistros /></ProtectedRoute>} />
             <Route path="/crear-box" element={<ProtectedRoute allowedRoles={['Developer']}><CrearBox /></ProtectedRoute>} />
             <Route path="/admin-competencias" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><AdminCompetencias /></ProtectedRoute>} />
