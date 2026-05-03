@@ -6,7 +6,7 @@ import '../assets/css/Register.css';
 
 export function Register() {
   const { idBox } = useParams();
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = `${import.meta.env.VITE_API_URL}/api`;
   
   const [correo, setCorreo] = useState('');
   const [boxSeleccionado, setBoxSeleccionado] = useState(null);

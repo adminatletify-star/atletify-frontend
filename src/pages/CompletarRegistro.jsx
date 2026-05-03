@@ -9,7 +9,7 @@ export default function CompletarRegistro() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const correoParam = searchParams.get('correo');
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = `${import.meta.env.VITE_API_URL}/api`;
 
   const [formData, setFormData] = useState({
     nombre: '',
