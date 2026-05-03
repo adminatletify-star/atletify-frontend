@@ -460,30 +460,72 @@ export default function AdminCompetencias() {
           <div className="row g-4">
             {competencias.filter(c => c.estatus !== 'Archivada' && c.estatus !== 'Historial').map(comp => (
               <div key={comp.idCompetencia} className="col-12 col-xl-6">
-                <div className={`acomp-comp-card acomp-comp-card--${getEstatusColor(comp.estatus)}`}>
+                <div className={`acomp-comp-card acomp-comp-card--${comp.saaS_Estatus === 'Configurando' ? 'secondary' : getEstatusColor(comp.estatus)}`}>
 
                   {/* Header tarjeta */}
                   <div className="acomp-comp-header">
                     <div className="min-w-0">
-                      <Link
-                        to={`/admin-competencias/panel/${comp.idCompetencia || comp.IdCompetencia}`}
-                        className="acomp-comp-nombre"
-                      >
-                        {comp.nombre} <i className="fas fa-external-link-alt"></i>
-                      </Link>
+                      {comp.saaS_Estatus === 'Configurando' ? (
+                        <div className="acomp-comp-nombre text-muted">{comp.nombre}</div>
+                      ) : (
+                        <Link to={`/admin-competencias/panel/${comp.idCompetencia || comp.IdCompetencia}`} className="acomp-comp-nombre">
+                          {comp.nombre} <i className="fas fa-external-link-alt"></i>
+                        </Link>
+                      )}
                       <p className="acomp-comp-fechas">
                         <i className="fas fa-calendar me-1"></i>
                         {new Date(comp.fechaInicio).toLocaleDateString()} — {new Date(comp.fechaFin).toLocaleDateString()}
                       </p>
                     </div>
-                    <EstatusPickerModal
-                      estatus={comp.estatus}
-                      onCambiar={(nuevoEstatus) => cambiarEstatus(comp.idCompetencia || comp.IdCompetencia, nuevoEstatus)}
-                    />
+                    {comp.saaS_Estatus === 'Configurando' ? (
+                      <span className="badge bg-warning text-dark"><i className="fas fa-lock me-1"></i>Pago Pendiente</span>
+                    ) : (
+                      <EstatusPickerModal estatus={comp.estatus} onCambiar={(nuevoEstatus) => cambiarEstatus(comp.idCompetencia || comp.IdCompetencia, nuevoEstatus)} />
+                    )}
                   </div>
 
-                  {/* Franja roster */}
-                  <div className="acomp-roster-strip">
+                  {/* B2B SaaS Stripe Payment Lock */}
+                  {comp.saaS_Estatus === 'Configurando' ? (
+                    <div className="p-4 text-center bg-dark border-top border-secondary border-opacity-50">
+                      <i className="fas fa-file-contract fs-1 text-warning mb-3"></i>
+                      <h5 className="text-white mb-2">Módulo Inactivo</h5>
+                      <p className="text-secondary small mb-3">Para abrir inscripciones y gestionar este evento, es necesario activar el paquete base.</p>
+                      <button 
+                        className="btn btn-warning fw-bold px-4 rounded-pill"
+                        onClick={async () => {
+                           const btn = document.activeElement;
+                           btn.disabled = true;
+                           btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generando Pago...';
+                           try {
+                             const urlRetorno = encodeURIComponent(window.location.href);
+                             const res = await fetch(`${COMPETENCIAS_ENDPOINT}/${comp.idCompetencia || comp.IdCompetencia}/contratar?successUrl=${urlRetorno}&cancelUrl=${urlRetorno}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                }
+                             });
+                             const data = await res.json();
+                             if(res.ok && data.url) {
+                                window.location.href = data.url;
+                             } else {
+                                alert(data.mensaje || "Error al conectar con Stripe.");
+                                btn.disabled = false;
+                                btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Contratar Evento';
+                             }
+                           } catch(e) {
+                             alert("Error de red.");
+                             btn.disabled = false;
+                             btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Contratar Evento';
+                           }
+                        }}
+                      >
+                        <i className="fas fa-credit-card me-2"></i>Contratar Evento
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Franja roster */}
+                      <div className="acomp-roster-strip">
                     <Link
                       to={`/admin-competencias/roster/${comp.idCompetencia || comp.IdCompetencia}`}
                       className="acomp-btn-roster text-decoration-none"
@@ -546,6 +588,8 @@ export default function AdminCompetencias() {
                       )}
                     </div>
                   </div>
+                    </>
+                  )}
 
                 </div>
               </div>

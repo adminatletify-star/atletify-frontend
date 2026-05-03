@@ -26,11 +26,30 @@ export default function CompletarRegistro() {
   const [alerts, setAlerts] = useState([]);
   const [usernameDisponible, setUsernameDisponible] = useState(null);
 
+  const [tokenEstado, setTokenEstado] = useState('cargando'); // 'cargando', 'valido', 'invalido', 'usado', 'expirado'
+  const [tokenMensaje, setTokenMensaje] = useState('');
+
   useEffect(() => {
     if (!token || !correoParam) {
-      showAlert("El enlace es inválido o está incompleto.");
+      setTokenEstado('invalido');
+      setTokenMensaje('El enlace está incompleto.');
+      return;
     }
-  }, [token, correoParam]);
+
+    const verificarToken = async () => {
+      try {
+        const res = await fetch(`${API_URL}/usuarios/verificar-token-preregistro?correo=${encodeURIComponent(correoParam)}&token=${encodeURIComponent(token)}`);
+        const data = await res.json();
+        setTokenEstado(data.estado?.toLowerCase() || 'invalido');
+        setTokenMensaje(data.mensaje);
+      } catch (error) {
+        setTokenEstado('invalido');
+        setTokenMensaje('Error al verificar el enlace.');
+      }
+    };
+    
+    verificarToken();
+  }, [token, correoParam, API_URL]);
 
   // Validar Username en tiempo real
   useEffect(() => {
@@ -90,13 +109,35 @@ export default function CompletarRegistro() {
     }
   };
 
-  if (!token || !correoParam) {
+  if (tokenEstado === 'cargando') {
     return (
         <div className="reg-root d-flex justify-content-center align-items-center min-vh-100">
-            <div className="reg-card text-center p-5">
-                <i className="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
-                <h4 className="text-white">Enlace inválido</h4>
-                <p className="text-white-50">Asegúrate de haber copiado el enlace completo desde tu correo.</p>
+            <div className="text-center">
+                <i className="fas fa-spinner fa-spin fa-3x text-white mb-3"></i>
+                <h4 className="text-white">Verificando enlace...</h4>
+            </div>
+        </div>
+    );
+  }
+
+  if (tokenEstado !== 'valido') {
+    return (
+        <div className="reg-root d-flex justify-content-center align-items-center min-vh-100">
+            <div className="reg-card text-center p-5 slide-in" style={{maxWidth: '500px'}}>
+                {tokenEstado === 'usado' ? (
+                    <i className="fas fa-check-circle fa-4x text-success mb-3"></i>
+                ) : (
+                    <i className="fas fa-exclamation-triangle fa-4x text-warning mb-3"></i>
+                )}
+                
+                <h3 className="text-white fw-bold mb-3">
+                  {tokenEstado === 'usado' ? '¡Cuenta ya activada!' : 'Enlace no disponible'}
+                </h3>
+                <p className="text-white-50 fs-5 mb-4">{tokenMensaje || 'Este enlace no es válido.'}</p>
+                
+                <Link to="/login" className="btn btn-outline-light rounded-pill px-5 py-2 fw-bold w-100">
+                   {tokenEstado === 'usado' ? 'Ir a Iniciar Sesión' : 'Volver al Inicio'}
+                </Link>
             </div>
         </div>
     );

@@ -57,21 +57,21 @@ export default function RegistroManual() {
       const headers = { 'Authorization': `Bearer ${token}` };
 
       // Cargar planes
-      const resPlanes = await fetch(`${import.meta.env.VITE_API_URL}/api/finanzas/planes/${boxActual.idBox}`, { headers });
+      const resPlanes = await fetch(`${import.meta.env.VITE_API_URL}/finanzas/planes/${boxActual.idBox}`, { headers });
       if (resPlanes.ok) {
         const planesData = await resPlanes.json();
         setPlanes(planesData.filter(p => p.esVisible !== false));
       }
 
       // Cargar descuentos activos
-      const resDescuentos = await fetch(`${import.meta.env.VITE_API_URL}/api/finanzas/descuentos/${boxActual.idBox}`, { headers });
+      const resDescuentos = await fetch(`${import.meta.env.VITE_API_URL}/finanzas/descuentos/${boxActual.idBox}`, { headers });
       if (resDescuentos.ok) {
         const descuentosData = await resDescuentos.json();
         setDescuentos(descuentosData.filter(d => d.activo));
       }
 
       // Cargar configuración del box para obtener monto de inscripción
-      const resConfig = await fetch(`${import.meta.env.VITE_API_URL}/api/configuracionbox/${boxActual.idBox}`, { headers });
+      const resConfig = await fetch(`${import.meta.env.VITE_API_URL}/configuracionbox/${boxActual.idBox}`, { headers });
       if (resConfig.ok) {
         const configData = await resConfig.json();
         setConfigBox(configData);
@@ -175,7 +175,7 @@ export default function RegistroManual() {
     const correoFinal = formData.correo ? formData.correo : `${formData.username.toLowerCase()}@wolfpack.local`;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/registro-manual`, {
+      const response = await fetch('import.meta.env.VITE_API_URL:7149/api/usuarios/registro-manual', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

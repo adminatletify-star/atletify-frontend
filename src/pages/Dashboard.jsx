@@ -9,7 +9,10 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ boxes: 0, usuarios: 0 });
   const [usuarios, setUsuarios] = useState([]);
   const [boxes, setBoxes] = useState([]);
+  const [metricasBoxes, setMetricasBoxes] = useState([]);
+  const [configuracion, setConfiguracion] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [guardandoConfig, setGuardandoConfig] = useState(false);
   const [filtroNombre, setFiltroNombre] = useState('');
   const [filtroRol, setFiltroRol] = useState('');
 
@@ -46,18 +49,28 @@ export default function Dashboard() {
   async function cargarDataGlobal() {
     setLoading(true);
     try {
-      const [resB, resU] = await Promise.all([
+      const token = localStorage.getItem('token');
+      const authHeader = { 'Authorization': `Bearer ${token}` };
+
+      const [resB, resU, resM, resC] = await Promise.all([
         fetch(BOXES_ENDPOINT),
-        fetch(USUARIOS_ENDPOINT)
+        fetch(USUARIOS_ENDPOINT),
+        fetch(`${import.meta.env.VITE_API_URL}/api/developer/metricas-boxes`, { headers: authHeader }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/developer/configuracion`, { headers: authHeader })
       ]);
       const dataB = await resB.json();
       const dataU = await resU.json();
+      const dataM = resM.ok ? await resM.json() : [];
+      const dataC = resC.ok ? await resC.json() : null;
 
       const boxesList = Array.isArray(dataB) ? dataB : [];
       const usersList = Array.isArray(dataU) ? dataU : (dataU.data || []);
 
       setBoxes(boxesList);
       setUsuarios(usersList);
+      setMetricasBoxes(Array.isArray(dataM) ? dataM : []);
+      if(dataC) setConfiguracion(dataC);
+      
       setStats({ boxes: boxesList.length, usuarios: usersList.length });
     } catch (err) {
       console.error("Error cargando dashboard:", err);
@@ -82,6 +95,37 @@ export default function Dashboard() {
     const coincideRol = !filtroRol || u.rol === filtroRol;
     return coincideTexto && coincideRol;
   });
+
+  const handleConfigChange = (e) => {
+    const { name, value } = e.target;
+    setConfiguracion(prev => ({ ...prev, [name]: value }));
+  };
+
+  const guardarConfiguracion = async (e) => {
+    e.preventDefault();
+    setGuardandoConfig(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/configuracion`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(configuracion)
+      });
+      if (res.ok) {
+        alert("Configuración Global actualizada con éxito");
+      } else {
+        alert("Error al actualizar la configuración");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error de red");
+    } finally {
+      setGuardandoConfig(false);
+    }
+  };
 
   if (loading) return (
     <div className="min-vh-100 d-flex justify-content-center align-items-center">
@@ -169,18 +213,21 @@ export default function Dashboard() {
                 <tr>
                   <th>ID</th>
                   <th>BOX / SUCURSAL</th>
+                  <th>ATLETAS</th>
+                  <th>COACHES</th>
+                  <th>ADMINS</th>
                   <th>ESTATUS</th>
-                  <th className="text-center">MÓDULOS PREMIUM</th>
-                  <th className="text-center">GESTIÓN</th>
+                  <th className="text-center">COMPETENCIAS</th>
                 </tr>
               </thead>
               <tbody>
-                {boxes.map(b => (
+                {metricasBoxes.map(b => (
                   <tr key={b.idBox} className="align-middle">
                     <td className="dash-text-muted">#{b.idBox}</td>
-                    <td>
-                      <div className="fw-bold">{b.nombre}</div>
-                    </td>
+                    <td><div className="fw-bold">{b.nombre}</div></td>
+                    <td><span className="badge bg-primary rounded-pill px-3">{b.totalAtletas}</span></td>
+                    <td><span className="badge bg-info text-dark rounded-pill px-3">{b.totalCoaches}</span></td>
+                    <td><span className="badge bg-warning text-dark rounded-pill px-3">{b.totalAdmins}</span></td>
                     <td>
                       <span className={`badge-estado ${b.activo ? 'badge-estado-activo' : 'badge-estado-inactivo'}`}>
                         {b.activo ? 'Operando' : 'Suspendido'}
@@ -207,12 +254,7 @@ export default function Dashboard() {
                         }}
                       >
                         <i className="fas fa-trophy me-1"></i>
-                        {b.moduloCompetenciasActivo ? 'Competencias OFF' : 'Competencias ON'}
-                      </button>
-                    </td>
-                    <td className="text-center">
-                      <button className="dash-action-btn dash-action-delete" title="Desactivar Cuenta">
-                        <i className="fas fa-ban"></i>
+                        {b.moduloCompetenciasActivo ? 'ON' : 'OFF'}
                       </button>
                     </td>
                   </tr>
@@ -221,6 +263,78 @@ export default function Dashboard() {
             </table>
           </div>
         </div>
+
+        {/* TABLA CONFIGURACIÓN B2B Y REDES */}
+        {configuracion && (
+          <div className="tarjeta-panel p-3 p-md-4 mb-5">
+            <h3 className="titulo-seccion mb-4"><i className="fas fa-cogs"></i> Configuración Global (B2B & Redes)</h3>
+            <form onSubmit={guardarConfiguracion}>
+              <div className="row g-4">
+                <div className="col-12 col-md-6">
+                  <h5 className="text-info border-bottom border-secondary pb-2">Módulo de Competencias</h5>
+                  <div className="mb-3">
+                    <label className="form-label text-white-50 small">Precio Base (Ya son clientes de Atletify)</label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-dark text-white border-secondary">$</span>
+                      <input type="number" step="0.01" className="form-control bg-dark text-white border-secondary" name="precioBase_SaaS" value={configuracion.precioBase_SaaS} onChange={handleConfigChange} required />
+                    </div>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label text-white-50 small">Precio Base (Solo vienen por el evento)</label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-dark text-white border-secondary">$</span>
+                      <input type="number" step="0.01" className="form-control bg-dark text-white border-secondary" name="precioBase_NoSaaS" value={configuracion.precioBase_NoSaaS} onChange={handleConfigChange} required />
+                    </div>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label text-white-50 small">Atletas Incluidos en Paquete Base</label>
+                    <input type="number" className="form-control bg-dark text-white border-secondary" name="atletasIncluidosBase" value={configuracion.atletasIncluidosBase} onChange={handleConfigChange} required />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label text-white-50 small">Precio por Atleta Excedente</label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-dark text-white border-secondary">$</span>
+                      <input type="number" step="0.01" className="form-control bg-dark text-white border-secondary" name="precioPorAtletaExtra" value={configuracion.precioPorAtletaExtra} onChange={handleConfigChange} required />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-12 col-md-6">
+                  <h5 className="text-info border-bottom border-secondary pb-2">Redes de Contacto (Footer Público)</h5>
+                  <div className="mb-3">
+                    <label className="form-label text-white-50 small"><i className="fab fa-instagram text-danger"></i> Instagram URL</label>
+                    <input type="text" className="form-control bg-dark text-white border-secondary" name="linkInstagram" value={configuracion.linkInstagram} onChange={handleConfigChange} />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label text-white-50 small"><i className="fab fa-facebook text-primary"></i> Facebook URL</label>
+                    <input type="text" className="form-control bg-dark text-white border-secondary" name="linkFacebook" value={configuracion.linkFacebook} onChange={handleConfigChange} />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label text-white-50 small"><i className="fas fa-envelope text-warning"></i> Correo de Contacto</label>
+                    <input type="email" className="form-control bg-dark text-white border-secondary" name="correoContacto" value={configuracion.correoContacto} onChange={handleConfigChange} />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label text-white-50 small"><i className="fas fa-phone text-success"></i> Teléfono de Soporte</label>
+                    <input type="text" className="form-control bg-dark text-white border-secondary" name="telefonoSoporte" value={configuracion.telefonoSoporte} onChange={handleConfigChange} />
+                  </div>
+                </div>
+                
+                <div className="col-12">
+                   <h5 className="text-info border-bottom border-secondary pb-2">Contrato Maestro Plataforma</h5>
+                   <div className="mb-3">
+                      <label className="form-label text-white-50 small">Términos y Condiciones (Texto plano o HTML simple)</label>
+                      <textarea className="form-control bg-dark text-white border-secondary" rows="5" name="contratoUsoGlobal" value={configuracion.contratoUsoGlobal} onChange={handleConfigChange}></textarea>
+                   </div>
+                </div>
+              </div>
+              <div className="text-end mt-3">
+                <button type="submit" className="btn btn-warning px-5 rounded-pill fw-bold" disabled={guardandoConfig}>
+                  {guardandoConfig ? <><i className="fas fa-spinner fa-spin me-2"></i>Guardando...</> : <><i className="fas fa-save me-2"></i>Guardar Configuración Global</>}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* TABLA DE USUARIOS */}
         <div className="tarjeta-panel p-3 p-md-4">

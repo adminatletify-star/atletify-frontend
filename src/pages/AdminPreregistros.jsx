@@ -29,6 +29,10 @@ export default function AdminPreregistros() {
   const [archivoMasivo, setArchivoMasivo] = useState(null);
   const [previewData, setPreviewData] = useState([]);
 
+  // Historial
+  const [historial, setHistorial] = useState([]);
+  const [cargandoHistorial, setCargandoHistorial] = useState(false);
+
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('usuario'));
     if (!u || (u.rol !== 'Developer' && u.rol !== 'AdminBox')) {
@@ -37,7 +41,22 @@ export default function AdminPreregistros() {
     }
     setUser(u);
     cargarBoxes();
-  }, [navigate]);
+    if(activeTab === 'historial') cargarHistorial();
+  }, [navigate, activeTab]);
+
+  async function cargarHistorial() {
+    setCargandoHistorial(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/preregistros/estatus`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if(res.ok){
+        const data = await res.json();
+        setHistorial(data);
+      }
+    } catch(e) { console.error(e); }
+    finally { setCargandoHistorial(false); }
+  }
 
   async function cargarBoxes() {
     try {
@@ -207,10 +226,11 @@ export default function AdminPreregistros() {
             </div>
           </div>
 
-          <div className="d-flex gap-3 mt-4 border-bottom border-secondary pb-2">
-            <button className={`btn ${activeTab === 'admin' ? 'btn-warning' : 'btn-outline-light'} px-4 rounded-pill fw-bold`} onClick={() => setActiveTab('admin')}>AdminBox</button>
-            <button className={`btn ${activeTab === 'atleta' ? 'btn-primary' : 'btn-outline-light'} px-4 rounded-pill fw-bold`} onClick={() => setActiveTab('atleta')}>Atleta Individual</button>
-            <button className={`btn ${activeTab === 'masivo' ? 'btn-success' : 'btn-outline-light'} px-4 rounded-pill fw-bold`} onClick={() => setActiveTab('masivo')}>Carga Masiva</button>
+          <div className="d-flex gap-3 mt-4 border-bottom border-secondary pb-2 overflow-auto">
+            <button className={`btn ${activeTab === 'admin' ? 'btn-warning' : 'btn-outline-light'} px-4 rounded-pill fw-bold text-nowrap`} onClick={() => setActiveTab('admin')}>AdminBox</button>
+            <button className={`btn ${activeTab === 'atleta' ? 'btn-primary' : 'btn-outline-light'} px-4 rounded-pill fw-bold text-nowrap`} onClick={() => setActiveTab('atleta')}>Atleta Individual</button>
+            <button className={`btn ${activeTab === 'masivo' ? 'btn-success' : 'btn-outline-light'} px-4 rounded-pill fw-bold text-nowrap`} onClick={() => setActiveTab('masivo')}>Carga Masiva</button>
+            <button className={`btn ${activeTab === 'historial' ? 'btn-info' : 'btn-outline-light'} px-4 rounded-pill fw-bold text-nowrap`} onClick={() => setActiveTab('historial')}><i className="fas fa-history me-2"></i>Historial</button>
           </div>
         </div>
       </div>
@@ -346,6 +366,53 @@ export default function AdminPreregistros() {
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* TAB HISTORIAL */}
+        {activeTab === 'historial' && (
+          <div className="tarjeta-panel p-4 slide-in">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h4 className="text-white mb-0"><i className="fas fa-list-ul me-2 text-info"></i> Estatus de Invitaciones</h4>
+              <button className="btn btn-sm btn-outline-info" onClick={cargarHistorial}><i className="fas fa-sync-alt me-1"></i> Actualizar</button>
+            </div>
+            
+            {cargandoHistorial ? (
+              <div className="text-center py-5"><i className="fas fa-spinner fa-spin fa-2x text-info"></i></div>
+            ) : historial.length === 0 ? (
+              <div className="text-center text-white-50 py-5">No hay invitaciones registradas.</div>
+            ) : (
+              <div className="table-responsive">
+                <table className="table table-dark table-hover align-middle">
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Correo</th>
+                      <th>Rol</th>
+                      <th>Box</th>
+                      <th>Estado</th>
+                      <th>Expiración</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historial.map(h => (
+                      <tr key={h.idPreregistro}>
+                        <td>{h.nombre}</td>
+                        <td>{h.correo}</td>
+                        <td><span className={`badge ${h.rolEsperado === 'AdminBox' ? 'bg-warning text-dark' : 'bg-primary'}`}>{h.rolEsperado}</span></td>
+                        <td>{h.nombreBox || 'N/A'}</td>
+                        <td>
+                          {h.estado === 'Completado' && <span className="badge bg-success"><i className="fas fa-check me-1"></i>Completado</span>}
+                          {h.estado === 'Pendiente' && <span className="badge bg-secondary"><i className="fas fa-clock me-1"></i>Pendiente</span>}
+                          {h.estado === 'Expirado' && <span className="badge bg-danger"><i className="fas fa-times me-1"></i>Expirado</span>}
+                        </td>
+                        <td className="text-white-50 small">{new Date(h.expiracionToken).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
