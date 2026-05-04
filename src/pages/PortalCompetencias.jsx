@@ -14,6 +14,42 @@ import MetodoPagoPicker from '../components/MetodoPagoPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import logoAtletify from './Atketify System/logo.png';
 
+const CountdownTimer = ({ targetDate, onExpire }) => {
+  const calculateTimeLeft = () => {
+    const difference = +new Date(targetDate) - +new Date();
+    let timeLeft = {};
+
+    if (difference > 0) {
+      timeLeft = {
+        minutos: Math.floor((difference / 1000 / 60) % 60),
+        segundos: Math.floor((difference / 1000) % 60)
+      };
+    } else {
+      timeLeft = { minutos: 0, segundos: 0 };
+    }
+    return timeLeft;
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const remaining = calculateTimeLeft();
+      setTimeLeft(remaining);
+      if (remaining.minutos === 0 && remaining.segundos === 0 && onExpire) {
+        onExpire();
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  });
+
+  return (
+    <span className="fw-bold" style={{ fontFamily: 'monospace', fontSize: '1.2rem', letterSpacing: '1px' }}>
+      {timeLeft.minutos.toString().padStart(2, '0')}:{timeLeft.segundos.toString().padStart(2, '0')}
+    </span>
+  );
+};
+
 export default function PortalCompetencias() {
   const { id } = useParams();
   const [competencias, setCompetencias] = useState([]);
@@ -277,12 +313,21 @@ export default function PortalCompetencias() {
       const data = await res.json();
 
       if (res.ok) {
+        if (data.requiresCheckout && data.sessionUrl) {
+           window.location.href = data.sessionUrl;
+           return;
+        }
+
         setMensaje({ tipo: 'success', texto: data.mensaje, codigo: data.codigo || '' });
         setCatSeleccionada(null); setComprobanteFile(null); setModoInscripcion(null); setMostrarDwp(false);
         cargarCompetencias();
         window.scrollTo(0, 0);
       } else {
-        setMensaje({ tipo: 'danger', texto: data.mensaje || 'Error al inscribir.' });
+        if (data.mensaje && data.mensaje.includes('proceso de pago activo')) {
+           setMensaje({ tipo: 'warning', texto: '⏳ ' + data.mensaje });
+        } else {
+           setMensaje({ tipo: 'danger', texto: data.mensaje || 'Error al inscribir.' });
+        }
       }
     } catch (err) { setMensaje({ tipo: 'danger', texto: 'Error de conexión con el servidor.' }); }
     finally { setEnviando(false); }
@@ -1046,20 +1091,52 @@ export default function PortalCompetencias() {
                               <div className="portal-pago-section">
                                 <p className="portal-pago-title"><i className="fas fa-wallet me-2"></i>Aportación Financiera</p>
                                 <p className="portal-pago-desc">El saldo restante para {catSeleccionada.esEquipo ? 'el equipo' : 'tu registro'} es de <strong>${getCostoFinal()} MXN</strong>. Ingresa el monto que vas a abonar hoy.</p>
-                                <div className="row g-3">
-                                  <div className="col-12 col-md-6">
-                                    <label className="portal-label">Método de Pago</label>
-                                    <MetodoPagoPicker valor={pagoForm.metodo} onCambiar={v => setPagoForm({ ...pagoForm, metodo: v })} disabled={getCostoFinal() <= 0} />
+                                  <div className="row g-3">
+                                    <div className="col-12 col-md-6">
+                                      <label className="portal-label">Método de Pago</label>
+                                      <MetodoPagoPicker 
+                                        valor={pagoForm.metodo} 
+                                        onCambiar={v => {
+                                          const nuevoForm = { ...pagoForm, metodo: v };
+                                          if (v === 'EnLinea') {
+                                            nuevoForm.monto = getCostoFinal().toString();
+                                          }
+                                          setPagoForm(nuevoForm);
+                                        }} 
+                                        disabled={getCostoFinal() <= 0}
+                                        opcionesPermitidas={[
+                                          (compActiva.aceptarPagosEnLinea ?? compActiva.AceptarPagosEnLinea ?? true) ? 'EnLinea' : null,
+                                          (compActiva.aceptarTransferencias ?? compActiva.AceptarTransferencias ?? true) ? 'Transferencia' : null,
+                                          (compActiva.aceptarEfectivo ?? compActiva.AceptarEfectivo ?? true) ? 'Efectivo' : null
+                                        ].filter(Boolean)} 
+                                      />
+                                    </div>
+                                    <div className="col-12 col-md-6">
+                                      <label className="portal-label">Monto a abonar ($)</label>
+                                      <input 
+                                        type="number" 
+                                        min={pagoForm.metodo === 'EnLinea' ? getCostoFinal() : (compActiva.montoMinimoAporte ?? compActiva.MontoMinimoAporte ?? 0)} 
+                                        max={getCostoFinal()} 
+                                        step="0.01" 
+                                        className="portal-pago-monto" 
+                                        placeholder={getCostoFinal() <= 0 ? "0" : "Ej. 200"} 
+                                        required 
+                                        disabled={getCostoFinal() <= 0 || pagoForm.metodo === 'EnLinea'} 
+                                        value={getCostoFinal() <= 0 ? 0 : pagoForm.monto} 
+                                        onChange={e => {
+                                          let val = parseFloat(e.target.value);
+                                          if (val > getCostoFinal()) val = getCostoFinal();
+                                          setPagoForm({ ...pagoForm, monto: val.toString() });
+                                        }} 
+                                      />
+                                      {pagoForm.metodo === 'EnLinea' && (
+                                        <small className="text-info mt-1 d-block"><i className="fas fa-info-circle me-1"></i>Pago en línea requiere liquidar el total.</small>
+                                      )}
+                                      {pagoForm.metodo !== 'EnLinea' && (compActiva.montoMinimoAporte > 0 || compActiva.MontoMinimoAporte > 0) && (
+                                        <small className="text-warning mt-1 d-block"><i className="fas fa-exclamation-triangle me-1"></i>Anticipo mínimo: ${(compActiva.montoMinimoAporte ?? compActiva.MontoMinimoAporte)}</small>
+                                      )}
+                                    </div>
                                   </div>
-                                  <div className="col-12 col-md-6">
-                                    <label className="portal-label">Monto a abonar ($)</label>
-                                    <input type="number" min="0" max={getCostoFinal()} step="0.01" className="portal-pago-monto" placeholder={getCostoFinal() <= 0 ? "0" : "Ej. 200"} required disabled={getCostoFinal() <= 0} value={getCostoFinal() <= 0 ? 0 : pagoForm.monto} onChange={e => {
-                                      let val = parseFloat(e.target.value);
-                                      if (val > getCostoFinal()) val = getCostoFinal();
-                                      setPagoForm({ ...pagoForm, monto: val.toString() });
-                                    }} />
-                                  </div>
-                                </div>
                                 {pagoForm.metodo === 'Transferencia' && (
                                   <div className="portal-comprobante-section">
                                     <label className="portal-comprobante-label">
@@ -1302,6 +1379,150 @@ export default function PortalCompetencias() {
                             </div>
                           </div>
                         </div>
+
+                        {/* SECCIÓN DE PAGO (Si hay deuda restante) */}
+                        {(datosEstatus.deudaRestante > 0 || datosEstatus.DeudaRestante > 0) && (
+                          <div className="mt-4 pt-4 border-top border-secondary border-opacity-25">
+                            <h5 className="text-white mb-3"><i className="fas fa-hand-holding-usd me-2 text-info"></i>Liquidar Saldo Restante</h5>
+                            
+                            {(datosEstatus.pagoEnProceso || datosEstatus.PagoEnProceso) ? (
+                              <div className="alert alert-warning d-flex align-items-center justify-content-between">
+                                <div>
+                                  <i className="fas fa-lock me-2 fs-4"></i>
+                                  <strong>Pago en Proceso.</strong> Un integrante del equipo está realizando el pago en línea. Por favor espera a que termine o expire la sesión.
+                                </div>
+                                <div className="text-center px-3 border-start border-warning ms-3">
+                                  <div className="small text-dark mb-1">Tiempo Restante</div>
+                                  <CountdownTimer 
+                                    targetDate={datosEstatus.pagoEnProcesoHasta || datosEstatus.PagoEnProcesoHasta} 
+                                    onExpire={() => {
+                                      // Refrescar estatus automáticamente cuando acabe
+                                      consultarEstatus({ preventDefault: () => {} });
+                                    }} 
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              <form onSubmit={async (e) => {
+                                e.preventDefault();
+                                setEnviando(true);
+                                setMensaje({ tipo: '', texto: '', codigo: '' });
+
+                                let urlFinalComprobante = '';
+                                if (pagoForm.metodo === 'Transferencia' && comprobanteFile) {
+                                  const formData = new FormData();
+                                  formData.append('file', comprobanteFile);
+                                  try {
+                                    const resFoto = await fetch(`${COMPETENCIAS_ENDPOINT}/upload-comprobante`, { method: 'POST', body: formData });
+                                    if (resFoto.ok) {
+                                      const dataFoto = await resFoto.json();
+                                      urlFinalComprobante = dataFoto.url;
+                                    } else {
+                                      setMensaje({ tipo: 'danger', texto: 'Error al subir comprobante.' });
+                                      setEnviando(false); return;
+                                    }
+                                  } catch (err) {
+                                    setMensaje({ tipo: 'danger', texto: 'Error al subir comprobante.' });
+                                    setEnviando(false); return;
+                                  }
+                                }
+
+                                const payload = {
+                                  codigoInvitacion: codigoEstatus,
+                                  atleta: { nombreCompleto: "Abono", apellidos: "Deuda" }, // Dummy ya que no es un nuevo atleta
+                                  montoAbonado: parseFloat(pagoForm.monto) || 0,
+                                  metodoPago: pagoForm.metodo,
+                                  comprobanteUrl: urlFinalComprobante,
+                                  esSoloAbono: true // Bandera para backend
+                                };
+
+                                try {
+                                  const res = await fetch(`${COMPETENCIAS_ENDPOINT}/unirse-equipo`, {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                                  });
+                                  const data = await res.json();
+                                  if (res.ok) {
+                                    if (data.requiresCheckout && data.sessionUrl) {
+                                       window.location.href = data.sessionUrl;
+                                       return;
+                                    }
+                                    setMensaje({ tipo: 'success', texto: 'Abono registrado con éxito.' });
+                                    setComprobanteFile(null);
+                                    consultarEstatus({ preventDefault: () => {} }); // Refresh
+                                  } else {
+                                    if (data.mensaje && data.mensaje.includes('proceso de pago activo')) {
+                                       setMensaje({ tipo: 'warning', texto: '⏳ ' + data.mensaje });
+                                       consultarEstatus({ preventDefault: () => {} }); // Refresh para ver el timer
+                                    } else {
+                                       setMensaje({ tipo: 'danger', texto: data.mensaje || 'Error al abonar.' });
+                                    }
+                                  }
+                                } catch (err) { setMensaje({ tipo: 'danger', texto: 'Error de conexión.' }); }
+                                finally { setEnviando(false); }
+                              }} className="portal-pago-section mt-0">
+                                <p className="portal-pago-desc">Puedes abonar al saldo del equipo aquí. Adeudo actual: <strong>${(datosEstatus.deudaRestante || datosEstatus.DeudaRestante)} MXN</strong></p>
+                                <div className="row g-3">
+                                  <div className="col-12 col-md-6">
+                                    <label className="portal-label">Método de Pago</label>
+                                    <MetodoPagoPicker 
+                                      valor={pagoForm.metodo} 
+                                      onCambiar={v => {
+                                        const nuevoForm = { ...pagoForm, metodo: v };
+                                        if (v === 'EnLinea') {
+                                          nuevoForm.monto = (datosEstatus.deudaRestante || datosEstatus.DeudaRestante).toString();
+                                        }
+                                        setPagoForm(nuevoForm);
+                                      }} 
+                                      opcionesPermitidas={[
+                                        (compActiva.aceptarPagosEnLinea ?? compActiva.AceptarPagosEnLinea ?? true) ? 'EnLinea' : null,
+                                        (compActiva.aceptarTransferencias ?? compActiva.AceptarTransferencias ?? true) ? 'Transferencia' : null,
+                                        (compActiva.aceptarEfectivo ?? compActiva.AceptarEfectivo ?? true) ? 'Efectivo' : null
+                                      ].filter(Boolean)} 
+                                    />
+                                  </div>
+                                  <div className="col-12 col-md-6">
+                                    <label className="portal-label">Monto a abonar ($)</label>
+                                    <input 
+                                      type="number" 
+                                      min={pagoForm.metodo === 'EnLinea' ? (datosEstatus.deudaRestante || datosEstatus.DeudaRestante) : (compActiva.montoMinimoAporte ?? compActiva.MontoMinimoAporte ?? 0)} 
+                                      max={(datosEstatus.deudaRestante || datosEstatus.DeudaRestante)} 
+                                      step="0.01" 
+                                      className="portal-pago-monto" 
+                                      required 
+                                      disabled={pagoForm.metodo === 'EnLinea'} 
+                                      value={pagoForm.monto} 
+                                      onChange={e => {
+                                        let val = parseFloat(e.target.value);
+                                        const max = (datosEstatus.deudaRestante || datosEstatus.DeudaRestante);
+                                        if (val > max) val = max;
+                                        setPagoForm({ ...pagoForm, monto: val.toString() });
+                                      }} 
+                                    />
+                                    {pagoForm.metodo === 'EnLinea' && (
+                                      <small className="text-info mt-1 d-block"><i className="fas fa-info-circle me-1"></i>Stripe requiere liquidar el total.</small>
+                                    )}
+                                  </div>
+                                </div>
+                                {pagoForm.metodo === 'Transferencia' && (
+                                  <div className="portal-comprobante-section mt-3">
+                                    <label className="portal-comprobante-label">
+                                      <i className="fas fa-camera me-1"></i>Subir Comprobante
+                                    </label>
+                                    <input type="file" required className="portal-comprobante-input" accept="image/png, image/jpeg, image/jpg" onChange={(e) => setComprobanteFile(e.target.files[0])} />
+                                  </div>
+                                )}
+                                
+                                {mensaje.texto && (
+                                  <div className={`alert alert-${mensaje.tipo} mt-3 mb-0 small`}>{mensaje.texto}</div>
+                                )}
+
+                                <BotonSeguro type="submit" disabled={enviando} className="btn btn-primary w-100 fw-bold mt-4 py-2" tiempoBloqueo={3000}>
+                                  <i className="fas fa-paper-plane me-2"></i>Enviar Abono
+                                </BotonSeguro>
+                              </form>
+                            )}
+                          </div>
+                        )}
 
                       </div>
                     );

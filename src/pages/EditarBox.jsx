@@ -569,6 +569,7 @@ export default function EditarBox() {
                       )}
                     </div>
 
+                    <div className="row g-3">
                       <div className="col-12 col-md-4 d-flex align-items-center">
                         <div className="form-check form-switch custom-switch">
                           <input className="form-check-input" type="checkbox" id="switchPagosEnLinea" name="aceptarPagosEnLinea" checked={config.aceptarPagosEnLinea} onChange={handleConfigChange} style={{ width: '2.5rem', height: '1.3rem' }} />

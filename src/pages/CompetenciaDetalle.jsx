@@ -31,6 +31,14 @@ export default function CompetenciaDetalle() {
   const [gastos, setGastos] = useState([]);
   const [nuevoGasto, setNuevoGasto] = useState({ descripcion: '', monto: '' });
   const [guardandoGastos, setGuardandoGastos] = useState(false);
+  const [configFinanciera, setConfigFinanciera] = useState({
+    aceptarPagosEnLinea: true,
+    aceptarTransferencias: true,
+    aceptarEfectivo: true,
+    absorberComisionTarjeta: false,
+    montoMinimoAporte: 0
+  });
+  const [guardandoConfig, setGuardandoConfig] = useState(false);
 
   // Portal Público y Fechas
   const [reglamento, setReglamento] = useState('');
@@ -248,6 +256,14 @@ export default function CompetenciaDetalle() {
           setGastos([]);
         }
 
+        setConfigFinanciera({
+          aceptarPagosEnLinea: encontrada.aceptarPagosEnLinea ?? encontrada.AceptarPagosEnLinea ?? true,
+          aceptarTransferencias: encontrada.aceptarTransferencias ?? encontrada.AceptarTransferencias ?? true,
+          aceptarEfectivo: encontrada.aceptarEfectivo ?? encontrada.AceptarEfectivo ?? true,
+          absorberComisionTarjeta: encontrada.absorberComisionTarjeta ?? encontrada.AbsorberComisionTarjeta ?? false,
+          montoMinimoAporte: encontrada.montoMinimoAporte ?? encontrada.MontoMinimoAporte ?? 0
+        });
+
         const estandaresGuardados = encontrada.parametrosEstandares || encontrada.ParametrosEstandares || '';
         try {
           if (estandaresGuardados.startsWith('[')) {
@@ -296,6 +312,27 @@ export default function CompetenciaDetalle() {
       alert("Error de conexión.");
     } finally {
       setGuardando(false);
+    }
+  };
+
+  const guardarConfiguracionFinanciera = async () => {
+    setGuardandoConfig(true);
+    try {
+      const res = await fetch(`${COMPETENCIAS_ENDPOINT}/${id}/config-financiera`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(configFinanciera)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("¡Configuración financiera actualizada correctamente!");
+      } else {
+        alert(data.mensaje || "Error al guardar configuración.");
+      }
+    } catch (err) {
+      alert("Error de conexión al guardar configuración financiera.");
+    } finally {
+      setGuardandoConfig(false);
     }
   };
 
@@ -1386,6 +1423,99 @@ export default function CompetenciaDetalle() {
                       <div className="text-end">
                         <span className="cd-utilidad-item-lbl">Egresos</span>
                         <span className="cd-utilidad-item-val" style={{ color: 'var(--danger)' }}>-${totalGastos.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              </div>
+
+              {/* B2C CONFIGURACIÓN FINANCIERA */}
+              <div className="cd-section-header mt-4" style={{ marginBottom: '1rem' }}>
+                <span className="cd-card-titulo cd-card-titulo--info">
+                  <i className="fas fa-cog"></i>Configuración de Pagos B2C
+                </span>
+                <BotonSeguro onClick={guardarConfiguracionFinanciera} disabled={guardandoConfig} className="cd-btn cd-btn--primary cd-btn--sm" textoProcesando="Guardando...">
+                  Guardar Configuración
+                </BotonSeguro>
+              </div>
+              <div className="cd-card mb-4">
+                <div className="cd-card-body">
+                  <div className="row g-4">
+                    <div className="col-md-6">
+                      <h6 className="text-white mb-3"><i className="fas fa-wallet text-info me-2"></i>Métodos Aceptados</h6>
+                      
+                      <div className="form-check form-switch mb-3 d-flex align-items-center gap-2">
+                        <input className="form-check-input" type="checkbox" role="switch" id="swPagosEnLinea" 
+                               style={{ width: '2.5em', height: '1.25em', cursor: 'pointer' }}
+                               checked={configFinanciera.aceptarPagosEnLinea}
+                               onChange={(e) => setConfigFinanciera({...configFinanciera, aceptarPagosEnLinea: e.target.checked})} />
+                        <label className="form-check-label text-light ms-2" htmlFor="swPagosEnLinea" style={{ cursor: 'pointer' }}>
+                          Aceptar Pagos en Línea (Stripe) <br/>
+                          <small className="text-muted">Recomendado para asegurar cupos al instante.</small>
+                        </label>
+                      </div>
+
+                      <div className="form-check form-switch mb-3 d-flex align-items-center gap-2">
+                        <input className="form-check-input" type="checkbox" role="switch" id="swTransferencias" 
+                               style={{ width: '2.5em', height: '1.25em', cursor: 'pointer' }}
+                               checked={configFinanciera.aceptarTransferencias}
+                               onChange={(e) => setConfigFinanciera({...configFinanciera, aceptarTransferencias: e.target.checked})} />
+                        <label className="form-check-label text-light ms-2" htmlFor="swTransferencias" style={{ cursor: 'pointer' }}>
+                          Aceptar Transferencias / Depósitos <br/>
+                          <small className="text-muted">Requiere validación manual del comprobante.</small>
+                        </label>
+                      </div>
+
+                      <div className="form-check form-switch mb-3 d-flex align-items-center gap-2">
+                        <input className="form-check-input" type="checkbox" role="switch" id="swEfectivo" 
+                               style={{ width: '2.5em', height: '1.25em', cursor: 'pointer' }}
+                               checked={configFinanciera.aceptarEfectivo}
+                               onChange={(e) => setConfigFinanciera({...configFinanciera, aceptarEfectivo: e.target.checked})} />
+                        <label className="form-check-label text-light ms-2" htmlFor="swEfectivo" style={{ cursor: 'pointer' }}>
+                          Aceptar Efectivo <br/>
+                          <small className="text-muted">Los atletas pagan físicamente en la recepción del box.</small>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="col-md-6">
+                      <h6 className="text-white mb-3"><i className="fas fa-percentage text-warning me-2"></i>Comisiones y Anticipos</h6>
+                      
+                      <div className="mb-4">
+                        <label className="cd-label text-light mb-2 d-block">¿Quién paga la comisión de Stripe? (Pagos en línea)</label>
+                        <div className="d-flex gap-3">
+                          <div className="form-check">
+                            <input className="form-check-input" type="radio" name="absorberComision" id="comisionAtleta" 
+                                   checked={!configFinanciera.absorberComisionTarjeta}
+                                   onChange={() => setConfigFinanciera({...configFinanciera, absorberComisionTarjeta: false})} />
+                            <label className="form-check-label text-light" htmlFor="comisionAtleta">El atleta (Se suma al total)</label>
+                          </div>
+                          <div className="form-check">
+                            <input className="form-check-input" type="radio" name="absorberComision" id="comisionBox" 
+                                   checked={configFinanciera.absorberComisionTarjeta}
+                                   onChange={() => setConfigFinanciera({...configFinanciera, absorberComisionTarjeta: true})} />
+                            <label className="form-check-label text-light" htmlFor="comisionBox">El organizador (Se descuenta de tu ingreso)</label>
+                          </div>
+                        </div>
+                        <small className="text-muted mt-1 d-block">
+                          <i className="fas fa-info-circle me-1"></i> No se puede cambiar si ya hay equipos inscritos.
+                        </small>
+                      </div>
+
+                      <div>
+                        <label className="cd-label text-light mb-2 d-block">Apartado Mínimo Obligatorio (Efectivo/Transferencia)</label>
+                        <div className="input-group">
+                          <span className="input-group-text bg-dark text-secondary border-secondary">$</span>
+                          <input type="number" className="form-control bg-dark text-light border-secondary" 
+                                 value={configFinanciera.montoMinimoAporte}
+                                 onChange={(e) => setConfigFinanciera({...configFinanciera, montoMinimoAporte: parseFloat(e.target.value) || 0})}
+                                 min="0" step="50" placeholder="0.00" />
+                        </div>
+                        <small className="text-muted mt-1 d-block">
+                          <i className="fas fa-lightbulb me-1"></i> Los pagos con tarjeta siempre requieren el pago total del equipo para minimizar comisiones de Stripe.
+                        </small>
                       </div>
                     </div>
                   </div>

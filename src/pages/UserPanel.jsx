@@ -52,6 +52,7 @@ export default function UserPanel() {
   // 👇 1. ESTADOS PARA LA NUEVA LÓGICA FINANCIERA 👇
   const [finanzas, setFinanzas] = useState(null);
   const [showModalPlanes, setShowModalPlanes] = useState(false);
+  const [iniciandoPago, setIniciandoPago] = useState(false);
 
   // 👇 2. CARGAR EL ADN FINANCIERO DESDE C# 👇
   useEffect(() => {
@@ -244,8 +245,34 @@ export default function UserPanel() {
   };
 
   const abrirModalReservas = () => {
+    if (finanzas?.suscripcion?.estatus === 'Vencida') {
+        alert("Tu membresía está vencida. Renueva tu suscripción para reservar.");
+        return;
+    }
     setShowModal(true);
     cargarClasesDeFecha(box.idBox, user.idUsuario || user.id, fechaSeleccionada);
+  };
+
+  const handlePagarEnLinea = async () => {
+      setIniciandoPago(true);
+      try {
+          const token = localStorage.getItem('token');
+          const res = await fetch(`${API_BASE}/finanzas/checkout-b2c/${box.idBox}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ idSuscripcion: finanzas.suscripcion.idSuscripcion })
+          });
+          const data = await res.json();
+          if (res.ok && data.url) {
+              window.location.href = data.url;
+          } else {
+              alert(data.mensaje || 'Error al iniciar pago.');
+          }
+      } catch (err) {
+          alert('Error de red al conectar con Stripe.');
+      } finally {
+          setIniciandoPago(false);
+      }
   };
 
   const toggleReserva = async (idClase) => {
@@ -382,7 +409,58 @@ export default function UserPanel() {
 
         {/* MAIN CONTENT */}
         <div className="container py-4 mb-5 flex-grow-1">
-          <div className="row g-4">
+
+          {/* 👇 BLOQUEO DE MEMBRESÍA VENCIDA 👇 */}
+          {finanzas?.suscripcion?.estatus === 'Vencida' && (
+            <div className="row justify-content-center mb-5 animate__animated animate__shakeX">
+                <div className="col-12 col-md-10 col-lg-8">
+                    <div className="card bg-black border-danger shadow-lg p-4 p-md-5 text-center">
+                        <i className="fas fa-exclamation-triangle text-danger fs-1 mb-3"></i>
+                        <h2 className="text-white fw-bold mb-3" style={{fontFamily: 'var(--font-heading)'}}>MEMBRESÍA VENCIDA</h2>
+                        <p className="text-secondary mb-4">Tu acceso a clases y reservas ha sido suspendido. Por favor, regulariza tu pago para volver a la manada.</p>
+                        
+                        <div className="row g-3 justify-content-center">
+                            {finanzas?.configuracionBox?.aceptarPagosEnLinea !== false && (
+                                <div className="col-12 col-md-8">
+                                    <button 
+                                        onClick={handlePagarEnLinea} 
+                                        disabled={iniciandoPago}
+                                        className="btn btn-danger w-100 py-3 fw-bold rounded-pill shadow"
+                                    >
+                                        {iniciandoPago ? <><i className="fas fa-spinner fa-spin me-2"></i>Conectando con Stripe...</> : <><i className="fab fa-stripe me-2 fs-5"></i> Domiciliar Tarjeta / Pagar</>}
+                                    </button>
+                                </div>
+                            )}
+                            {finanzas?.configuracionBox?.aceptarTransferencias !== false && (
+                                <div className="col-12 col-md-8">
+                                    <button className="btn btn-outline-info w-100 py-2 fw-bold rounded-pill" onClick={() => alert('Envía tu comprobante de transferencia al WhatsApp de administración para que un coach reactive tu cuenta manualmente.')}>
+                                        <i className="fas fa-file-invoice-dollar me-2"></i> Ya transferí (Subir comprobante)
+                                    </button>
+                                </div>
+                            )}
+                            {finanzas?.configuracionBox?.aceptarEfectivo !== false && (
+                                <div className="col-12 col-md-8">
+                                    <div className="text-muted small mt-2">
+                                        <i className="fas fa-store-alt me-1"></i> O paga en efectivo en recepción
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+          )}
+
+          {/* 👇 GRACIA ALERT 👇 */}
+          {finanzas?.suscripcion?.estatus === 'Gracia' && (
+            <div className="alert bg-warning text-dark border-warning mb-4 shadow-sm fw-bold animate__animated animate__fadeInDown">
+                <i className="fas fa-clock me-2"></i> 
+                Tuvimos un problema con tu último pago o te encuentras en tus días de gracia. Tu acceso será bloqueado pronto si no lo regularizas. 
+                <button onClick={handlePagarEnLinea} className="btn btn-sm btn-dark ms-3 fw-bold text-warning rounded-pill">Pagar Ahora</button>
+            </div>
+          )}
+
+          <div className="row g-4" style={finanzas?.suscripcion?.estatus === 'Vencida' ? { opacity: 0.3, pointerEvents: 'none', filter: 'grayscale(100%) blur(2px)' } : {}}>
 
             {/* ===== LEFT COL: WOD + Pizarra ===== */}
             <div className="col-lg-8 d-flex flex-column gap-4">

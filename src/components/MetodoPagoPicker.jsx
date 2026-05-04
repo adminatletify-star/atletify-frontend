@@ -2,15 +2,17 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import './MetodoPagoPicker.css';
 
-const OPCIONES = [
+const TODAS_LAS_OPCIONES = [
+  { valor: 'EnLinea',       nombre: 'Pago en Línea Segura',  desc: 'Paga con tarjeta de crédito/débito',     icono: 'fas fa-credit-card',     key: 'tarjeta'  },
   { valor: 'Transferencia', nombre: 'Transferencia Bancaria', desc: 'Sube tu comprobante de pago', icono: 'fas fa-university',      key: 'transfer' },
-  { valor: 'Efectivo',      nombre: 'Efectivo en Recepción', desc: 'Paga en caja el día del evento', icono: 'fas fa-money-bill-wave', key: 'efectivo' },
-  { valor: 'Tarjeta',       nombre: 'Tarjeta en Recepción',  desc: 'Pago con terminal bancaria',     icono: 'fas fa-credit-card',     key: 'tarjeta'  },
+  { valor: 'Efectivo',      nombre: 'Efectivo en Recepción', desc: 'Paga en caja el día del evento', icono: 'fas fa-money-bill-wave', key: 'efectivo' }
 ];
 
-export default function MetodoPagoPicker({ valor, onCambiar }) {
+export default function MetodoPagoPicker({ valor, onCambiar, opcionesPermitidas = ['EnLinea', 'Transferencia', 'Efectivo'] }) {
   const [abierto, setAbierto] = useState(false);
-  const actual = OPCIONES.find(o => o.valor === valor) || OPCIONES[0];
+  
+  const opcionesMostradas = TODAS_LAS_OPCIONES.filter(o => opcionesPermitidas.includes(o.valor));
+  const actual = opcionesMostradas.find(o => o.valor === valor) || opcionesMostradas[0];
 
   const seleccionar = (v) => {
     setAbierto(false);
@@ -45,7 +47,7 @@ export default function MetodoPagoPicker({ valor, onCambiar }) {
             </div>
 
             <div className="mpp-options">
-              {OPCIONES.map(op => (
+              {opcionesMostradas.map(op => (
                 <button
                   key={op.valor}
                   type="button"
