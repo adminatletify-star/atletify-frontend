@@ -59,8 +59,8 @@ export default function GestionJuecesPanel({ idCompetencia, colorTheme = 'info' 
   const agregarJuez = async (e) => {
     e.preventDefault();
     
-    if (!form.nombre || !form.username || !form.telefono) {
-      alert("Por favor completa los campos obligatorios: Nombre, Usuario y Teléfono.");
+    if (!form.nombre || !form.apellidos || !form.username || !form.telefono || !form.fechaNacimiento || !form.tallaPlayera || !form.tipoDeSangre || !form.tieneDiscapacidad || !form.alergias || !form.lesionesPrevias || !form.contactoEmergenciaNombre || !form.contactoEmergenciaTelefono) {
+      alert("Por favor completa todos los campos. Si no aplica alguno (ej. Discapacidad), escribe 'Ninguna'.");
       return;
     }
 
@@ -113,8 +113,8 @@ export default function GestionJuecesPanel({ idCompetencia, colorTheme = 'info' 
 
   const handleEditarJuez = async (e) => {
     e.preventDefault();
-    if (!formEditar.nombre || !formEditar.telefono) {
-      alert("Por favor completa los campos obligatorios: Nombre y Teléfono.");
+    if (!formEditar.nombre || !formEditar.apellidos || !formEditar.telefono || !formEditar.fechaNacimiento || !formEditar.tallaPlayera || !formEditar.tipoDeSangre || !formEditar.tieneDiscapacidad || !formEditar.alergias || !formEditar.lesionesPrevias || !formEditar.contactoEmergenciaNombre || !formEditar.contactoEmergenciaTelefono) {
+      alert("Por favor completa todos los campos. Si no aplica alguno (ej. Discapacidad), escribe 'Ninguna'.");
       return;
     }
 
@@ -358,19 +358,19 @@ export default function GestionJuecesPanel({ idCompetencia, colorTheme = 'info' 
                   <input type="text" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={formEditar.nombre} onChange={e => setFormEditar({...formEditar, nombre: e.target.value})} />
                 </div>
                 <div className="col-md-6">
-                  <label className="cd-label">Apellidos</label>
-                  <input type="text" className="cd-input" value={formEditar.apellidos} onChange={e => setFormEditar({...formEditar, apellidos: e.target.value})} />
+                  <label className="cd-label text-warning">Apellidos *</label>
+                  <input type="text" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={formEditar.apellidos} onChange={e => setFormEditar({...formEditar, apellidos: e.target.value})} />
                 </div>
                 <div className="col-md-6">
                   <label className="cd-label text-warning">Teléfono *</label>
                   <input type="text" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={formEditar.telefono} onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ''); setFormEditar({...formEditar, telefono: v}) }} maxLength="10" />
                 </div>
                 <div className="col-md-6">
-                  <label className="cd-label">Fecha de Nacimiento</label>
-                  <input type="date" className="cd-input" value={formEditar.fechaNacimiento} onChange={e => setFormEditar({...formEditar, fechaNacimiento: e.target.value})} />
+                  <label className="cd-label text-warning">Fecha de Nacimiento *</label>
+                  <input type="date" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={formEditar.fechaNacimiento} onChange={e => setFormEditar({...formEditar, fechaNacimiento: e.target.value})} />
                 </div>
                 <div className="col-md-6">
-                  <label className="cd-label">Talla de Playera</label>
+                  <label className="cd-label text-warning">Talla de Playera *</label>
                   <TallaPlayeraPicker valor={formEditar.tallaPlayera} onCambiar={v => setFormEditar({...formEditar, tallaPlayera: v})} />
                 </div>
               </div>
@@ -379,8 +379,8 @@ export default function GestionJuecesPanel({ idCompetencia, colorTheme = 'info' 
 
               <div className="row g-3 mb-4">
                 <div className="col-md-6">
-                  <label className="cd-label">Tipo de Sangre</label>
-                  <select className="cd-input" value={formEditar.tipoDeSangre} onChange={e => setFormEditar({...formEditar, tipoDeSangre: e.target.value})}>
+                  <label className="cd-label text-warning">Tipo de Sangre *</label>
+                  <select className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={formEditar.tipoDeSangre} onChange={e => setFormEditar({...formEditar, tipoDeSangre: e.target.value})}>
                     <option value="">Seleccionar...</option>
                     <option value="O+">O+</option>
                     <option value="O-">O-</option>
@@ -393,24 +393,24 @@ export default function GestionJuecesPanel({ idCompetencia, colorTheme = 'info' 
                   </select>
                 </div>
                 <div className="col-md-6">
-                  <label className="cd-label">Discapacidad (Opcional)</label>
-                  <input type="text" className="cd-input" value={formEditar.tieneDiscapacidad} onChange={e => setFormEditar({...formEditar, tieneDiscapacidad: e.target.value})} />
+                  <label className="cd-label text-warning">Discapacidad *</label>
+                  <input type="text" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={formEditar.tieneDiscapacidad} onChange={e => setFormEditar({...formEditar, tieneDiscapacidad: e.target.value})} placeholder="Escribe 'Ninguna' si no aplica" />
                 </div>
                 <div className="col-md-6">
-                  <label className="cd-label">Alergias</label>
-                  <input type="text" className="cd-input" value={formEditar.alergias} onChange={e => setFormEditar({...formEditar, alergias: e.target.value})} />
+                  <label className="cd-label text-warning">Alergias *</label>
+                  <input type="text" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={formEditar.alergias} onChange={e => setFormEditar({...formEditar, alergias: e.target.value})} placeholder="Escribe 'Ninguna' si no aplica" />
                 </div>
                 <div className="col-md-6">
-                  <label className="cd-label">Lesiones Previas</label>
-                  <input type="text" className="cd-input" value={formEditar.lesionesPrevias} onChange={e => setFormEditar({...formEditar, lesionesPrevias: e.target.value})} />
+                  <label className="cd-label text-warning">Lesiones Previas *</label>
+                  <input type="text" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={formEditar.lesionesPrevias} onChange={e => setFormEditar({...formEditar, lesionesPrevias: e.target.value})} placeholder="Escribe 'Ninguna' si no aplica" />
                 </div>
                 <div className="col-md-6">
-                  <label className="cd-label">Contacto de Emergencia</label>
-                  <input type="text" className="cd-input" value={formEditar.contactoEmergenciaNombre} onChange={e => setFormEditar({...formEditar, contactoEmergenciaNombre: e.target.value})} />
+                  <label className="cd-label text-warning">Contacto de Emergencia *</label>
+                  <input type="text" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={formEditar.contactoEmergenciaNombre} onChange={e => setFormEditar({...formEditar, contactoEmergenciaNombre: e.target.value})} />
                 </div>
                 <div className="col-md-6">
-                  <label className="cd-label">Tel. Emergencia</label>
-                  <input type="text" className="cd-input" value={formEditar.contactoEmergenciaTelefono} onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ''); setFormEditar({...formEditar, contactoEmergenciaTelefono: v}) }} maxLength="10" />
+                  <label className="cd-label text-warning">Tel. Emergencia *</label>
+                  <input type="text" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={formEditar.contactoEmergenciaTelefono} onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ''); setFormEditar({...formEditar, contactoEmergenciaTelefono: v}) }} maxLength="10" />
                 </div>
               </div>
 
@@ -455,8 +455,8 @@ export default function GestionJuecesPanel({ idCompetencia, colorTheme = 'info' 
                   <input type="text" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})} placeholder="Ej: Edwin" />
                 </div>
                 <div className="col-md-6">
-                  <label className="cd-label">Apellidos</label>
-                  <input type="text" className="cd-input" value={form.apellidos} onChange={e => setForm({...form, apellidos: e.target.value})} placeholder="Ej: Tun" />
+                  <label className="cd-label text-warning">Apellidos *</label>
+                  <input type="text" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={form.apellidos} onChange={e => setForm({...form, apellidos: e.target.value})} placeholder="Ej: Tun" />
                 </div>
                 <div className="col-md-6">
                   <label className="cd-label text-warning">Usuario (Username) *</label>
@@ -467,11 +467,11 @@ export default function GestionJuecesPanel({ idCompetencia, colorTheme = 'info' 
                   <input type="text" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={form.telefono} onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ''); setForm({...form, telefono: v}) }} placeholder="10 dígitos" maxLength="10" />
                 </div>
                 <div className="col-md-6">
-                  <label className="cd-label">Fecha de Nacimiento</label>
-                  <input type="date" className="cd-input" value={form.fechaNacimiento} onChange={e => setForm({...form, fechaNacimiento: e.target.value})} />
+                  <label className="cd-label text-warning">Fecha de Nacimiento *</label>
+                  <input type="date" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={form.fechaNacimiento} onChange={e => setForm({...form, fechaNacimiento: e.target.value})} />
                 </div>
                 <div className="col-md-6">
-                  <label className="cd-label">Talla de Playera</label>
+                  <label className="cd-label text-warning">Talla de Playera *</label>
                   <TallaPlayeraPicker valor={form.tallaPlayera} onCambiar={v => setForm({...form, tallaPlayera: v})} />
                 </div>
               </div>
@@ -480,8 +480,8 @@ export default function GestionJuecesPanel({ idCompetencia, colorTheme = 'info' 
 
               <div className="row g-3 mb-4">
                 <div className="col-md-6">
-                  <label className="cd-label">Tipo de Sangre</label>
-                  <select className="cd-input" value={form.tipoDeSangre} onChange={e => setForm({...form, tipoDeSangre: e.target.value})}>
+                  <label className="cd-label text-warning">Tipo de Sangre *</label>
+                  <select className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={form.tipoDeSangre} onChange={e => setForm({...form, tipoDeSangre: e.target.value})}>
                     <option value="">Seleccionar...</option>
                     <option value="O+">O+</option>
                     <option value="O-">O-</option>
@@ -494,24 +494,24 @@ export default function GestionJuecesPanel({ idCompetencia, colorTheme = 'info' 
                   </select>
                 </div>
                 <div className="col-md-6">
-                  <label className="cd-label">Discapacidad (Opcional)</label>
-                  <input type="text" className="cd-input" value={form.tieneDiscapacidad} onChange={e => setForm({...form, tieneDiscapacidad: e.target.value})} placeholder="Describa si aplica" />
+                  <label className="cd-label text-warning">Discapacidad *</label>
+                  <input type="text" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={form.tieneDiscapacidad} onChange={e => setForm({...form, tieneDiscapacidad: e.target.value})} placeholder="Escribe 'Ninguna' si no aplica" />
                 </div>
                 <div className="col-md-6">
-                  <label className="cd-label">Alergias</label>
-                  <input type="text" className="cd-input" value={form.alergias} onChange={e => setForm({...form, alergias: e.target.value})} placeholder="Ej: Penicilina, nueces" />
+                  <label className="cd-label text-warning">Alergias *</label>
+                  <input type="text" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={form.alergias} onChange={e => setForm({...form, alergias: e.target.value})} placeholder="Escribe 'Ninguna' si no aplica" />
                 </div>
                 <div className="col-md-6">
-                  <label className="cd-label">Lesiones Previas</label>
-                  <input type="text" className="cd-input" value={form.lesionesPrevias} onChange={e => setForm({...form, lesionesPrevias: e.target.value})} placeholder="Ej: Rodilla derecha" />
+                  <label className="cd-label text-warning">Lesiones Previas *</label>
+                  <input type="text" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={form.lesionesPrevias} onChange={e => setForm({...form, lesionesPrevias: e.target.value})} placeholder="Escribe 'Ninguna' si no aplica" />
                 </div>
                 <div className="col-md-6">
-                  <label className="cd-label">Contacto de Emergencia</label>
-                  <input type="text" className="cd-input" value={form.contactoEmergenciaNombre} onChange={e => setForm({...form, contactoEmergenciaNombre: e.target.value})} placeholder="Nombre completo" />
+                  <label className="cd-label text-warning">Contacto de Emergencia *</label>
+                  <input type="text" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={form.contactoEmergenciaNombre} onChange={e => setForm({...form, contactoEmergenciaNombre: e.target.value})} placeholder="Nombre completo" />
                 </div>
                 <div className="col-md-6">
-                  <label className="cd-label">Tel. Emergencia</label>
-                  <input type="text" className="cd-input" value={form.contactoEmergenciaTelefono} onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ''); setForm({...form, contactoEmergenciaTelefono: v}) }} placeholder="10 dígitos" maxLength="10" />
+                  <label className="cd-label text-warning">Tel. Emergencia *</label>
+                  <input type="text" className="cd-input" style={{ borderColor: 'var(--warning)' }} required value={form.contactoEmergenciaTelefono} onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ''); setForm({...form, contactoEmergenciaTelefono: v}) }} placeholder="10 dígitos" maxLength="10" />
                 </div>
               </div>
 
