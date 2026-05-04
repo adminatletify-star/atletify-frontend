@@ -24,6 +24,12 @@ const AdminSaaS = () => {
         codigo: '', mesesGratis: 1, idPlanSaaS: '', limiteUsos: 1
     });
 
+    // Tokens de Competencias
+    const [tokensComp, setTokensComp] = useState([]);
+    const [nuevoTokenComp, setNuevoTokenComp] = useState({
+        idPlanSaaS: '', correoDestino: '', diasValidez: 365
+    });
+
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -51,6 +57,15 @@ const AdminSaaS = () => {
             });
             const dataCodigos = await resCodigos.json();
             setCodigos(dataCodigos);
+
+            // Fetch Tokens de Competencia
+            const resTokens = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/tokens`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (resTokens.ok) {
+                const dataTokens = await resTokens.json();
+                setTokensComp(dataTokens);
+            }
         } catch (error) {
             console.error(error);
         } finally {
@@ -114,6 +129,31 @@ const AdminSaaS = () => {
         }
     };
 
+    const handleCrearTokenComp = async (e) => {
+        e.preventDefault();
+        try {
+            const token = localStorage.getItem('token');
+            const payload = {
+                idPlanSaaS: parseInt(nuevoTokenComp.idPlanSaaS),
+                correoDestino: nuevoTokenComp.correoDestino,
+                diasValidez: parseInt(nuevoTokenComp.diasValidez) || 365
+            };
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/tokens`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}` 
+                },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error();
+            alert('Token de competencia generado con éxito');
+            cargarData();
+        } catch (error) {
+            alert('Error al generar token de competencia');
+        }
+    };
+
     const handleEliminarPlan = async (id) => {
         if (!window.confirm("¿Seguro que deseas eliminar este plan?")) return;
         try {
@@ -145,6 +185,23 @@ const AdminSaaS = () => {
             cargarData();
         } catch (error) {
             alert(error.message || 'Error al eliminar código');
+        }
+    };
+
+    const handleEliminarTokenComp = async (id) => {
+        if (!window.confirm("¿Seguro que deseas eliminar este token de competencia?")) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/tokens/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.mensaje || 'Error al eliminar');
+            alert(data.mensaje || 'Token eliminado exitosamente');
+            cargarData();
+        } catch (error) {
+            alert(error.message || 'Error al eliminar token');
         }
     };
 
@@ -333,6 +390,80 @@ const AdminSaaS = () => {
                                             </td>
                                             <td>
                                                 <button onClick={() => handleEliminarCodigo(c.idCodigo)} className="btn btn-sm btn-outline-danger">
+                                                    <i className="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── TOKENS DE COMPETENCIA ── */}
+                <div className="col-12 mt-5">
+                    <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg h-100">
+                        <h2 className="text-xl font-bold mb-4 text-warning"><i className="fas fa-trophy"></i> Tokens de Regalo para Competencias</h2>
+                        
+                        <form onSubmit={handleCrearTokenComp} className="bg-gray-900/50 p-4 rounded-lg mb-6 border border-gray-700">
+                            <h4 className="text-sm font-semibold mb-4 text-gray-300 uppercase tracking-wider border-bottom border-gray-700 pb-2">Generar Nuevo Token de Competencia</h4>
+                            <div className="row g-4">
+                                <div className="col-md-4">
+                                    <label className="form-label text-muted small fw-bold mb-1">Plan a Regalar</label>
+                                    <select className="form-select bg-dark text-white border-secondary shadow-none" required value={nuevoTokenComp.idPlanSaaS} onChange={e => setNuevoTokenComp({...nuevoTokenComp, idPlanSaaS: e.target.value})}>
+                                        <option value="">Selecciona un Plan...</option>
+                                        {planes.filter(p => p.incluyeCompetencias || p.categoria === 'Competencias').map(p => (
+                                            <option key={p.idPlan} value={p.idPlan}>{p.nombre}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="col-md-5">
+                                    <label className="form-label text-muted small fw-bold mb-1">Correo Destino (Organizador)</label>
+                                    <input type="email" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="organizador@example.com" required value={nuevoTokenComp.correoDestino} onChange={e => setNuevoTokenComp({...nuevoTokenComp, correoDestino: e.target.value})} />
+                                </div>
+                                <div className="col-md-3">
+                                    <label className="form-label text-muted small fw-bold mb-1">Días Validez</label>
+                                    <input type="number" className="form-control bg-dark text-white border-secondary shadow-none" placeholder="365" required value={nuevoTokenComp.diasValidez} onChange={e => setNuevoTokenComp({...nuevoTokenComp, diasValidez: e.target.value})} />
+                                </div>
+                                <div className="col-12 text-end mt-4">
+                                    <button type="submit" className="btn py-2 px-4 bg-yellow-600 text-white font-bold rounded shadow hover:bg-yellow-500 transition-all">
+                                        <i className="fas fa-gift me-2"></i> Generar Token de Regalo
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div className="table-responsive">
+                            <table className="table table-dark table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Token</th>
+                                        <th>Plan Asignado</th>
+                                        <th>Destino</th>
+                                        <th>Vence</th>
+                                        <th>Estatus</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {tokensComp.map(t => (
+                                        <tr key={t.idToken}>
+                                            <td className="font-monospace text-warning fw-bold">{t.tokenString}</td>
+                                            <td>{t.planSaaS ? t.planSaaS.nombre : 'Desconocido'}</td>
+                                            <td className="text-muted">{t.correoDestino}</td>
+                                            <td>{new Date(t.fechaExpiracion).toLocaleDateString()}</td>
+                                            <td>
+                                                {t.usado ? (
+                                                    <span className="badge bg-secondary">Usado el {new Date(t.fechaUso).toLocaleDateString()}</span>
+                                                ) : new Date(t.fechaExpiracion) < new Date() ? (
+                                                    <span className="badge bg-danger">Vencido</span>
+                                                ) : (
+                                                    <span className="badge bg-success">Activo</span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                <button onClick={() => handleEliminarTokenComp(t.idToken)} disabled={t.usado} className="btn btn-sm btn-outline-danger">
                                                     <i className="fas fa-trash"></i>
                                                 </button>
                                             </td>

@@ -10,6 +10,7 @@ import CompDetalleSideMenu from '../components/CompDetalleSideMenu';
 import TipoCalificacionPicker from '../components/TipoCalificacionPicker';
 import TimeWheelPicker from '../components/TimeWheelPicker';
 import BotonSeguro from '../components/BotonSeguro';
+import PlanesModal from '../components/PlanesModal';
 import GestionJuecesPanel from '../components/GestionJuecesPanel';
 import '../assets/css/CompetenciaDetalle.css';
 
@@ -20,6 +21,7 @@ export default function CompetenciaDetalle() {
   const [tabActiva, setTabActiva] = useState('dashboard');
   const [sideMenuOpen, setSideMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [mostrarPlanes, setMostrarPlanes] = useState(false);
 
   // ========================================================
   // 1. ESTADOS GLOBALES Y PESTAÑAS
@@ -1228,6 +1230,28 @@ export default function CompetenciaDetalle() {
       {/* ── CONTENIDO ── */}
       <div className="cd-content">
 
+        {comp.saaS_Estatus === 'Configurando' ? (
+          <div className="d-flex flex-column align-items-center justify-content-center h-100 text-center p-5">
+            <i className="fas fa-lock fs-1 text-warning mb-4"></i>
+            <h2 className="text-white mb-3">Módulo Inactivo</h2>
+            <p className="text-secondary mb-4" style={{ maxWidth: '500px' }}>
+              Para poder visualizar y gestionar los detalles de esta competencia, necesitas contratar un plan base o ingresar un token de activación.
+            </p>
+            <button className="btn btn-warning fw-bold px-4 rounded-pill" onClick={() => setMostrarPlanes(true)}>
+              <i className="fas fa-credit-card me-2"></i>Contratar Evento
+            </button>
+            <PlanesModal 
+              isOpen={mostrarPlanes} 
+              onClose={() => setMostrarPlanes(false)} 
+              idCompetencia={comp.idCompetencia || comp.IdCompetencia} 
+              onSuccess={() => {
+                setMostrarPlanes(false);
+                cargarDatos();
+              }} 
+            />
+          </div>
+        ) : (
+          <>
         {/* ========================================================= */}
         {/* TAB: DASHBOARD FINANCIERO */}
         {/* ========================================================= */}
@@ -3089,7 +3113,8 @@ export default function CompetenciaDetalle() {
         {tabActiva === 'jueces' && (
           <GestionJuecesPanel idCompetencia={id} />
         )}
-
+          </>
+        )}
       </div>
 
       {selectorHerramientaAbierto && createPortal(

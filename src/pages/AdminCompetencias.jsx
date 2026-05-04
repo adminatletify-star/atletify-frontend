@@ -6,6 +6,7 @@ import BackButton from '../components/BackButton';
 import EstatusPickerModal from '../components/EstatusPickerModal';
 import FormatoCategoriaPicker from '../components/FormatoCategoriaPicker';
 import BotonSeguro from '../components/BotonSeguro';
+import PlanesModal from '../components/PlanesModal';
 import '../assets/css/AdminCompetencias.css';
 
 export default function AdminCompetencias() {
@@ -19,6 +20,7 @@ export default function AdminCompetencias() {
   const [formComp, setFormComp] = useState({ nombre: '', fechaInicio: '', fechaFin: '' });
 
   const [compSeleccionada, setCompSeleccionada] = useState(null);
+  const [compParaPagar, setCompParaPagar] = useState(null);
 
   // --- Estados Modal Wizard Categoría ---
   const [mostrarWizard, setMostrarWizard] = useState(false);
@@ -492,32 +494,7 @@ export default function AdminCompetencias() {
                       <p className="text-secondary small mb-3">Para abrir inscripciones y gestionar este evento, es necesario activar el paquete base.</p>
                       <button 
                         className="btn btn-warning fw-bold px-4 rounded-pill"
-                        onClick={async () => {
-                           const btn = document.activeElement;
-                           btn.disabled = true;
-                           btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generando Pago...';
-                           try {
-                             const urlRetorno = encodeURIComponent(window.location.href);
-                             const res = await fetch(`${COMPETENCIAS_ENDPOINT}/${comp.idCompetencia || comp.IdCompetencia}/contratar?successUrl=${urlRetorno}&cancelUrl=${urlRetorno}`, {
-                                method: 'POST',
-                                headers: {
-                                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                                }
-                             });
-                             const data = await res.json();
-                             if(res.ok && data.url) {
-                                window.location.href = data.url;
-                             } else {
-                                alert(data.mensaje || "Error al conectar con Stripe.");
-                                btn.disabled = false;
-                                btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Contratar Evento';
-                             }
-                           } catch(e) {
-                             alert("Error de red.");
-                             btn.disabled = false;
-                             btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Contratar Evento';
-                           }
-                        }}
+                        onClick={() => setCompParaPagar(comp)}
                       >
                         <i className="fas fa-credit-card me-2"></i>Contratar Evento
                       </button>
@@ -915,6 +892,15 @@ export default function AdminCompetencias() {
           );
         })()}
 
+        <PlanesModal 
+          isOpen={!!compParaPagar} 
+          onClose={() => setCompParaPagar(null)} 
+          idCompetencia={compParaPagar?.idCompetencia || compParaPagar?.IdCompetencia} 
+          onSuccess={() => {
+            setCompParaPagar(null);
+            cargarCompetencias(box.idBox || box.IdBox);
+          }} 
+        />
       </div>
     </div>
   );

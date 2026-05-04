@@ -192,11 +192,17 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (allowedRoles && !allowedRoles.includes(storedUser.rol)) {
-    console.error(`CADENERO: Acceso denegado a [${allowedRoles}]. Rol actual: '${storedUser.rol}'.`);
-    if (storedUser.rol === 'Developer') return <Navigate to="/dashboard" replace />;
-    if (storedUser.rol === 'AdminBox' || storedUser.rol === 'Coach') return <Navigate to="/admin-box-panel" replace />;
-    if (storedUser.rol === 'Juez') return <Navigate to={`/juez/${storedUser.idCompetenciaAsignada}`} replace />;
-    return <Navigate to="/user-panel" replace />;
+    // Permitir acceso a rutas de admin-competencias si el usuario es organizador
+    const isRutaCompetencias = window.location.pathname.startsWith('/admin-competencias');
+    if (isRutaCompetencias && storedUser.esOrganizadorCompetencias) {
+      // Dejar pasar
+    } else {
+      console.error(`CADENERO: Acceso denegado a [${allowedRoles}]. Rol actual: '${storedUser.rol}'.`);
+      if (storedUser.rol === 'Developer') return <Navigate to="/dashboard" replace />;
+      if (storedUser.rol === 'AdminBox' || storedUser.rol === 'Coach') return <Navigate to="/admin-box-panel" replace />;
+      if (storedUser.rol === 'Juez') return <Navigate to={`/juez/${storedUser.idCompetenciaAsignada}`} replace />;
+      return <Navigate to="/user-panel" replace />;
+    }
   }
 
   // 👇 CADENERO SAAS B2B (PAYWALL PARA ADMINS)

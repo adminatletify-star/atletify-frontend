@@ -759,6 +759,26 @@ export default function UserPanel() {
                 </div>
               )}
 
+              {/* Módulo de Organizador de Competencias Independiente */}
+              {user?.esOrganizadorCompetencias && (
+                <div
+                  className="up-card up-card-clickable border border-warning border-opacity-50"
+                  onClick={() => navigate('/admin-competencias')}
+                  style={{ background: 'linear-gradient(135deg, rgba(20,20,20,0.9) 0%, rgba(60,40,0,0.8) 100%)' }}
+                >
+                  <div className="up-mini-card">
+                    <div className="up-mini-icon text-dark bg-warning shadow-sm">
+                      <i className="fas fa-trophy fa-bounce"></i>
+                    </div>
+                    <div className="flex-grow-1">
+                      <div className="up-mini-label text-warning fw-bold">Organizador de Competencias</div>
+                      <div className="up-mini-value text-white opacity-75 small">Accede al panel de gestión de tus eventos deportivos.</div>
+                    </div>
+                    <i className="fas fa-chevron-right text-warning"></i>
+                  </div>
+                </div>
+              )}
+
               {/* Mi Clase de Hoy */}
               <div className="up-card">
                 <div className="up-card-header">
