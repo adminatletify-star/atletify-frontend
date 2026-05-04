@@ -36,7 +36,12 @@ const initialConfig = {
   diasCerrado: '',
   stripeAccountId: '',
   absorberComisionTarjeta: false,
-  compraMinimaTarjeta: 100
+  compraMinimaTarjeta: 100,
+  aceptarPagosEnLinea: true,
+  aceptarTransferencias: true,
+  aceptarEfectivo: true,
+  recargoMontoFijo: 0,
+  aplicarGraciaSoloConCobroAutomatico: true
 };
 
 const DIAS_SEMANA = [
@@ -145,7 +150,12 @@ export default function EditarBox() {
           diasCerrado: data.diasCerrado ?? '',
           stripeAccountId: data.stripeAccountId ?? '',
           absorberComisionTarjeta: data.absorberComisionTarjeta ?? false,
-          compraMinimaTarjeta: data.compraMinimaTarjeta ?? 100
+          compraMinimaTarjeta: data.compraMinimaTarjeta ?? 100,
+          aceptarPagosEnLinea: data.aceptarPagosEnLinea ?? true,
+          aceptarTransferencias: data.aceptarTransferencias ?? true,
+          aceptarEfectivo: data.aceptarEfectivo ?? true,
+          recargoMontoFijo: data.recargoMontoFijo ?? 0,
+          aplicarGraciaSoloConCobroAutomatico: data.aplicarGraciaSoloConCobroAutomatico ?? true
         });
 
         if (data.horariosApertura) {
@@ -237,7 +247,12 @@ export default function EditarBox() {
           diasCerrado: config.diasCerrado,
           anticipacionReservaHoras: parseInt(config.anticipacionReservaHoras) || 24,
           absorberComisionTarjeta: config.absorberComisionTarjeta,
-          compraMinimaTarjeta: parseFloat(config.compraMinimaTarjeta) || 100
+          compraMinimaTarjeta: parseFloat(config.compraMinimaTarjeta) || 100,
+          aceptarPagosEnLinea: config.aceptarPagosEnLinea,
+          aceptarTransferencias: config.aceptarTransferencias,
+          aceptarEfectivo: config.aceptarEfectivo,
+          recargoMontoFijo: parseFloat(config.recargoMontoFijo) || 0,
+          aplicarGraciaSoloConCobroAutomatico: config.aplicarGraciaSoloConCobroAutomatico
         })
       });
 
@@ -554,8 +569,35 @@ export default function EditarBox() {
                       )}
                     </div>
 
-                    <div className="row g-3">
-                      <div className="col-12 col-md-6 d-flex align-items-center">
+                      <div className="col-12 col-md-4 d-flex align-items-center">
+                        <div className="form-check form-switch custom-switch">
+                          <input className="form-check-input" type="checkbox" id="switchPagosEnLinea" name="aceptarPagosEnLinea" checked={config.aceptarPagosEnLinea} onChange={handleConfigChange} style={{ width: '2.5rem', height: '1.3rem' }} />
+                          <label className="form-check-label ms-2 text-white" htmlFor="switchPagosEnLinea" style={{ fontSize: '0.85rem' }}>
+                            <i className="fas fa-credit-card me-1" style={{ color: '#6772E5' }}></i>
+                            Habilitar Pagos con Tarjeta (App)
+                          </label>
+                        </div>
+                      </div>
+                      <div className="col-12 col-md-4 d-flex align-items-center">
+                        <div className="form-check form-switch custom-switch">
+                          <input className="form-check-input" type="checkbox" id="switchTransferencias" name="aceptarTransferencias" checked={config.aceptarTransferencias} onChange={handleConfigChange} style={{ width: '2.5rem', height: '1.3rem' }} />
+                          <label className="form-check-label ms-2 text-white" htmlFor="switchTransferencias" style={{ fontSize: '0.85rem' }}>
+                            <i className="fas fa-money-bill-transfer me-1" style={{ color: 'var(--info)' }}></i>
+                            Aceptar Transferencias
+                          </label>
+                        </div>
+                      </div>
+                      <div className="col-12 col-md-4 d-flex align-items-center">
+                        <div className="form-check form-switch custom-switch">
+                          <input className="form-check-input" type="checkbox" id="switchEfectivo" name="aceptarEfectivo" checked={config.aceptarEfectivo} onChange={handleConfigChange} style={{ width: '2.5rem', height: '1.3rem' }} />
+                          <label className="form-check-label ms-2 text-white" htmlFor="switchEfectivo" style={{ fontSize: '0.85rem' }}>
+                            <i className="fas fa-coins me-1" style={{ color: 'var(--success)' }}></i>
+                            Aceptar Efectivo en Recepción
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="col-12 col-md-6 d-flex align-items-center mt-3">
                         <div className="form-check form-switch custom-switch">
                           <input className="form-check-input" type="checkbox" id="switchComision" name="absorberComisionTarjeta" checked={config.absorberComisionTarjeta} onChange={handleConfigChange} style={{ width: '2.5rem', height: '1.3rem' }} />
                           <label className="form-check-label ms-2 text-white" htmlFor="switchComision" style={{ fontSize: '0.85rem' }}>
@@ -564,7 +606,7 @@ export default function EditarBox() {
                           </label>
                         </div>
                       </div>
-                      <div className="col-12 col-md-6">
+                      <div className="col-12 col-md-6 mt-3">
                         <label className="eb-label" style={{ color: '#6772E5' }}>Compra Mínima para Tarjeta ($)</label>
                         <input type="number" name="compraMinimaTarjeta" className="eb-input" value={config.compraMinimaTarjeta} onChange={handleConfigChange} placeholder="Ej. 100" />
                         <small className="text-secondary" style={{ fontSize: '0.7rem' }}>Menor a esto solo permite fiar ("Deuda") o cobrar en efectivo. Ayuda a evitar comisiones trampa.</small>
@@ -740,6 +782,24 @@ export default function EditarBox() {
                         </select>
                         <small className="text-secondary" style={{ fontSize: '0.7rem' }}>Después del vencimiento, el atleta tiene estos días para pagar antes de perder acceso.</small>
                       </div>
+                      
+                      {config.diasGracia > 0 && (
+                          <div className="col-12 col-md-6 d-flex align-items-center">
+                              <div className="form-check form-switch custom-switch mt-4">
+                                  <input className="form-check-input" type="checkbox" id="switchGraciaSoloAuto" name="aplicarGraciaSoloConCobroAutomatico" checked={config.aplicarGraciaSoloConCobroAutomatico} onChange={handleConfigChange} style={{ width: '2.5rem', height: '1.3rem' }} />
+                                  <label className="form-check-label ms-2 text-white" htmlFor="switchGraciaSoloAuto" style={{ fontSize: '0.85rem' }}>
+                                      Aplicar días de gracia SOLO a los que tienen Cobro Automático
+                                  </label>
+                              </div>
+                          </div>
+                      )}
+                      
+                      <div className="col-12 col-md-6">
+                        <label className="eb-label text-warning">Recargo por Pago Atrasado ($ Fijo)</label>
+                        <input type="number" name="recargoMontoFijo" className="eb-input border-warning text-warning fw-bold" value={config.recargoMontoFijo} onChange={handleConfigChange} placeholder="Ej. 50" />
+                        <small className="text-secondary" style={{ fontSize: '0.7rem' }}>Monto extra que se cobrará al pagar en línea si ya superó su fecha límite + gracia.</small>
+                      </div>
+
                       <div className="col-12 col-md-6">
                         <label className="eb-label">Máx. Meses de Renovación Anticipada</label>
                         <select name="maxMesesRenovacionAnticipada" className="eb-input" value={config.maxMesesRenovacionAnticipada} onChange={handleConfigChange}>
@@ -755,18 +815,23 @@ export default function EditarBox() {
                     </div>
                   </div>
 
-                  {/* ── ACCESO RÁPIDO AL CENTRO FINANCIERO ── */}
-                  <div className="d-flex flex-column flex-sm-row gap-3 align-items-stretch mb-4">
-                    <button type="button" className="eb-btn-guardar-form flex-grow-1" onClick={guardarConfiguracion} disabled={savingConfig}>
-                      {savingConfig
-                        ? <><i className="fas fa-spinner fa-spin me-2"></i>Guardando...</>
-                        : <><i className="fas fa-save me-2"></i>Guardar Configuración Financiera</>
-                      }
-                    </button>
-                    <button type="button" className="eb-btn-cancelar flex-grow-0" onClick={() => navigate('/gestion-finanzas')} style={{ whiteSpace: 'nowrap' }}>
-                      <i className="fas fa-external-link-alt me-2"></i>Ir al Centro Financiero
-                    </button>
-                  </div>
+                    <div className="d-flex flex-column flex-sm-row gap-3 align-items-stretch mb-4">
+                      <button type="button" className="eb-btn-guardar-form flex-grow-1" onClick={guardarConfiguracion} disabled={savingConfig}>
+                        {savingConfig
+                          ? <><i className="fas fa-spinner fa-spin me-2"></i>Guardando...</>
+                          : <><i className="fas fa-save me-2"></i>Guardar Configuración Financiera</>
+                        }
+                      </button>
+                      <button type="button" className="eb-btn-cancelar flex-grow-0" onClick={() => navigate('/gestion-finanzas')} style={{ whiteSpace: 'nowrap' }}>
+                        <i className="fas fa-external-link-alt me-2"></i>Ir al Centro Financiero
+                      </button>
+                      
+                      {config.stripeAccountId && (
+                          <a href="https://dashboard.stripe.com/login" target="_blank" rel="noopener noreferrer" className="btn btn-outline-primary flex-grow-0 d-flex align-items-center justify-content-center" style={{ whiteSpace: 'nowrap', borderRadius: '12px' }}>
+                              <i className="fab fa-stripe fs-5 me-2"></i>Mi Portal de Pagos
+                          </a>
+                      )}
+                    </div>
 
                 </div>
               )}
