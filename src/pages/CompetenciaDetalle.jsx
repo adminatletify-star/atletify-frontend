@@ -1429,8 +1429,6 @@ export default function CompetenciaDetalle() {
                 </div>
               </div>
 
-              </div>
-
               {/* B2C CONFIGURACIÓN FINANCIERA */}
               <div className="cd-section-header mt-4" style={{ marginBottom: '1rem' }}>
                 <span className="cd-card-titulo cd-card-titulo--info">
