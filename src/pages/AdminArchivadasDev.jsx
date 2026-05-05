@@ -17,7 +17,7 @@ export default function AdminArchivadasDev() {
   const [cargandoBoxes, setCargandoBoxes] = useState(true);
   const [busqueda, setBusqueda] = useState('');
 
-  // Validar rol
+  // Validar rol // no es nada nuevo 
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('usuario'));
     if (!u || u.rol !== 'Developer') {

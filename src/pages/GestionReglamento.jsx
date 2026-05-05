@@ -24,6 +24,19 @@ export default function GestionReglamento() {
   const [firmas, setFirmas] = useState([]);
   const [cargandoFirmas, setCargandoFirmas] = useState(false);
   const [firmaSeleccionada, setFirmaSeleccionada] = useState(null);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
+  const [firmaSeleccionadaParaPdf, setFirmaSeleccionadaParaPdf] = useState(null);
+  const [generandoPdf, setGenerandoPdf] = useState(false);
+  const [busquedaFirma, setBusquedaFirma] = useState('');
+
+  const firmasFiltradas = firmas.filter(f => {
+    if (!busquedaFirma) return true;
+    const b = busquedaFirma.toLowerCase();
+    const nombre = `${f.usuario.nombre} ${f.usuario.apellidos}`.toLowerCase();
+    const correo = (f.usuario.correo || '').toLowerCase();
+    const fecha = new Date(f.fechaFirma).toLocaleString('es-MX').toLowerCase();
+    return nombre.includes(b) || correo.includes(b) || fecha.includes(b);
+  });
 
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('usuario'));
@@ -98,6 +111,88 @@ export default function GestionReglamento() {
     } finally {
       setGuardando(false);
     }
+  };
+
+  const previsualizarPdf = (firma) => {
+    // 1. Verificación: ¿El atleta firmó antes o después de la última actualización?
+    const fechaFirma = new Date(firma.fechaFirma);
+    const fechaActualizacion = actualizadoEn ? new Date(actualizadoEn) : new Date(0);
+    
+    if (fechaFirma < fechaActualizacion) {
+      alert("⚠️ Esta firma pertenece a una versión anterior del reglamento. El atleta debe firmar el reglamento actual para generar su documento PDF.");
+      return;
+    }
+
+    setGenerandoPdf(true);
+
+    // 2. Cargar html2pdf si no existe
+    if (!window.html2pdf) {
+      const script = document.createElement('script');
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+      script.onload = () => generarDocumentoPdf(firma);
+      document.body.appendChild(script);
+    } else {
+      generarDocumentoPdf(firma);
+    }
+  };
+
+  const generarDocumentoPdf = (firma) => {
+    const contenedor = document.createElement('div');
+    contenedor.style.padding = '40px';
+    contenedor.style.fontFamily = 'Arial, sans-serif';
+    contenedor.style.color = '#000';
+    contenedor.style.backgroundColor = '#fff';
+
+    const fechaFirmaStr = new Date(firma.fechaFirma).toLocaleString('es-MX', {
+      year: 'numeric', month: 'long', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+
+    const nombreCompleto = `${firma.usuario.nombre} ${firma.usuario.apellidos}`;
+
+    contenedor.innerHTML = `
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h2>Reglamento Oficial y Carta Compromiso</h2>
+      </div>
+      <p style="font-size: 14px; line-height: 1.6; text-align: justify; margin-bottom: 20px;">
+        Yo, <strong>${nombreCompleto}</strong>, el día <strong>${fechaFirmaStr}</strong>, declaro haber leído, comprendido y me comprometo a cumplir estrictamente con todo lo estipulado en el siguiente reglamento interno del Box:
+      </p>
+      <hr style="margin-bottom: 20px;" />
+      <div style="font-size: 13px; line-height: 1.5; color: #333;">
+        ${reglamentoHtml}
+      </div>
+      <hr style="margin-top: 30px; margin-bottom: 30px;" />
+      <div style="text-align: center; margin-top: 40px; page-break-inside: avoid;">
+        <p style="margin-bottom: 10px; font-weight: bold;">Firma de Conformidad</p>
+        <img src="${firma.firmaBase64}" style="max-height: 120px; max-width: 300px; border-bottom: 1px solid #000; padding-bottom: 5px;" />
+        <p style="margin-top: 5px;">${nombreCompleto}</p>
+      </div>
+    `;
+
+    const opt = {
+      margin:       10,
+      filename:     `Reglamento_${firma.usuario.nombre.replace(/\s+/g, '_')}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    window.html2pdf().set(opt).from(contenedor).toPdf().get('pdf').then((pdf) => {
+      const pdfUrl = pdf.output('bloburl');
+      setPdfPreviewUrl(pdfUrl);
+      setFirmaSeleccionadaParaPdf(firma);
+      setGenerandoPdf(false);
+    });
+  };
+
+  const descargarBlob = () => {
+    if (!pdfPreviewUrl || !firmaSeleccionadaParaPdf) return;
+    const a = document.createElement('a');
+    a.href = pdfPreviewUrl;
+    a.download = `Reglamento_${firmaSeleccionadaParaPdf.usuario.nombre.replace(/\s+/g, '_')}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   if (loading) {
@@ -184,10 +279,31 @@ export default function GestionReglamento() {
         {/* Tab Content: Historial de Firmas */}
         {tabActiva === 'historial' && (
           <div className="card bg-dark text-light border-secondary shadow-lg">
-            <div className="card-header border-secondary py-3">
+            <div className="card-header border-secondary py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
               <h5 className="mb-0 text-danger" style={{ fontWeight: '800' }}>
                 <i className="fas fa-list me-2"></i>Atletas que han firmado
               </h5>
+              <div className="input-group" style={{ maxWidth: '350px' }}>
+                <span className="input-group-text bg-dark border-secondary text-muted">
+                  <i className="fas fa-search"></i>
+                </span>
+                <input 
+                  type="text" 
+                  className="form-control bg-dark text-light border-secondary" 
+                  placeholder="Buscar nombre, correo o fecha..."
+                  value={busquedaFirma}
+                  onChange={(e) => setBusquedaFirma(e.target.value)}
+                />
+                {busquedaFirma && (
+                  <button 
+                    className="btn btn-outline-secondary" 
+                    type="button" 
+                    onClick={() => setBusquedaFirma('')}
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                )}
+              </div>
             </div>
             <div className="card-body p-0">
               {cargandoFirmas ? (
@@ -199,6 +315,11 @@ export default function GestionReglamento() {
                 <div className="text-center py-5 text-muted">
                   <i className="fas fa-signature fa-3x mb-3" style={{ opacity: 0.3 }}></i>
                   <p>Aún no hay firmas registradas.</p>
+                </div>
+              ) : firmasFiltradas.length === 0 ? (
+                <div className="text-center py-5 text-muted">
+                  <i className="fas fa-search fa-3x mb-3" style={{ opacity: 0.3 }}></i>
+                  <p>No se encontraron firmas que coincidan con "{busquedaFirma}".</p>
                 </div>
               ) : (
                 <div className="table-responsive">
@@ -212,7 +333,7 @@ export default function GestionReglamento() {
                       </tr>
                     </thead>
                     <tbody>
-                      {firmas.map((f) => (
+                      {firmasFiltradas.map((f) => (
                         <tr key={f.idFirma}>
                           <td className="border-secondary fw-bold text-light">
                             {f.usuario.nombre} {f.usuario.apellidos}
@@ -223,10 +344,19 @@ export default function GestionReglamento() {
                           </td>
                           <td className="border-secondary text-center">
                             <button 
-                              className="btn btn-sm btn-outline-info rounded-pill"
+                              className="btn btn-sm btn-outline-info rounded-pill me-2"
                               onClick={() => setFirmaSeleccionada(f)}
+                              title="Ver firma"
                             >
-                              <i className="fas fa-eye me-1"></i>Ver
+                              <i className="fas fa-eye"></i>
+                            </button>
+                            <button 
+                              className="btn btn-sm btn-outline-danger rounded-pill"
+                              onClick={() => previsualizarPdf(f)}
+                              title="Previsualizar PDF"
+                              disabled={generandoPdf}
+                            >
+                              <i className={generandoPdf ? "fas fa-spinner fa-spin" : "fas fa-file-pdf"}></i>
                             </button>
                           </td>
                         </tr>
@@ -258,6 +388,42 @@ export default function GestionReglamento() {
                   alt="Firma del Atleta" 
                   style={{ maxWidth: '100%', border: '1px dashed #ccc' }} 
                 />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para PREVISUALIZAR el PDF */}
+      {pdfPreviewUrl && firmaSeleccionadaParaPdf && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 1060 }}>
+          <div className="modal-dialog modal-xl modal-dialog-centered">
+            <div className="modal-content bg-dark text-light border-secondary" style={{ height: '85vh' }}>
+              <div className="modal-header border-secondary">
+                <h5 className="modal-title text-danger fw-bold">
+                  <i className="fas fa-file-pdf me-2"></i>Previsualización de Documento
+                </h5>
+                <div>
+                  <button 
+                    type="button" 
+                    className="btn btn-danger me-3" 
+                    onClick={descargarBlob}
+                    style={{ borderRadius: '20px', fontWeight: 'bold' }}
+                  >
+                    <i className="fas fa-download me-2"></i>Descargar PDF
+                  </button>
+                  <button type="button" className="btn-close btn-close-white" onClick={() => {
+                    setPdfPreviewUrl(null);
+                    setFirmaSeleccionadaParaPdf(null);
+                  }}></button>
+                </div>
+              </div>
+              <div className="modal-body p-0 bg-white">
+                <iframe 
+                  src={pdfPreviewUrl} 
+                  style={{ width: '100%', height: '100%', border: 'none' }} 
+                  title="PDF Preview"
+                ></iframe>
               </div>
             </div>
           </div>

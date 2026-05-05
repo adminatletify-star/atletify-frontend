@@ -220,12 +220,12 @@ export default function GestionJuecesPanel({ idCompetencia, colorTheme = 'info' 
               <div className="cd-wod-card">
                 <div className={`cd-wod-tip cd-wod-tip--${j.activo ? 'amrap' : 'peso'}`}></div>
                 <div className="d-flex justify-content-between align-items-start mb-2">
-                  <h5 className="cd-wod-nombre">{j.nombre} {j.apellidos}</h5>
+                  <h5 className="cd-wod-nombre" style={{ textTransform: 'none' }}>{j.nombre} {j.apellidos}</h5>
                   <span className={`cd-badge ${j.activo ? 'cd-badge--success' : 'cd-badge--danger'}`}>
                     {j.activo ? 'Activo' : 'Inactivo'}
                   </span>
                 </div>
-                <div className="cd-tipo-badge cd-tipo-badge--amrap">
+                <div className="cd-tipo-badge cd-tipo-badge--amrap" style={{ textTransform: 'none' }}>
                   <i className="fas fa-user-tag"></i>
                   {j.username}
                 </div>

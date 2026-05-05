@@ -12,6 +12,7 @@ import TimeWheelPicker from '../components/TimeWheelPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import PlanesModal from '../components/PlanesModal';
 import GestionJuecesPanel from '../components/GestionJuecesPanel';
+import GestionStaffCompePanel from '../components/GestionStaffCompePanel';
 import '../assets/css/CompetenciaDetalle.css';
 
 export default function CompetenciaDetalle() {
@@ -70,6 +71,7 @@ export default function CompetenciaDetalle() {
   const [cargandoRoster, setCargandoRoster] = useState(false);
   const [procesandoPago, setProcesandoPago] = useState(false);
   const [juecesComp, setJuecesComp] = useState([]);
+  const [staffComp, setStaffComp] = useState([]);
   const [modalTallaVisible, setModalTallaVisible] = useState(null);
 
   const adminLeaderboardCalculado = useMemo(() => {
@@ -501,6 +503,12 @@ export default function CompetenciaDetalle() {
       const resJueces = await fetch(`${API_BASE_URL_CONST}/usuarios/jueces/${id}`);
       if (resJueces.ok) {
         setJuecesComp(await resJueces.json());
+      }
+
+      // Cargar staff operativo para la Orden de Imprenta
+      const resStaff = await fetch(`${API_BASE_URL_CONST}/usuarios/staff-compe/${id}`);
+      if (resStaff.ok) {
+        setStaffComp(await resStaff.json());
       }
     } catch (err) {
       console.error(err);
@@ -1109,6 +1117,7 @@ export default function CompetenciaDetalle() {
     { id: 'parametros', label: 'Parámetros', icon: 'fa-list-ul' },
     { id: 'wods', label: 'Diseño de WODs', icon: 'fa-dumbbell' },
     { id: 'jueces', label: 'Gestión de Jueces', icon: 'fa-gavel' },
+    { id: 'staff', label: 'Staff Operativo', icon: 'fa-users-cog' },
     { id: 'auditoria', label: 'Auditoría Scores', icon: 'fa-shield-alt' }
   ];
 
@@ -1304,7 +1313,24 @@ export default function CompetenciaDetalle() {
               if (tallasPlayerasList[talla] !== undefined) {
                 tallasPlayerasList[talla].push({
                   nombre: `${j.nombreCompleto || j.NombreCompleto} ${j.apellidos || j.Apellidos || ''}`.trim(),
-                  categoria: 'Juez / Staff',
+                  categoria: 'Juez',
+                  equipo: '-'
+                });
+              }
+            }
+          });
+
+          // Agregar tallas del staff operativo a la Orden de Imprenta
+          staffComp.forEach(s => {
+            if (s.activo) {
+              let talla = (s.tallaPlayera || s.TallaPlayera || '').toUpperCase().trim();
+              if (talla === 'CH') talla = 'S';
+              if (talla === 'G') talla = 'L';
+              if (talla === 'XG') talla = 'XL';
+              if (tallasPlayerasList[talla] !== undefined) {
+                tallasPlayerasList[talla].push({
+                  nombre: `${s.nombre || s.Nombre} ${s.apellidos || s.Apellidos || ''}`.trim(),
+                  categoria: 'Staff Operativo',
                   equipo: '-'
                 });
               }
@@ -2925,6 +2951,7 @@ export default function CompetenciaDetalle() {
                           <th style={{ paddingLeft: '1rem' }}>Equipo / Atleta</th>
                           <th>WOD</th>
                           <th style={{ textAlign: 'center' }}>Score</th>
+                          <th style={{ textAlign: 'center' }}>Juez</th>
                           <th style={{ textAlign: 'center' }}>Estatus</th>
                           <th style={{ textAlign: 'center' }}>Enviado</th>
                           <th style={{ textAlign: 'right', paddingRight: '1rem' }}>Acciones</th>
@@ -2948,6 +2975,12 @@ export default function CompetenciaDetalle() {
                               </td>
                               <td style={{ textAlign: 'center', fontFamily: 'var(--font-stats)', fontWeight: 700, fontSize: '1.05rem', color: 'var(--accent-cool)' }}>
                                 {score.resultado}
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                  <i className="fas fa-user-tag me-1"></i>
+                                  {score.nombreJuez || score.NombreJuez || 'Sin Juez'}
+                                </span>
                               </td>
                               <td style={{ textAlign: 'center' }}>
                                 <span className={`cd-badge ${estatus === 'Aprobado' ? 'cd-badge--success' : 'cd-badge--warning'}`}>
@@ -3112,6 +3145,13 @@ export default function CompetenciaDetalle() {
         {/* ========================================================= */}
         {tabActiva === 'jueces' && (
           <GestionJuecesPanel idCompetencia={id} />
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB: STAFF OPERATIVO */}
+        {/* ========================================================= */}
+        {tabActiva === 'staff' && (
+          <GestionStaffCompePanel idCompetencia={id} />
         )}
           </>
         )}

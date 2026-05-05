@@ -7,9 +7,10 @@ import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import '../assets/css/PerfilAtletaAdmin.css';
 import BotonSeguro from '../components/BotonSeguro';
 
-const API_USUARIOS = import.meta.env.VITE_API_URL;
-const API_COBRANZA = import.meta.env.VITE_API_URL;
-const API_PRECIO = import.meta.env.VITE_API_URL;
+const API_USUARIOS = `${import.meta.env.VITE_API_URL}/usuarios`;
+const API_COBRANZA = `${import.meta.env.VITE_API_URL}/cobranza`;
+const API_PRECIO = `${import.meta.env.VITE_API_URL}/precioespecial`;
+const API_FINANZAS = `${import.meta.env.VITE_API_URL}/finanzas`;
 
 export default function PerfilAtletaAdmin() {
   const { idUsuario } = useParams();
@@ -62,7 +63,7 @@ export default function PerfilAtletaAdmin() {
       const [resAtleta, resFinanzas, resDescuentos] = await Promise.all([
         fetch(`${API_USUARIOS}/${idUsuario}`, { headers: headersGet }),
         fetch(`${API_COBRANZA}/atleta/${idUsuario}`, { headers: headersGet }),
-        fetch(`import.meta.env.VITE_API_URL:7149/api/finanzas/descuentos/${b.idBox}`, { headers: headersGet })
+        fetch(`${API_FINANZAS}/descuentos/${b.idBox}`, { headers: headersGet })
       ]);
 
 
