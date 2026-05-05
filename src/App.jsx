@@ -56,6 +56,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import SeleccionPlanSaaS from './pages/SeleccionPlanSaaS';
 import RegistroBoxSaaS from './pages/RegistroBoxSaaS';
+import PerfilAdminCoach from './pages/PerfilAdminCoach';
+import NotFound from './pages/NotFound';
 
 // Nuevos Módulos (Edwin)
 import GestionInventario from './pages/GestionInventario';
@@ -379,6 +381,7 @@ function App() {
             <Route path="/wolf-beneficios" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><WolfBeneficios /></ProtectedRoute>} />
             <Route path="/buzon-sugerencias" element={<ProtectedRoute allowedRoles={['Atleta', 'Coach', 'AdminBox', 'Developer']}><BuzonSugerencias /></ProtectedRoute>} />
             <Route path="/gestion-reglamento" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><GestionReglamento /></ProtectedRoute>} />
+            <Route path="/perfil-admin" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><PerfilAdminCoach /></ProtectedRoute>} />
 
             {/* --- ZONA ATLETAS Y USUARIOS --- */}
             <Route path="/user-panel" element={<ProtectedRoute allowedRoles={['Usuario', 'Atleta', 'AdminBox', 'Coach', 'Developer']}><UserPanel /></ProtectedRoute>} />
@@ -395,6 +398,9 @@ function App() {
             <Route path="/detalle-plan-user" element={<ProtectedRoute allowedRoles={['Atleta', 'Usuario']}><DetallePlanUser /></ProtectedRoute>} />
 
           </Route>
+
+          {/* Ruta 404 - Cualquier ruta no definida caerá aquí */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
         </MaintenanceGuard>
       </Router>

@@ -305,6 +305,11 @@ export default function CalendarioWods() {
 
                               {/* BADGES */}
                               <div className="d-flex flex-wrap gap-1 mb-1">
+                                {wod.bloques?.filter(b => b.tipoBloque === 'WOD').map((b, i) => (
+                                  <span key={`mod-${i}`} className="cw-badge" style={{ backgroundColor: 'var(--btn-soft-purple, #9153C6)', color: '#fff', border: 'none' }}>
+                                    <i className="fas fa-tag me-1"></i>{b.tipoModalidad}
+                                  </span>
+                                ))}
                                 <span className={`cw-badge ${wod.estaPublicado ? 'cw-badge-published' : 'cw-badge-draft'}`}>
                                   {wod.estaPublicado ? 'Público' : 'Borrador'}
                                 </span>

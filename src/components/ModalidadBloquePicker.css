@@ -20,6 +20,7 @@
 .mbp-trigger--tabata     { background: rgba(245,166,35,0.08);  border-color: rgba(245,166,35,0.3);  color: var(--accent, #f5a623); }
 .mbp-trigger--fuerzarm   { background: rgba(155,89,182,0.08);  border-color: rgba(155,89,182,0.3);  color: #9b59b6; }
 .mbp-trigger--notfortime { background: rgba(173,181,189,0.08); border-color: rgba(173,181,189,0.3); color: #adb5bd; }
+.mbp-trigger--benchmark  { background: rgba(193,53,235,0.08);  border-color: rgba(193,53,235,0.3);  color: var(--bg-neon-purple, #C135EB); }
 
 /* OVERLAY */
 .mbp-overlay {
@@ -75,6 +76,7 @@
 .mbp-option--activo.mbp-option--tabata     { border-color: rgba(245,166,35,0.4);  background: rgba(245,166,35,0.07); }
 .mbp-option--activo.mbp-option--fuerzarm   { border-color: rgba(155,89,182,0.4);  background: rgba(155,89,182,0.07); }
 .mbp-option--activo.mbp-option--notfortime { border-color: rgba(173,181,189,0.4); background: rgba(173,181,189,0.07); }
+.mbp-option--activo.mbp-option--benchmark  { border-color: rgba(193,53,235,0.4);  background: rgba(193,53,235,0.07); }
 
 .mbp-icon-wrap {
   width: 36px; height: 36px; border-radius: 10px;
@@ -86,6 +88,7 @@
 .mbp-option--tabata     .mbp-icon-wrap { background: rgba(245,166,35,0.1);  color: var(--accent, #f5a623); }
 .mbp-option--fuerzarm   .mbp-icon-wrap { background: rgba(155,89,182,0.1);  color: #9b59b6; }
 .mbp-option--notfortime .mbp-icon-wrap { background: rgba(173,181,189,0.1); color: #adb5bd; }
+.mbp-option--benchmark  .mbp-icon-wrap { background: rgba(193,53,235,0.1);  color: var(--bg-neon-purple, #C135EB); }
 
 .mbp-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .mbp-nombre {
@@ -98,6 +101,7 @@
 .mbp-option--tabata     .mbp-nombre { color: var(--accent, #f5a623); }
 .mbp-option--fuerzarm   .mbp-nombre { color: #9b59b6; }
 .mbp-option--notfortime .mbp-nombre { color: #adb5bd; }
+.mbp-option--benchmark  .mbp-nombre { color: var(--bg-neon-purple, #C135EB); }
 
 .mbp-desc { font-family: var(--font-body, 'Inter', sans-serif); font-size: 0.72rem; color: var(--text-muted, #888); margin-top: 0.1rem; }
 
@@ -108,3 +112,4 @@
 .mbp-option--tabata     .mbp-check { color: var(--accent, #f5a623); }
 .mbp-option--fuerzarm   .mbp-check { color: #9b59b6; }
 .mbp-option--notfortime .mbp-check { color: #adb5bd; }
+.mbp-option--benchmark  .mbp-check { color: var(--bg-neon-purple, #C135EB); }

@@ -98,6 +98,7 @@ export default function AdminBoxPanel() {
   });
 
   const menuItems = [
+    { link: '/perfil-admin', text: 'MI PERFIL / EXPEDIENTE', image: 'https://images.unsplash.com/photo-1526506190301-3d47c062c54c?w=600&q=80' },
     { link: '/registro-manual', text: 'NUEVO ATLETA', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&q=80' },
     { link: '/pase-de-lista', text: 'PASE DE LISTA', image: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=600&q=80' },
     { link: '/calendario-wods', text: 'PROGRAMAR WODS', image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&q=80' },

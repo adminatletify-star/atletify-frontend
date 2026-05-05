@@ -10,9 +10,7 @@ import HomeLegendasArena from '../components/HomeLegendasArena';
 import HomePricingSaaS from '../components/HomePricingSaaS';
 import '../assets/css/home.css';
 
-// Logos Atletify System
-import logoIcono from './Atketify System/logo.png';
-import logoConLetras from './Atketify System/Logo con letras.png';
+// Logos eliminados, ahora se usan desde public/LogosDeAtletify
 
 // Imágenes del collage
 import imgCuerdas from './img/Captura de pantalla 2026-03-26 161213.png';
@@ -159,7 +157,7 @@ export default function Home() {
       <nav className="navbar navbar-dark fixed-top home-navbar">
         <div className="container-fluid px-4">
           <Link to="/" className="navbar-brand d-flex align-items-center">
-            <img src={logoConLetras} alt="Atletify System" className="navbar-logo-img" />
+            <img src="/LogosDeAtletify/LogoBlanco.png" alt="Atletify System" className="navbar-logo-img" />
           </Link>
         </div>
       </nav>
@@ -200,7 +198,7 @@ export default function Home() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             >
-              <img src={logoIcono} alt="Atletify System" className="hero-logo-icono" />
+              <img src="/LogosDeAtletify/LogoBlanco.png" alt="Atletify System" className="hero-logo-icono" />
               <p className="hero-brand-name">
                 <span className="hero-brand-letra-roja">A</span>tletify{' '}
                 <span className="hero-brand-letra-roja">S</span>ystem
@@ -476,8 +474,11 @@ export default function Home() {
             transition={{ duration: 0.7 }}
           >
             <div className="cta-logo-banner">
-              <img src={logoConLetras} alt="Atletify System" className="cta-logo-banner-img" />
-            </div>
+        <img
+          src="/LogosDeAtletify/LogoBlanco.png"
+          alt="Atletify Logo"
+          className="cta-logo-banner-img"
+        />    </div>
 
             <h2 className="cta-titulo">
               ¡Únete hoy y<br />
@@ -509,7 +510,7 @@ export default function Home() {
       <footer className="home-footer">
         <div className="container text-center py-4">
           <div className="footer-logo-wrapper mb-2">
-            <img src={logoIcono} alt="Atletify System" className="footer-logo-icono" />
+            <img src="/LogosDeAtletify/LogoBlanco.png" alt="Atletify System" className="footer-logo-icono" />
             <span className="footer-brand-name fw-bold ms-2">
               <span className="text-danger">A</span>tletify{' '}
               <span className="text-danger">S</span>ystem

@@ -12,7 +12,6 @@ import TipoSangrePicker from '../components/TipoSangrePicker';
 import TallaPlayeraPicker from '../components/TallaPlayeraPicker';
 import MetodoPagoPicker from '../components/MetodoPagoPicker';
 import BotonSeguro from '../components/BotonSeguro';
-import logoAtletify from './Atketify System/logo.png';
 
 const CountdownTimer = ({ targetDate, onExpire }) => {
   const calculateTimeLeft = () => {
@@ -537,7 +536,7 @@ export default function PortalCompetencias() {
           <div className="d-flex align-items-center gap-2">
             <BackButton to="/competencias" />
             <Link to="/" className="portal-nav-brand">
-              <img src={logoAtletify} alt="Atletify System" style={{ height: '26px', width: 'auto' }} className="me-2" />
+              <img src="/LogosDeAtletify/LogoBlanco.png" alt="Atletify System" style={{ height: '26px', width: 'auto' }} className="me-2" />
               <span className="portal-nav-title">Atletify System</span>
             </Link>
           </div>

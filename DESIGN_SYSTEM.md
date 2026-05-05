@@ -1,73 +1,84 @@
-# WolfPack System — Design System
+# AtletifySystem — Design System
 
 ## Giro del Sistema
 
-WolfPack es un sistema de gestión integral para **Boxes de CrossFit / Functional Training**.  
-El nombre "WolfPack" (manada de lobos) evoca: **fuerza, unidad, ferocidad, disciplina, élite**.  
-La estética debe ser **oscura, agresiva, premium y atlética**.
+**AtletifySystem** es una plataforma integral de gestión para Boxes de entrenamiento funcional y fitness. Su estética busca ser vibrante, de alto contraste, moderna y orientada a la acción. 
 
 ---
 
-## Paleta de Colores — "Arctic Wolf"
+## Paleta de Colores
 
-Regla aplicada: **60-30-10**
+La paleta de colores de AtletifySystem está dividida estrictamente por casos de uso para mantener la consistencia visual en toda la aplicación.
 
-### Fondos (60%)
+### 1. Fondos, Contenedores y Cards (60%)
+Estos colores deben utilizarse en los fondos principales de la aplicación, contenedores modulares, tarjetas (cards), paneles y modales. 
+Aportan la estructura base sobre la cual descansan los demás componentes.
 
-| Variable          | Hex         | Descripción                          |
-|-------------------|-------------|--------------------------------------|
-| `--bg-base`       | `#0B0B0F`   | Fondo principal de toda la app       |
-| `--bg-elevated`   | `#14141A`   | Fondo de secciones, contenedores     |
-| `--bg-card`       | `#1C1C26`   | Tarjetas, modales, sidebars          |
-| `--bg-card-hover` | `#252533`   | Hover de tarjetas                    |
-| `--bg-input`      | `#1A1A24`   | Inputs y selects                     |
+| Color | Hexadecimal | Uso sugerido |
+| :--- | :--- | :--- |
+| ![#1912EA](https://via.placeholder.com/15/1912EA/000000?text=+) | `#1912EA` | Fondos intensos, contenedores heroicos |
+| ![#F02C10](https://via.placeholder.com/15/F02C10/000000?text=+) | `#F02C10` | Tarjetas destacadas, bloques de advertencia/importancia |
+| ![#DADFE5](https://via.placeholder.com/15/DADFE5/000000?text=+) | `#DADFE5` | Fondos de aplicación claros, tarjetas neutrales |
+| ![#081A19](https://via.placeholder.com/15/081A19/000000?text=+) | `#081A19` | Fondos dark-mode, sidebars, modales profundos |
+| ![#C135EB](https://via.placeholder.com/15/C135EB/000000?text=+) | `#C135EB` | Paneles creativos, tarjetas de membrecías premium |
 
-### Colores principales (30% + 10%)
+### 2. Contrastes (30%)
+Estos colores están destinados a generar jerarquía visual. Se usan para separar contenido, crear líneas divisorias, bordes, sombras, y para enfatizar secciones o dar peso a elementos inactivos o de estado.
 
-| Variable           | Hex / Valor                      | Descripción                                  |
-|--------------------|----------------------------------|----------------------------------------------|
-| `--primary`        | `#E63946`                        | Botones principales, acentos clave (10%)     |
-| `--primary-dark`   | `#B82D38`                        | Hover de botones, bordes activos             |
-| `--primary-glow`   | `rgba(230, 57, 70, 0.25)`       | Box-shadow, glows, focus rings               |
-| `--secondary`      | `#A8B2D1`                        | Texto secundario, subtítulos, iconos inactivos |
-| `--accent`         | `#F5A623`                        | Badges premium, rankings, estrellas, alertas |
-| `--accent-cool`    | `#4FC3F7`                        | Links informativos, stats, charts            |
+| Color | Hexadecimal | Uso sugerido |
+| :--- | :--- | :--- |
+| ![#000000](https://via.placeholder.com/15/000000/000000?text=+) | `#000000` | Contrastes absolutos, sombras, superposiciones (overlays) |
+| ![#2A0048](https://via.placeholder.com/15/2A0048/000000?text=+) | `#2A0048` | Bordes profundos, fondos para insignias |
+| ![#560072](https://via.placeholder.com/15/560072/000000?text=+) | `#560072` | Divisores, secciones contrastantes secundarias |
+| ![#800080](https://via.placeholder.com/15/800080/000000?text=+) | `#800080` | Elementos de estado neutral o enfocados |
+| ![#A90072](https://via.placeholder.com/15/A90072/000000?text=+) | `#A90072` | Detalles sutiles, acentos en bordes |
+| ![#D50048](https://via.placeholder.com/15/D50048/000000?text=+) | `#D50048` | Alertas de sistema secundarias, iconos |
+| ![#FF0000](https://via.placeholder.com/15/FF0000/000000?text=+) | `#FF0000` | Errores críticos, eliminaciones, estados de peligro |
 
-### Estados
+### 3. Botones y Texto Primario (10%)
+La interacción del usuario depende de estos colores. Son de máxima jerarquía visual para las llamadas a la acción (CTA), botones, links y textos de alto impacto.
 
-| Variable      | Hex         | Descripción                        |
-|---------------|-------------|------------------------------------|
-| `--success`   | `#2ECC71`   | Estados activos, confirmaciones    |
-| `--warning`   | `#F39C12`   | Advertencias, estados pendientes   |
-| `--danger`    | `#E74C3C`   | Errores, eliminaciones             |
-
-### Texto
-
-| Variable          | Hex / Valor   | Descripción                       |
-|-------------------|---------------|-----------------------------------|
-| `--text-primary`  | `#F0F0F5`     | Texto principal (no blanco puro)  |
-| `--text-muted`    | `#6B7280`     | Texto terciario, placeholders     |
-
-### Bordes y Glass
-
-| Variable          | Valor                            | Descripción                        |
-|-------------------|----------------------------------|------------------------------------|
-| `--border`        | `rgba(255, 255, 255, 0.06)`     | Líneas divisoras, bordes tarjetas  |
-| `--border-hover`  | `rgba(230, 57, 70, 0.4)`        | Bordes en hover/focus              |
-| `--glass-bg`      | `rgba(20, 20, 30, 0.85)`        | Glassmorphism (modales, dropdowns) |
+| Color | Hexadecimal | Uso sugerido |
+| :--- | :--- | :--- |
+| ![#7288B9](https://via.placeholder.com/15/7288B9/000000?text=+) | `#7288B9` | Botones secundarios, texto descriptivo o informativo |
+| ![#4D59F8](https://via.placeholder.com/15/4D59F8/000000?text=+) | `#4D59F8` | Botones primarios (Guardar, Enviar, Aceptar) |
+| ![#C71627](https://via.placeholder.com/15/C71627/000000?text=+) | `#C71627` | Botones de acción urgente, texto de alerta vital |
+| ![#7C1ED9](https://via.placeholder.com/15/7C1ED9/000000?text=+) | `#7C1ED9` | Botones de features premium, enlaces destacados |
+| ![#9153C6](https://via.placeholder.com/15/9153C6/000000?text=+) | `#9153C6` | Texto interactivo, hovers en botones púrpuras |
 
 ---
 
-## Fuentes
+## Responsive Design — Estandarización con Bootstrap 5
+
+El sistema **AtletifySystem** utiliza **Bootstrap 5** como motor principal para la disposición fluida y responsiva de los elementos. Todo diseño nuevo debe apegarse estrictamente al sistema de Grid y utilidades de Bootstrap.
+
+### Breakpoints Oficiales (Bootstrap 5)
+- **xs (Extra small)**: `< 576px` (Móviles en vertical)
+- **sm (Small)**: `≥ 576px` (Móviles en horizontal / Tablets pequeñas)
+- **md (Medium)**: `≥ 768px` (Tablets / iPads)
+- **lg (Large)**: `≥ 992px` (Laptops / Pantallas pequeñas)
+- **xl (Extra large)**: `≥ 1200px` (Monitores de escritorio)
+- **xxl (Extra extra large)**: `≥ 1400px` (Pantallas grandes)
+
+### Reglas de Diseño Responsivo
+1. **Mobile-First Approach**: Siempre se diseña pensando primero en la pantalla móvil (`col-12`) y se escala hacia arriba con los breakpoints (`col-md-6`, `col-lg-4`).
+2. **Uso de Grid (`row` y `col`)**: Nunca usar valores de `width` forzados en CSS para layouts. Todo debe ir envuelto en un `.container` o `.container-fluid`, seguido de `.row` y sus respectivas `.col-`.
+3. **Visibilidad de Elementos (`d-none`, `d-md-block`)**:
+   - Ocultar tablas densas en móviles usando `d-none d-md-block` o implementar `table-responsive`.
+   - Mostrar versiones en tarjetas apiladas para móviles (`d-md-none`).
+4. **Espaciados Dinámicos**: Usar clases de utilidad como `gap-2 gap-md-4`, `p-3 p-lg-5`, `mb-3 mb-md-0` para ajustar los márgenes y paddings según el tamaño de la pantalla sin necesidad de media queries manuales en CSS.
+5. **Flexbox Utilities**: Priorizar `d-flex`, `align-items-center`, `justify-content-between`, `flex-column flex-md-row` para adaptar barras de navegación, menús laterales y headers responsivos de manera nativa.
+
+---
+
+## Tipografía (Fuentes)
 
 ### Google Fonts — Línea de importación
-
 ```html
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 ```
 
 ### Asignación por elemento
-
 | Elemento               | Fuente              | Peso      | Notas                          |
 |------------------------|---------------------|-----------|--------------------------------|
 | Headings H1-H2         | `Oswald`            | 600–700   | uppercase, impacto máximo      |
@@ -77,134 +88,35 @@ Regla aplicada: **60-30-10**
 | Números / stats        | `Rajdhani`          | 600–700   | Counters, leaderboards, timers |
 | Banners heroicos       | `Bebas Neue`        | 400       | Ya es bold por naturaleza      |
 
-### Descripción de cada fuente
-
-- **Oswald**: Condensada, fuerte, impactante. LA fuente del mundo fitness/CrossFit.
-- **Bebas Neue**: Ultra condensada, all-caps natural. Para títulos heroicos y banners de competencia.
-- **Rajdhani**: Geométrica, técnica. Ideal para estadísticas, counters y leaderboards.
-- **Barlow Condensed**: Militar/atlética, limpia. Subtítulos y nombres de secciones.
-- **Inter**: Diseñada para interfaces. Ultra legible, moderna, elegante.
-
-### Ejemplos concretos de uso por fuente
-
-#### Oswald (Títulos principales — H1, H2)
-- Nombre del Box: **"WOLFPACK GYM"**
-- Título de página: **"DASHBOARD"**, **"MIS CLASES"**, **"INVENTARIO"**
-- Encabezado de sección principal: **"COMPETENCIAS ACTIVAS"**, **"PASE DE LISTA"**
-- Nombre de competencia grande: **"WOLFPACK THROWDOWN 2026"**
-- Estilo: `font-family: 'Oswald'; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;`
-
-#### Bebas Neue (Banners heroicos, impacto visual)
-- Hero del Home: **"ENTRENA COMO MANADA"**
-- Banners de competencia: **"INSCRIPCIONES ABIERTAS"**
-- Pantalla de splash o bienvenida: **"BIENVENIDO A WOLFPACK"**
-- Contadores gigantes en landing: **"150+ ATLETAS"**
-- Estilo: `font-family: 'Bebas Neue'; font-size: 3rem+; text-transform: uppercase; letter-spacing: 2px;`
-
-#### Barlow Condensed (Subtítulos — H3, H4, H5)
-- Subtítulos de tarjeta: **"Información del Atleta"**, **"Detalles de la Clase"**
-- Nombres de tabs/secciones: **"General"**, **"Finanzas"**, **"Staff"**
-- Encabezados de tabla: **"Nombre"**, **"Rol"**, **"Estatus"**
-- Labels de formulario: **"Correo electrónico"**, **"Contraseña"**
-- Títulos de modales: **"Editar Usuario"**, **"Confirmar Pago"**
-- Estilo: `font-family: 'Barlow Condensed'; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;`
-
-#### Inter (Cuerpo, UI general)
-- Párrafos y descripciones: "Este WOD consiste en 5 rondas de..."
-- Texto dentro de inputs y selects
-- Texto de botones: "Guardar", "Cancelar", "Registrarse"
-- Mensajes de alerta: "Usuario registrado correctamente"
-- Contenido de tarjetas: datos del atleta, descripción de productos
-- Texto de navegación (navbar, sidebar, menús)
-- Placeholders: "Ingresa tu correo..."
-- Estilo: `font-family: 'Inter'; font-weight: 400; (500-600 para botones y labels)`
-
-#### Rajdhani (Números, estadísticas, datos numéricos)
-- Contadores de dashboard: **"85"** atletas activos, **"12"** clases hoy
-- Leaderboard scores: **"15:23"**, **"245 lbs"**, **"3 Rondas + 5 Reps"**
-- Precios en punto de venta: **"$350.00"**
-- Timers de WOD: **"12:00"**, **"AMRAP 20"**
-- Estadísticas de perfil: Peso **"75 kg"**, PR **"120 kg"**
-- Cantidades de inventario: **"Stock: 24"**
-- Estilo: `font-family: 'Rajdhani'; font-weight: 700; letter-spacing: 0.5px;`
-
 ---
 
-## CSS Variables — Bloque listo para copiar
+## CSS Variables — Bloque Base 
+
+A partir de los colores proporcionados, se sugiere declararlos en la raíz global para un fácil uso con Tailwind o CSS puro:
 
 ```css
 :root {
-  /* === FONDOS === */
-  --bg-base: #0B0B0F;
-  --bg-elevated: #14141A;
-  --bg-card: #1C1C26;
-  --bg-card-hover: #252533;
-  --bg-input: #1A1A24;
+  /* FONDOS, CONTENEDORES Y CARDS */
+  --bg-deep-blue: #1912EA;
+  --bg-alert-red: #F02C10;
+  --bg-light-grey: #DADFE5;
+  --bg-dark-teal: #081A19;
+  --bg-neon-purple: #C135EB;
 
-  /* === PRIMARIOS === */
-  --primary: #E63946;
-  --primary-dark: #B82D38;
-  --primary-glow: rgba(230, 57, 70, 0.25);
+  /* CONTRASTES */
+  --contrast-black: #000000;
+  --contrast-deep-purple: #2A0048;
+  --contrast-purple: #560072;
+  --contrast-magenta: #800080;
+  --contrast-pinkish: #A90072;
+  --contrast-reddish: #D50048;
+  --contrast-red: #FF0000;
 
-  /* === SECUNDARIOS Y ACENTOS === */
-  --secondary: #A8B2D1;
-  --accent: #F5A623;
-  --accent-cool: #4FC3F7;
-
-  /* === ESTADOS === */
-  --success: #2ECC71;
-  --warning: #F39C12;
-  --danger: #E74C3C;
-
-  /* === TEXTO === */
-  --text-primary: #F0F0F5;
-  --text-muted: #6B7280;
-
-  /* === BORDES Y GLASS === */
-  --border: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(230, 57, 70, 0.4);
-  --glass-bg: rgba(20, 20, 30, 0.85);
-
-  /* === FUENTES === */
-  --font-heading: 'Oswald', sans-serif;
-  --font-heading-alt: 'Barlow Condensed', sans-serif;
-  --font-body: 'Inter', sans-serif;
-  --font-stats: 'Rajdhani', sans-serif;
-  --font-hero: 'Bebas Neue', sans-serif;
-
-  /* === TRANSICIÓN GLOBAL === */
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* BOTONES Y TEXTO */
+  --btn-steel-blue: #7288B9;
+  --btn-bright-blue: #4D59F8;
+  --btn-crimson: #C71627;
+  --btn-electric-purple: #7C1ED9;
+  --btn-soft-purple: #9153C6;
 }
 ```
-
----
-
-## Referencia Visual Rápida
-
-```
-┌──────────────────────────────────────────────────────┐
-│  FONDO BASE (#0B0B0F)                     60%        │
-│  ┌──────────────────────────────────────────────┐    │
-│  │  TARJETA (#1C1C26)                   30%     │    │
-│  │                                              │    │
-│  │  Título (Oswald 700) ── #F0F0F5              │    │
-│  │  Subtítulo (Barlow) ── #A8B2D1               │    │
-│  │  Párrafo (Inter 400) ── #6B7280              │    │
-│  │                                              │    │
-│  │  [  BOTÓN PRIMARIO  ]  ── #E63946    10%     │    │
-│  │  ★ Ranking ── #F5A623                        │    │
-│  │  ℹ Info link ── #4FC3F7                      │    │
-│  └──────────────────────────────────────────────┘    │
-└──────────────────────────────────────────────────────┘
-```
-
----
-
-## Notas de Diseño
-
-- **Rojo `#E63946`** en lugar de `#FF0000`: El rojo puro cansa la vista. Este rojo tiene profundidad, es sofisticado y sigue siendo agresivo.
-- **Fondos con subtono azulado** (`#0B0B0F`, `#1C1C26`): Sensación premium y nocturna — como un lobo en la noche. No usar grises puros.
-- **Oro `#F5A623`**: Para rankings, trofeos y badges de competencia. Toque de "élite" y "campeón".
-- **Plata `#A8B2D1`**: Texto secundario que no compite con el blanco principal, jerarquía visual limpia.
-- **Glassmorphism**: Usar `backdrop-filter: blur(20px)` con `--glass-bg` en modales, dropdowns y elementos flotantes.
-- **Regla 60-30-10**: Siempre respetar la proporción para mantener armonía visual.

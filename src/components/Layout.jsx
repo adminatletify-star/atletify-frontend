@@ -100,6 +100,7 @@ export default function Layout() {
             { label: 'Editar Box', href: '/editar-box' },
             { label: 'Bandeja de pagos', href: '/admin-roster' },
             { label: 'Buzón de Sugerencias', href: '/buzon-sugerencias' },
+            { label: 'Mi Perfil', href: '/perfil-admin' },
           ]
         }
       ];
@@ -144,6 +145,7 @@ export default function Layout() {
           { label: 'Pase de Lista', href: '/pase-de-lista' },
           { label: 'Calendario de WODs', href: '/calendario-wods' },
           { label: 'Buzón de Sugerencias', href: '/buzon-sugerencias' },
+          { label: 'Mi Perfil', href: '/perfil-admin' },
         ]
       }
     ];

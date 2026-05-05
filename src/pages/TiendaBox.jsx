@@ -9,7 +9,7 @@ export default function TiendaBox() {
   const navigate = useNavigate();
   const [apartados, setApartados] = useState([]);
   const [apartadoActivo, setApartadoActivo] = useState('General (Box)');
-  const [productos, setProductos] = useState([]);
+  const [productosTotales, setProductosTotales] = useState([]);
   const [carrito, setCarrito] = useState([]);
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(false);
@@ -17,11 +17,13 @@ export default function TiendaBox() {
   const { usuario } = useAuth();
   
   // Novedades: Pestañas, Método de Pago y Mis Pedidos
-  const [activeTab, setActiveTab] = useState('catalogo');
+  const [activeTab, setActiveTab] = useState('catalogo-fisico');
   const [metodoPago, setMetodoPago] = useState('Efectivo en Recepción');
   const [misPedidos, setMisPedidos] = useState([]);
   const [cargandoPedidos, setCargandoPedidos] = useState(false);
   const [pedidoExpandido, setPedidoExpandido] = useState(null);
+
+  const productos = productosTotales.filter(p => activeTab === 'catalogo-fisico' ? !p.esSobrePedido : p.esSobrePedido);
 
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));
@@ -99,8 +101,7 @@ export default function TiendaBox() {
       const res = await fetch(`${PRODUCTOS_ENDPOINT}/${idBox}?apartado=${encodeURIComponent(apartado)}&soloActivos=true`);
       if (res.ok) {
         const data = await res.json();
-        const productosFiltrados = data.filter(p => p.esSobrePedido);
-        setProductos(productosFiltrados);
+        setProductosTotales(data);
       }
     } catch (e) {
       console.error("Error al cargar productos", e);
@@ -142,7 +143,7 @@ export default function TiendaBox() {
           if (nuevaCantidad <= 0) return item; // Debería usar el botón eliminar
           
           // Verificar contra el stock original
-          const prodOriginal = productos.find(p => p.idProducto === idProducto);
+          const prodOriginal = productosTotales.find(p => p.idProducto === idProducto);
           if (prodOriginal && !prodOriginal.esSobrePedido && nuevaCantidad > prodOriginal.stockActual) {
             alert("No hay suficiente stock.");
             return item;
@@ -227,24 +228,31 @@ export default function TiendaBox() {
         )}
 
         {/* NAVEGACIÓN PRINCIPAL (TABS) */}
-        <div className="d-flex mb-4 border-bottom border-secondary">
+        <div className="d-flex mb-4 border-bottom border-secondary overflow-auto">
           <button 
-            className={`btn fs-5 px-4 py-2 rounded-top ${activeTab === 'catalogo' ? 'btn-danger' : 'btn-dark text-muted border-bottom-0'}`}
-            style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, marginRight: '4px' }}
-            onClick={() => setActiveTab('catalogo')}
+            className={`btn fs-5 px-4 py-2 rounded-top ${activeTab === 'catalogo-fisico' ? 'btn-danger' : 'btn-dark text-muted border-bottom-0'}`}
+            style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, marginRight: '4px', whiteSpace: 'nowrap' }}
+            onClick={() => setActiveTab('catalogo-fisico')}
           >
-            <i className="fas fa-store me-2"></i>Catálogo
+            <i className="fas fa-box me-2"></i>Catálogo
+          </button>
+          <button 
+            className={`btn fs-5 px-4 py-2 rounded-top ${activeTab === 'catalogo-sobre-pedido' ? 'btn-danger' : 'btn-dark text-muted border-bottom-0'}`}
+            style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, marginRight: '4px', whiteSpace: 'nowrap' }}
+            onClick={() => setActiveTab('catalogo-sobre-pedido')}
+          >
+            <i className="fas fa-store me-2"></i>Sobre Pedido
           </button>
           <button 
             className={`btn fs-5 px-4 py-2 rounded-top ${activeTab === 'mis-pedidos' ? 'btn-danger' : 'btn-dark text-muted border-bottom-0'}`}
-            style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
+            style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, whiteSpace: 'nowrap' }}
             onClick={() => setActiveTab('mis-pedidos')}
           >
             <i className="fas fa-list-alt me-2"></i>Mis Pedidos
           </button>
         </div>
 
-        {activeTab === 'catalogo' && (
+        {(activeTab === 'catalogo-fisico' || activeTab === 'catalogo-sobre-pedido') && (
           <>
             {/* Filtro Apartados */}
             {apartados.length > 1 && (
@@ -264,7 +272,7 @@ export default function TiendaBox() {
             <div className="row g-4">
           
           {/* CATÁLOGO DE PRODUCTOS */}
-          <div className="col-12 col-lg-8">
+          <div className={`col-12 ${activeTab === 'catalogo-fisico' ? '' : 'col-lg-8'}`}>
             <div className="catalogo-container">
               <h4 className="catalogo-title mb-3">
                 <i className="fas fa-box-open me-2"></i> Productos Disponibles
@@ -325,14 +333,20 @@ export default function TiendaBox() {
                               <p className="producto-stock mb-2" style={{ color: '#aaa' }}>
                                 {p.esSobrePedido ? 'Manejo sobre pedido' : `Stock: ${p.stockActual}`}
                               </p>
-                              <button 
-                                className="btn btn-outline-danger w-100"
-                                onClick={() => agregarAlCarrito(p)}
-                                disabled={!p.esSobrePedido && (agotado || sinStockRestante)}
-                              >
-                                <i className="fas fa-cart-plus me-1"></i> 
-                                {(!p.esSobrePedido && sinStockRestante && !agotado) ? 'Máximo alcanzado' : 'Agregar'}
-                              </button>
+                              {activeTab === 'catalogo-fisico' ? (
+                                <div className="text-center p-2 rounded mt-2" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)', fontSize: '0.85rem', color: '#ccc' }}>
+                                  <i className="fas fa-store me-1 text-danger"></i> De venta en recepción
+                                </div>
+                              ) : (
+                                <button 
+                                  className="btn btn-outline-danger w-100"
+                                  onClick={() => agregarAlCarrito(p)}
+                                  disabled={!p.esSobrePedido && (agotado || sinStockRestante)}
+                                >
+                                  <i className="fas fa-cart-plus me-1"></i> 
+                                  {(!p.esSobrePedido && sinStockRestante && !agotado) ? 'Máximo alcanzado' : 'Agregar'}
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -345,94 +359,96 @@ export default function TiendaBox() {
           </div>
 
           {/* CARRITO Y RESUMEN */}
-          <div className="col-12 col-lg-4">
-            <div className="carrito-container">
-              <h4 className="carrito-title mb-3">
-                <i className="fas fa-shopping-cart me-2"></i> Mi Pedido
-              </h4>
-              
-              {carrito.length === 0 ? (
-                <div className="carrito-vacio text-center py-4">
-                  <i className="fas fa-cart-arrow-down fa-2x mb-2" style={{ color: '#555' }}></i>
-                  <p style={{ color: '#aaa' }}>Tu carrito está vacío.</p>
-                </div>
-              ) : (
-                <div className="carrito-items-wrapper">
-                  {carrito.map(item => (
-                    <div className="carrito-item" key={item.idProducto}>
-                      <div className="carrito-item-info">
-                        <span className="fw-bold">{item.nombre}</span>
-                        <span className="text-muted ms-auto">${(item.precioVenta * item.cantidad).toFixed(2)}</span>
-                      </div>
-                      <div className="carrito-item-controls mt-2 d-flex justify-content-between align-items-center">
-                        <div className="cant-controls">
-                          <button className="btn-cant" onClick={() => modificarCantidad(item.idProducto, -1)} disabled={item.cantidad <= 1}>
-                            <i className="fas fa-minus"></i>
-                          </button>
-                          <span className="cant-value">{item.cantidad}</span>
-                          <button className="btn-cant" onClick={() => modificarCantidad(item.idProducto, 1)}>
-                            <i className="fas fa-plus"></i>
+          {activeTab !== 'catalogo-fisico' && (
+            <div className="col-12 col-lg-4">
+              <div className="carrito-container">
+                <h4 className="carrito-title mb-3">
+                  <i className="fas fa-shopping-cart me-2"></i> Mi Pedido
+                </h4>
+                
+                {carrito.length === 0 ? (
+                  <div className="carrito-vacio text-center py-4">
+                    <i className="fas fa-cart-arrow-down fa-2x mb-2" style={{ color: '#555' }}></i>
+                    <p style={{ color: '#aaa' }}>Tu carrito está vacío.</p>
+                  </div>
+                ) : (
+                  <div className="carrito-items-wrapper">
+                    {carrito.map(item => (
+                      <div className="carrito-item" key={item.idProducto}>
+                        <div className="carrito-item-info">
+                          <span className="fw-bold">{item.nombre}</span>
+                          <span className="text-muted ms-auto">${(item.precioVenta * item.cantidad).toFixed(2)}</span>
+                        </div>
+                        <div className="carrito-item-controls mt-2 d-flex justify-content-between align-items-center">
+                          <div className="cant-controls">
+                            <button className="btn-cant" onClick={() => modificarCantidad(item.idProducto, -1)} disabled={item.cantidad <= 1}>
+                              <i className="fas fa-minus"></i>
+                            </button>
+                            <span className="cant-value">{item.cantidad}</span>
+                            <button className="btn-cant" onClick={() => modificarCantidad(item.idProducto, 1)}>
+                              <i className="fas fa-plus"></i>
+                            </button>
+                          </div>
+                          <button className="btn-remove" onClick={() => removerDelCarrito(item.idProducto)}>
+                            <i className="fas fa-trash"></i>
                           </button>
                         </div>
-                        <button className="btn-remove" onClick={() => removerDelCarrito(item.idProducto)}>
-                          <i className="fas fa-trash"></i>
-                        </button>
                       </div>
-                    </div>
-                  ))}
-                  
-                  <div className="carrito-total mt-4">
-                    <span>Total a Pagar:</span>
-                    <span className="total-amount">${totalCarrito.toFixed(2)}</span>
-                  </div>
-
-                  <div className="mt-3">
-                    <label className="form-label text-white fw-bold mb-1">Método de Pago Preferido</label>
-                    <select 
-                      className="form-select bg-dark text-white border-secondary"
-                      value={metodoPago}
-                      onChange={(e) => setMetodoPago(e.target.value)}
-                    >
-                      <option value="Efectivo en Recepción">Efectivo en Recepción</option>
-                      
-                      {totalCarrito >= 100 && (
-                        <option value="Tarjeta en Recepción">Tarjeta en Recepción (Mínimo $100)</option>
-                      )}
-                      
-                      {totalCarrito >= 100 && (
-                        <option value="Transferencia">Transferencia (Mínimo $100)</option>
-                      )}
-
-                      {usuario?.esDeConfianza && (
-                        <option value="Fiar (Anotar en mi cuenta)">Fiar (Anotar a mi Deuda Tienda)</option>
-                      )}
-                    </select>
+                    ))}
                     
-                    {totalCarrito < 100 && (
-                      <p className="text-danger small mt-1 mb-0"><i className="fas fa-info-circle"></i> Compra mínima de $100 para pago con Tarjeta o Transferencia.</p>
-                    )}
-                  </div>
+                    <div className="carrito-total mt-4">
+                      <span>Total a Pagar:</span>
+                      <span className="total-amount">${totalCarrito.toFixed(2)}</span>
+                    </div>
 
-                  <div className="carrito-warning mt-3 mb-3 p-3 text-center">
-                    <i className="fas fa-info-circle text-info mb-2 fs-5"></i>
-                    <p className="small mb-0" style={{ color: '#ddd' }}>Al realizar tu pedido, reservaremos los productos por <strong>24 horas</strong>. Pasa a recepción para realizar el pago y recibir tus artículos.</p>
-                  </div>
+                    <div className="mt-3">
+                      <label className="form-label text-white fw-bold mb-1">Método de Pago Preferido</label>
+                      <select 
+                        className="form-select bg-dark text-white border-secondary"
+                        value={metodoPago}
+                        onChange={(e) => setMetodoPago(e.target.value)}
+                      >
+                        <option value="Efectivo en Recepción">Efectivo en Recepción</option>
+                        
+                        {totalCarrito >= 100 && (
+                          <option value="Tarjeta en Recepción">Tarjeta en Recepción (Mínimo $100)</option>
+                        )}
+                        
+                        {totalCarrito >= 100 && (
+                          <option value="Transferencia">Transferencia (Mínimo $100)</option>
+                        )}
 
-                  <button 
-                    className="btn btn-danger w-100 py-3 fw-bold"
-                    onClick={realizarPedido}
-                    disabled={procesando}
-                  >
-                    {procesando ? (
-                      <><i className="fas fa-spinner fa-spin me-2"></i> Procesando...</>
-                    ) : (
-                      <><i className="fas fa-check-circle me-2"></i> Realizar Pedido</>
-                    )}
-                  </button>
-                </div>
-              )}
+                        {usuario?.esDeConfianza && (
+                          <option value="Fiar (Anotar en mi cuenta)">Fiar (Anotar a mi Deuda Tienda)</option>
+                        )}
+                      </select>
+                      
+                      {totalCarrito < 100 && (
+                        <p className="text-danger small mt-1 mb-0"><i className="fas fa-info-circle"></i> Compra mínima de $100 para pago con Tarjeta o Transferencia.</p>
+                      )}
+                    </div>
+
+                    <div className="carrito-warning mt-3 mb-3 p-3 text-center">
+                      <i className="fas fa-info-circle text-info mb-2 fs-5"></i>
+                      <p className="small mb-0" style={{ color: '#ddd' }}>Al realizar tu pedido, reservaremos los productos por <strong>24 horas</strong>. Pasa a recepción para realizar el pago y recibir tus artículos.</p>
+                    </div>
+
+                    <button 
+                      className="btn btn-danger w-100 py-3 fw-bold"
+                      onClick={realizarPedido}
+                      disabled={procesando}
+                    >
+                      {procesando ? (
+                        <><i className="fas fa-spinner fa-spin me-2"></i> Procesando...</>
+                      ) : (
+                        <><i className="fas fa-check-circle me-2"></i> Realizar Pedido</>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           </div>
           </>

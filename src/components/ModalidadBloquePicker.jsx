@@ -9,6 +9,7 @@ const OPCIONES = [
   { valor: 'TABATA',       label: 'TABATA',       desc: 'Intervalos 20s/10s',              icono: 'fas fa-bolt',            key: 'tabata'      },
   { valor: 'Fuerza/RM',    label: 'Fuerza / RM',  desc: 'Repetición máxima',               icono: 'fas fa-weight-hanging',  key: 'fuerzarm'    },
   { valor: 'Not For Time', label: 'Not For Time', desc: 'Sin tiempo, a ritmo propio',      icono: 'fas fa-feather-alt',     key: 'notfortime'  },
+  { valor: 'Benchmark',    label: 'Benchmark',    desc: 'WOD estándar (Ej. Fran, Murph)',  icono: 'fas fa-medal',           key: 'benchmark'   },
 ];
 
 export default function ModalidadBloquePicker({ valor, onCambiar }) {

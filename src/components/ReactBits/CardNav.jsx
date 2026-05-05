@@ -6,7 +6,6 @@ import { useAuth } from "../../context/AuthContext";
 import './CardNav.css';
 import { COMPETENCIAS_ENDPOINT } from '../../services/api';
 import BoxPickerModal from '../BoxPickerModal';
-import logoAtletify from '../../pages/Atketify System/logo.png';
 
 const CardNav = ({
   logo, logoAlt = 'Logo', items, className = '', ease = 'power3.out',
@@ -130,7 +129,7 @@ const CardNav = ({
           </div>
 
           <Link to="/" className="text-decoration-none text-white hover-scale transition-all d-flex align-items-center gap-2" style={{ cursor: 'pointer' }}>
-            <img src={logoAtletify} alt="Atletify System" style={{ height: '28px', width: '28px', objectFit: 'contain' }} />
+            <img src="/LogosDeAtletify/LogoBlanco.png" alt="Atletify System" style={{ height: '28px', width: '28px', objectFit: 'contain' }} />
             <span className="fw-bold" style={{ fontFamily: 'var(--font-heading-alt)', letterSpacing: '0.05em', fontSize: '0.95rem' }}>
               <span style={{ color: 'var(--primary)' }}>A</span>tletify{' '}
               <span style={{ color: 'var(--primary)' }}>S</span>ystem

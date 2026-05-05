@@ -19,6 +19,8 @@ export default function AtletasBox() {
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstatus, setFiltroEstatus] = useState(searchParams.get('estatus') || '');
   const [filtroCat, setFiltroCat] = useState('');
+  const [filtroRol, setFiltroRol] = useState('');
+  const [staffSeleccionado, setStaffSeleccionado] = useState(null);
 
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('usuario'));
@@ -35,7 +37,7 @@ export default function AtletasBox() {
       const todos = Array.isArray(data) ? data : (data.data || []);
       const delBox = todos.filter(x =>
         (x.idBoxPredeterminado === idBox || x.IdBoxPredeterminado === idBox) &&
-        (x.rol === 'Atleta' || x.Rol === 'Atleta')
+        (x.rol === 'Atleta' || x.Rol === 'Atleta' || x.rol === 'Coach' || x.Rol === 'Coach' || x.rol === 'AdminBox' || x.Rol === 'AdminBox')
       );
       setAtletas(delBox);
     } catch (err) { console.error(err); }
@@ -73,7 +75,9 @@ export default function AtletasBox() {
     const matchCat = !filtroCat || a.categoriaBase === filtroCat;
     const matchEstatus = !filtroEstatus ||
       (filtroEstatus === 'activo' ? a.activo : !a.activo);
-    return matchNombre && matchCat && matchEstatus;
+    const rolActual = a.rol || a.Rol;
+    const matchRol = !filtroRol || rolActual === filtroRol;
+    return matchNombre && matchCat && matchEstatus && matchRol;
   });
 
   if (loading) {
@@ -142,7 +146,7 @@ export default function AtletasBox() {
         ══════════════════════════════════ */}
         <div className="atb-filtros">
           <div className="row g-2">
-            <div className="col-12 col-md-6">
+            <div className="col-12 col-md-4">
               <div className="atb-search-wrapper">
                 <i className="fas fa-search atb-search-icon"></i>
                 <input
@@ -154,7 +158,20 @@ export default function AtletasBox() {
                 />
               </div>
             </div>
-            <div className="col-12 col-md-6">
+            <div className="col-12 col-md-4">
+              <select 
+                className="form-select" 
+                style={{ backgroundColor: 'var(--bg-card-hover)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: '12px', height: '100%', minHeight: '48px', padding: '12px 16px' }} 
+                value={filtroRol} 
+                onChange={e => setFiltroRol(e.target.value)}
+              >
+                <option value="">Todos los Roles</option>
+                <option value="Atleta">Atletas</option>
+                <option value="Coach">Coaches</option>
+                <option value="AdminBox">Admin Box</option>
+              </select>
+            </div>
+            <div className="col-12 col-md-4">
               <FiltroCategoriaPicker
                 categorias={categorias}
                 valor={filtroCat}
@@ -210,15 +227,23 @@ export default function AtletasBox() {
                             }
                           </div>
                           <div>
-                            <div style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '0.92rem', color: 'var(--text-primary)' }}>{atleta.nombre}</div>
+                            <div style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '0.92rem', color: 'var(--text-primary)' }}>
+                              {atleta.nombre}
+                              {(atleta.rol === 'Coach' || atleta.Rol === 'Coach') && <span className="badge bg-info text-dark ms-2" style={{fontSize: '0.65rem'}}>Coach</span>}
+                              {(atleta.rol === 'AdminBox' || atleta.Rol === 'AdminBox') && <span className="badge bg-warning text-dark ms-2" style={{fontSize: '0.65rem'}}>Admin</span>}
+                            </div>
                             <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{atleta.correo}</div>
                           </div>
                         </div>
                       </td>
                       <td className="py-3" style={{ borderColor: 'var(--border)', verticalAlign: 'middle', background: 'transparent' }}>
-                        <span className="badge-estado" style={{ background: 'rgba(168,178,209,0.08)', border: '1px solid rgba(168,178,209,0.2)', color: 'var(--secondary)', fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem', letterSpacing: '1px' }}>
-                          {atleta.categoriaBase || 'Sin categoría'}
-                        </span>
+                        {(atleta.rol === 'Coach' || atleta.Rol === 'Coach' || atleta.rol === 'AdminBox' || atleta.Rol === 'AdminBox') ? (
+                          <span style={{ color: 'var(--text-muted)' }}>—</span>
+                        ) : (
+                          <span className="badge-estado" style={{ background: 'rgba(168,178,209,0.08)', border: '1px solid rgba(168,178,209,0.2)', color: 'var(--secondary)', fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem', letterSpacing: '1px' }}>
+                            {atleta.categoriaBase || 'Sin categoría'}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3" style={{ borderColor: 'var(--border)', verticalAlign: 'middle', background: 'transparent' }}>
                         <span className={`badge-estado ${atleta.activo ? 'badge-estado-activo' : 'badge-estado-inactivo'}`}>
@@ -235,13 +260,23 @@ export default function AtletasBox() {
                           >
                             <i className="fas fa-pen"></i>
                           </Link>
-                          <Link
-                            to={`/perfil-atleta-admin/${atleta.idUsuario}`}
-                            className="atb-action-btn btn btn-sm btn-outline-secondary"
-                            title="Ver expediente"
-                          >
-                            <i className="fas fa-id-card"></i>
-                          </Link>
+                          {(atleta.rol === 'Coach' || atleta.Rol === 'Coach' || atleta.rol === 'AdminBox' || atleta.Rol === 'AdminBox') ? (
+                            <button
+                              className="atb-action-btn btn btn-sm btn-outline-secondary"
+                              title="Ver datos"
+                              onClick={() => setStaffSeleccionado(atleta)}
+                            >
+                              <i className="fas fa-id-card"></i>
+                            </button>
+                          ) : (
+                            <Link
+                              to={`/perfil-atleta-admin/${atleta.idUsuario}`}
+                              className="atb-action-btn btn btn-sm btn-outline-secondary"
+                              title="Ver expediente"
+                            >
+                              <i className="fas fa-id-card"></i>
+                            </Link>
+                          )}
                           <BotonSeguro
                             onClick={() => expulsarAtleta(atleta.idUsuario)}
                             className="atb-action-btn btn btn-sm btn-outline-danger"
@@ -272,7 +307,11 @@ export default function AtletasBox() {
                       }
                     </div>
                     <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                      <div className="atleta-nombre">{atleta.nombre}</div>
+                      <div className="atleta-nombre d-flex align-items-center flex-wrap gap-1">
+                        {atleta.nombre}
+                        {(atleta.rol === 'Coach' || atleta.Rol === 'Coach') && <span className="badge bg-info text-dark" style={{fontSize: '0.6rem'}}>Coach</span>}
+                        {(atleta.rol === 'AdminBox' || atleta.Rol === 'AdminBox') && <span className="badge bg-warning text-dark" style={{fontSize: '0.6rem'}}>Admin</span>}
+                      </div>
                       <div className="atleta-correo">{atleta.correo}</div>
                     </div>
                     <span className={`badge-estado flex-shrink-0 ${atleta.activo ? 'badge-estado-activo' : 'badge-estado-inactivo'}`}>
@@ -283,10 +322,14 @@ export default function AtletasBox() {
 
                   {/* Fila inferior: categoría + acciones */}
                   <div className="atb-atleta-footer">
-                    <span className="badge-estado" style={{ background: 'rgba(168,178,209,0.08)', border: '1px solid rgba(168,178,209,0.2)', color: 'var(--secondary)', fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem', letterSpacing: '1px' }}>
-                      <i className="fas fa-tag me-1"></i>
-                      {atleta.categoriaBase || 'Sin categoría'}
-                    </span>
+                    {(atleta.rol === 'Coach' || atleta.Rol === 'Coach' || atleta.rol === 'AdminBox' || atleta.Rol === 'AdminBox') ? (
+                      <span></span>
+                    ) : (
+                      <span className="badge-estado" style={{ background: 'rgba(168,178,209,0.08)', border: '1px solid rgba(168,178,209,0.2)', color: 'var(--secondary)', fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem', letterSpacing: '1px' }}>
+                        <i className="fas fa-tag me-1"></i>
+                        {atleta.categoriaBase || 'Sin categoría'}
+                      </span>
+                    )}
                     <div className="d-flex gap-2">
                       <Link
                         to={`/editar-usuario/${atleta.idUsuario}`}
@@ -295,13 +338,23 @@ export default function AtletasBox() {
                       >
                         <i className="fas fa-pen"></i>
                       </Link>
-                      <Link
-                        to={`/perfil-atleta-admin/${atleta.idUsuario}`}
-                        className="atb-action-btn btn btn-sm btn-outline-secondary"
-                        title="Expediente"
-                      >
-                        <i className="fas fa-id-card"></i>
-                      </Link>
+                      {(atleta.rol === 'Coach' || atleta.Rol === 'Coach' || atleta.rol === 'AdminBox' || atleta.Rol === 'AdminBox') ? (
+                        <button
+                          className="atb-action-btn btn btn-sm btn-outline-secondary"
+                          title="Ver datos"
+                          onClick={() => setStaffSeleccionado(atleta)}
+                        >
+                          <i className="fas fa-id-card"></i>
+                        </button>
+                      ) : (
+                        <Link
+                          to={`/perfil-atleta-admin/${atleta.idUsuario}`}
+                          className="atb-action-btn btn btn-sm btn-outline-secondary"
+                          title="Expediente"
+                        >
+                          <i className="fas fa-id-card"></i>
+                        </Link>
+                      )}
                       <BotonSeguro
                         onClick={() => expulsarAtleta(atleta.idUsuario)}
                         className="atb-action-btn btn btn-sm btn-outline-danger"
@@ -320,6 +373,83 @@ export default function AtletasBox() {
         )}
 
       </div>
+
+      {/* MODAL STAFF */}
+      {staffSeleccionado && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1050, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ maxWidth: '400px', width: '100%', margin: 'auto' }}>
+            <div className="modal-content text-start border-secondary shadow-lg rounded-4 p-4 w-100" style={{ backgroundColor: '#141414', border: '1px solid #333' }}>
+              
+              <div className="text-center mb-3 mt-2">
+                <div style={{ width: '80px', height: '80px', margin: '0 auto', borderRadius: '50%', backgroundColor: 'var(--bg-card-hover)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 'bold', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                  {staffSeleccionado.foto ? (
+                    <img src={staffSeleccionado.foto} alt={staffSeleccionado.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    staffSeleccionado.nombre?.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <h4 style={{ color: 'var(--text-primary)', marginTop: '1rem', marginBottom: '0.25rem', fontFamily: 'var(--font-heading)' }}>
+                  {staffSeleccionado.nombre} {staffSeleccionado.apellidos || ''}
+                </h4>
+                <div className="mb-3 mt-2">
+                  <span className={`badge ${staffSeleccionado.rol === 'Coach' || staffSeleccionado.Rol === 'Coach' ? 'bg-info text-dark' : 'bg-warning text-dark'}`} style={{ fontSize: '0.8rem', padding: '0.5em 1em', letterSpacing: '0.5px' }}>
+                    <i className="fas fa-shield-alt me-1"></i> {staffSeleccionado.rol || staffSeleccionado.Rol}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '15px', borderRadius: '10px', marginBottom: '1.5rem', fontSize: '0.9rem', border: '1px solid var(--border)' }}>
+                <div className="d-flex justify-content-between mb-2 pb-2 border-bottom border-secondary">
+                  <span style={{ color: 'var(--text-muted)' }}><i className="fas fa-envelope me-2 text-primary"></i>Correo:</span>
+                  <span style={{ color: 'var(--text-primary)', textAlign: 'right', wordBreak: 'break-all', maxWidth: '60%' }}>{staffSeleccionado.correo}</span>
+                </div>
+                <div className="d-flex justify-content-between mb-2 pb-2 border-bottom border-secondary">
+                  <span style={{ color: 'var(--text-muted)' }}><i className="fas fa-phone me-2 text-success"></i>Teléfono:</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{staffSeleccionado.telefono || 'No registrado'}</span>
+                </div>
+                <div className="d-flex justify-content-between mb-2 pb-2 border-bottom border-secondary">
+                  <span style={{ color: 'var(--text-muted)' }}><i className="fas fa-tint me-2 text-danger"></i>Tipo de Sangre:</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{staffSeleccionado.tipoDeSangre || staffSeleccionado.TipoDeSangre || 'No registrado'}</span>
+                </div>
+                <div className="d-flex justify-content-between mb-2 pb-2 border-bottom border-secondary">
+                  <span style={{ color: 'var(--text-muted)' }}><i className="fas fa-tshirt me-2 text-warning"></i>Talla:</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{staffSeleccionado.tallaPlayera || staffSeleccionado.TallaPlayera || 'No registrada'}</span>
+                </div>
+                <div className="d-flex justify-content-between mb-2 pb-2 border-bottom border-secondary">
+                  <span style={{ color: 'var(--text-muted)' }}><i className="fas fa-layer-group me-2 text-info"></i>Nivel:</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{staffSeleccionado.categoriaBase || staffSeleccionado.CategoriaBase || 'Sin definir'}</span>
+                </div>
+                <div className="d-flex flex-column mb-2 pb-2 border-bottom border-secondary">
+                  <span style={{ color: 'var(--text-muted)', marginBottom: '4px' }}><i className="fas fa-running me-2 text-success"></i>Deportes Previos:</span>
+                  <span style={{ color: 'var(--text-primary)' }}>
+                    {staffSeleccionado.tieneExperiencia || staffSeleccionado.TieneExperiencia
+                      ? (staffSeleccionado.deporteExperiencia || staffSeleccionado.DeporteExperiencia || 'Sí (No especificó)')
+                      : 'Ninguno / Sin experiencia'
+                    }
+                  </span>
+                </div>
+                <div className="d-flex flex-column mb-2 pb-2 border-bottom border-secondary">
+                  <span style={{ color: 'var(--text-muted)', marginBottom: '4px' }}><i className="fas fa-notes-medical me-2 text-warning"></i>Lesiones / Enfermedades:</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{staffSeleccionado.tieneDiscapacidad || staffSeleccionado.TieneDiscapacidad || 'Ninguna registrada'}</span>
+                </div>
+                <div className="d-flex flex-column mt-3">
+                  <span style={{ color: 'var(--text-muted)', marginBottom: '4px' }}><i className="fas fa-truck-medical me-2 text-danger"></i>Contacto de Emergencia:</span>
+                  <span style={{ color: 'var(--text-primary)' }}>
+                    {staffSeleccionado.contactoEmergenciaNombre || staffSeleccionado.ContactoEmergenciaNombre
+                      ? `${staffSeleccionado.contactoEmergenciaNombre || staffSeleccionado.ContactoEmergenciaNombre} - ${staffSeleccionado.contactoEmergenciaTelefono || staffSeleccionado.ContactoEmergenciaTelefono || 'Sin tel'}`
+                      : 'No registrado'
+                    }
+                  </span>
+                </div>
+              </div>
+
+              <button className="btn btn-outline-secondary w-100 py-2 fw-bold" style={{ borderRadius: '8px' }} onClick={() => setStaffSeleccionado(null)}>
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

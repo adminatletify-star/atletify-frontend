@@ -4,7 +4,6 @@ import DarkVeil from '../components/ReactBits/DarkVeil';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import WolfLanyard from '../components/ReactBits/WolfLanyard';
 import BotonSeguro from '../components/BotonSeguro';
-import logoAtletify from './Atketify System/logo.png';
 import '../assets/css/user-panel.css';
 
 const API_BASE = import.meta.env.VITE_API_URL;
@@ -353,7 +352,7 @@ export default function UserPanel() {
         <nav className="up-navbar px-3 px-md-4">
           <div className="d-flex align-items-center gap-2">
             <div className="up-brand">
-              <img src={logoAtletify} alt="Atletify System" style={{ height: '24px', width: '24px', objectFit: 'contain' }} />
+              <img src="/LogosDeAtletify/LogoBlanco.png" alt="Atletify System" style={{ height: '24px', width: '24px', objectFit: 'contain' }} />
               <span><span style={{ color: 'var(--primary)' }}>A</span>tletify <span style={{ color: 'var(--primary)' }}>S</span>ystem</span>
             </div>
           </div>

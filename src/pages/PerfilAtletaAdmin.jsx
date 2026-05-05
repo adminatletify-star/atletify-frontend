@@ -11,6 +11,7 @@ const API_USUARIOS = `${import.meta.env.VITE_API_URL}/usuarios`;
 const API_COBRANZA = `${import.meta.env.VITE_API_URL}/cobranza`;
 const API_PRECIO = `${import.meta.env.VITE_API_URL}/precioespecial`;
 const API_FINANZAS = `${import.meta.env.VITE_API_URL}/finanzas`;
+const API_ASISTENCIAS = `${import.meta.env.VITE_API_URL}/asistencias`;
 
 export default function PerfilAtletaAdmin() {
   const { idUsuario } = useParams();
@@ -26,8 +27,11 @@ export default function PerfilAtletaAdmin() {
   const [loading, setLoading] = useState(true);
   const [descuentosActivos, setDescuentosActivos] = useState([]);
   const [paginaHistorial, setPaginaHistorial] = useState(1);
+  const [paginaAsistencias, setPaginaAsistencias] = useState(1);
   const itemsPorPagina = 5;
   const [calculoActivo, setCalculoActivo] = useState(null); // Resultado de la calculadora del backend
+  const [asistencias, setAsistencias] = useState([]);
+  const [activeTab, setActiveTab] = useState('pagos');
 
   // MODALES V3 - MÁS COMPLETOS Y CON VALIDACIONES
   const [showModalPago, setShowModalPago] = useState(false);
@@ -60,15 +64,17 @@ export default function PerfilAtletaAdmin() {
         const dataPrecio = await resPrecio.json();
         setPrecioEspecial(dataPrecio.existe ? dataPrecio : null);
       }
-      const [resAtleta, resFinanzas, resDescuentos] = await Promise.all([
+      const [resAtleta, resFinanzas, resDescuentos, resAsistencias] = await Promise.all([
         fetch(`${API_USUARIOS}/${idUsuario}`, { headers: headersGet }),
         fetch(`${API_COBRANZA}/atleta/${idUsuario}`, { headers: headersGet }),
-        fetch(`${API_FINANZAS}/descuentos/${b.idBox}`, { headers: headersGet })
+        fetch(`${API_FINANZAS}/descuentos/${b.idBox}`, { headers: headersGet }),
+        fetch(`${API_ASISTENCIAS}/usuario/${idUsuario}/pase-lista`, { headers: headersGet })
       ]);
 
 
       if (resAtleta.ok) setAtleta(await resAtleta.json());
       if (resDescuentos.ok) setDescuentosActivos((await resDescuentos.json()).filter(d => d.activo));
+      if (resAsistencias.ok) setAsistencias(await resAsistencias.json());
 
       if (resFinanzas.ok) {
         const dataFinanzas = await resFinanzas.json();
@@ -201,13 +207,7 @@ export default function PerfilAtletaAdmin() {
     } catch (e) { alert("Error al editar el plan."); }
   };
 
-  const eliminarTransaccion = async (idTransaccion) => {
-    if (!window.confirm("¿Seguro que deseas eliminar este recibo?")) return;
-    try {
-      const res = await fetch(`${API_COBRANZA}/transaccion/${idTransaccion}`, { method: 'DELETE', headers: headersGet });
-      if (res.ok) cargarDatos();
-    } catch (e) { alert("Error al eliminar"); }
-  };
+
 
   const darDeBaja = async () => {
     if (!window.confirm(`🚨 ¿Dar de BAJA a ${atleta.nombre}? Perderá su acceso.`)) return;
@@ -493,61 +493,126 @@ export default function PerfilAtletaAdmin() {
               )}
             </div>
 
-            {/* HISTORIAL DE TRANSACCIONES */}
+            {/* HISTORIAL DE TRANSACCIONES Y ASISTENCIAS */}
             <div className="tarjeta-panel p-4">
-              <p className="paa-section-label"><i className="fas fa-receipt"></i>Historial de Pagos</p>
-              {(() => {
-                const historialTotal = finanzas?.historialPagos || [];
-                const totalPaginas = Math.ceil(historialTotal.length / itemsPorPagina);
-                const historialPaginado = historialTotal.slice((paginaHistorial - 1) * itemsPorPagina, paginaHistorial * itemsPorPagina);
+              <div className="d-flex gap-3 mb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px' }}>
+                <button 
+                  onClick={() => setActiveTab('pagos')}
+                  className={`btn ${activeTab === 'pagos' ? 'btn-primary' : 'btn-outline-secondary'} fw-bold`}
+                  style={{ borderRadius: '8px' }}
+                >
+                  <i className="fas fa-receipt me-2"></i>Historial de Pagos
+                </button>
+                <button 
+                  onClick={() => setActiveTab('asistencias')}
+                  className={`btn ${activeTab === 'asistencias' ? 'btn-info text-dark' : 'btn-outline-secondary'} fw-bold`}
+                  style={{ borderRadius: '8px' }}
+                >
+                  <i className="fas fa-calendar-check me-2"></i>Asistencias
+                </button>
+              </div>
 
-                return (
-                  <>
-                    <div className="table-responsive">
-                      <table className="table table-hover paa-table">
-                        <thead>
-                          <tr>
-                            <th>Fecha</th>
-                            <th>Tipo</th>
-                            <th>Método</th>
-                            <th>Monto</th>
-                            <th className="d-none d-md-table-cell">Notas</th>
-                            <th className="text-end">Acción</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {historialPaginado.length === 0 ? <tr><td colSpan="6" className="text-center py-4 text-muted">No hay pagos registrados.</td></tr> : (
-                            historialPaginado.map(t => (
-                              <tr key={t.idTransaccion}>
-                                <td>{new Date(t.fechaPago).toLocaleDateString()}</td>
-                                <td>{t.tipoTransaccion}</td>
-                                <td>
-                                  <span className="badge bg-secondary bg-opacity-50">{t.metodoPago1}</span>
-                                  {t.metodoPago2 && <span className="badge bg-secondary bg-opacity-50 ms-1">{t.metodoPago2}</span>}
-                                </td>
-                                <td style={{ color: 'var(--success)', fontFamily: 'var(--font-stats)', fontWeight: 700 }}>${t.montoTotal}</td>
-                                <td className="d-none d-md-table-cell" style={{ color: 'var(--text-primary)', fontSize: '0.82rem' }}>{t.notas || '—'}</td>
-                                <td className="text-end">
-                                  <BotonSeguro onClick={() => eliminarTransaccion(t.idTransaccion)} textoProcesando="" style={{ width: '30px', height: '30px', padding: 0, borderRadius: '8px', background: 'rgba(231,76,60,0.08)', border: '1px solid rgba(231,76,60,0.3)', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <i className="fas fa-trash"></i>
-                                  </BotonSeguro>
-                                </td>
+              {activeTab === 'pagos' && (
+                <>
+                  {(() => {
+                    const historialTotal = finanzas?.historialPagos || [];
+                    const totalPaginas = Math.ceil(historialTotal.length / itemsPorPagina);
+                    const historialPaginado = historialTotal.slice((paginaHistorial - 1) * itemsPorPagina, paginaHistorial * itemsPorPagina);
+
+                    return (
+                      <>
+                        <div className="table-responsive">
+                          <table className="table table-hover paa-table">
+                            <thead>
+                              <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Método</th>
+                                <th>Monto</th>
+                                <th>Vencimiento</th>
+                                <th className="d-none d-md-table-cell">Notas</th>
                               </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                    {totalPaginas > 1 && (
-                      <div className="paa-pagination">
-                        <button onClick={() => setPaginaHistorial(p => Math.max(1, p - 1))} disabled={paginaHistorial === 1} className="paa-page-btn">Anterior</button>
-                        <span className="paa-page-info">Página {paginaHistorial} de {totalPaginas}</span>
-                        <button onClick={() => setPaginaHistorial(p => Math.min(totalPaginas, p + 1))} disabled={paginaHistorial === totalPaginas} className="paa-page-btn">Siguiente</button>
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
+                            </thead>
+                            <tbody>
+                              {historialPaginado.length === 0 ? <tr><td colSpan="6" className="text-center py-4 text-muted">No hay pagos registrados.</td></tr> : (
+                                historialPaginado.map(t => (
+                                  <tr key={t.idTransaccion}>
+                                    <td>{new Date(t.fechaPago).toLocaleDateString()}</td>
+                                    <td>{t.tipoTransaccion}</td>
+                                    <td>
+                                      <span className="badge bg-secondary bg-opacity-50">{t.metodoPago1}</span>
+                                      {t.metodoPago2 && <span className="badge bg-secondary bg-opacity-50 ms-1">{t.metodoPago2}</span>}
+                                    </td>
+                                    <td style={{ color: 'var(--success)', fontFamily: 'var(--font-stats)', fontWeight: 700 }}>${t.montoTotal}</td>
+                                    <td style={{ fontWeight: 600 }}>{t.fechaVencimiento ? new Date(t.fechaVencimiento).toLocaleDateString() : '—'}</td>
+                                    <td className="d-none d-md-table-cell" style={{ color: 'var(--text-primary)', fontSize: '0.82rem' }}>{t.notas || '—'}</td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                        {totalPaginas > 1 && (
+                          <div className="paa-pagination">
+                            <button onClick={() => setPaginaHistorial(p => Math.max(1, p - 1))} disabled={paginaHistorial === 1} className="paa-page-btn">Anterior</button>
+                            <span className="paa-page-info">Página {paginaHistorial} de {totalPaginas}</span>
+                            <button onClick={() => setPaginaHistorial(p => Math.min(totalPaginas, p + 1))} disabled={paginaHistorial === totalPaginas} className="paa-page-btn">Siguiente</button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </>
+              )}
+
+              {activeTab === 'asistencias' && (
+                <>
+                  {(() => {
+                    const totalPaginasAsis = Math.ceil(asistencias.length / itemsPorPagina);
+                    const asistenciasPaginado = asistencias.slice((paginaAsistencias - 1) * itemsPorPagina, paginaAsistencias * itemsPorPagina);
+
+                    return (
+                      <>
+                        <div className="table-responsive">
+                          <table className="table table-hover paa-table">
+                            <thead>
+                              <tr>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Clase</th>
+                                <th>Estatus</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {asistenciasPaginado.length === 0 ? <tr><td colSpan="4" className="text-center py-4 text-muted">No hay asistencias registradas.</td></tr> : (
+                                asistenciasPaginado.map(a => (
+                                  <tr key={a.idAsistencia}>
+                                    <td>{new Date(a.fecha).toLocaleDateString()}</td>
+                                    <td style={{ fontFamily: 'var(--font-stats)', fontWeight: 600 }}>{a.horaClase.slice(0, 5)}</td>
+                                    <td>{a.nombreClase}</td>
+                                    <td>
+                                      <span className={`badge ${a.estado === 'Asistió' ? 'bg-success' : a.estado === 'Faltó' ? 'bg-danger' : 'bg-warning'} bg-opacity-75`}>
+                                        {a.estado}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                        {totalPaginasAsis > 1 && (
+                          <div className="paa-pagination">
+                            <button onClick={() => setPaginaAsistencias(p => Math.max(1, p - 1))} disabled={paginaAsistencias === 1} className="paa-page-btn">Anterior</button>
+                            <span className="paa-page-info">Página {paginaAsistencias} de {totalPaginasAsis}</span>
+                            <button onClick={() => setPaginaAsistencias(p => Math.min(totalPaginasAsis, p + 1))} disabled={paginaAsistencias === totalPaginasAsis} className="paa-page-btn">Siguiente</button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </>
+              )}
             </div>
           </div>
         </div>

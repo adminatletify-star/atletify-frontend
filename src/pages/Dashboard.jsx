@@ -16,6 +16,15 @@ export default function Dashboard() {
   const [filtroNombre, setFiltroNombre] = useState('');
   const [filtroRol, setFiltroRol] = useState('');
 
+  const [modalAdminBox, setModalAdminBox] = useState({ open: false, idBox: null, nombreBox: '' });
+  const [formDataAdmin, setFormDataAdmin] = useState({
+    nombre: '', apellidos: '', username: '', correo: '', telefono: '', fechaNacimiento: ''
+  });
+  const [creandoAdmin, setCreandoAdmin] = useState(false);
+  
+  // Estado para el Modal de Éxito de Creación de Admin
+  const [modalSuccessAdmin, setModalSuccessAdmin] = useState({ open: false, username: '', contrasenaGenerada: '' });
+
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('usuario'));
     if (!u || u.rol !== 'Developer') {
@@ -127,6 +136,42 @@ export default function Dashboard() {
     }
   };
 
+  const handleCrearAdminBox = async (e) => {
+    e.preventDefault();
+    setCreandoAdmin(true);
+    try {
+      const payload = {
+        ...formDataAdmin,
+        idBox: modalAdminBox.idBox,
+        fechaNacimiento: formDataAdmin.fechaNacimiento ? new Date(formDataAdmin.fechaNacimiento).toISOString() : new Date().toISOString()
+      };
+      
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${USUARIOS_ENDPOINT}/crear-admin-box`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        // En lugar de alert, mostramos nuestro Modal de Éxito
+        setModalSuccessAdmin({ open: true, username: data.username, contrasenaGenerada: data.contrasenaGenerada });
+        
+        setModalAdminBox({ open: false, idBox: null, nombreBox: '' });
+        setFormDataAdmin({ nombre: '', apellidos: '', username: '', correo: '', telefono: '', fechaNacimiento: '' });
+        cargarDataGlobal(); // Recargar usuarios
+      } else {
+        const data = await res.json();
+        alert(data.mensaje || "Error al crear AdminBox");
+      }
+    } catch(err) {
+      alert("Error de conexión");
+    } finally {
+      setCreandoAdmin(false);
+    }
+  };
+
   if (loading) return (
     <div className="min-vh-100 d-flex justify-content-center align-items-center">
       <div className="spinner-wp" />
@@ -233,7 +278,19 @@ export default function Dashboard() {
                     <td><div className="fw-bold">{b.nombre}</div></td>
                     <td><span className="badge bg-primary rounded-pill px-3">{b.totalAtletas}</span></td>
                     <td><span className="badge bg-info text-dark rounded-pill px-3">{b.totalCoaches}</span></td>
-                    <td><span className="badge bg-warning text-dark rounded-pill px-3">{b.totalAdmins}</span></td>
+                    <td>
+                      <div className="d-flex align-items-center gap-2">
+                        <span className="badge bg-warning text-dark rounded-pill px-3">{b.totalAdmins}</span>
+                        <button 
+                          className="btn btn-sm btn-outline-warning rounded-circle" 
+                          title="Crear AdminBox"
+                          onClick={() => setModalAdminBox({ open: true, idBox: b.idBox, nombreBox: b.nombre })}
+                          style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <i className="fas fa-plus"></i>
+                        </button>
+                      </div>
+                    </td>
                     <td>
                       <div className="d-flex flex-column gap-2">
                         <select 
@@ -557,6 +614,112 @@ export default function Dashboard() {
         </div>
 
       </div>
+
+      {/* MODAL CREAR ADMIN BOX */}
+      {modalAdminBox.open && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.8)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content bg-dark text-white border-secondary">
+              <div className="modal-header border-secondary">
+                <h5 className="modal-title text-warning">
+                  <i className="fas fa-user-plus me-2"></i>Crear Admin para {modalAdminBox.nombreBox}
+                </h5>
+                <button type="button" className="btn-close btn-close-white" onClick={() => setModalAdminBox({ open: false, idBox: null, nombreBox: '' })}></button>
+              </div>
+              <div className="modal-body">
+                <form onSubmit={handleCrearAdminBox}>
+                  <div className="row g-3">
+                    <div className="col-6">
+                      <label className="form-label small text-muted">Nombre(s) *</label>
+                      <input type="text" className="form-control bg-dark text-white border-secondary" required value={formDataAdmin.nombre} onChange={e => setFormDataAdmin({...formDataAdmin, nombre: e.target.value})} />
+                    </div>
+                    <div className="col-6">
+                      <label className="form-label small text-muted">Apellidos</label>
+                      <input type="text" className="form-control bg-dark text-white border-secondary" value={formDataAdmin.apellidos} onChange={e => setFormDataAdmin({...formDataAdmin, apellidos: e.target.value})} />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label small text-muted">Username *</label>
+                      <input type="text" className="form-control bg-dark text-white border-secondary" required value={formDataAdmin.username} onChange={e => setFormDataAdmin({...formDataAdmin, username: e.target.value})} />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label small text-muted">Correo (Login) *</label>
+                      <input type="email" className="form-control bg-dark text-white border-secondary" required value={formDataAdmin.correo} onChange={e => setFormDataAdmin({...formDataAdmin, correo: e.target.value})} />
+                    </div>
+                    <div className="col-12">
+                      <div className="p-3 rounded-3" style={{ background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)' }}>
+                        <label className="form-label small text-warning fw-bold mb-1"><i className="fas fa-magic me-2"></i>Contraseña (Generada Automáticamente)</label>
+                        <p className="small text-muted mb-0">Se mostrará en pantalla después de crear el AdminBox (Formato: XXX-NNNN*)</p>
+                      </div>
+                    </div>
+                    <div className="col-6">
+                      <label className="form-label small text-muted">Teléfono</label>
+                      <input 
+                        type="text" 
+                        className="form-control bg-dark text-white border-secondary" 
+                        maxLength="10"
+                        value={formDataAdmin.telefono} 
+                        onChange={e => {
+                          const soloNumeros = e.target.value.replace(/\D/g, '');
+                          setFormDataAdmin({...formDataAdmin, telefono: soloNumeros});
+                        }} 
+                      />
+                    </div>
+                    <div className="col-6">
+                      <label className="form-label small text-muted">Fecha Nacimiento *</label>
+                      <input type="date" className="form-control bg-dark text-white border-secondary" required value={formDataAdmin.fechaNacimiento} onChange={e => setFormDataAdmin({...formDataAdmin, fechaNacimiento: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="d-flex justify-content-end gap-2 mt-4">
+                    <button type="button" className="btn btn-secondary" onClick={() => setModalAdminBox({ open: false, idBox: null, nombreBox: '' })}>Cancelar</button>
+                    <button type="submit" className="btn btn-warning fw-bold" disabled={creandoAdmin}>
+                      {creandoAdmin ? <><i className="fas fa-spinner fa-spin me-2"></i>Creando...</> : 'Crear AdminBox'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE ÉXITO: CONTRASEÑA GENERADA */}
+      {modalSuccessAdmin.open && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1055 }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content bg-dark text-white border-success shadow-lg">
+              <div className="modal-body text-center p-5">
+                <div className="mb-4">
+                  <div className="d-inline-flex align-items-center justify-content-center bg-success text-white rounded-circle mb-3" style={{ width: '80px', height: '80px', fontSize: '2rem' }}>
+                    <i className="fas fa-check"></i>
+                  </div>
+                  <h3 className="text-white fw-bold">¡AdminBox Creado!</h3>
+                  <p className="text-muted">El usuario ha sido registrado exitosamente. Por favor, guarda estos accesos para entregarlos al cliente.</p>
+                </div>
+                
+                <div className="p-3 rounded-3 text-start mb-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div className="mb-2">
+                    <small className="text-muted text-uppercase fw-bold" style={{ letterSpacing: '1px' }}>Username (Login)</small>
+                    <div className="fs-5 text-white user-select-all">{modalSuccessAdmin.username}</div>
+                  </div>
+                  <div>
+                    <small className="text-warning text-uppercase fw-bold" style={{ letterSpacing: '1px' }}><i className="fas fa-key me-2"></i>Contraseña Segura</small>
+                    <div className="fs-3 fw-bold text-warning user-select-all" style={{ letterSpacing: '2px' }}>{modalSuccessAdmin.contrasenaGenerada}</div>
+                  </div>
+                </div>
+
+                <button 
+                  type="button" 
+                  className="btn btn-success px-5 py-2 fw-bold rounded-pill"
+                  onClick={() => setModalSuccessAdmin({ open: false, username: '', contrasenaGenerada: '' })}
+                >
+                  Entendido, Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
