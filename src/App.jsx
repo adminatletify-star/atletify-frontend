@@ -1,7 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout'; 
 import { jwtDecode } from "jwt-decode";
+import Mantenimiento from './pages/Mantenimiento';
 
 // Importaciones de Páginas
 import Home from './pages/Home';
@@ -220,11 +222,60 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   return children;
 };
 
+// === GUARDIA DE MANTENIMIENTO ===
+function MaintenanceGuard({ children }) {
+  const [enMantenimiento, setEnMantenimiento] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const location = useLocation(); // Fuerza re-render en cada navegación
+
+  useEffect(() => {
+    async function verificar() {
+      try {
+        const res = await originalFetch(`${import.meta.env.VITE_API_URL}/api/developer/configuracion`);
+        if (res.ok) {
+          const data = await res.json();
+          setEnMantenimiento(!!data.enMantenimiento);
+        }
+      } catch (e) {
+        // Si falla la consulta, no bloquear
+      } finally {
+        setChecked(true);
+      }
+    }
+    verificar(); // Re-verifica en cada cambio de ruta
+  }, [location.pathname]);
+
+  if (!checked) return null;
+
+  if (enMantenimiento) {
+    // Si hay usuario logueado y es Developer → acceso total
+    try {
+      const u = JSON.parse(localStorage.getItem('usuario'));
+      if (u?.rol === 'Developer') return children;
+    } catch (e) { /* sin usuario */ }
+
+    // Rutas públicas permitidas durante mantenimiento (para que el Dev pueda llegar al login)
+    const rutasPermitidas = ['/', '/login', '/registro', '/terminos', '/politica-cookies',
+      '/forgot-password', '/reset-password', '/sobre-nosotros', '/wolfpack',
+      '/ejercicios', '/directorio-boxes', '/simulador-barra-publico'];
+    const rutaActual = location.pathname;
+    const esRutaPermitida = rutasPermitidas.some(r => rutaActual === r || rutaActual.startsWith('/registro/'));
+
+    if (esRutaPermitida) return children; // Dejar ver rutas públicas básicas
+
+    // Todo lo demás (portales de juez, atleta, leaderboard, paneles, etc.) → bloqueado
+    return <Mantenimiento />;
+  }
+
+  return children;
+}
+
 // === COMPONENTE PRINCIPAL APP ===
 function App() {
   return (
     <AuthProvider>
       <Router>
+        <MaintenanceGuard>
         <CookieBanner />
         <Routes>
           {/* ========================================= */}
@@ -345,6 +396,7 @@ function App() {
 
           </Route>
         </Routes>
+        </MaintenanceGuard>
       </Router>
     </AuthProvider>
   );

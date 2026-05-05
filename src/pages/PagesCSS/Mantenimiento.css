@@ -1,0 +1,193 @@
+/* ========================================
+   MANTENIMIENTO PAGE — WolfPack Dark Premium
+   ======================================== */
+
+.mant-page {
+  min-height: 100vh;
+  background: #050505;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem;
+}
+
+/* ── PARTÍCULAS DECORATIVAS ── */
+.mant-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.mant-particle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.08;
+  animation: mant-float 8s ease-in-out infinite;
+}
+.mant-particle.p-0 { width: 300px; height: 300px; background: #dc3545; top: -80px; left: -80px; animation-delay: 0s; }
+.mant-particle.p-1 { width: 200px; height: 200px; background: #e67e22; bottom: -60px; right: -40px; animation-delay: 2s; }
+.mant-particle.p-2 { width: 150px; height: 150px; background: #3498db; top: 40%; right: 10%; animation-delay: 4s; }
+.mant-particle.p-3 { width: 100px; height: 100px; background: #dc3545; bottom: 20%; left: 15%; animation-delay: 1s; }
+.mant-particle.p-4 { width: 80px; height: 80px; background: #f39c12; top: 15%; left: 60%; animation-delay: 3s; }
+.mant-particle.p-5 { width: 120px; height: 120px; background: #e74c3c; top: 60%; left: 5%; animation-delay: 5s; }
+
+@keyframes mant-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(20px, -15px) scale(1.05); }
+  66% { transform: translate(-10px, 10px) scale(0.95); }
+}
+
+/* ── CONTENT ── */
+.mant-content {
+  text-align: center;
+  max-width: 580px;
+  z-index: 2;
+  animation: mant-appear 0.8s ease;
+}
+
+@keyframes mant-appear {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── MASCOTA ── */
+.mant-mascot-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 2rem;
+}
+.mant-mascot-glow {
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(220, 53, 69, 0.15) 0%, transparent 70%);
+  animation: mant-glow-pulse 3s ease-in-out infinite;
+}
+@keyframes mant-glow-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+.mant-mascot {
+  width: 220px;
+  height: 220px;
+  object-fit: contain;
+  position: relative;
+  z-index: 1;
+  animation: mant-bob 4s ease-in-out infinite;
+  filter: drop-shadow(0 10px 40px rgba(220, 53, 69, 0.2));
+}
+@keyframes mant-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* ── TEXTO ── */
+.mant-text {
+  margin-bottom: 2.5rem;
+}
+.mant-subtitle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: #dc3545;
+  margin-bottom: 0.8rem;
+}
+.mant-title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  margin-bottom: 1rem;
+}
+@media (max-width: 576px) {
+  .mant-title {
+    font-size: 1.5rem;
+  }
+}
+.mant-highlight {
+  background: linear-gradient(135deg, #dc3545, #e74c3c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.mant-desc {
+  font-size: 0.92rem;
+  color: #777;
+  line-height: 1.7;
+}
+
+/* ── BARRA DE PROGRESO ── */
+.mant-progress-wrapper {
+  max-width: 320px;
+  margin: 0 auto 2rem;
+}
+.mant-progress-bar {
+  height: 4px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+.mant-progress-fill {
+  height: 100%;
+  width: 40%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #dc3545, #e67e22, #dc3545);
+  background-size: 200% 100%;
+  animation: mant-progress-move 2.5s ease-in-out infinite;
+}
+@keyframes mant-progress-move {
+  0% { transform: translateX(-100%); background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { transform: translateX(350%); background-position: 0% 50%; }
+}
+.mant-progress-label {
+  display: block;
+  text-align: center;
+  color: #444;
+  font-size: 0.68rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  letter-spacing: 1px;
+}
+
+/* ── CONTACTO ── */
+.mant-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 30px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #555;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.mant-contact i {
+  color: #dc3545;
+}
+
+/* ── BOTÓN REGRESAR ── */
+.mant-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 1.2rem;
+  padding: 0.6rem 1.5rem;
+  border-radius: 30px;
+  background: none;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #777;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.mant-back-btn:hover {
+  border-color: #dc3545;
+  color: #dc3545;
+  background: rgba(220, 53, 69, 0.06);
+}

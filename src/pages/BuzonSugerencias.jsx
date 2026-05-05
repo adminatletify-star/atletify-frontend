@@ -14,6 +14,13 @@ const CATEGORIAS = [
   { id: 'Otro', emoji: '❓', label: 'Otro' },
 ];
 
+const ESTATUS_CONFIG = {
+  'Pendiente':  { icon: 'fa-clock',        color: '#f39c12', label: 'Pendiente' },
+  'En Proceso': { icon: 'fa-wrench',       color: '#3498db', label: 'En Proceso' },
+  'Solucionado':{ icon: 'fa-check-circle', color: '#2ecc71', label: 'Solucionado' },
+  'No Procede': { icon: 'fa-ban',          color: '#e74c3c', label: 'No Procede' },
+};
+
 const API_URL = import.meta.env.VITE_API_URL;
 const MAX_CHARS = 1000;
 
@@ -25,6 +32,7 @@ export default function BuzonSugerencias() {
   // Formulario (roles no-Dev)
   const [categoria, setCategoria] = useState('');
   const [mensaje, setMensaje] = useState('');
+  const [imagenUrl, setImagenUrl] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [exito, setExito] = useState(false);
 
@@ -39,6 +47,13 @@ export default function BuzonSugerencias() {
   const [filtroCatSug, setFiltroCatSug] = useState('');
   const [filtroRolSug, setFiltroRolSug] = useState('');
   const [loadingSug, setLoadingSug] = useState(true);
+
+  // Respuesta del Developer
+  const [respuestaDevId, setRespuestaDevId] = useState(null);
+  const [respuestaDevText, setRespuestaDevText] = useState('');
+
+  // Lightbox de imagen
+  const [lightboxImg, setLightboxImg] = useState(null);
 
   const isDev = user?.rol === 'Developer';
 
@@ -59,6 +74,41 @@ export default function BuzonSugerencias() {
       cargarHistorial(u.id);
     }
   }, [navigate]);
+
+  // === CLOUDINARY UPLOAD ===
+  function abrirCloudinary() {
+    if (!window.cloudinary) {
+      alert('El widget de Cloudinary no ha cargado. Revisa tu conexión a internet.');
+      return;
+    }
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
+        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
+        sources: ['local', 'camera'],
+        multiple: false,
+        maxFileSize: 5000000, // 5MB
+        resourceType: 'image',
+        clientAllowedFormats: ['png', 'jpg', 'jpeg', 'gif', 'webp'],
+        cropping: false,
+        folder: 'buzon_sugerencias',
+        language: 'es',
+        text: {
+          'es': {
+            'or': 'o',
+            'menu': { 'files': 'Mis Archivos', 'camera': 'Cámara' },
+            'local': { 'browse': 'Buscar archivo', 'dd_title_single': 'Arrastra tu imagen aquí' }
+          }
+        }
+      },
+      (error, result) => {
+        if (!error && result && result.event === 'success') {
+          setImagenUrl(result.info.secure_url);
+        }
+      }
+    );
+    widget.open();
+  }
 
   // === LÓGICA DE USUARIOS (Atleta, Coach, AdminBox) ===
   async function cargarHistorial(idUsuario) {
@@ -92,6 +142,7 @@ export default function BuzonSugerencias() {
         mensaje: mensaje.trim(),
         rol: user.rol,
         categoria: categoria,
+        imagenUrl: imagenUrl || null,
       };
 
       const res = await fetch(`${API_URL}/sugerencias`, {
@@ -104,6 +155,7 @@ export default function BuzonSugerencias() {
         setExito(true);
         setMensaje('');
         setCategoria('');
+        setImagenUrl('');
         cargarHistorial(user.id);
         setTimeout(() => setExito(false), 4000);
       } else {
@@ -134,21 +186,15 @@ export default function BuzonSugerencias() {
     }
   }
 
-  async function cambiarEstatusSugerencia(id, nuevoEstatus) {
+  async function cambiarEstatusSugerencia(id, nuevoEstatus, respuesta) {
     try {
       await fetch(`${API_URL}/sugerencias/${id}/estatus`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estatus: nuevoEstatus })
+        body: JSON.stringify({ estatus: nuevoEstatus, respuestaDev: respuesta || null })
       });
-      cargarSugerencias();
-    } catch (err) { console.error(err); }
-  }
-
-  async function eliminarSugerencia(id) {
-    if (!window.confirm('¿Eliminar esta sugerencia permanentemente?')) return;
-    try {
-      await fetch(`${API_URL}/sugerencias/${id}`, { method: 'DELETE' });
+      setRespuestaDevId(null);
+      setRespuestaDevText('');
       cargarSugerencias();
     } catch (err) { console.error(err); }
   }
@@ -161,7 +207,6 @@ export default function BuzonSugerencias() {
   });
 
   const categoriasUnicas = [...new Set(sugerencias.map(s => s.categoria))];
-  const rolesUnicosSug = [...new Set(sugerencias.map(s => s.rol))];
 
   // Rutas de regreso
   const rutaRegreso = isDev
@@ -172,6 +217,9 @@ export default function BuzonSugerencias() {
 
   const charCount = mensaje.length;
   const charClass = charCount > MAX_CHARS ? 'danger' : charCount > MAX_CHARS * 0.85 ? 'warn' : '';
+
+  // Tabs del developer
+  const TABS_DEV = ['Pendiente', 'En Proceso', 'Solucionado', 'No Procede'];
 
   return (
     <div className="buzon-page">
@@ -226,24 +274,31 @@ export default function BuzonSugerencias() {
                   onChange={e => setFiltroRolSug(e.target.value)}
                 >
                   <option value="">Todos los roles</option>
-                  {rolesUnicosSug.map(r => <option key={r} value={r}>{r}</option>)}
+                  <option value="AdminBox">AdminBox</option>
+                  <option value="Coach">Coach</option>
+                  <option value="Atleta">Atleta</option>
                 </select>
               </div>
             </div>
 
-            {/* Tabs: Pendientes / Archivados */}
+            {/* Tabs: Pendiente | En Proceso | Solucionado | No Procede */}
             <div className="buzon-dev-tabs">
-              {['Pendiente', 'Archivado'].map(tab => (
-                <button
-                  key={tab}
-                  className={`buzon-dev-tab ${filtroTabSug === tab ? 'active' : ''}`}
-                  onClick={() => setFiltroTabSug(tab)}
-                >
-                  {tab === 'Pendiente' && <><i className="fas fa-clock me-1"></i>Pendientes</>}
-                  {tab === 'Archivado' && <><i className="fas fa-archive me-1"></i>Archivados</>}
-                  <span className="ms-1" style={{ opacity: 0.5 }}>({sugerencias.filter(s => s.estatus === tab).length})</span>
-                </button>
-              ))}
+              {TABS_DEV.map(tab => {
+                const cfg = ESTATUS_CONFIG[tab];
+                const count = sugerencias.filter(s => s.estatus === tab).length;
+                return (
+                  <button
+                    key={tab}
+                    className={`buzon-dev-tab ${filtroTabSug === tab ? 'active' : ''}`}
+                    onClick={() => setFiltroTabSug(tab)}
+                    style={filtroTabSug === tab ? { color: cfg.color, borderBottomColor: cfg.color } : {}}
+                  >
+                    <i className={`fas ${cfg.icon} me-1`}></i>
+                    {cfg.label}
+                    <span className="ms-1" style={{ opacity: 0.5 }}>({count})</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Lista de sugerencias */}
@@ -255,12 +310,13 @@ export default function BuzonSugerencias() {
               ) : sugerenciasFiltradas.length === 0 ? (
                 <div className="buzon-empty">
                   <i className="fas fa-inbox"></i>
-                  <h3>Sin sugerencias {filtroTabSug.toLowerCase()}s</h3>
+                  <h3>Sin sugerencias {ESTATUS_CONFIG[filtroTabSug]?.label.toLowerCase()}</h3>
                   <p>No hay reportes que coincidan con los filtros</p>
                 </div>
               ) : (
                 sugerenciasFiltradas.map(s => {
                   const catInfo = CATEGORIAS.find(c => c.id === s.categoria) || { emoji: '📝', label: s.categoria };
+                  const isExpandedResp = respuestaDevId === s.idSugerencia;
                   return (
                     <div key={s.idSugerencia} className="buzon-dev-item">
                       <div className={`buzon-dev-prio prio-${s.prioridad}`}></div>
@@ -276,27 +332,105 @@ export default function BuzonSugerencias() {
                           )}
                         </div>
                         <p className="buzon-dev-msg-text">{s.mensaje}</p>
+
+                        {/* Imagen adjunta */}
+                        {s.imagenUrl && (
+                          <div
+                            className="buzon-dev-img-thumb"
+                            onClick={() => setLightboxImg(s.imagenUrl)}
+                          >
+                            <img src={s.imagenUrl} alt="Adjunto" />
+                            <span className="buzon-dev-img-label"><i className="fas fa-search-plus me-1"></i>Ver imagen</span>
+                          </div>
+                        )}
+
+                        {/* Respuesta del Dev ya guardada */}
+                        {s.respuestaDev && (
+                          <div className="buzon-dev-respuesta-display">
+                            <i className="fas fa-reply"></i>
+                            <span>{s.respuestaDev}</span>
+                          </div>
+                        )}
+
                         <span style={{ fontSize: '0.68rem', color: '#444' }}>
                           {new Date(s.fechaCreacion).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </span>
+
+                        {/* Campo para escribir respuesta */}
+                        {isExpandedResp && (
+                          <div className="buzon-dev-respuesta-input mt-2">
+                            <input
+                              type="text"
+                              placeholder="Nota/respuesta para el usuario (opcional)..."
+                              value={respuestaDevText}
+                              onChange={e => setRespuestaDevText(e.target.value)}
+                              maxLength={300}
+                              autoFocus
+                            />
+                          </div>
+                        )}
                       </div>
-                      <div className="buzon-dev-actions">
-                        {s.estatus === 'Pendiente' && (
+
+                      {/* Acciones de estatus */}
+                      <div className="buzon-dev-actions-col">
+                        {filtroTabSug === 'Pendiente' && (
+                          <>
+                            <button
+                              className="buzon-dev-action-btn btn-proceso"
+                              title="Marcar En Proceso"
+                              onClick={() => {
+                                if (isExpandedResp) {
+                                  cambiarEstatusSugerencia(s.idSugerencia, 'En Proceso', respuestaDevText);
+                                } else {
+                                  setRespuestaDevId(s.idSugerencia);
+                                  setRespuestaDevText('');
+                                }
+                              }}
+                            >
+                              <i className="fas fa-wrench"></i>
+                            </button>
+                            <button
+                              className="buzon-dev-action-btn btn-noprocede"
+                              title="No Procede"
+                              onClick={() => {
+                                if (isExpandedResp) {
+                                  cambiarEstatusSugerencia(s.idSugerencia, 'No Procede', respuestaDevText);
+                                } else {
+                                  setRespuestaDevId(s.idSugerencia);
+                                  setRespuestaDevText('');
+                                }
+                              }}
+                            >
+                              <i className="fas fa-ban"></i>
+                            </button>
+                          </>
+                        )}
+                        {filtroTabSug === 'En Proceso' && (
                           <button
-                            className="buzon-dev-action-btn btn-archive"
-                            title="Archivar (Marcar como atendido)"
-                            onClick={() => cambiarEstatusSugerencia(s.idSugerencia, 'Archivado')}
+                            className="buzon-dev-action-btn btn-solucionado"
+                            title="Marcar como Solucionado"
+                            onClick={() => {
+                              if (isExpandedResp) {
+                                cambiarEstatusSugerencia(s.idSugerencia, 'Solucionado', respuestaDevText);
+                              } else {
+                                setRespuestaDevId(s.idSugerencia);
+                                setRespuestaDevText('');
+                              }
+                            }}
                           >
-                            <i className="fas fa-check"></i>
+                            <i className="fas fa-check-circle"></i>
                           </button>
                         )}
-                        <button
-                          className="buzon-dev-action-btn"
-                          title="Eliminar"
-                          onClick={() => eliminarSugerencia(s.idSugerencia)}
-                        >
-                          <i className="fas fa-trash"></i>
-                        </button>
+                        {isExpandedResp && (
+                          <button
+                            className="buzon-dev-action-btn"
+                            title="Cancelar"
+                            onClick={() => { setRespuestaDevId(null); setRespuestaDevText(''); }}
+                            style={{ fontSize: '0.6rem' }}
+                          >
+                            <i className="fas fa-times"></i>
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -356,9 +490,37 @@ export default function BuzonSugerencias() {
                   {charCount} / {MAX_CHARS}
                 </p>
 
-                {/* Paso 3: Enviar */}
+                {/* Paso 3: Imagen (Cloudinary) */}
+                <p className="buzon-section-label mt-3">
+                  <i className="fas fa-camera"></i>Adjuntar captura de pantalla (opcional)
+                </p>
+                {imagenUrl ? (
+                  <div className="buzon-img-preview">
+                    <img src={imagenUrl} alt="Preview" onClick={() => setLightboxImg(imagenUrl)} />
+                    <button
+                      type="button"
+                      className="buzon-img-remove"
+                      onClick={() => setImagenUrl('')}
+                      title="Quitar imagen"
+                    >
+                      <i className="fas fa-times"></i>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="buzon-upload-btn"
+                    onClick={abrirCloudinary}
+                  >
+                    <i className="fas fa-cloud-upload-alt"></i>
+                    <span>Subir imagen</span>
+                    <small>PNG, JPG, WEBP — Máx 5MB</small>
+                  </button>
+                )}
+
+                {/* Paso 4: Enviar */}
                 <button
-                  className="buzon-btn-enviar mt-2"
+                  className="buzon-btn-enviar mt-3"
                   onClick={handleEnviar}
                   disabled={enviando || !categoria || !mensaje.trim()}
                 >
@@ -400,18 +562,40 @@ export default function BuzonSugerencias() {
                 <div className="d-flex flex-column gap-2">
                   {historial.map(s => {
                     const catInfo = CATEGORIAS.find(c => c.id === s.categoria) || { emoji: '📝', label: s.categoria };
+                    const estatusCfg = ESTATUS_CONFIG[s.estatus] || ESTATUS_CONFIG['Pendiente'];
                     return (
                       <div key={s.idSugerencia} className="buzon-historial-card">
                         <p className="buzon-historial-msg">{s.mensaje}</p>
+
+                        {/* Thumbnail de la imagen si existe */}
+                        {s.imagenUrl && (
+                          <div className="buzon-historial-img" onClick={() => setLightboxImg(s.imagenUrl)}>
+                            <img src={s.imagenUrl} alt="Adjunto" />
+                          </div>
+                        )}
+
+                        {/* Respuesta del developer */}
+                        {s.respuestaDev && (
+                          <div className="buzon-historial-respuesta">
+                            <i className="fas fa-reply"></i>
+                            <span><strong>Respuesta del equipo:</strong> {s.respuestaDev}</span>
+                          </div>
+                        )}
+
                         <div className="buzon-historial-meta">
                           <span className="buzon-badge-cat">
                             {catInfo.emoji} {catInfo.label}
                           </span>
-                          <span className={`buzon-badge-estatus ${s.estatus?.toLowerCase()}`}>
-                            {s.estatus === 'Pendiente' && <i className="fas fa-clock me-1"></i>}
-                            {s.estatus === 'Leido' && <i className="fas fa-check me-1"></i>}
-                            {s.estatus === 'Archivado' && <i className="fas fa-archive me-1"></i>}
-                            {s.estatus}
+                          <span
+                            className="buzon-badge-estatus"
+                            style={{
+                              background: `${estatusCfg.color}15`,
+                              color: estatusCfg.color,
+                              border: `1px solid ${estatusCfg.color}33`
+                            }}
+                          >
+                            <i className={`fas ${estatusCfg.icon} me-1`}></i>
+                            {estatusCfg.label}
                           </span>
                           <span className="buzon-historial-fecha">
                             {new Date(s.fechaCreacion).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -429,6 +613,18 @@ export default function BuzonSugerencias() {
         )}
 
       </div>
+
+      {/* ── LIGHTBOX DE IMAGEN ── */}
+      {lightboxImg && (
+        <div className="buzon-lightbox" onClick={() => setLightboxImg(null)}>
+          <div className="buzon-lightbox-content" onClick={e => e.stopPropagation()}>
+            <button className="buzon-lightbox-close" onClick={() => setLightboxImg(null)}>
+              <i className="fas fa-times"></i>
+            </button>
+            <img src={lightboxImg} alt="Imagen adjunta" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -313,6 +313,63 @@ export default function Dashboard() {
         {configuracion && (
           <div className="tarjeta-panel p-3 p-md-4 mb-5">
             <h3 className="titulo-seccion mb-4"><i className="fas fa-cogs"></i> Configuración Global (B2B & Redes)</h3>
+
+            {/* === INTERRUPTOR MODO MANTENIMIENTO === */}
+            <div
+              className="p-3 rounded-3 mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3"
+              style={{
+                background: configuracion.enMantenimiento ? 'rgba(220,53,69,0.12)' : 'rgba(255,255,255,0.03)',
+                border: `1.5px solid ${configuracion.enMantenimiento ? '#dc3545' : 'rgba(255,255,255,0.08)'}`,
+                transition: 'all 0.3s ease'
+              }}
+            >
+              <div className="d-flex align-items-center gap-3">
+                <i className={`fas fa-hard-hat fs-4 ${configuracion.enMantenimiento ? 'text-danger' : 'text-secondary'}`}></i>
+                <div>
+                  <div className="fw-bold text-white" style={{ fontSize: '0.9rem' }}>
+                    Modo Mantenimiento
+                    {configuracion.enMantenimiento && <span className="badge bg-danger ms-2" style={{ fontSize: '0.6rem' }}>ACTIVO</span>}
+                  </div>
+                  <small className="text-white-50" style={{ fontSize: '0.72rem' }}>
+                    {configuracion.enMantenimiento
+                      ? '⚠️ Todos los usuarios (excepto tú) están bloqueados'
+                      : 'Activa para bloquear el acceso a todos los usuarios excepto Developer'}
+                  </small>
+                </div>
+              </div>
+              <div className="form-check form-switch m-0">
+                <input
+                  className="form-check-input bg-danger border-danger"
+                  type="checkbox"
+                  role="switch"
+                  id="switchMantenimiento"
+                  checked={configuracion.enMantenimiento || false}
+                  onChange={async (e) => {
+                    const nuevoEstado = e.target.checked;
+                    if (nuevoEstado) {
+                      const ok = await window.wpConfirm('⚠️ ¿Activar Modo Mantenimiento?\n\nTodos los usuarios (Atletas, Coaches, AdminBox, Jueces y Staff) serán bloqueados y verán una página de mantenimiento.\n\nSolo tú (Developer) podrás seguir navegando.');
+                      if (!ok) return;
+                    }
+                    try {
+                      const token = localStorage.getItem('token');
+                      const payload = { ...configuracion, enMantenimiento: nuevoEstado };
+                      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/configuracion`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify(payload)
+                      });
+                      if (res.ok) {
+                        setConfiguracion(prev => ({ ...prev, enMantenimiento: nuevoEstado }));
+                      }
+                    } catch (err) {
+                      console.error('Error al cambiar modo mantenimiento:', err);
+                    }
+                  }}
+                  style={{ width: '3rem', height: '1.5rem', cursor: 'pointer' }}
+                />
+              </div>
+            </div>
+
             <form onSubmit={guardarConfiguracion}>
               <div className="row g-4">
                 <div className="col-12 col-md-6">

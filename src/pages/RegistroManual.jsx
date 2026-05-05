@@ -175,7 +175,7 @@ export default function RegistroManual() {
     const correoFinal = formData.correo ? formData.correo : `${formData.username.toLowerCase()}@wolfpack.local`;
 
     try {
-      const response = await fetch('import.meta.env.VITE_API_URL:7149/api/usuarios/registro-manual', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/registro-manual`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
