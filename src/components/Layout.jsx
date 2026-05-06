@@ -60,7 +60,12 @@ export default function Layout() {
   };
 
   const handleLogout = () => {
-    localStorage.clear();
+    // 👈 Cambiado: En lugar de clear() que borraba todo (incluyendo el banner de cookies), 
+    // ahora solo borramos la sesión activa.
+    localStorage.removeItem('usuario');
+    localStorage.removeItem('token');
+    localStorage.removeItem('boxActivo');
+    localStorage.removeItem('box');
     navigate('/');
   };
 
@@ -87,7 +92,7 @@ export default function Layout() {
             { label: 'Inventario de Almacén', href: '/almacen-panel' },
             { label: 'Gestión de Clases', href: '/gestion-clases' },
             { label: 'Mensualidades', href: "/gestion-finanzas" },
-            { label: 'Gestión Competencias', href: '/admin-competencias' },
+            ...(user.rol === 'Developer' || user.esOrganizadorCompetencias ? [{ label: 'Gestión Competencias', href: '/admin-competencias' }] : []),
             { label: 'Beneficios', href: '/wolf-beneficios' },
 
           ]

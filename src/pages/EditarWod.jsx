@@ -426,52 +426,68 @@ export default function EditarWod() {
                   <p className="crw-empty-text text-center py-2">No hay ejercicios añadidos</p>
                 )}
 
-                {bloque.ejercicios.map((ej, eIndex) => (
-                  <div key={eIndex} className="crw-ejercicio-row row g-2 align-items-center">
-                    <div className="col-4 col-sm-3 col-md-2">
-                      <input
-                        type="text"
-                        className="crw-reps-input"
-                        placeholder="Reps"
-                        value={ej.esquemaRepeticiones}
-                        onChange={e => {
-                          let val = e.target.value.replace(/[^0-9]/g, '');
-                          if (parseInt(val) > 100) val = '100';
-                          actualizarEjercicio(bIndex, eIndex, 'esquemaRepeticiones', val);
-                        }}
-                      />
+                {bloque.ejercicios.map((ej, eIndex) => {
+                  const ejercicioInfo = glosarioEjercicios.find(g => g.idEjercicio == ej.idEjercicio);
+                  const categoria = ejercicioInfo?.categoria || '';
+                  
+                  let placeholderReps = "Reps/Dist.";
+                  let regexFiltro = /[^0-9xXmcal\s-]/gi;
+                  
+                  if (categoria === 'Monostructural') {
+                    placeholderReps = "Ej: 400m, 15cal";
+                    regexFiltro = /[^0-9mcal\s]/gi;
+                  } else if (categoria === 'Weightlifting' || categoria === 'Gymnastics') {
+                    placeholderReps = "Ej: 4x12, 21-15";
+                    regexFiltro = /[^0-9xX\s-]/gi;
+                  }
+
+                  return (
+                    <div key={eIndex} className="crw-ejercicio-row row g-2 align-items-center">
+                      <div className="col-4 col-sm-3 col-md-2">
+                        <input
+                          type="text"
+                          className="crw-reps-input"
+                          placeholder={placeholderReps}
+                          value={ej.esquemaRepeticiones}
+                          maxLength="15"
+                          onChange={e => {
+                            let val = e.target.value.replace(regexFiltro, '');
+                            actualizarEjercicio(bIndex, eIndex, 'esquemaRepeticiones', val);
+                          }}
+                        />
+                      </div>
+                      <div className="col-8 col-sm-9 col-md-5">
+                        <EjercicioPicker
+                          ejercicios={glosarioEjercicios}
+                          valor={ej.idEjercicio}
+                          onCambiar={v => actualizarEjercicio(bIndex, eIndex, 'idEjercicio', v)}
+                        />
+                      </div>
+                      <div className="col-9 col-sm-8 col-md-4">
+                        <input
+                          type="text"
+                          className="crw-peso-input"
+                          placeholder="Peso (Ej: 135/95)"
+                          value={ej.pesoSugerido}
+                          maxLength="15"
+                          onChange={e => {
+                            let val = e.target.value.replace(/[^0-9.\s/lbskg]/gi, '');
+                            actualizarEjercicio(bIndex, eIndex, 'pesoSugerido', val);
+                          }}
+                        />
+                      </div>
+                      <div className="col-3 col-sm-4 col-md-1 text-center">
+                        <button
+                          type="button"
+                          onClick={() => quitarEjercicio(bIndex, eIndex)}
+                          className="crw-delete-ej-btn"
+                        >
+                          <i className="fas fa-times-circle fs-5"></i>
+                        </button>
+                      </div>
                     </div>
-                    <div className="col-8 col-sm-9 col-md-5">
-                      <EjercicioPicker
-                        ejercicios={glosarioEjercicios}
-                        valor={ej.idEjercicio}
-                        onCambiar={v => actualizarEjercicio(bIndex, eIndex, 'idEjercicio', v)}
-                      />
-                    </div>
-                    <div className="col-9 col-sm-8 col-md-4">
-                      <input
-                        type="text"
-                        className="crw-peso-input"
-                        placeholder="Peso RX"
-                        value={ej.pesoSugerido}
-                        onChange={e => {
-                          let val = e.target.value.replace(/[^0-9.]/g, '');
-                          if (parseFloat(val) > 500) val = '500';
-                          actualizarEjercicio(bIndex, eIndex, 'pesoSugerido', val);
-                        }}
-                      />
-                    </div>
-                    <div className="col-3 col-sm-4 col-md-1 text-center">
-                      <button
-                        type="button"
-                        onClick={() => quitarEjercicio(bIndex, eIndex)}
-                        className="crw-delete-ej-btn"
-                      >
-                        <i className="fas fa-times-circle fs-5"></i>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* 👈 LA MAGIA VISUAL: Mostrar u ocultar según el Modo de Ranking */}

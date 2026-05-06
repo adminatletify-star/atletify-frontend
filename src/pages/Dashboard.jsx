@@ -630,29 +630,29 @@ export default function Dashboard() {
                 <form onSubmit={handleCrearAdminBox}>
                   <div className="row g-3">
                     <div className="col-6">
-                      <label className="form-label small text-muted">Nombre(s) *</label>
+                      <label className="form-label small text-light">Nombre(s) *</label>
                       <input type="text" className="form-control bg-dark text-white border-secondary" required value={formDataAdmin.nombre} onChange={e => setFormDataAdmin({...formDataAdmin, nombre: e.target.value})} />
                     </div>
                     <div className="col-6">
-                      <label className="form-label small text-muted">Apellidos</label>
+                      <label className="form-label small text-light">Apellidos</label>
                       <input type="text" className="form-control bg-dark text-white border-secondary" value={formDataAdmin.apellidos} onChange={e => setFormDataAdmin({...formDataAdmin, apellidos: e.target.value})} />
                     </div>
                     <div className="col-12">
-                      <label className="form-label small text-muted">Username *</label>
+                      <label className="form-label small text-light">Username *</label>
                       <input type="text" className="form-control bg-dark text-white border-secondary" required value={formDataAdmin.username} onChange={e => setFormDataAdmin({...formDataAdmin, username: e.target.value})} />
                     </div>
                     <div className="col-12">
-                      <label className="form-label small text-muted">Correo (Login) *</label>
+                      <label className="form-label small text-light">Correo (Login) *</label>
                       <input type="email" className="form-control bg-dark text-white border-secondary" required value={formDataAdmin.correo} onChange={e => setFormDataAdmin({...formDataAdmin, correo: e.target.value})} />
                     </div>
                     <div className="col-12">
                       <div className="p-3 rounded-3" style={{ background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)' }}>
                         <label className="form-label small text-warning fw-bold mb-1"><i className="fas fa-magic me-2"></i>Contraseña (Generada Automáticamente)</label>
-                        <p className="small text-muted mb-0">Se mostrará en pantalla después de crear el AdminBox (Formato: XXX-NNNN*)</p>
+                        <p className="small text-white-50 mb-0">Se mostrará en pantalla después de crear el AdminBox (Formato: XXX-NNNN*)</p>
                       </div>
                     </div>
                     <div className="col-6">
-                      <label className="form-label small text-muted">Teléfono</label>
+                      <label className="form-label small text-light">Teléfono</label>
                       <input 
                         type="text" 
                         className="form-control bg-dark text-white border-secondary" 
@@ -665,7 +665,7 @@ export default function Dashboard() {
                       />
                     </div>
                     <div className="col-6">
-                      <label className="form-label small text-muted">Fecha Nacimiento *</label>
+                      <label className="form-label small text-light">Fecha Nacimiento *</label>
                       <input type="date" className="form-control bg-dark text-white border-secondary" required value={formDataAdmin.fechaNacimiento} onChange={e => setFormDataAdmin({...formDataAdmin, fechaNacimiento: e.target.value})} />
                     </div>
                   </div>

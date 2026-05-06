@@ -22,6 +22,14 @@ const CardNav = ({
   // 👇 EXTRAEMOS EL USUARIO Y LA FUNCIÓN DE CAMBIAR BOX 👇
   const { usuario, boxActivo, cambiarBox } = useAuth();
 
+  const getHomeRoute = () => {
+    if (!usuario) return '/';
+    if (usuario.rol === 'Developer') return '/dashboard';
+    if (usuario.rol === 'AdminBox' || usuario.rol === 'Coach') return '/admin-box-panel';
+    if (usuario.rol === 'Atleta' || usuario.rol === 'Usuario') return '/user-panel';
+    return '/';
+  };
+
   useEffect(() => {
     if (isExpanded) {
       setIsHamburgerOpen(false); setIsExpanded(false);
@@ -128,7 +136,7 @@ const CardNav = ({
             <div className="hamburger-line" /><div className="hamburger-line" />
           </div>
 
-          <Link to="/" className="text-decoration-none text-white hover-scale transition-all d-flex align-items-center gap-2" style={{ cursor: 'pointer' }}>
+          <Link to={getHomeRoute()} className="text-decoration-none text-white hover-scale transition-all d-flex align-items-center gap-2" style={{ cursor: 'pointer' }}>
             <img src="/LogosDeAtletify/LogoBlanco.png" alt="Atletify System" style={{ height: '28px', width: '28px', objectFit: 'contain' }} />
             <span className="fw-bold" style={{ fontFamily: 'var(--font-heading-alt)', letterSpacing: '0.05em', fontSize: '0.95rem' }}>
               <span style={{ color: 'var(--primary)' }}>A</span>tletify{' '}

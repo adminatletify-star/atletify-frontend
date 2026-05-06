@@ -428,17 +428,32 @@ export default function CreadorWods() {
                     <p className="crw-empty-text text-center py-2">No hay ejercicios añadidos</p>
                   )}
 
-                  {bloque.ejercicios.map((ej, eIndex) => (
+                {bloque.ejercicios.map((ej, eIndex) => {
+                  const ejercicioInfo = glosarioEjercicios.find(g => g.idEjercicio == ej.idEjercicio);
+                  const categoria = ejercicioInfo?.categoria || '';
+                  
+                  let placeholderReps = "Reps/Dist.";
+                  let regexFiltro = /[^0-9xXmcal\s-]/gi;
+                  
+                  if (categoria === 'Monostructural') {
+                    placeholderReps = "Ej: 400m, 15cal";
+                    regexFiltro = /[^0-9mcal\s]/gi;
+                  } else if (categoria === 'Weightlifting' || categoria === 'Gymnastics') {
+                    placeholderReps = "Ej: 4x12, 21-15";
+                    regexFiltro = /[^0-9xX\s-]/gi;
+                  }
+
+                  return (
                     <div key={eIndex} className="crw-ejercicio-row row g-2 align-items-center">
                       <div className="col-4 col-sm-3 col-md-2">
                         <input
                           type="text"
                           className="crw-reps-input"
-                          placeholder="Reps"
+                          placeholder={placeholderReps}
                           value={ej.esquemaRepeticiones}
+                          maxLength="15"
                           onChange={e => {
-                            let val = e.target.value.replace(/[^0-9]/g, '');
-                            if (parseInt(val) > 100) val = '100';
+                            let val = e.target.value.replace(regexFiltro, '');
                             actualizarEjercicio(bIndex, eIndex, 'esquemaRepeticiones', val);
                           }}
                         />
@@ -454,11 +469,11 @@ export default function CreadorWods() {
                         <input
                           type="text"
                           className="crw-peso-input"
-                          placeholder="Peso RX"
+                          placeholder="Peso (Ej: 135/95)"
                           value={ej.pesoSugerido}
+                          maxLength="15"
                           onChange={e => {
-                            let val = e.target.value.replace(/[^0-9.]/g, '');
-                            if (parseFloat(val) > 500) val = '500';
+                            let val = e.target.value.replace(/[^0-9.\s/lbskg]/gi, '');
                             actualizarEjercicio(bIndex, eIndex, 'pesoSugerido', val);
                           }}
                         />
@@ -473,7 +488,8 @@ export default function CreadorWods() {
                         </button>
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
                 </div>
 
                 {/* PLANTILLA DE JUECEO */}
