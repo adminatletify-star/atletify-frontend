@@ -166,21 +166,22 @@
 }
 
 .rgdp-nav-btn {
-  border: none;
-  background: #dc3545;
-  color: #ffffff;
+  border: none !important;
+  background: #dc3545 !important;
+  color: #ffffff !important;
   transition: all 0.2s ease;
   height: 40px;
   width: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 50% !important; /* Hacemos las flechas redondas para que se vean mejor */
 }
 
 .rgdp-nav-btn:hover {
-  background: #e74c5c;
-  color: #ffffff;
-  box-shadow: 0 0 12px rgba(220, 53, 69, 0.5);
+  background: #e74c5c !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(220, 53, 69, 0.5) !important;
   transform: scale(1.05);
 }
 

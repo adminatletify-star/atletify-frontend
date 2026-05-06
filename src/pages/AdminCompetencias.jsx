@@ -11,7 +11,9 @@ import '../assets/css/AdminCompetencias.css';
 
 export default function AdminCompetencias() {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
   const [box, setBox] = useState(null);
+  const [configPublica, setConfigPublica] = useState(null);
   const [competencias, setCompetencias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(false);
@@ -46,11 +48,30 @@ export default function AdminCompetencias() {
   const [mostrarDetallesAtleta, setMostrarDetallesAtleta] = useState(false);
   const [atletaDetalle, setAtletaDetalle] = useState(null);
 
+  // --- Modal Comprar Plan ---
+  const [planSeleccionado, setPlanSeleccionado] = useState(null);
+  const [nombreCompetenciaExpress, setNombreCompetenciaExpress] = useState('');
+  const [creandoExpress, setCreandoExpress] = useState(false);
+
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));
     const u = JSON.parse(localStorage.getItem('usuario'));
     if (!b || (u?.rol !== 'AdminBox' && u?.rol !== 'Developer')) { navigate('/login'); return; }
-    setBox(b); cargarCompetencias(b.idBox);
+    setUser(u);
+    setBox(b); 
+
+    // Revisar si el módulo está inactivo (tanto camelCase como PascalCase)
+    const isModuloInactivo = (b.moduloCompetenciasActivo === false || b.ModuloCompetenciasActivo === false);
+
+    if (isModuloInactivo && u.rol !== 'Developer') {
+      setLoading(false);
+      fetch(`${import.meta.env.VITE_API_URL}/api/homepublic/configuracion`)
+        .then(res => res.json())
+        .then(data => setConfigPublica(data))
+        .catch(err => console.error('Error fetching public config', err));
+    } else {
+      cargarCompetencias(b.idBox);
+    }
   }, [navigate]);
 
   const cargarCompetencias = async (idBox) => {
@@ -63,7 +84,10 @@ export default function AdminCompetencias() {
   const crearCompetencia = async (e) => {
     e.preventDefault(); setProcesando(true);
     try {
-      const payload = { ...formComp, idBox: box.idBox || box.IdBox };
+      const payload = { nombre: formComp.nombre, idBox: box.idBox || box.IdBox };
+      // Solo enviar fechas si el usuario las puso
+      if (formComp.fechaInicio) payload.fechaInicio = formComp.fechaInicio;
+      if (formComp.fechaFin) payload.fechaFin = formComp.fechaFin;
       const res = await fetch(COMPETENCIAS_ENDPOINT, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
       });
@@ -72,6 +96,23 @@ export default function AdminCompetencias() {
         setMostrarFormComp(false); cargarCompetencias(box.idBox || box.IdBox);
       } else { const err = await res.json(); alert(`Error: ${err.mensaje}`); }
     } catch (err) { alert('Error de conexión.'); } finally { setProcesando(false); }
+  };
+
+  const eliminarCompetencia = async (idComp, nombreComp) => {
+    if (!await window.wpConfirm(`¿Seguro que quieres ELIMINAR en cascada la competencia "${nombreComp}"? Se borrarán todas sus categorías, inscripciones, pagos y scores. Esta acción NO se puede deshacer.`)) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${COMPETENCIAS_ENDPOINT}/${idComp}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        cargarCompetencias(box.idBox || box.IdBox);
+      } else {
+        const errData = await res.json();
+        alert(errData.mensaje || 'Error al eliminar.');
+      }
+    } catch (err) { alert('Error de conexión.'); }
   };
 
   const guardarCategoria = async (e) => {
@@ -206,6 +247,165 @@ export default function AdminCompetencias() {
       <div className="spinner-wp"></div>
     </div>
   );
+
+  const comprarPlanYCrear = async (e) => {
+    e.preventDefault();
+    if (!planSeleccionado || !nombreCompetenciaExpress) return;
+    setCreandoExpress(true);
+    try {
+      const token = localStorage.getItem('token');
+      const payload = {
+        nombreCompetencia: nombreCompetenciaExpress,
+        planNombre: planSeleccionado.nombre,
+        diasPlan: planSeleccionado.dias,
+        atletasIncluidos: planSeleccionado.atletasIncluidos,
+        precioAtletaExtra: planSeleccionado.precioAtletaExtra
+      };
+      
+      const res = await fetch(`${COMPETENCIAS_ENDPOINT}/comprar-plan-crear`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+      
+      if (res.ok) {
+        // Update local box state
+        const updatedBox = { ...box, moduloCompetenciasActivo: true, ModuloCompetenciasActivo: true };
+        setBox(updatedBox);
+        localStorage.setItem('box', JSON.stringify(updatedBox));
+        
+        alert("¡Plan activado! Se ha creado tu competencia con éxito.");
+        setPlanSeleccionado(null);
+        setNombreCompetenciaExpress('');
+        cargarCompetencias(box.idBox || box.IdBox);
+      } else {
+        const err = await res.json();
+        alert(`Error al activar el plan: ${err.mensaje}`);
+      }
+    } catch (err) {
+      alert("Error de conexión al activar el plan.");
+    } finally {
+      setCreandoExpress(false);
+    }
+  };
+
+  // ===================================================================================
+  // PANTALLA DE BLOQUEO (PAYWALL) PARA ADMINBOX CUANDO EL MÓDULO ESTÁ APAGADO
+  // ===================================================================================
+  if (box && (box.moduloCompetenciasActivo === false || box.ModuloCompetenciasActivo === false) && user?.rol !== 'Developer') {
+    return (
+      <div className="d-flex flex-column align-items-center justify-content-center text-center px-4" style={{ minHeight: '80vh', background: 'var(--bg-base)' }}>
+        <i className="fas fa-trophy text-secondary mb-4" style={{ fontSize: '4rem', opacity: 0.5 }}></i>
+        <h2 className="text-white mb-3 fw-bold">¿Quieres gestionar tu competencia?</h2>
+        <p className="text-white-50 mb-5" style={{ maxWidth: '500px' }}>
+          El módulo de Gestión de Competencias no se encuentra activo para tu cuenta. 
+          Contáctanos para conocer nuestros planes y habilitar todas las herramientas profesionales para tu evento.
+        </p>
+
+        {configPublica ? (
+          <>
+            {/* PRICING CARDS */}
+            {(() => {
+              let planes = [];
+              if (configPublica.planesCompetenciaJson) {
+                try { planes = JSON.parse(configPublica.planesCompetenciaJson); } catch (e) {}
+              }
+              if (planes.length === 0) return null;
+              
+              return (
+                <div className="row g-4 justify-content-center mb-5 w-100" style={{ maxWidth: '1000px' }}>
+                  {planes.map((plan, idx) => (
+                    <div key={idx} className="col-12 col-md-4">
+                      <div className="card h-100 border-secondary text-center p-4 rounded-4 shadow-lg hover-scale" style={{ background: 'linear-gradient(145deg, #1a1a1a, #121212)' }}>
+                        <h4 className="text-info fw-bold mb-3 text-uppercase" style={{ letterSpacing: '1px' }}>{plan.nombre}</h4>
+                        <h2 className="text-white mb-4 fw-black">${plan.precio} <span className="fs-6 text-white-50 fw-normal">MXN</span></h2>
+                        <ul className="list-unstyled text-start text-white-50 mb-4 mx-auto flex-grow-1" style={{ maxWidth: '220px' }}>
+                          <li className="mb-3"><i className="fas fa-calendar-day text-success me-3"></i> {plan.dias} {plan.dias === 1 ? 'Día' : 'Días'} de duración</li>
+                          <li className="mb-3"><i className="fas fa-users text-primary me-3"></i> {plan.atletasIncluidos} Atletas incluidos</li>
+                          <li className="mb-3"><i className="fas fa-plus-circle text-warning me-3"></i> ${plan.precioAtletaExtra} por atleta extra</li>
+                        </ul>
+                        <button 
+                          className="btn btn-outline-info w-100 rounded-pill mt-auto fw-bold py-2"
+                          onClick={() => setPlanSeleccionado(plan)}
+                        >
+                          Seleccionar Plan
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+
+            <h5 className="text-white mb-4 fw-bold">¿Listo para llevar tu evento al siguiente nivel?</h5>
+            <div className="d-flex flex-wrap gap-3 align-items-center justify-content-center">
+            {configPublica.linkInstagram && (
+              <a href={configPublica.linkInstagram} target="_blank" rel="noreferrer" className="btn btn-outline-danger px-4 py-2 rounded-pill d-flex align-items-center gap-3 fw-bold" style={{ width: 'auto', minWidth: '200px', justifyContent: 'center' }}>
+                <i className="fab fa-instagram fs-5"></i> Instagram
+              </a>
+            )}
+            {configPublica.linkFacebook && (
+              <a href={configPublica.linkFacebook} target="_blank" rel="noreferrer" className="btn btn-outline-primary px-4 py-2 rounded-pill d-flex align-items-center gap-3 fw-bold" style={{ width: 'auto', minWidth: '200px', justifyContent: 'center' }}>
+                <i className="fab fa-facebook fs-5"></i> Facebook
+              </a>
+            )}
+            {configPublica.telefonoSoporte && (
+              <a href={`https://wa.me/${configPublica.telefonoSoporte.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="btn btn-outline-success px-4 py-2 rounded-pill d-flex align-items-center gap-3 fw-bold" style={{ width: 'auto', minWidth: '200px', justifyContent: 'center' }}>
+                <i className="fab fa-whatsapp fs-5"></i> WhatsApp
+              </a>
+            )}
+            {configPublica.correoContacto && (
+              <a href={`mailto:${configPublica.correoContacto}`} className="btn btn-outline-warning px-4 py-2 rounded-pill d-flex align-items-center gap-3 fw-bold" style={{ width: 'auto', minWidth: '200px', justifyContent: 'center' }}>
+                <i className="fas fa-envelope fs-5"></i> Correo
+              </a>
+            )}
+            </div>
+            
+            {/* Modal Comprar Plan Express */}
+            {planSeleccionado && (
+              <div className="modal-backdrop-wp d-flex align-items-center justify-content-center px-3" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1050, background: 'rgba(0,0,0,0.8)' }}>
+                <div className="tarjeta-panel p-4 w-100 rounded-4" style={{ maxWidth: '500px' }}>
+                  <div className="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+                    <h4 className="text-info m-0 fw-bold">Activar Plan: {planSeleccionado.nombre}</h4>
+                    <button type="button" className="btn-close btn-close-white" onClick={() => setPlanSeleccionado(null)}></button>
+                  </div>
+                  
+                  <div className="mb-4 text-center">
+                    <h1 className="text-white fw-bold">${planSeleccionado.precio} <span className="fs-5 text-white-50 fw-normal">MXN</span></h1>
+                  </div>
+
+                  <form onSubmit={comprarPlanYCrear}>
+                    <div className="mb-4">
+                      <label className="form-label text-white-50">Nombre de la Competencia <span className="text-danger">*</span></label>
+                      <input 
+                        type="text" 
+                        className="form-control bg-dark text-white border-secondary rounded-pill px-4 py-2" 
+                        placeholder="Ej. Wolfpack Throwdown 2026" 
+                        value={nombreCompetenciaExpress}
+                        onChange={(e) => setNombreCompetenciaExpress(e.target.value)}
+                        required
+                        autoFocus
+                      />
+                    </div>
+                    
+                    <div className="d-flex justify-content-end gap-2">
+                      <button type="button" className="btn btn-outline-secondary rounded-pill px-4" onClick={() => setPlanSeleccionado(null)}>Cancelar</button>
+                      <button type="submit" className="btn btn-info rounded-pill px-4 text-dark fw-bold" disabled={creandoExpress}>
+                        {creandoExpress ? 'Procesando...' : 'Comprar y Crear Competencia'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="spinner-wp mt-4" style={{ transform: 'scale(0.5)' }}></div>
+        )}
+      </div>
+    );
+  }
+
 
   // ===================================================================================
   // VISTA 2: CUARTO DE GUERRA (ROSTER Y FINANZAS) — dead code, entrada real via Link
@@ -400,13 +600,15 @@ export default function AdminCompetencias() {
           <Link to="/admin-competencias/historial" className="acomp-btn-cancel-sm text-decoration-none">
             <i className="fas fa-archive"></i> <span className="d-none d-sm-inline">Historial</span>
           </Link>
-          <button
-            className={`acomp-btn-nueva ${mostrarFormComp ? 'acomp-btn-nueva--cancelar' : ''}`}
-            onClick={() => setMostrarFormComp(!mostrarFormComp)}
-          >
-            <i className={`fas ${mostrarFormComp ? 'fa-times' : 'fa-plus'}`}></i>
-            <span className="d-none d-sm-inline">{mostrarFormComp ? 'Cancelar' : 'Nueva'}</span>
-          </button>
+          {user?.rol === 'Developer' && (
+            <button
+              className={`acomp-btn-nueva ${mostrarFormComp ? 'acomp-btn-nueva--cancelar' : ''}`}
+              onClick={() => setMostrarFormComp(!mostrarFormComp)}
+            >
+              <i className={`fas ${mostrarFormComp ? 'fa-times' : 'fa-plus'}`}></i>
+              <span className="d-none d-sm-inline">{mostrarFormComp ? 'Cancelar' : 'Nueva'}</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -433,12 +635,12 @@ export default function AdminCompetencias() {
                     />
                   </div>
                   <div className="col-6 col-md-3">
-                    <label className="acomp-label">Fecha inicio</label>
-                    <RedGrayDatePicker required value={formComp.fechaInicio} onChange={value => setFormComp({ ...formComp, fechaInicio: value })} />
+                    <label className="acomp-label">Fecha inicio <span className="text-muted">(opcional)</span></label>
+                    <RedGrayDatePicker value={formComp.fechaInicio} onChange={value => setFormComp({ ...formComp, fechaInicio: value })} />
                   </div>
                   <div className="col-6 col-md-3">
-                    <label className="acomp-label">Fecha fin</label>
-                    <RedGrayDatePicker required value={formComp.fechaFin} onChange={value => setFormComp({ ...formComp, fechaFin: value })} />
+                    <label className="acomp-label">Fecha fin <span className="text-muted">(opcional)</span></label>
+                    <RedGrayDatePicker value={formComp.fechaFin} onChange={value => setFormComp({ ...formComp, fechaFin: value })} />
                   </div>
                 </div>
                 <div className="d-flex justify-content-end gap-2 mt-4">
@@ -476,13 +678,26 @@ export default function AdminCompetencias() {
                       )}
                       <p className="acomp-comp-fechas">
                         <i className="fas fa-calendar me-1"></i>
-                        {new Date(comp.fechaInicio).toLocaleDateString()} — {new Date(comp.fechaFin).toLocaleDateString()}
+                        {new Date(comp.fechaInicio).getFullYear() >= 2099 
+                          ? "Fechas por definir" 
+                          : `${new Date(comp.fechaInicio).toLocaleDateString()} — ${new Date(comp.fechaFin).toLocaleDateString()}`}
                       </p>
                     </div>
                     {comp.saaS_Estatus === 'Configurando' ? (
                       <span className="badge bg-warning text-dark"><i className="fas fa-lock me-1"></i>Pago Pendiente</span>
                     ) : (
                       <EstatusPickerModal estatus={comp.estatus} onCambiar={(nuevoEstatus) => cambiarEstatus(comp.idCompetencia || comp.IdCompetencia, nuevoEstatus)} />
+                    )}
+                    {user?.rol === 'Developer' && (
+                      <BotonSeguro
+                        className="btn btn-sm btn-outline-danger rounded-circle ms-1"
+                        style={{ width: '30px', height: '30px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                        title="Eliminar competencia en cascada"
+                        textoProcesando=""
+                        onClick={() => eliminarCompetencia(comp.idCompetencia || comp.IdCompetencia, comp.nombre)}
+                      >
+                        <i className="fas fa-trash" style={{ fontSize: '0.7rem' }}></i>
+                      </BotonSeguro>
                     )}
                   </div>
 

@@ -971,7 +971,12 @@ export default function GestionFinanzas() {
                 </div>
                 <div className="col-6">
                   <label className="etiqueta-campo">Monto ($)</label>
-                  <input type="number" step="0.01" className="entrada-oscura fw-bold" required value={formCobro.monto1} onChange={e => setFormCobro({ ...formCobro, monto1: e.target.value })} placeholder="Ej. 500" />
+                  <input type="number" step="0.01" className="entrada-oscura fw-bold" required value={formCobro.monto1} onChange={e => {
+                    const val = e.target.value;
+                    if (val === '' || parseFloat(val) <= totalACobrar) {
+                      setFormCobro({ ...formCobro, monto1: val });
+                    }
+                  }} placeholder={`Ej. ${totalACobrar.toFixed(2)}`} />
                 </div>
               </div>
 

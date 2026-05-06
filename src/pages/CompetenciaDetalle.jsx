@@ -48,6 +48,10 @@ export default function CompetenciaDetalle() {
   const [anuncios, setAnuncios] = useState('');
   const [fechas, setFechas] = useState({ inicioIns: '', finIns: '', inicioComp: '', finComp: '' });
 
+  // Rol del usuario logueado
+  const userRol = JSON.parse(localStorage.getItem('usuario') || '{}')?.rol || '';
+  const esDeveloper = userRol === 'Developer';
+
   // Categorías
   const [procesandoCat, setProcesandoCat] = useState(false);
   const [formCat, setFormCat] = useState({
@@ -156,6 +160,9 @@ export default function CompetenciaDetalle() {
   const [atletaSwap, setAtletaSwap] = useState(null);
   const [mostrarPickerHoraInicio, setMostrarPickerHoraInicio] = useState(false);
 
+  // Configuracion de Plataforma
+  const [contactoSoporte, setContactoSoporte] = useState({ correo: '', telefono: '', ig: '', fb: '' });
+
   // Inventario de competencia
   const [herramientasBox, setHerramientasBox] = useState([]);
   const [cargandoHerramientasBox, setCargandoHerramientasBox] = useState(false);
@@ -215,6 +222,20 @@ export default function CompetenciaDetalle() {
       const data = await res.json();
       const encontrada = data.find(c => (c.idCompetencia || c.IdCompetencia) == id);
 
+      // Obtener configuracion de la plataforma para mostrar contacto
+      try {
+        const resConfig = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/developer/configuracion`);
+        const dataConfig = await resConfig.json();
+        setContactoSoporte({
+          correo: dataConfig.correoContacto || dataConfig.CorreoContacto || '',
+          telefono: dataConfig.telefonoSoporte || dataConfig.TelefonoSoporte || '',
+          ig: dataConfig.linkInstagram || dataConfig.LinkInstagram || '',
+          fb: dataConfig.linkFacebook || dataConfig.LinkFacebook || ''
+        });
+      } catch (errConfig) {
+        console.error("Error al cargar config de la plataforma", errConfig);
+      }
+
       if (encontrada) {
         setComp(encontrada);
         setCarta(encontrada.cartaResponsiva || encontrada.CartaResponsiva || '');
@@ -249,8 +270,8 @@ export default function CompetenciaDetalle() {
         setFechas({
           inicioIns: encontrada.fechaInicioInscripcion || encontrada.FechaInicioInscripcion ? (encontrada.fechaInicioInscripcion || encontrada.FechaInicioInscripcion).split('T')[0] : '',
           finIns: encontrada.fechaFinInscripcion || encontrada.FechaFinInscripcion ? (encontrada.fechaFinInscripcion || encontrada.FechaFinInscripcion).split('T')[0] : '',
-          inicioComp: encontrada.fechaInicio || encontrada.FechaInicio ? (encontrada.fechaInicio || encontrada.FechaInicio).split('T')[0] : '',
-          finComp: encontrada.fechaFin || encontrada.FechaFin ? (encontrada.fechaFin || encontrada.FechaFin).split('T')[0] : ''
+          inicioComp: (encontrada.fechaInicio || encontrada.FechaInicio)?.startsWith('2099') ? '' : ((encontrada.fechaInicio || encontrada.FechaInicio) ? (encontrada.fechaInicio || encontrada.FechaInicio).split('T')[0] : ''),
+          finComp: (encontrada.fechaFin || encontrada.FechaFin)?.startsWith('2099') ? '' : ((encontrada.fechaFin || encontrada.FechaFin) ? (encontrada.fechaFin || encontrada.FechaFin).split('T')[0] : '')
         });
 
         try {
@@ -1047,6 +1068,48 @@ export default function CompetenciaDetalle() {
 
   const guardarFechas = async (e) => {
     e.preventDefault();
+
+    // 1. Validar fechas de inscripción
+    if (fechas.inicioIns && fechas.finIns) {
+      if (new Date(fechas.inicioIns) >= new Date(fechas.finIns)) {
+        return alert("El inicio de inscripciones debe ser antes del cierre de inscripciones.");
+      }
+    }
+
+    // 2. Validar que la competencia empiece al menos 1 día después del cierre de inscripciones
+    if (fechas.finIns && fechas.inicioComp) {
+      const fechaFinIns = new Date(fechas.finIns);
+      const fechaInicioC = new Date(fechas.inicioComp);
+      // Solo tomamos en cuenta los días sin importar la hora
+      fechaFinIns.setHours(0, 0, 0, 0);
+      fechaInicioC.setHours(0, 0, 0, 0);
+
+      const diferenciaDias = (fechaInicioC - fechaFinIns) / (1000 * 60 * 60 * 24);
+      if (diferenciaDias < 1) {
+        return alert("El Día 1 de la competencia debe ser mínimo 1 día después del cierre de inscripciones.");
+      }
+    }
+
+    // 3. Validar duración de la competencia
+    if (fechas.inicioComp && fechas.finComp) {
+      const fechaInicioC = new Date(fechas.inicioComp);
+      const fechaFinC = new Date(fechas.finComp);
+      fechaInicioC.setHours(0, 0, 0, 0);
+      fechaFinC.setHours(0, 0, 0, 0);
+
+      if (fechaFinC < fechaInicioC) {
+        return alert("El fin de la competencia no puede ser antes del Día 1.");
+      }
+
+      // 4. Validar límite de días según el plan
+      const limiteDias = comp?.diasPlanSaaS || 1; // Por si es null o no existe, asume 1
+      const diasDuracion = ((fechaFinC - fechaInicioC) / (1000 * 60 * 60 * 24)) + 1; // +1 porque el mismo día cuenta como 1 día de evento
+
+      if (diasDuracion > limiteDias) {
+        return alert(`Tu plan actual solo permite competencias de hasta ${limiteDias} día(s). Has seleccionado una duración de ${diasDuracion} días.`);
+      }
+    }
+
     try {
       const res = await fetch(`${COMPETENCIAS_ENDPOINT}/${id}/fechas`, {
         method: 'PUT',
@@ -1061,9 +1124,12 @@ export default function CompetenciaDetalle() {
       if (res.ok) {
         alert("¡Calendario actualizado! 📅");
         await cargarDatos(); // 🔄 Recarga para que el auto-status corra inmediatamente
+      } else {
+        const errData = await res.json();
+        alert(errData.mensaje || "Error al actualizar las fechas.");
       }
     } catch (err) {
-      alert("Error de conexión.");
+      alert("Error de conexión al guardar el calendario.");
     }
   };
 
@@ -1646,57 +1712,193 @@ export default function CompetenciaDetalle() {
         {/* ========================================================= */}
         {/* TAB: PORTAL PÚBLICO */}
         {/* ========================================================= */}
-        {tabActiva === 'portal' && (
-          <div className="cd-tab-fade">
-            <div className="cd-section-header">
-              <h2 className="cd-section-h">Portal Público</h2>
-            </div>
+        {tabActiva === 'portal' && (() => {
+          // Utilidades para calcular mínimos y máximos visuales
+          const sumarDias = (fechaStr, dias) => {
+            if (!fechaStr) return '';
+            const [year, month, day] = fechaStr.split('-').map(Number);
+            const d = new Date(year, month - 1, day);
+            d.setDate(d.getDate() + dias);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${dd}`;
+          };
 
-            {/* Fechas */}
-            <div className="cd-card cd-card--info mb-4">
-              <div className="cd-card-header cd-card-header--info">
-                <span className="cd-card-titulo cd-card-titulo--info">
-                  <i className="fas fa-calendar-alt"></i>Calendario
-                </span>
+          const hoyLocal = new Date();
+          const hoyStr = `${hoyLocal.getFullYear()}-${String(hoyLocal.getMonth() + 1).padStart(2, '0')}-${String(hoyLocal.getDate()).padStart(2, '0')}`;
+          
+          const minApertura = hoyStr;
+          const minCierre = sumarDias(fechas.inicioIns, 1);
+          const maxApertura = fechas.finIns ? sumarDias(fechas.finIns, -1) : '';
+          const minDia1 = sumarDias(fechas.finIns, 1);
+          const minFin = fechas.inicioComp || '';
+          
+          // Si por alguna razón la competencia no tiene días guardados en BD (ej. se creó antes de la actualización), dejamos al menos 3 o 30 días para no bloquearlos.
+          let maxDiasPermitidos = comp?.diasPlanSaaS;
+          if (!maxDiasPermitidos || maxDiasPermitidos < 1) maxDiasPermitidos = 30; // fallback seguro
+
+          const maxFin = fechas.inicioComp ? sumarDias(fechas.inicioComp, maxDiasPermitidos - 1) : '';
+
+          return (
+            <div className="cd-tab-fade">
+              <div className="cd-section-header">
+                <h2 className="cd-section-h">Portal Público</h2>
               </div>
-              <div className="cd-card-body-lg">
-                <form onSubmit={guardarFechas}>
-                  <div className="row g-4">
-                    <div className="col-md-6">
-                      <p className="cd-label" style={{ marginBottom: '0.85rem', color: 'var(--accent-cool)' }}>Inscripciones</p>
-                      <div className="d-flex gap-3">
-                        <div className="flex-grow-1">
-                          <label className="cd-label">Apertura</label>
-                          <RedGrayDatePicker value={fechas.inicioIns} onChange={(next) => setFechas({ ...fechas, inicioIns: next })} />
+
+              {/* Fechas */}
+              <div className="cd-card cd-card--info mb-4">
+                <div className="cd-card-header cd-card-header--info">
+                  <span className="cd-card-titulo cd-card-titulo--info">
+                    <i className="fas fa-calendar-alt"></i>Calendario
+                  </span>
+                </div>
+                <div className="cd-card-body-lg">
+                  {/* Avisos de límite de ediciones — solo para AdminBox */}
+                  {!esDeveloper && comp?.vecesFechasEditadas >= 2 ? (
+                    <div className="alert-locked-dates mb-4" style={{ background: 'rgba(220, 53, 69, 0.1)', border: '1px solid rgba(220, 53, 69, 0.3)', borderRadius: '0.8rem', padding: '1.2rem', color: '#f2f2f2' }}>
+                      <div className="d-flex align-items-center gap-3 mb-2">
+                        <i className="fas fa-lock text-danger" style={{ fontSize: '1.5rem' }}></i>
+                        <h4 style={{ margin: 0, fontWeight: 700 }}>Modificación de Fechas Bloqueada</h4>
+                      </div>
+                      <p style={{ margin: 0, color: '#adb5bd', fontSize: '0.9rem' }}>Has alcanzado el límite máximo de ediciones de fecha. Por seguridad, si necesitas realizar cambios, contacta al soporte de Atletify.</p>
+                      
+                      <div className="d-flex gap-4 mt-3 flex-wrap">
+                        {contactoSoporte.correo && (
+                          <a href={`mailto:${contactoSoporte.correo}`} style={{ color: 'var(--primary)', textDecoration: 'none' }}>
+                            <i className="fas fa-envelope me-2"></i>{contactoSoporte.correo}
+                          </a>
+                        )}
+                        {contactoSoporte.telefono && (
+                          <a href={`tel:${contactoSoporte.telefono}`} style={{ color: 'var(--primary)', textDecoration: 'none' }}>
+                            <i className="fas fa-phone me-2"></i>{contactoSoporte.telefono}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ) : !esDeveloper && comp?.vecesFechasEditadas === 1 ? (
+                    <div className="alert-warning-dates mb-4" style={{ background: 'rgba(255, 193, 7, 0.1)', border: '1px solid rgba(255, 193, 7, 0.3)', borderRadius: '0.8rem', padding: '1rem', color: '#ffc107', fontSize: '0.9rem' }}>
+                      <i className="fas fa-exclamation-triangle me-2"></i>
+                      <strong>Atención:</strong> Esta es tu última oportunidad para cambiar las fechas. Después de guardar, el calendario se bloqueará permanentemente.
+                    </div>
+                  ) : null}
+
+                  {/* Formulario de fechas — bloqueado para AdminBox con 2+ ediciones, siempre abierto para Developer */}
+                  {(!esDeveloper && comp?.vecesFechasEditadas >= 2) ? (
+                    <div className="row g-4">
+                      <div className="col-md-6">
+                        <p className="cd-label" style={{ marginBottom: '0.85rem', color: 'var(--accent-cool)' }}>Inscripciones</p>
+                        <div className="d-flex gap-3">
+                          <div className="flex-grow-1">
+                            <label className="cd-label">Apertura</label>
+                            <div className="form-control" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid #333', color: '#999' }}>{fechas.inicioIns || '--'}</div>
+                          </div>
+                          <div className="flex-grow-1">
+                            <label className="cd-label">Cierre</label>
+                            <div className="form-control" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid #333', color: '#999' }}>{fechas.finIns || '--'}</div>
+                          </div>
                         </div>
-                        <div className="flex-grow-1">
-                          <label className="cd-label">Cierre</label>
-                          <RedGrayDatePicker value={fechas.finIns} onChange={(next) => setFechas({ ...fechas, finIns: next })} />
+                      </div>
+                      <div className="col-md-6">
+                        <p className="cd-label" style={{ marginBottom: '0.85rem', color: 'var(--primary)' }}>Competencia</p>
+                        <div className="d-flex gap-3">
+                          <div className="flex-grow-1">
+                            <label className="cd-label">Día 1</label>
+                            <div className="form-control" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid #333', color: '#999' }}>{fechas.inicioComp || '--'}</div>
+                          </div>
+                          <div className="flex-grow-1">
+                            <label className="cd-label">Fin</label>
+                            <div className="form-control" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid #333', color: '#999' }}>{fechas.finComp || '--'}</div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <div className="col-md-6">
-                      <p className="cd-label" style={{ marginBottom: '0.85rem', color: 'var(--primary)' }}>Competencia</p>
-                      <div className="d-flex gap-3">
-                        <div className="flex-grow-1">
-                          <label className="cd-label">Día 1</label>
-                          <RedGrayDatePicker required value={fechas.inicioComp} onChange={(next) => setFechas({ ...fechas, inicioComp: next })} />
+                  ) : (
+                    <form onSubmit={guardarFechas}>
+                      <div className="row g-4">
+                        <div className="col-md-6">
+                          <p className="cd-label" style={{ marginBottom: '0.85rem', color: 'var(--accent-cool)' }}>Inscripciones</p>
+                          <div className="d-flex gap-3">
+                            <div className="flex-grow-1">
+                              <label className="cd-label">Apertura</label>
+                              <RedGrayDatePicker 
+                                value={fechas.inicioIns} 
+                                min={minApertura}
+                                max={maxApertura}
+                                onChange={(next) => setFechas({ ...fechas, inicioIns: next })} 
+                              />
+                            </div>
+                            <div className="flex-grow-1">
+                              <label className="cd-label">
+                                Cierre
+                                {!fechas.inicioIns && <span className="ms-1 text-warning" title="Define primero la apertura"><i className="fas fa-lock"></i></span>}
+                              </label>
+                              {fechas.inicioIns ? (
+                                <RedGrayDatePicker 
+                                  value={fechas.finIns} 
+                                  min={minCierre}
+                                  onChange={(next) => setFechas({ ...fechas, finIns: next })} 
+                                />
+                              ) : (
+                                <div className="form-control" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,193,7,0.3)', color: '#888', cursor: 'not-allowed' }}>
+                                  <i className="fas fa-lock me-2 text-warning opacity-50"></i><span className="opacity-50">Primero apertura</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex-grow-1">
-                          <label className="cd-label">Fin</label>
-                          <RedGrayDatePicker required value={fechas.finComp} onChange={(next) => setFechas({ ...fechas, finComp: next })} />
+                        <div className="col-md-6">
+                          <p className="cd-label" style={{ marginBottom: '0.85rem', color: 'var(--primary)' }}>Competencia</p>
+                          <div className="d-flex gap-3">
+                            <div className="flex-grow-1">
+                              <label className="cd-label">
+                                Día 1
+                                {(!fechas.inicioIns || !fechas.finIns) && <span className="ms-1 text-warning" title="Define primero las fechas de inscripción"><i className="fas fa-lock"></i></span>}
+                              </label>
+                              {(fechas.inicioIns && fechas.finIns) ? (
+                                <RedGrayDatePicker 
+                                  required 
+                                  value={fechas.inicioComp} 
+                                  min={minDia1}
+                                  onChange={(next) => setFechas({ ...fechas, inicioComp: next })} 
+                                />
+                              ) : (
+                                <div className="form-control" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,193,7,0.3)', color: '#888', cursor: 'not-allowed' }}>
+                                  <i className="fas fa-lock me-2 text-warning opacity-50"></i><span className="opacity-50">Primero inscripciones</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-grow-1">
+                              <label className="cd-label">
+                                Fin
+                                {!fechas.inicioComp && <span className="ms-1 text-warning" title="Define primero el Día 1"><i className="fas fa-lock"></i></span>}
+                              </label>
+                              {fechas.inicioComp ? (
+                                <RedGrayDatePicker 
+                                  required 
+                                  value={fechas.finComp} 
+                                  min={minFin}
+                                  max={maxFin}
+                                  onChange={(next) => setFechas({ ...fechas, finComp: next })} 
+                                />
+                              ) : (
+                                <div className="form-control" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,193,7,0.3)', color: '#888', cursor: 'not-allowed' }}>
+                                  <i className="fas fa-lock me-2 text-warning opacity-50"></i><span className="opacity-50">Primero Día 1</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-12 text-end">
+                          <BotonSeguro type="submit" className="cd-btn cd-btn--info-solid" textoProcesando="Guardando...">
+                            <i className="fas fa-calendar-check"></i>GUARDAR CALENDARIO
+                          </BotonSeguro>
                         </div>
                       </div>
-                    </div>
-                    <div className="col-12 text-end">
-                      <BotonSeguro type="submit" className="cd-btn cd-btn--info-solid" textoProcesando="Guardando...">
-                        <i className="fas fa-calendar-check"></i>GUARDAR CALENDARIO
-                      </BotonSeguro>
-                    </div>
-                  </div>
-                </form>
+                    </form>
+                  )}
+                </div>
               </div>
-            </div>
 
             {/* Anuncios */}
             <div className="cd-section-header mt-4">
@@ -1724,7 +1926,7 @@ export default function CompetenciaDetalle() {
               <ReactQuill theme="snow" value={reglamento} onChange={setReglamento} style={{ height: '300px' }} />
             </div>
           </div>
-        )}
+        )})()}
 
         {/* ========================================================= */}
         {/* TAB: INVENTARIO COMPETENCIA */}

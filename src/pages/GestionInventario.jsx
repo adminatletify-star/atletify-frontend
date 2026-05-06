@@ -246,7 +246,9 @@ export default function GestionInventario() {
                     type="number" min="0" step="0.01"
                     className="entrada-oscura"
                     value={form.precioVenta}
-                    onChange={e => setForm({ ...form, precioVenta: e.target.value })}
+                    onChange={e => {
+                      if (e.target.value.length <= 5) setForm({ ...form, precioVenta: e.target.value });
+                    }}
                     placeholder="0.00"
                     style={{ color: 'var(--success)', fontFamily: 'var(--font-stats)', fontWeight: 700 }}
                   />
@@ -258,7 +260,9 @@ export default function GestionInventario() {
                     type="number" min="0"
                     className="entrada-oscura"
                     value={form.stockActual}
-                    onChange={e => setForm({ ...form, stockActual: e.target.value })}
+                    onChange={e => {
+                      if (e.target.value.length <= 5) setForm({ ...form, stockActual: e.target.value });
+                    }}
                     placeholder="0"
                     style={{ fontFamily: 'var(--font-stats)', fontWeight: 700 }}
                     disabled={form.esSobrePedido}
@@ -271,7 +275,9 @@ export default function GestionInventario() {
                     type="number" min="0"
                     className="entrada-oscura"
                     value={form.stockMinimo}
-                    onChange={e => setForm({ ...form, stockMinimo: e.target.value })}
+                    onChange={e => {
+                      if (e.target.value.length <= 5) setForm({ ...form, stockMinimo: e.target.value });
+                    }}
                     placeholder="0"
                     style={{ fontFamily: 'var(--font-stats)', fontWeight: 700 }}
                     disabled={form.esSobrePedido}

@@ -124,7 +124,7 @@ export default function GestionVentasProductos() {
     }
   };
 
-  const opciones = [
+  let opciones = [
     {
       titulo: 'Vender Productos',
       descripcion: 'Registra una nueva venta y descuenta stock automáticamente.',
@@ -148,8 +148,20 @@ export default function GestionVentasProductos() {
       colorClass: 'info',
       ruta: '/historial-ventas',
       variante: 'cyan'
+    },
+    {
+      titulo: 'Gestión de Fiado',
+      descripcion: 'Controla las deudas de los atletas de confianza y registra sus pagos/abonos.',
+      icono: 'fa-hand-holding-usd',
+      colorClass: 'danger',
+      ruta: '/gestion-fiado',
+      variante: 'red'
     }
   ];
+
+  if (apartadoActivo !== 'General (Box)') {
+    opciones = opciones.filter(o => o.titulo !== 'Gestión de Fiado');
+  }
 
   return (
     <div className="gvp-page">

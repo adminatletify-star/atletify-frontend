@@ -1,0 +1,157 @@
+.mdf-page {
+  min-height: 100vh;
+  background-color: var(--wp-bg-body);
+}
+
+.mdf-header {
+  padding: 1.5rem 2rem;
+  background-color: var(--wp-bg-card);
+  border-bottom: 1px solid var(--wp-border);
+  margin-bottom: 2rem;
+}
+
+.mdf-header-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--wp-text-main);
+}
+.mdf-header-title span {
+  color: var(--wp-primary);
+}
+
+.mdf-resumen-card {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
+  border: 1px solid var(--bs-danger);
+  border-radius: 1rem;
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.1);
+}
+
+.mdf-resumen-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.mdf-resumen-label {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--wp-text-main);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.mdf-resumen-monto {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--bs-danger);
+}
+
+.mdf-resumen-icon {
+  font-size: 3rem;
+  color: rgba(220, 53, 69, 0.5);
+}
+
+.mdf-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--wp-text-main);
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--wp-border);
+  padding-bottom: 0.5rem;
+}
+
+.mdf-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mdf-bloque {
+  background-color: var(--wp-bg-card);
+  border: 1px solid var(--wp-border);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.mdf-bloque--pendiente {
+  border-left: 4px solid var(--bs-warning);
+}
+
+.mdf-bloque--saldado {
+  border-left: 4px solid var(--bs-success);
+  opacity: 0.8;
+}
+
+.mdf-bloque-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px dashed var(--wp-border);
+}
+
+.mdf-bloque-prods {
+  font-size: 0.95rem;
+  color: var(--wp-text-muted);
+  margin-bottom: 1rem;
+}
+
+.mdf-bloque-foot {
+  background-color: rgba(255, 255, 255, 0.02);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+}
+
+/* Modal */
+.mdf-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0,0,0,0.7);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.mdf-modal-panel {
+  background-color: #1e1e1e;
+  border: 1px solid rgba(255,193,7,0.25);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+  border-radius: 1rem;
+  width: 100%;
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mdf-modal-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--wp-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mdf-close-btn {
+  background: none;
+  border: none;
+  color: var(--wp-text-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.mdf-modal-body {
+  padding: 1.5rem;
+}

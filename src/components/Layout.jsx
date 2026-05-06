@@ -25,6 +25,24 @@ export default function Layout() {
     setUser(u);
     setBox(b);
 
+    // Refrescar los datos del Box en segundo plano para obtener permisos actualizados (ej. moduloCompetenciasActivo)
+    if (b && (b.idBox || b.IdBox)) {
+      const targetId = b.idBox || b.IdBox;
+      fetch(`${BOXES_ENDPOINT}/${targetId}`)
+        .then(res => {
+          if (res.ok) return res.json();
+          throw new Error('Network response was not ok.');
+        })
+        .then(data => {
+          if (data && (data.idBox || data.IdBox)) {
+             const updatedBox = { ...b, ...data };
+             localStorage.setItem('box', JSON.stringify(updatedBox));
+             setBox(updatedBox); // Actualiza el estado y recalcula el menú
+          }
+        })
+        .catch(err => console.error("Error refrescando box en segundo plano:", err));
+    }
+
     if (u && b && u.rol === 'Atleta') {
       const idUsuarioActual = u.idUsuario || u.id;
       if (idUsuarioActual) {
@@ -92,7 +110,8 @@ export default function Layout() {
             { label: 'Inventario de Almacén', href: '/almacen-panel' },
             { label: 'Gestión de Clases', href: '/gestion-clases' },
             { label: 'Mensualidades', href: "/gestion-finanzas" },
-            ...(user.rol === 'Developer' || user.esOrganizadorCompetencias ? [{ label: 'Gestión Competencias', href: '/admin-competencias' }] : []),
+            { label: 'Gestión Competencias', href: '/admin-competencias' },
+            { label: 'Historial Competencias', href: '/admin-competencias/historial' },
             { label: 'Beneficios', href: '/wolf-beneficios' },
 
           ]
@@ -135,6 +154,7 @@ export default function Layout() {
           links: [
             { label: 'Mi Perfil', href: '/mi-perfil' },
             { label: 'Mis Mensualidades', href: '/detalle-plan-user' },
+            { label: 'Estado de Cuenta (Tienda)', href: '/mis-deudas' },
             { label: 'Expediente Médico', href: '/expediente-medico' },
             { label: 'Buzón de Sugerencias', href: '/buzon-sugerencias' },
           ]
@@ -154,7 +174,7 @@ export default function Layout() {
         ]
       }
     ];
-  }, [user]); // <- Solo se recalcula si cambia el usuario
+  }, [user, box]); // <- Se recalcula si cambia el usuario o el box
 
   // Ruta de inicio según rol (para el tab Inicio del MobileNavBar)
   const homeRoute = useMemo(() => {

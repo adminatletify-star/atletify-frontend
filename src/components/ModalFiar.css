@@ -1,0 +1,164 @@
+.mf-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.mf-panel {
+  background-color: #1e1e1e;
+  border: 1px solid rgba(255,193,7,0.25);
+  border-radius: 1rem;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.8);
+}
+
+.mf-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--wp-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mf-title {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--wp-text-main);
+  font-weight: 600;
+}
+
+.mf-close {
+  background: none;
+  border: none;
+  color: var(--wp-text-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.mf-close:hover {
+  color: var(--wp-text-main);
+}
+
+.mf-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.mf-search {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.mf-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 1rem;
+  transform: translateY(-50%);
+  color: var(--wp-text-muted);
+}
+
+.mf-search-input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  background-color: var(--wp-bg-body);
+  border: 1px solid var(--wp-border);
+  border-radius: 0.5rem;
+  color: var(--wp-text-main);
+}
+
+.mf-search-input:focus {
+  outline: none;
+  border-color: var(--wp-primary);
+}
+
+.mf-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mf-atleta-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background-color: var(--wp-bg-body);
+  border: 1px solid var(--wp-border);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mf-atleta-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--wp-text-muted);
+}
+
+.mf-atleta-item--activo {
+  background-color: rgba(255, 193, 7, 0.1);
+  border-color: var(--bs-warning);
+}
+
+.mf-atleta-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mf-atleta-foto {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.mf-atleta-inicial {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--wp-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.mf-atleta-nombre {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--wp-text-main);
+}
+
+.mf-deuda-badge {
+  font-size: 0.75rem;
+  margin-top: 0.2rem;
+}
+
+.mf-check {
+  font-size: 1.25rem;
+}
+
+.mf-footer {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid var(--wp-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}

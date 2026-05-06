@@ -15,11 +15,12 @@ export default function EstatusPickerModal({ estatus, onCambiar }) {
 
   const opcionActual = OPCIONES_BASE.find(o => o.valor === estatus) || OPCIONES_BASE[0];
 
-  // Solo mostrar opciones de archivo si ya está en alguna etapa final o si ya es archivo
-  const mostrarArchivo = ['Finalizada', 'Archivada', 'Historial'].includes(estatus);
-  const opcionesMostradas = mostrarArchivo 
-    ? OPCIONES_BASE.filter(o => ['Finalizada', 'Archivada', 'Historial'].includes(o.valor))
-    : OPCIONES_BASE.filter(o => o.valor !== 'Archivada' && o.valor !== 'Historial');
+  // Estado "cerrado": solo puede moverse entre Historial y Archivada
+  const esCerrado = ['Historial', 'Archivada'].includes(estatus);
+
+  const opcionesMostradas = esCerrado
+    ? OPCIONES_BASE.filter(o => ['Historial', 'Archivada'].includes(o.valor))
+    : OPCIONES_BASE.filter(o => o.valor !== 'Archivada' && o.valor !== 'Historial' && o.valor !== 'Finalizada');
 
   const seleccionar = (valor) => {
     setAbierto(false);

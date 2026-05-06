@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PRODUCTOS_ENDPOINT, VENTAS_ENDPOINT } from '../services/api';
 import BackButton from '../components/BackButton';
 import BotonSeguro from '../components/BotonSeguro';
+import ModalFiar from '../components/ModalFiar';
 import '../assets/css/PuntoDeVenta.css';
 
 export default function PuntoDeVenta() {
@@ -13,6 +14,9 @@ export default function PuntoDeVenta() {
   const [carrito, setCarrito] = useState([]);
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(false);
+  const [modalFiarOpen, setModalFiarOpen] = useState(false);
+  const [modalCobrarOpen, setModalCobrarOpen] = useState(false);
+  const [metodoCobro, setMetodoCobro] = useState('Efectivo');
 
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));
@@ -74,28 +78,37 @@ export default function PuntoDeVenta() {
 
   const totalVenta = carrito.reduce((acc, i) => acc + i.producto.precioVenta * i.cantidad, 0);
 
-  async function realizarVenta() {
+  const realizarVenta = async (esFiado = false, idUsuario = null, metodo = 'Efectivo') => {
     if (carrito.length === 0) return;
-    if (!await window.wpConfirm(`¿Confirmar venta por $${totalVenta.toFixed(2)}?`)) return;
     setProcesando(true);
     const apartadoActual = localStorage.getItem('apartadoVentas') || 'General (Box)';
 
     try {
+      const payload = {
+        idBox: box.idBox,
+        apartado: apartadoActual,
+        detalles: carrito.map(i => ({ idProducto: i.producto.idProducto, cantidad: i.cantidad }))
+      };
+
+      if (esFiado && idUsuario) {
+        payload.metodoPago = "Fiado";
+        payload.idUsuario = idUsuario;
+      } else {
+        payload.metodoPago = metodo;
+      }
+
       const res = await fetch(VENTAS_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idBox: box.idBox,
-          apartado: apartadoActual,
-          detalles: carrito.map(i => ({ idProducto: i.producto.idProducto, cantidad: i.cantidad }))
-        })
+        body: JSON.stringify(payload)
       });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.mensaje || 'Error al procesar la venta.');
       }
-      alert(`Venta registrada con éxito: $${totalVenta.toFixed(2)}`);
+      alert(esFiado ? `Deuda registrada con éxito por $${totalVenta.toFixed(2)}` : `Venta registrada con éxito: $${totalVenta.toFixed(2)}`);
       setCarrito([]);
+      setModalFiarOpen(false);
       await cargarProductos();
     } catch (err) {
       alert(err.message || 'Error al procesar la venta.');
@@ -103,6 +116,10 @@ export default function PuntoDeVenta() {
       setProcesando(false);
     }
   }
+
+  const handleConfirmarFiar = (atleta) => {
+    realizarVenta(true, atleta.idUsuario);
+  };
 
   return (
     <div className="pdv-page">
@@ -206,13 +223,24 @@ export default function PuntoDeVenta() {
                       <span className="pdv-total-label">Total a pagar</span>
                       <span className="pdv-total-amount">${totalVenta.toFixed(2)}</span>
                     </div>
-                    <BotonSeguro
-                      className="pdv-cobrar-btn"
-                      onClick={realizarVenta}
-                      textoProcesando="Procesando..."
-                    >
-                      <i className="fas fa-check-circle"></i>Cobrar
-                    </BotonSeguro>
+                    <div className="d-flex gap-2">
+                      <button
+                        className="pdv-cobrar-btn w-100"
+                        onClick={() => setModalCobrarOpen(true)}
+                        disabled={procesando}
+                      >
+                        <i className="fas fa-check-circle"></i>Cobrar
+                      </button>
+                      {(!localStorage.getItem('apartadoVentas') || localStorage.getItem('apartadoVentas') === 'General (Box)') && (
+                        <button
+                          className="pdv-cobrar-btn btn-warning w-100"
+                          style={{backgroundColor: '#ffc107', borderColor: '#ffc107', color: '#000'}}
+                          onClick={() => setModalFiarOpen(true)}
+                        >
+                          <i className="fas fa-hand-holding-usd"></i>Fiar
+                        </button>
+                      )}
+                    </div>
                     <button
                       className="pdv-vaciar-btn"
                       onClick={() => setCarrito([])}
@@ -314,6 +342,77 @@ export default function PuntoDeVenta() {
 
         </div>
       </div>
+
+      {modalFiarOpen && box && (
+        <ModalFiar 
+          boxId={box.idBox} 
+          onClose={() => setModalFiarOpen(false)} 
+          onConfirm={handleConfirmarFiar} 
+        />
+      )}
+
+      {/* Modal para Confirmar Cobro */}
+      {modalCobrarOpen && (
+        <div 
+          onClick={() => !procesando && setModalCobrarOpen(false)} 
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1060, padding: '1rem'
+          }}
+        >
+          <div 
+            onClick={e => e.stopPropagation()} 
+            style={{
+              width: '100%', maxWidth: '400px', 
+              backgroundColor: '#1e1e1e', 
+              border: '1px solid rgba(255,193,7,0.25)', 
+              boxShadow: '0 12px 40px rgba(0,0,0,0.8)',
+              borderRadius: '12px', overflow: 'hidden'
+            }}
+          >
+            <div className="p-3 border-bottom border-secondary d-flex justify-content-between align-items-center">
+              <h5 className="mb-0 text-white">Confirmar Cobro</h5>
+              <button 
+                className="btn-close btn-close-white" 
+                onClick={() => setModalCobrarOpen(false)} 
+                disabled={procesando}
+              ></button>
+            </div>
+            <div className="p-4 text-white">
+              <div className="text-center mb-4">
+                <p className="text-muted mb-1">Total a cobrar:</p>
+                <h2 className="text-success fw-bold mb-0">${totalVenta.toFixed(2)}</h2>
+              </div>
+              
+              <div className="mb-4">
+                <label className="form-label text-muted">¿Cómo pagó el cliente?</label>
+                <select 
+                  className="form-select bg-dark text-white border-secondary"
+                  value={metodoCobro}
+                  onChange={e => setMetodoCobro(e.target.value)}
+                >
+                  <option value="Efectivo">Efectivo</option>
+                  <option value="Tarjeta en Recepción">Tarjeta en Recepción</option>
+                </select>
+              </div>
+
+              <button 
+                className="btn btn-success w-100 fw-bold py-2"
+                onClick={() => {
+                  setModalCobrarOpen(false);
+                  realizarVenta(false, null, metodoCobro);
+                }}
+                disabled={procesando}
+              >
+                {procesando ? <span className="spinner-border spinner-border-sm me-2"></span> : <i className="fas fa-check-circle me-2"></i>}
+                Confirmar y Registrar Venta
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

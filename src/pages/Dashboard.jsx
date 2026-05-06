@@ -11,6 +11,7 @@ export default function Dashboard() {
   const [boxes, setBoxes] = useState([]);
   const [metricasBoxes, setMetricasBoxes] = useState([]);
   const [configuracion, setConfiguracion] = useState(null);
+  const [planesB2B, setPlanesB2B] = useState([]);
   const [loading, setLoading] = useState(true);
   const [guardandoConfig, setGuardandoConfig] = useState(false);
   const [filtroNombre, setFiltroNombre] = useState('');
@@ -21,6 +22,10 @@ export default function Dashboard() {
     nombre: '', apellidos: '', username: '', correo: '', telefono: '', fechaNacimiento: ''
   });
   const [creandoAdmin, setCreandoAdmin] = useState(false);
+  
+  // Estado para el Modal de Habilitar Competencia
+  const [modalActivarCompe, setModalActivarCompe] = useState({ open: false, idBox: null, planSaaS: null, estatusSaaS: '', fechaVencimientoSaaS: null, nombre: '' });
+  const [activandoCompe, setActivandoCompe] = useState(false);
   
   // Estado para el Modal de Éxito de Creación de Admin
   const [modalSuccessAdmin, setModalSuccessAdmin] = useState({ open: false, username: '', contrasenaGenerada: '' });
@@ -61,16 +66,18 @@ export default function Dashboard() {
       const token = localStorage.getItem('token');
       const authHeader = { 'Authorization': `Bearer ${token}` };
 
-      const [resB, resU, resM, resC] = await Promise.all([
+      const [resB, resU, resM, resC, resPlanes] = await Promise.all([
         fetch(BOXES_ENDPOINT),
         fetch(USUARIOS_ENDPOINT),
         fetch(`${import.meta.env.VITE_API_URL}/api/developer/metricas-boxes`, { headers: authHeader }),
-        fetch(`${import.meta.env.VITE_API_URL}/api/developer/configuracion`, { headers: authHeader })
+        fetch(`${import.meta.env.VITE_API_URL}/api/developer/configuracion`, { headers: authHeader }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/saas/planes`, { headers: authHeader })
       ]);
       const dataB = await resB.json();
       const dataU = await resU.json();
       const dataM = resM.ok ? await resM.json() : [];
       const dataC = resC.ok ? await resC.json() : null;
+      const dataPlanes = resPlanes.ok ? await resPlanes.json() : [];
 
       const boxesList = Array.isArray(dataB) ? dataB : [];
       const usersList = Array.isArray(dataU) ? dataU : (dataU.data || []);
@@ -78,7 +85,16 @@ export default function Dashboard() {
       setBoxes(boxesList);
       setUsuarios(usersList);
       setMetricasBoxes(Array.isArray(dataM) ? dataM : []);
-      if(dataC) setConfiguracion(dataC);
+      if(dataC) {
+        try {
+          dataC.planesCompetenciaArray = JSON.parse(dataC.planesCompetenciaJson || "[]");
+        } catch(e) {
+          dataC.planesCompetenciaArray = [];
+        }
+        setConfiguracion(dataC);
+      }
+      
+      setPlanesB2B(Array.isArray(dataPlanes) ? dataPlanes : []);
       
       setStats({ boxes: boxesList.length, usuarios: usersList.length });
     } catch (err) {
@@ -114,6 +130,11 @@ export default function Dashboard() {
     e.preventDefault();
     setGuardandoConfig(true);
     try {
+      const payloadToSave = { ...configuracion };
+      payloadToSave.planesCompetenciaJson = JSON.stringify(configuracion.planesCompetenciaArray || []);
+      // Remove array from payload just in case (though backend might ignore it)
+      delete payloadToSave.planesCompetenciaArray;
+
       const token = localStorage.getItem('token');
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/configuracion`, {
         method: 'PUT',
@@ -121,7 +142,7 @@ export default function Dashboard() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(configuracion)
+        body: JSON.stringify(payloadToSave)
       });
       if (res.ok) {
         alert("Configuración Global actualizada con éxito");
@@ -169,6 +190,55 @@ export default function Dashboard() {
       alert("Error de conexión");
     } finally {
       setCreandoAdmin(false);
+    }
+  };
+
+  const handleActivarYCrearCompe = async (e) => {
+    e.preventDefault();
+    setActivandoCompe(true);
+    try {
+      const token = localStorage.getItem('token');
+      // 1. Habilitar el módulo SaaS
+      const resSaaS = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/box-saas/${modalActivarCompe.idBox}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ 
+          estatusSaaS: modalActivarCompe.estatusSaaS === 'Pendiente' || !modalActivarCompe.estatusSaaS ? 'Activo' : modalActivarCompe.estatusSaaS, 
+          idPlanSaaS: modalActivarCompe.planSaaS,
+          moduloCompetenciasActivo: true,
+          fechaVencimientoSaaS: modalActivarCompe.fechaVencimientoSaaS
+        })
+      });
+
+      if (!resSaaS.ok) throw new Error("Error al habilitar módulo");
+
+      // 2. Crear la competencia
+
+      const planSeleccionado = configuracion?.planesCompetenciaArray?.find(p => p.id.toString() === modalActivarCompe.planCompetenciaId);
+
+      const resCompe = await fetch(`${import.meta.env.VITE_API_URL}/api/competencias`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+           idBox: modalActivarCompe.idBox,
+           nombre: modalActivarCompe.nombre,
+           SaaS_Estatus: planSeleccionado ? "Activa" : "Configurando",
+           DiasPlanSaaS: planSeleccionado ? planSeleccionado.dias : 1,
+           AtletasIncluidos: planSeleccionado ? planSeleccionado.atletasIncluidos : 0,
+           PrecioAtletaExtra: planSeleccionado ? planSeleccionado.precioAtletaExtra : 0
+        })
+      });
+
+      if (!resCompe.ok) throw new Error("Error al crear la competencia");
+
+      alert("Módulo habilitado y competencia creada con éxito. Ya puedes revisarla en Admin Competencias.");
+      setModalActivarCompe({ open: false, idBox: null, planSaaS: null, estatusSaaS: '', fechaVencimientoSaaS: null, nombre: '' });
+      cargarDataGlobal();
+    } catch(err) {
+      console.error(err);
+      alert(err.message || "No se pudo completar la operación.");
+    } finally {
+      setActivandoCompe(false);
     }
   };
 
@@ -311,8 +381,9 @@ export default function Dashboard() {
                                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                                 body: JSON.stringify({ 
                                   estatusSaaS: newStatus, 
+                                  idPlanSaaS: b.idPlanSaaS,
                                   moduloCompetenciasActivo: b.moduloCompetenciasActivo,
-                                  fechaVencimientoSaaS: fechaGracia
+                                  fechaVencimientoSaaS: fechaGracia || b.fechaVencimientoSaaS
                                 })
                               });
                               alert("Estatus SaaS actualizado");
@@ -340,17 +411,38 @@ export default function Dashboard() {
                         className={`btn btn-sm ${b.moduloCompetenciasActivo ? 'btn-success' : 'btn-outline-warning'}`}
                         style={{ borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}
                         onClick={async () => {
-                          const conf = await window.wpConfirm(
-                            b.moduloCompetenciasActivo 
-                            ? '¿Seguro que deseas desactivar el módulo de competencias para este Box?'
-                            : '¿Seguro que deseas habilitar el módulo de competencias para este Box?'
-                          );
-                          if(conf) {
-                            try {
-                              await api.actualizarModulosPremium(b.idBox, { moduloCompetenciasActivo: !b.moduloCompetenciasActivo });
-                              cargarDataGlobal();
-                            } catch (e) {
-                              alert("No se pudo actualizar el módulo.");
+                          if (!b.moduloCompetenciasActivo) {
+                            // Abrir modal para encender y crear competencia
+                            setModalActivarCompe({ 
+                              open: true, 
+                              idBox: b.idBox, 
+                              planSaaS: b.idPlanSaaS, 
+                              planCompetenciaId: '',
+                              estatusSaaS: b.estatusSaaS, 
+                              fechaVencimientoSaaS: b.fechaVencimientoSaaS, 
+                              nombre: '' 
+                            });
+                          } else {
+                            const conf = await window.wpConfirm('¿Seguro que deseas desactivar el módulo de competencias para este Box?');
+                            if(conf) {
+                              try {
+                                const token = localStorage.getItem('token');
+                                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/box-saas/${b.idBox}`, {
+                                  method: 'PUT',
+                                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                  body: JSON.stringify({ 
+                                    estatusSaaS: b.estatusSaaS || 'Pendiente', 
+                                    idPlanSaaS: b.idPlanSaaS,
+                                    moduloCompetenciasActivo: false,
+                                    fechaVencimientoSaaS: b.fechaVencimientoSaaS
+                                  })
+                                });
+                                if (!res.ok) throw new Error("Error en servidor");
+                                cargarDataGlobal();
+                              } catch (e) {
+                                console.error(e);
+                                alert("No se pudo actualizar el módulo.");
+                              }
                             }
                           }
                         }}
@@ -430,36 +522,104 @@ export default function Dashboard() {
             <form onSubmit={guardarConfiguracion}>
               <div className="row g-4">
                 <div className="col-12 col-md-6">
-                  <h5 className="text-info border-bottom border-secondary pb-2">Módulo de Competencias</h5>
-                  <div className="mb-3">
-                    <label className="form-label text-white-50 small">Precio Base (Ya son clientes de Atletify)</label>
-                    <div className="input-group">
-                      <span className="input-group-text bg-dark text-white border-secondary">$</span>
-                      <input type="number" step="0.01" className="form-control bg-dark text-white border-secondary" name="precioBase_SaaS" value={configuracion.precioBase_SaaS} onChange={handleConfigChange} required />
-                    </div>
+                  <div className="d-flex justify-content-between align-items-center border-bottom border-secondary pb-2 mb-3">
+                    <h5 className="text-info m-0">Planes de Competencias SaaS</h5>
+                    <button 
+                      type="button" 
+                      className="btn btn-sm btn-outline-info rounded-pill"
+                      onClick={() => {
+                        const newPlan = { id: Date.now(), nombre: '', precio: 0, dias: 1, atletasIncluidos: 50, precioAtletaExtra: 0 };
+                        setConfiguracion(prev => ({
+                          ...prev,
+                          planesCompetenciaArray: [...(prev.planesCompetenciaArray || []), newPlan]
+                        }));
+                      }}
+                    >
+                      <i className="fas fa-plus me-1"></i> Añadir Plan
+                    </button>
                   </div>
-                  <div className="mb-3">
-                    <label className="form-label text-white-50 small">Precio Base (Solo vienen por el evento)</label>
-                    <div className="input-group">
-                      <span className="input-group-text bg-dark text-white border-secondary">$</span>
-                      <input type="number" step="0.01" className="form-control bg-dark text-white border-secondary" name="precioBase_NoSaaS" value={configuracion.precioBase_NoSaaS} onChange={handleConfigChange} required />
-                    </div>
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label text-white-50 small">Atletas Incluidos en Paquete Base</label>
-                    <input type="number" className="form-control bg-dark text-white border-secondary" name="atletasIncluidosBase" value={configuracion.atletasIncluidosBase} onChange={handleConfigChange} required />
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label text-white-50 small">Precio por Atleta Excedente</label>
-                    <div className="input-group">
-                      <span className="input-group-text bg-dark text-white border-secondary">$</span>
-                      <input type="number" step="0.01" className="form-control bg-dark text-white border-secondary" name="precioPorAtletaExtra" value={configuracion.precioPorAtletaExtra} onChange={handleConfigChange} required />
-                    </div>
+                  
+                  <div className="d-flex flex-column gap-3" style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '10px' }}>
+                    {(!configuracion.planesCompetenciaArray || configuracion.planesCompetenciaArray.length === 0) && (
+                      <div className="text-center text-white-50 p-3 border border-secondary rounded border-dashed">
+                        No hay planes configurados.
+                      </div>
+                    )}
+                    {(configuracion.planesCompetenciaArray || []).map((plan, index) => (
+                      <div key={plan.id || index} className="p-3 bg-dark border border-secondary rounded position-relative">
+                        <button 
+                          type="button" 
+                          className="btn btn-sm btn-outline-danger position-absolute"
+                          style={{ top: '10px', right: '10px' }}
+                          onClick={() => {
+                            const newArray = [...configuracion.planesCompetenciaArray];
+                            newArray.splice(index, 1);
+                            setConfiguracion(prev => ({ ...prev, planesCompetenciaArray: newArray }));
+                          }}
+                        >
+                          <i className="fas fa-times"></i>
+                        </button>
+                        
+                        <div className="mb-2 pe-4">
+                          <label className="form-label text-white-50 small m-0">Nombre del Plan</label>
+                          <input type="text" className="form-control form-control-sm bg-black text-white border-secondary" placeholder="Ej. Básico, Pro" value={plan.nombre} onChange={e => {
+                            const newArray = [...configuracion.planesCompetenciaArray];
+                            newArray[index].nombre = e.target.value;
+                            setConfiguracion(prev => ({ ...prev, planesCompetenciaArray: newArray }));
+                          }} required />
+                        </div>
+                        
+                        <div className="row g-2 mb-2">
+                          <div className="col-6">
+                            <label className="form-label text-white-50 small m-0">Precio</label>
+                            <div className="input-group input-group-sm">
+                              <span className="input-group-text bg-black text-white border-secondary">$</span>
+                              <input type="number" step="0.01" className="form-control bg-black text-white border-secondary" value={plan.precio} onChange={e => {
+                                const newArray = [...configuracion.planesCompetenciaArray];
+                                newArray[index].precio = parseFloat(e.target.value) || 0;
+                                setConfiguracion(prev => ({ ...prev, planesCompetenciaArray: newArray }));
+                              }} required />
+                            </div>
+                          </div>
+                          <div className="col-6">
+                            <label className="form-label text-white-50 small m-0">Plazo (Días)</label>
+                            <input type="number" className="form-control form-control-sm bg-black text-white border-secondary" placeholder="Duración evento" value={plan.dias} onChange={e => {
+                                const newArray = [...configuracion.planesCompetenciaArray];
+                                newArray[index].dias = parseInt(e.target.value) || 1;
+                                setConfiguracion(prev => ({ ...prev, planesCompetenciaArray: newArray }));
+                            }} required />
+                          </div>
+                        </div>
+
+                        <div className="row g-2">
+                          <div className="col-6">
+                            <label className="form-label text-white-50 small m-0">Atletas Incluidos</label>
+                            <input type="number" className="form-control form-control-sm bg-black text-white border-secondary" value={plan.atletasIncluidos} onChange={e => {
+                                const newArray = [...configuracion.planesCompetenciaArray];
+                                newArray[index].atletasIncluidos = parseInt(e.target.value) || 0;
+                                setConfiguracion(prev => ({ ...prev, planesCompetenciaArray: newArray }));
+                            }} required />
+                          </div>
+                          <div className="col-6">
+                            <label className="form-label text-white-50 small m-0">Precio Atleta Extra</label>
+                            <div className="input-group input-group-sm">
+                              <span className="input-group-text bg-black text-white border-secondary">$</span>
+                              <input type="number" step="0.01" className="form-control bg-black text-white border-secondary" value={plan.precioAtletaExtra} onChange={e => {
+                                const newArray = [...configuracion.planesCompetenciaArray];
+                                newArray[index].precioAtletaExtra = parseFloat(e.target.value) || 0;
+                                setConfiguracion(prev => ({ ...prev, planesCompetenciaArray: newArray }));
+                              }} required />
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                    ))}
                   </div>
                 </div>
 
                 <div className="col-12 col-md-6">
-                  <h5 className="text-info border-bottom border-secondary pb-2">Redes de Contacto (Footer Público)</h5>
+                  <h5 className="text-info border-bottom border-secondary pb-2">Redes de Contacto</h5>
                   <div className="mb-3">
                     <label className="form-label text-white-50 small"><i className="fab fa-instagram text-danger"></i> Instagram URL</label>
                     <input type="text" className="form-control bg-dark text-white border-secondary" name="linkInstagram" value={configuracion.linkInstagram} onChange={handleConfigChange} />
@@ -714,6 +874,63 @@ export default function Dashboard() {
                 >
                   Entendido, Cerrar
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ACTIVAR COMPETENCIAS Y CREAR */}
+      {modalActivarCompe.open && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1055 }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content bg-dark text-white border-secondary">
+              <div className="modal-header border-secondary">
+                <h5 className="modal-title text-warning">
+                  <i className="fas fa-trophy me-2"></i>Habilitar Módulo y Crear Competencia
+                </h5>
+                <button type="button" className="btn-close btn-close-white" onClick={() => setModalActivarCompe({ open: false, idBox: null, planSaaS: null, estatusSaaS: '', fechaVencimientoSaaS: null, nombre: '' })}></button>
+              </div>
+              <div className="modal-body">
+                <p className="small text-white-50 mb-4">
+                  Al habilitar el módulo de competencias, el sistema le asignará un plan y creará automáticamente la primera competencia para este Box (como si hubieran hecho la compra). Por favor, selecciona el plan y el nombre del evento.
+                </p>
+                <form onSubmit={handleActivarYCrearCompe}>
+                  <div className="mb-3">
+                    <label className="form-label small text-light">Plan de Competencia a Asignar *</label>
+                    <select 
+                      className="form-select bg-dark text-white border-secondary"
+                      required
+                      value={modalActivarCompe.planCompetenciaId || ''}
+                      onChange={e => setModalActivarCompe({...modalActivarCompe, planCompetenciaId: e.target.value})}
+                    >
+                      <option value="" disabled>-- Selecciona un Plan --</option>
+                      {(configuracion?.planesCompetenciaArray || []).map(p => (
+                        <option key={p.id || p.nombre} value={p.id}>
+                          {p.nombre} (Incluye {p.atletasIncluidos} atletas - ${p.precio})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label className="form-label small text-light">Nombre de la Competencia *</label>
+                    <input 
+                      type="text" 
+                      className="form-control bg-dark text-white border-secondary" 
+                      required 
+                      value={modalActivarCompe.nombre} 
+                      onChange={e => setModalActivarCompe({...modalActivarCompe, nombre: e.target.value})} 
+                      placeholder="Ej. Wolfpack Open 2026"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="d-flex justify-content-end gap-2">
+                    <button type="button" className="btn btn-secondary" onClick={() => setModalActivarCompe({ open: false, idBox: null, planSaaS: null, estatusSaaS: '', fechaVencimientoSaaS: null, nombre: '' })}>Cancelar</button>
+                    <button type="submit" className="btn btn-warning fw-bold" disabled={activandoCompe}>
+                      {activandoCompe ? <><i className="fas fa-spinner fa-spin me-2"></i>Habilitando...</> : 'Habilitar y Crear'}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>

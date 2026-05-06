@@ -52,10 +52,12 @@ export default function RedGrayDatePicker({
   inputClassName = '',
   style,
   min,
+  max,
 }) {
   const rootRef = useRef(null);
   const selectedDate = useMemo(() => parseISODate(value), [value]);
   const minDate = useMemo(() => parseISODate(min), [min]);
+  const maxDate = useMemo(() => parseISODate(max), [max]);
   const [open, setOpen] = useState(false);
   const [viewDate, setViewDate] = useState(selectedDate || new Date());
 
@@ -130,8 +132,9 @@ export default function RedGrayDatePicker({
   };
 
   const isDisabledDate = (date) => {
-    if (!minDate) return false;
-    return compareDateOnly(date, minDate) < 0;
+    if (minDate && compareDateOnly(date, minDate) < 0) return true;
+    if (maxDate && compareDateOnly(date, maxDate) > 0) return true;
+    return false;
   };
 
   const selectDate = (date) => {

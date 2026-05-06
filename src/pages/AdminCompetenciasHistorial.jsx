@@ -13,6 +13,7 @@ export default function AdminCompetenciasHistorial() {
   const [competencias, setCompetencias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(false);
+  const [user, setUser] = useState(null);
 
   const [compSeleccionada, setCompSeleccionada] = useState(null);
 
@@ -33,8 +34,27 @@ export default function AdminCompetenciasHistorial() {
     const b = JSON.parse(localStorage.getItem('box'));
     const u = JSON.parse(localStorage.getItem('usuario'));
     if (!b || (u?.rol !== 'AdminBox' && u?.rol !== 'Developer')) { navigate('/login'); return; }
-    setBox(b); cargarCompetencias(b.idBox);
+    setBox(b);
+    setUser(u);
+    cargarCompetencias(b.idBox);
   }, [navigate]);
+
+  const eliminarCompetencia = async (idComp, nombreComp) => {
+    if (!await window.wpConfirm(`¿Eliminar en cascada "${nombreComp}"? Se borrarán todas sus categorías, inscripciones, pagos y scores. Acción IRREVERSIBLE.`)) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${COMPETENCIAS_ENDPOINT}/${idComp}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        cargarCompetencias(box.idBox || box.IdBox);
+      } else {
+        const errData = await res.json();
+        alert(errData.mensaje || 'Error al eliminar.');
+      }
+    } catch (err) { alert('Error de conexión.'); }
+  };
 
   const cargarCompetencias = async (idBox) => {
     try {
@@ -408,6 +428,17 @@ export default function AdminCompetenciasHistorial() {
                       estatus={comp.estatus}
                       onCambiar={(nuevoEstatus) => cambiarEstatus(comp.idCompetencia || comp.IdCompetencia, nuevoEstatus)}
                     />
+                    {user?.rol === 'Developer' && comp.estatus === 'Archivada' && (
+                      <BotonSeguro
+                        className="btn btn-sm btn-outline-danger rounded-circle ms-1"
+                        style={{ width: '30px', height: '30px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                        title="Eliminar competencia en cascada (solo Archivadas)"
+                        textoProcesando=""
+                        onClick={() => eliminarCompetencia(comp.idCompetencia || comp.IdCompetencia, comp.nombre)}
+                      >
+                        <i className="fas fa-trash" style={{ fontSize: '0.7rem' }}></i>
+                      </BotonSeguro>
+                    )}
                   </div>
 
                   {/* Franja roster */}
