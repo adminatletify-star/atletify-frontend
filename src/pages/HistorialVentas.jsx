@@ -17,6 +17,8 @@ export default function HistorialVentas() {
   const [periodo, setPeriodo] = useState('mes');
   const [fechaFiltro, setFechaFiltro] = useState('');
   const [filtroTipo, setFiltroTipo] = useState('todas');
+  const [tabPrincipal, setTabPrincipal] = useState('pedidos'); // 'recepcion' | 'pedidos'
+  const [verConsolidado, setVerConsolidado] = useState(false);
 
   const apartadoActual = localStorage.getItem('apartadoVentas') || 'General (Box)';
 
@@ -93,12 +95,13 @@ export default function HistorialVentas() {
     setPeriodo('custom');
   }
 
-  let ventasFiltradas = ventas;
+  // 1. Filtro por Pestaña Principal (Recepción vs Pedidos)
+  let ventasFiltradas = ventas.filter(v => {
+    if (tabPrincipal === 'recepcion') return v.usuarioNombre === 'Mostrador';
+    return v.usuarioNombre !== 'Mostrador';
+  });
 
-  if (periodo === 'custom' && fechaFiltro) {
-    ventasFiltradas = ventasFiltradas.filter(v => new Date(v.fechaVenta).toISOString().slice(0, 10) === fechaFiltro);
-  }
-
+  // 2. Filtro por Estatus (Tipo)
   if (filtroTipo === 'pendientes') {
     ventasFiltradas = ventasFiltradas.filter(v => v.estatus === 'Pendiente');
   } else if (filtroTipo === 'por-entregar') {
@@ -108,8 +111,39 @@ export default function HistorialVentas() {
   } else if (filtroTipo === 'fiados') {
     ventasFiltradas = ventasFiltradas.filter(v => v.estatus && v.estatus.includes('Fiado'));
   } else if (filtroTipo === 'pagadas') {
-    ventasFiltradas = ventasFiltradas.filter(v => v.estatus === 'Completada' || v.usuarioNombre === 'Mostrador');
+    ventasFiltradas = ventasFiltradas.filter(v => v.estatus === 'Completada' || (tabPrincipal === 'recepcion' && v.usuarioNombre === 'Mostrador' && v.estatus !== 'Cancelada'));
   }
+
+  // 3. Filtro por Fecha (si aplica)
+  if (periodo === 'custom' && fechaFiltro) {
+    ventasFiltradas = ventasFiltradas.filter(v => new Date(v.fechaVenta).toISOString().slice(0, 10) === fechaFiltro);
+  }
+
+  // 4. Lógica de Consolidado (Agrupar productos para pedido al proveedor)
+  const consolidado = ventasFiltradas.reduce((acc, v) => {
+    v.detalles?.forEach(d => {
+      const idProd = d.idProducto;
+      if (!acc[idProd]) {
+        acc[idProd] = {
+          nombre: d.producto?.nombre || `Producto #${idProd}`,
+          foto: d.producto?.fotoUrl,
+          talla: d.producto?.talla,
+          categoria: d.producto?.categoria,
+          cantidadTotal: 0,
+          atletas: []
+        };
+      }
+      acc[idProd].cantidadTotal += d.cantidad;
+      acc[idProd].atletas.push({
+        nombre: v.usuarioNombre,
+        cantidad: d.cantidad,
+        fecha: v.fechaVenta
+      });
+    });
+    return acc;
+  }, {});
+
+  const listaConsolidada = Object.values(consolidado).sort((a, b) => b.cantidadTotal - a.cantidadTotal);
 
   const ventasPorDia = ventasFiltradas.reduce((acc, v) => {
     const fecha = new Date(v.fechaVenta);
@@ -165,6 +199,38 @@ export default function HistorialVentas() {
     }
   };
 
+  const generarPDFConsolidado = () => {
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text("Consolidado de Pedidos (Sobre Pedido) - Atletify", 14, 15);
+      
+      doc.setFontSize(10);
+      doc.text(`Fecha de generación: ${new Date().toLocaleDateString('es-MX', { hour: '2-digit', minute: '2-digit' })}`, 14, 22);
+      doc.text(`Filtro aplicado: ${filtroTipo.toUpperCase()}`, 14, 28);
+      
+      const tableData = listaConsolidada.map(p => [
+        p.nombre,
+        p.talla || 'N/A',
+        p.cantidadTotal,
+        p.atletas.length
+      ]);
+
+      autoTable(doc, {
+        startY: 35,
+        head: [['Producto', 'Talla', 'Cantidad Total', 'Atletas']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: { fillColor: [0, 123, 255] } // Azul para pedidos
+      });
+
+      doc.save(`Consolidado_Pedidos_${new Date().toISOString().slice(0, 10)}.pdf`);
+    } catch (error) {
+      console.error("Error al generar PDF:", error);
+      alert("Error al generar el consolidado.");
+    }
+  };
+
   return (
     <div className="hv-page">
 
@@ -188,18 +254,41 @@ export default function HistorialVentas() {
         {/* ══════════════════════════════════
             STATS
         ══════════════════════════════════ */}
-        {!loading && ventas.length > 0 && (
+        {/* ══════════════════════════════════
+            TABS PRINCIPALES
+        ══════════════════════════════════ */}
+        <div className="d-flex mb-4 border-bottom border-secondary overflow-auto d-print-none">
+          <button 
+            className={`btn px-4 py-2 rounded-top ${tabPrincipal === 'pedidos' ? 'btn-danger' : 'btn-dark text-muted border-bottom-0'}`}
+            style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, marginRight: '4px', whiteSpace: 'nowrap' }}
+            onClick={() => { setTabPrincipal('pedidos'); setFiltroTipo('todas'); setVerConsolidado(false); }}
+          >
+            <i className="fas fa-truck-loading me-2"></i>Gestión de Pedidos
+          </button>
+          <button 
+            className={`btn px-4 py-2 rounded-top ${tabPrincipal === 'recepcion' ? 'btn-danger' : 'btn-dark text-muted border-bottom-0'}`}
+            style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, marginRight: '4px', whiteSpace: 'nowrap' }}
+            onClick={() => { setTabPrincipal('recepcion'); setFiltroTipo('pagadas'); setVerConsolidado(false); }}
+          >
+            <i className="fas fa-cash-register me-2"></i>Ventas Recepción
+          </button>
+        </div>
+
+        {/* ══════════════════════════════════
+            STATS
+        ══════════════════════════════════ */}
+        {!loading && (
           <div className="row g-3 mb-4">
             <div className="col-6 col-sm-4">
               <div className="hv-stat-card text-center">
-                <p className="hv-stat-label">Total ventas</p>
-                <p className="hv-stat-value hv-stat-value--cyan">{ventas.length}</p>
+                <p className="hv-stat-label">{tabPrincipal === 'recepcion' ? 'Tickets' : 'Pedidos'}</p>
+                <p className="hv-stat-value hv-stat-value--cyan">{ventasFiltradas.length}</p>
               </div>
             </div>
             <div className="col-6 col-sm-8">
               <div className="hv-stat-card">
                 <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
-                  <p className="hv-stat-label mb-0">Ingresos</p>
+                  <p className="hv-stat-label mb-0">Ingresos {tabPrincipal === 'recepcion' ? 'Directos' : 'por Pedidos'}</p>
                   <div className="d-flex gap-1 flex-wrap align-items-center">
                     {[['dia', 'Hoy'], ['mes', 'Mes'], ['anio', 'Año']].map(([val, lbl]) => (
                       <button
@@ -210,7 +299,7 @@ export default function HistorialVentas() {
                         {lbl}
                       </button>
                     ))}
-                    {apartadoActual === 'General (Box)' && (
+                    {apartadoActual === 'General (Box)' && tabPrincipal === 'recepcion' && (
                       <button className="btn btn-sm btn-outline-danger ms-2 d-print-none" onClick={generarPDF} title="Generar PDF Real">
                         <i className="fas fa-file-pdf"></i> Reporte
                       </button>
@@ -220,11 +309,6 @@ export default function HistorialVentas() {
                 <p className="hv-stat-value hv-stat-value--green text-center mb-0">
                   ${ingresosDelPeriodo.toFixed(2)}
                 </p>
-                {periodo === 'custom' && fechaFiltro && (
-                  <p className="hv-filtro-hint text-center mt-1 mb-0">
-                    <i className="fas fa-calendar-check"></i> {new Date(fechaFiltro + 'T12:00').toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                  </p>
-                )}
               </div>
             </div>
           </div>
@@ -240,43 +324,60 @@ export default function HistorialVentas() {
             </button>
             
             {apartadoActual === 'General (Box)' && (
-              <div className="d-flex gap-2 overflow-auto" style={{ whiteSpace: 'nowrap' }}>
-                <button 
-                  className={`btn btn-sm ${filtroTipo === 'todas' ? 'btn-danger' : 'btn-outline-secondary'}`}
-                  onClick={() => setFiltroTipo('todas')}
-                >
-                  Todas
-                </button>
-                <button 
-                  className={`btn btn-sm ${filtroTipo === 'pendientes' ? 'btn-warning text-dark fw-bold' : 'btn-outline-warning text-white'}`}
-                  onClick={() => setFiltroTipo('pendientes')}
-                >
-                  <i className="fas fa-clock me-1"></i> Pendientes de Pago
-                </button>
-                <button 
-                  className={`btn btn-sm ${filtroTipo === 'por-entregar' ? 'btn-secondary text-white fw-bold' : 'btn-outline-secondary text-white'}`}
-                  onClick={() => setFiltroTipo('por-entregar')}
-                >
-                  <i className="fas fa-truck-loading me-1"></i> Pagados por Entregar
-                </button>
-                <button 
-                  className={`btn btn-sm ${filtroTipo === 'listos' ? 'btn-info text-dark fw-bold' : 'btn-outline-info text-white'}`}
-                  onClick={() => setFiltroTipo('listos')}
-                >
-                  <i className="fas fa-box-open me-1"></i> Listos para Recoger
-                </button>
-                <button 
-                  className={`btn btn-sm ${filtroTipo === 'fiados' ? 'btn-primary text-white fw-bold' : 'btn-outline-primary text-white'}`}
-                  onClick={() => setFiltroTipo('fiados')}
-                >
-                  <i className="fas fa-handshake me-1"></i> Atletas de Fiar
-                </button>
-                <button 
-                  className={`btn btn-sm ${filtroTipo === 'pagadas' ? 'btn-success text-white fw-bold' : 'btn-outline-success text-white'}`}
-                  onClick={() => setFiltroTipo('pagadas')}
-                >
-                  <i className="fas fa-check-circle me-1"></i> Ya Pagadas
-                </button>
+              <div className="d-flex gap-2 overflow-auto" style={{ whiteSpace: 'nowrap', paddingBottom: '5px' }}>
+                {tabPrincipal === 'recepcion' ? (
+                  <>
+                    <button 
+                      className={`btn btn-sm ${filtroTipo === 'pagadas' ? 'btn-success' : 'btn-outline-success'}`}
+                      onClick={() => setFiltroTipo('pagadas')}
+                    >
+                      <i className="fas fa-check-circle me-1"></i> Ventas Finalizadas
+                    </button>
+                    <button 
+                      className={`btn btn-sm ${filtroTipo === 'todas' ? 'btn-secondary' : 'btn-outline-secondary'}`}
+                      onClick={() => setFiltroTipo('todas')}
+                    >
+                      Ver Todas (Incl. Canceladas)
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button 
+                      className={`btn btn-sm ${filtroTipo === 'todas' ? 'btn-danger' : 'btn-outline-secondary'}`}
+                      onClick={() => { setFiltroTipo('todas'); setVerConsolidado(false); }}
+                    >
+                      Todos los Pedidos
+                    </button>
+                    <button 
+                      className={`btn btn-sm ${filtroTipo === 'pendientes' ? 'btn-warning text-dark fw-bold' : 'btn-outline-warning text-white'}`}
+                      onClick={() => { setFiltroTipo('pendientes'); setVerConsolidado(false); }}
+                    >
+                      <i className="fas fa-clock me-1"></i> Por Pagar
+                    </button>
+                    <button 
+                      className={`btn btn-sm ${filtroTipo === 'por-entregar' ? 'btn-primary text-white fw-bold' : 'btn-outline-primary text-white'}`}
+                      onClick={() => { setFiltroTipo('por-entregar'); setVerConsolidado(false); }}
+                    >
+                      <i className="fas fa-money-bill-check me-1"></i> Pagados (Por Pedir/Entregar)
+                    </button>
+                    <button 
+                      className={`btn btn-sm ${filtroTipo === 'listos' ? 'btn-info text-dark fw-bold' : 'btn-outline-info text-white'}`}
+                      onClick={() => { setFiltroTipo('listos'); setVerConsolidado(false); }}
+                    >
+                      <i className="fas fa-box-open me-1"></i> Listos en Box
+                    </button>
+                    <button 
+                      className={`btn btn-sm ${verConsolidado ? 'btn-light text-dark fw-bold' : 'btn-outline-light'}`}
+                      onClick={() => { 
+                        setFiltroTipo('por-entregar'); 
+                        setVerConsolidado(!verConsolidado); 
+                      }}
+                      disabled={ventasFiltradas.length === 0 && !verConsolidado}
+                    >
+                      <i className="fas fa-layer-group me-1"></i> Consolidar para Pedido
+                    </button>
+                  </>
+                )}
               </div>
             )}
 
@@ -311,11 +412,69 @@ export default function HistorialVentas() {
         </div>
 
         {/* ══════════════════════════════════
-            LISTA DE VENTAS
+            LISTA DE VENTAS O CONSOLIDADO
         ══════════════════════════════════ */}
         {loading ? (
           <div className="hv-loading">
             <div className="spinner-wp"></div>
+          </div>
+        ) : verConsolidado ? (
+          <div className="consolidado-container">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h4 className="text-white mb-0">
+                <i className="fas fa-layer-group me-2 text-info"></i>
+                Consolidado: {filtroTipo === 'por-entregar' ? 'Pagados por Pedir' : 'Lote seleccionado'}
+              </h4>
+              <button className="btn btn-primary" onClick={generarPDFConsolidado}>
+                <i className="fas fa-file-pdf me-2"></i> Exportar Lista para Proveedor
+              </button>
+            </div>
+
+            <div className="row g-3">
+              {listaConsolidada.length === 0 ? (
+                <div className="col-12 text-center py-5 bg-dark rounded border border-secondary">
+                  <p className="text-muted mb-0">No hay productos pagados para consolidar en este periodo.</p>
+                </div>
+              ) : (
+                listaConsolidada.map((prod, idx) => (
+                  <div className="col-12" key={idx}>
+                    <div className="hv-venta-card p-3 d-flex align-items-center gap-3">
+                      <div className="hv-venta-icono bg-primary">
+                        <i className="fas fa-box"></i>
+                      </div>
+                      <div className="flex-grow-1">
+                        <h5 className="mb-1 text-white fw-bold">{prod.nombre}</h5>
+                        <div className="d-flex gap-2">
+                          {prod.talla && <span className="badge border border-light text-light">Talla: {prod.talla}</span>}
+                          {prod.categoria && <span className="badge bg-secondary">{prod.categoria}</span>}
+                        </div>
+                      </div>
+                      <div className="text-center px-4 border-start border-secondary">
+                        <p className="hv-stat-label mb-0">Cantidad</p>
+                        <p className="hv-stat-value mb-0 text-info">{prod.cantidadTotal}</p>
+                      </div>
+                      <div className="text-end border-start border-secondary ps-4" style={{ minWidth: '150px' }}>
+                        <p className="hv-stat-label mb-0">Solicitado por</p>
+                        <p className="text-white mb-0 fw-bold">{prod.atletas.length} Atletas</p>
+                        <button 
+                          className="btn btn-link btn-sm text-info p-0 mt-1"
+                          onClick={() => alert(`Solicitado por: \n${prod.atletas.map(a => `- ${a.nombre} (${a.cantidad})`).join('\n')}`)}
+                        >
+                          Ver nombres
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            <div className="mt-4 p-3 bg-dark rounded border border-info">
+              <p className="small text-info mb-0">
+                <i className="fas fa-info-circle me-2"></i>
+                Esta vista agrupa todos los artículos de los pedidos que coinciden con tus filtros. Ideal para hacer el pedido masivo al proveedor.
+              </p>
+            </div>
           </div>
         ) : ventas.length === 0 ? (
           <div className="hv-empty">
@@ -358,6 +517,11 @@ export default function HistorialVentas() {
                             <p className="hv-venta-fecha">
                               <i className="fas fa-clock"></i>
                               {formatFecha(v.fechaVenta)}
+                              {v.detalles?.some(d => d.producto?.esSobrePedido) && (
+                                <span className="ms-2 badge bg-warning text-dark">
+                                  <i className="fas fa-store me-1"></i>Sobre Pedido
+                                </span>
+                              )}
                             </p>
                           </div>
                         </div>
