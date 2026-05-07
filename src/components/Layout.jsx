@@ -4,6 +4,7 @@ import CardNav from './ReactBits/CardNav';
 import MobileNavBar from './MobileNavBar';
 import { Link } from 'react-router-dom';
 import { BOXES_ENDPOINT } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import ModalFirmaReglamento from './ModalFirmaReglamento';
 import ModalExpedienteMedico from './ModalExpedienteMedico';
 
@@ -77,12 +78,10 @@ export default function Layout() {
     }
   };
 
+  const { logout: authLogout } = useAuth();
+
   const handleLogout = () => {
-    // 👈 Cambiado: En lugar de clear() que borraba todo (incluyendo el banner de cookies), 
-    // ahora solo borramos la sesión activa.
-    localStorage.removeItem('usuario');
-    localStorage.removeItem('token');
-    localStorage.removeItem('boxActivo');
+    authLogout();
     localStorage.removeItem('box');
     navigate('/');
   };

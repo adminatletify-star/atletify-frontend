@@ -290,6 +290,7 @@ export default function Directorio() {
                   type="text"
                   className="entrada-oscura directorio-input"
                   placeholder="Escribe un nombre..."
+                  maxLength={50}
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
                 />
@@ -318,12 +319,14 @@ export default function Directorio() {
                     placeholder="Min"
                     value={filtroPesoMin}
                     min="0"
+                    max="999"
                     onChange={(e) => {
                       const val = e.target.value;
-                      setFiltroPesoMin(val);
-                      // Validar que max no sea menor que min
-                      if (val !== '' && filtroPesoMax !== '' && parseFloat(filtroPesoMax) < parseFloat(val)) {
-                        setFiltroPesoMax(val);
+                      if (val === '' || /^\d{0,3}(\.\d*)?$/.test(val)) {
+                        setFiltroPesoMin(val);
+                        if (val !== '' && filtroPesoMax !== '' && parseFloat(filtroPesoMax) < parseFloat(val)) {
+                          setFiltroPesoMax(val);
+                        }
                       }
                     }}
                   />
@@ -336,7 +339,13 @@ export default function Directorio() {
                     placeholder="Max"
                     value={filtroPesoMax}
                     min={filtroPesoMin !== '' ? filtroPesoMin : "0"}
-                    onChange={(e) => setFiltroPesoMax(e.target.value)}
+                    max="999"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || /^\d{0,3}(\.\d*)?$/.test(val)) {
+                        setFiltroPesoMax(val);
+                      }
+                    }}
                   />
                 </div>
               </div>

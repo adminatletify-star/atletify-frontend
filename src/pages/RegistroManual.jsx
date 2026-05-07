@@ -258,18 +258,18 @@ export default function RegistroManual() {
                   <div className="row">
                     <div className="col-md-6 mb-4 registro-col-mobile">
                       <label className="form-label registro-label">Nombre(s)</label>
-                      <input type="text" className="form-control registro-input" name="nombre" value={formData.nombre} onChange={e => { const v = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, ''); setFormData({ ...formData, nombre: v }); }} required />
+                      <input type="text" className="form-control registro-input" name="nombre" maxLength={50} value={formData.nombre} onChange={e => { const v = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, ''); setFormData({ ...formData, nombre: v }); }} required />
                     </div>
                     <div className="col-md-6 mb-4 registro-col-mobile">
                       <label className="form-label registro-label">Apellido(s)</label>
-                      <input type="text" className="form-control registro-input" name="apellidos" value={formData.apellidos} onChange={e => { const v = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, ''); setFormData({ ...formData, apellidos: v }); }} required />
+                      <input type="text" className="form-control registro-input" name="apellidos" maxLength={50} value={formData.apellidos} onChange={e => { const v = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, ''); setFormData({ ...formData, apellidos: v }); }} required />
                     </div>
                   </div>
 
                   <div className="row">
                     <div className="col-md-4 mb-4 registro-col-mobile">
                       <label className="form-label registro-label text-warning"><i className="fas fa-at me-1"></i>Username Único</label>
-                      <input type="text" className="form-control registro-input border-warning" name="username" value={formData.username} onChange={handleChange} placeholder="Ej. juanperez99" required />
+                      <input type="text" className="form-control registro-input border-warning" name="username" maxLength={30} value={formData.username} onChange={handleChange} placeholder="Ej. juanperez99" required />
                     </div>
                     <div className="col-md-4 mb-4 registro-col-mobile">
                       <label className="form-label registro-label text-warning"><i className="fas fa-phone-alt me-1"></i>Teléfono</label>
@@ -277,7 +277,7 @@ export default function RegistroManual() {
                     </div>
                     <div className="col-md-4 mb-4 registro-col-mobile">
                       <label className="form-label registro-label">Correo (Opcional)</label>
-                      <input type="email" className="form-control registro-input" name="correo" value={formData.correo} onChange={handleChange} placeholder="Dejar vacío si no tiene" />
+                      <input type="email" className="form-control registro-input" name="correo" maxLength={100} value={formData.correo} onChange={handleChange} placeholder="Dejar vacío si no tiene" />
                     </div>
                   </div>
 
@@ -295,7 +295,7 @@ export default function RegistroManual() {
                     </div>
                     <div className="col-md-4 mb-4 registro-col-mobile">
                       <label className="form-label registro-label">Peso (Kilos)</label>
-                      <input type="number" className="form-control registro-input" name="peso" value={formData.peso} onChange={handleChange} placeholder="Ej. 75" />
+                      <input type="number" className="form-control registro-input" name="peso" min="1" max="999" value={formData.peso} onChange={e => { const v = e.target.value; if (v === '' || /^\d{0,3}(\.\d*)?$/.test(v)) setFormData({ ...formData, peso: v }); }} placeholder="Ej. 75" />
                     </div>
                   </div>
 
@@ -320,7 +320,7 @@ export default function RegistroManual() {
                     </div>
                     <div className="col-md-4 mb-4 registro-col-mobile">
                       <label className="form-label registro-label">Deporte Previo</label>
-                      <input type="text" className="form-control registro-input" name="experiencia" value={formData.experiencia} onChange={handleChange} placeholder="Ej. Gym, Natación..." />
+                      <input type="text" className="form-control registro-input" name="experiencia" maxLength={100} value={formData.experiencia} onChange={handleChange} placeholder="Ej. Gym, Natación..." />
                     </div>
                   </div>
 
@@ -500,8 +500,28 @@ export default function RegistroManual() {
                   <MetodoPagoPicker valor={formCobro.metodo1} onCambiar={v => setFormCobro({ ...formCobro, metodo1: v })} />
                 </div>
                 <div className="col-6">
-                  <label className="etiqueta-campo">Monto ($)</label>
-                  <input type="number" step="0.01" className="entrada-oscura fw-bold" required value={formCobro.monto1} onChange={e => setFormCobro({ ...formCobro, monto1: e.target.value })} placeholder="0.00" />
+                  <label className="etiqueta-campo d-flex justify-content-between">
+                    <span>Monto ($)</span>
+                    {parseFloat(formCobro.monto1) > totalACobrar && (
+                      <span style={{fontSize:'0.7rem', color:'#ef4444'}}>Excede el total</span>
+                    )}
+                  </label>
+                  <input
+                    type="number" step="0.01" className="entrada-oscura fw-bold" required
+                    value={formCobro.monto1}
+                    onChange={e => {
+                      // Solo permitir máximo 2 decimales
+                      let raw = e.target.value;
+                      if (/^\d*\.?\d{0,2}$/.test(raw) || raw === '') {
+                        const v = parseFloat(raw) || 0;
+                        const clamped = v > totalACobrar ? totalACobrar.toFixed(2) : raw;
+                        setFormCobro({ ...formCobro, monto1: clamped });
+                      }
+                    }}
+                    max={totalACobrar}
+                    placeholder="0.00"
+                    style={{ borderColor: parseFloat(formCobro.monto1) > totalACobrar ? '#ef4444' : '' }}
+                  />
                 </div>
               </div>
 
@@ -524,7 +544,7 @@ export default function RegistroManual() {
 
               <div className="mb-4">
                 <label className="etiqueta-campo">Notas (Opcional)</label>
-                <input type="text" className="entrada-oscura" placeholder="Comentarios..." value={formCobro.notas} onChange={e => setFormCobro({ ...formCobro, notas: e.target.value })} />
+                <input type="text" className="entrada-oscura" maxLength={200} placeholder="Comentarios..." value={formCobro.notas} onChange={e => setFormCobro({ ...formCobro, notas: e.target.value })} />
               </div>
 
               <div className="finanzas-modal-btns d-flex gap-2">

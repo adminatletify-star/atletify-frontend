@@ -200,9 +200,9 @@ export default function AlmacenPanel() {
     setEdicion({ idHerramienta: '', nombre: '', descripcionAdicional: '', medida: 0, cantidad: 0, esKilo: false, esLibra: false, esMetro: false, esMaquina: false, esBarra: true, esBumpers: false, esKettlebell: false, esMancuerna: false, esCajon: false, esOtra: false, ejerciciosIds: [] });
   }
 
-  // Buscar si ya existe un item idéntico (nombre + medida + unidad)
-  function buscarDuplicado(nombre, medida, esKilo, esLibra, esMetro, esMaquina, esCajon) {
-    return herramientas.find(h => {
+  // Buscar si ya existen items idénticos (nombre + medida + unidad)
+  function buscarDuplicados(nombre, medida, esKilo, esLibra, esMetro, esMaquina, esCajon) {
+    return herramientas.filter(h => {
       const hNombre = (h.nombre ?? h.Nombre ?? '').trim().toLowerCase();
       const hMedida = Number(h.medida ?? h.Medida ?? h.descripcion ?? h.Descripcion ?? 0);
       const mismoNombre = hNombre === nombre.trim().toLowerCase();
@@ -214,11 +214,11 @@ export default function AlmacenPanel() {
         (esMaquina && (h.esMaquina ?? h.EsMaquina ?? false)) ||
         (esCajon && (h.esCajon ?? h.EsCajon ?? false));
       return mismoNombre && mismaMedida && mismaUnidad;
-    }) || null;
+    });
   }
 
-  async function crearHerramienta(e) {
-    e.preventDefault();
+  async function crearHerramienta(e, forzar = false) {
+    if (e) e.preventDefault();
     if (!box?.idBox) return;
 
     const unidadSeleccionada = nuevaHerramienta.esKilo || nuevaHerramienta.esLibra || nuevaHerramienta.esMetro || nuevaHerramienta.esMaquina;
@@ -233,17 +233,19 @@ export default function AlmacenPanel() {
       ? nuevaHerramienta.nombre
       : nuevaHerramienta.esBarra ? 'Barra' : nuevaHerramienta.esBumpers ? 'Disco' : nuevaHerramienta.esKettlebell ? 'Kettlebell' : nuevaHerramienta.esMancuerna ? 'Mancuerna' : 'Cajón';
 
-    // Verificar duplicado
-    const duplicado = buscarDuplicado(
-      nombreFinal, nuevaHerramienta.medida,
-      nuevaHerramienta.esKilo, nuevaHerramienta.esLibra,
-      nuevaHerramienta.esMetro, nuevaHerramienta.esMaquina,
-      nuevaHerramienta.esCajon
-    );
+    if (!forzar) {
+      // Verificar duplicados
+      const duplicados = buscarDuplicados(
+        nombreFinal, nuevaHerramienta.medida,
+        nuevaHerramienta.esKilo, nuevaHerramienta.esLibra,
+        nuevaHerramienta.esMetro, nuevaHerramienta.esMaquina,
+        nuevaHerramienta.esCajon
+      );
 
-    if (duplicado) {
-      setConfirmSuma({ herramienta: duplicado, cantidadNueva: Number(nuevaHerramienta.cantidad), nombre: nombreFinal });
-      return;
+      if (duplicados.length > 0) {
+        setConfirmSuma({ herramientas: duplicados, cantidadNueva: Number(nuevaHerramienta.cantidad), nombre: nombreFinal });
+        return;
+      }
     }
 
     setSaving(true);
@@ -254,8 +256,9 @@ export default function AlmacenPanel() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.mensaje || 'No se pudo crear la herramienta.');
-      window.alert('Herramienta creada correctamente.');
+      window.alert('Herramienta guardada correctamente.');
       resetFormAgregar();
+      setConfirmSuma(null);
       await cargarDatos(box.idBox);
     } catch (err) { window.alert(err.message || 'Error al crear herramienta.'); }
     finally { setSaving(false); }
@@ -263,8 +266,8 @@ export default function AlmacenPanel() {
 
   // Sumar cantidad al item duplicado existente
   async function sumarCantidadExistente(herramientaManual = null, cantidadManual = 0) {
-    const h = herramientaManual || confirmSuma?.herramienta;
-    const c = cantidadManual || confirmSuma?.cantidadNueva;
+    const h = herramientaManual;
+    const c = cantidadManual;
     if (!h) return;
 
     const idH = getHerramientaId(h);
@@ -597,10 +600,16 @@ export default function AlmacenPanel() {
                               type="number"
                               step="0.01"
                               min="0"
+                              max="999"
                               className="form-control almacen-input"
                               placeholder={`Ej: ${nuevaHerramienta.esKilo ? '13.5' : '27.5'}`}
                               value={nuevaHerramienta.medida || ''}
-                              onChange={(e) => setNuevaHerramienta(prev => ({ ...prev, medida: e.target.value === '' ? 0 : Number(e.target.value) }))}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                if (v === '' || /^\d{0,3}(\.\d{0,2})?$/.test(v)) {
+                                  setNuevaHerramienta(prev => ({ ...prev, medida: v === '' ? 0 : v }));
+                                }
+                              }}
                             />
                           </div>
                         </div>
@@ -621,6 +630,7 @@ export default function AlmacenPanel() {
                           <label className="almacen-label">Nombre del equipo</label>
                           <input type="text" className="form-control almacen-input"
                             placeholder="Ej: Mancuerna, Kettlebell, Cuerda..." required
+                            maxLength={50}
                             value={nuevaHerramienta.nombre}
                             onChange={(e) => setNuevaHerramienta(prev => ({ ...prev, nombre: e.target.value }))} />
                         </div>
@@ -628,10 +638,15 @@ export default function AlmacenPanel() {
                           <label className="almacen-label">
                             Peso / Medida {nuevaHerramienta.esMaquina ? '(opcional)' : ''}
                           </label>
-                          <input type="number" step="0.01" min="0" className="form-control almacen-input"
+                          <input type="number" step="0.01" min="0" max="999" className="form-control almacen-input"
                             placeholder="Ej: 10, 20, 1.5..."
                             value={nuevaHerramienta.medida || ''}
-                            onChange={(e) => setNuevaHerramienta(prev => ({ ...prev, medida: e.target.value === '' ? 0 : Number(e.target.value) }))} />
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              if (v === '' || /^\d{0,3}(\.\d{0,2})?$/.test(v)) {
+                                setNuevaHerramienta(prev => ({ ...prev, medida: v === '' ? 0 : v }));
+                              }
+                            }} />
                         </div>
                       </div>
                     )}
@@ -641,9 +656,14 @@ export default function AlmacenPanel() {
                       <label className="almacen-label">
                         <i className="fas fa-layer-group me-1"></i> Unidades disponibles
                       </label>
-                      <input type="number" className="form-control almacen-input" min="1" placeholder="Ej: 10" required
+                      <input type="number" className="form-control almacen-input" min="1" max="9999" placeholder="Ej: 10" required
                         value={nuevaHerramienta.cantidad || ''}
-                        onChange={(e) => setNuevaHerramienta(prev => ({ ...prev, cantidad: e.target.value }))} />
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v === '' || /^\d{0,4}$/.test(v)) {
+                            setNuevaHerramienta(prev => ({ ...prev, cantidad: v }));
+                          }
+                        }} />
                     </div>
 
                     {/* Descripción adicional / forma de medir */}
@@ -652,6 +672,7 @@ export default function AlmacenPanel() {
                         <i className="fas fa-note-sticky me-1"></i> {nuevaHerramienta.esCajon ? 'Cómo se mide' : 'Descripción adicional'}
                       </label>
                       <textarea className="form-control almacen-input" rows="2" required={nuevaHerramienta.esCajon}
+                        maxLength={200}
                         placeholder={nuevaHerramienta.esCajon ? 'Ej: se mide por largo x ancho x alto, por módulo, por cavidades...' : 'Agrrega detalles adicionales (ej: marca, condición, observaciones...)'}
                         value={nuevaHerramienta.descripcionAdicional || ''}
                         onChange={(e) => setNuevaHerramienta(prev => ({ ...prev, descripcionAdicional: e.target.value }))} />
@@ -690,6 +711,7 @@ export default function AlmacenPanel() {
                     <label className="almacen-label"><i className="fas fa-search me-1"></i> Filtrar</label>
                     <input type="text" className="form-control almacen-input"
                       placeholder="Buscar por nombre..."
+                      maxLength={50}
                       value={busquedaHerramientaModificar}
                       onChange={(e) => setBusquedaHerramientaModificar(e.target.value)} />
                   </div>
@@ -769,6 +791,7 @@ export default function AlmacenPanel() {
                         <label className="almacen-label">Nombre del equipo</label>
                         <input type="text" className="form-control almacen-input"
                           placeholder="Nombre del equipo..."
+                          maxLength={50}
                           value={edicion.nombre}
                           onChange={(e) => setEdicion(prev => ({ ...prev, nombre: e.target.value }))} />
                       </div>
@@ -779,7 +802,8 @@ export default function AlmacenPanel() {
                           <i className="fas fa-note-sticky me-1"></i> {edicion.esCajon ? 'Cómo se mide' : 'Descripción adicional'}
                         </label>
                         <textarea className="form-control almacen-input" rows="2"
-                          placeholder={edicion.esCajon ? 'Ej: se mide por largo x ancho x alto, por módulo, por cavidades...' : 'Agrga detalles adicionales (ej: marca, condición, observaciones...)'}
+                          maxLength={200}
+                          placeholder={edicion.esCajon ? 'Ej: se mide por largo x ancho x alto, por módulo, por cavidades...' : 'Agrrega detalles adicionales (ej: marca, condición, observaciones...)'}
                           value={edicion.descripcionAdicional || ''}
                           onChange={(e) => setEdicion(prev => ({ ...prev, descripcionAdicional: e.target.value }))} />
                       </div>
@@ -788,27 +812,42 @@ export default function AlmacenPanel() {
                         <div className="almacen-field-group cols-1" style={{ marginBottom: '1.25rem' }}>
                           <div>
                             <label className="almacen-label">Unidades disponibles</label>
-                            <input type="number" min="0" className="form-control almacen-input"
+                            <input type="number" min="0" max="9999" className="form-control almacen-input"
                               placeholder="Ej: 10" required
                               value={edicion.cantidad || ''}
-                              onChange={(e) => setEdicion(prev => ({ ...prev, cantidad: e.target.value }))} />
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                if (v === '' || /^\d{0,4}$/.test(v)) {
+                                  setEdicion(prev => ({ ...prev, cantidad: v }));
+                                }
+                              }} />
                           </div>
                         </div>
                       ) : (
                         <div className="almacen-field-group cols-2" style={{ marginBottom: '1.25rem' }}>
                           <div>
                             <label className="almacen-label">Peso / Medida</label>
-                            <input type="number" step="0.01" min="0" className="form-control almacen-input"
+                            <input type="number" step="0.01" min="0" max="999" className="form-control almacen-input"
                               placeholder="Ej: 20"
                               value={edicion.medida || ''}
-                              onChange={(e) => setEdicion(prev => ({ ...prev, medida: e.target.value === '' ? 0 : Number(e.target.value) }))} />
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                if (v === '' || /^\d{0,3}(\.\d{0,2})?$/.test(v)) {
+                                  setEdicion(prev => ({ ...prev, medida: v === '' ? 0 : v }));
+                                }
+                              }} />
                           </div>
                           <div>
                             <label className="almacen-label">Unidades disponibles</label>
-                            <input type="number" min="0" className="form-control almacen-input"
+                            <input type="number" min="0" max="9999" className="form-control almacen-input"
                               placeholder="Ej: 10" required
                               value={edicion.cantidad || ''}
-                              onChange={(e) => setEdicion(prev => ({ ...prev, cantidad: e.target.value }))} />
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                if (v === '' || /^\d{0,4}$/.test(v)) {
+                                  setEdicion(prev => ({ ...prev, cantidad: v }));
+                                }
+                              }} />
                           </div>
                         </div>
                       )}
@@ -835,6 +874,7 @@ export default function AlmacenPanel() {
                 <h2 className="almacen-table-title"><i className="fas fa-boxes me-2 text-danger"></i>Inventario Actual</h2>
                 <div className="almacen-search">
                   <input type="text" className="form-control almacen-input" placeholder="Buscar equipo..."
+                    maxLength={50}
                     value={busquedaHerramienta} onChange={(e) => setBusquedaHerramienta(e.target.value)} />
                 </div>
               </div>
@@ -904,6 +944,7 @@ export default function AlmacenPanel() {
                   type="text"
                   className="form-control almacen-input"
                   placeholder="Buscar por nombre o notas..."
+                  maxLength={50}
                   value={busquedaVerificacion}
                   onChange={e => setBusquedaVerificacion(e.target.value)}
                 />
@@ -943,7 +984,12 @@ export default function AlmacenPanel() {
                         className="form-control almacen-verificacion-qty"
                         defaultValue={1}
                         min={1}
+                        max={999}
                         id={`qty-${getHerramientaId(h)}`}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v !== '' && Number(v) > 999) e.target.value = 999;
+                        }}
                       />
                       <button
                         className="almacen-verificacion-add"
@@ -976,29 +1022,56 @@ export default function AlmacenPanel() {
       {/* ===== MODAL: CONFIRMAR SUMA DE CANTIDAD ===== */}
       {confirmSuma && (
         <div className="almacen-confirm-overlay" onClick={() => setConfirmSuma(null)}>
-          <div className="almacen-confirm-modal" onClick={e => e.stopPropagation()}>
-            <div className="almacen-confirm-icon">
+          <div className="almacen-confirm-modal modal-grande" onClick={e => e.stopPropagation()}>
+            <div className="almacen-confirm-icon bg-warning">
               <i className="fas fa-exclamation-triangle"></i>
             </div>
-            <h3 className="almacen-confirm-titulo">¡Ya existe este equipamiento!</h3>
-            <p className="almacen-confirm-desc">
-              Ya tienes <strong>{confirmSuma.nombre}</strong> de{' '}
-              <strong>{confirmSuma.herramienta.medida ?? confirmSuma.herramienta.Medida} {getTipoUnidadHerramienta(confirmSuma.herramienta).toLowerCase()}</strong>{' '}
-              con <strong>{confirmSuma.herramienta.cantidad ?? confirmSuma.herramienta.Cantidad} unidades</strong> en el inventario.
+            <h3 className="almacen-confirm-titulo">¡Equipamiento similar detectado!</h3>
+            <p className="almacen-confirm-desc destacado text-center mb-4">
+              Hemos encontrado <strong>{confirmSuma.herramientas.length}</strong> registro(s) con las mismas especificaciones.
+              ¿Deseas sumarlo a uno existente o guardarlo como un registro nuevo?
             </p>
-            <p className="almacen-confirm-pregunta">
-              ¿Deseas sumar <strong style={{ color: 'var(--success)' }}>{confirmSuma.cantidadNueva} unidades</strong> al inventario existente?
-            </p>
-            <div className="almacen-confirm-total">
-              Total resultante:{' '}
-              <span>{Number(confirmSuma.herramienta.cantidad ?? confirmSuma.herramienta.Cantidad ?? 0) + confirmSuma.cantidadNueva} unidades</span>
+
+            <div className="almacen-verificacion-lista px-3" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              {confirmSuma.herramientas.map((h, idx) => (
+                <div key={getHerramientaId(h)} className="almacen-verificacion-card" style={{ animationDelay: `${idx * 0.05}s` }}>
+                  <div className="almacen-verificacion-info">
+                    <div className="almacen-verificacion-nombre">{h.nombre ?? h.Nombre}</div>
+                    <div className="almacen-verificacion-meta">
+                      <span className="almacen-verificacion-badge peso">
+                        <i className="fas fa-weight"></i> {getHerramientaMedida(h)} {getTipoUnidadHerramienta(h).toLowerCase()}
+                      </span>
+                      <span className="almacen-verificacion-badge">
+                        <i className="fas fa-layer-group"></i> Stock: {h.cantidad ?? h.Cantidad} uds
+                      </span>
+                    </div>
+                    {(h.descripcionAdicional ?? h.DescripcionAdicional) && (
+                      <div className="almacen-verificacion-notas">
+                        <i className="fas fa-info-circle me-1"></i>
+                        <span>{h.descripcionAdicional ?? h.DescripcionAdicional}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="almacen-verificacion-actions">
+                    <button
+                      className="almacen-btn almacen-btn-success btn-sm"
+                      onClick={() => sumarCantidadExistente(h, confirmSuma.cantidadNueva)}
+                      disabled={saving}
+                    >
+                      <i className="fas fa-plus me-1"></i> Sumar {confirmSuma.cantidadNueva}
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="almacen-confirm-btns">
+
+            <div className="almacen-confirm-btns mt-4 px-3 pb-3">
               <button className="almacen-btn almacen-btn-secondary" onClick={() => setConfirmSuma(null)} disabled={saving}>
                 Cancelar
               </button>
-              <button className="almacen-btn almacen-btn-success" onClick={sumarCantidadExistente} disabled={saving}>
-                <i className="fas fa-plus me-2"></i>{saving ? 'Sumando...' : 'Sí, sumar cantidad'}
+              <button className="almacen-btn almacen-btn-primary" onClick={() => crearHerramienta(null, true)} disabled={saving}>
+                <i className="fas fa-save me-2"></i>{saving ? 'Guardando...' : 'Guardar como nuevo'}
               </button>
             </div>
           </div>

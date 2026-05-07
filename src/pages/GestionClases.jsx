@@ -242,6 +242,7 @@ export default function GestionClases() {
                     className="entrada-oscura"
                     placeholder="Ej. CrossFit 6:00 PM"
                     required
+                    maxLength={50}
                     value={form.nombre}
                     onChange={e => setForm({ ...form, nombre: e.target.value })}
                   />
@@ -315,10 +316,16 @@ export default function GestionClases() {
                     <input
                       type="number"
                       min="1"
+                      max="200"
                       className="entrada-oscura"
                       required
                       value={form.maximoAtletas}
-                      onChange={e => setForm({ ...form, maximoAtletas: e.target.value })}
+                      onChange={e => {
+                        const v = e.target.value;
+                        if (v === '' || (Number(v) <= 200 && /^\d*$/.test(v))) {
+                          setForm({ ...form, maximoAtletas: v });
+                        }
+                      }}
                     />
                   </div>
                   <div className="col-6">
@@ -372,10 +379,16 @@ export default function GestionClases() {
                       <input
                         type="number"
                         min="0"
+                        max="100"
                         className="entrada-oscura"
                         placeholder="Ej. 2 lugares"
                         value={form.cupoVisitantes}
-                        onChange={e => setForm({ ...form, cupoVisitantes: e.target.value })}
+                        onChange={e => {
+                          const v = e.target.value;
+                          if (v === '' || (Number(v) <= 100 && /^\d*$/.test(v))) {
+                            setForm({ ...form, cupoVisitantes: v });
+                          }
+                        }}
                       />
                     </div>
                   )}

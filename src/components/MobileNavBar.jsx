@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './MobileNavBar.css';
+import { useAuth } from '../context/AuthContext';
 
 /* ── Items estáticos — modo público (Home.jsx sin props) ── */
 const NAV_ITEMS = [
@@ -24,6 +25,7 @@ const IS_MOBILE = typeof window !== 'undefined' &&
   (window.innerWidth < 768 || 'ontouchstart' in window);
 
 export default function MobileNavBar({ navItems = [], homeRoute = '/', onLogout }) {
+  const { usuario, cuentasGuardadas, cambiarCuenta } = useAuth();
   const navigate  = useNavigate();
   const isDynamic = Array.isArray(navItems) && navItems.length > 0;
 
@@ -472,18 +474,79 @@ export default function MobileNavBar({ navItems = [], homeRoute = '/', onLogout 
             ))}
           </ul>
 
-          {onLogout && (
-            <div className="mnav-drawer-footer">
+          {onLogout && (() => {
+            const currentId = usuario?.idUsuario || usuario?.IdUsuario || usuario?.id || usuario?.Id;
+            return (
+            <div className="mnav-drawer-footer d-flex flex-column gap-2">
+              {cuentasGuardadas && cuentasGuardadas.length > 0 && (
+                <div style={{display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', padding: '4px 0'}}>
+                  {cuentasGuardadas.map((c, i) => {
+                    const cId = c.usuario?.idUsuario || c.usuario?.IdUsuario || c.usuario?.id || c.usuario?.Id;
+                    const isActiva = cId === currentId;
+                    const foto = c.usuario?.fotoPerfilUrl || c.usuario?.foto;
+                    return (
+                      <button
+                        key={cId || i}
+                        type="button"
+                        className="border-0 p-0"
+                        title={`${c.usuario.nombre} (${c.usuario.rol})${isActiva ? ' — Activa' : ''}`}
+                        onClick={() => {
+                          if (!isActiva) {
+                            const ok = cambiarCuenta(c);
+                            if (ok) {
+                              closeDrawer();
+                              window.location.reload();
+                            }
+                          }
+                        }}
+                        style={{
+                          width: '40px', height: '40px', borderRadius: '50%',
+                          overflow: 'hidden', cursor: isActiva ? 'default' : 'pointer',
+                          border: isActiva ? '2.5px solid #dc3545' : '2.5px solid rgba(255,255,255,0.15)',
+                          transition: 'all 0.2s', flexShrink: 0,
+                          background: '#222', opacity: isActiva ? 1 : 0.65,
+                        }}
+                      >
+                        {foto ? (
+                          <img src={foto} alt={c.usuario.nombre} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                        ) : (
+                          <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isActiva ? '#dc3545' : '#333', color: '#fff', fontSize: '0.85rem', fontWeight: 700}}>
+                            {c.usuario.nombre?.charAt(0)?.toUpperCase()}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {cuentasGuardadas.length < 5 && (
+                    <button
+                      type="button"
+                      className="border-0 p-0"
+                      title="Añadir cuenta"
+                      onClick={() => { closeDrawer(); navigate('/login?addAccount=true'); }}
+                      style={{
+                        width: '40px', height: '40px', borderRadius: '50%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        border: '2.5px dashed rgba(255,255,255,0.2)', color: '#888',
+                        fontSize: '0.9rem', background: 'transparent', flexShrink: 0,
+                      }}
+                    >
+                      <i className="fas fa-plus"></i>
+                    </button>
+                  )}
+                </div>
+              )}
+              
               <button
                 type="button"
                 className="mnav-drawer-logout"
                 onClick={() => { closeDrawer(); onLogout(); }}
               >
                 <i className="fas fa-sign-out-alt" />
-                <span>Cerrar sesión</span>
+                <span>Cerrar sesión activa</span>
               </button>
             </div>
-          )}
+            );
+          })()}
         </div>
       )}
 

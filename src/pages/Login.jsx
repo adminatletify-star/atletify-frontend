@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import Particles from '../components/ReactBits/Particles';
 import { useAuth } from '../context/AuthContext';
 import BackButton from '../components/BackButton';
@@ -10,7 +10,11 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login, logout } = useAuth();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const isAddingAccount = queryParams.get('addAccount') === 'true';
+
+  const { login, logout, usuario } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -77,7 +81,8 @@ export default function Login() {
             <Link to="/" className="d-inline-block text-decoration-none">
               <div className="login-logo-circle"><i className="fas fa-paw login-logo-icon"></i></div>
             </Link>
-            <h1 className="login-title">Iniciar Sesión</h1>
+            <h1 className="login-title">{isAddingAccount ? 'Añadir Cuenta' : 'Iniciar Sesión'}</h1>
+            {isAddingAccount && <p className="text-white-50 small mt-2">Introduce las credenciales de tu otra cuenta.</p>}
           </div>
 
           <form onSubmit={handleLogin} className="login-form">
@@ -105,7 +110,18 @@ export default function Login() {
           <div className="login-footer">
             <p className="login-footer-text">¿No tienes cuenta?</p>
             <Link to="/registro" className="login-link">Regístrate como Atleta</Link><br />
-            <Link to="/" className="login-link-secondary"><i className="fas fa-arrow-left me-1"></i>Volver al inicio</Link>
+            {isAddingAccount && usuario ? (
+               <button onClick={() => {
+                 const route = usuario.rol === 'Developer' ? '/dashboard'
+                              : usuario.rol === 'Atleta' || usuario.rol === 'Usuario' ? '/user-panel'
+                                : '/admin-box-panel';
+                 navigate(route);
+               }} className="btn btn-link text-white-50 mt-2 text-decoration-none p-0 border-0">
+                 <i className="fas fa-arrow-left me-1"></i>Volver a mi panel
+               </button>
+            ) : (
+               <Link to="/" className="login-link-secondary"><i className="fas fa-arrow-left me-1"></i>Volver al inicio</Link>
+            )}
           </div>
         </div>
       </div>

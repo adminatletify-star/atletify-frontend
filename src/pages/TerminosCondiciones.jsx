@@ -28,16 +28,32 @@ export default function TerminosCondiciones() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/usuarios/${usuario.id || usuario.idUsuario}/aceptar-terminos`, {
+      const idUser = usuario.idUsuario || usuario.id || usuario.Id || usuario.IdUsuario;
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/${idUser}/aceptar-terminos`, {
         method: 'PUT'
       });
 
       if (res.ok) {
-        // Actualizar el localStorage
+        // 1. Actualizar el objeto en localStorage (sesión activa)
         const updatedUser = { ...usuario, aceptoTerminos: true };
         localStorage.setItem('usuario', JSON.stringify(updatedUser));
 
-        // Redirección inteligente igual que en Login
+        // 2. También actualizar dentro de cuentasGuardadas para que el cambio persista
+        try {
+          const cuentas = JSON.parse(localStorage.getItem('cuentasGuardadas') || '[]');
+          const cuentasActualizadas = cuentas.map(c => {
+            const cId = c.usuario?.idUsuario || c.usuario?.id || c.usuario?.Id || c.usuario?.IdUsuario;
+            if (String(cId) === String(idUser)) {
+              return { ...c, usuario: { ...c.usuario, aceptoTerminos: true } };
+            }
+            return c;
+          });
+          localStorage.setItem('cuentasGuardadas', JSON.stringify(cuentasActualizadas));
+        } catch (e) {
+          console.warn('No se pudo actualizar cuentasGuardadas:', e);
+        }
+
+        // 3. Redirección inteligente igual que en Login
         switch (updatedUser.rol) {
           case 'Developer': navigate('/dashboard'); break;
           case 'AdminBox':

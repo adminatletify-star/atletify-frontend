@@ -2,6 +2,7 @@ import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { useNavigate, Link } from 'react-router-dom';
 import './HomeStaggeredMenu.css';
+import { useAuth } from '../../context/AuthContext';
 
 export const HomeStaggeredMenu = ({
   position = 'right',
@@ -17,6 +18,7 @@ export const HomeStaggeredMenu = ({
   handleProfileClick = () => {},
   dropdownRef = null
 }) => {
+  const { usuario, cuentasGuardadas, cambiarCuenta } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const openRef = useRef(false);
@@ -105,6 +107,8 @@ export const HomeStaggeredMenu = ({
       }
     });
   }
+
+  const userToDisplay = user || usuario;
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -436,44 +440,213 @@ export const HomeStaggeredMenu = ({
               className="hsm-profile-btn"
               onClick={(e) => {
                 e.stopPropagation();
-                handleProfileClick(e);
+                setDropdownOpen(!dropdownOpen);
               }}
               type="button"
               aria-expanded={dropdownOpen}
-              title={user ? 'Ver perfil' : 'Iniciar sesión'}
+              title={userToDisplay ? userToDisplay.nombre : 'Iniciar sesión'}
+              style={{display: 'flex', alignItems: 'center', gap: '8px'}}
             >
-              <i className="fas fa-user"></i>
-              <span>{user ? user.nombre : 'Cuenta'}</span>
+              {/* Mostrar avatar del usuario activo en el botón */}
+              {userToDisplay ? (() => {
+                const foto = userToDisplay?.foto;
+                const COLORS = [
+                  ['#6C63FF','#8B5CF6'], ['#dc3545','#ff6b6b'],
+                  ['#0ea5e9','#38bdf8'], ['#10b981','#34d399'],
+                  ['#f59e0b','#fbbf24'], ['#ec4899','#f472b6'],
+                  ['#14b8a6','#2dd4bf'], ['#8b5cf6','#a78bfa'],
+                ];
+                const getColor = (name = '') => {
+                  let hash = 0;
+                  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+                  return COLORS[Math.abs(hash) % COLORS.length];
+                };
+                const [colorA, colorB] = getColor(userToDisplay.nombre || '');
+                return (
+                  <div style={{
+                    width: '22px', height: '22px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
+                    border: `2px solid ${colorA}`,
+                  }}>
+                    {foto
+                      ? <img src={foto} alt={userToDisplay.nombre} style={{width:'100%',height:'100%',objectFit:'cover'}} />
+                      : <div style={{width:'100%',height:'100%',background:`linear-gradient(135deg,${colorA},${colorB})`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'0.6rem',fontWeight:800}}>
+                          {userToDisplay.nombre?.charAt(0)?.toUpperCase()}
+                        </div>
+                    }
+                  </div>
+                );
+              })() : <i className="fas fa-user" />}
+              <span>{userToDisplay ? userToDisplay.nombre?.split(' ')[0] : 'Cuenta'}</span>
             </button>
 
-            {/* Dropdown para usuarios sin sesión */}
-            {!user && dropdownOpen && (
+            {dropdownOpen && (() => {
+              const currentId = userToDisplay?.idUsuario || userToDisplay?.IdUsuario || userToDisplay?.id || userToDisplay?.Id;
+
+              const COLORS = [
+                ['#6C63FF','#8B5CF6'], ['#dc3545','#ff6b6b'],
+                ['#0ea5e9','#38bdf8'], ['#10b981','#34d399'],
+                ['#f59e0b','#fbbf24'], ['#ec4899','#f472b6'],
+                ['#14b8a6','#2dd4bf'], ['#8b5cf6','#a78bfa'],
+              ];
+              const getColor = (name = '') => {
+                let hash = 0;
+                for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+                return COLORS[Math.abs(hash) % COLORS.length];
+              };
+              const getRoleLabel = (rol) => {
+                const map = { Developer: 'Dev', AdminBox: 'Admin', Coach: 'Coach', Atleta: 'Atleta', Usuario: 'Nuevo', Juez: 'Juez' };
+                return map[rol] || rol;
+              };
+
+              return (
               <div className="hsm-profile-dropdown">
-                <Link
-                  to="/login"
-                  className="hsm-dropdown-item"
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    closeMenu();
-                  }}
-                >
-                  <i className="fas fa-sign-in-alt me-2"></i>
-                  Iniciar Sesión
-                </Link>
-                <div className="hsm-dropdown-divider"></div>
-                <Link
-                  to="/directorio-boxes"
-                  className="hsm-dropdown-item"
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    closeMenu();
-                  }}
-                >
-                  <i className="fas fa-user-plus me-2"></i>
-                  Registrarme
-                </Link>
+                {cuentasGuardadas && cuentasGuardadas.length > 0 ? (
+                  <>
+                    {/* Premium avatar grid */}
+                    <div style={{padding: '12px 14px 8px'}}>
+                      <p style={{fontSize: '0.58rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px'}}>Cuentas</p>
+                      <div style={{display: 'flex', alignItems: 'flex-start', gap: '10px', flexWrap: 'wrap'}}>
+                        {cuentasGuardadas.map((c, i) => {
+                          const cId = c.usuario?.idUsuario || c.usuario?.IdUsuario || c.usuario?.id || c.usuario?.Id;
+                          const isActiva = String(cId) === String(currentId);
+                          const foto = c.usuario?.foto;
+                          const [colorA, colorB] = getColor(c.usuario?.nombre || '');
+                          const inicial = c.usuario?.nombre?.charAt(0)?.toUpperCase() || '?';
+                          const nombre = c.usuario?.nombre || 'Usuario';
+                          const rol = getRoleLabel(c.usuario?.rol);
+
+                          return (
+                            <button
+                              key={cId || i}
+                              className="border-0 p-0"
+                              onClick={() => {
+                                if (!isActiva) {
+                                  const ok = cambiarCuenta(c);
+                                  if (ok) {
+                                    setDropdownOpen(false);
+                                    closeMenu();
+                                    const rol = c.usuario?.rol;
+                                    const idCompe = c.usuario?.idCompetenciaAsignada;
+                                    let route = '/user-panel';
+                                    if (rol === 'Developer')                  route = '/dashboard';
+                                    else if (rol === 'AdminBox')              route = '/admin-box-panel';
+                                    else if (rol === 'Coach')                 route = '/admin-box-panel';
+                                    else if (rol === 'Atleta')                route = '/user-panel';
+                                    else if (rol === 'Usuario')               route = '/sala-espera';
+                                    else if (rol === 'Juez' && idCompe)       route = `/juez/${idCompe}`;
+                                    window.location.href = route;
+                                  }
+                                }
+                              }}
+                              style={{
+                                background: 'none', cursor: isActiva ? 'default' : 'pointer',
+                                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                                gap: '4px', opacity: isActiva ? 1 : 0.6,
+                                transition: 'opacity 0.2s, transform 0.2s',
+                                transform: isActiva ? 'scale(1.05)' : 'scale(1)',
+                                width: '50px',
+                              }}
+                              onMouseEnter={e => { if (!isActiva) { e.currentTarget.style.opacity='1'; e.currentTarget.style.transform='scale(1.08)'; }}}
+                              onMouseLeave={e => { if (!isActiva) { e.currentTarget.style.opacity='0.6'; e.currentTarget.style.transform='scale(1)'; }}}
+                            >
+                              {/* Avatar */}
+                              <div style={{
+                                width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden',
+                                border: isActiva ? `2.5px solid ${colorA}` : '2.5px solid rgba(255,255,255,0.1)',
+                                boxShadow: isActiva ? `0 0 12px ${colorA}55` : 'none',
+                                position: 'relative',
+                              }}>
+                                {foto
+                                  ? <img src={foto} alt={nombre} style={{width:'100%',height:'100%',objectFit:'cover'}} />
+                                  : <div style={{width:'100%',height:'100%',background:`linear-gradient(135deg,${colorA},${colorB})`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'1.05rem',fontWeight:800,fontFamily:'Inter,sans-serif'}}>
+                                      {inicial}
+                                    </div>
+                                }
+                                {isActiva && (
+                                  <span style={{position:'absolute',bottom:'1px',right:'1px',width:'10px',height:'10px',borderRadius:'50%',background:'#22c55e',border:'1.5px solid #111'}} />
+                                )}
+                              </div>
+                              {/* Nombre */}
+                              <span style={{fontSize:'0.58rem',color:isActiva?'#fff':'rgba(255,255,255,0.5)',fontWeight:isActiva?700:400,textAlign:'center',lineHeight:1.2,maxWidth:'50px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                                {nombre}
+                              </span>
+                              {/* Badge rol */}
+                              <span style={{fontSize:'0.5rem',padding:'1px 5px',borderRadius:'4px',background:isActiva?colorA:'rgba(255,255,255,0.08)',color:isActiva?'#fff':'rgba(255,255,255,0.4)',fontWeight:600,lineHeight:1.4}}>
+                                {rol}
+                              </span>
+                            </button>
+                          );
+                        })}
+                        {cuentasGuardadas.length < 5 && (
+                          <Link
+                            to="/login?addAccount=true"
+                            onClick={() => { setDropdownOpen(false); closeMenu(); }}
+                            style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'4px',textDecoration:'none',width:'50px'}}
+                          >
+                            <div style={{width:'40px',height:'40px',borderRadius:'50%',border:'2px dashed rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',color:'#666',fontSize:'0.9rem',transition:'all 0.2s'}}
+                              onMouseEnter={e=>{e.currentTarget.style.borderColor='#4FC3F7';e.currentTarget.style.color='#4FC3F7';}}
+                              onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(255,255,255,0.2)';e.currentTarget.style.color='#666';}}
+                            >
+                              <i className="fas fa-plus" />
+                            </div>
+                            <span style={{fontSize:'0.52rem',color:'rgba(255,255,255,0.3)'}}>Añadir</span>
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+
+                    
+                    {/* Go to panel button */}
+                    {userToDisplay && (
+                      <>
+                        <div className="hsm-dropdown-divider"></div>
+                        <button
+                          className="hsm-dropdown-item w-100 text-start border-0 bg-transparent"
+                          onClick={() => {
+                            setDropdownOpen(false);
+                            closeMenu();
+                            const route = userToDisplay.rol === 'Developer' ? '/dashboard'
+                              : userToDisplay.rol === 'Atleta' || userToDisplay.rol === 'Usuario' ? '/user-panel'
+                                : '/admin-box-panel';
+                            navigate(route);
+                          }}
+                        >
+                          <i className="fas fa-arrow-right me-2"></i>
+                          Ir a mi panel
+                        </button>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/login"
+                      className="hsm-dropdown-item"
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        closeMenu();
+                      }}
+                    >
+                      <i className="fas fa-sign-in-alt me-2"></i>
+                      Iniciar Sesión
+                    </Link>
+                    <div className="hsm-dropdown-divider"></div>
+                    <Link
+                      to="/directorio-boxes"
+                      className="hsm-dropdown-item"
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        closeMenu();
+                      }}
+                    >
+                      <i className="fas fa-user-plus me-2"></i>
+                      Registrarme
+                    </Link>
+                  </>
+                )}
               </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       </aside>

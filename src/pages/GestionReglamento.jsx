@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import html2pdf from 'html2pdf.js';
 import { BOXES_ENDPOINT } from '../services/api';
 import BackButton from '../components/BackButton';
 import BotonSeguro from '../components/BotonSeguro';
@@ -124,31 +125,22 @@ export default function GestionReglamento() {
     }
 
     setGenerandoPdf(true);
-
-    // 2. Cargar html2pdf si no existe
-    if (!window.html2pdf) {
-      const script = document.createElement('script');
-      script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-      script.onload = () => generarDocumentoPdf(firma);
-      document.body.appendChild(script);
-    } else {
-      generarDocumentoPdf(firma);
-    }
+    generarDocumentoPdf(firma);
   };
 
-  const generarDocumentoPdf = (firma) => {
-    const contenedor = document.createElement('div');
-    contenedor.style.padding = '40px';
-    contenedor.style.fontFamily = 'Arial, sans-serif';
-    contenedor.style.color = '#000';
-    contenedor.style.backgroundColor = '#fff';
-
+  const generarDocumentoPdf = async (firma) => {
+    const nombreCompleto = `${firma.usuario.nombre} ${firma.usuario.apellidos}`;
     const fechaFirmaStr = new Date(firma.fechaFirma).toLocaleString('es-MX', {
       year: 'numeric', month: 'long', day: 'numeric',
       hour: '2-digit', minute: '2-digit'
     });
 
-    const nombreCompleto = `${firma.usuario.nombre} ${firma.usuario.apellidos}`;
+    // 1. Contenedor SOLO con el texto del reglamento (sin firma)
+    const contenedor = document.createElement('div');
+    contenedor.style.padding = '40px';
+    contenedor.style.fontFamily = 'Arial, sans-serif';
+    contenedor.style.color = '#000';
+    contenedor.style.backgroundColor = '#fff';
 
     contenedor.innerHTML = `
       <div style="text-align: center; margin-bottom: 30px;">
@@ -158,31 +150,67 @@ export default function GestionReglamento() {
         Yo, <strong>${nombreCompleto}</strong>, el día <strong>${fechaFirmaStr}</strong>, declaro haber leído, comprendido y me comprometo a cumplir estrictamente con todo lo estipulado en el siguiente reglamento interno del Box:
       </p>
       <hr style="margin-bottom: 20px;" />
-      <div style="font-size: 13px; line-height: 1.5; color: #333;">
+      <div style="font-size: 13px; line-height: 1.5; color: #333; margin-bottom: 80px;">
         ${reglamentoHtml}
-      </div>
-      <hr style="margin-top: 30px; margin-bottom: 30px;" />
-      <div style="text-align: center; margin-top: 40px; page-break-inside: avoid;">
-        <p style="margin-bottom: 10px; font-weight: bold;">Firma de Conformidad</p>
-        <img src="${firma.firmaBase64}" style="max-height: 120px; max-width: 300px; border-bottom: 1px solid #000; padding-bottom: 5px;" />
-        <p style="margin-top: 5px;">${nombreCompleto}</p>
       </div>
     `;
 
     const opt = {
-      margin:       10,
-      filename:     `Reglamento_${firma.usuario.nombre.replace(/\s+/g, '_')}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      margin:      [15, 15, 25, 15], // margen inferior de 25mm para dejar espacio a la firma
+      filename:    `Reglamento_${firma.usuario.nombre.replace(/\s+/g, '_')}.pdf`,
+      image:       { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    window.html2pdf().set(opt).from(contenedor).toPdf().get('pdf').then((pdf) => {
+    // 2. Generar el PDF con el texto, luego añadir la firma con jsPDF nativo
+    try {
+      const pdf = await html2pdf().set(opt).from(contenedor).toPdf().get('pdf');
+
+      const pageWidth  = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const totalPages = pdf.internal.getNumberOfPages();
+
+      // Ir a la última página
+      pdf.setPage(totalPages);
+
+      // Línea separadora
+      const sigY = pageHeight - 55;
+      pdf.setDrawColor(180, 180, 180);
+      pdf.line(15, sigY, pageWidth - 15, sigY);
+
+      // Título "Firma de Conformidad"
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(40, 40, 40);
+      pdf.text('Firma de Conformidad', pageWidth / 2, sigY + 7, { align: 'center' });
+
+      // Imagen de la firma (centrada)
+      const imgW = 55;
+      const imgH = 22;
+      const imgX = (pageWidth - imgW) / 2;
+      pdf.addImage(firma.firmaBase64, 'PNG', imgX, sigY + 10, imgW, imgH);
+
+      // Línea bajo la firma
+      pdf.setDrawColor(0, 0, 0);
+      pdf.line(imgX - 5, sigY + 34, imgX + imgW + 5, sigY + 34);
+
+      // Nombre y fecha
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      pdf.setTextColor(60, 60, 60);
+      pdf.text(nombreCompleto, pageWidth / 2, sigY + 40, { align: 'center' });
+      pdf.text(fechaFirmaStr, pageWidth / 2, sigY + 46, { align: 'center' });
+
       const pdfUrl = pdf.output('bloburl');
       setPdfPreviewUrl(pdfUrl);
       setFirmaSeleccionadaParaPdf(firma);
       setGenerandoPdf(false);
-    });
+    } catch (err) {
+      console.error('Error generando PDF:', err);
+      setGenerandoPdf(false);
+      alert('Error al generar el PDF. Intenta de nuevo.');
+    }
   };
 
   const descargarBlob = () => {
