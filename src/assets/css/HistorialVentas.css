@@ -331,37 +331,44 @@
 /* === ZONA DE DETALLE EXPANDIDA === */
 .hv-detalle-zona {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(0, 0, 0, 0.22);
+  background: rgba(20, 20, 24, 0.4);
+  padding: 1.25rem 1rem;
 }
 
 .hv-detalle-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 0.4rem;
 }
 
 .hv-detalle-th {
   font-family: var(--font-heading-alt);
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.8px;
-  padding: 0.55rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  letter-spacing: 1px;
+  padding: 0 1rem 0.5rem 1rem;
+  border-bottom: none;
   white-space: nowrap;
 }
 
 .hv-detalle-row {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  transition: background 0.12s ease;
-}
-
-.hv-detalle-row:last-child {
-  border-bottom: none;
+  background: rgba(255, 255, 255, 0.03);
+  transition: background 0.2s ease;
 }
 
 .hv-detalle-row:hover {
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.hv-detalle-row td:first-child {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+.hv-detalle-row td:last-child {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
 
 .hv-detalle-nombre {
