@@ -474,11 +474,11 @@ export default function Home() {
             transition={{ duration: 0.7 }}
           >
             <div className="cta-logo-banner">
-        <img
-          src="/LogosDeAtletify/LogoBlanco.png"
-          alt="Atletify Logo"
-          className="cta-logo-banner-img"
-        />    </div>
+              <img
+                src="/LogosDeAtletify/LogoBlanco.png"
+                alt="Atletify Logo"
+                className="cta-logo-banner-img"
+              />    </div>
 
             <h2 className="cta-titulo">
               ¡Únete hoy y<br />

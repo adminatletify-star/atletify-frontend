@@ -5,7 +5,7 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
-  const [boxActivo, setBoxActivo] = useState(null); 
+  const [boxActivo, setBoxActivo] = useState(null);
   const [token, setToken] = useState(null);
   const [cuentasGuardadas, setCuentasGuardadas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,10 +28,19 @@ export function AuthProvider({ children }) {
     const usuarioGuardado = localStorage.getItem('usuario');
     const tokenGuardado = localStorage.getItem('token');
     const cuentasGuardadasStorage = localStorage.getItem('cuentasGuardadas');
-    
+
     if (cuentasGuardadasStorage) {
       try {
         let cuentas = JSON.parse(cuentasGuardadasStorage);
+        
+        // Parche retroactivo para cuentas corruptas (doble stringify)
+        cuentas = cuentas.map(c => {
+          if (typeof c.boxData === 'string') {
+            try { c.boxData = JSON.parse(c.boxData); } catch (e) {}
+          }
+          return c;
+        });
+
         // Auto-limpiar cuentas con tokens expirados
         const cuentasValidas = cuentas.filter(c => isTokenValid(c.token));
         if (cuentasValidas.length !== cuentas.length) {
@@ -42,13 +51,13 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('cuentasGuardadas');
       }
     }
-    
+
     if (usuarioGuardado) {
       try {
         const userObj = JSON.parse(usuarioGuardado);
         setUsuario(userObj);
         if (tokenGuardado) setToken(tokenGuardado);
-        
+
         const boxGuardado = localStorage.getItem('boxActivo');
         if (boxGuardado) {
           setBoxActivo(JSON.parse(boxGuardado));
@@ -66,10 +75,10 @@ export function AuthProvider({ children }) {
 
   const login = (usuarioData, tokenData) => {
     setUsuario(usuarioData);
-    setToken(tokenData); 
+    setToken(tokenData);
     localStorage.setItem('usuario', JSON.stringify(usuarioData));
-    if (tokenData) localStorage.setItem('token', tokenData); 
-    
+    if (tokenData) localStorage.setItem('token', tokenData);
+
     let boxToSave = null;
     if (usuarioData.idBoxPredeterminado) {
       boxToSave = usuarioData.idBoxPredeterminado;
@@ -77,7 +86,7 @@ export function AuthProvider({ children }) {
     } else {
       const storedBox = localStorage.getItem('boxActivo');
       if (storedBox) {
-        try { boxToSave = JSON.parse(storedBox); } catch(e) {}
+        try { boxToSave = JSON.parse(storedBox); } catch (e) { }
       }
     }
 
@@ -89,7 +98,7 @@ export function AuthProvider({ children }) {
       // Primero filtrar cuentas expiradas, luego quitar la actual si existe
       const cuentasLimpias = prevCuentas.filter(c => isTokenValid(c.token));
       const nuevasCuentas = cuentasLimpias.filter(c => getIdFromUser(c.usuario) !== idUser);
-      
+
       nuevasCuentas.unshift({
         usuario: usuarioData,
         token: tokenData,
@@ -138,17 +147,21 @@ export function AuthProvider({ children }) {
     setUsuario(cuenta.usuario);
     setToken(cuenta.token);
     setBoxActivo(cuenta.boxActivo);
-    
+
     localStorage.setItem('usuario', JSON.stringify(cuenta.usuario));
     if (cuenta.token) localStorage.setItem('token', cuenta.token);
     else localStorage.removeItem('token');
-    
+
     if (cuenta.boxActivo) localStorage.setItem('boxActivo', JSON.stringify(cuenta.boxActivo));
     else localStorage.removeItem('boxActivo');
 
-    // Restaurar también el box completo de esa cuenta
+    // Restaurar también el box completo de esa cuenta (asegurando que sea objeto JSON válido)
     if (cuenta.boxData) {
-      localStorage.setItem('box', cuenta.boxData);
+      let dataToSave = cuenta.boxData;
+      if (typeof dataToSave === 'string') {
+        try { dataToSave = JSON.parse(dataToSave); } catch (e) {}
+      }
+      localStorage.setItem('box', JSON.stringify(dataToSave));
     } else {
       localStorage.removeItem('box');
     }
@@ -158,13 +171,25 @@ export function AuthProvider({ children }) {
   const cambiarBox = (idBox) => {
     setBoxActivo(idBox);
     localStorage.setItem('boxActivo', JSON.stringify(idBox));
-    
+
+    let boxDataToSave = null;
+    try {
+      const boxStr = localStorage.getItem('box');
+      if (boxStr) {
+         let parsed = JSON.parse(boxStr);
+         if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+         boxDataToSave = parsed;
+      }
+    } catch (e) {}
+
     // Update active box in saved accounts for the current user
     if (usuario) {
       setCuentasGuardadas(prev => {
         const idUser = getIdFromUser(usuario);
         const nuevas = prev.map(c => {
-          if (getIdFromUser(c.usuario) === idUser) return { ...c, boxActivo: idBox };
+          if (getIdFromUser(c.usuario) === idUser) {
+            return { ...c, boxActivo: idBox, boxData: boxDataToSave };
+          }
           return c;
         });
         localStorage.setItem('cuentasGuardadas', JSON.stringify(nuevas));
@@ -178,21 +203,21 @@ export function AuthProvider({ children }) {
   const isCoach = usuario?.rol === 'Coach';
 
   return (
-    <AuthContext.Provider value={{ 
-      usuario, 
-      boxActivo,      
+    <AuthContext.Provider value={{
+      usuario,
+      boxActivo,
       token,
       cuentasGuardadas,
-      cambiarBox,     
+      cambiarBox,
       cambiarCuenta,
       getIdFromUser,
       isTokenValid,
-      login, 
-      logout, 
-      isAuthenticated, 
-      isDeveloper, 
-      isCoach, 
-      loading 
+      login,
+      logout,
+      isAuthenticated,
+      isDeveloper,
+      isCoach,
+      loading
     }}>
       {children}
     </AuthContext.Provider>

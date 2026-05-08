@@ -240,7 +240,12 @@ const CardNav = ({
                                 else if (rol === 'Atleta')          route = '/user-panel';
                                 else if (rol === 'Usuario')         route = '/sala-espera';
                                 else if (rol === 'Juez' && idCompe) route = `/juez/${idCompe}`;
-                                window.location.href = route;
+                                
+                                if (window.location.pathname === route) {
+                                  window.location.reload();
+                                } else {
+                                  window.location.href = route;
+                                }
                               }
                             }
                           }}

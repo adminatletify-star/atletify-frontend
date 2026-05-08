@@ -53,7 +53,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   font-family: var(--font-body);
   line-height: 1.6;
@@ -273,6 +274,7 @@ footer {
     display: flex;
     flex-direction: column;
   }
+
   footer {
     margin-top: auto;
   }
@@ -280,8 +282,15 @@ footer {
 
 /* Animaciones */
 @keyframes slideIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Colores de texto */
@@ -401,20 +410,25 @@ a.text-danger:hover {
   .card-body {
     padding: 2rem 1.5rem !important;
   }
+
   .form-label {
     font-size: 0.8rem;
   }
+
   .btn-lg {
     padding: 0.7rem 1.5rem;
     font-size: 1rem;
   }
+
   .btn {
     width: 100%;
     margin-bottom: 0.5rem;
   }
+
   .display-4 {
     font-size: 2rem;
   }
+
   .display-3 {
     font-size: 1.5rem;
   }

@@ -224,14 +224,18 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   // 👇 CADENERO SAAS B2B (PAYWALL PARA ADMINS)
-  const storedBoxStr = localStorage.getItem('boxActivo');
+  const storedBoxStr = localStorage.getItem('box');
   if (storedBoxStr && (storedUser.rol === 'AdminBox' || storedUser.rol === 'Coach')) {
-    const boxActivo = JSON.parse(storedBoxStr);
-    // Si están vencidos o pendientes, se bloquea su navegación al panel
-    if (window.location.pathname !== '/seleccion-plan-saas' &&
-      (boxActivo.estatusSaaS === 'Pendiente' || boxActivo.estatusSaaS === 'Vencido')) {
-      console.error("CADENERO SAAS: Box bloqueado por falta de pago. Redirigiendo a Paywall.");
-      return <Navigate to="/seleccion-plan-saas" replace />;
+    try {
+      const boxData = JSON.parse(storedBoxStr);
+      // Si están vencidos o pendientes, se bloquea su navegación al panel
+      if (window.location.pathname !== '/seleccion-plan-saas' &&
+        (boxData.estatusSaaS === 'Pendiente' || boxData.estatusSaaS === 'Vencido')) {
+        console.error("CADENERO SAAS: Box bloqueado por falta de pago. Redirigiendo a Paywall.");
+        return <Navigate to="/seleccion-plan-saas" replace />;
+      }
+    } catch (e) {
+      console.error("CADENERO SAAS: Error leyendo data del box", e);
     }
   }
 

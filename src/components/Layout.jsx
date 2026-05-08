@@ -11,7 +11,7 @@ import ModalExpedienteMedico from './ModalExpedienteMedico';
 export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [user, setUser] = useState(null);
+  const { usuario: user, logout: authLogout, boxActivo } = useAuth();
   const [box, setBox] = useState(null);
   const [statusReglamento, setStatusReglamento] = useState(null);
   const [statusExpediente, setStatusExpediente] = useState(null);
@@ -21,9 +21,12 @@ export default function Layout() {
   const isStaticNavRoute = location.pathname === '/admin-competencias/panel/1';
 
   useEffect(() => {
-    const u = JSON.parse(localStorage.getItem('usuario'));
-    const b = JSON.parse(localStorage.getItem('box'));
-    setUser(u);
+    // Sincronizar el box del localStorage siempre que cambie el usuario o la ruta
+    const bStr = localStorage.getItem('box');
+    let b = null;
+    if (bStr) {
+      try { b = JSON.parse(bStr); } catch (e) {}
+    }
     setBox(b);
 
     // Refrescar los datos del Box en segundo plano para obtener permisos actualizados (ej. moduloCompetenciasActivo)
@@ -44,14 +47,14 @@ export default function Layout() {
         .catch(err => console.error("Error refrescando box en segundo plano:", err));
     }
 
-    if (u && b && u.rol === 'Atleta') {
-      const idUsuarioActual = u.idUsuario || u.id;
+    if (user && b && user.rol === 'Atleta') {
+      const idUsuarioActual = user.idUsuario || user.id;
       if (idUsuarioActual) {
-        verificarReglamento(b.idBox, idUsuarioActual);
+        verificarReglamento(b.idBox || b.IdBox, idUsuarioActual);
         verificarExpediente(idUsuarioActual);
       }
     }
-  }, [location]);
+  }, [location, user, boxActivo]);
 
   const verificarReglamento = async (idBox, idUsuario) => {
     try {
@@ -78,7 +81,7 @@ export default function Layout() {
     }
   };
 
-  const { logout: authLogout } = useAuth();
+
 
   const handleLogout = () => {
     authLogout();

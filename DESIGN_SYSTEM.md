@@ -1,77 +1,120 @@
-# AtletifySystem — Design System
+# AtletifySystem — Design System v2
 
 ## Giro del Sistema
 
-**AtletifySystem** es una plataforma integral de gestión para Boxes de entrenamiento funcional y fitness. Su estética busca ser vibrante, de alto contraste, moderna y orientada a la acción. 
+**AtletifySystem** es una plataforma integral de gestión para Boxes de entrenamiento funcional y fitness.
+La nueva estética es **cálida, legible y moderna**: fondos crema suave, tipografía navy profunda, acentos en rosa y teal — transmite profesionalismo sin perder energía.
 
 ---
 
-## Paleta de Colores
+## Paleta de Colores Principal
 
-La paleta de colores de AtletifySystem está dividida estrictamente por casos de uso para mantener la consistencia visual en toda la aplicación.
+Basada en 7 colores base oficiales, ampliada con derivados armónicos para cubrir todos los casos de uso del sistema.
 
-### 1. Fondos, Contenedores y Cards (60%)
-Estos colores deben utilizarse en los fondos principales de la aplicación, contenedores modulares, tarjetas (cards), paneles y modales. 
-Aportan la estructura base sobre la cual descansan los demás componentes.
+### 1. Colores Base Oficiales
 
-| Color | Hexadecimal | Uso sugerido |
-| :--- | :--- | :--- |
-| ![#1912EA](https://via.placeholder.com/15/1912EA/000000?text=+) | `#1912EA` | Fondos intensos, contenedores heroicos |
-| ![#F02C10](https://via.placeholder.com/15/F02C10/000000?text=+) | `#F02C10` | Tarjetas destacadas, bloques de advertencia/importancia |
-| ![#DADFE5](https://via.placeholder.com/15/DADFE5/000000?text=+) | `#DADFE5` | Fondos de aplicación claros, tarjetas neutrales |
-| ![#081A19](https://via.placeholder.com/15/081A19/000000?text=+) | `#081A19` | Fondos dark-mode, sidebars, modales profundos |
-| ![#C135EB](https://via.placeholder.com/15/C135EB/000000?text=+) | `#C135EB` | Paneles creativos, tarjetas de membrecías premium |
-
-### 2. Contrastes (30%)
-Estos colores están destinados a generar jerarquía visual. Se usan para separar contenido, crear líneas divisorias, bordes, sombras, y para enfatizar secciones o dar peso a elementos inactivos o de estado.
-
-| Color | Hexadecimal | Uso sugerido |
-| :--- | :--- | :--- |
-| ![#000000](https://via.placeholder.com/15/000000/000000?text=+) | `#000000` | Contrastes absolutos, sombras, superposiciones (overlays) |
-| ![#2A0048](https://via.placeholder.com/15/2A0048/000000?text=+) | `#2A0048` | Bordes profundos, fondos para insignias |
-| ![#560072](https://via.placeholder.com/15/560072/000000?text=+) | `#560072` | Divisores, secciones contrastantes secundarias |
-| ![#800080](https://via.placeholder.com/15/800080/000000?text=+) | `#800080` | Elementos de estado neutral o enfocados |
-| ![#A90072](https://via.placeholder.com/15/A90072/000000?text=+) | `#A90072` | Detalles sutiles, acentos en bordes |
-| ![#D50048](https://via.placeholder.com/15/D50048/000000?text=+) | `#D50048` | Alertas de sistema secundarias, iconos |
-| ![#FF0000](https://via.placeholder.com/15/FF0000/000000?text=+) | `#FF0000` | Errores críticos, eliminaciones, estados de peligro |
-
-### 3. Botones y Texto Primario (10%)
-La interacción del usuario depende de estos colores. Son de máxima jerarquía visual para las llamadas a la acción (CTA), botones, links y textos de alto impacto.
-
-| Color | Hexadecimal | Uso sugerido |
-| :--- | :--- | :--- |
-| ![#7288B9](https://via.placeholder.com/15/7288B9/000000?text=+) | `#7288B9` | Botones secundarios, texto descriptivo o informativo |
-| ![#4D59F8](https://via.placeholder.com/15/4D59F8/000000?text=+) | `#4D59F8` | Botones primarios (Guardar, Enviar, Aceptar) |
-| ![#C71627](https://via.placeholder.com/15/C71627/000000?text=+) | `#C71627` | Botones de acción urgente, texto de alerta vital |
-| ![#7C1ED9](https://via.placeholder.com/15/7C1ED9/000000?text=+) | `#7C1ED9` | Botones de features premium, enlaces destacados |
-| ![#9153C6](https://via.placeholder.com/15/9153C6/000000?text=+) | `#9153C6` | Texto interactivo, hovers en botones púrpuras |
+| Token               | Hexadecimal | Nombre Visual      | Rol                                         |
+| :------------------ | :---------- | :----------------- | :------------------------------------------ |
+| `--color-bg`        | `#fef6e4`   | Warm Cream         | Fondo principal de la aplicación            |
+| `--color-headline`  | `#001858`   | Deep Navy          | Títulos H1–H2, texto de alto peso           |
+| `--color-paragraph` | `#172c66`   | Dark Navy          | Párrafos, texto de cuerpo                   |
+| `--color-btn`       | `#f582ae`   | Soft Rose          | Botones primarios, CTA                      |
+| `--color-btn-text`  | `#001858`   | Deep Navy          | Texto de botones (siempre legible)          |
+| `--color-main`      | `#f3d2c1`   | Soft Peach         | Cards, paneles y contenedores principales   |
+| `--color-highlight` | `#fef6e4`   | Warm Cream (alias) | Zonas de énfasis, tooltips                  |
+| `--color-secondary` | `#8bd3dd`   | Sky Teal           | Badges informativos, acentos fríos          |
+| `--color-tertiary`  | `#f582ae`   | Soft Rose (alias)  | Elementos terciarios, pills, etiquetas      |
 
 ---
 
-## Responsive Design — Estandarización con Bootstrap 5
+### 2. Derivados Armónicos (añadidos para coherencia del sistema)
 
-El sistema **AtletifySystem** utiliza **Bootstrap 5** como motor principal para la disposición fluida y responsiva de los elementos. Todo diseño nuevo debe apegarse estrictamente al sistema de Grid y utilidades de Bootstrap.
+Todos calculados manteniéndose dentro de la misma familia de temperatura (cálidos y fríos pasteles + navy profundo).
 
-### Breakpoints Oficiales (Bootstrap 5)
-- **xs (Extra small)**: `< 576px` (Móviles en vertical)
-- **sm (Small)**: `≥ 576px` (Móviles en horizontal / Tablets pequeñas)
-- **md (Medium)**: `≥ 768px` (Tablets / iPads)
-- **lg (Large)**: `≥ 992px` (Laptops / Pantallas pequeñas)
-- **xl (Extra large)**: `≥ 1200px` (Monitores de escritorio)
-- **xxl (Extra extra large)**: `≥ 1400px` (Pantallas grandes)
+#### Fondos y Superficies
+| Token                  | Hexadecimal | Uso                                             |
+| :--------------------- | :---------- | :---------------------------------------------- |
+| `--bg-base`            | `#fef6e4`   | Fondo global de página                          |
+| `--bg-elevated`        | `#fdf0d5`   | Fondos elevados (headers sticky, navbar)        |
+| `--bg-card`            | `#f3d2c1`   | Cards y contenedores primarios                  |
+| `--bg-card-hover`      | `#edcab7`   | Estado hover de cards                           |
+| `--bg-input`           | `#fef9f0`   | Fondo de campos de formulario                   |
+| `--bg-modal`           | `#fdf2e0`   | Fondo de modales y overlays                     |
+| `--bg-sidebar`         | `#001858`   | Sidebar / navs laterales oscuros               |
+| `--bg-overlay`         | `rgba(0,24,88,0.55)` | Overlay de modales / blur screens      |
 
-### Reglas de Diseño Responsivo
-1. **Mobile-First Approach**: Siempre se diseña pensando primero en la pantalla móvil (`col-12`) y se escala hacia arriba con los breakpoints (`col-md-6`, `col-lg-4`).
-2. **Uso de Grid (`row` y `col`)**: Nunca usar valores de `width` forzados en CSS para layouts. Todo debe ir envuelto en un `.container` o `.container-fluid`, seguido de `.row` y sus respectivas `.col-`.
-3. **Visibilidad de Elementos (`d-none`, `d-md-block`)**:
-   - Ocultar tablas densas en móviles usando `d-none d-md-block` o implementar `table-responsive`.
-   - Mostrar versiones en tarjetas apiladas para móviles (`d-md-none`).
-4. **Espaciados Dinámicos**: Usar clases de utilidad como `gap-2 gap-md-4`, `p-3 p-lg-5`, `mb-3 mb-md-0` para ajustar los márgenes y paddings según el tamaño de la pantalla sin necesidad de media queries manuales en CSS.
-5. **Flexbox Utilities**: Priorizar `d-flex`, `align-items-center`, `justify-content-between`, `flex-column flex-md-row` para adaptar barras de navegación, menús laterales y headers responsivos de manera nativa.
+#### Texto
+| Token            | Hexadecimal          | Uso                                          |
+| :--------------- | :------------------- | :------------------------------------------- |
+| `--text-primary` | `#001858`            | Títulos y texto de máxima importancia        |
+| `--text-body`    | `#172c66`            | Texto de párrafo y contenido general         |
+| `--text-muted`   | `#5a6e9a`            | Texto secundario, placeholders, hints        |
+| `--text-disabled`| `#aab4cc`            | Texto deshabilitado                          |
+| `--text-on-dark` | `#fef6e4`            | Texto sobre fondos navy oscuros              |
+| `--text-on-btn`  | `#001858`            | Texto dentro de botones rosa/teal            |
+
+#### Botones
+| Token                 | Hexadecimal | Uso                                            |
+| :-------------------- | :---------- | :--------------------------------------------- |
+| `--btn-primary`       | `#f582ae`   | Botón principal (Guardar, Enviar, Confirmar)   |
+| `--btn-primary-hover` | `#f065a0`   | Hover del botón primario                       |
+| `--btn-primary-glow`  | `rgba(245,130,174,0.32)` | Sombra y glow del primario          |
+| `--btn-secondary`     | `#8bd3dd`   | Botón secundario (Cancelar, Ver más)           |
+| `--btn-secondary-hover`| `#6ac4d0`  | Hover del botón secundario                     |
+| `--btn-dark`          | `#001858`   | Botón oscuro (acción navy)                     |
+| `--btn-dark-hover`    | `#002a80`   | Hover del botón oscuro                         |
+| `--btn-ghost`         | `transparent` | Botón fantasma con borde                    |
+| `--btn-ghost-border`  | `rgba(0,24,88,0.3)` | Borde del botón fantasma              |
+| `--btn-danger`        | `#e05c7e`   | Botón destructivo (Eliminar)                   |
+| `--btn-danger-hover`  | `#c94a6a`   | Hover del botón destructivo                    |
+
+#### Estados del Sistema
+| Token           | Hexadecimal | Uso                                               |
+| :-------------- | :---------- | :------------------------------------------------ |
+| `--success`     | `#52b788`   | Confirmaciones, registros exitosos, publicados    |
+| `--success-bg`  | `#d8f3e3`   | Fondo de alertas success                          |
+| `--warning`     | `#f4a261`   | Advertencias, campos pendientes, borradores       |
+| `--warning-bg`  | `#fde8ce`   | Fondo de alertas warning                          |
+| `--danger`      | `#e05c7e`   | Errores, eliminaciones, deudas vencidas           |
+| `--danger-bg`   | `#fdd8e0`   | Fondo de alertas danger                           |
+| `--info`        | `#8bd3dd`   | Información, notas, tips                          |
+| `--info-bg`     | `#ddf4f8`   | Fondo de alertas info                             |
+
+#### Bordes y Divisores
+| Token              | Hexadecimal                   | Uso                                      |
+| :----------------- | :---------------------------- | :--------------------------------------- |
+| `--border`         | `rgba(0,24,88,0.12)`          | Borde suave por defecto                  |
+| `--border-medium`  | `rgba(0,24,88,0.22)`          | Borde de cards y paneles                 |
+| `--border-strong`  | `rgba(0,24,88,0.38)`          | Borde de inputs focus, elementos activos |
+| `--border-hover`   | `rgba(245,130,174,0.55)`      | Borde de elementos en hover (rosa)       |
+| `--border-teal`    | `rgba(139,211,221,0.5)`       | Borde de badges teal                     |
+
+#### Acentos y Decorativos
+| Token              | Hexadecimal | Uso                                            |
+| :----------------- | :---------- | :--------------------------------------------- |
+| `--accent-rose`    | `#f582ae`   | Acento rosa principal (alias de btn primary)   |
+| `--accent-teal`    | `#8bd3dd`   | Acento teal frío                               |
+| `--accent-peach`   | `#f3d2c1`   | Acento melocotón suave                         |
+| `--accent-navy`    | `#001858`   | Acento navy fuerte                             |
+| `--accent-lavender`| `#c9b8e8`   | Acento lavanda (armónico frío-cálido)          |
+| `--accent-gold`    | `#e9c46a`   | Acento dorado (estadísticas, premios, ranking) |
+| `--accent-coral`   | `#f4845f`   | Acento coral (alertas importantes, urgencias)  |
+
+#### Glassmorphism / Efectos
+| Token           | Valor                           | Uso                                      |
+| :-------------- | :------------------------------ | :--------------------------------------- |
+| `--glass-bg`    | `rgba(254,246,228,0.82)`        | Cards con efecto glass en fondo claro    |
+| `--glass-dark`  | `rgba(0,24,88,0.88)`            | Glass sobre elementos navy               |
+| `--blur`        | `blur(20px)`                    | Backdropfilter estándar                  |
+| `--shadow-sm`   | `0 2px 8px rgba(0,24,88,0.10)` | Sombra sutil                             |
+| `--shadow-md`   | `0 4px 20px rgba(0,24,88,0.15)`| Sombra media (cards)                     |
+| `--shadow-lg`   | `0 8px 40px rgba(0,24,88,0.22)`| Sombra grande (modales, dropdowns)       |
+| `--shadow-rose` | `0 4px 20px rgba(245,130,174,0.35)` | Sombra rosa (botones CTA hover)    |
+| `--shadow-teal` | `0 4px 20px rgba(139,211,221,0.35)` | Sombra teal (info elements hover)  |
 
 ---
 
-## Tipografía (Fuentes)
+## Tipografía
 
 ### Google Fonts — Línea de importación
 ```html
@@ -79,44 +122,211 @@ El sistema **AtletifySystem** utiliza **Bootstrap 5** como motor principal para 
 ```
 
 ### Asignación por elemento
-| Elemento               | Fuente              | Peso      | Notas                          |
-|------------------------|---------------------|-----------|--------------------------------|
-| Headings H1-H2         | `Oswald`            | 600–700   | uppercase, impacto máximo      |
-| Headings H3-H4         | `Barlow Condensed`  | 500–600   | Subtítulos, secciones          |
-| Cuerpo / párrafos      | `Inter`             | 400       | Legibilidad en UI              |
-| Botones y labels       | `Inter`             | 500–600   | Claridad en controles          |
-| Números / stats        | `Rajdhani`          | 600–700   | Counters, leaderboards, timers |
-| Banners heroicos       | `Bebas Neue`        | 400       | Ya es bold por naturaleza      |
+| Elemento               | Fuente              | Peso    | Color recomendado      |
+|------------------------|---------------------|---------|------------------------|
+| Headings H1–H2         | `Oswald`            | 600–700 | `--color-headline` (#001858) |
+| Headings H3–H4         | `Barlow Condensed`  | 500–600 | `--text-body` (#172c66)      |
+| Cuerpo / párrafos      | `Inter`             | 400     | `--text-body` (#172c66)      |
+| Botones y labels       | `Inter`             | 500–600 | `--text-on-btn` (#001858)    |
+| Números / stats        | `Rajdhani`          | 600–700 | `--color-headline` (#001858) |
+| Banners heroicos       | `Bebas Neue`        | 400     | `--color-headline` (#001858) |
+| Texto en fondos navy   | `Inter`             | 400–500 | `--text-on-dark` (#fef6e4)   |
 
 ---
 
-## CSS Variables — Bloque Base 
+## Responsive Design — Bootstrap 5
 
-A partir de los colores proporcionados, se sugiere declararlos en la raíz global para un fácil uso con Tailwind o CSS puro:
+### Breakpoints Oficiales
+- **xs**: `< 576px` — Móviles verticales
+- **sm**: `≥ 576px` — Móviles horizontales / tablets pequeñas
+- **md**: `≥ 768px` — Tablets / iPads
+- **lg**: `≥ 992px` — Laptops / pantallas pequeñas
+- **xl**: `≥ 1200px` — Escritorios
+- **xxl**: `≥ 1400px` — Pantallas grandes
+
+### Reglas de Diseño
+1. **Mobile-First**: `col-12` → escalar con `col-md-6`, `col-lg-4`.
+2. **Grid estricto**: Todo en `.container > .row > .col-*`. Sin `width` forzados.
+3. **Visibilidad**: `d-none d-md-block` para tablas. Tarjetas apiladas en móvil.
+4. **Espaciados dinámicos**: `gap-2 gap-md-4`, `p-3 p-lg-5`.
+
+---
+
+## CSS Variables — Bloque Global Completo
 
 ```css
 :root {
-  /* FONDOS, CONTENEDORES Y CARDS */
-  --bg-deep-blue: #1912EA;
-  --bg-alert-red: #F02C10;
-  --bg-light-grey: #DADFE5;
-  --bg-dark-teal: #081A19;
-  --bg-neon-purple: #C135EB;
+  /* ── FONDOS Y SUPERFICIES ── */
+  --bg-base:          #fef6e4;
+  --bg-elevated:      #fdf0d5;
+  --bg-card:          #f3d2c1;
+  --bg-card-hover:    #edcab7;
+  --bg-input:         #fef9f0;
+  --bg-modal:         #fdf2e0;
+  --bg-sidebar:       #001858;
+  --bg-overlay:       rgba(0,24,88,0.55);
 
-  /* CONTRASTES */
-  --contrast-black: #000000;
-  --contrast-deep-purple: #2A0048;
-  --contrast-purple: #560072;
-  --contrast-magenta: #800080;
-  --contrast-pinkish: #A90072;
-  --contrast-reddish: #D50048;
-  --contrast-red: #FF0000;
+  /* ── TEXTO ── */
+  --text-primary:     #001858;
+  --text-body:        #172c66;
+  --text-muted:       #5a6e9a;
+  --text-disabled:    #aab4cc;
+  --text-on-dark:     #fef6e4;
+  --text-on-btn:      #001858;
 
-  /* BOTONES Y TEXTO */
-  --btn-steel-blue: #7288B9;
-  --btn-bright-blue: #4D59F8;
-  --btn-crimson: #C71627;
-  --btn-electric-purple: #7C1ED9;
-  --btn-soft-purple: #9153C6;
+  /* ── COLORES BASE OFICIALES ── */
+  --color-bg:         #fef6e4;
+  --color-headline:   #001858;
+  --color-paragraph:  #172c66;
+  --color-btn:        #f582ae;
+  --color-btn-text:   #001858;
+  --color-main:       #f3d2c1;
+  --color-highlight:  #fef6e4;
+  --color-secondary:  #8bd3dd;
+  --color-tertiary:   #f582ae;
+
+  /* ── PRIMARIO (Rosa) ── */
+  --primary:          #f582ae;
+  --primary-dark:     #f065a0;
+  --primary-glow:     rgba(245,130,174,0.32);
+
+  /* ── SECUNDARIO (Teal) ── */
+  --secondary:        #8bd3dd;
+  --secondary-dark:   #6ac4d0;
+  --secondary-glow:   rgba(139,211,221,0.32);
+
+  /* ── BOTONES ── */
+  --btn-primary:      #f582ae;
+  --btn-primary-hover:#f065a0;
+  --btn-secondary:    #8bd3dd;
+  --btn-secondary-hover:#6ac4d0;
+  --btn-dark:         #001858;
+  --btn-dark-hover:   #002a80;
+  --btn-danger:       #e05c7e;
+  --btn-danger-hover: #c94a6a;
+  --btn-ghost-border: rgba(0,24,88,0.3);
+
+  /* ── ESTADOS ── */
+  --success:          #52b788;
+  --success-bg:       #d8f3e3;
+  --warning:          #f4a261;
+  --warning-bg:       #fde8ce;
+  --danger:           #e05c7e;
+  --danger-bg:        #fdd8e0;
+  --info:             #8bd3dd;
+  --info-bg:          #ddf4f8;
+
+  /* ── ACENTOS ── */
+  --accent:           #f582ae;
+  --accent-rose:      #f582ae;
+  --accent-teal:      #8bd3dd;
+  --accent-peach:     #f3d2c1;
+  --accent-navy:      #001858;
+  --accent-lavender:  #c9b8e8;
+  --accent-gold:      #e9c46a;
+  --accent-coral:     #f4845f;
+  --accent-cool:      #8bd3dd;
+
+  /* ── BORDES ── */
+  --border:           rgba(0,24,88,0.12);
+  --border-medium:    rgba(0,24,88,0.22);
+  --border-strong:    rgba(0,24,88,0.38);
+  --border-hover:     rgba(245,130,174,0.55);
+  --border-teal:      rgba(139,211,221,0.5);
+
+  /* ── GLASS Y SOMBRAS ── */
+  --glass-bg:         rgba(254,246,228,0.82);
+  --glass-dark:       rgba(0,24,88,0.88);
+  --shadow-sm:        0 2px 8px rgba(0,24,88,0.10);
+  --shadow-md:        0 4px 20px rgba(0,24,88,0.15);
+  --shadow-lg:        0 8px 40px rgba(0,24,88,0.22);
+  --shadow-rose:      0 4px 20px rgba(245,130,174,0.35);
+  --shadow-teal:      0 4px 20px rgba(139,211,221,0.35);
+
+  /* ── FUENTES ── */
+  --font-heading:     'Oswald', sans-serif;
+  --font-heading-alt: 'Barlow Condensed', sans-serif;
+  --font-body:        'Inter', sans-serif;
+  --font-stats:       'Rajdhani', sans-serif;
+  --font-hero:        'Bebas Neue', sans-serif;
+
+  /* ── TRANSICIÓN GLOBAL ── */
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 ```
+
+---
+
+## Guía de Uso por Componente
+
+### Cards y Panels
+- **Fondo**: `var(--bg-card)` → `#f3d2c1`
+- **Borde**: `var(--border)` → `rgba(0,24,88,0.12)`
+- **Hover borde**: `var(--border-hover)` → rosa suave
+- **Sombra**: `var(--shadow-md)`
+
+### Inputs y Formularios
+- **Fondo**: `var(--bg-input)` → `#fef9f0`
+- **Borde normal**: `var(--border-medium)`
+- **Borde focus**: `var(--border-strong)` + `box-shadow: 0 0 0 3px var(--primary-glow)`
+- **Placeholder**: `var(--text-muted)`
+- **Texto**: `var(--text-body)`
+
+### Botones Primarios (CTA)
+- **Fondo**: `var(--btn-primary)` → `#f582ae`
+- **Texto**: `var(--text-on-btn)` → `#001858`
+- **Hover**: `var(--btn-primary-hover)` + `var(--shadow-rose)`
+
+### Botones Secundarios
+- **Fondo**: `var(--btn-secondary)` → `#8bd3dd`
+- **Texto**: `var(--text-on-btn)` → `#001858`
+- **Hover**: `var(--btn-secondary-hover)` + `var(--shadow-teal)`
+
+### Botones Destructivos
+- **Fondo**: `var(--btn-danger)` → `#e05c7e`
+- **Texto**: `#fff`
+- **Hover**: `var(--btn-danger-hover)`
+
+### Modales
+- **Fondo**: `var(--bg-modal)` con `backdrop-filter: blur(20px)`
+- **Borde**: `var(--border-hover)`
+- **Overlay**: `var(--bg-overlay)`
+- **Sombra**: `var(--shadow-lg)`
+
+### Badges y Pills
+- **Info/Clases**: fondo `var(--info-bg)`, texto `var(--info)` (#8bd3dd)
+- **Success/Publicado**: fondo `var(--success-bg)`, texto `var(--success)`
+- **Warning/Borrador**: fondo `var(--warning-bg)`, texto `var(--warning)`
+- **Danger/Alerta**: fondo `var(--danger-bg)`, texto `var(--danger)`
+- **Rose (Acento)**: fondo `rgba(245,130,174,0.15)`, texto `var(--accent-rose)`
+
+### Navbar y Header Sticky
+- **Fondo**: `var(--bg-elevated)` → `#fdf0d5`
+- **Borde inferior**: `var(--border-medium)`
+- **Sombra**: `var(--shadow-sm)`
+- **Backdrop**: `blur(20px)`
+
+### Sidebar / Menús Oscuros
+- **Fondo**: `var(--bg-sidebar)` → `#001858`
+- **Texto**: `var(--text-on-dark)` → `#fef6e4`
+- **Ítem activo**: fondo `rgba(245,130,174,0.18)`, borde izquierdo `var(--accent-rose)`
+
+### Scrollbar
+- **Track**: `var(--bg-elevated)`
+- **Thumb**: `var(--primary)`
+- **Thumb hover**: `var(--primary-dark)`
+
+### Spinner / Loading
+- **Track**: `rgba(0,24,88,0.15)`
+- **Activo**: `var(--primary)` (rosa)
+
+---
+
+## Colores Reservados — NO mezclar con la paleta nueva
+
+> Estos colores solo deben usarse en contextos muy específicos (modo TV/pizarra, overlay de pantalla completa).
+
+| Contexto        | Color      | Justificación                            |
+| :-------------- | :--------- | :--------------------------------------- |
+| Fondo TV/Pizarra | `#001858` | Pantalla completa para visualización     |
+| Overlay de error fatal | `#e05c7e` con opacidad alta | Solo en bloqueos críticos |

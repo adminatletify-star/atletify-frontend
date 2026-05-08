@@ -32,9 +32,14 @@ export default function Login() {
         const userObj = result.usuario || result;
         const token = result.token;
 
-        login(userObj, token);
         const boxObj = result.box || userObj.box || result.boxInfo;
-        if (boxObj) localStorage.setItem('box', JSON.stringify(boxObj));
+        if (boxObj) {
+          localStorage.setItem('box', JSON.stringify(boxObj));
+        } else {
+          localStorage.removeItem('box');
+        }
+        
+        login(userObj, token);
 
         if (!userObj.aceptoTerminos) {
           navigate('/terminos', { state: { requiereAceptacion: true } });
