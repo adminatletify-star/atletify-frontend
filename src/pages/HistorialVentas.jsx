@@ -26,6 +26,13 @@ export default function HistorialVentas() {
   const [estatusObjetivoCobro, setEstatusObjetivoCobro] = useState('Pagado (Pendiente Entrega)');
   const [procesandoEstatus, setProcesandoEstatus] = useState(false);
 
+  // Estados para el Modal de Reporte PDF
+  const [modalReporteOpen, setModalReporteOpen] = useState(false);
+  const [reporteFiltroPeriodo, setReporteFiltroPeriodo] = useState('Hoy');
+  const [reporteFechaInicio, setReporteFechaInicio] = useState('');
+  const [reporteFechaFin, setReporteFechaFin] = useState('');
+  const [reporteTipo, setReporteTipo] = useState('Todo'); // Todo, Ingresos, Pendientes
+
   const apartadoActual = localStorage.getItem('apartadoVentas') || 'General (Box)';
 
   useEffect(() => {
@@ -95,7 +102,7 @@ export default function HistorialVentas() {
   let transacciones = [];
 
   ventas.forEach(v => {
-    if (v.metodoPago !== 'Fiado') {
+    if (v.metodoPago !== 'Fiado' && v.metodoPago !== 'Fiar (Anotar en mi cuenta)') {
       transacciones.push({
         tipo: 'Venta',
         idUnico: `Venta-${v.idVenta}`,
@@ -121,8 +128,16 @@ export default function HistorialVentas() {
 
   transacciones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
+  const getLocalIsoDate = (dateStr) => {
+    const d = new Date(dateStr);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   if (fechaFiltro) {
-    transacciones = transacciones.filter(t => new Date(t.fecha).toISOString().slice(0, 10) === fechaFiltro);
+    transacciones = transacciones.filter(t => getLocalIsoDate(t.fecha) === fechaFiltro);
   }
 
   // ----------------------------------------------------------------------
@@ -140,60 +155,11 @@ export default function HistorialVentas() {
   let countPorEntregar = 0;
   let countListos = 0;
 
-  const ventasAAnalizar = fechaFiltro ? ventas.filter(v => new Date(v.fechaVenta).toISOString().slice(0,10) === fechaFiltro) : ventas;
+  const ventasAAnalizar = fechaFiltro ? ventas.filter(v => getLocalIsoDate(v.fechaVenta) === fechaFiltro) : ventas;
 
+  // Calculamos deudaFiado y contadores sobre ventasAAnalizar
   ventasAAnalizar.forEach(v => {
     if (v.estatus !== 'Cancelada') {
-      if (v.estatus === 'Completada' || v.estatus === 'Pagado y Listo' || v.estatus === 'Pagado (Pendiente Entrega)') {
-          totalIngreso += v.totalVenta;
-          
-          // Estandarizar métodos de pago
-          let mp = v.metodoPago || 'Efectivo';
-          const mpLower = mp.toLowerCase();
-          if (mpLower.includes('tarjeta')) mp = 'Tarjeta en Recepción';
-          else if (mpLower.includes('transf')) mp = 'Transferencia';
-          else if (mpLower.includes('linea') || mpLower.includes('línea')) mp = 'En línea';
-          else mp = 'Efectivo';
-
-          metodosPagoMap[mp] = (metodosPagoMap[mp] || 0) + v.totalVenta;
-          
-          // Lógica de agrupación de fechas por escala de tiempo (evitando bug de zona horaria UTC)
-          let claveFechaSort = '';
-          let labelStr = '';
-          let d = new Date(v.fechaVenta);
-          
-          const yyyy = d.getFullYear();
-          const mm = String(d.getMonth() + 1).padStart(2, '0');
-          const dd = String(d.getDate()).padStart(2, '0');
-
-          if (escalaTiempo === 'diario') {
-             claveFechaSort = `${yyyy}-${mm}-${dd}`;
-             labelStr = d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
-          } else if (escalaTiempo === 'semanal') {
-             const day = d.getDay(); 
-             const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-             const monday = new Date(new Date(d).setDate(diff));
-             const mY = monday.getFullYear();
-             const mM = String(monday.getMonth() + 1).padStart(2, '0');
-             const mD = String(monday.getDate()).padStart(2, '0');
-             claveFechaSort = `${mY}-${mM}-${mD}`;
-             labelStr = `Semana del ${mD}/${mM}`;
-          } else if (escalaTiempo === 'mensual') {
-             claveFechaSort = `${yyyy}-${mm}`;
-             let mesNombre = d.toLocaleString('es-MX', { month: 'short' });
-             mesNombre = mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1);
-             labelStr = `${mesNombre} ${yyyy}`;
-          } else if (escalaTiempo === 'anual') {
-             claveFechaSort = `${yyyy}`;
-             labelStr = `${yyyy}`;
-          }
-
-          if (!ventasDiariasMap[claveFechaSort]) {
-             ventasDiariasMap[claveFechaSort] = { total: 0, label: labelStr };
-          }
-          ventasDiariasMap[claveFechaSort].total += v.totalVenta;
-      }
-
       if (v.estatus === 'Pendiente' && v.metodoPago !== 'Fiado') {
           pendienteDeCobro += v.totalVenta;
           countPendiente++;
@@ -212,6 +178,83 @@ export default function HistorialVentas() {
           });
       }
     }
+  });
+
+  const agruparEnGrafica = (fechaIso, monto) => {
+      let claveFechaSort = '';
+      let labelStr = '';
+      let d = new Date(fechaIso);
+      
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+
+      if (escalaTiempo === 'diario') {
+         claveFechaSort = `${yyyy}-${mm}-${dd}`;
+         labelStr = d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+      } else if (escalaTiempo === 'semanal') {
+         const day = d.getDay(); 
+         const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+         const monday = new Date(new Date(d).setDate(diff));
+         const mY = monday.getFullYear();
+         const mM = String(monday.getMonth() + 1).padStart(2, '0');
+         const mD = String(monday.getDate()).padStart(2, '0');
+         claveFechaSort = `${mY}-${mM}-${mD}`;
+         labelStr = `Semana del ${mD}/${mM}`;
+      } else if (escalaTiempo === 'mensual') {
+         claveFechaSort = `${yyyy}-${mm}`;
+         let mesNombre = d.toLocaleString('es-MX', { month: 'short' });
+         mesNombre = mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1);
+         labelStr = `${mesNombre} ${yyyy}`;
+      } else if (escalaTiempo === 'anual') {
+         claveFechaSort = `${yyyy}`;
+         labelStr = `${yyyy}`;
+      }
+
+      if (!ventasDiariasMap[claveFechaSort]) {
+         ventasDiariasMap[claveFechaSort] = { total: 0, label: labelStr };
+      }
+      ventasDiariasMap[claveFechaSort].total += monto;
+  };
+
+  // Calculamos ingresos sobre las transacciones filtradas para incluir Abonos correctamente
+  transacciones.forEach(t => {
+      const isVenta = t.tipo === 'Venta';
+      
+      if (isVenta) {
+          const v = t.datos;
+          if (v.estatus === 'Cancelada' || v.metodoPago === 'Fiado' || v.metodoPago === 'Fiar (Anotar en mi cuenta)') return;
+          
+          if (v.estatus === 'Completada' || v.estatus === 'Pagado y Listo' || v.estatus === 'Pagado (Pendiente Entrega)') {
+              totalIngreso += v.totalVenta;
+              
+              let mp = v.metodoPago || 'Efectivo';
+              const mpLower = mp.toLowerCase();
+              if (mpLower.includes('tarjeta')) mp = 'Tarjeta en Recepción';
+              else if (mpLower.includes('transf')) mp = 'Transferencia';
+              else if (mpLower.includes('linea') || mpLower.includes('línea')) mp = 'En línea';
+              else mp = 'Efectivo';
+
+              metodosPagoMap[mp] = (metodosPagoMap[mp] || 0) + v.totalVenta;
+              agruparEnGrafica(v.fechaVenta, v.totalVenta);
+          }
+      } else {
+          const a = t.datos;
+          // Solo sumar abonos aprobados
+          if (a.estatus === 'Aprobado') {
+              totalIngreso += a.monto;
+              
+              let mp = a.metodoPago || 'Efectivo';
+              const mpLower = mp.toLowerCase();
+              if (mpLower.includes('tarjeta')) mp = 'Tarjeta en Recepción';
+              else if (mpLower.includes('transf')) mp = 'Transferencia';
+              else if (mpLower.includes('linea') || mpLower.includes('línea')) mp = 'En línea';
+              else mp = 'Efectivo';
+
+              metodosPagoMap[mp] = (metodosPagoMap[mp] || 0) + a.monto;
+              agruparEnGrafica(a.fechaAbono, a.monto);
+          }
+      }
   });
 
   const porcentajeSobrePedido = countProductosNormales + countProductosSobrePedido > 0 
@@ -241,15 +284,132 @@ export default function HistorialVentas() {
   // GENERADORES DE PDF
   // ----------------------------------------------------------------------
   const generarReporteVentasPDF = () => {
+    // 1. Generar transacciones crudas sin filtros de UI
+    let pdfTransacciones = [];
+    ventas.forEach(v => {
+      if (v.metodoPago !== 'Fiado' && v.metodoPago !== 'Fiar (Anotar en mi cuenta)') {
+        pdfTransacciones.push({
+          tipo: 'Venta',
+          fecha: v.fechaVenta,
+          datos: v
+        });
+      }
+      if (v.abonos && v.abonos.length > 0) {
+        v.abonos.forEach(a => {
+          pdfTransacciones.push({
+            tipo: 'Abono',
+            fecha: a.fechaAbono,
+            datos: { ...a, ventaRelacionada: v }
+          });
+        });
+      }
+    });
+
+    // 2. Filtrar por rango de fechas
+    pdfTransacciones = pdfTransacciones.filter(t => {
+      const d = new Date(t.fecha);
+      d.setHours(0,0,0,0);
+      
+      const hoy = new Date();
+      hoy.setHours(0,0,0,0);
+
+      if (reporteFiltroPeriodo === 'Hoy') {
+        return d.getTime() === hoy.getTime();
+      } else if (reporteFiltroPeriodo === 'Esta Semana') {
+        const day = hoy.getDay(); 
+        const diff = hoy.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(new Date().setDate(diff));
+        monday.setHours(0,0,0,0);
+        return d >= monday && d <= new Date();
+      } else if (reporteFiltroPeriodo === 'Este Mes') {
+        return d.getMonth() === new Date().getMonth() && d.getFullYear() === new Date().getFullYear();
+      } else if (reporteFiltroPeriodo === 'Este Año') {
+        return d.getFullYear() === new Date().getFullYear();
+      } else if (reporteFiltroPeriodo === 'Personalizado') {
+        if (!reporteFechaInicio || !reporteFechaFin) return true;
+        
+        // Sumamos 1 día a la fecha fin si hay problemas de zona horaria, pero el local no debería sufrir de esto si parseamos con cuidado
+        const startStr = reporteFechaInicio.split('-');
+        const endStr = reporteFechaFin.split('-');
+        
+        const start = new Date(startStr[0], startStr[1] - 1, startStr[2]); 
+        start.setHours(0,0,0,0);
+        const end = new Date(endStr[0], endStr[1] - 1, endStr[2]); 
+        end.setHours(23,59,59,999);
+        
+        return d >= start && d <= end;
+      }
+      return true; // 'Todo el Historial'
+    });
+
+    // 3. Filtrar por tipo
+    if (reporteTipo === 'Ingresos') {
+      pdfTransacciones = pdfTransacciones.filter(t => {
+         if (t.tipo === 'Venta') {
+             const estatus = t.datos.estatus;
+             return estatus === 'Completada' || estatus === 'Pagado y Listo' || estatus === 'Pagado (Pendiente Entrega)';
+         } else {
+             return t.datos.estatus === 'Aprobado';
+         }
+      });
+    } else if (reporteTipo === 'Pendientes') {
+      pdfTransacciones = pdfTransacciones.filter(t => t.tipo === 'Venta' && t.datos.estatus === 'Pendiente');
+    }
+
+    // 4. Recalcular totales para este corte
+    let pdfTotalIngreso = 0;
+    let pdfPendiente = 0;
+    pdfTransacciones.forEach(t => {
+        if (t.tipo === 'Venta') {
+            const v = t.datos;
+            if (v.estatus === 'Completada' || v.estatus === 'Pagado y Listo' || v.estatus === 'Pagado (Pendiente Entrega)') {
+                pdfTotalIngreso += parseFloat(v.totalVenta || 0);
+            } else if (v.estatus === 'Pendiente') {
+                pdfPendiente += parseFloat(v.totalVenta || 0);
+            }
+        } else {
+            const a = t.datos;
+            if (a.estatus === 'Aprobado') {
+                pdfTotalIngreso += parseFloat(a.monto || 0);
+            }
+        }
+    });
+
+    let tituloPeriodo = reporteFiltroPeriodo;
+    let nombreArchivoPeriodo = reporteFiltroPeriodo.replace(/ /g, '_');
+
+    if (reporteFiltroPeriodo === 'Personalizado') {
+        if (reporteFechaInicio && reporteFechaFin) {
+            if (reporteFechaInicio === reporteFechaFin) {
+                tituloPeriodo = `Día ${reporteFechaInicio}`;
+                nombreArchivoPeriodo = `Dia_${reporteFechaInicio}`;
+            } else {
+                tituloPeriodo = `del ${reporteFechaInicio} al ${reporteFechaFin}`;
+                nombreArchivoPeriodo = `Del_${reporteFechaInicio}_Al_${reporteFechaFin}`;
+            }
+        }
+    } else if (reporteFiltroPeriodo === 'Hoy') {
+        const h = new Date();
+        const yyyy = h.getFullYear();
+        const mm = String(h.getMonth() + 1).padStart(2, '0');
+        const dd = String(h.getDate()).padStart(2, '0');
+        tituloPeriodo = `del Día ${dd}/${mm}/${yyyy}`;
+        nombreArchivoPeriodo = `Dia_${yyyy}-${mm}-${dd}`;
+    }
+
     const doc = new jsPDF();
-    const titulo = fechaFiltro ? `Reporte de Ventas - ${fechaFiltro}` : 'Reporte Histórico de Ventas';
+    const titulo = `Reporte de Ventas - ${tituloPeriodo}`;
+    const boxNombre = box?.nombre || 'Box';
+    const boxUbicacion = box?.ubicacion || '';
+
     doc.setFontSize(16);
     doc.text(titulo, 14, 20);
     
     doc.setFontSize(10);
-    doc.text(`Generado el: ${new Date().toLocaleString('es-MX')}`, 14, 28);
-    doc.text(`Ingreso Total Registrado (En vista): $${totalIngreso.toFixed(2)}`, 14, 34);
-    doc.text(`Pendiente de Cobro: $${pendienteDeCobro.toFixed(2)}`, 14, 40);
+    doc.text(`Box: ${boxNombre} ${boxUbicacion ? `- ${boxUbicacion}` : ''}`, 14, 28);
+    doc.text(`Generado el: ${new Date().toLocaleString('es-MX')}`, 14, 34);
+    doc.text(`Ingreso Confirmado (En Periodo): $${pdfTotalIngreso.toFixed(2)}`, 14, 40);
+    doc.text(`Pendiente de Cobro (En Periodo): $${pdfPendiente.toFixed(2)}`, 14, 46);
 
     const columns = [
       { header: 'Fecha', dataKey: 'fecha' },
@@ -260,7 +420,7 @@ export default function HistorialVentas() {
       { header: 'Monto', dataKey: 'monto' }
     ];
 
-    const rows = transacciones.map(t => {
+    const rows = pdfTransacciones.map(t => {
       const isVenta = t.tipo === 'Venta';
       const v = isVenta ? t.datos : t.datos.ventaRelacionada;
       const a = isVenta ? null : t.datos;
@@ -275,7 +435,7 @@ export default function HistorialVentas() {
     });
 
     autoTable(doc, {
-      startY: 48,
+      startY: 54,
       columns: columns,
       body: rows,
       theme: 'grid',
@@ -283,7 +443,8 @@ export default function HistorialVentas() {
       styles: { fontSize: 8 }
     });
 
-    doc.save(`ReporteVentas_${fechaFiltro || 'Historico'}.pdf`);
+    doc.save(`ReporteVentas_${nombreArchivoPeriodo}.pdf`);
+    setModalReporteOpen(false);
   };
 
   const generarListaComprasPDF = () => {
@@ -356,13 +517,6 @@ export default function HistorialVentas() {
     transacciones = transacciones.filter(t => t.tipo === 'Venta' && (t.datos.estatus === 'Pagado y Listo' || t.datos.estatus === 'Listo para Recoger'));
   } else if (tabActual === 'canceladas') {
     transacciones = transacciones.filter(t => t.tipo === 'Venta' && t.datos.estatus === 'Cancelada');
-  } else if (tabActual === 'deudas') {
-    transacciones = transacciones.filter(t => {
-       if (t.tipo !== 'Venta') return false;
-       if (t.datos.estatus !== 'Fiado' && t.datos.estatus !== 'Fiado (Entregado)') return false;
-       const totalAbonos = (t.datos.abonos || []).reduce((sum, a) => sum + parseFloat(a.monto), 0);
-       return (t.datos.totalVenta - totalAbonos) > 0;
-    });
   }
 
   const transaccionesPorDia = transacciones.reduce((acc, t) => {
@@ -419,12 +573,6 @@ export default function HistorialVentas() {
                 onClick={() => setTabActual('listos')}
             >
                 <i className="fas fa-box-open me-2"></i>Listos para Recoger
-            </button>
-            <button 
-                className={`btn ${tabActual === 'deudas' ? 'btn-primary text-white border-primary fw-bold' : 'btn-outline-secondary text-white'} rounded-pill px-3`} 
-                onClick={() => setTabActual('deudas')}
-            >
-                <i className="fas fa-handshake me-2"></i>Deudas (Fiados)
             </button>
             <button 
                 className={`btn ${tabActual === 'canceladas' ? 'btn-dark text-danger border-danger' : 'btn-outline-secondary text-white'} rounded-pill px-3`} 
@@ -624,7 +772,7 @@ export default function HistorialVentas() {
               </div>
               
               <div className="d-flex align-items-center gap-2 flex-wrap">
-                <button className="btn btn-outline-light" onClick={generarReporteVentasPDF} title="Generar PDF de esta tabla">
+                <button className="btn btn-outline-light" onClick={() => setModalReporteOpen(true)} title="Configurar y Generar PDF">
                   <i className="fas fa-file-pdf text-danger me-2"></i>Reporte Ventas
                 </button>
                 <button className="btn btn-outline-info text-nowrap" onClick={generarListaComprasPDF} title="Generar lista de compras sobre pedido">
@@ -947,6 +1095,91 @@ export default function HistorialVentas() {
               >
                 {procesandoEstatus ? <span className="spinner-border spinner-border-sm me-2"></span> : <i className="fas fa-check-circle me-2"></i>}
                 Confirmar Pago y Avanzar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para Configurar Reporte PDF */}
+      {modalReporteOpen && (
+        <div 
+          onClick={() => setModalReporteOpen(false)} 
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1060, padding: '1rem'
+          }}
+        >
+          <div 
+            onClick={e => e.stopPropagation()} 
+            style={{
+              width: '100%', maxWidth: '400px', 
+              backgroundColor: '#1e1e1e', 
+              border: '1px solid rgba(220,53,69,0.25)', 
+              boxShadow: '0 12px 40px rgba(0,0,0,0.8)',
+              borderRadius: '12px', overflow: 'hidden'
+            }}
+          >
+            <div className="p-3 border-bottom border-secondary d-flex justify-content-between align-items-center">
+              <h5 className="mb-0 text-white"><i className="fas fa-file-pdf text-danger me-2"></i>Configurar Reporte</h5>
+              <button className="btn-close btn-close-white" onClick={() => setModalReporteOpen(false)}></button>
+            </div>
+            <div className="p-4 text-white">
+              <div className="mb-3">
+                <label className="form-label text-white-50 fw-bold">Periodo a Exportar</label>
+                <select 
+                  className="form-select bg-dark text-white border-secondary"
+                  value={reporteFiltroPeriodo}
+                  onChange={e => setReporteFiltroPeriodo(e.target.value)}
+                >
+                  <option value="Hoy">Hoy</option>
+                  <option value="Esta Semana">Esta Semana</option>
+                  <option value="Este Mes">Este Mes</option>
+                  <option value="Este Año">Este Año</option>
+                  <option value="Todo el Historial">Todo el Historial</option>
+                  <option value="Personalizado">Personalizado...</option>
+                </select>
+              </div>
+
+              {reporteFiltroPeriodo === 'Personalizado' && (
+                <div className="row g-2 mb-3">
+                    <div className="col-6">
+                        <label className="form-label text-white-50 small">Desde</label>
+                        <input type="date" className="form-control bg-dark text-white border-secondary" value={reporteFechaInicio} onChange={e => setReporteFechaInicio(e.target.value)} />
+                    </div>
+                    <div className="col-6">
+                        <label className="form-label text-white-50 small">Hasta</label>
+                        <input type="date" className="form-control bg-dark text-white border-secondary" value={reporteFechaFin} onChange={e => setReporteFechaFin(e.target.value)} />
+                    </div>
+                </div>
+              )}
+              
+              <div className="mb-4">
+                <label className="form-label text-white-50 fw-bold">Tipo de Transacciones</label>
+                <select 
+                  className="form-select bg-dark text-white border-secondary"
+                  value={reporteTipo}
+                  onChange={e => setReporteTipo(e.target.value)}
+                >
+                  <option value="Todo">Todas las Transacciones</option>
+                  <option value="Ingresos">Solo Ingresos Confirmados</option>
+                  <option value="Pendientes">Solo Pendientes por Cobrar</option>
+                </select>
+              </div>
+
+              <div className="alert alert-secondary py-2 mb-4" style={{fontSize:'0.8rem', backgroundColor: 'rgba(255,255,255,0.05)', border: 'none', color: '#aaa'}}>
+                  <i className="fas fa-info-circle me-2"></i>
+                  El PDF agrupará la información exacta para el periodo que selecciones, ignorando los filtros de la pantalla.
+              </div>
+
+              <button 
+                className="btn btn-danger w-100 fw-bold py-2"
+                onClick={generarReporteVentasPDF}
+                disabled={reporteFiltroPeriodo === 'Personalizado' && (!reporteFechaInicio || !reporteFechaFin)}
+              >
+                <i className="fas fa-download me-2"></i> Descargar PDF
               </button>
             </div>
           </div>

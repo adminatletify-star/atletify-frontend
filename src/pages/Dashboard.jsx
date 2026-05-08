@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [guardandoConfig, setGuardandoConfig] = useState(false);
   const [filtroNombre, setFiltroNombre] = useState('');
   const [filtroRol, setFiltroRol] = useState('');
+  const [filtroBox, setFiltroBox] = useState('');
 
   const [modalAdminBox, setModalAdminBox] = useState({ open: false, idBox: null, nombreBox: '' });
   const [formDataAdmin, setFormDataAdmin] = useState({
@@ -116,9 +117,10 @@ export default function Dashboard() {
   const rolesUnicos = [...new Set(usuarios.map(u => u.rol))];
 
   const usuariosFiltrados = usuarios.filter(u => {
-    const coincideTexto = u.nombre.toLowerCase().includes(filtroNombre) || u.correo.toLowerCase().includes(filtroNombre);
+    const coincideTexto = u.nombre?.toLowerCase().includes(filtroNombre) || u.correo?.toLowerCase().includes(filtroNombre);
     const coincideRol = !filtroRol || u.rol === filtroRol;
-    return coincideTexto && coincideRol;
+    const coincideBox = !filtroBox || u.idBoxPredeterminado?.toString() === filtroBox;
+    return coincideTexto && coincideRol && coincideBox;
   });
 
   const handleConfigChange = (e) => {
@@ -664,6 +666,16 @@ export default function Dashboard() {
               <i className="fas fa-users-cog"></i> Control Global de Roles
             </h3>
             <div className="d-flex flex-column flex-sm-row gap-2 dash-filters">
+              <select
+                className="entrada-oscura dash-filter-select flex-shrink-0"
+                value={filtroBox}
+                onChange={(e) => setFiltroBox(e.target.value)}
+              >
+                <option value="">Todos los Boxes</option>
+                {boxes.map(b => (
+                  <option key={b.idBox} value={b.idBox.toString()}>{b.nombre}</option>
+                ))}
+              </select>
               <select
                 className="entrada-oscura dash-filter-select flex-shrink-0"
                 value={filtroRol}
