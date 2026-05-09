@@ -351,7 +351,12 @@ export default function UserPanel() {
         {/* NAVBAR PREMIUM */}
         <nav className="up-navbar px-3 px-md-4">
           <div className="d-flex align-items-center gap-2">
-            <div className="up-brand">
+            <div 
+              className="up-brand" 
+              onClick={() => navigate('/user-panel')} 
+              onDoubleClick={(e) => { e.preventDefault(); navigate('/'); }} 
+              style={{ cursor: 'pointer' }}
+            >
               <img src="/LogosDeAtletify/LogoBlanco.png" alt="Atletify System" style={{ height: '24px', width: '24px', objectFit: 'contain' }} />
               <span><span style={{ color: 'var(--primary)' }}>A</span>tletify <span style={{ color: 'var(--primary)' }}>S</span>ystem</span>
             </div>

@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState, useEffect } from 'react';
 import { gsap } from 'gsap';
 import { GoArrowUpRight } from 'react-icons/go';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from "../../context/AuthContext"; 
 import './CardNav.css';
 import { COMPETENCIAS_ENDPOINT } from '../../services/api';
@@ -17,6 +17,7 @@ const CardNav = ({
   const cardsRef = useRef([]);
   const tlRef = useRef(null);
   const location = useLocation();
+  const navigate = useNavigate();
   const [listaBoxes, setListaBoxes] = useState([]);
   
   // 👇 EXTRAEMOS EL USUARIO Y LA FUNCIÓN DE CAMBIAR BOX 👇
@@ -136,7 +137,12 @@ const CardNav = ({
             <div className="hamburger-line" /><div className="hamburger-line" />
           </div>
 
-          <Link to={getHomeRoute()} className="text-decoration-none text-white hover-scale transition-all d-flex align-items-center gap-2" style={{ cursor: 'pointer' }}>
+          <Link 
+            to={getHomeRoute()} 
+            onDoubleClick={(e) => { e.preventDefault(); navigate('/'); }}
+            className="text-decoration-none text-white hover-scale transition-all d-flex align-items-center gap-2" 
+            style={{ cursor: 'pointer' }}
+          >
             <img src="/LogosDeAtletify/LogoBlanco.png" alt="Atletify System" style={{ height: '28px', width: '28px', objectFit: 'contain' }} />
             <span className="fw-bold" style={{ fontFamily: 'var(--font-heading-alt)', letterSpacing: '0.05em', fontSize: '0.95rem' }}>
               <span style={{ color: 'var(--primary)' }}>A</span>tletify{' '}
