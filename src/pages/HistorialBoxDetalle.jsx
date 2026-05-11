@@ -53,6 +53,20 @@ export default function HistorialBoxDetalle() {
           transition={{ duration: 0.7 }}
         >
           <span className="lc-hero-tag">Muro del Honor</span>
+          
+          {boxData && (
+            <div className="mb-3 mt-2 d-flex justify-content-center">
+              <div style={{ width: '90px', height: '90px', borderRadius: '50%', overflow: 'hidden', background: 'var(--bg-elevated)', border: '2px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+                <img 
+                  src={boxData.logo && boxData.logo.trim() !== '' ? boxData.logo : `https://ui-avatars.com/api/?name=${encodeURIComponent(boxData.nombre)}&background=1C1C26&color=E63946&size=128&bold=true&font-size=0.4`} 
+                  alt={boxData.nombre} 
+                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(boxData.nombre)}&background=1C1C26&color=E63946&size=128&bold=true&font-size=0.4`; }}
+                />
+              </div>
+            </div>
+          )}
+
           <h1 className="lc-hero-titulo text-uppercase" style={{ fontSize: 'clamp(2rem, 5vw, 4rem)' }}>
             {boxData?.nombre || 'BOX'}
           </h1>
@@ -61,16 +75,16 @@ export default function HistorialBoxDetalle() {
 
           <div className="mt-4 mx-auto" style={{ maxWidth: '500px' }}>
             <div className="input-group">
-              <span className="input-group-text bg-dark border-secondary text-secondary">
+              <span className="input-group-text" style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
                 <i className="fas fa-search"></i>
               </span>
               <input
                 type="text"
-                className="form-control bg-dark border-secondary text-white"
+                className="form-control"
+                style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)', boxShadow: 'none' }}
                 placeholder="Buscar competencia por nombre..."
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
-                style={{ boxShadow: 'none' }}
               />
             </div>
           </div>

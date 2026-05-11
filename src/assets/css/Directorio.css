@@ -198,9 +198,9 @@
 }
 
 .dir-chip:hover {
-  border-color: rgba(255,255,255,0.2);
+  border-color: rgba(255, 255, 255, 0.2);
   color: var(--text-primary);
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .dir-chip--activo {
@@ -425,35 +425,87 @@
 }
 
 /* Colores por tipo de dato */
-.atleta-dato--telefono { border: 1px solid rgba(46, 204, 113, 0.22); }
-.atleta-dato--telefono i { color: #6ee09b; }
-.atleta-dato--telefono .atleta-dato-valor { color: #6ee09b; }
+.atleta-dato--telefono {
+  border: 1px solid rgba(46, 204, 113, 0.22);
+}
 
-.atleta-dato--talla { border: 1px solid rgba(79, 195, 247, 0.22); }
-.atleta-dato--talla i { color: var(--accent-cool); }
-.atleta-dato--talla .atleta-dato-valor { color: var(--accent-cool); }
+.atleta-dato--telefono i {
+  color: #6ee09b;
+}
 
-.atleta-dato--peso { border: 1px solid rgba(79, 195, 247, 0.18); }
-.atleta-dato--peso i { color: #82d0f5; }
-.atleta-dato--peso .atleta-dato-valor { color: #82d0f5; }
+.atleta-dato--telefono .atleta-dato-valor {
+  color: #6ee09b;
+}
 
-.atleta-dato--categoria { border: 1px solid rgba(245, 166, 35, 0.22); }
-.atleta-dato--categoria i { color: var(--accent); }
-.atleta-dato--categoria .atleta-dato-valor { color: var(--accent); }
+.atleta-dato--talla {
+  border: 1px solid rgba(79, 195, 247, 0.22);
+}
 
-.atleta-dato--sangre { border: 1px solid rgba(230, 57, 70, 0.22); }
-.atleta-dato--sangre i { color: #f08090; }
-.atleta-dato--sangre .atleta-dato-valor { color: #f08090; }
+.atleta-dato--talla i {
+  color: var(--accent-cool);
+}
 
-.atleta-dato--membresia { border: 1px solid rgba(76, 175, 80, 0.22); }
-.atleta-dato--membresia i { color: #4caf50; }
-.atleta-dato--membresia .atleta-dato-valor { color: #4caf50; }
+.atleta-dato--talla .atleta-dato-valor {
+  color: var(--accent-cool);
+}
+
+.atleta-dato--peso {
+  border: 1px solid rgba(79, 195, 247, 0.18);
+}
+
+.atleta-dato--peso i {
+  color: #82d0f5;
+}
+
+.atleta-dato--peso .atleta-dato-valor {
+  color: #82d0f5;
+}
+
+.atleta-dato--categoria {
+  border: 1px solid rgba(245, 166, 35, 0.22);
+}
+
+.atleta-dato--categoria i {
+  color: var(--accent);
+}
+
+.atleta-dato--categoria .atleta-dato-valor {
+  color: var(--accent);
+}
+
+.atleta-dato--sangre {
+  border: 1px solid rgba(230, 57, 70, 0.22);
+}
+
+.atleta-dato--sangre i {
+  color: #f08090;
+}
+
+.atleta-dato--sangre .atleta-dato-valor {
+  color: #f08090;
+}
+
+.atleta-dato--membresia {
+  border: 1px solid rgba(76, 175, 80, 0.22);
+}
+
+.atleta-dato--membresia i {
+  color: #4caf50;
+}
+
+.atleta-dato--membresia .atleta-dato-valor {
+  color: #4caf50;
+}
 
 .atleta-dato--experiencia {
   border: 1px solid rgba(168, 178, 209, 0.18);
   max-width: 100%;
 }
-.atleta-dato--experiencia i { color: var(--secondary); }
+
+.atleta-dato--experiencia i {
+  color: var(--secondary);
+}
+
 .atleta-dato--experiencia .atleta-dato-valor {
   font-family: var(--font-body);
   color: var(--secondary);
@@ -519,8 +571,15 @@
 }
 
 @keyframes modalIn {
-  from { opacity: 0; transform: scale(0.92) translateY(20px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .directorio-modal-close {

@@ -328,7 +328,8 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/seleccionar-plan" element={<SeleccionPlanSaaS />} />
             <Route path="/registro-b2b/:idPlan" element={<RegistroBoxSaaS />} />
-            <Route path="/public-dropin" element={<PublicDropIn />} />
+            <Route path="/public-drop-in" element={<PublicDropIn />} />
+            <Route path="/public-drop-in/:idBox" element={<PublicDropIn />} />
 
 
             {/* ========================================= */}

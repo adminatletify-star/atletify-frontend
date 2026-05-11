@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import BlurText from '../components/ReactBits/BlurText';
 import CountUp from '../components/ReactBits/CountUp';
-import HomeStaggeredMenu from '../components/ReactBits/HomeStaggeredMenu';
+import HomeMegaMenu from '../components/ReactBits/HomeMegaMenu';
 import HomeWodTimeline from '../components/HomeWodTimeline';
 import HomeMitosRealidad from '../components/HomeMitosRealidad';
 import HomeLegendasArena from '../components/HomeLegendasArena';
@@ -144,23 +144,8 @@ export default function Home() {
   return (
     <div className="home-wrapper">
 
-      {/* ── STAGGERED MENU ─────────────────────────────────── */}
-      <HomeStaggeredMenu
-        user={user}
-        dropdownOpen={dropdownOpen}
-        setDropdownOpen={setDropdownOpen}
-        handleProfileClick={handleProfileClick}
-        dropdownRef={dropdownRef}
-      />
-
       {/* ── NAVBAR ─────────────────────────────────────────── */}
-      <nav className="navbar navbar-dark fixed-top home-navbar">
-        <div className="container-fluid px-4">
-          <Link to="/" className="navbar-brand d-flex align-items-center">
-            <img src="/LogosDeAtletify/LogoBlanco.png" alt="Atletify System" className="navbar-logo-img" />
-          </Link>
-        </div>
-      </nav>
+      <HomeMegaMenu user={user} mobileMenuOpen={dropdownOpen} setMobileMenuOpen={setDropdownOpen} />
 
       {/* ══════════════════════════════════════════════════════
           SECCIÓN HERO — COLLAGE ESTÁTICO

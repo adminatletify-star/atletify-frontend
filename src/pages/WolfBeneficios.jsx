@@ -37,7 +37,7 @@ export default function WolfBeneficios() {
   const cargarPlanes = async (idBox) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/planes/${idBox}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await fetch(`${API_BASE}/finanzas/planes/${idBox}`, { headers: { 'Authorization': `Bearer ${token}` } });
       if (res.ok) setPlanes(await res.json());
     } catch (e) { console.error('Error al cargar planes', e); }
     finally { setLoading(false); }
@@ -72,7 +72,7 @@ export default function WolfBeneficios() {
 
   const guardarPlan = async (e) => {
     e.preventDefault();
-    const endpoint = editandoId ? `${API_BASE}/planes/${editandoId}` : `${API_BASE}/planes`;
+    const endpoint = editandoId ? `${API_BASE}/finanzas/planes/${editandoId}` : `${API_BASE}/finanzas/planes`;
     const method = editandoId ? 'PUT' : 'POST';
 
     const payload = {

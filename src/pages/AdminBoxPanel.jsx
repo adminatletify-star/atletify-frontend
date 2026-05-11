@@ -127,11 +127,22 @@ export default function AdminBoxPanel() {
         <section className="abp-hero">
           <div className="d-flex justify-content-between align-items-start gap-3">
             <div>
-              <span className="abp-role-badge">
+              <span className="abp-role-badge mb-3 d-inline-block shadow-sm">
                 <i className="fas fa-shield-alt me-1"></i>{user?.rol}
               </span>
-              <h1 className="abp-box-title">{box?.nombre || 'MI BOX'}</h1>
-              <p className="abp-hero-sub">Centro de mando y control operativo</p>
+              <div className="d-flex align-items-center gap-3">
+                {box?.logo && (
+                  <img 
+                    src={box.logo} 
+                    alt={box?.nombre || 'Logo Box'} 
+                    style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '14px', background: '#1c1c24', border: '1px solid rgba(255,255,255,0.1)' }}
+                  />
+                )}
+                <div>
+                  <h1 className="abp-box-title mb-0" style={{ lineHeight: '1.1' }}>{box?.nombre || 'MI BOX'}</h1>
+                  <p className="abp-hero-sub mb-0 mt-1 opacity-75">Centro de mando y control operativo</p>
+                </div>
+              </div>
             </div>
             {isAdmin && (
               <Link to="/editar-box" className="abp-config-btn mt-1">
@@ -218,7 +229,7 @@ export default function AdminBoxPanel() {
             ACCESOS RÁPIDOS (FLOWING MENU)
         ══════════════════════════════════ */}
         <p className="abp-section-label">Accesos Rápidos</p>
-        <div className="abp-menu-wrapper" style={{ height: `${Math.max(500, menuItems.length * 90)}px` }}>
+        <div className="abp-menu-wrapper" style={{ height: 'auto' }}>
           <FlowingMenu
             items={menuItems}
             speed={20}
