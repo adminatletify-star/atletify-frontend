@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import CardNav from './ReactBits/CardNav';
-import MobileNavBar from './MobileNavBar';
+
 import { Link } from 'react-router-dom';
 import { BOXES_ENDPOINT } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -189,36 +190,22 @@ export default function Layout() {
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh', backgroundColor: '#050505' }}>
-      {!shouldHideNav && (
-        <>
-          {/* CardNav — solo en pantallas md+ */}
-          <div className="d-none d-md-block">
-            <CardNav
-              className={isStaticNavRoute ? 'card-nav-static-only-route' : ''}
-              logo={user ? "Logout" : "Login"}
-              logoAlt="WOLFPACK"
-              items={navItems}
-              baseColor="rgba(10, 10, 10, 0.85)"
-              menuColor="#ffffff"
-              buttonBgColor="#dc3545"
-              buttonTextColor="#ffffff"
-              onButtonClick={handleLogout}
-            />
-          </div>
-
-          {/* MobileNavBar — solo en mobile (CSS la oculta en md+) */}
-          <MobileNavBar
-            navItems={navItems}
-            homeRoute={homeRoute}
-            onLogout={handleLogout}
-          />
-        </>
+      {!shouldHideNav && createPortal(
+        <CardNav
+          className={isStaticNavRoute ? 'card-nav-static-only-route' : ''}
+          logo={user ? "Logout" : "Login"}
+          logoAlt="WOLFPACK"
+          items={navItems}
+          baseColor="rgba(10, 10, 10, 0.85)"
+          menuColor="#ffffff"
+          buttonBgColor="#dc3545"
+          buttonTextColor="#ffffff"
+          onButtonClick={handleLogout}
+        />,
+        document.body
       )}
 
-      <div
-        className={!shouldHideNav ? 'layout-has-nav' : ''}
-        style={{ paddingTop: shouldHideNav ? '0' : '120px' }}
-      >
+      <div className={!shouldHideNav ? 'layout-has-nav layout-content' : ''}>
         <Outlet />
       </div>
 

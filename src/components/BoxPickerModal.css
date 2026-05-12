@@ -21,6 +21,24 @@
   transition: background 0.18s, border-color 0.18s, transform 0.15s;
   white-space: nowrap;
   max-width: 200px;
+  flex-shrink: 0;
+}
+
+/* En pantallas pequeñas: solo ícono, sin texto ni chevron */
+@media (max-width: 520px) {
+  .bpm-trigger {
+    padding: 0.42rem 0.6rem;
+    gap: 0;
+    max-width: none;
+    min-width: 0;
+  }
+  .bpm-trigger-label,
+  .bpm-trigger-chevron {
+    display: none;
+  }
+  .bpm-trigger-icon {
+    font-size: 0.95rem;
+  }
 }
 
 .bpm-trigger:hover {

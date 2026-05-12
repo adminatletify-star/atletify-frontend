@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import '../assets/css/ListaCompetencias.css';
 import BackButton from '../components/BackButton';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -36,8 +36,7 @@ export default function HistorialCompetenciasPublico() {
   return (
     <div className="lc-wrapper">
 
-      {/* Botón volver */}
-      <BackButton to="/" className="lc-back-fixed" />
+      {/* Botón volver eliminado */}
 
       {/* Hero */}
       <section className="lc-hero">
@@ -56,16 +55,16 @@ export default function HistorialCompetenciasPublico() {
 
           <div className="mt-4 mx-auto" style={{ maxWidth: '500px' }}>
             <div className="input-group">
-              <span className="input-group-text bg-dark border-secondary text-secondary">
+              <span className="input-group-text" style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
                 <i className="fas fa-search"></i>
               </span>
               <input
                 type="text"
-                className="form-control bg-dark border-secondary text-white"
+                className="form-control"
+                style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)', boxShadow: 'none' }}
                 placeholder="Buscar box por nombre o ubicación..."
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
-                style={{ boxShadow: 'none' }}
               />
             </div>
           </div>
@@ -108,24 +107,23 @@ export default function HistorialCompetenciasPublico() {
                     variants={fadeUp}
                     initial="hidden"
                     animate="visible"
-                    whileHover={{ y: -6, backgroundColor: 'rgba(255,255,255,0.05)' }}
+                    whileHover={{ y: -6, borderColor: 'var(--border-hover)', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
                     onClick={() => navigate(`/historial-competencias/${b.idBox}`)}
-                    style={{ background: 'var(--card-bg)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer' }}
+                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
                   >
-                    <div style={{ width: '70px', height: '70px', borderRadius: '50%', overflow: 'hidden', background: '#000', flexShrink: 0 }}>
-                      {b.logo ? (
-                        <img src={`${import.meta.env.VITE_API_URL}${b.logo}`} alt={b.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <div className="w-100 h-100 d-flex align-items-center justify-content-center">
-                          <i className="fas fa-warehouse text-secondary fs-4"></i>
-                        </div>
-                      )}
+                    <div style={{ width: '70px', height: '70px', borderRadius: '50%', overflow: 'hidden', background: 'var(--bg-elevated)', flexShrink: 0, border: '2px solid var(--border)' }}>
+                      <img
+                        src={b.logo && b.logo.trim() !== '' ? b.logo : `https://ui-avatars.com/api/?name=${encodeURIComponent(b.nombre)}&background=1C1C26&color=E63946&size=128&bold=true&font-size=0.4`}
+                        alt={b.nombre}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(b.nombre)}&background=1C1C26&color=E63946&size=128&bold=true&font-size=0.4`; }}
+                      />
                     </div>
                     <div>
-                      <h3 className="m-0 text-white fs-4">{b.nombre}</h3>
-                      <p className="m-0 text-secondary mt-1"><i className="fas fa-map-marker-alt me-1"></i>{b.ubicacion || 'Sin ubicación'}</p>
+                      <h3 className="m-0 fs-4" style={{ color: 'var(--text-primary)' }}>{b.nombre}</h3>
+                      <p className="m-0 mt-1" style={{ color: 'var(--text-muted)' }}><i className="fas fa-map-marker-alt me-1" style={{ color: 'var(--primary)' }}></i>{b.ubicacion || 'Sin ubicación'}</p>
                     </div>
-                    <div className="ms-auto text-secondary">
+                    <div className="ms-auto" style={{ color: 'var(--text-muted)' }}>
                       <i className="fas fa-chevron-right"></i>
                     </div>
                   </motion.div>

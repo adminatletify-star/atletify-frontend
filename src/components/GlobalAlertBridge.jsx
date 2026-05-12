@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import '../assets/css/global-alert.css';
 
 function normalizeMessage(input) {
@@ -139,14 +140,35 @@ export default function GlobalAlertBridge() {
 
   const renderToasts = () => (
     <div className="wp-toast-stack" aria-live="polite" aria-atomic="false">
-      {toasts.map((toast) => (
-        <div key={toast.id} className={`wp-toast wp-toast-${toast.variant}`} role="status">
-          <span className="wp-toast-icon" aria-hidden="true">
-            {toastIconByVariant[toast.variant] || 'i'}
-          </span>
-          <span className="wp-toast-message">{toast.message}</span>
-        </div>
-      ))}
+      <AnimatePresence>
+        {toasts.map((toast) => (
+          <motion.div
+            layout
+            initial={{ opacity: 0, x: 20, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.8}
+            onDragEnd={(e, { offset, velocity }) => {
+              if (Math.abs(offset.x) > 60 || Math.abs(velocity.x) > 400) {
+                setToasts((prev) => prev.filter((item) => item.id !== toast.id));
+              }
+            }}
+            onClick={() => setToasts((prev) => prev.filter((item) => item.id !== toast.id))}
+            key={toast.id}
+            className={`wp-toast wp-toast-${toast.variant}`}
+            role="status"
+            style={{ touchAction: 'pan-y', cursor: 'grab' }}
+            whileDrag={{ cursor: 'grabbing' }}
+          >
+            <span className="wp-toast-icon" aria-hidden="true">
+              {toastIconByVariant[toast.variant] || 'i'}
+            </span>
+            <span className="wp-toast-message">{toast.message}</span>
+          </motion.div>
+        ))}
+      </AnimatePresence>
     </div>
   );
 

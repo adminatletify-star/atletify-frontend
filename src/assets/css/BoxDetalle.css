@@ -85,7 +85,7 @@
 ══════════════════════════════════════════════ */
 .bxd-hero {
   position: relative;
-  min-height: 100svh;
+  min-height: 50vh;
   display: flex;
   flex-direction: column;
   background: var(--bg-base);
@@ -114,8 +114,8 @@
   height: min(900px, 130vw);
   background: radial-gradient(
     circle,
-    rgba(230, 57, 70, 0.32) 0%,
-    rgba(230, 57, 70, 0.12) 35%,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.02) 35%,
     transparent 65%
   );
   animation: bxdOrbFloat 8s ease-in-out infinite;
@@ -126,7 +126,7 @@
   right: -8%;
   width: min(450px, 70vw);
   height: min(450px, 70vw);
-  background: radial-gradient(circle, rgba(245, 166, 35, 0.07) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.03) 0%, transparent 65%);
   animation: bxdOrbFloat 11s ease-in-out infinite reverse;
 }
 
@@ -138,8 +138,8 @@
     -52deg,
     transparent,
     transparent 48px,
-    rgba(230, 57, 70, 0.04) 48px,
-    rgba(230, 57, 70, 0.04) 49px
+    rgba(255, 255, 255, 0.02) 48px,
+    rgba(255, 255, 255, 0.02) 49px
   );
 }
 
@@ -159,7 +159,7 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(230, 57, 70, 0.6) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.15) 50%, transparent 100%);
   animation: bxdScanLine 6s ease-in-out infinite;
   top: 0;
 }
@@ -171,7 +171,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 7rem 1.5rem 4.5rem;
+  padding: 6rem 1.5rem 3rem;
   text-align: center;
   position: relative;
   z-index: 2;
@@ -243,16 +243,16 @@
 /* ── Box name ── */
 .bxd-nombre {
   font-family: var(--font-hero);
-  font-size: clamp(3.2rem, 13vw, 8.5rem);
-  letter-spacing: clamp(3px, 1vw, 10px);
+  font-size: clamp(2.5rem, 8vw, 5.5rem);
+  letter-spacing: clamp(2px, 0.8vw, 6px);
   text-transform: uppercase;
   color: var(--text-primary);
-  line-height: 0.88;
+  line-height: 0.95;
   margin: 0 0 1rem;
   /* Text glow */
   text-shadow:
-    0 0 80px rgba(230, 57, 70, 0.25),
-    0 0 160px rgba(230, 57, 70, 0.1);
+    0 0 60px rgba(255, 255, 255, 0.1),
+    0 0 100px rgba(255, 255, 255, 0.05);
 }
 
 /* ── Red underline accent under name ── */

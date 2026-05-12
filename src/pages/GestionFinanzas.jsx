@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import BackButton from '../components/BackButton';
@@ -9,6 +9,7 @@ import FiltroMesAnoPicker from '../components/FiltroMesAnoPicker';
 import SelectorPlanPicker from '../components/SelectorPlanPicker';
 import PromocionPicker from '../components/PromocionPicker';
 import MetodoPagoPicker from '../components/MetodoPagoPicker';
+import CategoriaBasePicker from '../components/CategoriaBasePicker';
 import '../assets/css/GestionFinanzas.css';
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api/finanzas`;
@@ -53,9 +54,17 @@ export default function GestionFinanzas() {
     montoInscripcion: '300'
   });
 
-  const [formDropIn, setFormDropIn] = useState({ nombreAtletaExterno: '', montoPagado: '', tipoVisita: 'Clase' });
+  // ── ESTADO DROP-IN ADMIN ──────────────────────────────────
   const [listaDropins, setListaDropins] = useState([]);
   const [loadingDropins, setLoadingDropins] = useState(false);
+  // Modal de 3 pasos
+  const [showModalDropIn, setShowModalDropIn] = useState(false);
+  const [pasoDropIn, setPasoDropIn] = useState(1);
+  const [formDropInAdmin, setFormDropInAdmin] = useState({ nombre: '', email: '', nivelAtleta: 'Principiante' });
+  const [clasesDropIn, setClasesDropIn] = useState([]);
+  const [claseSeleccionada, setClaseSeleccionada] = useState(null); // {idClase, tipoVisita:'Clase'|'SoloGym', nombre, costo}
+  const [procesandoPago, setProcesandoPago] = useState(false);
+  const [loadingClasesDropIn, setLoadingClasesDropIn] = useState(false);
 
   const [editandoPlan, setEditandoPlan] = useState(null);
   const [showModalEditPlan, setShowModalEditPlan] = useState(false); // 👈 Nuevo Modal
@@ -74,16 +83,22 @@ export default function GestionFinanzas() {
   const cargarDatos = useCallback(async (idBox) => {
     setLoading(true);
     try {
-      const [resSemaforo, resPlanes, resDashboard, resDescuentos] = await Promise.all([
+      const [resSemaforo, resPlanes, resDashboard, resDescuentos, resConfig] = await Promise.all([
         fetch(`${API_BASE}/semaforo/${idBox}`, { headers: headersGet }),
         fetch(`${API_BASE}/planes/${idBox}`, { headers: headersGet }),
         fetch(`${API_BASE}/dashboard/${idBox}`, { headers: headersGet }),
         fetch(`${API_BASE}/descuentos/${idBox}`, { headers: headersGet }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/configuracionbox/${idBox}`),
       ]);
       if (resSemaforo.ok) setSemaforo(await resSemaforo.json());
       if (resPlanes.ok) setPlanes(await resPlanes.json());
       if (resDashboard.ok) setDashboardData(await resDashboard.json());
       if (resDescuentos.ok) setDescuentos(await resDescuentos.json());
+      // Enriquecer el box con la configuración (costoDropIn, costoVisitaGym, etc.)
+      if (resConfig.ok) {
+        const configData = await resConfig.json();
+        setBox(prev => prev ? { ...prev, ...configData } : prev);
+      }
     } catch (error) { console.error('Error al cargar finanzas:', error); } finally { setLoading(false); }
   }, []);
 
@@ -127,6 +142,76 @@ export default function GestionFinanzas() {
       if (res.ok) setListaDropins(await res.json());
     } catch (e) { console.error(e); } finally { setLoadingDropins(false); }
   }, []);
+
+  const cargarClasesDropIn = useCallback(async (idBox) => {
+    setLoadingClasesDropIn(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/publicdropin/clases-disponibles/${idBox}`);
+      if (res.ok) setClasesDropIn(await res.json());
+    } catch (e) { console.error(e); } finally { setLoadingClasesDropIn(false); }
+  }, []);
+
+  const abrirModalDropIn = () => {
+    setFormDropInAdmin({ nombre: '', email: '', nivelAtleta: 'Principiante' });
+    setClaseSeleccionada(null);
+    setPasoDropIn(1);
+    setShowModalDropIn(true);
+    if (box) cargarClasesDropIn(box.idBox);
+  };
+
+  const confirmarDropInAdmin = async (metodo) => {
+    if (!claseSeleccionada || procesandoPago) return;
+    setProcesandoPago(true);
+    try {
+      // Usamos fecha local (no UTC) para evitar desfase de zona horaria
+      const ahora = new Date();
+      const hoy = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')}`;
+      const payload = {
+        idBox: box.idBox,
+        nombre: formDropInAdmin.nombre,
+        email: formDropInAdmin.email,
+        nivelAtleta: formDropInAdmin.nivelAtleta,
+        visitas: [{
+          idClase: claseSeleccionada.tipoVisita === 'Clase' ? claseSeleccionada.idClase : 0,
+          fecha: hoy,
+          tipoVisita: claseSeleccionada.tipoVisita
+        }]
+      };
+
+      // 1. Crear la visita como Pendiente
+      const resReserva = await fetch(`${import.meta.env.VITE_API_URL}/api/publicdropin/reservar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const dataReserva = await resReserva.json();
+      if (!resReserva.ok) { alert(dataReserva.mensaje || 'Error al crear la visita.'); return; }
+
+      // 2. Aprobar con el método de pago elegido (Efectivo, Tarjeta o Transferencia)
+      const ids = dataReserva.idsVisita || [];
+      for (const idVisita of ids) {
+        const resAprobar = await fetch(
+          `${API_BASE}/dropin/aprobar/${idVisita}?metodo=${encodeURIComponent(metodo)}`,
+          { method: 'PUT', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }
+        );
+        if (!resAprobar.ok) {
+          const errData = await resAprobar.json().catch(() => ({}));
+          alert(`Error al aprobar visita ${idVisita}: ${errData.mensaje || resAprobar.status}`);
+          return;
+        }
+      }
+
+      alert(`✅ Drop-In registrado y pagado (${metodo}).`);
+      setShowModalDropIn(false);
+      cargarDropins(box.idBox);
+      cargarDatos(box.idBox);
+    } catch (e) {
+      console.error(e);
+      alert('Error al confirmar el Drop-In: ' + e.message);
+    } finally {
+      setProcesandoPago(false);
+    }
+  };
 
   useEffect(() => {
     if (pestaña === 'movimientos' && box) cargarMovimientos(box.idBox, filtroMes, filtroTipoMov);
@@ -283,26 +368,7 @@ export default function GestionFinanzas() {
     } catch (e) { alert('Error al editar'); }
   };
 
-  const registrarDropIn = async (e) => {
-    e.preventDefault();
-    if (!formDropIn.nombreAtletaExterno) return alert('Se requiere un nombre');
-    try {
-      const payload = {
-        idBox: box.idBox,
-        nombre: formDropIn.nombreAtletaExterno,
-        tipoVisita: formDropIn.tipoVisita,
-        montoPagado: formDropIn.montoPagado ? parseFloat(formDropIn.montoPagado) : null
-      };
-
-      const res = await fetch(`${API_BASE}/dropin`, { method: 'POST', headers: headersPost, body: JSON.stringify(payload) });
-      if (res.ok) {
-        alert('Walk-In Registrado.');
-        setFormDropIn({ nombreAtletaExterno: '', montoPagado: '', tipoVisita: 'Clase' });
-        cargarDropins(box.idBox);
-        cargarDatos(box.idBox);
-      }
-    } catch (e) { alert('Error al registrar Walk-In'); }
-  };
+  // registrarDropIn removido — reemplazado por confirmarDropInAdmin con modales
 
   const aprobarDropIn = async (idVisita, metodo) => {
     if (!window.confirm(`¿Confirmar que el turista pagó mediante ${metodo}?`)) return;
@@ -746,33 +812,20 @@ export default function GestionFinanzas() {
               </div>
             )}
 
-            {/* TAB: DROP-IN (V2) */}
+            {/* TAB: DROP-IN (V3 — Modal) */}
             {pestaña === 'dropin' && (
               <div className="row g-4">
-                {/* FORMULARIO DE WALK-IN RÁPIDO */}
+                {/* PANEL LATERAL CON BOTÓN */}
                 <div className="col-12 col-lg-4">
                   <div className="finanzas-card sticky-top" style={{ top: '80px' }}>
-                    <div className="text-center mb-4"><i className="fas fa-walking text-warning display-4 mb-2"></i><div className="finanzas-card-titulo d-block border-0 mb-1">Registrar Walk-In Rápido</div><p className="text-secondary small">Para atletas que llegan sin avisar a mostrador. El pase se asume inmediato.</p></div>
-                    <form onSubmit={registrarDropIn}>
-                      <div className="mb-3">
-                        <label className="etiqueta-campo">Nombre del Turista</label>
-                        <input type="text" className="finanzas-input" value={formDropIn.nombreAtletaExterno} onChange={e => setFormDropIn({ ...formDropIn, nombreAtletaExterno: e.target.value })} required />
-                      </div>
-                      <div className="mb-3">
-                        <label className="etiqueta-campo">¿Qué tomará?</label>
-                        <select className="finanzas-input" value={formDropIn.tipoVisita} onChange={e => setFormDropIn({ ...formDropIn, tipoVisita: e.target.value })}>
-                          <option value="Clase">Clase Guiada</option>
-                          <option value="SoloGym">Solo Open Gym</option>
-                        </select>
-                      </div>
-                      <div className="mb-4">
-                        <label className="etiqueta-campo">Monto Pagado Físico ($)</label>
-                        <input type="number" className="finanzas-input text-warning fw-bold fs-4" placeholder="(Opcional) Vacío = Predeterminado" value={formDropIn.montoPagado} onChange={e => setFormDropIn({ ...formDropIn, montoPagado: e.target.value })} />
-                      </div>
-                      <button type="submit" className="finanzas-btn-submit finanzas-btn-submit--warning" textoProcesando="Aprobando...">
-                        <i className="fas fa-bolt me-2"></i>Registrar Ingreso Físico
-                      </button>
-                    </form>
+                    <div className="text-center mb-4">
+                      <i className="fas fa-plane-arrival text-warning display-4 mb-2"></i>
+                      <div className="finanzas-card-titulo d-block border-0 mb-1">Registrar Drop-In</div>
+                      <p className="text-secondary small">Registra a un turista en una clase del día y cobra el pago en mostrador.</p>
+                    </div>
+                    <button type="button" className="finanzas-btn-submit finanzas-btn-submit--warning w-100" onClick={abrirModalDropIn}>
+                      <i className="fas fa-plus me-2"></i>Registrar Drop-In
+                    </button>
                   </div>
                 </div>
 
@@ -801,8 +854,8 @@ export default function GestionFinanzas() {
                               listaDropins.map(v => (
                                 <tr key={v.idVisita}>
                                   <td>
-                                    <div className="fw-bold text-white">{new Date(v.fechaProgramada).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}</div>
-                                    <div className="small text-secondary">{v.horaClase || '--:--'}</div>
+                                    <div className="fw-bold text-white">{new Date(v.fechaProgramada + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}</div>
+                                    <div className="small text-secondary">{v.horaClase ? v.horaClase : v.tipoVisita === 'SoloGym' ? 'Open Gym' : 'Admin'}</div>
                                   </td>
                                   <td>
                                     <div className="fw-bold">{v.nombreAtletaExterno}</div>
@@ -817,7 +870,7 @@ export default function GestionFinanzas() {
                                     {v.estatus === 'Pendiente' ? (
                                       <span className="badge bg-secondary border border-secondary text-white rounded-pill"><i className="fas fa-clock me-1"></i>Pendiente</span>
                                     ) : (
-                                      <span className="badge bg-success bg-opacity-25 border border-success text-success rounded-pill"><i className="fas fa-check-circle me-1"></i>Pagado <small>({v.estatus == 'Pagado_Efectivo' ? 'Efctivo' : 'Stripe'})</small></span>
+                                      <span className="badge bg-success bg-opacity-25 border border-success text-success rounded-pill"><i className="fas fa-check-circle me-1"></i>Pagado <small>({v.estatus === 'Pagado_Efectivo' ? 'Efectivo' : v.estatus === 'Pagado_Tarjeta' ? 'Tarjeta' : v.estatus === 'Pagado_Transferencia' ? 'Transfer.' : 'Online'})</small></span>
                                     )}
                                   </td>
                                   <td className="text-end">
@@ -1016,9 +1069,11 @@ export default function GestionFinanzas() {
       {/* ── MODAL 3: EDICIÓN SUPREMA DE PLANES ── */}
       {showModalEditPlan && (
         <div className="finanzas-modal-overlay" onClick={() => setShowModalEditPlan(false)}>
-          <div className="finanzas-modal" style={{ maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-            <h3 className="finanzas-modal-titulo text-accent"><i className="fas fa-edit me-2"></i>Editar Plan de Membresía</h3>
-
+          <div className="finanzas-modal-card" style={{ maxWidth: '640px' }} onClick={e => e.stopPropagation()}>
+            <div className="finanzas-modal-header">
+              <h5 className="finanzas-modal-titulo"><i className="fas fa-pen me-2 text-warning"></i>Editar Plan</h5>
+              <button className="finanzas-modal-close" onClick={() => setShowModalEditPlan(false)}><i className="fas fa-times"></i></button>
+            </div>
             <form onSubmit={guardarEdicionPlan}>
               <div className="row g-3">
                 <div className="col-md-8">
@@ -1084,6 +1139,288 @@ export default function GestionFinanzas() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════
+          MODALES DROP-IN ADMIN (3 pasos)
+          ══════════════════════════════════════════════════════ */}
+      {showModalDropIn && (
+        <div className="finanzas-modal-overlay" onClick={() => setShowModalDropIn(false)}>
+          <div className="finanzas-modal-card" style={{ maxWidth: '560px', width: '95%' }} onClick={e => e.stopPropagation()}>
+
+            {/* ── ENCABEZADO ── */}
+            <div className="finanzas-modal-header">
+              <h5 className="finanzas-modal-titulo">
+                <i className="fas fa-plane-arrival me-2 text-warning"></i>
+                Registrar Drop-In
+                <span className="badge bg-secondary ms-2" style={{ fontSize: '0.7rem', fontWeight: 400 }}>
+                  Paso {pasoDropIn} de 3
+                </span>
+              </h5>
+              <button className="finanzas-modal-close" onClick={() => setShowModalDropIn(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            {/* ── PASO 1: DATOS DEL TURISTA ── */}
+            {pasoDropIn === 1 && (
+              <div className="p-1">
+                <div className="mb-3">
+                  <label className="etiqueta-campo">Nombre Completo *</label>
+                  <input
+                    type="text"
+                    className="finanzas-input"
+                    placeholder="Ej. Juan García"
+                    value={formDropInAdmin.nombre}
+                    onChange={e => setFormDropInAdmin({ ...formDropInAdmin, nombre: e.target.value })}
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="etiqueta-campo">Correo Electrónico *</label>
+                  <input
+                    type="email"
+                    className="finanzas-input"
+                    placeholder="turista@correo.com"
+                    value={formDropInAdmin.email}
+                    onChange={e => setFormDropInAdmin({ ...formDropInAdmin, email: e.target.value })}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="etiqueta-campo">Nivel del Atleta</label>
+                  <CategoriaBasePicker
+                    valor={formDropInAdmin.nivelAtleta}
+                    onCambiar={v => setFormDropInAdmin({ ...formDropInAdmin, nivelAtleta: v })}
+                  />
+                </div>
+                <div className="d-flex gap-2">
+                  <button type="button" className="finanzas-modal-btn-cancel w-50" onClick={() => setShowModalDropIn(false)}>
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="finanzas-btn-submit finanzas-btn-submit--warning w-50"
+                    onClick={() => {
+                      if (!formDropInAdmin.nombre.trim() || !formDropInAdmin.email.trim())
+                        return alert('Nombre y correo son obligatorios.');
+                      setPasoDropIn(2);
+                    }}
+                  >
+                    Siguiente <i className="fas fa-arrow-right ms-2"></i>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── PASO 2: SELECCIÓN DE CLASE ── */}
+            {pasoDropIn === 2 && (() => {
+              const jerarquia = { novato: 1, principiante: 2, intermedio: 3, rx: 4, avanzado: 4 };
+              const nivelAtletaVal = jerarquia[formDropInAdmin.nivelAtleta.toLowerCase()] || 1;
+
+              const mapDiasArray = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+              const dayCodeHoy = mapDiasArray[new Date().getDay()];
+
+              const ahora = new Date();
+              const tiempoActualMinutos = ahora.getHours() * 60 + ahora.getMinutes();
+
+              const clasesDeHoy = clasesDropIn.filter(c => {
+                 if (!c.dias) return true;
+                 return c.dias.toUpperCase().includes(dayCodeHoy);
+              });
+
+              const clasesManana = clasesDeHoy.filter(c => {
+                const hrs = c.horarioInicio ? parseInt(c.horarioInicio.split(':')[0], 10) : 0;
+                return hrs < 13;
+              });
+              const clasesTarde = clasesDeHoy.filter(c => {
+                const hrs = c.horarioInicio ? parseInt(c.horarioInicio.split(':')[0], 10) : 12;
+                return hrs >= 13;
+              });
+
+              const renderClase = (c) => {
+                const nivelesClase = c.nivelesPermitidos || 'Todos';
+                let nivelNoPermitido = false;
+                if (nivelesClase !== 'Todos') {
+                  let nivelClaseVal = 0;
+                  Object.keys(jerarquia).forEach(n => {
+                    if (nivelesClase.toLowerCase().includes(n))
+                      nivelClaseVal = Math.max(nivelClaseVal, jerarquia[n]);
+                  });
+                  if (nivelClaseVal === 0) nivelClaseVal = 1;
+                  if (nivelAtletaVal < nivelClaseVal) nivelNoPermitido = true;
+                }
+
+                let yaPaso = false;
+                if (c.horarioInicio) {
+                    const [h, m] = c.horarioInicio.split(':');
+                    const minClase = parseInt(h, 10) * 60 + parseInt(m || '0', 10);
+                    if (tiempoActualMinutos >= minClase) {
+                        yaPaso = true;
+                    }
+                }
+
+                const cupoLleno = c.maximoAtletas <= 0 || c.inscritos >= c.maximoAtletas;
+                const bloqueada = nivelNoPermitido || cupoLleno || yaPaso;
+                const seleccionada = claseSeleccionada?.tipoVisita === 'Clase' && claseSeleccionada?.idClase === c.idClase;
+
+                return (
+                  <button
+                    key={c.idClase}
+                    type="button"
+                    disabled={bloqueada}
+                    onClick={() => setClaseSeleccionada({ idClase: c.idClase, tipoVisita: 'Clase', nombre: c.nombre, costo: 0 })}
+                    className="btn text-start p-2 rounded-3 w-100 mb-2"
+                    style={{
+                      background: seleccionada ? 'rgba(245,166,35,0.18)' : bloqueada ? 'rgba(255,255,255,0.02)' : 'rgba(230,57,70,0.07)',
+                      color: 'white',
+                      border: `1px solid ${seleccionada ? 'rgba(245,166,35,0.6)' : bloqueada ? 'rgba(255,255,255,0.05)' : 'rgba(230,57,70,0.2)'}`,
+                      transition: 'all 0.2s',
+                      opacity: bloqueada ? 0.5 : 1,
+                    }}
+                  >
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <div className="fw-bold" style={{ fontSize: '0.9rem' }}>
+                          {seleccionada && <i className="fas fa-check-circle text-warning me-2"></i>}
+                          {c.nombre}
+                          <span className="text-success ms-2">(${box?.costoDropIn || 0})</span>
+                          {nivelesClase !== 'Todos' && <span className="badge bg-danger bg-opacity-25 text-danger ms-2" style={{ fontSize: '0.6rem' }}>{nivelesClase}</span>}
+                        </div>
+                        <div className="text-secondary" style={{ fontSize: '0.78rem' }}>
+                          {yaPaso
+                            ? <><i className="fas fa-clock me-1 text-secondary"></i>Clase finalizada</>
+                            : cupoLleno
+                              ? <><i className="fas fa-ban me-1 text-danger"></i>Cupo lleno</>
+                              : nivelNoPermitido
+                                ? <><i className="fas fa-lock me-1"></i>Solo {nivelesClase}</>
+                                : <><i className="far fa-clock me-1"></i>{c.horarioInicio} &bull; {c.inscritos}/{c.maximoAtletas} atletas</>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              };
+
+              return (
+                <div>
+                  {loadingClasesDropIn ? (
+                    <div className="text-center py-4"><div className="spinner-border text-warning"></div></div>
+                  ) : clasesDropIn.length === 0 ? (
+                    <div className="text-center py-4 text-secondary">
+                      <i className="fas fa-calendar-times fa-2x mb-2 d-block"></i>
+                      No hay clases disponibles con cupo hoy.
+                    </div>
+                  ) : (
+                    <>
+                      {/* Open Gym */}
+                      {(box?.costoVisitaGym > 0 || box?.CostoVisitaGym > 0) && (
+                        <div className="mb-3">
+                          <div className="text-secondary small fw-bold mb-2"><i className="fas fa-dumbbell me-1"></i> OPEN GYM</div>
+                          <button
+                            type="button"
+                            onClick={() => setClaseSeleccionada({ idClase: 0, tipoVisita: 'SoloGym', nombre: 'Open Gym', costo: box?.costoVisitaGym || 0 })}
+                            className="btn text-start p-2 rounded-3 w-100 mb-2"
+                            style={{
+                              background: claseSeleccionada?.tipoVisita === 'SoloGym' ? 'rgba(245,166,35,0.18)' : 'rgba(245,166,35,0.06)',
+                              color: 'white',
+                              border: `1px solid ${claseSeleccionada?.tipoVisita === 'SoloGym' ? 'rgba(245,166,35,0.6)' : 'rgba(245,166,35,0.2)'}`,
+                            }}
+                          >
+                            {claseSeleccionada?.tipoVisita === 'SoloGym' && <i className="fas fa-check-circle text-warning me-2"></i>}
+                            <span className="fw-bold">Open Gym (Solo pesas) <span className="text-success ms-2">(${box?.costoVisitaGym || 0})</span></span>
+                          </button>
+                        </div>
+                      )}
+
+                      {clasesManana.length > 0 && (
+                        <div className="mb-3">
+                          <div className="text-warning small fw-bold mb-2"><i className="fas fa-sun me-1"></i> MAÑANA</div>
+                          {clasesManana.map(renderClase)}
+                        </div>
+                      )}
+                      {clasesTarde.length > 0 && (
+                        <div className="mb-3">
+                          <div className="text-info small fw-bold mb-2"><i className="fas fa-moon me-1"></i> TARDE</div>
+                          {clasesTarde.map(renderClase)}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  <div className="d-flex gap-2 mt-3">
+                    <button type="button" className="finanzas-modal-btn-cancel w-50" onClick={() => setPasoDropIn(1)}>
+                      <i className="fas fa-arrow-left me-1"></i> Atrás
+                    </button>
+                    <button
+                      type="button"
+                      className="finanzas-btn-submit finanzas-btn-submit--warning w-50"
+                      disabled={!claseSeleccionada}
+                      onClick={() => setPasoDropIn(3)}
+                    >
+                      Siguiente <i className="fas fa-arrow-right ms-2"></i>
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── PASO 3: PAGO ── */}
+            {pasoDropIn === 3 && (
+              <div>
+                <div className="p-3 rounded-3 mb-4 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div className="text-secondary small mb-1">Turista</div>
+                  <div className="fw-bold text-white">{formDropInAdmin.nombre}</div>
+                  <div className="text-secondary small">{formDropInAdmin.email}</div>
+                  <hr style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+                  <div className="text-secondary small mb-1">Visita seleccionada</div>
+                  <div className="fw-bold text-warning mb-3">
+                    <i className={`fas ${claseSeleccionada?.tipoVisita === 'SoloGym' ? 'fa-dumbbell' : 'fa-running'} me-2`}></i>
+                    {claseSeleccionada?.nombre || claseSeleccionada?.tipoVisita}
+                  </div>
+                  <div className="text-secondary text-uppercase small fw-bold mb-1" style={{ letterSpacing: '1px' }}>Total a cobrar</div>
+                  <h2 className="text-success fw-bold mb-0">${claseSeleccionada?.tipoVisita === 'Clase' ? (box?.costoDropIn || 0) : (box?.costoVisitaGym || 0)} <span className="fs-6 text-white opacity-50 fw-normal">MXN</span></h2>
+                </div>
+
+                <p className="text-secondary small text-center mb-3">¿Cómo pagó el turista?</p>
+
+                <div className="d-flex flex-column gap-2">
+                  <BotonSeguro
+                    onClick={() => confirmarDropInAdmin('Efectivo')}
+                    className="btn btn-outline-success fw-bold py-3"
+                    textoProcesando="Registrando..."
+                    disabled={procesandoPago}
+                    style={{ borderRadius: '12px' }}
+                  >
+                    <i className="fas fa-money-bill-wave me-2"></i> Efectivo
+                  </BotonSeguro>
+                  <BotonSeguro
+                    onClick={() => confirmarDropInAdmin('Tarjeta')}
+                    className="btn btn-outline-info fw-bold py-3"
+                    textoProcesando="Registrando..."
+                    disabled={procesandoPago}
+                    style={{ borderRadius: '12px' }}
+                  >
+                    <i className="fas fa-credit-card me-2"></i> Tarjeta
+                  </BotonSeguro>
+                  <BotonSeguro
+                    onClick={() => confirmarDropInAdmin('Transferencia')}
+                    className="btn btn-outline-primary fw-bold py-3"
+                    textoProcesando="Registrando..."
+                    disabled={procesandoPago}
+                    style={{ borderRadius: '12px' }}
+                  >
+                    <i className="fas fa-exchange-alt me-2"></i> Transferencia
+                  </BotonSeguro>
+                </div>
+
+                <button type="button" className="btn btn-link text-secondary mt-3 w-100 text-decoration-none" onClick={() => setPasoDropIn(2)}>
+                  <i className="fas fa-arrow-left me-1"></i> Cambiar clase
+                </button>
+              </div>
+            )}
+
           </div>
         </div>
       )}

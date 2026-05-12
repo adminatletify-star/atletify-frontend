@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import BlurText from '../components/ReactBits/BlurText';
 import CountUp from '../components/ReactBits/CountUp';
-import HomeStaggeredMenu from '../components/ReactBits/HomeStaggeredMenu';
+import HomeMegaMenu from '../components/ReactBits/HomeMegaMenu';
 import HomeWodTimeline from '../components/HomeWodTimeline';
 import HomeMitosRealidad from '../components/HomeMitosRealidad';
 import HomeLegendasArena from '../components/HomeLegendasArena';
@@ -106,62 +106,8 @@ const fadeUp = {
 };
 
 export default function Home() {
-  const navigate = useNavigate();
-  const dropdownRef = useRef(null);
-
-  const [user, setUser] = useState(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-
-
-  // ── Efectos globales ──────────────────────────────────────
-  useEffect(() => {
-    const u = localStorage.getItem('usuario');
-    if (u) setUser(JSON.parse(u));
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setDropdownOpen(false);
-      }
-    };
-    if (dropdownOpen) document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [dropdownOpen]);
-
-  const handleProfileClick = (e) => {
-    e.stopPropagation();
-    if (user) {
-      const route = user.rol === 'Developer' ? '/dashboard'
-        : user.rol === 'Atleta' || user.rol === 'Usuario' ? '/user-panel'
-          : '/admin-box-panel';
-      navigate(route);
-    } else {
-      setDropdownOpen(!dropdownOpen);
-    }
-  };
-
   return (
     <div className="home-wrapper">
-
-      {/* ── STAGGERED MENU ─────────────────────────────────── */}
-      <HomeStaggeredMenu
-        user={user}
-        dropdownOpen={dropdownOpen}
-        setDropdownOpen={setDropdownOpen}
-        handleProfileClick={handleProfileClick}
-        dropdownRef={dropdownRef}
-      />
-
-      {/* ── NAVBAR ─────────────────────────────────────────── */}
-      <nav className="navbar navbar-dark fixed-top home-navbar">
-        <div className="container-fluid px-4">
-          <Link to="/" className="navbar-brand d-flex align-items-center">
-            <img src="/LogosDeAtletify/LogoBlanco.png" alt="Atletify System" className="navbar-logo-img" />
-          </Link>
-        </div>
-      </nav>
-
       {/* ══════════════════════════════════════════════════════
           SECCIÓN HERO — COLLAGE ESTÁTICO
           ══════════════════════════════════════════════════════ */}
@@ -461,50 +407,6 @@ export default function Home() {
           SECCIÓN PRECIOS SAAS B2B
           ══════════════════════════════════════════════════════ */}
       <HomePricingSaaS />
-
-      {/* ══════════════════════════════════════════════════════
-          SECCIÓN CTA — LLAMADA A LA ACCIÓN
-          ══════════════════════════════════════════════════════ */}
-      <section className="cta-seccion">
-        <div className="container position-relative">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.7 }}
-          >
-            <div className="cta-logo-banner">
-              <img
-                src="/LogosDeAtletify/LogoBlanco.png"
-                alt="Atletify Logo"
-                className="cta-logo-banner-img"
-              />    </div>
-
-            <h2 className="cta-titulo">
-              ¡Únete hoy y<br />
-              <span className="text-danger">transforma tu rendimiento!</span>
-            </h2>
-
-            <p className="cta-subtitulo">
-              Tu primer WOD te espera. La comunidad te espera.<br />
-              Tu mejor versión te espera.
-            </p>
-
-            <div className="cta-botones">
-              <Link to="/login" className="btn cta-btn-principal">
-                <i className="fas fa-user-plus me-2"></i>
-                Empieza Hoy
-              </Link>
-              <Link to="/login" className="btn cta-btn-secundario">
-                <i className="fas fa-sign-in-alt me-2"></i>
-                Iniciar Sesión
-              </Link>
-            </div>
-
-            <p className="cta-nota">Sin excusas. Solo resultados.</p>
-          </motion.div>
-        </div>
-      </section>
 
       {/* ── FOOTER ─────────────────────────────────────────── */}
       <footer className="home-footer">

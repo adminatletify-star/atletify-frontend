@@ -439,11 +439,10 @@ export default function SimuladorBarraPublico() {
   };
 
   return (
-    <div className="sb-page">
+    <div className="sb-page" style={{ paddingTop: '80px' }}>
 
       {/* ── HEADER STICKY ── */}
       <header className="sb-nav">
-        <BackButton to="/" />
         <div className="sb-nav-icon d-none d-sm-flex">
           <i className="fas fa-dumbbell" />
         </div>

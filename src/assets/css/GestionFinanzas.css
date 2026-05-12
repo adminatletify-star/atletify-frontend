@@ -456,14 +456,59 @@
   from { opacity: 0; transform: scale(0.94) translateY(16px); }
   to   { opacity: 1; transform: scale(1)    translateY(0); }
 }
+
+/* === MODAL-CARD (layout moderno con header/body) === */
+.finanzas-modal-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 480px;
+  max-height: 88vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.55);
+  animation: finanzasModalIn 0.22s ease-out;
+}
+.finanzas-modal-card::-webkit-scrollbar { width: 4px; }
+.finanzas-modal-card::-webkit-scrollbar-track { background: transparent; }
+.finanzas-modal-card::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.finanzas-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
 .finanzas-modal-titulo {
   font-family: var(--font-heading);
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
-  text-transform: uppercase;
-  color: var(--success);
-  margin-bottom: 0.25rem;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
+.finanzas-modal-close {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--secondary);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+.finanzas-modal-close:hover { border-color: var(--danger); color: var(--danger); }
+
 .finanzas-modal-sub {
   font-family: var(--font-body);
   font-size: 0.88rem;

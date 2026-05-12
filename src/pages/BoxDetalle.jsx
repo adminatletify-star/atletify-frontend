@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
 import BackButton from '../components/BackButton';
 import '../assets/css/BoxDetalle.css';
+import '../assets/css/WolfBeneficios.css';
 
 const PLACEHOLDER_LOGO = 'https://ui-avatars.com/api/?name=Box&background=1C1C26&color=E63946&size=256&bold=true&font-size=0.5';
 
@@ -110,6 +111,16 @@ export default function BoxDetalle() {
       return `${plan.diasDuracion} días`;
     }
     return '30 días';
+  };
+
+  const calcularAhorro = (precioTotal, precioReferenciaMensual, diasDuracion) => {
+    if (!precioReferenciaMensual || !precioTotal || !diasDuracion) return null;
+    const meses = Math.max(1, Math.round(diasDuracion / 30));
+    const precioBaseTotal = precioReferenciaMensual * meses;
+    if (precioBaseTotal <= precioTotal) return null;
+    const ahorroDinero = precioBaseTotal - precioTotal;
+    const ahorroPorcentaje = Math.round((ahorroDinero / precioBaseTotal) * 100);
+    return { ahorroDinero, ahorroPorcentaje, meses };
   };
 
   return (
@@ -365,26 +376,71 @@ export default function BoxDetalle() {
                   <span>Planes de Membresía</span>
                 </div>
 
-                {planes.length > 0 ? (
-                  <div className="bxd-planes-grid">
-                    {planes.map(plan => (
-                      <div key={plan.idPlan} className="bxd-pricing-card">
-                        <div className="bxd-pricing-card-glow" />
-                        <div className="bxd-pricing-top">
-                          <span className="bxd-plan-nombre">{plan.nombre}</span>
+                {planes.filter(p => p.esVisible).length > 0 ? (
+                  <div className="row g-3 g-md-4 mt-3">
+                    {planes.filter(p => p.esVisible).map(p => {
+                      const ahorro = calcularAhorro(p.precio, p.precioReferenciaMensual, p.diasDuracion);
+                      
+                      return (
+                        <div key={p.idPlan} className="col-12 col-sm-6 col-xl-4">
+                          <div className="wb-card">
+                            <div className="wb-card-stripe" />
+                            <div className="wb-card-body">
+                              <p className="wb-plan-nombre">{p.nombre}</p>
+
+                              <div className="wb-precio-row">
+                                <span className="wb-precio-monto">${p.precio}</span>
+                                <span className="wb-precio-periodo">/ {formatDuracion(p)}</span>
+                              </div>
+
+                              {ahorro && (
+                                <span className="wb-ahorro-badge">
+                                  <i className="fas fa-piggy-bank"></i>
+                                  Ahorra ${ahorro.ahorroDinero} ({ahorro.ahorroPorcentaje}%)
+                                </span>
+                              )}
+
+                              <hr className="wb-divider" />
+                              <h6 className="text-secondary small fw-bold mb-3 text-start px-3" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>EL PLAN INCLUYE:</h6>
+
+                              <ul className="wb-features">
+                                <li className="wb-feature-item">
+                                  <i className={`fas fa-dumbbell ${p.nivelAcceso !== 'OpenGym' ? 'text-primary' : 'text-muted'}`}></i>
+                                  {p.nivelAcceso === 'CrossFit' ? 'Clases de CrossFit' : p.nivelAcceso === 'OpenGym' ? 'Solo Open Gym' : 'CrossFit + Gym'}
+                                </li>
+                                <li className="wb-feature-item">
+                                  <i className={`fas fa-building ${p.incluyeGym ? 'text-success' : 'text-danger'}`}></i>
+                                  {p.incluyeGym ? 'Incluye Open Gym' : 'Sin Open Gym'}
+                                </li>
+                                <li className="wb-feature-item">
+                                  <i className={`fas fa-crown ${p.requiereInscripcion ? 'text-warning' : 'text-muted'}`}></i>
+                                  {p.requiereInscripcion ? 'Suma racha de lealtad' : 'Sin racha de lealtad'}
+                                </li>
+                                <li className="wb-feature-item">
+                                  <i className={`fas fa-chart-line ${p.permiteScore ? 'text-info' : 'text-danger'}`}></i>
+                                  {p.permiteScore ? 'Sube scores a la pizarra' : 'Sin acceso a pizarra'}
+                                </li>
+                              </ul>
+
+                              {p.descripcionDetallada && (
+                                <>
+                                  <hr className="wb-divider" />
+                                  <h6 className="text-secondary small fw-bold mb-3 text-start px-3" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>BENEFICIOS:</h6>
+                                  <ul className="wb-features">
+                                    {p.descripcionDetallada.split('\n').filter(l => l.trim()).map((linea, i) => (
+                                      <li key={i} className="wb-feature-item">
+                                        <i className="fas fa-circle wb-bullet-dot" style={{ fontSize: '0.5rem', color: 'var(--primary)' }}></i>
+                                        {linea.replace(/^[•\s]+/, '')}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div className="bxd-pricing-price">
-                          <span className="bxd-pricing-currency">$</span>
-                          <span className="bxd-pricing-amount">
-                            {Number(plan.precio).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                        <div className="bxd-pricing-period">
-                          <i className="fas fa-calendar-alt" />
-                          {formatDuracion(plan)}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="bxd-empty-state">

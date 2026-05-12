@@ -168,6 +168,18 @@ export function AuthProvider({ children }) {
     return true;
   };
 
+  const removerCuenta = (cuentaId) => {
+    setCuentasGuardadas((prevCuentas) => {
+      const nuevasCuentas = prevCuentas.filter(c => getIdFromUser(c.usuario) !== cuentaId);
+      localStorage.setItem('cuentasGuardadas', JSON.stringify(nuevasCuentas));
+      return nuevasCuentas;
+    });
+    // Si la cuenta a eliminar es la que está activa actualmente, cerramos sesión
+    if (usuario && getIdFromUser(usuario) === cuentaId) {
+      logout();
+    }
+  };
+
   const cambiarBox = (idBox) => {
     setBoxActivo(idBox);
     localStorage.setItem('boxActivo', JSON.stringify(idBox));
@@ -214,6 +226,7 @@ export function AuthProvider({ children }) {
       isTokenValid,
       login,
       logout,
+      removerCuenta,
       isAuthenticated,
       isDeveloper,
       isCoach,

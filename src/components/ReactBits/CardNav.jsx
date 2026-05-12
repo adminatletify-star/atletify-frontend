@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState, useEffect } from 'react';
 import { gsap } from 'gsap';
 import { GoArrowUpRight } from 'react-icons/go';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from "../../context/AuthContext"; 
+import { useAuth } from "../../context/AuthContext";
 import './CardNav.css';
 import { COMPETENCIAS_ENDPOINT } from '../../services/api';
 import BoxPickerModal from '../BoxPickerModal';
@@ -18,8 +18,9 @@ const CardNav = ({
   const tlRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const clickTimeout = useRef(null);
   const [listaBoxes, setListaBoxes] = useState([]);
-  
+
   // 👇 EXTRAEMOS EL USUARIO Y LA FUNCIÓN DE CAMBIAR BOX 👇
   const { usuario, boxActivo, cambiarBox, cuentasGuardadas, cambiarCuenta } = useAuth();
 
@@ -38,18 +39,18 @@ const CardNav = ({
     }
   }, [location.pathname]);
 
- // 👇 NUEVO: Buscamos los boxes en C# en cuanto carga el menú 👇
+  // 👇 NUEVO: Buscamos los boxes en C# en cuanto carga el menú 👇
   useEffect(() => {
     if (usuario?.rol === 'Developer' || usuario?.rol === 'AdminBox') {
       const cargarBoxesReales = async () => {
         try {
           // Extraemos la URL base (ej. http://localhost:5000/api)
           const baseUrl = COMPETENCIAS_ENDPOINT.split('/competencias')[0];
-          
+
           // Hacemos la petición (si tu controlador es singular, cambia '/boxes' por '/box')
           const res = await fetch(`${baseUrl}/box`);
           const data = await res.json();
-          
+
           // Escudo: Solo guardamos si realmente nos devolvió una lista
           if (Array.isArray(data)) {
             setListaBoxes(data);
@@ -75,7 +76,9 @@ const CardNav = ({
       contentEl.style.visibility = 'visible'; contentEl.style.position = 'static';
       const topBar = 60; const padding = 0; const contentHeight = contentEl.scrollHeight;
       contentEl.style.visibility = wasVisible; contentEl.style.position = wasPosition;
-      return topBar + contentHeight + padding;
+      const finalHeight = topBar + contentHeight + padding;
+      const maxHeight = window.innerHeight - 30; // Margen para que no desborde la pantalla abajo
+      return Math.min(finalHeight, maxHeight);
     }
     return 260;
   };
@@ -137,23 +140,36 @@ const CardNav = ({
             <div className="hamburger-line" /><div className="hamburger-line" />
           </div>
 
-          <Link 
-            to={getHomeRoute()} 
-            onDoubleClick={(e) => { e.preventDefault(); navigate('/'); }}
+          <div 
+            onClick={(e) => {
+              e.preventDefault();
+              if (clickTimeout.current) {
+                clearTimeout(clickTimeout.current);
+                clickTimeout.current = null;
+                navigate('/');
+                closeMenu();
+              } else {
+                clickTimeout.current = setTimeout(() => {
+                  clickTimeout.current = null;
+                  navigate(getHomeRoute());
+                  closeMenu();
+                }, 250);
+              }
+            }}
             className="text-decoration-none text-white hover-scale transition-all d-flex align-items-center gap-2" 
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: 'pointer', userSelect: 'none' }}
           >
             <img src="/LogosDeAtletify/LogoBlanco.png" alt="Atletify System" style={{ height: '28px', width: '28px', objectFit: 'contain' }} />
             <span className="fw-bold" style={{ fontFamily: 'var(--font-heading-alt)', letterSpacing: '0.05em', fontSize: '0.95rem' }}>
               <span style={{ color: 'var(--primary)' }}>A</span>tletify{' '}
               <span style={{ color: 'var(--primary)' }}>S</span>ystem
             </span>
-          </Link>
+          </div>
 
           <div className="d-flex align-items-center gap-3">
-           
-       
-            {(usuario?.rol === 'Developer' ) && (
+
+
+            {(usuario?.rol === 'Developer') && (
               <BoxPickerModal
                 boxes={listaBoxes.map(b => ({ idBox: b.idBox || b.IdBox, nombre: b.nombre || b.Nombre }))}
                 boxSeleccionado={boxActivo}
@@ -196,10 +212,10 @@ const CardNav = ({
 
               // Paleta de colores únicos (igual que Google/Slack) basada en el nombre
               const COLORS = [
-                ['#6C63FF','#8B5CF6'], ['#dc3545','#ff6b6b'],
-                ['#0ea5e9','#38bdf8'], ['#10b981','#34d399'],
-                ['#f59e0b','#fbbf24'], ['#ec4899','#f472b6'],
-                ['#14b8a6','#2dd4bf'], ['#8b5cf6','#a78bfa'],
+                ['#6C63FF', '#8B5CF6'], ['#dc3545', '#ff6b6b'],
+                ['#0ea5e9', '#38bdf8'], ['#10b981', '#34d399'],
+                ['#f59e0b', '#fbbf24'], ['#ec4899', '#f472b6'],
+                ['#14b8a6', '#2dd4bf'], ['#8b5cf6', '#a78bfa'],
               ];
               const getColor = (name = '') => {
                 let hash = 0;
@@ -213,9 +229,9 @@ const CardNav = ({
               };
 
               return (
-                <div style={{padding: '6px 0 2px'}}>
-                  <p style={{fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px'}}>Cuentas</p>
-                  <div style={{display: 'flex', alignItems: 'flex-start', gap: '8px', flexWrap: 'wrap'}}>
+                <div style={{ padding: '6px 0 2px' }}>
+                  <p style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>Cuentas</p>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', flexWrap: 'wrap' }}>
                     {cuentasGuardadas.map((c, i) => {
                       const cId = c.usuario?.idUsuario || c.usuario?.IdUsuario || c.usuario?.id || c.usuario?.Id;
                       const isActiva = String(cId) === String(currentId);
@@ -240,13 +256,13 @@ const CardNav = ({
                                 const rol = c.usuario?.rol;
                                 const idCompe = c.usuario?.idCompetenciaAsignada;
                                 let route = '/user-panel';
-                                if (rol === 'Developer')            route = '/dashboard';
-                                else if (rol === 'AdminBox')        route = '/admin-box-panel';
-                                else if (rol === 'Coach')           route = '/admin-box-panel';
-                                else if (rol === 'Atleta')          route = '/user-panel';
-                                else if (rol === 'Usuario')         route = '/sala-espera';
+                                if (rol === 'Developer') route = '/dashboard';
+                                else if (rol === 'AdminBox') route = '/admin-box-panel';
+                                else if (rol === 'Coach') route = '/admin-box-panel';
+                                else if (rol === 'Atleta') route = '/user-panel';
+                                else if (rol === 'Usuario') route = '/sala-espera';
                                 else if (rol === 'Juez' && idCompe) route = `/juez/${idCompe}`;
-                                
+
                                 if (window.location.pathname === route) {
                                   window.location.reload();
                                 } else {
@@ -263,8 +279,8 @@ const CardNav = ({
                             transform: isActiva ? 'scale(1.05)' : 'scale(1)',
                             width: '46px',
                           }}
-                          onMouseEnter={e => { if (!isActiva) { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.08)'; }}}
-                          onMouseLeave={e => { if (!isActiva) { e.currentTarget.style.opacity = '0.6'; e.currentTarget.style.transform = 'scale(1)'; }}}
+                          onMouseEnter={e => { if (!isActiva) { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.08)'; } }}
+                          onMouseLeave={e => { if (!isActiva) { e.currentTarget.style.opacity = '0.6'; e.currentTarget.style.transform = 'scale(1)'; } }}
                         >
                           {/* Avatar circle */}
                           <div style={{
@@ -275,7 +291,7 @@ const CardNav = ({
                             position: 'relative',
                           }}>
                             {foto ? (
-                              <img src={foto} alt={nombre} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                              <img src={foto} alt={nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             ) : (
                               <div style={{
                                 width: '100%', height: '100%',
@@ -338,7 +354,7 @@ const CardNav = ({
                         >
                           <i className="fas fa-plus" />
                         </div>
-                        <span style={{fontSize: '0.5rem', color: 'rgba(255,255,255,0.3)'}}>Añadir</span>
+                        <span style={{ fontSize: '0.5rem', color: 'rgba(255,255,255,0.3)' }}>Añadir</span>
                       </Link>
                     )}
                   </div>

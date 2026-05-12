@@ -35,8 +35,7 @@ export default function ListaCompetencias() {
   return (
     <div className="lc-wrapper">
 
-      {/* Botón volver — solo flecha, top-left */}
-      <BackButton to="/" className="lc-back-fixed" />
+      {/* Botón volver eliminado */}
 
       {/* Hero */}
       <section className="lc-hero">
