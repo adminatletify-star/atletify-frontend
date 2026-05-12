@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import '../assets/css/ListaCompetencias.css';
 import BackButton from '../components/BackButton';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -65,7 +65,6 @@ export default function HistorialCompetenciasPublico() {
                 placeholder="Buscar box por nombre o ubicación..."
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
-                style={{ boxShadow: 'none' }}
               />
             </div>
           </div>
@@ -113,9 +112,9 @@ export default function HistorialCompetenciasPublico() {
                     style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
                   >
                     <div style={{ width: '70px', height: '70px', borderRadius: '50%', overflow: 'hidden', background: 'var(--bg-elevated)', flexShrink: 0, border: '2px solid var(--border)' }}>
-                      <img 
-                        src={b.logo && b.logo.trim() !== '' ? b.logo : `https://ui-avatars.com/api/?name=${encodeURIComponent(b.nombre)}&background=1C1C26&color=E63946&size=128&bold=true&font-size=0.4`} 
-                        alt={b.nombre} 
+                      <img
+                        src={b.logo && b.logo.trim() !== '' ? b.logo : `https://ui-avatars.com/api/?name=${encodeURIComponent(b.nombre)}&background=1C1C26&color=E63946&size=128&bold=true&font-size=0.4`}
+                        alt={b.nombre}
                         style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                         onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(b.nombre)}&background=1C1C26&color=E63946&size=128&bold=true&font-size=0.4`; }}
                       />
