@@ -401,6 +401,7 @@ export default function BoxDetalle() {
                               )}
 
                               <hr className="wb-divider" />
+                              <h6 className="text-secondary small fw-bold mb-3 text-start px-3" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>EL PLAN INCLUYE:</h6>
 
                               <ul className="wb-features">
                                 <li className="wb-feature-item">
@@ -424,10 +425,11 @@ export default function BoxDetalle() {
                               {p.descripcionDetallada && (
                                 <>
                                   <hr className="wb-divider" />
+                                  <h6 className="text-secondary small fw-bold mb-3 text-start px-3" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>BENEFICIOS:</h6>
                                   <ul className="wb-features">
                                     {p.descripcionDetallada.split('\n').filter(l => l.trim()).map((linea, i) => (
                                       <li key={i} className="wb-feature-item">
-                                        <i className="fas fa-circle wb-bullet-dot"></i>
+                                        <i className="fas fa-circle wb-bullet-dot" style={{ fontSize: '0.5rem', color: 'var(--primary)' }}></i>
                                         {linea.replace(/^[•\s]+/, '')}
                                       </li>
                                     ))}

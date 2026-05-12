@@ -5,24 +5,7 @@ import BackButton from '../components/BackButton';
 
 export default function SobreNosotros() {
   return (
-    <div className="sobre-nosotros-wrapper">
-      {/* Navbar */}
-      <nav className="navbar navbar-dark fixed-top sn-navbar">
-        <div className="container-fluid px-4">
-          <div className="d-flex align-items-center gap-3">
-            <BackButton />
-            <Link to="/" className="navbar-brand d-flex align-items-center">
-              <i className="fas fa-paw text-danger fs-3 me-2"></i>
-              <span className="fw-bold" style={{ letterSpacing: '2px' }}>WOLFPACK</span>
-            </Link>
-          </div>
-          <Link to="/" className="btn btn-outline-light btn-sm">
-            <i className="fas fa-arrow-left me-2"></i>
-            Volver al Home
-          </Link>
-        </div>
-      </nav>
-
+    <div className="sobre-nosotros-wrapper" style={{ paddingTop: '80px' }}>
       {/* Hero Section */}
       <section className="sn-hero">
         <div className="sn-hero-overlay"></div>

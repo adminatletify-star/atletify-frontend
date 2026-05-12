@@ -59,18 +59,6 @@ export default function WolfPackPage() {
 
       {/* ── HERO ── */}
       <section className="wp-hero" ref={heroRef}>
-        <div className="wp-hero-backbtn">
-          <button
-            onClick={() => navigate('/')}
-            className="wp-back-arrow"
-            title="Volver al inicio"
-            aria-label="Volver al inicio"
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M11.5 3.5L5.5 9l6 5.5" />
-            </svg>
-          </button>
-        </div>
         <div className="wp-hero-overlay" />
         <div className="container position-relative" style={{ zIndex: 2 }}>
 

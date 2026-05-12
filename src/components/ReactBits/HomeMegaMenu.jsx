@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import './HomeMegaMenu.css';
 
 export default function HomeMegaMenu({ user, mobileMenuOpen, setMobileMenuOpen }) {
-  const { cuentasGuardadas, cambiarCuenta } = useAuth();
+  const { cuentasGuardadas, cambiarCuenta, removerCuenta } = useAuth();
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
 
@@ -45,9 +45,10 @@ export default function HomeMegaMenu({ user, mobileMenuOpen, setMobileMenuOpen }
           const isActiva = cId === currentId;
           const foto = c.usuario?.fotoPerfilUrl || c.usuario?.foto;
           return (
-            <button
+            <div
               key={cId || i}
-              type="button"
+              role="button"
+              tabIndex={0}
               className="hmm-account-btn"
               onClick={() => {
                 const targetPanel = c.usuario.rol === 'Developer' ? '/dashboard' : c.usuario.rol === 'Atleta' ? '/user-panel' : '/admin-box-panel';
@@ -80,13 +81,25 @@ export default function HomeMegaMenu({ user, mobileMenuOpen, setMobileMenuOpen }
                 <span className="hmm-account-name">{c.usuario.nombre}</span>
                 <span className="hmm-account-role">{c.usuario.rol}</span>
               </div>
-              {isActiva && <i className="fas fa-check hmm-account-check"></i>}
-            </button>
+              {isActiva && <i className="fas fa-check hmm-account-check" style={{ marginRight: '4px' }}></i>}
+              <button
+                type="button"
+                className="hmm-account-delete"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removerCuenta(cId);
+                }}
+                title="Quitar cuenta"
+              >
+                <i className="fas fa-trash-alt"></i>
+              </button>
+            </div>
           );
         })}
         {cuentasGuardadas.length < 5 && (
-          <button
-            type="button"
+          <div
+            role="button"
+            tabIndex={0}
             className="hmm-account-btn hmm-account-add"
             onClick={() => { setMobileMenuOpen(false); navigate('/login?addAccount=true'); }}
             style={{ border: '1px dashed rgba(255,255,255,0.3)', background: 'transparent' }}
@@ -97,7 +110,7 @@ export default function HomeMegaMenu({ user, mobileMenuOpen, setMobileMenuOpen }
             <div className="hmm-account-info">
               <span className="hmm-account-name" style={{ color: 'var(--text-primary)' }}>Añadir cuenta</span>
             </div>
-          </button>
+          </div>
         )}
       </div>
     );
@@ -105,7 +118,7 @@ export default function HomeMegaMenu({ user, mobileMenuOpen, setMobileMenuOpen }
 
   return (
     <>
-      <nav className={`hmm-navbar ${scrolled ? 'scrolled' : ''}`}>
+      <nav className={`hmm-navbar ${scrolled ? 'scrolled' : ''} ${mobileMenuOpen ? 'menu-open' : ''}`}>
         <div className="hmm-container">
           
           {/* LOGO */}

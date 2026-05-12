@@ -7,7 +7,7 @@
   top: 0;
   left: 0;
   width: 100%;
-  z-index: 1040;
+  z-index: 1050;
   padding: 1.2rem 2rem;
   transition: background 0.3s ease, border-bottom 0.3s ease, padding 0.3s ease;
   display: flex;
@@ -20,6 +20,11 @@
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   padding: 0.8rem 2rem;
+}
+
+.hmm-navbar.menu-open {
+  background: var(--bg-base, #0a0a0b);
+  border-bottom: 1px solid var(--border);
 }
 
 .hmm-container {
@@ -112,7 +117,7 @@
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   padding: 0;
   overflow: hidden;
-  z-index: 1050;
+  z-index: 1060;
 }
 
 /* El puente invisible para que el hover no se corte al bajar el ratón */
@@ -271,12 +276,14 @@
   background: var(--primary);
   padding: 0.5rem 1.2rem;
   border-radius: 50px;
+  border: none;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(230, 57, 70, 0.25);
+  cursor: pointer;
 }
 
 .hmm-btn-solid:hover {
-  background: var(--primary-hover);
+  background: var(--primary-dark);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(230, 57, 70, 0.35);
 }
@@ -363,12 +370,32 @@
 .hmm-account-role {
   font-family: var(--font-body);
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .hmm-account-check {
   color: var(--primary);
   font-size: 0.9rem;
+}
+
+.hmm-account-delete {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.95rem;
+  padding: 6px;
+  margin-left: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.hmm-account-delete:hover {
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.1);
 }
 
 .hmm-avatar-add {

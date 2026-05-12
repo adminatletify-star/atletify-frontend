@@ -58,6 +58,7 @@ import SeleccionPlanSaaS from './pages/SeleccionPlanSaaS';
 import RegistroBoxSaaS from './pages/RegistroBoxSaaS';
 import PerfilAdminCoach from './pages/PerfilAdminCoach';
 import NotFound from './pages/NotFound';
+import PublicLayout from './components/PublicLayout';
 
 // Nuevos Módulos (Edwin)
 import GestionInventario from './pages/GestionInventario';
@@ -299,15 +300,28 @@ function App() {
           <CookieBanner />
           <Routes>
             {/* ========================================= */}
-            {/* RUTAS SIN NAVBAR (Públicas y Fullscreen)  */}
+            {/* RUTAS CON NAVBAR PÚBLICA (HomeMegaMenu)   */}
             {/* ========================================= */}
-            <Route path="/" element={<Home />} />
-            <Route path="/sobre-nosotros" element={<SobreNosotros />} />
-            <Route path="/competencias" element={<ListaCompetencias />} />
-            <Route path="/historial-competencias" element={<HistorialCompetenciasPublico />} />
-            <Route path="/historial-competencias/:idBox" element={<HistorialBoxDetalle />} />
-            <Route path="/admin-archivadas" element={<AdminArchivadasDev />} />
-            <Route path="/admin-archivadas/:idBox" element={<AdminArchivadasDevDetalle />} />
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/sobre-nosotros" element={<SobreNosotros />} />
+              <Route path="/competencias" element={<ListaCompetencias />} />
+              <Route path="/historial-competencias" element={<HistorialCompetenciasPublico />} />
+              <Route path="/historial-competencias/:idBox" element={<HistorialBoxDetalle />} />
+              <Route path="/admin-archivadas" element={<AdminArchivadasDev />} />
+              <Route path="/admin-archivadas/:idBox" element={<AdminArchivadasDevDetalle />} />
+              <Route path="/simulador-barra-publico" element={<SimuladorBarraPublico />} />
+              <Route path="/wolfpack" element={<WolfPackPage />} />
+              <Route path="/ejercicios" element={<Ejercicios />} />
+              <Route path="/directorio-boxes" element={<DirectorioBoxes />} />
+              <Route path="/box/:id" element={<BoxDetalle />} />
+              <Route path="/public-drop-in" element={<PublicDropIn />} />
+              <Route path="/public-drop-in/:idBox" element={<PublicDropIn />} />
+            </Route>
+
+            {/* ========================================= */}
+            {/* RUTAS COMPLETAMENTE SIN NAVBAR            */}
+            {/* ========================================= */}
             <Route path="/login" element={<Login />} />
             <Route path="/terminos" element={<TerminosCondiciones />} />
             <Route path="/politica-cookies" element={<PoliticaCookies />} />
@@ -319,17 +333,10 @@ function App() {
             <Route path="/atleta/:compId" element={<PortalAtleta />} />
             <Route path="/atleta" element={<PortalAtleta />} />
             <Route path="/sala-espera" element={<SalaDeEspera />} />
-            <Route path="/simulador-barra-publico" element={<SimuladorBarraPublico />} />
-            <Route path="/wolfpack" element={<WolfPackPage />} />
-            <Route path="/ejercicios" element={<Ejercicios />} />
-            <Route path="/directorio-boxes" element={<DirectorioBoxes />} />
-            <Route path="/box/:id" element={<BoxDetalle />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/seleccionar-plan" element={<SeleccionPlanSaaS />} />
             <Route path="/registro-b2b/:idPlan" element={<RegistroBoxSaaS />} />
-            <Route path="/public-drop-in" element={<PublicDropIn />} />
-            <Route path="/public-drop-in/:idBox" element={<PublicDropIn />} />
 
 
             {/* ========================================= */}

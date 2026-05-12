@@ -28,7 +28,7 @@ export default function DirectorioBoxes() {
 
   return (
     <div className="directorio-boxes-page">
-      <BackButton to="/" className="db-back-fixed" />
+      {/* Botón volver eliminado */}
 
       {/* Hero */}
       <section className="db-hero">

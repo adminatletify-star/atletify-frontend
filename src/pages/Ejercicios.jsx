@@ -42,15 +42,7 @@ export default function Ejercicios() {
 
   return (
     <div className="ejercicios-wrapper">
-      {/* Navbar */}
-      <nav className="navbar navbar-dark fixed-top ej-navbar">
-        <div className="container-fluid px-3 px-md-4">
-          <div className="d-flex align-items-center gap-3">
-            <BackButton to="/" />
-            <span className="ej-navbar-title">WOLFPACK</span>
-          </div>
-        </div>
-      </nav>
+      {/* Navbar Removed */}
 
       {/* Hero */}
       <section className="ej-hero">

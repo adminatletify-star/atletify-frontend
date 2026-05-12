@@ -36,8 +36,7 @@ export default function HistorialCompetenciasPublico() {
   return (
     <div className="lc-wrapper">
 
-      {/* Botón volver */}
-      <BackButton to="/" className="lc-back-fixed" />
+      {/* Botón volver eliminado */}
 
       {/* Hero */}
       <section className="lc-hero">
