@@ -101,12 +101,13 @@
 
 .lc-hero-titulo {
   font-family: var(--font-hero);
-  font-size: clamp(3.5rem, 10vw, 7rem);
-  letter-spacing: 6px;
+  font-size: clamp(1.8rem, 8vw, 7rem);
+  letter-spacing: clamp(2px, 1vw, 6px);
   text-transform: uppercase;
   color: var(--text-primary);
   line-height: 0.95;
   margin: 0;
+  word-break: break-word;
 }
 
 .lc-hero-titulo span {

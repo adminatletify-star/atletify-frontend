@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { USUARIOS_ENDPOINT } from '../services/api';
+import { USUARIOS_ENDPOINT, VENTAS_ENDPOINT } from '../services/api';
 import DateWheelPicker from '../components/DateWheelPicker';
 import BackButton from '../components/BackButton';
 import EstadoDelDiaPicker from '../components/EstadoDelDiaPicker';
@@ -15,6 +15,7 @@ import UnidadPesoPicker from '../components/UnidadPesoPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import PasswordRulesHint from '../components/PasswordRulesHint';
 import usePasswordStrength from '../hooks/usePasswordStrength';
+import ImageCropperModal from '../components/ImageCropperModal';
 import '../assets/css/MiPerfil.css';
 
 const API_BASE = import.meta.env.VITE_API_URL;;
@@ -25,7 +26,8 @@ export default function MiPerfil() {
   const [userAuth, setUserAuth] = useState(null);
   const [progreso, setProgreso] = useState(0);
   const [rachaVisible, setRachaVisible] = useState(0);
-
+  const [imageToCrop, setImageToCrop] = useState(null);
+  const [deudaReal, setDeudaReal] = useState(0);
 
   const [form, setForm] = useState({
     nombre: '', apellidos: '', foto: '', telefono: '', fechaNacimiento: '',
@@ -58,9 +60,26 @@ export default function MiPerfil() {
     const b = JSON.parse(localStorage.getItem('box'));
     if (!u || !b) { navigate('/login'); return; }
     setUserAuth(u);
-    fetchExpediente(u.id || u.idUsuario);
-    cargarDatosPRs(b.idBox, u.id || u.idUsuario);
+    setUserAuth(u);
+    const idUsuario = u.id || u.idUsuario;
+    fetchExpediente(idUsuario);
+    fetchDeudaReal(idUsuario);
+    cargarDatosPRs(b.idBox, idUsuario);
   }, [navigate]);
+
+  async function fetchDeudaReal(idUsuario) {
+    try {
+      const res = await fetch(`${VENTAS_ENDPOINT}/fiados/mis-deudas/${idUsuario}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (res.ok) {
+        const pedidos = await res.json();
+        const pendientes = pedidos.filter(p => p.estatus === 'Pendiente' || p.estatus === 'Fiado');
+        const total = pendientes.reduce((acc, p) => acc + (p.resta ?? (p.totalVenta - (p.montoAbonado || 0))), 0);
+        setDeudaReal(total);
+      }
+    } catch (e) { console.error("Error al cargar deuda real:", e); }
+  }
 
   async function fetchExpediente(idUsuario) {
     try {
@@ -140,6 +159,32 @@ export default function MiPerfil() {
     setProgreso(Math.round((llenos / camposClave.length) * 100));
   };
 
+  const guardarFotoInmediata = async (base64Foto) => {
+    try {
+      const payload = {
+        ...form,
+        foto: base64Foto,
+        peso: form.peso ? parseFloat(form.peso) : null,
+        fechaNacimiento: form.fechaNacimiento ? new Date(form.fechaNacimiento).toISOString() : null
+      };
+      const res = await fetch(`${USUARIOS_ENDPOINT}/${userAuth.id || userAuth.idUsuario}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const currentStorage = JSON.parse(localStorage.getItem('usuario'));
+        if (currentStorage) {
+          currentStorage.foto = base64Foto;
+          localStorage.setItem('usuario', JSON.stringify(currentStorage));
+        }
+        window.location.reload();
+      } else {
+        alert("Hubo un error al guardar la foto en la base de datos.");
+      }
+    } catch (err) {
+      alert("Error de conexión al guardar la foto.");
+    }
+  };
+
   // 📸 Convertir imagen a Base64 para mandarla a la BD
   const handleSubirFoto = (e) => {
     const file = e.target.files[0];
@@ -148,11 +193,9 @@ export default function MiPerfil() {
         alert("La imagen es muy pesada. El tamaño máximo es 2MB.");
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setForm({ ...form, foto: reader.result });
-      };
-      reader.readAsDataURL(file);
+      const imageUrl = URL.createObjectURL(file);
+      setImageToCrop(imageUrl);
+      e.target.value = ''; // Resetear el input para poder seleccionar la misma si se cancela
     }
   };
 
@@ -178,7 +221,9 @@ export default function MiPerfil() {
         currentStorage.estadoDelDia = form.estadoDelDia;
         currentStorage.categoriaBase = form.categoriaBase;
         currentStorage.nivelGamer = form.nivelGamer;
+        if (form.foto) currentStorage.foto = form.foto;
         localStorage.setItem('usuario', JSON.stringify(currentStorage));
+        window.location.reload(); // Recargar para que AuthContext y Navbar tomen la nueva foto
       } else { alert("Hubo un error al guardar los datos."); }
     } catch (error) { alert("Error de conexión."); }
   }
@@ -250,7 +295,7 @@ export default function MiPerfil() {
               <div className="d-flex flex-column flex-md-row align-items-center gap-4">
                 {/* AVATAR + BOTÓN FOTO */}
                 <div className="d-flex flex-column align-items-center gap-2">
-                  <div className="mp-hero-avatar" style={{ overflow: 'hidden' }}>
+                  <div className="mp-hero-avatar">
                     {form.foto ? (
                       <img src={form.foto} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
@@ -274,10 +319,10 @@ export default function MiPerfil() {
                       <i className="fas fa-fire"></i> Racha: {rachaVisible} días
                     </span>
                     <span className="mp-hero-badge">{form.estadoDelDia}</span>
-                    {(form.esDeConfianza || form.deudaTienda > 0) && (
-                      <span className={`mp-hero-badge ${form.deudaTienda > 0 ? 'bg-danger border-danger' : 'bg-primary border-primary'}`}>
+                    {(form.esDeConfianza || deudaReal > 0) && (
+                      <span className={`mp-hero-badge ${deudaReal > 0 ? 'bg-danger border-danger' : 'bg-primary border-primary'}`}>
                         <i className="fas fa-handshake me-1"></i>
-                        Deuda en Tienda: ${form.deudaTienda.toFixed(2)}
+                        Deuda en Tienda: ${deudaReal.toFixed(2)}
                       </span>
                     )}
                   </div>
@@ -638,6 +683,18 @@ export default function MiPerfil() {
             />
           </div>
         </div>
+      )}
+
+      {imageToCrop && (
+        <ImageCropperModal
+          imageSrc={imageToCrop}
+          onCropComplete={(croppedBase64) => {
+            setForm({ ...form, foto: croppedBase64 });
+            setImageToCrop(null);
+            guardarFotoInmediata(croppedBase64);
+          }}
+          onCancel={() => setImageToCrop(null)}
+        />
       )}
     </>
   );

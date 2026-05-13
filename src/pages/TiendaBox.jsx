@@ -230,21 +230,21 @@ export default function TiendaBox() {
         {/* NAVEGACIÓN PRINCIPAL (TABS) */}
         <div className="d-flex mb-4 border-bottom border-secondary overflow-auto">
           <button 
-            className={`btn fs-5 px-4 py-2 rounded-top ${activeTab === 'catalogo-fisico' ? 'btn-danger' : 'btn-dark text-muted border-bottom-0'}`}
+            className={`btn fs-5 px-4 py-2 rounded-top ${activeTab === 'catalogo-fisico' ? 'btn-danger text-white' : 'btn-dark text-light opacity-75 border-bottom-0'}`}
             style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, marginRight: '4px', whiteSpace: 'nowrap' }}
             onClick={() => setActiveTab('catalogo-fisico')}
           >
             <i className="fas fa-box me-2"></i>Catálogo
           </button>
           <button 
-            className={`btn fs-5 px-4 py-2 rounded-top ${activeTab === 'catalogo-sobre-pedido' ? 'btn-danger' : 'btn-dark text-muted border-bottom-0'}`}
+            className={`btn fs-5 px-4 py-2 rounded-top ${activeTab === 'catalogo-sobre-pedido' ? 'btn-danger text-white' : 'btn-dark text-light opacity-75 border-bottom-0'}`}
             style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, marginRight: '4px', whiteSpace: 'nowrap' }}
             onClick={() => setActiveTab('catalogo-sobre-pedido')}
           >
             <i className="fas fa-store me-2"></i>Sobre Pedido
           </button>
           <button 
-            className={`btn fs-5 px-4 py-2 rounded-top ${activeTab === 'mis-pedidos' ? 'btn-danger' : 'btn-dark text-muted border-bottom-0'}`}
+            className={`btn fs-5 px-4 py-2 rounded-top ${activeTab === 'mis-pedidos' ? 'btn-danger text-white' : 'btn-dark text-light opacity-75 border-bottom-0'}`}
             style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, whiteSpace: 'nowrap' }}
             onClick={() => setActiveTab('mis-pedidos')}
           >

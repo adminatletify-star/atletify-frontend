@@ -330,133 +330,258 @@ export default function Dashboard() {
             </h3>
           </div>
           
-          <div className="table-responsive rounded-3 overflow-hidden">
-            <table className="table table-dark table-hover mb-0">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>BOX / SUCURSAL</th>
-                  <th>ATLETAS</th>
-                  <th>COACHES</th>
-                  <th>ADMINS</th>
-                  <th>SAAS / CONNECT</th>
-                  <th className="text-center">COMPETENCIAS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {metricasBoxes.map(b => (
-                  <tr key={b.idBox} className="align-middle">
-                    <td className="dash-text-muted">#{b.idBox}</td>
-                    <td><div className="fw-bold">{b.nombre}</div></td>
-                    <td><span className="badge bg-primary rounded-pill px-3">{b.totalAtletas}</span></td>
-                    <td><span className="badge bg-info text-dark rounded-pill px-3">{b.totalCoaches}</span></td>
-                    <td>
-                      <div className="d-flex align-items-center gap-2">
-                        <span className="badge bg-warning text-dark rounded-pill px-3">{b.totalAdmins}</span>
-                        <button 
-                          className="btn btn-sm btn-outline-warning rounded-circle" 
-                          title="Crear AdminBox"
-                          onClick={() => setModalAdminBox({ open: true, idBox: b.idBox, nombreBox: b.nombre })}
-                          style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                          <i className="fas fa-plus"></i>
-                        </button>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="d-flex flex-column gap-2">
-                        <select 
-                          className={`form-select form-select-sm bg-dark text-white border-secondary ${b.estatusSaaS === 'Activo' ? 'text-success' : b.estatusSaaS === 'Vencido' ? 'text-danger' : 'text-warning'}`}
-                          value={b.estatusSaaS || 'Pendiente'}
-                          onChange={async (e) => {
-                            const newStatus = e.target.value;
-                            let fechaGracia = null;
-                            if (newStatus === 'Gracia') {
-                              fechaGracia = prompt("Ingresa la fecha de vencimiento/corte del periodo de gracia (YYYY-MM-DD):", new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
-                              if (!fechaGracia) return; // Canceló
-                            }
-
-                            try {
-                              const token = localStorage.getItem('token');
-                              await fetch(`${import.meta.env.VITE_API_URL}/api/developer/box-saas/${b.idBox}`, {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                                body: JSON.stringify({ 
-                                  estatusSaaS: newStatus, 
-                                  idPlanSaaS: b.idPlanSaaS,
-                                  moduloCompetenciasActivo: b.moduloCompetenciasActivo,
-                                  fechaVencimientoSaaS: fechaGracia || b.fechaVencimientoSaaS
-                                })
-                              });
-                              alert("Estatus SaaS actualizado");
-                              cargarDataGlobal(); // RECARGAR ESTADO
-                            } catch(err) {
-                              alert("Error al actualizar estatus SaaS");
-                            }
-                          }}
-                        >
-                          <option value="Pendiente">Pendiente</option>
-                          <option value="Activo">Activo</option>
-                          <option value="Gracia">Gracia</option>
-                          <option value="Vencido">Vencido</option>
-                        </select>
-                        <div className="d-flex flex-column" style={{fontSize: '0.75rem'}}>
-                          {b.fechaVencimientoSaaS && <span className="text-muted"><i className="fas fa-calendar-alt"></i> Vence: {new Date(b.fechaVencimientoSaaS).toLocaleDateString()}</span>}
-                          {b.stripeConnectActivo 
-                            ? <span className="text-success fw-bold"><i className="fab fa-stripe-s"></i> Connect OK</span> 
-                            : <span className="text-danger"><i className="fab fa-stripe-s"></i> Sin Connect</span>}
+          {/* Tabla Desktop */}
+          <div className="d-none d-md-block">
+            <div className="table-responsive rounded-3 overflow-hidden">
+              <table className="table table-dark table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>BOX / SUCURSAL</th>
+                    <th>ATLETAS</th>
+                    <th>COACHES</th>
+                    <th>ADMINS</th>
+                    <th>SAAS / CONNECT</th>
+                    <th className="text-center">COMPETENCIAS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {metricasBoxes.map(b => (
+                    <tr key={b.idBox} className="align-middle">
+                      <td className="dash-text-muted">#{b.idBox}</td>
+                      <td><div className="fw-bold">{b.nombre}</div></td>
+                      <td><span className="badge bg-primary rounded-pill px-3">{b.totalAtletas}</span></td>
+                      <td><span className="badge bg-info text-dark rounded-pill px-3">{b.totalCoaches}</span></td>
+                      <td>
+                        <div className="d-flex align-items-center gap-2">
+                          <span className="badge bg-warning text-dark rounded-pill px-3">{b.totalAdmins}</span>
+                          <button 
+                            className="btn btn-sm btn-outline-warning rounded-circle" 
+                            title="Crear AdminBox"
+                            onClick={() => setModalAdminBox({ open: true, idBox: b.idBox, nombreBox: b.nombre })}
+                            style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <i className="fas fa-plus"></i>
+                          </button>
                         </div>
-                      </div>
-                    </td>
-                    <td className="text-center">
-                      <button 
-                        className={`btn btn-sm ${b.moduloCompetenciasActivo ? 'btn-success' : 'btn-outline-warning'}`}
-                        style={{ borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}
-                        onClick={async () => {
-                          if (!b.moduloCompetenciasActivo) {
-                            // Abrir modal para encender y crear competencia
-                            setModalActivarCompe({ 
-                              open: true, 
-                              idBox: b.idBox, 
-                              planSaaS: b.idPlanSaaS, 
-                              planCompetenciaId: '',
-                              estatusSaaS: b.estatusSaaS, 
-                              fechaVencimientoSaaS: b.fechaVencimientoSaaS, 
-                              nombre: '' 
-                            });
-                          } else {
-                            const conf = await window.wpConfirm('¿Seguro que deseas desactivar el módulo de competencias para este Box?');
-                            if(conf) {
+                      </td>
+                      <td>
+                        <div className="d-flex flex-column gap-2">
+                          <select 
+                            className={`form-select form-select-sm bg-dark text-white border-secondary ${b.estatusSaaS === 'Activo' ? 'text-success' : b.estatusSaaS === 'Vencido' ? 'text-danger' : 'text-warning'}`}
+                            value={b.estatusSaaS || 'Pendiente'}
+                            onChange={async (e) => {
+                              const newStatus = e.target.value;
+                              let fechaGracia = null;
+                              if (newStatus === 'Gracia') {
+                                fechaGracia = prompt("Ingresa la fecha de vencimiento/corte del periodo de gracia (YYYY-MM-DD):", new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+                                if (!fechaGracia) return; // Canceló
+                              }
+
                               try {
                                 const token = localStorage.getItem('token');
-                                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/box-saas/${b.idBox}`, {
+                                await fetch(`${import.meta.env.VITE_API_URL}/api/developer/box-saas/${b.idBox}`, {
                                   method: 'PUT',
                                   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                                   body: JSON.stringify({ 
-                                    estatusSaaS: b.estatusSaaS || 'Pendiente', 
+                                    estatusSaaS: newStatus, 
                                     idPlanSaaS: b.idPlanSaaS,
-                                    moduloCompetenciasActivo: false,
-                                    fechaVencimientoSaaS: b.fechaVencimientoSaaS
+                                    moduloCompetenciasActivo: b.moduloCompetenciasActivo,
+                                    fechaVencimientoSaaS: fechaGracia || b.fechaVencimientoSaaS
                                   })
                                 });
-                                if (!res.ok) throw new Error("Error en servidor");
-                                cargarDataGlobal();
-                              } catch (e) {
-                                console.error(e);
-                                alert("No se pudo actualizar el módulo.");
+                                alert("Estatus SaaS actualizado");
+                                cargarDataGlobal(); // RECARGAR ESTADO
+                              } catch(err) {
+                                alert("Error al actualizar estatus SaaS");
+                              }
+                            }}
+                          >
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="Activo">Activo</option>
+                            <option value="Gracia">Gracia</option>
+                            <option value="Vencido">Vencido</option>
+                          </select>
+                          <div className="d-flex flex-column" style={{fontSize: '0.75rem'}}>
+                            {b.fechaVencimientoSaaS && <span className="text-muted"><i className="fas fa-calendar-alt"></i> Vence: {new Date(b.fechaVencimientoSaaS).toLocaleDateString()}</span>}
+                            {b.stripeConnectActivo 
+                              ? <span className="text-success fw-bold"><i className="fab fa-stripe-s"></i> Connect OK</span> 
+                              : <span className="text-danger"><i className="fab fa-stripe-s"></i> Sin Connect</span>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="text-center">
+                        <button 
+                          className={`btn btn-sm ${b.moduloCompetenciasActivo ? 'btn-success' : 'btn-outline-warning'}`}
+                          style={{ borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}
+                          onClick={async () => {
+                            if (!b.moduloCompetenciasActivo) {
+                              // Abrir modal para encender y crear competencia
+                              setModalActivarCompe({ 
+                                open: true, 
+                                idBox: b.idBox, 
+                                planSaaS: b.idPlanSaaS, 
+                                planCompetenciaId: '',
+                                estatusSaaS: b.estatusSaaS, 
+                                fechaVencimientoSaaS: b.fechaVencimientoSaaS, 
+                                nombre: '' 
+                              });
+                            } else {
+                              const conf = await window.wpConfirm('¿Seguro que deseas desactivar el módulo de competencias para este Box?');
+                              if(conf) {
+                                try {
+                                  const token = localStorage.getItem('token');
+                                  const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/box-saas/${b.idBox}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                    body: JSON.stringify({ 
+                                      estatusSaaS: b.estatusSaaS || 'Pendiente', 
+                                      idPlanSaaS: b.idPlanSaaS,
+                                      moduloCompetenciasActivo: false,
+                                      fechaVencimientoSaaS: b.fechaVencimientoSaaS
+                                    })
+                                  });
+                                  if (!res.ok) throw new Error("Error en servidor");
+                                  cargarDataGlobal();
+                                } catch (e) {
+                                  console.error(e);
+                                  alert("No se pudo actualizar el módulo.");
+                                }
                               }
                             }
-                          }
-                        }}
+                          }}
+                        >
+                          <i className="fas fa-trophy me-1"></i>
+                          {b.moduloCompetenciasActivo ? 'ON' : 'OFF'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Cards Mobile */}
+          <div className="d-md-none d-flex flex-column gap-3 mt-3">
+            {metricasBoxes.map(b => (
+              <div key={b.idBox} className="dash-user-card p-3 rounded-3 border border-secondary" style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}>
+                <div className="d-flex justify-content-between align-items-start mb-3">
+                  <div>
+                    <div className="dash-text-muted small">#{b.idBox}</div>
+                    <div className="fw-bold fs-5 text-white">{b.nombre}</div>
+                  </div>
+                  <div className="d-flex flex-column align-items-end gap-1">
+                    <span className="badge bg-primary rounded-pill" title="Atletas"><i className="fas fa-users me-1"></i> {b.totalAtletas}</span>
+                    <span className="badge bg-info text-dark rounded-pill" title="Coaches"><i className="fas fa-chalkboard-teacher me-1"></i> {b.totalCoaches}</span>
+                    <div className="d-flex align-items-center gap-1 mt-1">
+                      <span className="badge bg-warning text-dark rounded-pill" title="Admins"><i className="fas fa-user-shield me-1"></i> {b.totalAdmins}</span>
+                      <button 
+                        className="btn btn-sm btn-warning rounded-circle p-0 d-flex align-items-center justify-content-center" 
+                        title="Crear AdminBox"
+                        onClick={() => setModalAdminBox({ open: true, idBox: b.idBox, nombreBox: b.nombre })}
+                        style={{ width: '22px', height: '22px' }}
                       >
-                        <i className="fas fa-trophy me-1"></i>
-                        {b.moduloCompetenciasActivo ? 'ON' : 'OFF'}
+                        <i className="fas fa-plus" style={{ fontSize: '10px' }}></i>
                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-2 rounded bg-black border border-secondary mb-3">
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <div className="small text-white-50"><i className="fas fa-cloud me-1"></i> SaaS / Connect</div>
+                  </div>
+                  <select 
+                    className={`form-select form-select-sm bg-dark text-white border-secondary mb-2 ${b.estatusSaaS === 'Activo' ? 'text-success' : b.estatusSaaS === 'Vencido' ? 'text-danger' : 'text-warning'}`}
+                    value={b.estatusSaaS || 'Pendiente'}
+                    onChange={async (e) => {
+                      const newStatus = e.target.value;
+                      let fechaGracia = null;
+                      if (newStatus === 'Gracia') {
+                        fechaGracia = prompt("Ingresa la fecha de vencimiento/corte del periodo de gracia (YYYY-MM-DD):", new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+                        if (!fechaGracia) return; // Canceló
+                      }
+
+                      try {
+                        const token = localStorage.getItem('token');
+                        await fetch(`${import.meta.env.VITE_API_URL}/api/developer/box-saas/${b.idBox}`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                          body: JSON.stringify({ 
+                            estatusSaaS: newStatus, 
+                            idPlanSaaS: b.idPlanSaaS,
+                            moduloCompetenciasActivo: b.moduloCompetenciasActivo,
+                            fechaVencimientoSaaS: fechaGracia || b.fechaVencimientoSaaS
+                          })
+                        });
+                        alert("Estatus SaaS actualizado");
+                        cargarDataGlobal(); // RECARGAR ESTADO
+                      } catch(err) {
+                        alert("Error al actualizar estatus SaaS");
+                      }
+                    }}
+                  >
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Activo">Activo</option>
+                    <option value="Gracia">Gracia</option>
+                    <option value="Vencido">Vencido</option>
+                  </select>
+                  <div className="d-flex justify-content-between align-items-center" style={{fontSize: '0.75rem'}}>
+                    {b.fechaVencimientoSaaS ? <span className="text-muted"><i className="fas fa-calendar-alt"></i> Vence: {new Date(b.fechaVencimientoSaaS).toLocaleDateString()}</span> : <span></span>}
+                    {b.stripeConnectActivo 
+                      ? <span className="text-success fw-bold"><i className="fab fa-stripe-s"></i> Connect OK</span> 
+                      : <span className="text-danger"><i className="fab fa-stripe-s"></i> Sin Connect</span>}
+                  </div>
+                </div>
+
+                <div className="d-flex justify-content-between align-items-center">
+                  <div className="small text-white-50">Competencias:</div>
+                  <button 
+                    className={`btn btn-sm ${b.moduloCompetenciasActivo ? 'btn-success' : 'btn-outline-warning'} rounded-pill fw-bold px-3`}
+                    onClick={async () => {
+                      if (!b.moduloCompetenciasActivo) {
+                        setModalActivarCompe({ 
+                          open: true, 
+                          idBox: b.idBox, 
+                          planSaaS: b.idPlanSaaS, 
+                          planCompetenciaId: '',
+                          estatusSaaS: b.estatusSaaS, 
+                          fechaVencimientoSaaS: b.fechaVencimientoSaaS, 
+                          nombre: '' 
+                        });
+                      } else {
+                        const conf = await window.wpConfirm('¿Seguro que deseas desactivar el módulo de competencias para este Box?');
+                        if(conf) {
+                          try {
+                            const token = localStorage.getItem('token');
+                            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/box-saas/${b.idBox}`, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ 
+                                estatusSaaS: b.estatusSaaS || 'Pendiente', 
+                                idPlanSaaS: b.idPlanSaaS,
+                                moduloCompetenciasActivo: false,
+                                fechaVencimientoSaaS: b.fechaVencimientoSaaS
+                              })
+                            });
+                            if (!res.ok) throw new Error("Error en servidor");
+                            cargarDataGlobal();
+                          } catch (e) {
+                            console.error(e);
+                            alert("No se pudo actualizar el módulo.");
+                          }
+                        }
+                      }
+                    }}
+                  >
+                    <i className="fas fa-trophy me-1"></i>
+                    {b.moduloCompetenciasActivo ? 'ACTIVADO' : 'DESACTIVADO'}
+                  </button>
+                </div>
+
+              </div>
+            ))}
           </div>
         </div>
 

@@ -348,41 +348,11 @@ export default function UserPanel() {
 
       <div style={{ position: 'relative', zIndex: 1 }} className="min-vh-100 d-flex flex-column">
 
-        {/* NAVBAR PREMIUM */}
-        <nav className="up-navbar px-3 px-md-4">
-          <div className="d-flex align-items-center gap-2">
-            <div 
-              className="up-brand" 
-              onClick={() => navigate('/user-panel')} 
-              onDoubleClick={(e) => { e.preventDefault(); navigate('/'); }} 
-              style={{ cursor: 'pointer' }}
-            >
-              <img src="/LogosDeAtletify/LogoBlanco.png" alt="Atletify System" style={{ height: '24px', width: '24px', objectFit: 'contain' }} />
-              <span><span style={{ color: 'var(--primary)' }}>A</span>tletify <span style={{ color: 'var(--primary)' }}>S</span>ystem</span>
-            </div>
-          </div>
-          <div className="d-flex align-items-center gap-2 gap-md-3">
-            <button
-              className="up-notif-btn position-relative"
-              onClick={() => setShowModalNotis(true)}
-            >
-              <i className={`fas fa-bell ${notisNoLeidas > 0 ? 'fa-shake' : ''}`}></i>
-              {notisNoLeidas > 0 && (
-                <span className="up-notif-badge">{notisNoLeidas > 9 ? '9+' : notisNoLeidas}</span>
-              )}
-            </button>
-            <div className="up-user-pill">
-              <div className="up-user-avatar-sm">
-                {String(user?.nombre || 'A').charAt(0).toUpperCase()}
-              </div>
-              <span className="d-none d-md-inline">{String(user?.nombre || 'Atleta').split(' ')[0]}</span>
-            </div>
-          </div>
-        </nav>
-
         {/* HERO BAR */}
-        <div className="up-hero-bar px-3 px-md-4 py-3 py-md-4">
+        <div className="up-hero-bar px-3 px-md-4 py-3 py-md-4 mt-3">
           <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+            
+            {/* IZQUIERDA: Info del usuario */}
             <div className="d-flex align-items-center gap-3">
               <div className="up-hero-avatar">
                 {String(user?.nombre || 'A').charAt(0).toUpperCase()}
@@ -404,9 +374,23 @@ export default function UserPanel() {
                 </div>
               </div>
             </div>
-            <div className="up-categoria-badge">
-              <i className="fas fa-fire me-2"></i>
-              {user?.categoriaBase || 'Novato'}
+            
+            {/* DERECHA: Notificaciones, Categoria y Mini Pill */}
+            <div className="d-flex align-items-center gap-3">
+              <button
+                className="up-notif-btn position-relative"
+                onClick={() => setShowModalNotis(true)}
+              >
+                <i className={`fas fa-bell ${notisNoLeidas > 0 ? 'fa-shake' : ''}`}></i>
+                {notisNoLeidas > 0 && (
+                  <span className="up-notif-badge">{notisNoLeidas > 9 ? '9+' : notisNoLeidas}</span>
+                )}
+              </button>
+
+              <div className="up-categoria-badge">
+                <i className="fas fa-fire me-2"></i>
+                {user?.categoriaBase || 'Novato'}
+              </div>
             </div>
           </div>
         </div>

@@ -147,7 +147,7 @@ export default function Layout() {
           label: 'Comunidad', icon: 'fa-trophy', bgColor: '#2c1214', textColor: '#fff',
           links: [
             { label: 'Calendario', href: '/calendario-atleta' },
-            { label: 'Eventos del Box', href: '#' },
+            { label: 'Eventos del Box', href: '/competencias' },
             { label: 'Reseñas', href: '/resenas-coaches' },
             { label: 'Tienda del Box', href: '/tienda-box' },
           ]

@@ -85,6 +85,34 @@
   position: relative;
 }
 
+.mp-hero-avatar img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.mp-hero-level-badge {
+  position: absolute;
+  bottom: -10px;
+  background-color: var(--primary);
+  color: white;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 12px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  z-index: 2;
+  text-transform: uppercase;
+}
+
 .mp-foto-btn {
   display: inline-flex;
   align-items: center;
