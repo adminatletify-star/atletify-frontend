@@ -6,6 +6,7 @@ import TallaPlayeraPicker from '../components/TallaPlayeraPicker';
 import CategoriaBasePicker from '../components/CategoriaBasePicker';
 import TipoSangrePicker from '../components/TipoSangrePicker';
 import '../assets/css/SalaDeEspera.css';
+import AtletifyLoader from '../components/AtletifyLoader';
 
 export default function SalaDeEspera() {
   const navigate = useNavigate();
@@ -59,7 +60,7 @@ export default function SalaDeEspera() {
     } catch (error) { alert("Error de conexión."); } finally { setGuardando(false); }
   }
 
-  if (loading || !usuarioDB) return <div className="sde-wrapper d-flex align-items-center justify-content-center min-vh-100"><div className="spinner-border text-danger"></div></div>;
+  if (loading || !usuarioDB) return <div className="sde-wrapper d-flex align-items-center justify-content-center min-vh-100"><AtletifyLoader /></div>;
 
   const estaBaneado = usuarioDB.estadoSolicitud === "Baneado";
   const estaRechazado = usuarioDB.estatus === "Rechazado" || usuarioDB.estadoSolicitud === "Rechazado";

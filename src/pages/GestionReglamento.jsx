@@ -6,6 +6,7 @@ import html2pdf from 'html2pdf.js';
 import { BOXES_ENDPOINT } from '../services/api';
 import BackButton from '../components/BackButton';
 import BotonSeguro from '../components/BotonSeguro';
+import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/AdminBoxPanel.css'; // Reusing existing styles for consistency
 
 export default function GestionReglamento() {
@@ -226,7 +227,7 @@ export default function GestionReglamento() {
   if (loading) {
     return (
       <div className="abp-loading">
-        <div className="spinner-border text-danger" role="status" style={{ width: '3rem', height: '3rem' }}></div>
+        <AtletifyLoader />
       </div>
     );
   }
@@ -336,7 +337,7 @@ export default function GestionReglamento() {
             <div className="card-body p-0">
               {cargandoFirmas ? (
                 <div className="text-center py-5 text-muted">
-                  <div className="spinner-border text-danger mb-3" role="status"></div>
+                  <AtletifyLoader />
                   <p>Cargando firmas...</p>
                 </div>
               ) : firmas.length === 0 ? (

@@ -5,6 +5,7 @@ import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import WolfLanyard from '../components/ReactBits/WolfLanyard';
 import BotonSeguro from '../components/BotonSeguro';
 import '../assets/css/user-panel.css';
+import AtletifyLoader from '../components/AtletifyLoader';
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -465,7 +466,7 @@ export default function UserPanel() {
                 </div>
                 <div className="up-card-body">
                   {loadingWod ? (
-                    <div className="text-center py-5"><div className="spinner-border text-danger"></div></div>
+                    <div className="text-center py-5"><AtletifyLoader /></div>
                   ) : wodsHoy.length === 0 ? (
                     <div className="text-center py-5">
                       <i className="fas fa-bed fs-1 mb-3 text-secondary opacity-50"></i>
@@ -1033,7 +1034,7 @@ export default function UserPanel() {
               />
             </div>
 
-            {loadingClases ? <div className="text-center py-5"><div className="spinner-border text-danger"></div></div> : clasesDisponibles.length === 0 ? <div className="text-center py-4 text-secondary">No hay clases en esta fecha.</div> : (
+            {loadingClases ? <div className="text-center py-5"><AtletifyLoader /></div> : clasesDisponibles.length === 0 ? <div className="text-center py-4 text-secondary">No hay clases en esta fecha.</div> : (
               <div className="d-flex flex-column gap-3">
                 {[...clasesDisponibles].sort((a, b) => {
                   if (a.idClase === user.idClasePredeterminada) return -1;

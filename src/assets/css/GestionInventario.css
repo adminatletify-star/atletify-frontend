@@ -209,38 +209,104 @@
   color: var(--text-muted);
 }
 
-/* === FILTRO STOCK BAJO === */
-.gi-filtro-stock-btn {
+/* === TOOLBAR (buscador + chips) === */
+.gi-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 1.1rem;
+}
+
+@media (min-width: 768px) {
+  .gi-toolbar {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+  }
+}
+
+/* === CHIPS DE FILTRO === */
+.gi-chips-row {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  color: var(--text-muted);
-  font-family: var(--font-heading-alt);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  padding: 0 0.85rem;
-  cursor: pointer;
-  transition: var(--transition);
-  white-space: nowrap;
+  flex-wrap: wrap;
   flex-shrink: 0;
 }
 
-.gi-filtro-stock-btn:hover {
-  border-color: rgba(230, 57, 70, 0.4);
-  color: var(--primary);
-  background: rgba(230, 57, 70, 0.06);
+@media (min-width: 768px) {
+  .gi-chips-row { flex-wrap: nowrap; }
 }
 
-.gi-filtro-stock-btn--active {
+.gi-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+
+.gi-chip:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Activo: Normales */
+.gi-chip--normal {
+  background: rgba(245, 166, 35, 0.1);
+  border-color: rgba(245, 166, 35, 0.5);
+  color: var(--accent);
+}
+
+/* Activo: Sobre Pedido */
+.gi-chip--pedido {
+  background: rgba(245, 166, 35, 0.1);
+  border-color: rgba(245, 166, 35, 0.5);
+  color: var(--accent);
+}
+
+/* Activo: Borradores */
+.gi-chip--borrador {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: var(--text-primary);
+}
+
+/* Divisor visual antes del chip Stock bajo */
+.gi-chip--divider {
+  margin-left: 0.25rem;
+  border-left: none;
+  position: relative;
+}
+
+.gi-chip--divider::before {
+  content: '';
+  position: absolute;
+  left: -0.6rem;
+  top: 20%;
+  height: 60%;
+  width: 1px;
+  background: var(--border);
+}
+
+/* Activo: Stock bajo */
+.gi-chip--stock {
   background: rgba(230, 57, 70, 0.1);
-  border-color: var(--primary);
+  border-color: rgba(230, 57, 70, 0.5);
   color: var(--primary);
-  box-shadow: 0 0 0 1px rgba(230, 57, 70, 0.2);
 }
 
 /* === BUSCADOR === */
@@ -252,7 +318,8 @@
   border-radius: 12px;
   overflow: hidden;
   transition: var(--transition);
-  margin-bottom: 1rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .gi-search-wrap:focus-within {

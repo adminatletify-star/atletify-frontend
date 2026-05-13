@@ -13,6 +13,7 @@ import BotonSeguro from '../components/BotonSeguro';
 import PlanesModal from '../components/PlanesModal';
 import GestionJuecesPanel from '../components/GestionJuecesPanel';
 import GestionStaffCompePanel from '../components/GestionStaffCompePanel';
+import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/CompetenciaDetalle.css';
 
 export default function CompetenciaDetalle() {
@@ -1247,7 +1248,7 @@ export default function CompetenciaDetalle() {
   if (loading) {
     return (
       <div className="cd-container d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
-        <div className="spinner-wp"></div>
+        <AtletifyLoader />
       </div>
     );
   }
@@ -1964,7 +1965,7 @@ export default function CompetenciaDetalle() {
                   <div className="cd-card-body-lg">
                     {cargandoHerramientasBox ? (
                       <div className="d-flex align-items-center gap-2">
-                        <div className="spinner-wp" style={{ width: '18px', height: '18px' }}></div>
+                        <AtletifyLoader />
                         <span style={{ color: 'var(--text-muted)' }}>Cargando herramientas...</span>
                       </div>
                     ) : (
@@ -2113,7 +2114,7 @@ export default function CompetenciaDetalle() {
                 </div>
                 {cargandoInventarioComp && (
                   <div className="d-flex align-items-center gap-2 mb-3">
-                    <div className="spinner-wp" style={{ width: '18px', height: '18px' }}></div>
+                    <AtletifyLoader />
                     <span style={{ color: 'var(--text-muted)' }}>Cargando inventario de competencia...</span>
                   </div>
                 )}
@@ -3131,7 +3132,7 @@ export default function CompetenciaDetalle() {
 
               {cargandoAuditoria ? (
                 <div className="cd-empty">
-                  <div className="spinner-wp mx-auto"></div>
+                  <AtletifyLoader />
                 </div>
               ) : scoresAuditoria.length === 0 ? (
                 <div className="cd-empty">
@@ -3300,7 +3301,7 @@ export default function CompetenciaDetalle() {
             </div>
 
             {cargandoWods ? (
-              <div className="cd-empty"><div className="spinner-wp mx-auto"></div></div>
+              <div className="cd-empty"><AtletifyLoader /></div>
             ) : wods.length === 0 ? (
               <div className="cd-empty">
                 <i className="fas fa-dumbbell"></i>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { BOXES_ENDPOINT } from '../services/api';
 import BackButton from '../components/BackButton';
 import BotonSeguro from '../components/BotonSeguro';
+import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/EditarBox.css';
 
 const API_BASE = import.meta.env.VITE_API_URL;;
@@ -286,7 +287,7 @@ export default function EditarBox() {
 
   if (loading) return (
     <div className="eb-page d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
-      <div className="spinner-border" style={{ color: 'var(--primary)', width: '2.5rem', height: '2.5rem', borderWidth: '3px' }} />
+      <AtletifyLoader />
     </div>
   );
 

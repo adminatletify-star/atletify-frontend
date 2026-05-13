@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import BackButton from '../components/BackButton';
+import AtletifyLoader from '../components/AtletifyLoader';
 
 export default function MisClases() {
   const navigate = useNavigate();
@@ -122,7 +123,7 @@ export default function MisClases() {
         </div>
 
         {loading ? (
-          <div className="text-center py-5"><div className="spinner-border text-danger"></div></div>
+          <div className="text-center py-5"><AtletifyLoader /></div>
         ) : clases.length === 0 ? (
           <div className="text-center py-5">
             <i className="fas fa-bed text-secondary mb-3" style={{ fontSize: '4rem' }}></i>

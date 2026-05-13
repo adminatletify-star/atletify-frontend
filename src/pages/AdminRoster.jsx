@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { COMPETENCIAS_ENDPOINT } from '../services/api';
+import AtletifyLoader from '../components/AtletifyLoader';
 import BackButton from '../components/BackButton';
 import '../assets/css/AdminRoster.css';
 
@@ -106,7 +107,7 @@ export default function AdminRoster() {
       <div className="ar-content">
         {loading ? (
           <div className="ar-estado-centro">
-            <div className="spinner-wp"></div>
+            <AtletifyLoader />
           </div>
         ) : roster.length === 0 ? (
           <div className="ar-empty">

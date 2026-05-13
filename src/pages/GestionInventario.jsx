@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PRODUCTOS_ENDPOINT } from '../services/api';
 import BackButton from '../components/BackButton';
 import BotonSeguro from '../components/BotonSeguro';
+import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/GestionInventario.css';
 
 const FORM_VACIO = { nombre: '', precioVenta: '', stockActual: '', stockMinimo: '', fotoUrl: '', categoria: '', subCategoria: '', talla: '', descripcion: '', esSobrePedido: false, esBorrador: false };
@@ -21,7 +22,7 @@ export default function GestionInventario() {
   const [agregarStockId, setAgregarStockId] = useState(null);
   const [cantidadAStock, setCantidadAStock] = useState('');
   const [soloStockBajo, setSoloStockBajo] = useState(false);
-  const [vistaActual, setVistaActual] = useState('todos');
+  const [vistaActual, setVistaActual] = useState('normal');
 
   const apartadoActual = localStorage.getItem('apartadoVentas') || 'General (Box)';
 
@@ -458,10 +459,10 @@ export default function GestionInventario() {
         )}
 
         {/* ══════════════════════════════════
-            BUSCADOR + FILTRO
+            BUSCADOR + FILTROS
         ══════════════════════════════════ */}
-        <div className="d-flex gap-2 mb-3">
-          <div className="gi-search-wrap flex-grow-1" style={{ marginBottom: 0 }}>
+        <div className="gi-toolbar">
+          <div className="gi-search-wrap">
             <span className="gi-search-icon">
               <i className="fas fa-search"></i>
             </span>
@@ -472,44 +473,38 @@ export default function GestionInventario() {
               onChange={e => setBuscar(e.target.value)}
             />
           </div>
-          <div className="d-flex gap-2 overflow-auto" style={{ whiteSpace: 'nowrap' }}>
+
+          <div className="gi-chips-row">
             <button
-              className={`btn btn-sm ${vistaActual === 'todos' ? 'btn-danger' : 'btn-outline-secondary'}`}
-              onClick={() => setVistaActual('todos')}
+              className={`gi-chip ${vistaActual === 'normal' ? 'gi-chip--normal' : ''}`}
+              onClick={() => { setVistaActual('normal'); setSoloStockBajo(false); }}
             >
-              Todos
+              <i className="fas fa-box"></i> Normales
             </button>
-            <button
-              className={`btn btn-sm ${vistaActual === 'normal' ? 'btn-secondary text-white fw-bold' : 'btn-outline-secondary'}`}
-              onClick={() => setVistaActual('normal')}
-            >
-              Normales
-            </button>
+
             {apartadoActual === 'General (Box)' && (
               <>
                 <button
-                  className={`btn btn-sm ${vistaActual === 'sobre_pedido' ? 'btn-warning text-dark fw-bold' : 'btn-outline-warning text-white'}`}
-                  onClick={() => setVistaActual('sobre_pedido')}
+                  className={`gi-chip ${vistaActual === 'sobre_pedido' ? 'gi-chip--pedido' : ''}`}
+                  onClick={() => { setVistaActual('sobre_pedido'); setSoloStockBajo(false); }}
                 >
-                  <i className="fas fa-clock me-1"></i> Sobre Pedido
+                  <i className="fas fa-clock"></i> Sobre Pedido
                 </button>
                 <button
-                  className={`btn btn-sm ${vistaActual === 'borrador' ? 'btn-light text-dark fw-bold' : 'btn-outline-light text-white'}`}
-                  onClick={() => setVistaActual('borrador')}
+                  className={`gi-chip ${vistaActual === 'borrador' ? 'gi-chip--borrador' : ''}`}
+                  onClick={() => { setVistaActual('borrador'); setSoloStockBajo(false); }}
                 >
-                  <i className="fas fa-eye-slash me-1"></i> Borradores
+                  <i className="fas fa-eye-slash"></i> Borradores
                 </button>
               </>
             )}
-            
-            {(vistaActual === 'todos' || vistaActual === 'normal') && (
+
+            {vistaActual === 'normal' && (
               <button
-                className={`gi-filtro-stock-btn ${soloStockBajo ? 'gi-filtro-stock-btn--active' : ''} ms-2`}
+                className={`gi-chip gi-chip--divider ${soloStockBajo ? 'gi-chip--stock' : ''}`}
                 onClick={() => setSoloStockBajo(v => !v)}
-                title="Filtrar por stock bajo"
               >
-                <i className="fas fa-exclamation-triangle"></i>
-                <span className="d-none d-sm-inline">Stock bajo</span>
+                <i className="fas fa-exclamation-triangle"></i> Stock bajo
               </button>
             )}
           </div>
@@ -520,7 +515,7 @@ export default function GestionInventario() {
         ══════════════════════════════════ */}
         {loading ? (
           <div className="gi-loading">
-            <div className="spinner-wp"></div>
+            <AtletifyLoader />
           </div>
         ) : productos.length === 0 ? (
           <div className="gi-empty">
@@ -532,12 +527,11 @@ export default function GestionInventario() {
             <div className="row g-2 g-md-3">
               {productos
                 .filter(p => {
-                  if (vistaActual === 'normal') return !p.esSobrePedido && !p.esBorrador;
                   if (vistaActual === 'sobre_pedido') return p.esSobrePedido && !p.esBorrador;
                   if (vistaActual === 'borrador') return p.esBorrador;
-                  return true;
+                  return !p.esSobrePedido && !p.esBorrador;
                 })
-                .filter(p => (vistaActual !== 'todos' && vistaActual !== 'normal') ? true : (!soloStockBajo || p.stockActual <= p.stockMinimo))
+                .filter(p => vistaActual !== 'normal' ? true : (!soloStockBajo || p.stockActual <= p.stockMinimo))
                 .map(p => {
                 const stockBajo = p.stockActual <= p.stockMinimo;
                 return (
@@ -675,8 +669,12 @@ export default function GestionInventario() {
 
             <p className="gi-count-hint">
               {soloStockBajo
-                ? `${productos.filter(p => p.stockActual <= p.stockMinimo).length} producto(s) con stock bajo`
-                : `${productos.length} producto(s) encontrado(s)`
+                ? `${productos.filter(p => !p.esSobrePedido && !p.esBorrador && p.stockActual <= p.stockMinimo).length} producto(s) con stock bajo`
+                : `${productos.filter(p => {
+                    if (vistaActual === 'sobre_pedido') return p.esSobrePedido && !p.esBorrador;
+                    if (vistaActual === 'borrador') return p.esBorrador;
+                    return !p.esSobrePedido && !p.esBorrador;
+                  }).length} producto(s)`
               }
             </p>
           </>

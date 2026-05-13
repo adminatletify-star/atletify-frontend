@@ -5,6 +5,7 @@ import BotonSeguro from '../components/BotonSeguro';
 import EquipamientoPicker from '../components/EquipamientoPicker';
 import MetricaMedidaPicker from '../components/MetricaMedidaPicker';
 import NivelRecomendadoPicker from '../components/NivelRecomendadoPicker';
+import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/DiccionarioEjercicios.css';
 
 const API_BASE = import.meta.env.VITE_API_URL;;
@@ -140,7 +141,7 @@ export default function DiccionarioEjercicios() {
 
   if (loading) return (
     <div className="diccionario-container d-flex justify-content-center align-items-center">
-      <div className="spinner-wp"></div>
+      <AtletifyLoader />
     </div>
   );
 

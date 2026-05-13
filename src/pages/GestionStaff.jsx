@@ -4,6 +4,7 @@ import BackButton from '../components/BackButton';
 import TipoPagoPicker from '../components/TipoPagoPicker';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import BotonSeguro from '../components/BotonSeguro';
+import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/GestionStaff.css';
 
 export default function GestionStaff() {
@@ -266,7 +267,7 @@ export default function GestionStaff() {
         {/* ── LOADING ── */}
         {loading ? (
           <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
-            <div className="spinner-wp"></div>
+            <AtletifyLoader />
           </div>
 
           /* ── EMPTY STATE ── */

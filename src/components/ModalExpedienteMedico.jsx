@@ -1,94 +1,103 @@
 import { useState, useEffect } from 'react';
-import '../assets/css/Directorio.css'; // Reutilizamos estilos
+import AtletifyLoader from './AtletifyLoader';
+import '../assets/css/ExpedienteMedico.css';
+
+const TIPOS_SANGRE = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+
+const ESTADOS_CIVILES = [
+  { value: 'Soltero(a)',     icon: 'fa-user' },
+  { value: 'Casado(a)',      icon: 'fa-ring' },
+  { value: 'Divorciado(a)', icon: 'fa-heart-broken' },
+  { value: 'Viudo(a)',       icon: 'fa-leaf' },
+  { value: 'Unión Libre',    icon: 'fa-home' },
+];
+
+const PAD_MEDIC = [
+  { name: 'hipertension',       label: 'Hipertensión' },
+  { name: 'problemasHabla',     label: 'Problemas del habla' },
+  { name: 'problemasExtremidad',label: 'Problemas con alguna extremidad' },
+  { name: 'problemasEspalda',   label: 'Problemas en la espalda' },
+  { name: 'lumbalgia',          label: 'Lumbalgia' },
+  { name: 'cirugiaReciente',    label: 'Cirugía reciente' },
+  { name: 'fracturado',         label: 'Te has fracturado' },
+  { name: 'tiroides',           label: 'Tiroides' },
+  { name: 'tda',                label: 'TDA' },
+  { name: 'alergias',           label: 'Alergias' },
+  { name: 'inmunodeficiencia',  label: 'Síndrome de inmunodeficiencia' },
+  { name: 'esclerosisMultiple', label: 'Esclerosis múltiple' },
+  { name: 'parkinson',          label: 'Parkinson' },
+  { name: 'alcohol',            label: 'Alcohol' },
+  { name: 'calmantes',          label: 'Calmantes' },
+  { name: 'diabetes',           label: 'Diabetes' },
+  { name: 'problemasOido',      label: 'Problemas de oído' },
+  { name: 'plantilla',          label: 'Plantilla' },
+  { name: 'escoliosis',         label: 'Escoliosis' },
+  { name: 'cirugiaMetales',     label: 'Cirugía con metales' },
+  { name: 'cirugiaMas1Ano',     label: 'Cirugía de más de 1 año' },
+  { name: 'problemasCorazon',   label: 'Problemas del corazón' },
+  { name: 'autismo',            label: 'Autismo' },
+  { name: 'sindromeDown',       label: 'Síndrome de Down' },
+  { name: 'cancer',             label: 'Cáncer' },
+  { name: 'lupus',              label: 'Lupus' },
+  { name: 'fumador',            label: 'Fumador' },
+  { name: 'cannabis',           label: 'Cannabis' },
+];
+
+const FORM_INICIAL = {
+  estatura: '', estadoCivil: '', peso: '', tipoDeSangre: '',
+  contactoEmergenciaNombre: '', contactoEmergenciaTelefono: '',
+  alergiasDescripcion: '', correo: '', telefono: '', fechaNacimiento: '',
+  tieneExperiencia: false, deporteExperiencia: '', tieneDiscapacidad: '',
+  hipertension: false, problemasHabla: false, problemasExtremidad: false,
+  problemasEspalda: false, lumbalgia: false, cirugiaReciente: false,
+  fracturado: false, tiroides: false, tda: false, alergias: false,
+  inmunodeficiencia: false, esclerosisMultiple: false, parkinson: false,
+  alcohol: false, calmantes: false, diabetes: false, problemasOido: false,
+  plantilla: false, escoliosis: false, cirugiaMetales: false,
+  cirugiaMas1Ano: false, problemasCorazon: false, autismo: false,
+  sindromeDown: false, cancer: false, lupus: false, fumador: false,
+  cannabis: false, medicamentoControlado: '', suplementosVitaminas: ''
+};
 
 export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage = false }) {
   const [loadingDatos, setLoadingDatos] = useState(true);
   const [enviando, setEnviando] = useState(false);
+  const [form, setForm] = useState(FORM_INICIAL);
+  const [usuarioData, setUsuarioData] = useState(null);
 
-  const [form, setForm] = useState({
-    estatura: '',
-    estadoCivil: '',
-    peso: '',
-    tipoDeSangre: '',
-    contactoEmergenciaNombre: '',
-    contactoEmergenciaTelefono: '',
-    alergiasDescripcion: '',
-    correo: '',
-    telefono: '',
-    fechaNacimiento: '',
-
-    tieneExperiencia: false,
-    deporteExperiencia: '',
-    tieneDiscapacidad: '',
-
-    // Booleanos
-    hipertension: false,
-    problemasHabla: false,
-    problemasExtremidad: false,
-    problemasEspalda: false,
-    lumbalgia: false,
-    cirugiaReciente: false,
-    fracturado: false,
-    tiroides: false,
-    tda: false,
-    alergias: false,
-    inmunodeficiencia: false,
-    esclerosisMultiple: false,
-    parkinson: false,
-    alcohol: false,
-    calmantes: false,
-    diabetes: false,
-    problemasOido: false,
-    plantilla: false,
-    escoliosis: false,
-    cirugiaMetales: false,
-    cirugiaMas1Ano: false,
-    problemasCorazon: false,
-    autismo: false,
-    sindromeDown: false,
-    cancer: false,
-    lupus: false,
-    fumador: false,
-    cannabis: false,
-
-    // Textos finales
-    medicamentoControlado: '',
-    suplementosVitaminas: ''
-  });
-
-  const [usuarioData, setUsuarioData] = useState(null); // Para leer fecha de nacimiento y nombre si es necesario mostrarlo
+  const [modalSangreOpen, setModalSangreOpen] = useState(false);
+  const [modalCivilOpen, setModalCivilOpen] = useState(false);
+  const [modalPadOpen, setModalPadOpen] = useState(false);
 
   useEffect(() => {
-    // 1. Obtener los datos actuales del usuario para llenar los campos ya existentes
     const fetchDatos = async () => {
       try {
         const u = JSON.parse(localStorage.getItem('usuario'));
         setUsuarioData(u);
-
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/ExpedienteMedico/usuario/${idUsuario}`);
         if (res.ok) {
           const data = await res.json();
-          // Pre-llenar form con lo que ya tenga en Usuario
           setForm(prev => ({
             ...prev,
-            peso: data.peso || u.peso || u.Peso || '',
-            tipoDeSangre: data.tipoDeSangre || u.tipoDeSangre || u.TipoDeSangre || '',
+            peso: data.peso || u?.peso || u?.Peso || '',
+            tipoDeSangre: data.tipoDeSangre || u?.tipoDeSangre || u?.TipoDeSangre || '',
             contactoEmergenciaNombre: data.contactoEmergenciaNombre || '',
             contactoEmergenciaTelefono: data.contactoEmergenciaTelefono || '',
             alergiasDescripcion: data.alergiasDescripcion || '',
-            correo: data.correo || u.correo || u.Correo || '',
-            telefono: data.telefono || u.telefono || u.Telefono || '',
-            fechaNacimiento: data.fechaNacimiento ? data.fechaNacimiento.split('T')[0] : (u.fechaNacimiento || u.FechaNacimiento ? (u.fechaNacimiento || u.FechaNacimiento).split('T')[0] : ''),
+            correo: data.correo || u?.correo || u?.Correo || '',
+            telefono: data.telefono || u?.telefono || u?.Telefono || '',
+            fechaNacimiento: data.fechaNacimiento
+              ? data.fechaNacimiento.split('T')[0]
+              : (u?.fechaNacimiento || u?.FechaNacimiento
+                  ? (u?.fechaNacimiento || u?.FechaNacimiento).split('T')[0]
+                  : ''),
             tieneExperiencia: data.tieneExperiencia || false,
             deporteExperiencia: data.deporteExperiencia || '',
             tieneDiscapacidad: data.tieneDiscapacidad || '',
-
-            // Si ya tuviera algo de expediente guardado, pre-llenar todo:
             estatura: data.estatura || '',
             estadoCivil: data.estadoCivil || '',
             medicamentoControlado: data.medicamentoControlado || '',
             suplementosVitaminas: data.suplementosVitaminas || '',
-
             hipertension: data.hipertension || false,
             problemasHabla: data.problemasHabla || false,
             problemasExtremidad: data.problemasExtremidad || false,
@@ -116,11 +125,11 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
             cancer: data.cancer || false,
             lupus: data.lupus || false,
             fumador: data.fumador || false,
-            cannabis: data.cannabis || false
+            cannabis: data.cannabis || false,
           }));
         }
-      } catch (error) {
-        console.error("Error cargando expediente base", error);
+      } catch (err) {
+        console.error('Error cargando expediente', err);
       } finally {
         setLoadingDatos(false);
       }
@@ -130,38 +139,35 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
-    // Validación especial para teléfonos (solo números, max 10)
-    if ((name === 'telefono' || name === 'contactoEmergenciaTelefono')) {
-      const numericValue = value.replace(/\D/g, '');
-      if (numericValue.length > 10) return;
-      setForm(prev => ({ ...prev, [name]: numericValue }));
+    if (name === 'telefono' || name === 'contactoEmergenciaTelefono') {
+      const num = value.replace(/\D/g, '');
+      if (num.length > 10) return;
+      setForm(prev => ({ ...prev, [name]: num }));
       return;
     }
+    setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  };
 
-    setForm(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+  const togglePad = (name) => {
+    setForm(prev => ({ ...prev, [name]: !prev[name] }));
   };
 
   const calcularEdad = (fechaStr) => {
-    if (!fechaStr) return 'Edad desconocida';
+    if (!fechaStr) return '—';
     const hoy = new Date();
     const cumple = new Date(fechaStr);
     let edad = hoy.getFullYear() - cumple.getFullYear();
     const m = hoy.getMonth() - cumple.getMonth();
-    if (m < 0 || (m === 0 && hoy.getDate() < cumple.getDate())) { edad--; }
-    return edad;
+    if (m < 0 || (m === 0 && hoy.getDate() < cumple.getDate())) edad--;
+    return `${edad} años`;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setEnviando(true);
-
     try {
       const payload = {
-        idUsuario: idUsuario,
+        idUsuario,
         estatura: form.estatura ? parseFloat(form.estatura) : null,
         estadoCivil: form.estadoCivil,
         peso: form.peso ? parseFloat(form.peso) : null,
@@ -175,7 +181,6 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
         tieneExperiencia: form.tieneExperiencia,
         deporteExperiencia: form.deporteExperiencia,
         tieneDiscapacidad: form.tieneDiscapacidad,
-
         hipertension: form.hipertension,
         problemasHabla: form.problemasHabla,
         problemasExtremidad: form.problemasExtremidad,
@@ -204,241 +209,368 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
         lupus: form.lupus,
         fumador: form.fumador,
         cannabis: form.cannabis,
-
         medicamentoControlado: form.medicamentoControlado,
-        suplementosVitaminas: form.suplementosVitaminas
+        suplementosVitaminas: form.suplementosVitaminas,
       };
-
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/ExpedienteMedico`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
-
       if (res.ok) {
-        alert("Expediente médico guardado correctamente.");
+        alert('Expediente médico guardado correctamente.');
         onCompletado();
       } else {
-        alert("Error al guardar el expediente.");
+        alert('Error al guardar el expediente.');
       }
-    } catch (error) {
-      console.error(error);
-      alert("Error de conexión al guardar.");
+    } catch (err) {
+      console.error(err);
+      alert('Error de conexión al guardar.');
     } finally {
       setEnviando(false);
     }
   };
 
-  const padMedic = [
-    { name: 'hipertension', label: 'HIPERTENSIÓN' },
-    { name: 'problemasHabla', label: 'PROBLEMAS DEL HABLA' },
-    { name: 'problemasExtremidad', label: 'PROBLEMAS CON ALGUNA EXTREMIDAD' },
-    { name: 'problemasEspalda', label: 'PROBLEMAS EN LA ESPALDA' },
-    { name: 'lumbalgia', label: 'LUMBALGIA' },
-    { name: 'cirugiaReciente', label: 'CIRUGÍA RECIENTE' },
-    { name: 'fracturado', label: 'TE HAS FRACTURADO' },
-    { name: 'tiroides', label: 'TIROIDES' },
-    { name: 'tda', label: 'TDA' },
-    { name: 'alergias', label: 'ALERGIAS' },
-    { name: 'inmunodeficiencia', label: 'SÍNDROME DE INMUNODEFICIENCIA' },
-    { name: 'esclerosisMultiple', label: 'ESCLEROSIS MÚLTIPLE' },
-    { name: 'parkinson', label: 'PARKINSON' },
-    { name: 'alcohol', label: 'ALCOHOL' },
-    { name: 'calmantes', label: 'CALMANTES' },
-    { name: 'diabetes', label: 'DIABETES' },
-    { name: 'problemasOido', label: 'PROBLEMAS DE OÍDO' },
-    { name: 'plantilla', label: 'PLANTILLA' },
-    { name: 'escoliosis', label: 'ESCOLIOSIS' },
-    { name: 'cirugiaMetales', label: 'CIRUGÍA CON METALES' },
-    { name: 'cirugiaMas1Ano', label: 'CIRUGÍA DE MÁS DE 1 AÑO' },
-    { name: 'problemasCorazon', label: 'PROBLEMAS DEL CORAZÓN' },
-    { name: 'autismo', label: 'AUTISMO' },
-    { name: 'sindromeDown', label: 'SÍNDROME DE DOWN' },
-    { name: 'cancer', label: 'CÁNCER' },
-    { name: 'lupus', label: 'LUPUS' },
-    { name: 'fumador', label: 'FUMADOR' },
-    { name: 'cannabis', label: 'CANNABIS' },
-  ];
+  const padActivos = PAD_MEDIC.filter(p => form[p.name]);
+  const padCount = padActivos.length;
 
   if (loadingDatos) {
     return (
-      <div className={isPage ? "" : "directorio-modal-overlay d-flex justify-content-center align-items-center"} style={isPage ? { padding: '50px', textAlign: 'center' } : { zIndex: 9999 }}>
-        <div className="spinner-wp"></div>
+      <div className="em-loading" style={!isPage ? { position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.7)' } : {}}>
+        <AtletifyLoader />
       </div>
     );
   }
 
-  return (
-    <div className={isPage ? "" : "directorio-modal-overlay"} style={isPage ? {} : { zIndex: 9999, overflowY: 'auto', padding: '20px 0' }}>
-      <div className="directorio-modal" style={isPage ? { maxWidth: '100%', margin: '0', boxShadow: 'none' } : { maxWidth: '800px', cursor: 'default' }}>
+  const formContent = (
+    <form onSubmit={handleSubmit} className="em-form-content">
 
-        <div className="directorio-modal-header bg-danger text-white p-4" style={{ borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}>
-          <h3 className="mb-0 text-white"><i className="fas fa-notes-medical me-2"></i> {isPage ? "Mi Expediente Médico" : "Expediente Médico Obligatorio"}</h3>
-          <p className="mb-0 text-white opacity-75 mt-1">
-            {isPage ? "Actualiza o revisa tu historial médico para que tus coaches estén enterados." : "Por reglamento y tu seguridad, no puedes continuar sin completar tu historial médico."}
-          </p>
-        </div>
+      {/* ── DATOS PERSONALES ── */}
+      <div className="em-section-card">
+        <p className="em-section-title"><i className="fas fa-user-circle"></i> Datos Personales</p>
+        <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: '1fr' }}>
 
-        <div className="directorio-modal-body p-4">
-          <form onSubmit={handleSubmit}>
+          <div>
+            <label className="etiqueta-campo">Nombre completo</label>
+            <input
+              type="text"
+              className="em-input-readonly"
+              value={`${usuarioData?.nombre || ''} ${usuarioData?.apellidos || ''}`.trim()}
+              disabled
+            />
+          </div>
 
-            {/* DATOS PERSONALES */}
-            <h5 className="border-bottom pb-2 mb-3 text-danger"><i className="fas fa-user-circle me-2"></i> Datos Personales</h5>
-            <div className="row g-3 mb-4">
-              <div className="col-md-6">
-                <label className="etiqueta-campo">Nombre Completo (Sólo lectura)</label>
-                <input type="text" className="entrada-oscura directorio-input" value={`${usuarioData?.nombre || ''} ${usuarioData?.apellidos || ''}`} disabled />
-              </div>
-              <div className="col-md-6">
-                <label className="etiqueta-campo text-danger">Correo *</label>
-                <input type="email" required name="correo" className="entrada-oscura directorio-input" value={form.correo} onChange={handleChange} />
-              </div>
-              <div className="col-md-6">
-                <label className="etiqueta-campo text-danger">Teléfono (10 dígitos) *</label>
-                <input type="text" required name="telefono" maxLength="10" minLength="10" className="entrada-oscura directorio-input" value={form.telefono} onChange={handleChange} placeholder="Ej: 5512345678" />
-              </div>
-              <div className="col-md-3">
-                <label className="etiqueta-campo text-danger">Fecha de Nac. *</label>
-                <input type="date" required name="fechaNacimiento" className="entrada-oscura directorio-input" value={form.fechaNacimiento} onChange={handleChange} />
-              </div>
-              <div className="col-md-3">
-                <label className="etiqueta-campo">Edad</label>
-                <input type="text" className="entrada-oscura directorio-input" value={calcularEdad(form.fechaNacimiento)} disabled />
-              </div>
-
-              <div className="col-md-3">
-                <label className="etiqueta-campo text-danger">Estatura (cm) *</label>
-                <input type="number" required name="estatura" className="entrada-oscura directorio-input" value={form.estatura} onChange={handleChange} placeholder="Ej: 175" />
-              </div>
-              <div className="col-md-3">
-                <label className="etiqueta-campo text-danger">Peso (kg) *</label>
-                <input type="number" required step="0.1" name="peso" className="entrada-oscura directorio-input" value={form.peso} onChange={handleChange} placeholder="Ej: 70.5" />
-              </div>
-              <div className="col-md-3">
-                <label className="etiqueta-campo text-danger">Tipo de Sangre *</label>
-                <select required name="tipoDeSangre" className="entrada-oscura directorio-input" value={form.tipoDeSangre} onChange={handleChange}>
-                  <option value="">Selecciona...</option>
-                  <option value="A+">A+</option>
-                  <option value="A-">A-</option>
-                  <option value="B+">B+</option>
-                  <option value="B-">B-</option>
-                  <option value="O+">O+</option>
-                  <option value="O-">O-</option>
-                  <option value="AB+">AB+</option>
-                  <option value="AB-">AB-</option>
-                </select>
-              </div>
-              <div className="col-md-3">
-                <label className="etiqueta-campo text-danger">Estado Civil *</label>
-                <select required name="estadoCivil" className="entrada-oscura directorio-input" value={form.estadoCivil} onChange={handleChange}>
-                  <option value="">Selecciona...</option>
-                  <option value="Soltero(a)">Soltero(a)</option>
-                  <option value="Casado(a)">Casado(a)</option>
-                  <option value="Divorciado(a)">Divorciado(a)</option>
-                  <option value="Viudo(a)">Viudo(a)</option>
-                  <option value="Union Libre">Unión Libre</option>
-                </select>
-              </div>
+          <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+            <div>
+              <label className="etiqueta-campo">Correo <span style={{ color: 'var(--primary)' }}>*</span></label>
+              <input type="email" required name="correo" className="entrada-oscura" value={form.correo} onChange={handleChange} placeholder="ejemplo@correo.com" />
             </div>
-
-            {/* CONTACTO DE EMERGENCIA */}
-            <h5 className="border-bottom pb-2 mb-3 text-danger"><i className="fas fa-phone-alt me-2"></i> Contacto de Emergencia</h5>
-            <div className="row g-3 mb-4">
-              <div className="col-md-6">
-                <label className="etiqueta-campo text-danger">Nombre de Contacto *</label>
-                <input type="text" required name="contactoEmergenciaNombre" className="entrada-oscura directorio-input" value={form.contactoEmergenciaNombre} onChange={handleChange} placeholder="Nombre completo" />
-              </div>
-              <div className="col-md-6">
-                <label className="etiqueta-campo text-danger">Teléfono de Contacto (10 dígitos) *</label>
-                <input type="text" required name="contactoEmergenciaTelefono" maxLength="10" minLength="10" className="entrada-oscura directorio-input" value={form.contactoEmergenciaTelefono} onChange={handleChange} placeholder="Teléfono a 10 dígitos" />
-              </div>
+            <div>
+              <label className="etiqueta-campo">Teléfono (10 dígitos) <span style={{ color: 'var(--primary)' }}>*</span></label>
+              <input type="text" required name="telefono" maxLength="10" minLength="10" className="entrada-oscura" value={form.telefono} onChange={handleChange} placeholder="5512345678" />
             </div>
+          </div>
 
-            {/* EXPERIENCIA Y DISCAPACIDAD */}
-            <h5 className="border-bottom pb-2 mb-3 text-danger"><i className="fas fa-running me-2"></i> Experiencia y Otras Condiciones</h5>
-            <div className="row g-3 mb-4">
-              <div className="col-md-4">
-                <div className="form-check custom-checkbox mt-4">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    name="tieneExperiencia"
-                    id="tieneExperiencia"
-                    checked={form.tieneExperiencia}
-                    onChange={handleChange}
-                    style={{ cursor: 'pointer' }}
-                  />
-                  <label className="form-check-label text-light fw-bold" htmlFor="tieneExperiencia" style={{ cursor: 'pointer' }}>
-                    ¿Tienes experiencia deportiva previa?
-                  </label>
-                </div>
-              </div>
-              {form.tieneExperiencia && (
-                <div className="col-md-8">
-                  <label className="etiqueta-campo text-danger">¿Qué deporte(s) practicabas? *</label>
-                  <input type="text" required name="deporteExperiencia" className="entrada-oscura directorio-input" value={form.deporteExperiencia} onChange={handleChange} placeholder="Ej. Fútbol, CrossFit, Natación..." />
-                </div>
-              )}
-              <div className="col-12">
-                <label className="etiqueta-campo">Otras discapacidades (Opcional)</label>
-                <textarea name="tieneDiscapacidad" className="entrada-oscura directorio-input" value={form.tieneDiscapacidad} onChange={handleChange} rows="2" placeholder="Describa si tiene alguna otra discapacidad no listada..."></textarea>
-              </div>
+          <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+            <div>
+              <label className="etiqueta-campo">Fecha de nacimiento <span style={{ color: 'var(--primary)' }}>*</span></label>
+              <input type="date" required name="fechaNacimiento" className="entrada-oscura" value={form.fechaNacimiento} onChange={handleChange} />
             </div>
-
-            {/* HISTORIAL MÉDICO */}
-            <h5 className="border-bottom pb-2 mb-3 text-danger"><i className="fas fa-heartbeat me-2"></i> Historial Médico</h5>
-            <p className="text-muted small mb-3">Marca las opciones si has padecido o padeces actualmente alguna de las siguientes condiciones:</p>
-            <div className="row g-2 mb-4">
-              {padMedic.map(pad => (
-                <div key={pad.name} className="col-md-4 col-sm-6">
-                  <div className="form-check custom-checkbox">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      name={pad.name}
-                      id={pad.name}
-                      checked={form[pad.name]}
-                      onChange={handleChange}
-                      style={{ cursor: 'pointer' }}
-                    />
-                    <label className="form-check-label text-light small" htmlFor={pad.name} style={{ cursor: 'pointer' }}>
-                      {pad.label}
-                    </label>
-                  </div>
-                </div>
-              ))}
+            <div>
+              <label className="etiqueta-campo">Edad</label>
+              <input type="text" className="em-input-readonly" value={calcularEdad(form.fechaNacimiento)} disabled />
             </div>
-
-            {/* PREGUNTAS FINALES */}
-            <h5 className="border-bottom pb-2 mb-3 text-danger"><i className="fas fa-prescription-bottle-alt me-2"></i> Adicionales</h5>
-
-            {form.alergias && (
-              <div className="mb-3">
-                <label className="etiqueta-campo text-danger">Mencionaste tener Alergias. Especifíca a qué: *</label>
-                <textarea required name="alergiasDescripcion" className="entrada-oscura directorio-input" value={form.alergiasDescripcion} onChange={handleChange} rows="2" placeholder="Describa sus alergias..."></textarea>
-              </div>
-            )}
-
-            <div className="mb-3">
-              <label className="etiqueta-campo text-danger">¿Estás tomando ahora algún medicamento controlado? Describa: *</label>
-              <textarea required name="medicamentoControlado" className="entrada-oscura directorio-input" value={form.medicamentoControlado} onChange={handleChange} rows="2" placeholder="Si no toma ninguno, escriba 'Ninguno'"></textarea>
+            <div>
+              <label className="etiqueta-campo">Estatura (cm) <span style={{ color: 'var(--primary)' }}>*</span></label>
+              <input type="number" required name="estatura" className="entrada-oscura" value={form.estatura} onChange={handleChange} placeholder="175" />
             </div>
-
-            <div className="mb-4">
-              <label className="etiqueta-campo text-danger">¿Consumes algún suplemento o vitaminas? Describa: *</label>
-              <textarea required name="suplementosVitaminas" className="entrada-oscura directorio-input" value={form.suplementosVitaminas} onChange={handleChange} rows="2" placeholder="Si no consume, escriba 'Ninguno'"></textarea>
+            <div>
+              <label className="etiqueta-campo">Peso (kg) <span style={{ color: 'var(--primary)' }}>*</span></label>
+              <input type="number" required step="0.1" name="peso" className="entrada-oscura" value={form.peso} onChange={handleChange} placeholder="70.5" />
             </div>
+          </div>
 
-            <div className="d-grid mt-4">
-              <button type="submit" className="btn btn-danger btn-lg fw-bold" disabled={enviando}>
-                {enviando ? <span className="spinner-border spinner-border-sm me-2"></span> : <i className="fas fa-check-circle me-2"></i>}
-                Guardar y Continuar
+          <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+            <div>
+              <label className="etiqueta-campo">Tipo de sangre <span style={{ color: 'var(--primary)' }}>*</span></label>
+              <button type="button" className="em-select-btn" onClick={() => setModalSangreOpen(true)}>
+                <span className="em-select-btn__left">
+                  <i className="fas fa-tint em-select-btn__icon"></i>
+                  <span className={`em-select-btn__label ${!form.tipoDeSangre ? 'em-select-btn__placeholder' : ''}`}>
+                    {form.tipoDeSangre || 'Seleccionar...'}
+                  </span>
+                </span>
+                <i className="fas fa-chevron-right em-select-btn__arrow"></i>
               </button>
+              <input type="hidden" required name="tipoDeSangre" value={form.tipoDeSangre} onChange={() => {}} />
             </div>
-
-          </form>
+            <div>
+              <label className="etiqueta-campo">Estado civil <span style={{ color: 'var(--primary)' }}>*</span></label>
+              <button type="button" className="em-select-btn" onClick={() => setModalCivilOpen(true)}>
+                <span className="em-select-btn__left">
+                  <i className="fas fa-heart em-select-btn__icon"></i>
+                  <span className={`em-select-btn__label ${!form.estadoCivil ? 'em-select-btn__placeholder' : ''}`}>
+                    {form.estadoCivil || 'Seleccionar...'}
+                  </span>
+                </span>
+                <i className="fas fa-chevron-right em-select-btn__arrow"></i>
+              </button>
+              <input type="hidden" required name="estadoCivil" value={form.estadoCivil} onChange={() => {}} />
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* ── CONTACTO DE EMERGENCIA ── */}
+      <div className="em-section-card">
+        <p className="em-section-title"><i className="fas fa-phone-alt"></i> Contacto de Emergencia</p>
+        <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+          <div>
+            <label className="etiqueta-campo">Nombre del contacto <span style={{ color: 'var(--primary)' }}>*</span></label>
+            <input type="text" required name="contactoEmergenciaNombre" className="entrada-oscura" value={form.contactoEmergenciaNombre} onChange={handleChange} placeholder="Nombre completo" />
+          </div>
+          <div>
+            <label className="etiqueta-campo">Teléfono del contacto <span style={{ color: 'var(--primary)' }}>*</span></label>
+            <input type="text" required name="contactoEmergenciaTelefono" maxLength="10" minLength="10" className="entrada-oscura" value={form.contactoEmergenciaTelefono} onChange={handleChange} placeholder="5512345678" />
+          </div>
+        </div>
+      </div>
+
+      {/* ── EXPERIENCIA ── */}
+      <div className="em-section-card">
+        <p className="em-section-title"><i className="fas fa-running"></i> Experiencia y Otras Condiciones</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+
+          <div
+            className={`em-toggle-row ${form.tieneExperiencia ? 'em-toggle-row--active' : ''}`}
+            onClick={() => setForm(prev => ({ ...prev, tieneExperiencia: !prev.tieneExperiencia }))}
+          >
+            <span className="em-toggle-label">¿Tienes experiencia deportiva previa?</span>
+            <span className="em-toggle-switch"></span>
+          </div>
+
+          {form.tieneExperiencia && (
+            <div>
+              <label className="etiqueta-campo">¿Qué deporte(s) practicabas? <span style={{ color: 'var(--primary)' }}>*</span></label>
+              <input type="text" required name="deporteExperiencia" className="entrada-oscura" value={form.deporteExperiencia} onChange={handleChange} placeholder="Fútbol, CrossFit, Natación..." />
+            </div>
+          )}
+
+          <div>
+            <label className="etiqueta-campo">Otras discapacidades (Opcional)</label>
+            <textarea name="tieneDiscapacidad" className="entrada-oscura" value={form.tieneDiscapacidad} onChange={handleChange} rows="2" placeholder="Describa si tiene alguna discapacidad no listada..." style={{ resize: 'vertical' }}></textarea>
+          </div>
+        </div>
+      </div>
+
+      {/* ── HISTORIAL MÉDICO ── */}
+      <div className="em-section-card">
+        <p className="em-section-title"><i className="fas fa-heartbeat"></i> Historial Médico</p>
+        <button type="button" className="em-padecimientos-btn" onClick={() => setModalPadOpen(true)}>
+          <span className="em-padecimientos-btn__left">
+            <span className="em-padecimientos-btn__icon">
+              <i className="fas fa-notes-medical"></i>
+            </span>
+            <span className="em-padecimientos-btn__info">
+              <p className="em-padecimientos-btn__title">Padecimientos y condiciones</p>
+              <p className="em-padecimientos-btn__sub">Toca para seleccionar las condiciones que padeces o has padecido</p>
+            </span>
+          </span>
+          <span className={`em-pad-count ${padCount === 0 ? 'em-pad-count--zero' : ''}`}>
+            <i className="fas fa-check-circle" style={{ fontSize: '0.7rem' }}></i>
+            {padCount} seleccionado{padCount !== 1 ? 's' : ''}
+          </span>
+        </button>
+        {padCount > 0 && (
+          <div className="em-pad-tags">
+            {padActivos.slice(0, 3).map(p => (
+              <span key={p.name} className="em-pad-tag">
+                <i className="fas fa-circle" style={{ fontSize: '0.4rem' }}></i>
+                {p.label}
+              </span>
+            ))}
+            {padCount > 3 && (
+              <span className="em-pad-tag em-pad-tag--more">+{padCount - 3} más</span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── ADICIONALES ── */}
+      <div className="em-section-card">
+        <p className="em-section-title"><i className="fas fa-prescription-bottle-alt"></i> Adicionales</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+
+          {form.alergias && (
+            <div>
+              <label className="etiqueta-campo">Especifica tus alergias <span style={{ color: 'var(--primary)' }}>*</span></label>
+              <textarea required name="alergiasDescripcion" className="entrada-oscura" value={form.alergiasDescripcion} onChange={handleChange} rows="2" placeholder="Describa sus alergias..." style={{ resize: 'vertical' }}></textarea>
+            </div>
+          )}
+
+          <div>
+            <label className="etiqueta-campo">¿Estás tomando algún medicamento controlado? <span style={{ color: 'var(--primary)' }}>*</span></label>
+            <textarea required name="medicamentoControlado" className="entrada-oscura" value={form.medicamentoControlado} onChange={handleChange} rows="2" placeholder="Si no toma ninguno, escriba 'Ninguno'" style={{ resize: 'vertical' }}></textarea>
+          </div>
+
+          <div>
+            <label className="etiqueta-campo">¿Consumes algún suplemento o vitaminas? <span style={{ color: 'var(--primary)' }}>*</span></label>
+            <textarea required name="suplementosVitaminas" className="entrada-oscura" value={form.suplementosVitaminas} onChange={handleChange} rows="2" placeholder="Si no consume, escriba 'Ninguno'" style={{ resize: 'vertical' }}></textarea>
+          </div>
+        </div>
+      </div>
+
+      <p className="em-required-note"><span>*</span> Campos obligatorios</p>
+
+      <button type="submit" className="em-save-btn" disabled={enviando}>
+        {enviando
+          ? <><span style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }}></span> Guardando...</>
+          : <><i className="fas fa-check-circle"></i> Guardar expediente</>
+        }
+      </button>
+
+    </form>
+  );
+
+  const subModales = (
+    <>
+      {/* PICKER — TIPO DE SANGRE */}
+      {modalSangreOpen && (
+        <div className="em-picker-overlay" onClick={() => setModalSangreOpen(false)}>
+          <div className="em-picker-modal" onClick={e => e.stopPropagation()}>
+            <div className="em-picker-modal__header">
+              <div>
+                <p className="em-picker-modal__supertitle">Seleccionar</p>
+                <p className="em-picker-modal__title">Tipo de Sangre</p>
+              </div>
+              <button type="button" className="em-picker-close" onClick={() => setModalSangreOpen(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <p className="em-picker-modal__hint">Elige tu grupo sanguíneo. Este dato es vital en emergencias.</p>
+            <div className="em-picker-scroll">
+              <div className="em-sangre-grid">
+                {TIPOS_SANGRE.map(tipo => (
+                  <button
+                    key={tipo}
+                    type="button"
+                    className={`em-sangre-btn ${form.tipoDeSangre === tipo ? 'em-sangre-btn--active' : ''}`}
+                    onClick={() => { setForm(prev => ({ ...prev, tipoDeSangre: tipo })); setModalSangreOpen(false); }}
+                  >
+                    <span className="em-sangre-btn__tipo">{tipo}</span>
+                    {form.tipoDeSangre === tipo && <i className="fas fa-check em-sangre-btn__check"></i>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PICKER — ESTADO CIVIL */}
+      {modalCivilOpen && (
+        <div className="em-picker-overlay" onClick={() => setModalCivilOpen(false)}>
+          <div className="em-picker-modal" onClick={e => e.stopPropagation()}>
+            <div className="em-picker-modal__header">
+              <div>
+                <p className="em-picker-modal__supertitle">Seleccionar</p>
+                <p className="em-picker-modal__title">Estado Civil</p>
+              </div>
+              <button type="button" className="em-picker-close" onClick={() => setModalCivilOpen(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="em-picker-scroll">
+              <div className="em-picker-list">
+                {ESTADOS_CIVILES.map(ec => (
+                  <button
+                    key={ec.value}
+                    type="button"
+                    className={`em-picker-option ${form.estadoCivil === ec.value ? 'em-picker-option--active' : ''}`}
+                    onClick={() => { setForm(prev => ({ ...prev, estadoCivil: ec.value })); setModalCivilOpen(false); }}
+                  >
+                    <span className="em-picker-option__icon"><i className={`fas ${ec.icon}`}></i></span>
+                    <span className="em-picker-option__label">{ec.value}</span>
+                    {form.estadoCivil === ec.value && <i className="fas fa-check em-picker-option__check"></i>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PICKER — PADECIMIENTOS */}
+      {modalPadOpen && (
+        <div className="em-picker-overlay" onClick={() => setModalPadOpen(false)}>
+          <div className="em-picker-modal em-picker-modal--wide" onClick={e => e.stopPropagation()}>
+            <div className="em-picker-modal__header">
+              <div>
+                <p className="em-picker-modal__supertitle">Seleccionar</p>
+                <p className="em-picker-modal__title">Historial Médico</p>
+              </div>
+              <button type="button" className="em-picker-close" onClick={() => setModalPadOpen(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <p className="em-picker-modal__hint">Marca las condiciones que padeces o has padecido. Esta información es confidencial.</p>
+            <div className="em-picker-scroll">
+              <div className="em-pad-list">
+                {PAD_MEDIC.map(pad => (
+                  <button
+                    key={pad.name}
+                    type="button"
+                    className={`em-pad-item ${form[pad.name] ? 'em-pad-item--active' : ''}`}
+                    onClick={() => togglePad(pad.name)}
+                  >
+                    <span className="em-pad-item__name">{pad.label}</span>
+                    <span className="em-pad-item__dot">
+                      {form[pad.name] && <i className="fas fa-check" style={{ fontSize: '0.55rem' }}></i>}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="em-pad-footer">
+              <p className="em-pad-footer__count">
+                <strong>{padCount}</strong> condición{padCount !== 1 ? 'es' : ''} seleccionada{padCount !== 1 ? 's' : ''}
+              </p>
+              <button type="button" className="em-save-btn" style={{ width: 'auto', padding: '0.55rem 1.2rem', fontSize: '0.78rem' }} onClick={() => setModalPadOpen(false)}>
+                <i className="fas fa-check"></i> Listo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  /* ── MODO PÁGINA (isPage=true) ── */
+  if (isPage) {
+    return (
+      <>
+        {formContent}
+        {subModales}
+      </>
+    );
+  }
+
+  /* ── MODO MODAL BLOQUEANTE (isPage=false) ── */
+  return (
+    <div className="em-overlay">
+      <div className="em-modal-wrap">
+        <div className="em-modal-header" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem' }}>
+          <span className="em-modal-header-icon"><i className="fas fa-notes-medical"></i></span>
+          <div>
+            <p className="em-modal-header-title">Expediente Médico Obligatorio</p>
+            <p className="em-modal-header-sub">Por reglamento y tu seguridad no puedes continuar sin completar tu historial médico.</p>
+          </div>
+        </div>
+        <div className="em-modal-scroll">
+          {formContent}
+        </div>
+      </div>
+      {subModales}
     </div>
   );
 }

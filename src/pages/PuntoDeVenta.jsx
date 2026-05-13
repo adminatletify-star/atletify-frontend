@@ -5,6 +5,7 @@ import BackButton from '../components/BackButton';
 import BotonSeguro from '../components/BotonSeguro';
 import ModalFiar from '../components/ModalFiar';
 import '../assets/css/PuntoDeVenta.css';
+import AtletifyLoader from '../components/AtletifyLoader';
 
 export default function PuntoDeVenta() {
   const navigate = useNavigate();
@@ -275,7 +276,7 @@ export default function PuntoDeVenta() {
             {/* Grid de productos */}
             {loading ? (
               <div className="pdv-loading">
-                <div className="spinner-wp"></div>
+                <AtletifyLoader />
               </div>
             ) : productos.length === 0 ? (
               <div className="pdv-empty">
@@ -353,63 +354,109 @@ export default function PuntoDeVenta() {
 
       {/* Modal para Confirmar Cobro */}
       {modalCobrarOpen && (
-        <div 
-          onClick={() => !procesando && setModalCobrarOpen(false)} 
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.85)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 1060, padding: '1rem'
-          }}
+        <div
+          className="pdv-cobro-overlay"
+          onClick={() => !procesando && setModalCobrarOpen(false)}
         >
-          <div 
-            onClick={e => e.stopPropagation()} 
-            style={{
-              width: '100%', maxWidth: '400px', 
-              backgroundColor: '#1e1e1e', 
-              border: '1px solid rgba(255,193,7,0.25)', 
-              boxShadow: '0 12px 40px rgba(0,0,0,0.8)',
-              borderRadius: '12px', overflow: 'hidden'
-            }}
-          >
-            <div className="p-3 border-bottom border-secondary d-flex justify-content-between align-items-center">
-              <h5 className="mb-0 text-white">Confirmar Cobro</h5>
-              <button 
-                className="btn-close btn-close-white" 
-                onClick={() => setModalCobrarOpen(false)} 
-                disabled={procesando}
-              ></button>
-            </div>
-            <div className="p-4 text-white">
-              <div className="text-center mb-4">
-                <p className="text-muted mb-1">Total a cobrar:</p>
-                <h2 className="text-success fw-bold mb-0">${totalVenta.toFixed(2)}</h2>
-              </div>
-              
-              <div className="mb-4">
-                <label className="form-label text-muted">¿Cómo pagó el cliente?</label>
-                <select 
-                  className="form-select bg-dark text-white border-secondary"
-                  value={metodoCobro}
-                  onChange={e => setMetodoCobro(e.target.value)}
-                >
-                  <option value="Efectivo">Efectivo</option>
-                  <option value="Tarjeta en Recepción">Tarjeta en Recepción</option>
-                </select>
-              </div>
+          <div className="pdv-cobro-panel" onClick={e => e.stopPropagation()}>
 
-              <button 
-                className="btn btn-success w-100 fw-bold py-2"
-                onClick={() => {
-                  setModalCobrarOpen(false);
-                  realizarVenta(false, null, metodoCobro);
-                }}
+            {/* Header */}
+            <div className="pdv-cobro-header">
+              <span className="pdv-cobro-header-icon">
+                <i className="fas fa-check-circle"></i>
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p className="pdv-cobro-title">Confirmar Cobro</p>
+                <p className="pdv-cobro-subtitle">Revisa el resumen y selecciona el método de pago</p>
+              </div>
+              <button
+                className="pdv-cobro-close"
+                onClick={() => setModalCobrarOpen(false)}
                 disabled={procesando}
               >
-                {procesando ? <span className="spinner-border spinner-border-sm me-2"></span> : <i className="fas fa-check-circle me-2"></i>}
-                Confirmar y Registrar Venta
+                <i className="fas fa-times"></i>
               </button>
             </div>
+
+            {/* Body */}
+            <div className="pdv-cobro-body">
+
+              {/* Monto total */}
+              <div className="pdv-cobro-monto-wrap">
+                <p className="pdv-cobro-monto-label">Total a cobrar</p>
+                <p className="pdv-cobro-monto">${totalVenta.toFixed(2)}</p>
+              </div>
+
+              {/* Resumen del carrito */}
+              <div>
+                <p className="pdv-cobro-section-label">
+                  <i className="fas fa-shopping-cart" style={{ marginRight: '0.4rem' }}></i>
+                  {carrito.length} producto{carrito.length !== 1 ? 's' : ''}
+                </p>
+                <div className="pdv-cobro-items">
+                  {carrito.map(item => (
+                    <div key={item.producto.idProducto} className="pdv-cobro-item">
+                      <p className="pdv-cobro-item-nombre">{item.producto.nombre}</p>
+                      <span className="pdv-cobro-item-qty">x{item.cantidad}</span>
+                      <p className="pdv-cobro-item-precio">
+                        ${(item.producto.precioVenta * item.cantidad).toFixed(2)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Método de pago */}
+              <div>
+                <p className="pdv-cobro-section-label">
+                  <i className="fas fa-wallet" style={{ marginRight: '0.4rem' }}></i>
+                  Método de pago
+                </p>
+                <div className="pdv-metodo-grid">
+                  {[
+                    { value: 'Efectivo',             icon: 'fa-money-bill-wave', label: 'Efectivo' },
+                    { value: 'Tarjeta en Recepción', icon: 'fa-credit-card',     label: 'Tarjeta' },
+                    { value: 'Transferencia',         icon: 'fa-university',      label: 'Transferencia' },
+                  ].map(m => (
+                    <button
+                      key={m.value}
+                      type="button"
+                      className={`pdv-metodo-btn ${metodoCobro === m.value ? 'pdv-metodo-btn--activo' : ''}`}
+                      onClick={() => setMetodoCobro(m.value)}
+                    >
+                      <i className={`fas ${m.icon}`}></i>
+                      <span>{m.label}</span>
+                      {metodoCobro === m.value && (
+                        <i className="fas fa-check-circle pdv-metodo-check"></i>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="pdv-cobro-footer">
+              <button
+                className="pdv-cobro-btn pdv-cobro-btn--cancel"
+                onClick={() => setModalCobrarOpen(false)}
+                disabled={procesando}
+              >
+                <i className="fas fa-times"></i> Cancelar
+              </button>
+              <button
+                className="pdv-cobro-btn pdv-cobro-btn--confirm"
+                onClick={() => { setModalCobrarOpen(false); realizarVenta(false, null, metodoCobro); }}
+                disabled={procesando}
+              >
+                {procesando
+                  ? <><span className="pdv-cobro-spinner"></span> Registrando...</>
+                  : <><i className="fas fa-check"></i> Cobrar</>
+                }
+              </button>
+            </div>
+
           </div>
         </div>
       )}

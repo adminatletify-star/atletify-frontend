@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import '../assets/css/global.css';
 import BackButton from '../components/BackButton';
+import AtletifyLoader from '../components/AtletifyLoader';
 
 export default function ClasesDisponibles() {
   const { usuario, loading: authLoading } = useAuth();
@@ -86,9 +87,7 @@ export default function ClasesDisponibles() {
   if (loading) {
     return (
       <div className="bg-dark text-white min-vh-100 d-flex align-items-center justify-content-center">
-        <div className="spinner-border text-danger" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
+        <AtletifyLoader />
       </div>
     );
   }

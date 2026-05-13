@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import AtletifyLoader from '../components/AtletifyLoader';
 
 export default function RegistroBoxSaaS() {
     const { idPlan } = useParams();
@@ -73,7 +74,7 @@ export default function RegistroBoxSaaS() {
         }
     };
 
-    if (loading) return <div className="min-vh-100 bg-dark d-flex justify-content-center align-items-center"><div className="spinner-border text-info" /></div>;
+    if (loading) return <div className="min-vh-100 bg-dark d-flex justify-content-center align-items-center"><AtletifyLoader /></div>;
     if (!plan) return null;
 
     return (

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { API_BASE_URL_CONST } from '../services/api';
 import BotonSeguro from './BotonSeguro';
 import TallaPlayeraPicker from './TallaPlayeraPicker';
+import AtletifyLoader from './AtletifyLoader';
 import { createPortal } from 'react-dom';
 
 export default function GestionJuecesPanel({ idCompetencia, colorTheme = 'info' }) {
@@ -207,7 +208,7 @@ export default function GestionJuecesPanel({ idCompetencia, colorTheme = 'info' 
       </div>
 
       {cargando ? (
-        <div className="cd-empty"><div className="spinner-wp mx-auto"></div></div>
+        <div className="cd-empty"><AtletifyLoader /></div>
       ) : jueces.length === 0 ? (
         <div className="cd-empty">
           <i className="fas fa-users-slash"></i>

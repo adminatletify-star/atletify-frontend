@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { API_BASE_URL_CONST } from '../services/api';
 import BotonSeguro from './BotonSeguro';
 import TallaPlayeraPicker from './TallaPlayeraPicker';
+import AtletifyLoader from './AtletifyLoader';
 import { createPortal } from 'react-dom';
 
 export default function GestionStaffCompePanel({ idCompetencia, colorTheme = 'primary' }) {
@@ -172,7 +173,7 @@ export default function GestionStaffCompePanel({ idCompetencia, colorTheme = 'pr
       )}
 
       {cargando ? (
-        <div className="cd-empty"><div className="spinner-wp mx-auto"></div></div>
+        <div className="cd-empty"><AtletifyLoader /></div>
       ) : staffList.length === 0 ? (
         <div className="cd-empty">
           <i className="fas fa-users-cog"></i>

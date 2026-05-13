@@ -247,7 +247,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 function MaintenanceGuard({ children }) {
   const [enMantenimiento, setEnMantenimiento] = useState(false);
   const [checked, setChecked] = useState(false);
-  const location = useLocation(); // Fuerza re-render en cada navegación
+  const location = useLocation();
 
   useEffect(() => {
     async function verificar() {
@@ -263,10 +263,12 @@ function MaintenanceGuard({ children }) {
         setChecked(true);
       }
     }
-    verificar(); // Re-verifica en cada cambio de ruta
-  }, [location.pathname]);
+    verificar(); // Solo al montar la app, no en cada navegación
+  }, []);
 
-  if (!checked) return null;
+  // Mientras se verifica, mostrar contenido normal (evita pantalla en blanco en carga inicial)
+  // Si hay mantenimiento, el check llegará pronto y se aplicará el bloqueo
+  if (!checked) return children;
 
   if (enMantenimiento) {
     // Si hay usuario logueado y es Developer → acceso total

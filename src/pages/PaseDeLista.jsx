@@ -7,6 +7,7 @@ import WodPicker from '../components/WodPicker';
 import '../assets/css/PaseDeLista.css';
 import BotonSeguro from '../components/BotonSeguro';
 import TimeInputMMSS from '../components/TimeInputMMSS';
+import AtletifyLoader from '../components/AtletifyLoader';
 
 const API_BASE = import.meta.env.VITE_API_URL;;
 
@@ -469,7 +470,7 @@ export default function PaseDeLista() {
           <div className="p-3 p-md-4">
             {loading ? (
               <div className="pdl-loading">
-                <div className="spinner-wp"></div>
+                <AtletifyLoader />
               </div>
             ) : asistentes.length === 0 ? (
               <div className="pdl-empty">
@@ -808,7 +809,7 @@ export default function PaseDeLista() {
 
           {loading ? (
             <div className="pdl-loading">
-              <div className="spinner-wp"></div>
+              <AtletifyLoader />
             </div>
           ) : clasesFiltradas.length === 0 ? (
             <div className="pdl-empty">

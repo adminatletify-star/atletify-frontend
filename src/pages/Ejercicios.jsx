@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BackButton from '../components/BackButton';
 import { api } from '../services/api';
+import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/Ejercicios.css';
 
 const CATEGORIAS_BASE = ['Todas'];
@@ -117,7 +118,7 @@ export default function Ejercicios() {
 
           {loading ? (
             <div className="d-flex justify-content-center align-items-center py-5">
-              <div className="spinner-wp" />
+              <AtletifyLoader />
             </div>
           ) : ejercicios.length === 0 ? (
             <div className="text-center py-5">

@@ -14,6 +14,7 @@
     "@reduxjs/toolkit": "^2.11.2",
     "bootstrap": "^5.3.8",
     "core-js": "^3.49.0",
+    "flubber": "^0.4.2",
     "framer-motion": "^12.35.1",
     "gsap": "^3.14.2",
     "html2pdf.js": "^0.14.0",

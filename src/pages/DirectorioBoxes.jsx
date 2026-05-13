@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import BackButton from '../components/BackButton';
+import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/DirectorioBoxes.css';
 
 const PLACEHOLDER_LOGO = 'https://ui-avatars.com/api/?name=Box&background=1C1C26&color=E63946&size=128&bold=true&font-size=0.5';
@@ -47,7 +48,7 @@ export default function DirectorioBoxes() {
         <div className="container">
           {loading && (
             <div className="db-status text-center">
-              <div className="spinner-border db-spinner" role="status" />
+              <AtletifyLoader />
               <p className="db-status-text mt-3">Cargando boxes...</p>
             </div>
           )}

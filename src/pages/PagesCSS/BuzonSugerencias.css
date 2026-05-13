@@ -1,161 +1,202 @@
-/* ========================================
-   BUZÓN DE SUGERENCIAS — WolfPack Dark Premium
-   ======================================== */
+/* ============================================
+   BUZÓN DE SUGERENCIAS — WolfPack Design System
+   Mismo esquema visual que GestionClases
+   ============================================ */
 
+/* === PÁGINA === */
 .buzon-page {
+  background: var(--bg-base);
   min-height: 100vh;
-  background: #050505;
-  color: #e8e8e8;
-  padding-bottom: 120px;
+  padding-bottom: 4rem;
 }
 
-/* ── HEADER ── */
+/* === HEADER STICKY (igual que gc-header) === */
 .buzon-header {
-  padding: 2rem 0 1.2rem;
-}
-.buzon-header-title {
-  font-size: 1.8rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  margin: 0;
-  color: #fff;
-}
-.buzon-header-sub {
-  color: #888;
-  font-size: 0.85rem;
-  margin: 0.2rem 0 0;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1rem 0.75rem 0.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  margin-bottom: 1.5rem;
 }
 
-/* ── CATEGORÍA PICKER ── */
+@media (min-width: 768px) {
+  .buzon-header {
+    padding: 0.85rem 1.5rem 0.85rem 0.6rem;
+    margin-bottom: 2rem;
+  }
+}
+
+.buzon-header-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.buzon-header-title span {
+  color: var(--primary);
+}
+
+.buzon-header-sub {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0.15rem 0 0;
+  line-height: 1.3;
+}
+
+/* Badge de pendientes en header */
+.buzon-dev-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 20px;
+  font-family: var(--font-stats);
+  font-size: 0.7rem;
+  font-weight: 800;
+  background: var(--primary);
+  color: #fff;
+  padding: 0 6px;
+}
+
+/* === TÍTULOS DE SECCIÓN (igual que gc-section-title) === */
+.buzon-section-label {
+  font-family: var(--font-heading);
+  font-size: clamp(0.75rem, 2vw, 0.9rem);
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.buzon-section-label i {
+  color: var(--primary);
+  font-size: 0.85em;
+}
+
+/* === PANEL FORMULARIO (igual que gc-form-card) === */
+.buzon-form-panel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
+  padding: 1.1rem;
+  transition: var(--transition);
+}
+
+@media (min-width: 576px) {
+  .buzon-form-panel {
+    padding: 1.5rem;
+  }
+}
+
+/* === CATEGORÍAS === */
 .buzon-cat-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.6rem;
+  gap: 0.5rem;
 }
-@media (min-width: 576px) {
+
+@media (min-width: 480px) {
   .buzon-cat-grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
 .buzon-cat-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.7rem 0.8rem;
-  border-radius: 12px;
-  border: 1.5px solid rgba(255,255,255,0.06);
-  background: rgba(255,255,255,0.03);
-  color: #999;
-  font-size: 0.78rem;
-  font-weight: 600;
+  gap: 0.4rem;
+  padding: 0.65rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: var(--transition);
   text-align: left;
-}
-.buzon-cat-btn:hover {
-  border-color: rgba(220, 53, 69, 0.3);
-  background: rgba(220, 53, 69, 0.06);
-  color: #ccc;
-}
-.buzon-cat-btn.active {
-  border-color: #dc3545;
-  background: rgba(220, 53, 69, 0.12);
-  color: #fff;
-  box-shadow: 0 0 20px rgba(220, 53, 69, 0.1);
-}
-.buzon-cat-btn .cat-emoji {
-  font-size: 1.1rem;
-  flex-shrink: 0;
+  touch-action: manipulation;
 }
 
-/* ── TEXTAREA ── */
+.buzon-cat-btn:hover {
+  border-color: rgba(230, 57, 70, 0.35);
+  background: rgba(230, 57, 70, 0.06);
+  color: var(--text-primary);
+}
+
+.buzon-cat-btn.active {
+  border-color: var(--primary);
+  background: rgba(230, 57, 70, 0.12);
+  color: var(--text-primary);
+  box-shadow: 0 0 16px var(--primary-glow);
+}
+
+.buzon-cat-btn .cat-emoji {
+  font-size: 1rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* === TEXTAREA === */
 .buzon-textarea {
   width: 100%;
   min-height: 140px;
-  padding: 1rem;
-  border-radius: 14px;
-  border: 1.5px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
-  color: #e8e8e8;
-  font-size: 0.9rem;
-  font-family: inherit;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+  line-height: 1.6;
   resize: vertical;
-  transition: border-color 0.3s;
+  transition: var(--transition);
   outline: none;
 }
+
 .buzon-textarea:focus {
-  border-color: #dc3545;
-  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
 }
+
 .buzon-textarea::placeholder {
-  color: #555;
+  color: var(--text-muted);
+  opacity: 0.6;
 }
+
 .buzon-char-count {
   text-align: right;
+  font-family: var(--font-stats);
   font-size: 0.72rem;
-  color: #555;
+  color: var(--text-muted);
   margin-top: 0.3rem;
 }
-.buzon-char-count.warn {
-  color: #e67e22;
-}
-.buzon-char-count.danger {
-  color: #dc3545;
-}
 
-/* ── BOTÓN ENVIAR ── */
-.buzon-btn-enviar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.9rem 1.5rem;
-  border-radius: 14px;
-  border: none;
-  background: linear-gradient(135deg, #dc3545, #b02a37);
-  color: #fff;
-  font-size: 0.95rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  letter-spacing: 0.3px;
-}
-.buzon-btn-enviar:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(220, 53, 69, 0.35);
-}
-.buzon-btn-enviar:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+.buzon-char-count.warn  { color: var(--warning); }
+.buzon-char-count.danger { color: var(--primary); }
 
-/* ── FORMULARIO PANEL ── */
-.buzon-form-panel {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 20px;
-  padding: 1.5rem;
-}
-
-/* ── SECCIÓN LABEL ── */
-.buzon-section-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: #666;
-  margin-bottom: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.buzon-section-label i {
-  color: #dc3545;
-  font-size: 0.8rem;
-}
-
-/* ── UPLOAD IMAGEN ── */
+/* === UPLOAD IMAGEN === */
 .buzon-upload-btn {
   display: flex;
   flex-direction: column;
@@ -164,39 +205,48 @@
   gap: 0.4rem;
   width: 100%;
   padding: 1.5rem;
-  border-radius: 14px;
-  border: 2px dashed rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.02);
-  color: #666;
+  border-radius: 12px;
+  border: 2px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: var(--transition);
+  touch-action: manipulation;
 }
+
 .buzon-upload-btn:hover {
-  border-color: rgba(220, 53, 69, 0.4);
-  background: rgba(220, 53, 69, 0.04);
-  color: #dc3545;
+  border-color: rgba(230, 57, 70, 0.4);
+  background: rgba(230, 57, 70, 0.04);
+  color: var(--primary);
 }
+
 .buzon-upload-btn i {
   font-size: 1.5rem;
 }
+
 .buzon-upload-btn span {
+  font-family: var(--font-heading-alt);
   font-size: 0.85rem;
-  font-weight: 600;
-}
-.buzon-upload-btn small {
-  font-size: 0.68rem;
-  color: #555;
+  font-weight: 700;
+  letter-spacing: 0.3px;
 }
 
-/* ── IMAGE PREVIEW ── */
+.buzon-upload-btn small {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* === IMAGE PREVIEW === */
 .buzon-img-preview {
   position: relative;
   display: inline-block;
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--border);
   max-width: 280px;
 }
+
 .buzon-img-preview img {
   display: block;
   width: 100%;
@@ -205,9 +255,9 @@
   cursor: pointer;
   transition: opacity 0.2s;
 }
-.buzon-img-preview img:hover {
-  opacity: 0.85;
-}
+
+.buzon-img-preview img:hover { opacity: 0.85; }
+
 .buzon-img-remove {
   position: absolute;
   top: 8px;
@@ -216,35 +266,98 @@
   height: 28px;
   border-radius: 50%;
   border: none;
-  background: rgba(0,0,0,0.7);
-  color: #dc3545;
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--primary);
   font-size: 0.7rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: var(--transition);
 }
+
 .buzon-img-remove:hover {
-  background: #dc3545;
+  background: var(--primary);
   color: #fff;
 }
 
-/* ── HISTORIAL PERSONAL ── */
+/* === BOTÓN ENVIAR (igual que gc-save-btn) === */
+.buzon-btn-enviar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+}
+
+.buzon-btn-enviar:hover:not(:disabled) {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 16px var(--primary-glow);
+}
+
+.buzon-btn-enviar:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* === INFO REMITENTE === */
+.buzon-remitente {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.buzon-remitente i {
+  color: var(--primary);
+  font-size: 0.8em;
+}
+
+.buzon-remitente strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+@keyframes buzon-fade-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* === HISTORIAL CARDS (igual que gc-clase-card) === */
 .buzon-historial-card {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 14px;
-  padding: 1rem 1.2rem;
-  transition: border-color 0.2s;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid rgba(230, 57, 70, 0.35);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  transition: var(--transition);
 }
+
 .buzon-historial-card:hover {
-  border-color: rgba(255,255,255,0.12);
+  border-color: rgba(230, 57, 70, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
+
 .buzon-historial-msg {
-  color: #ccc;
+  color: var(--text-primary);
   font-size: 0.85rem;
-  line-height: 1.5;
+  line-height: 1.55;
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -252,336 +365,412 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
 .buzon-historial-img {
   margin-top: 0.5rem;
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
   max-width: 160px;
   cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.08);
-  transition: border-color 0.2s;
+  border: 1px solid var(--border);
+  transition: var(--transition);
 }
-.buzon-historial-img:hover {
-  border-color: rgba(220, 53, 69, 0.4);
-}
+
+.buzon-historial-img:hover { border-color: rgba(230, 57, 70, 0.4); }
+
 .buzon-historial-img img {
   display: block;
   width: 100%;
   height: 90px;
   object-fit: cover;
 }
+
 .buzon-historial-respuesta {
   margin-top: 0.5rem;
-  padding: 0.6rem 0.8rem;
-  border-radius: 10px;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
   background: rgba(52, 152, 219, 0.08);
   border: 1px solid rgba(52, 152, 219, 0.2);
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
   font-size: 0.78rem;
-  color: #3498db;
-  line-height: 1.4;
+  color: #4fc3f7;
+  line-height: 1.45;
 }
+
 .buzon-historial-respuesta i {
   margin-top: 2px;
   flex-shrink: 0;
 }
+
+.buzon-historial-respuesta strong {
+  color: var(--text-primary);
+}
+
 .buzon-historial-meta {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  margin-top: 0.6rem;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
   flex-wrap: wrap;
 }
+
+.buzon-historial-fecha {
+  font-family: var(--font-stats);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* === BADGES === */
 .buzon-badge-cat {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
   padding: 0.2rem 0.6rem;
   border-radius: 20px;
-  font-size: 0.68rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.66rem;
   font-weight: 700;
-  background: rgba(220, 53, 69, 0.1);
-  color: #dc3545;
-  border: 1px solid rgba(220, 53, 69, 0.2);
+  letter-spacing: 0.3px;
+  background: rgba(230, 57, 70, 0.1);
+  color: #ff8896;
+  border: 1px solid rgba(230, 57, 70, 0.22);
+  white-space: nowrap;
 }
+
 .buzon-badge-estatus {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
   padding: 0.2rem 0.6rem;
   border-radius: 20px;
-  font-size: 0.68rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.66rem;
   font-weight: 700;
-}
-.buzon-historial-fecha {
-  font-size: 0.7rem;
-  color: #555;
-  margin-left: auto;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
-/* ── EMPTY STATE ── */
+.buzon-badge-rol {
+  display: inline-flex;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.buzon-badge-rol.adminbox {
+  background: rgba(230, 57, 70, 0.12);
+  color: #ff8896;
+}
+.buzon-badge-rol.coach {
+  background: rgba(245, 166, 35, 0.12);
+  color: var(--accent);
+}
+.buzon-badge-rol.atleta {
+  background: rgba(79, 195, 247, 0.12);
+  color: var(--accent-cool);
+}
+.buzon-badge-rol.publico {
+  background: rgba(168, 178, 209, 0.08);
+  color: var(--text-muted);
+}
+
+/* === EMPTY STATE === */
 .buzon-empty {
   text-align: center;
   padding: 3rem 1rem;
-  color: #555;
 }
+
 .buzon-empty i {
   font-size: 2.5rem;
   margin-bottom: 1rem;
-  color: #333;
+  color: var(--text-muted);
+  opacity: 0.4;
+  display: block;
 }
+
 .buzon-empty h3 {
+  font-family: var(--font-heading-alt);
   font-size: 1rem;
   font-weight: 700;
-  color: #777;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
   margin-bottom: 0.3rem;
+  text-transform: uppercase;
 }
+
 .buzon-empty p {
   font-size: 0.8rem;
-  color: #555;
+  color: var(--text-muted);
+  opacity: 0.7;
 }
 
-/* ── SEPARADOR ── */
-.buzon-divider {
-  height: 1px;
-  background: rgba(255,255,255,0.05);
-  margin: 1.5rem 0;
-  border: none;
-}
+/* ============================================
+   PANEL DEVELOPER
+   ============================================ */
 
-/* ── SUCCESS ANIMATION ── */
-.buzon-success-msg {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 1rem 1.2rem;
-  border-radius: 14px;
-  background: rgba(46, 204, 113, 0.08);
-  border: 1px solid rgba(46, 204, 113, 0.2);
-  color: #2ecc71;
-  font-size: 0.85rem;
-  font-weight: 600;
-  animation: buzon-fade-in 0.4s ease;
-}
-@keyframes buzon-fade-in {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ── DEV PANEL ── */
 .buzon-dev-panel {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
   overflow: hidden;
 }
+
 .buzon-dev-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.2rem 1.5rem;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
-  gap: 0.8rem;
+  gap: 0.75rem;
 }
+
 .buzon-dev-title {
-  font-size: 1.1rem;
-  font-weight: 800;
+  font-family: var(--font-heading);
+  font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
   margin: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
-.buzon-dev-title i {
-  color: #dc3545;
-}
-.buzon-dev-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  border-radius: 20px;
-  font-size: 0.7rem;
-  font-weight: 800;
-  background: #dc3545;
-  color: #fff;
-  padding: 0 6px;
-}
+
+.buzon-dev-title i { color: var(--primary); }
+
 .buzon-dev-filters {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+
 .buzon-dev-filter {
-  padding: 0.35rem 0.8rem;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
-  color: #888;
-  font-size: 0.72rem;
-  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition);
+  appearance: auto;
 }
+
 .buzon-dev-filter:hover {
-  border-color: rgba(220, 53, 69, 0.3);
-  color: #ccc;
+  border-color: rgba(230, 57, 70, 0.35);
+  color: var(--text-primary);
 }
-.buzon-dev-filter.active {
-  background: rgba(220, 53, 69, 0.12);
-  border-color: #dc3545;
-  color: #fff;
-}
+
+/* === TABS DEV === */
 .buzon-dev-tabs {
   display: flex;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid var(--border);
   overflow-x: auto;
+  scrollbar-width: none;
 }
+
+.buzon-dev-tabs::-webkit-scrollbar { display: none; }
+
 .buzon-dev-tab {
   flex: 1;
-  padding: 0.7rem 0.6rem;
+  min-width: max-content;
+  padding: 0.7rem 0.75rem;
   text-align: center;
+  font-family: var(--font-heading-alt);
   font-size: 0.72rem;
   font-weight: 700;
-  color: #666;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition);
+  border: none;
   border-bottom: 2px solid transparent;
   background: none;
-  border-top: none;
-  border-left: none;
-  border-right: none;
   white-space: nowrap;
+  touch-action: manipulation;
 }
-.buzon-dev-tab:hover {
-  color: #aaa;
+
+.buzon-dev-tab:hover { color: var(--text-primary); }
+
+.buzon-dev-tab-count {
+  opacity: 0.55;
+  margin-left: 0.25rem;
 }
-.buzon-dev-tab.active {
-  color: #dc3545;
-  border-bottom-color: #dc3545;
-}
+
+/* === BODY DEV === */
 .buzon-dev-body {
-  padding: 1rem 1.2rem;
-  max-height: 600px;
+  padding: 0.75rem 1rem;
+  max-height: 620px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }
+
+.buzon-dev-body::-webkit-scrollbar { width: 4px; }
+.buzon-dev-body::-webkit-scrollbar-track { background: transparent; }
+.buzon-dev-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
 .buzon-dev-item {
   display: flex;
-  gap: 0.8rem;
-  padding: 0.8rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
+  gap: 0.75rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--border);
   align-items: flex-start;
 }
-.buzon-dev-item:last-child {
-  border-bottom: none;
-}
+
+.buzon-dev-item:last-child { border-bottom: none; }
+
 .buzon-dev-prio {
-  width: 4px;
+  width: 3px;
   min-height: 40px;
   border-radius: 4px;
   flex-shrink: 0;
   align-self: stretch;
 }
-.buzon-dev-prio.prio-1 { background: #dc3545; }
-.buzon-dev-prio.prio-2 { background: #e67e22; }
+
+.buzon-dev-prio.prio-1 { background: var(--primary); }
+.buzon-dev-prio.prio-2 { background: var(--accent); }
 .buzon-dev-prio.prio-3 { background: #f1c40f; }
-.buzon-dev-prio.prio-4 { background: #555; }
+.buzon-dev-prio.prio-4 { background: rgba(255, 255, 255, 0.15); }
+
 .buzon-dev-content {
   flex: 1;
   min-width: 0;
-}
-.buzon-dev-sender {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #ccc;
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-.buzon-dev-msg-text {
-  font-size: 0.82rem;
-  color: #999;
-  margin: 0.3rem 0 0.4rem;
-  line-height: 1.5;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-/* ── DEV: Imagen adjunta thumbnail ── */
+.buzon-dev-sender {
+  font-family: var(--font-heading-alt);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.buzon-dev-boxname {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.buzon-dev-msg-text {
+  font-size: 0.83rem;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
+.buzon-dev-fecha {
+  font-family: var(--font-stats);
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* Imagen dev */
 .buzon-dev-img-thumb {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.3rem;
-  margin: 0.4rem 0;
+  gap: 0;
   cursor: pointer;
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.08);
-  transition: border-color 0.2s, transform 0.2s;
-  max-width: 180px;
+  border: 1px solid var(--border);
+  transition: var(--transition);
+  max-width: 160px;
 }
+
 .buzon-dev-img-thumb:hover {
-  border-color: rgba(220, 53, 69, 0.4);
+  border-color: rgba(230, 57, 70, 0.4);
   transform: translateY(-2px);
 }
+
 .buzon-dev-img-thumb img {
   display: block;
   width: 100%;
-  height: 100px;
+  height: 90px;
   object-fit: cover;
 }
+
 .buzon-dev-img-label {
-  font-size: 0.65rem;
-  color: #666;
-  padding: 0.2rem 0.5rem 0.3rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-card);
+  width: 100%;
+  text-align: center;
 }
 
-/* ── DEV: Respuesta guardada ── */
+/* Respuesta guardada */
 .buzon-dev-respuesta-display {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
-  margin: 0.4rem 0;
   padding: 0.5rem 0.7rem;
   border-radius: 8px;
   background: rgba(52, 152, 219, 0.08);
-  border: 1px solid rgba(52, 152, 219, 0.15);
+  border: 1px solid rgba(52, 152, 219, 0.18);
   font-size: 0.75rem;
-  color: #3498db;
+  color: #4fc3f7;
   line-height: 1.4;
 }
+
 .buzon-dev-respuesta-display i {
   margin-top: 2px;
   flex-shrink: 0;
 }
 
-/* ── DEV: Input de respuesta ── */
-.buzon-dev-respuesta-input {
-  animation: buzon-fade-in 0.3s ease;
-}
+/* Input de respuesta */
+.buzon-dev-respuesta-input { animation: buzon-fade-in 0.3s ease; }
+
 .buzon-dev-respuesta-input input {
   width: 100%;
-  padding: 0.5rem 0.7rem;
-  border-radius: 10px;
-  border: 1px solid rgba(52, 152, 219, 0.3);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(52, 152, 219, 0.35);
   background: rgba(52, 152, 219, 0.06);
-  color: #e8e8e8;
-  font-size: 0.78rem;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-family: var(--font-body);
   outline: none;
-  transition: border-color 0.2s;
-}
-.buzon-dev-respuesta-input input:focus {
-  border-color: #3498db;
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
-}
-.buzon-dev-respuesta-input input::placeholder {
-  color: #555;
+  transition: var(--transition);
 }
 
-/* ── DEV: Actions Column ── */
+.buzon-dev-respuesta-input input:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.12);
+}
+
+.buzon-dev-respuesta-input input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+/* Columna de acciones */
 .buzon-dev-actions-col {
   display: flex;
   flex-direction: column;
@@ -589,92 +778,71 @@
   flex-shrink: 0;
   align-self: center;
 }
+
 .buzon-dev-action-btn {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.06);
-  background: rgba(255,255,255,0.03);
-  color: #666;
-  font-size: 0.7rem;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 0.72rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: var(--transition);
+  touch-action: manipulation;
 }
+
 .buzon-dev-action-btn:hover {
-  border-color: rgba(220, 53, 69, 0.3);
-  color: #dc3545;
-  background: rgba(220, 53, 69, 0.08);
+  border-color: rgba(230, 57, 70, 0.35);
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.08);
 }
+
 .buzon-dev-action-btn.btn-proceso:hover {
   border-color: rgba(52, 152, 219, 0.4);
-  color: #3498db;
+  color: #4fc3f7;
   background: rgba(52, 152, 219, 0.1);
 }
+
 .buzon-dev-action-btn.btn-solucionado:hover {
   border-color: rgba(46, 204, 113, 0.4);
-  color: #2ecc71;
+  color: var(--success);
   background: rgba(46, 204, 113, 0.1);
 }
+
 .buzon-dev-action-btn.btn-noprocede:hover {
   border-color: rgba(231, 76, 60, 0.4);
-  color: #e74c3c;
+  color: var(--danger);
   background: rgba(231, 76, 60, 0.1);
 }
 
-/* ── BADGE ROL ── */
-.buzon-badge-rol {
-  display: inline-flex;
-  padding: 0.15rem 0.5rem;
-  border-radius: 20px;
-  font-size: 0.62rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.buzon-badge-rol.adminbox {
-  background: rgba(220, 53, 69, 0.12);
-  color: #dc3545;
-}
-.buzon-badge-rol.coach {
-  background: rgba(230, 126, 34, 0.12);
-  color: #e67e22;
-}
-.buzon-badge-rol.atleta {
-  background: rgba(241, 196, 15, 0.12);
-  color: #f1c40f;
-}
-.buzon-badge-rol.publico {
-  background: rgba(150, 150, 150, 0.1);
-  color: #888;
-}
-
-/* ── LIGHTBOX ── */
+/* === LIGHTBOX === */
 .buzon-lightbox {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.85);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
   animation: buzon-fade-in 0.25s ease;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
+
 .buzon-lightbox-content {
   position: relative;
   max-width: 90vw;
   max-height: 85vh;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
 }
+
 .buzon-lightbox-content img {
   display: block;
   max-width: 90vw;
@@ -682,6 +850,7 @@
   object-fit: contain;
   border-radius: 16px;
 }
+
 .buzon-lightbox-close {
   position: absolute;
   top: 12px;
@@ -690,17 +859,18 @@
   height: 36px;
   border-radius: 50%;
   border: none;
-  background: rgba(0,0,0,0.6);
-  color: #fff;
+  background: rgba(0, 0, 0, 0.65);
+  color: var(--text-primary);
   font-size: 0.9rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: var(--transition);
   backdrop-filter: blur(4px);
 }
+
 .buzon-lightbox-close:hover {
-  background: #dc3545;
+  background: var(--primary);
   transform: scale(1.1);
 }

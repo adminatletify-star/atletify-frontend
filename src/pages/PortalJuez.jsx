@@ -5,6 +5,7 @@ import BackButton from '../components/BackButton';
 import BotonSeguro from '../components/BotonSeguro';
 import TimeInputMMSS from '../components/TimeInputMMSS';
 import '../assets/css/PortalJuez.css';
+import AtletifyLoader from '../components/AtletifyLoader';
 
 export default function PortalJuez() {
   const { id } = useParams(); // ID de la competencia
@@ -159,7 +160,7 @@ export default function PortalJuez() {
   // ══════════════════════════════════════════
   if (loading) return (
     <div className="jz-spinner-wrapper">
-      <div className="spinner-wp"></div>
+      <AtletifyLoader />
     </div>
   );
 

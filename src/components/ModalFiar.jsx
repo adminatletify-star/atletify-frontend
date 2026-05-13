@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { VENTAS_ENDPOINT } from '../services/api';
+import AtletifyLoader from './AtletifyLoader';
 import './ModalFiar.css';
 
 export default function ModalFiar({ boxId, onClose, onConfirm }) {
@@ -8,17 +9,12 @@ export default function ModalFiar({ boxId, onClose, onConfirm }) {
   const [busqueda, setBusqueda] = useState('');
   const [atletaSeleccionado, setAtletaSeleccionado] = useState(null);
 
-  useEffect(() => {
-    cargarAtletas();
-  }, [boxId]);
+  useEffect(() => { cargarAtletas(); }, [boxId]);
 
   const cargarAtletas = async () => {
     try {
       const res = await fetch(`${VENTAS_ENDPOINT}/atletas-confianza/${boxId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setAtletas(data);
-      }
+      if (res.ok) setAtletas(await res.json());
     } catch (e) {
       console.error(e);
     } finally {
@@ -26,77 +22,119 @@ export default function ModalFiar({ boxId, onClose, onConfirm }) {
     }
   };
 
-  const filtrados = atletas.filter(a => 
-    `${a.nombre} ${a.apellidos}`.toLowerCase().includes(busqueda.toLowerCase())
+  const filtrados = atletas.filter(a =>
+    `${a.nombre} ${a.apellidos} ${a.correo || ''}`.toLowerCase().includes(busqueda.toLowerCase())
   );
 
   return (
     <div className="mf-overlay" onClick={onClose}>
       <div className="mf-panel" onClick={e => e.stopPropagation()}>
-        
+
+        {/* ── Header ── */}
         <div className="mf-header">
-          <h3 className="mf-title"><i className="fas fa-hand-holding-usd me-2 text-warning"></i> Fiar a Atleta</h3>
+          <span className="mf-header-icon">
+            <i className="fas fa-hand-holding-usd"></i>
+          </span>
+          <div className="mf-header-text">
+            <h3 className="mf-title">Fiar a Atleta</h3>
+            <p className="mf-subtitle">Selecciona el atleta para registrar la deuda</p>
+          </div>
           <button type="button" className="mf-close" onClick={onClose}>
             <i className="fas fa-times"></i>
           </button>
         </div>
 
+        {/* ── Body ── */}
         <div className="mf-body">
+
+          {/* Buscador */}
           <div className="mf-search">
             <i className="fas fa-search mf-search-icon"></i>
-            <input 
-              type="text" 
-              placeholder="Buscar por nombre..." 
+            <input
+              type="text"
+              placeholder="Buscar por nombre o correo..."
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
               className="mf-search-input"
+              autoFocus
             />
           </div>
 
+          {/* Atleta seleccionado (resumen) */}
+          {atletaSeleccionado && (
+            <div className="mf-seleccionado-card">
+              {atletaSeleccionado.fotoPerfilUrl
+                ? <img src={atletaSeleccionado.fotoPerfilUrl} alt="" className="mf-atleta-foto" />
+                : <div className="mf-atleta-inicial">{atletaSeleccionado.nombre.charAt(0)}</div>
+              }
+              <div>
+                <p className="mf-seleccionado-label">Atleta seleccionado</p>
+                <p className="mf-seleccionado-nombre">{atletaSeleccionado.nombre} {atletaSeleccionado.apellidos}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Lista */}
           <div className="mf-lista">
             {loading ? (
-              <div className="text-center py-4 text-muted"><div className="spinner-wp mb-2"></div><br/>Cargando atletas...</div>
+              <div className="mf-empty">
+                <AtletifyLoader />
+                <p>Cargando atletas...</p>
+              </div>
             ) : filtrados.length === 0 ? (
-              <div className="text-center py-4 text-muted">No se encontraron atletas de confianza.</div>
+              <div className="mf-empty">
+                <i className="fas fa-user-slash"></i>
+                <p>{busqueda ? 'Sin resultados para tu búsqueda.' : 'No hay atletas de confianza registrados.'}</p>
+              </div>
             ) : (
-              filtrados.map(a => (
-                <div 
-                  key={a.idUsuario} 
-                  className={`mf-atleta-item ${atletaSeleccionado?.idUsuario === a.idUsuario ? 'mf-atleta-item--activo' : ''}`}
-                  onClick={() => setAtletaSeleccionado(a)}
-                >
-                  <div className="mf-atleta-info">
-                    {a.fotoPerfilUrl ? (
-                      <img src={a.fotoPerfilUrl} alt={a.nombre} className="mf-atleta-foto" />
-                    ) : (
-                      <div className="mf-atleta-inicial">{a.nombre.charAt(0)}</div>
-                    )}
-                    <div>
-                      <p className="mf-atleta-nombre">{a.nombre} {a.apellidos}</p>
-                      {a.deudaActual > 0 && (
-                        <span className="badge bg-danger rounded-pill mf-deuda-badge">
-                          Deuda actual: ${parseFloat(a.deudaActual).toFixed(2)}
-                        </span>
-                      )}
+              filtrados.map(a => {
+                const activo = atletaSeleccionado?.idUsuario === a.idUsuario;
+                return (
+                  <div
+                    key={a.idUsuario}
+                    className={`mf-atleta-item ${activo ? 'mf-atleta-item--activo' : ''}`}
+                    onClick={() => setAtletaSeleccionado(a)}
+                  >
+                    <div className="mf-atleta-info">
+                      {a.fotoPerfilUrl
+                        ? <img src={a.fotoPerfilUrl} alt={a.nombre} className="mf-atleta-foto" />
+                        : <div className="mf-atleta-inicial">{a.nombre.charAt(0)}</div>
+                      }
+                      <div className="mf-atleta-datos">
+                        <p className="mf-atleta-nombre">{a.nombre} {a.apellidos}</p>
+                        {a.correo && (
+                          <p className="mf-atleta-correo">
+                            <i className="fas fa-envelope" style={{ marginRight: '0.3rem', fontSize: '0.6rem' }}></i>
+                            {a.correo}
+                          </p>
+                        )}
+                        {a.deudaActual > 0 && (
+                          <span className="mf-deuda-badge">
+                            <i className="fas fa-exclamation-circle" style={{ fontSize: '0.6rem' }}></i>
+                            Deuda: ${parseFloat(a.deudaActual).toFixed(2)}
+                          </span>
+                        )}
+                      </div>
                     </div>
+                    {activo && <i className="fas fa-check-circle mf-check-icon"></i>}
                   </div>
-                  {atletaSeleccionado?.idUsuario === a.idUsuario && (
-                    <i className="fas fa-check-circle text-success mf-check"></i>
-                  )}
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
 
+        {/* ── Footer ── */}
         <div className="mf-footer">
-          <button className="btn btn-outline-secondary" onClick={onClose}>Cancelar</button>
-          <button 
-            className="btn btn-warning" 
+          <button className="mf-btn mf-btn--cancel" onClick={onClose}>
+            <i className="fas fa-times"></i> Cancelar
+          </button>
+          <button
+            className="mf-btn mf-btn--confirm"
             disabled={!atletaSeleccionado}
             onClick={() => onConfirm(atletaSeleccionado)}
           >
-            Confirmar Fiado
+            <i className="fas fa-check"></i> Confirmar Fiado
           </button>
         </div>
 

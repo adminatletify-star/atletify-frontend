@@ -1,6 +1,7 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import ModalExpedienteMedico from '../components/ModalExpedienteMedico';
+import BackButton from '../components/BackButton';
+import '../assets/css/ExpedienteMedico.css';
 
 export default function ExpedienteMedicoPage() {
   const navigate = useNavigate();
@@ -8,20 +9,30 @@ export default function ExpedienteMedicoPage() {
   const idUsuario = u?.idUsuario || u?.id;
 
   if (!idUsuario) {
-    return <div className="text-white text-center p-5">Error: Usuario no identificado.</div>;
+    return (
+      <div className="em-page">
+        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+          Error: Usuario no identificado.
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container" style={{ padding: '20px 0', minHeight: '80vh', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: '800px', position: 'relative' }}>
-         <ModalExpedienteMedico 
-            idUsuario={idUsuario} 
-            onCompletado={() => {
-              // Simplemente mostramos mensaje o redirigimos
-              navigate('/user-panel');
-            }} 
-            isPage={true} 
-         />
+    <div className="em-page">
+      <header className="em-header">
+        <BackButton />
+        <h1 className="em-header-title">
+          Expediente <span>Médico</span>
+        </h1>
+      </header>
+
+      <div style={{ maxWidth: '720px', margin: '0 auto', padding: '0 0.75rem' }}>
+        <ModalExpedienteMedico
+          idUsuario={idUsuario}
+          onCompletado={() => navigate('/user-panel')}
+          isPage={true}
+        />
       </div>
     </div>
   );

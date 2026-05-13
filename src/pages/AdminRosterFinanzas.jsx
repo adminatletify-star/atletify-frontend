@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { COMPETENCIAS_ENDPOINT } from '../services/api';
+import AtletifyLoader from '../components/AtletifyLoader';
 import BackButton from '../components/BackButton';
 import FiltroEstatusPicker from '../components/FiltroEstatusPicker';
 import CategoriaPickerModal from '../components/CategoriaPickerModal';
@@ -126,7 +127,7 @@ export default function AdminRosterFinanzas() {
 
   if (loading) return (
     <div className="d-flex align-items-center justify-content-center" style={{ minHeight: '60vh', background: 'var(--bg-base)' }}>
-      <div className="spinner-wp"></div>
+      <AtletifyLoader />
     </div>
   );
 

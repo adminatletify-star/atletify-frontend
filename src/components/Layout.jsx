@@ -21,41 +21,58 @@ export default function Layout() {
   const shouldHideNav = hideNavRoutes.includes(location.pathname);
   const isStaticNavRoute = location.pathname === '/admin-competencias/panel/1';
 
+  // Sync de box desde localStorage — solo actualiza el estado si el ID cambió,
+  // evitando que JSON.parse genere un nuevo objeto en cada navegación y dispare
+  // la cadena: navItems recalcula → CardNav re-renderiza → GSAP reflow → freeze.
   useEffect(() => {
-    // Sincronizar el box del localStorage siempre que cambie el usuario o la ruta
     const bStr = localStorage.getItem('box');
     let b = null;
     if (bStr) {
       try { b = JSON.parse(bStr); } catch (e) {}
     }
-    setBox(b);
+    setBox(prev => {
+      const prevId = prev?.idBox || prev?.IdBox;
+      const newId = b?.idBox || b?.IdBox;
+      return prevId === newId ? prev : b;
+    });
+  }, [user?.idUsuario, boxActivo]);
 
-    // Refrescar los datos del Box en segundo plano para obtener permisos actualizados (ej. moduloCompetenciasActivo)
-    if (b && (b.idBox || b.IdBox)) {
-      const targetId = b.idBox || b.IdBox;
-      fetch(`${BOXES_ENDPOINT}/${targetId}`)
-        .then(res => {
-          if (res.ok) return res.json();
-          throw new Error('Network response was not ok.');
-        })
-        .then(data => {
-          if (data && (data.idBox || data.IdBox)) {
-             const updatedBox = { ...b, ...data };
-             localStorage.setItem('box', JSON.stringify(updatedBox));
-             setBox(updatedBox); // Actualiza el estado y recalcula el menú
-          }
-        })
-        .catch(err => console.error("Error refrescando box en segundo plano:", err));
+  // Verificaciones de atleta — se leen en cada ruta pero no tocan el box
+  useEffect(() => {
+    if (!user || user.rol !== 'Atleta') return;
+    const bStr = localStorage.getItem('box');
+    let b = null;
+    if (bStr) {
+      try { b = JSON.parse(bStr); } catch (e) {}
     }
+    if (!b) return;
+    const idUsuarioActual = user.idUsuario || user.id;
+    if (idUsuarioActual) {
+      verificarReglamento(b.idBox || b.IdBox, idUsuarioActual);
+      verificarExpediente(idUsuarioActual);
+    }
+  }, [location.pathname, user?.idUsuario]);
 
-    if (user && b && user.rol === 'Atleta') {
-      const idUsuarioActual = user.idUsuario || user.id;
-      if (idUsuarioActual) {
-        verificarReglamento(b.idBox || b.IdBox, idUsuarioActual);
-        verificarExpediente(idUsuarioActual);
-      }
+  // Refresh de datos del Box desde el servidor — solo cuando cambia el box activo
+  useEffect(() => {
+    const bStr = localStorage.getItem('box');
+    let b = null;
+    if (bStr) {
+      try { b = JSON.parse(bStr); } catch (e) {}
     }
-  }, [location, user, boxActivo]);
+    if (!b || !(b.idBox || b.IdBox)) return;
+    const targetId = b.idBox || b.IdBox;
+    fetch(`${BOXES_ENDPOINT}/${targetId}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && (data.idBox || data.IdBox)) {
+          const updatedBox = { ...b, ...data };
+          localStorage.setItem('box', JSON.stringify(updatedBox));
+          setBox(updatedBox);
+        }
+      })
+      .catch(err => console.error("Error refrescando box:", err));
+  }, [boxActivo]);
 
   const verificarReglamento = async (idBox, idUsuario) => {
     try {
@@ -97,7 +114,7 @@ export default function Layout() {
     if (user.rol === 'AdminBox' || user.rol === 'Developer') {
       return [
         {
-          label: 'Operaciones', icon: 'fa-clipboard-check', bgColor: '#1a1a1a', textColor: '#fff',
+          label: 'Operaciones', icon: 'fa-clipboard-check', bgColor: '#1C1C26', textColor: '#fff',
           links: [
             { label: 'Pase de Lista', href: '/pase-de-lista' },
             { label: 'Programar WODs', href: '/calendario-wods' },
@@ -107,7 +124,7 @@ export default function Layout() {
           ]
         },
         {
-          label: 'Administración', icon: 'fa-store', bgColor: '#2c1214', textColor: '#fff',
+          label: 'Administración', icon: 'fa-store', bgColor: '#1f1015', textColor: '#fff',
           links: [
             { label: 'Punto de Venta / Tienda', href: '/gestion-ventas-productos' },
             { label: 'Inventario de Almacén', href: '/almacen-panel' },
@@ -120,7 +137,7 @@ export default function Layout() {
           ]
         },
         {
-          label: 'Ajustes', icon: 'fa-cogs', bgColor: '#1a1a1a', textColor: '#fff',
+          label: 'Ajustes', icon: 'fa-cogs', bgColor: '#1C1C26', textColor: '#fff',
           links: [
             { label: 'Panel Principal', href: '/admin-box-panel' },
             { label: 'Staff y Coaches', href: '/gestion-staff' },
@@ -136,7 +153,7 @@ export default function Layout() {
     if (user.rol === 'Atleta') {
       return [
         {
-          label: 'Mi Entrenamiento', icon: 'fa-dumbbell', bgColor: '#1a1a1a', textColor: '#fff',
+          label: 'Mi Entrenamiento', icon: 'fa-dumbbell', bgColor: '#1C1C26', textColor: '#fff',
           links: [
             { label: 'Panel de Atleta', href: '/user-panel' },
             { label: 'Mis Resultados (Scores)', href: '/mis-resultados' },
@@ -144,7 +161,7 @@ export default function Layout() {
           ]
         },
         {
-          label: 'Comunidad', icon: 'fa-trophy', bgColor: '#2c1214', textColor: '#fff',
+          label: 'Comunidad', icon: 'fa-trophy', bgColor: '#1f1015', textColor: '#fff',
           links: [
             { label: 'Calendario', href: '/calendario-atleta' },
             { label: 'Eventos del Box', href: '/competencias' },
@@ -153,7 +170,7 @@ export default function Layout() {
           ]
         },
         {
-          label: 'Mi Cuenta', icon: 'fa-user', bgColor: '#1a1a1a', textColor: '#fff',
+          label: 'Mi Cuenta', icon: 'fa-user', bgColor: '#1C1C26', textColor: '#fff',
           links: [
             { label: 'Mi Perfil', href: '/mi-perfil' },
             { label: 'Mis Mensualidades', href: '/detalle-plan-user' },
@@ -167,7 +184,7 @@ export default function Layout() {
 
     return [
       {
-        label: 'Clases', icon: 'fa-stopwatch', bgColor: '#1a1a1a', textColor: '#fff',
+        label: 'Clases', icon: 'fa-stopwatch', bgColor: '#1C1C26', textColor: '#fff',
         links: [
           { label: 'Panel de Coach', href: '/admin-box-panel' },
           { label: 'Pase de Lista', href: '/pase-de-lista' },
@@ -177,7 +194,7 @@ export default function Layout() {
         ]
       }
     ];
-  }, [user, box]); // <- Se recalcula si cambia el usuario o el box
+  }, [user?.idUsuario, user?.rol]); // Solo depende del rol del usuario, box no se usa aquí
 
   // Ruta de inicio según rol (para el tab Inicio del MobileNavBar)
   const homeRoute = useMemo(() => {
@@ -189,14 +206,14 @@ export default function Layout() {
   }, [user]);
 
   return (
-    <div style={{ position: 'relative', minHeight: '100vh', backgroundColor: '#050505' }}>
+    <div style={{ position: 'relative', minHeight: '100vh', background: 'var(--bg-base)' }}>
       {!shouldHideNav && createPortal(
         <CardNav
           className={isStaticNavRoute ? 'card-nav-static-only-route' : ''}
           logo={user ? "Logout" : "Login"}
           logoAlt="WOLFPACK"
           items={navItems}
-          baseColor="rgba(10, 10, 10, 0.85)"
+          baseColor="rgba(20, 20, 30, 0.88)"
           menuColor="#ffffff"
           buttonBgColor="#dc3545"
           buttonTextColor="#ffffff"

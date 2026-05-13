@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { USUARIOS_ENDPOINT } from '../services/api';
 import '../assets/css/AtletasBox.css';
 import '../assets/css/Directorio.css';
+import AtletifyLoader from '../components/AtletifyLoader';
 import BackButton from '../components/BackButton';
 import FiltroCategoriaPicker from '../components/FiltroCategoriaPicker';
 import BotonSeguro from '../components/BotonSeguro';
@@ -83,7 +84,7 @@ export default function AtletasBox() {
   if (loading) {
     return (
       <div className="atb-loading">
-        <div className="spinner-wp"></div>
+        <AtletifyLoader />
       </div>
     );
   }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import AtletifyLoader from './AtletifyLoader';
 import '../assets/css/Directorio.css';
 
 export default function ModalVerExpediente({ atleta, onClose }) {
@@ -53,7 +54,7 @@ export default function ModalVerExpediente({ atleta, onClose }) {
   if (loading) {
     return (
       <div className="directorio-modal-overlay" style={{ zIndex: 10000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <div className="spinner-wp"></div>
+        <AtletifyLoader />
       </div>
     );
   }

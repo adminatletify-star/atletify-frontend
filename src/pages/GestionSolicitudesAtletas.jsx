@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
+import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/GestionSolicitudes.css';
 
 export default function GestionSolicitudesAtletas() {
@@ -99,7 +100,7 @@ export default function GestionSolicitudesAtletas() {
         </div>
 
         {loading ? (
-          <div className="gs-spinner-wrap"><div className="spinner-wp"></div></div>
+          <div className="gs-spinner-wrap"><AtletifyLoader /></div>
         ) : pendientes.length === 0 ? (
           <div className="gs-empty">
             <i className="fas fa-check-circle gs-empty-icon"></i>

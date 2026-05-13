@@ -94,7 +94,7 @@ export default function Comunidad() {
           <i className="fas fa-users"></i> COMUNIDAD
         </span>
         {!loading && (
-          <span className="com-member-count ms-auto">{comunidad.length} LOBOS</span>
+          <span className="com-member-count ms-auto">{comunidad.length} Compas</span>
         )}
       </nav>
 
@@ -217,6 +217,7 @@ export default function Comunidad() {
           onClose={() => setLoboSeleccionado(null)}
           onReaccionar={handleReaccionar}
           onSolicitarAmistad={handleSolicitarAmistad}
+          boxNombre={JSON.parse(localStorage.getItem('box'))?.nombre || 'WOLFPACK'}
         />
       )}
     </div>

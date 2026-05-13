@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL_CONST } from '../services/api';
+import AtletifyLoader from '../components/AtletifyLoader';
 import BackButton from '../components/BackButton';
 import '../assets/css/AlmacenPanel.css';
 
@@ -366,7 +367,7 @@ export default function AlmacenPanel() {
 
   if (loading) return (
     <div className="min-vh-100 d-flex justify-content-center align-items-center" style={{ background: 'var(--bg-base)' }}>
-      <div className="spinner-wp" />
+      <AtletifyLoader />
     </div>
   );
 

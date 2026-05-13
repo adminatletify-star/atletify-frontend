@@ -16,13 +16,14 @@ const CardNav = ({
   const navRef = useRef(null);
   const cardsRef = useRef([]);
   const tlRef = useRef(null);
+  const isExpandedRef = useRef(false);
   const location = useLocation();
   const navigate = useNavigate();
   const clickTimeout = useRef(null);
   const [listaBoxes, setListaBoxes] = useState([]);
 
   // 👇 EXTRAEMOS EL USUARIO Y LA FUNCIÓN DE CAMBIAR BOX 👇
-  const { usuario, boxActivo, cambiarBox, cuentasGuardadas, cambiarCuenta } = useAuth();
+  const { usuario, boxActivo, cambiarBox, cuentasGuardadas, prepararCambioCuenta } = useAuth();
 
   const getHomeRoute = () => {
     if (!usuario) return '/';
@@ -31,6 +32,9 @@ const CardNav = ({
     if (usuario.rol === 'Atleta' || usuario.rol === 'Usuario') return '/user-panel';
     return '/';
   };
+
+  // Mantiene el ref sincronizado con el estado
+  useEffect(() => { isExpandedRef.current = isExpanded; }, [isExpanded]);
 
   useEffect(() => {
     if (isExpanded) {
@@ -83,11 +87,14 @@ const CardNav = ({
     return 260;
   };
 
-  const createTimeline = () => {
+  const createTimeline = (startOpen = false) => {
     const navEl = navRef.current;
     if (!navEl) return null;
-    gsap.set(navEl, { height: 60, overflow: 'hidden' });
-    gsap.set(cardsRef.current, { y: 50, opacity: 0 });
+    // Si el nav estaba abierto cuando items cambió, no lo colapsamos para evitar el freeze
+    if (!startOpen) {
+      gsap.set(navEl, { height: 60, overflow: 'hidden' });
+      gsap.set(cardsRef.current, { y: 50, opacity: 0 });
+    }
     const tl = gsap.timeline({ paused: true });
     tl.to(navEl, { height: calculateHeight, duration: 0.4, ease });
     tl.to(cardsRef.current, { y: 0, opacity: 1, duration: 0.4, ease, stagger: 0.08 }, '-=0.1');
@@ -95,7 +102,13 @@ const CardNav = ({
   };
 
   useLayoutEffect(() => {
-    const tl = createTimeline(); tlRef.current = tl;
+    const wasOpen = isExpandedRef.current;
+    const tl = createTimeline(wasOpen);
+    tlRef.current = tl;
+    // Si estaba abierto cuando items cambió (ej. auth cargó tarde), restauramos el estado abierto
+    if (wasOpen && tl) {
+      tl.progress(1).pause();
+    }
     return () => { tl?.kill(); tlRef.current = null; };
   }, [ease, items]);
 
@@ -250,9 +263,16 @@ const CardNav = ({
                           onClick={(e) => {
                             e.preventDefault();
                             if (!isActiva) {
-                              const ok = cambiarCuenta(c);
+                              // prepararCambioCuenta solo escribe en localStorage sin disparar
+                              // setUsuario/setToken/setBoxActivo, evitando el re-render cascade
+                              // que congela la UI antes de que el navegador procese la navegación.
+                              const ok = prepararCambioCuenta(c);
                               if (ok) {
-                                closeMenu();
+                                if (navRef.current) gsap.set(navRef.current, { height: 60, overflow: 'hidden' });
+                                if (cardsRef.current.length) gsap.set(cardsRef.current, { y: 50, opacity: 0 });
+                                setIsHamburgerOpen(false);
+                                setIsExpanded(false);
+
                                 const rol = c.usuario?.rol;
                                 const idCompe = c.usuario?.idCompetenciaAsignada;
                                 let route = '/user-panel';

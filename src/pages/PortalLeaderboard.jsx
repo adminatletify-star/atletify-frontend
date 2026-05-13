@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { COMPETENCIAS_ENDPOINT } from '../services/api';
 import BackButton from '../components/BackButton';
 import '../assets/css/PortalLeaderboard.css';
+import AtletifyLoader from '../components/AtletifyLoader';
 
 export default function PortalLeaderboard() {
   const { id } = useParams();
@@ -154,7 +155,7 @@ export default function PortalLeaderboard() {
 
   if (loading) return (
     <div className="lb-spinner-wrapper">
-      <div className="spinner-wp"></div>
+      <AtletifyLoader />
     </div>
   );
 

@@ -533,9 +533,9 @@ export default function SimuladorBarra() {
     };
 
     return (
-      <div className="rounded-4 p-3 p-md-4" style={{ background: '#141f4a', minHeight: `${alturaArea}px`, border: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="small text-white fw-semibold mb-3">Coloca los discos en su lugar</div>
-        <div style={{ position: 'relative', height: '240px', overflow: 'hidden', borderRadius: '14px', background: '#1f2a63' }}>
+      <div className="rounded-4 p-3 p-md-4" style={{ background: 'var(--bg-card)', minHeight: `${alturaArea}px`, border: '1px solid var(--border)' }}>
+        <div className="small fw-semibold mb-3" style={{ color: 'var(--text-muted)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Coloca los discos en su lugar</div>
+        <div style={{ position: 'relative', height: '240px', overflow: 'hidden', borderRadius: '12px', background: 'var(--bg-input)' }}>
           <div
             style={{
               position: 'absolute',
@@ -656,7 +656,7 @@ export default function SimuladorBarra() {
         </div>
       </header>
 
-      <div className="container-fluid px-3 px-md-4 px-lg-5" style={{ maxWidth: '1440px', margin: '0 auto' }}>
+      <div className="container-fluid px-3 px-md-4" style={{ maxWidth: '1280px', margin: '0 auto' }}>
 
         {/* ── CONTROLS ── */}
         <div className="sb-controls mb-4">

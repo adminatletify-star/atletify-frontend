@@ -1,157 +1,672 @@
+/* ============================================================
+   MIS DEUDAS (Estado de Cuenta) — WolfPack Design System
+   Alineado visualmente con GestionClases
+   Mobile-first · Completamente responsivo
+   ============================================================ */
+
+/* ── PÁGINA ─────────────────────────────────────────────── */
 .mdf-page {
+  background: var(--bg-base);
   min-height: 100vh;
-  background-color: var(--wp-bg-body);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  padding-bottom: 4rem;
 }
 
+/* ── HEADER STICKY (= .gc-header) ─────────────────────── */
 .mdf-header {
-  padding: 1.5rem 2rem;
-  background-color: var(--wp-bg-card);
-  border-bottom: 1px solid var(--wp-border);
-  margin-bottom: 2rem;
-}
-
-.mdf-header-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin: 0;
-  color: var(--wp-text-main);
-}
-.mdf-header-title span {
-  color: var(--wp-primary);
-}
-
-.mdf-resumen-card {
-  background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
-  border: 1px solid var(--bs-danger);
-  border-radius: 1rem;
-  padding: 1.5rem 2rem;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1rem 0.75rem 0.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  margin-bottom: 1.5rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.1);
+  gap: 0.6rem;
 }
-
-.mdf-resumen-info {
-  display: flex;
-  flex-direction: column;
+@media (min-width: 768px) {
+  .mdf-header { padding: 0.85rem 1.5rem 0.85rem 0.6rem; margin-bottom: 2rem; }
 }
-
-.mdf-resumen-label {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--wp-text-main);
+.mdf-header-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  font-weight: 700;
+  color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 1px;
-}
-
-.mdf-resumen-monto {
   margin: 0;
-  font-size: 2.5rem;
+  line-height: 1.1;
+}
+.mdf-header-title span { color: var(--primary); }
+.mdf-header-sub {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* ── CONTENIDO ──────────────────────────────────────────── */
+.mdf-content {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* ── BANNER DE DEUDA TOTAL ──────────────────────────────── */
+.mdf-summary {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.mdf-summary-info { flex: 1; min-width: 0; }
+.mdf-summary-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.63rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin: 0 0 0.15rem;
+}
+.mdf-summary-amount {
+  font-family: var(--font-stats);
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
   font-weight: 800;
-  color: var(--bs-danger);
+  color: var(--primary);
+  margin: 0;
+  line-height: 1;
+}
+.mdf-summary-amount--zero { color: #198754; }
+
+.mdf-abonar-btn {
+  background: var(--primary);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0.65rem 1.1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}
+.mdf-abonar-btn:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 16px var(--primary-glow);
 }
 
-.mdf-resumen-icon {
-  font-size: 3rem;
-  color: rgba(220, 53, 69, 0.5);
+/* ── TABS ───────────────────────────────────────────────── */
+.mdf-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 1.5rem;
 }
+.mdf-tab {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  touch-action: manipulation;
+  flex: 1;
+  justify-content: center;
+}
+.mdf-tab:hover { border-color: rgba(230,57,70,0.35); color: var(--text-primary); }
+.mdf-tab--active { background: var(--primary); border-color: var(--primary); color: #fff; }
 
+.mdf-tab-count {
+  background: rgba(255,255,255,0.25);
+  border-radius: 20px;
+  padding: 0 0.45rem;
+  font-size: 0.62rem;
+  line-height: 1.5;
+  min-width: 18px;
+  text-align: center;
+}
+.mdf-tab--active .mdf-tab-count { background: rgba(0,0,0,0.2); }
+
+/* ── SECTION TITLE (= .gc-section-title) ──────────────── */
 .mdf-section-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--wp-text-main);
+  font-family: var(--font-heading);
+  font-size: clamp(0.72rem, 2vw, 0.88rem);
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
   margin-bottom: 1rem;
-  border-bottom: 2px solid var(--wp-border);
-  padding-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
+.mdf-section-title i { color: var(--primary); font-size: 0.85em; }
+.mdf-section-title--saldado i { color: #198754; }
 
-.mdf-lista {
+/* ── LISTA DE TARJETAS ──────────────────────────────────── */
+.mdf-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
-.mdf-bloque {
-  background-color: var(--wp-bg-card);
-  border: 1px solid var(--wp-border);
-  border-radius: 0.75rem;
-  padding: 1.25rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+/* ── TARJETA DE DEUDA (= .gc-form-card) ─────────────────── */
+.mdf-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid #ffc107;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: var(--transition);
 }
-
-.mdf-bloque--pendiente {
-  border-left: 4px solid var(--bs-warning);
+.mdf-card:hover {
+  box-shadow: 0 6px 22px rgba(0,0,0,0.25);
+  transform: translateY(-1px);
 }
-
-.mdf-bloque--saldado {
-  border-left: 4px solid var(--bs-success);
-  opacity: 0.8;
+.mdf-card--saldado {
+  border-top-color: #198754;
+  opacity: 0.85;
 }
+.mdf-card--saldado:hover { opacity: 1; }
 
-.mdf-bloque-head {
+/* Cabecera de tarjeta */
+.mdf-card-head {
+  padding: 0.85rem 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px dashed var(--wp-border);
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.mdf-card-meta { flex: 1; min-width: 0; }
+.mdf-card-id {
+  font-family: var(--font-heading-alt);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.1rem;
+}
+.mdf-card-date {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin: 0;
 }
 
-.mdf-bloque-prods {
-  font-size: 0.95rem;
-  color: var(--wp-text-muted);
-  margin-bottom: 1rem;
+/* Status badges */
+.mdf-status {
+  font-family: var(--font-heading-alt);
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0.18rem 0.55rem;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.mdf-status--pendiente {
+  background: rgba(255,193,7,0.14);
+  color: #ffc107;
+  border: 1px solid rgba(255,193,7,0.3);
+}
+.mdf-status--saldado {
+  background: rgba(25,135,84,0.12);
+  color: #198754;
+  border: 1px solid rgba(25,135,84,0.3);
 }
 
-.mdf-bloque-foot {
-  background-color: rgba(255, 255, 255, 0.02);
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.95rem;
+/* Productos */
+.mdf-card-items {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.mdf-card-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+.mdf-card-item-name {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mdf-card-item-sub {
+  font-family: var(--font-stats);
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  white-space: nowrap;
 }
 
-/* Modal */
+/* Resumen financiero */
+.mdf-card-foot {
+  padding: 0.75rem 1rem;
+  background: var(--bg-card);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.mdf-foot-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.mdf-foot-label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.mdf-foot-value {
+  font-family: var(--font-stats);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.mdf-foot-value--abonado { color: #198754; }
+.mdf-foot-row--resta {
+  padding-top: 0.35rem;
+  margin-top: 0.15rem;
+  border-top: 1px solid var(--border);
+}
+.mdf-foot-row--resta .mdf-foot-label { color: var(--text-primary); font-weight: 700; font-size: 0.78rem; }
+.mdf-foot-row--resta .mdf-foot-value { color: var(--primary); font-size: 0.95rem; font-weight: 800; }
+
+/* Fecha liquidación */
+.mdf-liquidacion {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: #198754;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding-top: 0.3rem;
+  margin-top: 0.2rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Historial de abonos */
+.mdf-card-abonos {
+  padding: 0.65rem 1rem 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.mdf-abonos-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 0.45rem;
+}
+.mdf-abono-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px dashed rgba(255,255,255,0.05);
+  font-size: 0.75rem;
+}
+.mdf-abono-row:last-child { border-bottom: none; }
+.mdf-abono-date  { color: var(--text-muted); white-space: nowrap; }
+.mdf-abono-metod { color: var(--text-muted); flex: 1; text-align: center; }
+.mdf-abono-amount { color: #198754; font-family: var(--font-stats); font-weight: 700; white-space: nowrap; }
+.mdf-abono-pending {
+  font-family: var(--font-heading-alt);
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0.15rem 0.45rem;
+  border-radius: 20px;
+  background: rgba(255,193,7,0.12);
+  color: #ffc107;
+  border: 1px solid rgba(255,193,7,0.25);
+  white-space: nowrap;
+}
+
+/* ── EMPTY STATE ────────────────────────────────────────── */
+.mdf-empty {
+  text-align: center;
+  padding: 3.5rem 1rem;
+}
+.mdf-empty i { font-size: 2.8rem; color: var(--border); display: block; margin-bottom: 0.75rem; }
+.mdf-empty p { font-family: var(--font-body); color: var(--text-muted); font-size: 0.88rem; margin: 0; }
+
+/* ── LOADER ─────────────────────────────────────────────── */
+.mdf-loader-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 35vh;
+}
+
+/* ── MODAL OVERLAY ──────────────────────────────────────── */
 .mdf-modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0,0,0,0.7);
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 1050;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  animation: mdfFadeIn 0.2s ease;
 }
+@keyframes mdfFadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mdfSlideUp { from { transform: translateY(14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-.mdf-modal-panel {
-  background-color: #1e1e1e;
-  border: 1px solid rgba(255,193,7,0.25);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
-  border-radius: 1rem;
+/* ── MODAL ──────────────────────────────────────────────── */
+.mdf-modal {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
   width: 100%;
-  max-width: 450px;
-  display: flex;
-  flex-direction: column;
+  max-width: 460px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+  animation: mdfSlideUp 0.22s ease;
 }
-
 .mdf-modal-header {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--wp-border);
+  padding: 0.9rem 1.1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 1px solid var(--border);
+  gap: 0.75rem;
 }
+@media (min-width: 576px) { .mdf-modal-header { padding: 1rem 1.25rem; } }
 
-.mdf-close-btn {
-  background: none;
-  border: none;
-  color: var(--wp-text-muted);
-  font-size: 1.25rem;
-  cursor: pointer;
+.mdf-modal-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(230,57,70,0.1);
+  border: 1px solid rgba(230,57,70,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 0.9rem;
+  flex-shrink: 0;
 }
+.mdf-modal-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.1;
+  flex: 1;
+}
+.mdf-modal-close {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+  font-size: 0.8rem;
+}
+.mdf-modal-close:hover:not(:disabled) {
+  border-color: rgba(230,57,70,0.4);
+  color: var(--primary);
+}
+.mdf-modal-close:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .mdf-modal-body {
-  padding: 1.5rem;
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+@media (min-width: 576px) { .mdf-modal-body { padding: 1.25rem; } }
+
+.mdf-modal-hint {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem 0.8rem;
+}
+
+.mdf-modal-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 0.35rem;
+}
+.mdf-modal-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  outline: none;
+  transition: var(--transition);
+}
+.mdf-modal-input:focus {
+  border-color: rgba(230,57,70,0.5);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+.mdf-modal-warn {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  color: #ffc107;
+  margin: 0.3rem 0 0;
+}
+.mdf-modal-preview {
+  text-align: center;
+  margin-top: 0.5rem;
+}
+.mdf-modal-preview img {
+  max-height: 140px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.mdf-modal-actions {
+  display: flex;
+  gap: 0.55rem;
+  align-items: stretch;
+}
+.mdf-btn-cancel {
+  width: 44px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.82rem;
+  transition: var(--transition);
+  touch-action: manipulation;
+}
+.mdf-btn-cancel:hover { border-color: var(--primary); color: var(--primary); background: rgba(230,57,70,0.06); }
+
+.mdf-submit-btn {
+  flex: 1;
+  background: var(--primary);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  touch-action: manipulation;
+}
+.mdf-submit-btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 16px var(--primary-glow);
+}
+.mdf-submit-btn:disabled { background: var(--bg-card); color: var(--text-muted); cursor: not-allowed; }
+
+/* ── VARIANTE MODAL RECHAZO ─────────────────────────────── */
+.mdf-modal--rechazo {
+  border-top-color: #ffc107;
+}
+
+.mdf-modal-icon--warn {
+  background: rgba(255, 193, 7, 0.1);
+  border-color: rgba(255, 193, 7, 0.3);
+  color: #ffc107;
+}
+
+/* Lista de comprobantes rechazados */
+.mdf-rechazados-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.mdf-rechazado-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: rgba(230, 57, 70, 0.06);
+  border: 1px solid rgba(230, 57, 70, 0.2);
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+}
+
+.mdf-rechazado-icon {
+  color: var(--primary);
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.mdf-rechazado-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.mdf-rechazado-monto {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  margin: 0 0 0.15rem;
+}
+
+.mdf-rechazado-monto strong {
+  font-family: var(--font-stats);
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+.mdf-rechazado-fecha {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.mdf-rechazado-estado {
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.5px;
+}
+
+/* Aviso al pie del modal */
+.mdf-rechazado-aviso {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: #ffc107;
+  background: rgba(255, 193, 7, 0.07);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+  border-radius: 8px;
+  padding: 0.55rem 0.8rem;
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  line-height: 1.45;
+}
+
+.mdf-rechazado-aviso i {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+/* Botón de reenvío (variante amarilla) */
+.mdf-submit-btn--reenviar {
+  background: #ffc107;
+  color: #111;
+}
+
+.mdf-submit-btn--reenviar:hover:not(:disabled) {
+  background: #e0a800;
+  box-shadow: 0 4px 16px rgba(255, 193, 7, 0.35);
 }

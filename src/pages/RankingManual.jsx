@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import BackButton from '../components/BackButton';
+import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/RankingManual.css';
 
 const API_BASE = import.meta.env.VITE_API_URL;;
@@ -172,9 +173,7 @@ export default function RankingManual() {
 
   if (loading) return (
     <div className="rm-loading">
-      <div className="spinner-border" role="status">
-        <span className="visually-hidden">Cargando...</span>
-      </div>
+      <AtletifyLoader />
     </div>
   );
 

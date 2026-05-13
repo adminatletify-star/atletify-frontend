@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { BOXES_ENDPOINT, USUARIOS_ENDPOINT, api } from '../services/api';
+import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/dashboard.css';
 
 export default function Dashboard() {
@@ -246,7 +247,7 @@ export default function Dashboard() {
 
   if (loading) return (
     <div className="min-vh-100 d-flex justify-content-center align-items-center">
-      <div className="spinner-wp" />
+      <AtletifyLoader />
     </div>
   );
 

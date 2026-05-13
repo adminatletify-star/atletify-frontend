@@ -83,6 +83,7 @@
 .finanzas-badge--gris { background: rgba(149, 165, 166, 0.2); color: #95a5a6; }
 
 .finanzas-tabs {
+  position: relative;
   display: flex;
   gap: 0.2rem;
   padding: 0.3rem;
@@ -92,7 +93,21 @@
   min-width: max-content;
 }
 
+.finanzas-tab-slider {
+  position: absolute;
+  top: 0.3rem;
+  height: calc(100% - 0.6rem);
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  border-radius: 10px;
+  pointer-events: none;
+  z-index: 0;
+  transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1), width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .finanzas-tab {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -107,16 +122,13 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   cursor: pointer;
-  transition: all 0.18s;
+  transition: color 0.18s;
   white-space: nowrap;
 }
 .finanzas-tab:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.04);
 }
 .finanzas-tab.activo {
-  background: rgba(230, 57, 70, 0.12);
-  border-color: rgba(230, 57, 70, 0.3);
   color: var(--primary);
 }
 

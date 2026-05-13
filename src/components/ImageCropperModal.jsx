@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '../utils/cropImage';
 import '../assets/css/ImageCropper.css';
@@ -9,8 +9,8 @@ export default function ImageCropperModal({ imageSrc, onCropComplete, onCancel }
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const onCropCompleteHandler = useCallback((croppedArea, croppedAreaPixels) => {
-    setCroppedAreaPixels(croppedAreaPixels);
+  const onCropCompleteHandler = useCallback((_, pixels) => {
+    setCroppedAreaPixels(pixels);
   }, []);
 
   const handleAplicar = async () => {
@@ -27,10 +27,24 @@ export default function ImageCropperModal({ imageSrc, onCropComplete, onCancel }
     }
   };
 
+  const zoomPercent = Math.round(((zoom - 1) / 2) * 100);
+
   return (
-    <div className="cropper-overlay">
-      <div className="cropper-modal">
-        <h4 className="cropper-title">Ajusta tu foto</h4>
+    <div className="cropper-overlay" onClick={onCancel}>
+      <div className="cropper-modal" onClick={e => e.stopPropagation()}>
+
+        {/* ── Header ── */}
+        <div className="cropper-header">
+          <span className="cropper-header-icon">
+            <i className="fas fa-camera"></i>
+          </span>
+          <div className="cropper-header-text">
+            <h4 className="cropper-title">Ajusta tu foto</h4>
+            <p className="cropper-subtitle">Mueve y escala para encuadrar tu foto de perfil</p>
+          </div>
+        </div>
+
+        {/* ── Área de recorte ── */}
         <div className="cropper-container">
           <Cropper
             image={imageSrc}
@@ -44,27 +58,54 @@ export default function ImageCropperModal({ imageSrc, onCropComplete, onCancel }
             onZoomChange={setZoom}
           />
         </div>
+
+        {/* ── Zoom ── */}
         <div className="cropper-controls">
-          <label className="text-light mb-1">Zoom</label>
+          <div className="cropper-zoom-label">
+            <span className="cropper-zoom-text">
+              <i className="fas fa-search-plus"></i> Zoom
+            </span>
+            <span className="cropper-zoom-value">{zoomPercent}%</span>
+          </div>
           <input
             type="range"
+            className="cropper-range"
             value={zoom}
             min={1}
             max={3}
-            step={0.1}
-            aria-labelledby="Zoom"
-            onChange={(e) => setZoom(e.target.value)}
-            className="form-range custom-range"
+            step={0.05}
+            aria-label="Zoom"
+            onChange={e => setZoom(parseFloat(e.target.value))}
           />
         </div>
+
+        {/* ── Hint ── */}
+        <p className="cropper-hint">
+          <i className="fas fa-hand-paper"></i>
+          Arrastra la imagen para reencuadrar · La foto se recortará en círculo
+        </p>
+
+        {/* ── Acciones ── */}
         <div className="cropper-actions">
-          <button className="btn btn-outline-light" onClick={onCancel} disabled={isProcessing}>
-            Cancelar
+          <button
+            className="cropper-btn cropper-btn--cancel"
+            onClick={onCancel}
+            disabled={isProcessing}
+          >
+            <i className="fas fa-times"></i> Cancelar
           </button>
-          <button className="btn btn-danger" onClick={handleAplicar} disabled={isProcessing}>
-            {isProcessing ? <i className="fas fa-spinner fa-spin"></i> : 'Aplicar'}
+          <button
+            className="cropper-btn cropper-btn--apply"
+            onClick={handleAplicar}
+            disabled={isProcessing}
+          >
+            {isProcessing
+              ? <><span className="cropper-spinner"></span> Aplicando...</>
+              : <><i className="fas fa-check"></i> Aplicar</>
+            }
           </button>
         </div>
+
       </div>
     </div>
   );

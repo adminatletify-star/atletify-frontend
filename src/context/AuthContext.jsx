@@ -168,6 +168,36 @@ export function AuthProvider({ children }) {
     return true;
   };
 
+  // Solo escribe en localStorage sin tocar el estado de React.
+  // Úsalo cuando inmediatamente después vas a hacer window.location.href / reload,
+  // así evitas el ciclo de re-renders que congela la UI antes de navegar.
+  const prepararCambioCuenta = (cuenta) => {
+    if (!isTokenValid(cuenta.token)) {
+      setCuentasGuardadas((prevCuentas) => {
+        const nuevas = prevCuentas.filter(c => getIdFromUser(c.usuario) !== getIdFromUser(cuenta.usuario));
+        localStorage.setItem('cuentasGuardadas', JSON.stringify(nuevas));
+        return nuevas;
+      });
+      alert(`La sesión de "${cuenta.usuario.nombre}" ha expirado. Necesitas volver a iniciar sesión con esa cuenta.`);
+      return false;
+    }
+    localStorage.setItem('usuario', JSON.stringify(cuenta.usuario));
+    if (cuenta.token) localStorage.setItem('token', cuenta.token);
+    else localStorage.removeItem('token');
+    if (cuenta.boxActivo) localStorage.setItem('boxActivo', JSON.stringify(cuenta.boxActivo));
+    else localStorage.removeItem('boxActivo');
+    if (cuenta.boxData) {
+      let dataToSave = cuenta.boxData;
+      if (typeof dataToSave === 'string') {
+        try { dataToSave = JSON.parse(dataToSave); } catch (e) {}
+      }
+      localStorage.setItem('box', JSON.stringify(dataToSave));
+    } else {
+      localStorage.removeItem('box');
+    }
+    return true;
+  };
+
   const removerCuenta = (cuentaId) => {
     setCuentasGuardadas((prevCuentas) => {
       const nuevasCuentas = prevCuentas.filter(c => getIdFromUser(c.usuario) !== cuentaId);
@@ -222,6 +252,7 @@ export function AuthProvider({ children }) {
       cuentasGuardadas,
       cambiarBox,
       cambiarCuenta,
+      prepararCambioCuenta,
       getIdFromUser,
       isTokenValid,
       login,

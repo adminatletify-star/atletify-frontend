@@ -4,6 +4,7 @@ import DarkVeil from '../components/ReactBits/DarkVeil';
 import BotonSeguro from '../components/BotonSeguro';
 import CategoriaBasePicker from '../components/CategoriaBasePicker';
 import '../assets/css/public-dropin.css';
+import AtletifyLoader from '../components/AtletifyLoader';
 
 const API_BASE = import.meta.env.VITE_API_URL;;
 
@@ -200,7 +201,7 @@ export default function PublicDropIn() {
     // ===============================================
     // VISTAS PRINCIPALES
     // ===============================================
-    if (loading) return <div className="text-center py-5" style={{ minHeight: '100vh' }}><div className="spinner-border text-danger"></div></div>;
+    if (loading) return <div className="text-center py-5" style={{ minHeight: '100vh' }}><AtletifyLoader /></div>;
 
     if (!idBox) {
         return (

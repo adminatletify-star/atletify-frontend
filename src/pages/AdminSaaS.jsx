@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AtletifyLoader from '../components/AtletifyLoader';
 
 const AdminSaaS = () => {
     const [planes, setPlanes] = useState([]);
@@ -205,7 +206,7 @@ const AdminSaaS = () => {
         }
     };
 
-    if (loading) return <div className="min-vh-100 d-flex justify-content-center align-items-center"><div className="spinner-border text-info" /></div>;
+    if (loading) return <div className="min-vh-100 d-flex justify-content-center align-items-center"><AtletifyLoader /></div>;
 
     return (
         <div className="container py-5 text-white font-sans min-h-screen">

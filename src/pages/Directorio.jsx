@@ -6,6 +6,7 @@ import AnimatedList from '../components/ReactBits/AnimatedList';
 import FiltroHorarioPicker from '../components/FiltroHorarioPicker';
 import FiltroMultiplePicker from '../components/FiltroMultiplePicker';
 import ModalVerExpediente from '../components/ModalVerExpediente';
+import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/Directorio.css';
 
 const API_BASE = import.meta.env.VITE_API_URL;;
@@ -428,7 +429,7 @@ export default function Directorio() {
         {/* LISTA */}
         {loading ? (
           <div className="empty-state">
-            <div className="spinner-wp mx-auto"></div>
+            <AtletifyLoader />
           </div>
         ) : atletasFiltrados.length === 0 ? (
           <div className="empty-state">
@@ -560,7 +561,7 @@ export default function Directorio() {
 
               <div className="directorio-seccion-label"><i className="fas fa-wallet"></i> Estado Financiero</div>
               {!estadoPagoModal ? (
-                <div className="text-center py-3"><div className="spinner-wp mx-auto"></div></div>
+                <div className="text-center py-3"><AtletifyLoader /></div>
               ) : (
                 <div className={`directorio-financiero ${estadoPagoModal.estado === 'Pagado' || estadoPagoModal.estado === 'Exento' ? 'directorio-financiero--ok' : 'directorio-financiero--alerta'}`}>
                   <i className={`fas fs-3 ${estadoPagoModal.estado === 'Pagado' || estadoPagoModal.estado === 'Exento' ? 'fa-check-circle' : 'fa-exclamation-triangle'}`}></i>

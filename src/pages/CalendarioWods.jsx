@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import BackButton from '../components/BackButton';
+import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/CalendarioWods.css';
 
 const API_BASE = import.meta.env.VITE_API_URL;;
@@ -216,7 +217,7 @@ export default function CalendarioWods() {
         >
           {loading ? (
             <div className="cw-loading">
-              <div className="spinner-wp"></div>
+              <AtletifyLoader />
             </div>
           ) : (
             <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-7 g-2 g-md-3 justify-content-center">

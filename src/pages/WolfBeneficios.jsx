@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import '../assets/css/WolfBeneficios.css';
+import AtletifyLoader from '../components/AtletifyLoader';
 
 const API_BASE = import.meta.env.VITE_API_URL;
 const todayISO = new Date().toISOString().split('T')[0];
@@ -149,7 +150,7 @@ export default function WolfBeneficios() {
 
         {loading ? (
           <div className="text-center py-5">
-            <div className="spinner-wp"></div>
+            <AtletifyLoader />
           </div>
         ) : planes.length === 0 ? (
           <div className="wb-empty">

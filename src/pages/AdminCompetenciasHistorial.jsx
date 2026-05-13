@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { COMPETENCIAS_ENDPOINT } from '../services/api';
+import AtletifyLoader from '../components/AtletifyLoader';
 import BackButton from '../components/BackButton';
 import EstatusPickerModal from '../components/EstatusPickerModal';
 import FormatoCategoriaPicker from '../components/FormatoCategoriaPicker';
@@ -175,7 +176,7 @@ export default function AdminCompetenciasHistorial() {
 
   if (loading) return (
     <div className="d-flex align-items-center justify-content-center" style={{ minHeight: '60vh', background: 'var(--bg-base)' }}>
-      <div className="spinner-wp"></div>
+      <AtletifyLoader />
     </div>
   );
 
@@ -201,7 +202,7 @@ export default function AdminCompetenciasHistorial() {
         <div className="container-xl px-3 px-md-4 py-4">
           {loadingRoster ? (
             <div className="d-flex align-items-center justify-content-center py-5">
-              <div className="spinner-wp"></div>
+              <AtletifyLoader />
             </div>
           ) : rosterData.length === 0 ? (
             <div className="acomp-empty">

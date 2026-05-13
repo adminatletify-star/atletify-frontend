@@ -6,6 +6,7 @@ import DiasCongelarPicker from '../components/DiasCongelarPicker';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import '../assets/css/PerfilAtletaAdmin.css';
 import BotonSeguro from '../components/BotonSeguro';
+import AtletifyLoader from '../components/AtletifyLoader';
 
 const API_USUARIOS = `${import.meta.env.VITE_API_URL}/usuarios`;
 const API_COBRANZA = `${import.meta.env.VITE_API_URL}/cobranza`;
@@ -311,7 +312,7 @@ export default function PerfilAtletaAdmin() {
     if (finanzas?.suscripcion) calcularPrecioReal();
   }, [finanzas, calcularPrecioReal]);
 
-  if (loading) return <div className="paa-loading"><div className="spinner-wp"></div></div>;
+  if (loading) return <div className="paa-loading"><AtletifyLoader /></div>;
   if (!atleta) return <div className="paa-not-found"><i className="fas fa-user-slash" style={{ fontSize: '3rem' }}></i><p>Atleta no encontrado.</p></div>;
 
   return (

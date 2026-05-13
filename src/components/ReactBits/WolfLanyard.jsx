@@ -16,6 +16,7 @@ export default function WolfLanyard({
   onClose,
   onReaccionar,
   onSolicitarAmistad,
+  boxNombre = 'WOLFPACK',
 }) {
   if (!lobo) return null;
 
@@ -200,8 +201,7 @@ export default function WolfLanyard({
 
             {/* Header strip */}
             <div className="wl-card-header">
-              <i className="fas fa-paw wl-logo-icon"></i>
-              <span className="wl-logo-text">WOLFPACK</span>
+              <span className="wl-logo-text">{boxNombre.toUpperCase()}</span>
             </div>
 
             {/* Scrollable content */}

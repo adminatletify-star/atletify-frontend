@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { VENTAS_ENDPOINT } from '../services/api';
 import BackButton from '../components/BackButton';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
+import AtletifyLoader from '../components/AtletifyLoader';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -586,7 +587,7 @@ export default function HistorialVentas() {
 
         {loading ? (
           <div className="hv-loading">
-            <div className="spinner-wp"></div>
+            <AtletifyLoader />
           </div>
         ) : (
           <>

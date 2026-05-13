@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import MesPicker from '../components/MesPicker';
 import AñoPicker from '../components/AñoPicker';
+import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/MisResultados.css';
 
 const API_BASE = import.meta.env.VITE_API_URL;;
@@ -177,7 +178,7 @@ export default function MisResultados() {
         {/* Estados */}
         {loading ? (
           <div className="mr-state-center">
-            <div className="spinner-border mr-spinner"></div>
+            <AtletifyLoader />
           </div>
         ) : error ? (
           <div className="mr-state-center">

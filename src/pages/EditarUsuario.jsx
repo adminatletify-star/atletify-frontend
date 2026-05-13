@@ -7,6 +7,7 @@ import CategoriaBasePicker from '../components/CategoriaBasePicker';
 import HorarioClasePicker from '../components/HorarioClasePicker';
 import RolUsuarioPicker from '../components/RolUsuarioPicker';
 import BotonSeguro from '../components/BotonSeguro';
+import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/EditarUsuario.css';
 
 export default function EditarUsuario() {
@@ -96,7 +97,7 @@ export default function EditarUsuario() {
   if (loading) {
     return (
       <div className="eu-loading">
-        <div className="spinner-wp"></div>
+        <AtletifyLoader />
         <p>Cargando información del atleta...</p>
       </div>
     );

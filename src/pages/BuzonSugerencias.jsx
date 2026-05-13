@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AtletifyLoader from '../components/AtletifyLoader';
 import BackButton from '../components/BackButton';
 import './PagesCSS/BuzonSugerencias.css';
 
@@ -15,10 +16,10 @@ const CATEGORIAS = [
 ];
 
 const ESTATUS_CONFIG = {
-  'Pendiente':  { icon: 'fa-clock',        color: '#f39c12', label: 'Pendiente' },
-  'En Proceso': { icon: 'fa-wrench',       color: '#3498db', label: 'En Proceso' },
-  'Solucionado':{ icon: 'fa-check-circle', color: '#2ecc71', label: 'Solucionado' },
-  'No Procede': { icon: 'fa-ban',          color: '#e74c3c', label: 'No Procede' },
+  'Pendiente': { icon: 'fa-clock', color: '#f39c12', label: 'Pendiente' },
+  'En Proceso': { icon: 'fa-wrench', color: '#3498db', label: 'En Proceso' },
+  'Solucionado': { icon: 'fa-check-circle', color: '#2ecc71', label: 'Solucionado' },
+  'No Procede': { icon: 'fa-ban', color: '#e74c3c', label: 'No Procede' },
 };
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -29,18 +30,14 @@ export default function BuzonSugerencias() {
   const [user, setUser] = useState(null);
   const [box, setBox] = useState(null);
 
-  // Formulario (roles no-Dev)
   const [categoria, setCategoria] = useState('');
   const [mensaje, setMensaje] = useState('');
   const [imagenUrl, setImagenUrl] = useState('');
   const [enviando, setEnviando] = useState(false);
-  const [exito, setExito] = useState(false);
 
-  // Historial personal (roles no-Dev)
   const [historial, setHistorial] = useState([]);
   const [loadingHistorial, setLoadingHistorial] = useState(true);
 
-  // Panel Developer
   const [sugerencias, setSugerencias] = useState([]);
   const [sugerenciasPendientes, setSugerenciasPendientes] = useState(0);
   const [filtroTabSug, setFiltroTabSug] = useState('Pendiente');
@@ -48,11 +45,9 @@ export default function BuzonSugerencias() {
   const [filtroRolSug, setFiltroRolSug] = useState('');
   const [loadingSug, setLoadingSug] = useState(true);
 
-  // Respuesta del Developer
   const [respuestaDevId, setRespuestaDevId] = useState(null);
   const [respuestaDevText, setRespuestaDevText] = useState('');
 
-  // Lightbox de imagen
   const [lightboxImg, setLightboxImg] = useState(null);
 
   const isDev = user?.rol === 'Developer';
@@ -60,22 +55,13 @@ export default function BuzonSugerencias() {
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('usuario'));
     const b = JSON.parse(localStorage.getItem('box'));
-
-    if (!u) {
-      navigate('/login');
-      return;
-    }
+    if (!u) { navigate('/login'); return; }
     setUser(u);
     setBox(b);
-
-    if (u.rol === 'Developer') {
-      cargarSugerencias();
-    } else {
-      cargarHistorial(u.id);
-    }
+    if (u.rol === 'Developer') cargarSugerencias();
+    else cargarHistorial(u.id);
   }, [navigate]);
 
-  // === CLOUDINARY UPLOAD ===
   function abrirCloudinary() {
     if (!window.cloudinary) {
       alert('El widget de Cloudinary no ha cargado. Revisa tu conexión a internet.');
@@ -87,7 +73,7 @@ export default function BuzonSugerencias() {
         uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
         sources: ['local', 'camera'],
         multiple: false,
-        maxFileSize: 5000000, // 5MB
+        maxFileSize: 5000000,
         resourceType: 'image',
         clientAllowedFormats: ['png', 'jpg', 'jpeg', 'gif', 'webp'],
         cropping: false,
@@ -110,7 +96,6 @@ export default function BuzonSugerencias() {
     widget.open();
   }
 
-  // === LÓGICA DE USUARIOS (Atleta, Coach, AdminBox) ===
   async function cargarHistorial(idUsuario) {
     setLoadingHistorial(true);
     try {
@@ -141,23 +126,20 @@ export default function BuzonSugerencias() {
         correo: user.correo,
         mensaje: mensaje.trim(),
         rol: user.rol,
-        categoria: categoria,
+        categoria,
         imagenUrl: imagenUrl || null,
       };
-
       const res = await fetch(`${API_URL}/sugerencias`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
       if (res.ok) {
-        setExito(true);
+        window.alert('¡Sugerencia enviada! El equipo de desarrollo la revisará pronto.');
         setMensaje('');
         setCategoria('');
         setImagenUrl('');
         cargarHistorial(user.id);
-        setTimeout(() => setExito(false), 4000);
       } else {
         const errData = await res.json();
         alert(errData.mensaje || 'Error al enviar la sugerencia.');
@@ -169,7 +151,6 @@ export default function BuzonSugerencias() {
     }
   }
 
-  // === LÓGICA DEL DEVELOPER ===
   async function cargarSugerencias() {
     setLoadingSug(true);
     try {
@@ -208,7 +189,6 @@ export default function BuzonSugerencias() {
 
   const categoriasUnicas = [...new Set(sugerencias.map(s => s.categoria))];
 
-  // Rutas de regreso
   const rutaRegreso = isDev
     ? '/dashboard'
     : user?.rol === 'AdminBox' || user?.rol === 'Coach'
@@ -218,40 +198,38 @@ export default function BuzonSugerencias() {
   const charCount = mensaje.length;
   const charClass = charCount > MAX_CHARS ? 'danger' : charCount > MAX_CHARS * 0.85 ? 'warn' : '';
 
-  // Tabs del developer
   const TABS_DEV = ['Pendiente', 'En Proceso', 'Solucionado', 'No Procede'];
 
   return (
     <div className="buzon-page">
+
+      {/* ── HEADER ── */}
+      <header className="buzon-header">
+        <div className="d-flex align-items-center gap-3">
+          <BackButton to={rutaRegreso} />
+          <div>
+            <h1 className="buzon-header-title">
+              Buzón de <span>Sugerencias</span>
+              {isDev && sugerenciasPendientes > 0 && (
+                <span className="buzon-dev-count ms-2">{sugerenciasPendientes}</span>
+              )}
+            </h1>
+            <p className="buzon-header-sub">
+              {isDev
+                ? 'Gestiona los reportes y sugerencias de todos los usuarios'
+                : 'Reporta bugs, errores o envía ideas al equipo de desarrollo'
+              }
+            </p>
+          </div>
+        </div>
+      </header>
+
       <div className="container-xl px-3 px-md-4">
 
-        {/* ── HEADER ── */}
-        <header className="buzon-header">
-          <div className="d-flex align-items-center gap-3">
-            <BackButton to={rutaRegreso} />
-            <div>
-              <h1 className="buzon-header-title">
-                <i className="fas fa-envelope-open-text me-2" style={{ color: '#dc3545' }}></i>
-                Buzón de Sugerencias
-                {isDev && sugerenciasPendientes > 0 && (
-                  <span className="buzon-dev-count ms-2">{sugerenciasPendientes}</span>
-                )}
-              </h1>
-              <p className="buzon-header-sub">
-                {isDev
-                  ? 'Gestiona los reportes y sugerencias de todos los usuarios'
-                  : 'Reporta bugs, errores o envía ideas al equipo de desarrollo'
-                }
-              </p>
-            </div>
-          </div>
-        </header>
-
-        {/* ══════════════════════════════════════════════════
-            VISTA DEVELOPER: Panel de lectura y gestión
-        ══════════════════════════════════════════════════ */}
+        {/* ══ VISTA DEVELOPER ══ */}
         {isDev ? (
           <div className="buzon-dev-panel">
+
             <div className="buzon-dev-header">
               <h3 className="buzon-dev-title">
                 <i className="fas fa-inbox"></i>
@@ -260,7 +238,6 @@ export default function BuzonSugerencias() {
               <div className="buzon-dev-filters">
                 <select
                   className="buzon-dev-filter"
-                  style={{ appearance: 'auto', padding: '0.35rem 0.6rem' }}
                   value={filtroCatSug}
                   onChange={e => setFiltroCatSug(e.target.value)}
                 >
@@ -269,7 +246,6 @@ export default function BuzonSugerencias() {
                 </select>
                 <select
                   className="buzon-dev-filter"
-                  style={{ appearance: 'auto', padding: '0.35rem 0.6rem' }}
                   value={filtroRolSug}
                   onChange={e => setFiltroRolSug(e.target.value)}
                 >
@@ -281,7 +257,7 @@ export default function BuzonSugerencias() {
               </div>
             </div>
 
-            {/* Tabs: Pendiente | En Proceso | Solucionado | No Procede */}
+            {/* Tabs */}
             <div className="buzon-dev-tabs">
               {TABS_DEV.map(tab => {
                 const cfg = ESTATUS_CONFIG[tab];
@@ -295,17 +271,17 @@ export default function BuzonSugerencias() {
                   >
                     <i className={`fas ${cfg.icon} me-1`}></i>
                     {cfg.label}
-                    <span className="ms-1" style={{ opacity: 0.5 }}>({count})</span>
+                    <span className="buzon-dev-tab-count">({count})</span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Lista de sugerencias */}
+            {/* Lista */}
             <div className="buzon-dev-body">
               {loadingSug ? (
                 <div className="d-flex justify-content-center py-5">
-                  <div className="spinner-border text-danger" role="status" style={{ width: '2rem', height: '2rem' }}></div>
+                  <AtletifyLoader />
                 </div>
               ) : sugerenciasFiltradas.length === 0 ? (
                 <div className="buzon-empty">
@@ -324,27 +300,22 @@ export default function BuzonSugerencias() {
                         <div className="buzon-dev-sender">
                           <span>{s.nombreUsuario || 'Anónimo'}</span>
                           <span className={`buzon-badge-rol ${s.rol?.toLowerCase()}`}>{s.rol}</span>
-                          <span className="buzon-badge-cat" style={{ fontSize: '0.62rem' }}>{catInfo.emoji} {catInfo.label}</span>
+                          <span className="buzon-badge-cat">{catInfo.emoji} {catInfo.label}</span>
                           {s.nombreBox && (
-                            <span style={{ color: '#555', fontSize: '0.68rem' }}>
+                            <span className="buzon-dev-boxname">
                               <i className="fas fa-dumbbell me-1"></i>{s.nombreBox}
                             </span>
                           )}
                         </div>
                         <p className="buzon-dev-msg-text">{s.mensaje}</p>
 
-                        {/* Imagen adjunta */}
                         {s.imagenUrl && (
-                          <div
-                            className="buzon-dev-img-thumb"
-                            onClick={() => setLightboxImg(s.imagenUrl)}
-                          >
+                          <div className="buzon-dev-img-thumb" onClick={() => setLightboxImg(s.imagenUrl)}>
                             <img src={s.imagenUrl} alt="Adjunto" />
                             <span className="buzon-dev-img-label"><i className="fas fa-search-plus me-1"></i>Ver imagen</span>
                           </div>
                         )}
 
-                        {/* Respuesta del Dev ya guardada */}
                         {s.respuestaDev && (
                           <div className="buzon-dev-respuesta-display">
                             <i className="fas fa-reply"></i>
@@ -352,11 +323,10 @@ export default function BuzonSugerencias() {
                           </div>
                         )}
 
-                        <span style={{ fontSize: '0.68rem', color: '#444' }}>
+                        <span className="buzon-dev-fecha">
                           {new Date(s.fechaCreacion).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </span>
 
-                        {/* Campo para escribir respuesta */}
                         {isExpandedResp && (
                           <div className="buzon-dev-respuesta-input mt-2">
                             <input
@@ -371,7 +341,6 @@ export default function BuzonSugerencias() {
                         )}
                       </div>
 
-                      {/* Acciones de estatus */}
                       <div className="buzon-dev-actions-col">
                         {filtroTabSug === 'Pendiente' && (
                           <>
@@ -379,12 +348,8 @@ export default function BuzonSugerencias() {
                               className="buzon-dev-action-btn btn-proceso"
                               title="Marcar En Proceso"
                               onClick={() => {
-                                if (isExpandedResp) {
-                                  cambiarEstatusSugerencia(s.idSugerencia, 'En Proceso', respuestaDevText);
-                                } else {
-                                  setRespuestaDevId(s.idSugerencia);
-                                  setRespuestaDevText('');
-                                }
+                                if (isExpandedResp) cambiarEstatusSugerencia(s.idSugerencia, 'En Proceso', respuestaDevText);
+                                else { setRespuestaDevId(s.idSugerencia); setRespuestaDevText(''); }
                               }}
                             >
                               <i className="fas fa-wrench"></i>
@@ -393,12 +358,8 @@ export default function BuzonSugerencias() {
                               className="buzon-dev-action-btn btn-noprocede"
                               title="No Procede"
                               onClick={() => {
-                                if (isExpandedResp) {
-                                  cambiarEstatusSugerencia(s.idSugerencia, 'No Procede', respuestaDevText);
-                                } else {
-                                  setRespuestaDevId(s.idSugerencia);
-                                  setRespuestaDevText('');
-                                }
+                                if (isExpandedResp) cambiarEstatusSugerencia(s.idSugerencia, 'No Procede', respuestaDevText);
+                                else { setRespuestaDevId(s.idSugerencia); setRespuestaDevText(''); }
                               }}
                             >
                               <i className="fas fa-ban"></i>
@@ -410,12 +371,8 @@ export default function BuzonSugerencias() {
                             className="buzon-dev-action-btn btn-solucionado"
                             title="Marcar como Solucionado"
                             onClick={() => {
-                              if (isExpandedResp) {
-                                cambiarEstatusSugerencia(s.idSugerencia, 'Solucionado', respuestaDevText);
-                              } else {
-                                setRespuestaDevId(s.idSugerencia);
-                                setRespuestaDevText('');
-                              }
+                              if (isExpandedResp) cambiarEstatusSugerencia(s.idSugerencia, 'Solucionado', respuestaDevText);
+                              else { setRespuestaDevId(s.idSugerencia); setRespuestaDevText(''); }
                             }}
                           >
                             <i className="fas fa-check-circle"></i>
@@ -426,7 +383,6 @@ export default function BuzonSugerencias() {
                             className="buzon-dev-action-btn"
                             title="Cancelar"
                             onClick={() => { setRespuestaDevId(null); setRespuestaDevText(''); }}
-                            style={{ fontSize: '0.6rem' }}
                           >
                             <i className="fas fa-times"></i>
                           </button>
@@ -440,24 +396,13 @@ export default function BuzonSugerencias() {
           </div>
 
         ) : (
-          /* ══════════════════════════════════════════════════
-              VISTA USUARIOS: Formulario de envío + historial
-          ══════════════════════════════════════════════════ */
+          /* ══ VISTA USUARIOS ══ */
           <div className="row g-4">
 
-            {/* COLUMNA IZQUIERDA: FORMULARIO */}
+            {/* FORMULARIO */}
             <div className="col-12 col-lg-7">
               <div className="buzon-form-panel">
 
-                {/* Éxito */}
-                {exito && (
-                  <div className="buzon-success-msg mb-3">
-                    <i className="fas fa-check-circle"></i>
-                    ¡Sugerencia enviada! El equipo de desarrollo la revisará pronto. 🐺
-                  </div>
-                )}
-
-                {/* Paso 1: Categoría */}
                 <p className="buzon-section-label">
                   <i className="fas fa-tag"></i>¿Qué tipo de reporte es?
                 </p>
@@ -475,7 +420,6 @@ export default function BuzonSugerencias() {
                   ))}
                 </div>
 
-                {/* Paso 2: Mensaje */}
                 <p className="buzon-section-label">
                   <i className="fas fa-comment-alt"></i>Describe el problema o sugerencia
                 </p>
@@ -490,7 +434,6 @@ export default function BuzonSugerencias() {
                   {charCount} / {MAX_CHARS}
                 </p>
 
-                {/* Paso 3: Imagen (Cloudinary) */}
                 <p className="buzon-section-label mt-3">
                   <i className="fas fa-camera"></i>Adjuntar captura de pantalla (opcional)
                 </p>
@@ -507,50 +450,42 @@ export default function BuzonSugerencias() {
                     </button>
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    className="buzon-upload-btn"
-                    onClick={abrirCloudinary}
-                  >
+                  <button type="button" className="buzon-upload-btn" onClick={abrirCloudinary}>
                     <i className="fas fa-cloud-upload-alt"></i>
                     <span>Subir imagen</span>
                     <small>PNG, JPG, WEBP — Máx 5MB</small>
                   </button>
                 )}
 
-                {/* Paso 4: Enviar */}
                 <button
                   className="buzon-btn-enviar mt-3"
                   onClick={handleEnviar}
                   disabled={enviando || !categoria || !mensaje.trim()}
                 >
-                  {enviando ? (
-                    <><i className="fas fa-spinner fa-spin"></i>Enviando...</>
-                  ) : (
-                    <><i className="fas fa-paper-plane"></i>Enviar Reporte</>
-                  )}
+                  {enviando
+                    ? <><i className="fas fa-spinner fa-spin"></i>Enviando...</>
+                    : <><i className="fas fa-paper-plane"></i>Enviar Reporte</>
+                  }
                 </button>
 
-                {/* Info del remitente */}
-                <div className="mt-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#555', fontSize: '0.72rem' }}>
+                <div className="buzon-remitente mt-3">
                   <i className="fas fa-user-shield"></i>
-                  Se enviará como <strong style={{ color: '#888' }}>{user?.nombre}</strong> ({user?.rol})
-                  {box && <> — <strong style={{ color: '#888' }}>{box.nombre}</strong></>}
+                  Se enviará como <strong>{user?.nombre}</strong> ({user?.rol})
+                  {box && <> — <strong>{box.nombre}</strong></>}
                 </div>
 
               </div>
             </div>
 
-            {/* COLUMNA DERECHA: HISTORIAL */}
+            {/* HISTORIAL */}
             <div className="col-12 col-lg-5">
-
               <p className="buzon-section-label">
                 <i className="fas fa-history"></i>Mis Reportes Enviados
               </p>
 
               {loadingHistorial ? (
                 <div className="d-flex justify-content-center py-5">
-                  <div className="spinner-border text-danger" role="status" style={{ width: '2rem', height: '2rem' }}></div>
+                  <AtletifyLoader />
                 </div>
               ) : historial.length === 0 ? (
                 <div className="buzon-empty">
@@ -567,14 +502,12 @@ export default function BuzonSugerencias() {
                       <div key={s.idSugerencia} className="buzon-historial-card">
                         <p className="buzon-historial-msg">{s.mensaje}</p>
 
-                        {/* Thumbnail de la imagen si existe */}
                         {s.imagenUrl && (
                           <div className="buzon-historial-img" onClick={() => setLightboxImg(s.imagenUrl)}>
                             <img src={s.imagenUrl} alt="Adjunto" />
                           </div>
                         )}
 
-                        {/* Respuesta del developer */}
                         {s.respuestaDev && (
                           <div className="buzon-historial-respuesta">
                             <i className="fas fa-reply"></i>
@@ -583,15 +516,13 @@ export default function BuzonSugerencias() {
                         )}
 
                         <div className="buzon-historial-meta">
-                          <span className="buzon-badge-cat">
-                            {catInfo.emoji} {catInfo.label}
-                          </span>
+                          <span className="buzon-badge-cat">{catInfo.emoji} {catInfo.label}</span>
                           <span
                             className="buzon-badge-estatus"
                             style={{
-                              background: `${estatusCfg.color}15`,
+                              background: `${estatusCfg.color}18`,
                               color: estatusCfg.color,
-                              border: `1px solid ${estatusCfg.color}33`
+                              border: `1px solid ${estatusCfg.color}44`
                             }}
                           >
                             <i className={`fas ${estatusCfg.icon} me-1`}></i>
@@ -606,7 +537,6 @@ export default function BuzonSugerencias() {
                   })}
                 </div>
               )}
-
             </div>
 
           </div>
@@ -614,7 +544,7 @@ export default function BuzonSugerencias() {
 
       </div>
 
-      {/* ── LIGHTBOX DE IMAGEN ── */}
+      {/* ── LIGHTBOX ── */}
       {lightboxImg && (
         <div className="buzon-lightbox" onClick={() => setLightboxImg(null)}>
           <div className="buzon-lightbox-content" onClick={e => e.stopPropagation()}>

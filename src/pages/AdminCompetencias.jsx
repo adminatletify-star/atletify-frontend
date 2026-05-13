@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { COMPETENCIAS_ENDPOINT } from '../services/api';
+import AtletifyLoader from '../components/AtletifyLoader';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import BackButton from '../components/BackButton';
 import EstatusPickerModal from '../components/EstatusPickerModal';
@@ -244,7 +245,7 @@ export default function AdminCompetencias() {
 
   if (loading) return (
     <div className="d-flex align-items-center justify-content-center" style={{ minHeight: '60vh', background: 'var(--bg-base)' }}>
-      <div className="spinner-wp"></div>
+      <AtletifyLoader />
     </div>
   );
 
@@ -400,7 +401,7 @@ export default function AdminCompetencias() {
             )}
           </>
         ) : (
-          <div className="spinner-wp mt-4" style={{ transform: 'scale(0.5)' }}></div>
+          <div className="mt-4" style={{ transform: 'scale(0.5)' }}><AtletifyLoader /></div>
         )}
       </div>
     );
@@ -429,7 +430,7 @@ export default function AdminCompetencias() {
         <div className="container-xl px-3 px-md-4 py-4">
           {loadingRoster ? (
             <div className="d-flex align-items-center justify-content-center py-5">
-              <div className="spinner-wp"></div>
+              <AtletifyLoader />
             </div>
           ) : rosterData.length === 0 ? (
             <div className="acomp-empty">

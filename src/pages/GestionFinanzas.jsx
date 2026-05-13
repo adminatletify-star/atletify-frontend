@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import BackButton from '../components/BackButton';
 import BotonSeguro from '../components/BotonSeguro';
+import AtletifyLoader from '../components/AtletifyLoader';
 import DuracionPlanPicker from '../components/DuracionPlanPicker';
 import TipoMovimientoPicker from '../components/TipoMovimientoPicker';
 import FiltroMesAnoPicker from '../components/FiltroMesAnoPicker';
@@ -10,6 +11,7 @@ import SelectorPlanPicker from '../components/SelectorPlanPicker';
 import PromocionPicker from '../components/PromocionPicker';
 import MetodoPagoPicker from '../components/MetodoPagoPicker';
 import CategoriaBasePicker from '../components/CategoriaBasePicker';
+import NivelAccesoPicker from '../components/NivelAccesoPicker';
 import '../assets/css/GestionFinanzas.css';
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api/finanzas`;
@@ -22,6 +24,12 @@ export default function GestionFinanzas() {
   const [box, setBox] = useState(null);
   const [loading, setLoading] = useState(false);
   const [pestaña, setPestaña] = useState(location.state?.fromTab || 'dashboard');
+  const tabRefs = useRef({});
+  const [sliderStyle, setSliderStyle] = useState(null);
+  useLayoutEffect(() => {
+    const el = tabRefs.current[pestaña];
+    if (el) setSliderStyle({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [pestaña]);
   const [dashboardData, setDashboardData] = useState(null);
   const [descuentos, setDescuentos] = useState([]);
   const [formDescuento, setFormDescuento] = useState({ nombre: '', porcentaje: '' });
@@ -109,15 +117,6 @@ export default function GestionFinanzas() {
     cargarDatos(b.idBox);
   }, [navigate, cargarDatos, location.key]);
 
-  // V4: Recargar datos cuando el usuario regresa de otra página (Ej: del perfil del atleta)
-  useEffect(() => {
-    const handleFocus = () => {
-      const b = JSON.parse(localStorage.getItem('box'));
-      if (b) cargarDatos(b.idBox);
-    };
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [cargarDatos]);
 
   const cargarMovimientos = useCallback(async (idBox, mes = '', tipo = 'Todos') => {
     setLoadingMov(true);
@@ -543,17 +542,18 @@ export default function GestionFinanzas() {
 
         <div className="finanzas-tabs-wrapper mb-4">
           <div className="finanzas-tabs">
-            <button className={`finanzas-tab ${pestaña === 'dashboard' ? 'activo' : ''}`} onClick={() => setPestaña('dashboard')}><i className="fas fa-chart-pie"></i>Dashboard</button>
-            <button className={`finanzas-tab ${pestaña === 'semaforo' ? 'activo' : ''}`} onClick={() => setPestaña('semaforo')}><i className="fas fa-traffic-light"></i>Semáforo</button>
-            <button className={`finanzas-tab ${pestaña === 'planes' ? 'activo' : ''}`} onClick={() => setPestaña('planes')}><i className="fas fa-tags"></i>Planes</button>
-            <button className={`finanzas-tab ${pestaña === 'descuentos' ? 'activo' : ''}`} onClick={() => setPestaña('descuentos')}><i className="fas fa-percent"></i>Promos</button>
-            <button className={`finanzas-tab ${pestaña === 'dropin' ? 'activo' : ''}`} onClick={() => setPestaña('dropin')}><i className="fas fa-plane-arrival"></i>Drop-In</button>
-            <button className={`finanzas-tab ${pestaña === 'movimientos' ? 'activo' : ''}`} onClick={() => setPestaña('movimientos')}><i className="fas fa-history"></i>Movimientos</button>
+            {sliderStyle && <div className="finanzas-tab-slider" style={sliderStyle} />}
+            <button ref={el => tabRefs.current['dashboard'] = el} className={`finanzas-tab ${pestaña === 'dashboard' ? 'activo' : ''}`} onClick={() => setPestaña('dashboard')}><i className="fas fa-chart-pie"></i>Dashboard</button>
+            <button ref={el => tabRefs.current['semaforo'] = el} className={`finanzas-tab ${pestaña === 'semaforo' ? 'activo' : ''}`} onClick={() => setPestaña('semaforo')}><i className="fas fa-traffic-light"></i>Semáforo</button>
+            <button ref={el => tabRefs.current['planes'] = el} className={`finanzas-tab ${pestaña === 'planes' ? 'activo' : ''}`} onClick={() => setPestaña('planes')}><i className="fas fa-tags"></i>Planes</button>
+            <button ref={el => tabRefs.current['descuentos'] = el} className={`finanzas-tab ${pestaña === 'descuentos' ? 'activo' : ''}`} onClick={() => setPestaña('descuentos')}><i className="fas fa-percent"></i>Promos</button>
+            <button ref={el => tabRefs.current['dropin'] = el} className={`finanzas-tab ${pestaña === 'dropin' ? 'activo' : ''}`} onClick={() => setPestaña('dropin')}><i className="fas fa-plane-arrival"></i>Drop-In</button>
+            <button ref={el => tabRefs.current['movimientos'] = el} className={`finanzas-tab ${pestaña === 'movimientos' ? 'activo' : ''}`} onClick={() => setPestaña('movimientos')}><i className="fas fa-history"></i>Movimientos</button>
           </div>
         </div>
 
         {loading ? (
-          <div className="text-center py-5"><div className="spinner-wp"></div></div>
+          <div className="text-center py-5"><AtletifyLoader /></div>
         ) : (
           <>
             {/* TAB: DASHBOARD */}
@@ -596,12 +596,12 @@ export default function GestionFinanzas() {
               <div className="finanzas-card">
                 <div className="finanzas-card-titulo d-flex justify-content-between align-items-center flex-wrap gap-2">
                   <span><i className="fas fa-traffic-light" style={{ color: 'var(--success)' }}></i> Estado de Atletas</span>
-                  <div className="d-flex gap-2 flex-wrap">
+                  <div className="d-flex gap-2 flex-wrap w-100 w-md-auto">
                     <input
                       type="text"
-                      className="finanzas-input mb-0 py-1 px-2"
+                      className="finanzas-input mb-0 py-1 px-2 flex-grow-1"
                       placeholder="Buscar por nombre o teléfono..."
-                      style={{ width: '250px', fontSize: '0.9rem' }}
+                      style={{ minWidth: '160px', fontSize: '0.9rem' }}
                       value={busquedaSemaforo}
                       onChange={(e) => setBusquedaSemaforo(e.target.value)}
                     />
@@ -617,7 +617,49 @@ export default function GestionFinanzas() {
                     </select>
                   </div>
                 </div>
-                <div className="finanzas-table-wrapper">
+                {/* Vista móvil: tarjetas */}
+                <div className="d-md-none">
+                  {semaforoFiltrado.length === 0 ? (
+                    <div className="finanzas-empty"><p>No hay atletas que coincidan.</p></div>
+                  ) : semaforoFiltrado.map(s => (
+                    <div key={s.idUsuario} className="finanzas-card mb-2 p-3 h-auto">
+                      <div className="d-flex justify-content-between align-items-start gap-2 mb-2">
+                        <div>
+                          <div className="finanzas-atleta-nombre">
+                            {s.nombre}
+                            {s.esDeConfianza && <span className="badge bg-info text-dark ms-2" style={{ fontSize: '0.6rem' }}><i className="fas fa-handshake"></i> Confianza</span>}
+                          </div>
+                          <div className="finanzas-atleta-tel"><i className="fas fa-phone me-1"></i>{s.telefono || 'Sin número'}</div>
+                          <div className="small mt-1" style={{ color: 'var(--secondary)' }}>{s.plan}</div>
+                        </div>
+                        <span className={`finanzas-badge ${getBadgeColor(s.estado)}`} style={{ whiteSpace: 'nowrap' }}>
+                          {s.estado === 'Verde' ? `Al día · ${s.diasRestantes}d`
+                            : s.estado === 'Amarillo' ? `Por vencer · ${s.diasRestantes}d`
+                              : s.estado === 'Azul' ? 'CONGELADO'
+                                : s.estado === 'VIP' ? 'PASE LIBRE'
+                                  : s.estado === 'Gris' ? 'CANCELADO'
+                                    : 'VENCIDO'}
+                        </span>
+                      </div>
+                      <div className="d-flex gap-2">
+                        <button
+                          className="finanzas-btn-accion finanzas-btn-accion--renovar"
+                          onClick={() => { setAtletaARenovar(s); setShowModal(true); }}
+                          disabled={s.estado === 'VIP'}
+                          style={{ opacity: s.estado === 'VIP' ? 0.4 : 1, cursor: s.estado === 'VIP' ? 'not-allowed' : 'pointer' }}
+                        >
+                          <i className="fas fa-sync-alt"></i>Renovar
+                        </button>
+                        <button className="finanzas-btn-accion finanzas-btn-accion--perfil" onClick={() => { navigate(location.pathname, { replace: true, state: { ...location.state, fromTab: pestaña } }); navigate(`/perfil-atleta-admin/${s.idUsuario}`); }}>
+                          <i className="fas fa-eye"></i>Perfil
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Vista escritorio: tabla */}
+                <div className="finanzas-table-wrapper d-none d-md-block">
                   <table className="finanzas-table">
                     <thead><tr><th>Atleta</th><th>Plan Actual</th><th>Estado</th><th style={{ textAlign: 'right' }}>Acción</th></tr></thead>
                     <tbody>
@@ -635,7 +677,6 @@ export default function GestionFinanzas() {
                             </span></td>
                             <td>
                               <div className="d-flex gap-2 justify-content-end flex-wrap">
-                                {/* 👇 AQUÍ AGREGAMOS EL disabled Y LA OPACIDAD 👇 */}
                                 <button
                                   className="finanzas-btn-accion finanzas-btn-accion--renovar"
                                   onClick={() => { setAtletaARenovar(s); setShowModal(true); }}
@@ -691,11 +732,7 @@ export default function GestionFinanzas() {
 
                         <div className="col-md-6">
                           <label className="etiqueta-campo">Nivel de Acceso</label>
-                          <select className="finanzas-input" value={formPlan.nivelAcceso} onChange={e => setFormPlan({ ...formPlan, nivelAcceso: e.target.value })}>
-                            <option value="CrossFit">Clases de CrossFit</option>
-                            <option value="OpenGym">Solo Open Gym (Pesas)</option>
-                            <option value="Hibrido">Híbrido (Ambos)</option>
-                          </select>
+                          <NivelAccesoPicker valor={formPlan.nivelAcceso} onCambiar={v => setFormPlan({ ...formPlan, nivelAcceso: v })} />
                         </div>
                         <div className="col-md-6">
                           <label className="etiqueta-campo">Precio Mensual Base (Para mostrar ahorro)</label>
@@ -816,11 +853,11 @@ export default function GestionFinanzas() {
             {pestaña === 'dropin' && (
               <div className="row g-4">
                 {/* PANEL LATERAL CON BOTÓN */}
-                <div className="col-12 col-lg-4">
-                  <div className="finanzas-card sticky-top" style={{ top: '80px' }}>
+                <div className="col-12 col-lg-4 align-self-lg-start">
+                  <div className="finanzas-card sticky-top h-auto" style={{ top: '80px' }}>
                     <div className="text-center mb-4">
-                      <i className="fas fa-plane-arrival text-warning display-4 mb-2"></i>
-                      <div className="finanzas-card-titulo d-block border-0 mb-1">Registrar Drop-In</div>
+                      <i className="fas fa-dumbbell text-warning display-4 mb-2"></i>
+                      <div className="finanzas-card-titulo border-0 mb-1 justify-content-center"><i className="fas fa-dumbbell text-warning me-2"></i>Registrar Drop-In</div>
                       <p className="text-secondary small">Registra a un turista en una clase del día y cobra el pago en mostrador.</p>
                     </div>
                     <button type="button" className="finanzas-btn-submit finanzas-btn-submit--warning w-100" onClick={abrirModalDropIn}>
@@ -835,65 +872,112 @@ export default function GestionFinanzas() {
                     <div className="finanzas-card-titulo">
                       <i className="fas fa-list-alt text-success"></i> Lista de Turistas Recientes
                     </div>
-                    {loadingDropins ? <div className="text-center py-4"><div className="spinner-border text-warning"></div></div> : (
-                      <div className="table-responsive">
-                        <table className="finanzas-table align-middle">
-                          <thead>
-                            <tr>
-                              <th>Fecha / Hora</th>
-                              <th>Atleta (Correo)</th>
-                              <th>Visita</th>
-                              <th>Estado</th>
-                              <th className="text-end">Acción</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {listaDropins.length === 0 ? (
-                              <tr><td colSpan="5"><div className="finanzas-empty py-4 text-center">No hay flujo de turistas recientemente.</div></td></tr>
-                            ) : (
-                              listaDropins.map(v => (
-                                <tr key={v.idVisita}>
-                                  <td>
-                                    <div className="fw-bold text-white">{new Date(v.fechaProgramada + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}</div>
-                                    <div className="small text-secondary">{v.horaClase ? v.horaClase : v.tipoVisita === 'SoloGym' ? 'Open Gym' : 'Admin'}</div>
-                                  </td>
-                                  <td>
-                                    <div className="fw-bold">{v.nombreAtletaExterno}</div>
-                                    <div className="small text-secondary">{v.correo} ({v.nivelAtleta})</div>
-                                  </td>
-                                  <td>
-                                    <span className={`badge ${v.tipoVisita === 'Clase' ? 'bg-danger' : 'bg-warning text-dark'} rounded-pill`}>
-                                      {v.tipoVisita === 'Clase' ? v.claseNombre : 'Open Gym'}
-                                    </span>
-                                  </td>
-                                  <td>
-                                    {v.estatus === 'Pendiente' ? (
-                                      <span className="badge bg-secondary border border-secondary text-white rounded-pill"><i className="fas fa-clock me-1"></i>Pendiente</span>
-                                    ) : (
-                                      <span className="badge bg-success bg-opacity-25 border border-success text-success rounded-pill"><i className="fas fa-check-circle me-1"></i>Pagado <small>({v.estatus === 'Pagado_Efectivo' ? 'Efectivo' : v.estatus === 'Pagado_Tarjeta' ? 'Tarjeta' : v.estatus === 'Pagado_Transferencia' ? 'Transfer.' : 'Online'})</small></span>
-                                    )}
-                                  </td>
-                                  <td className="text-end">
-                                    {v.estatus === 'Pendiente' && (
-                                      <div className="d-flex flex-wrap gap-2 justify-content-end">
-                                        <BotonSeguro onClick={() => aprobarDropIn(v.idVisita, 'Efectivo')} className="btn btn-sm btn-outline-success fw-bold" textoProcesando="Ok..">
-                                          <i className="fas fa-money-bill-wave me-1"></i> Efectivo
-                                        </BotonSeguro>
-                                        <BotonSeguro onClick={() => aprobarDropIn(v.idVisita, 'Tarjeta')} className="btn btn-sm btn-outline-info fw-bold" textoProcesando="Ok..">
-                                          <i className="fas fa-credit-card me-1"></i> Tarjeta
-                                        </BotonSeguro>
-                                        <BotonSeguro onClick={() => aprobarDropIn(v.idVisita, 'Transferencia')} className="btn btn-sm btn-outline-primary fw-bold" textoProcesando="Ok..">
-                                          <i className="fas fa-exchange-alt me-1"></i> Transf.
-                                        </BotonSeguro>
-                                      </div>
-                                    )}
-                                  </td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
+                    {loadingDropins ? <div className="text-center py-4"><AtletifyLoader /></div> : (
+                      <>
+                        {/* Vista móvil: tarjetas */}
+                        <div className="d-lg-none">
+                          {listaDropins.length === 0 ? (
+                            <div className="finanzas-empty py-4 text-center">No hay flujo de turistas recientemente.</div>
+                          ) : listaDropins.map(v => (
+                            <div key={v.idVisita} className="finanzas-card mb-2 p-3 h-auto">
+                              <div className="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                <div>
+                                  <div className="fw-bold text-white">{v.nombreAtletaExterno}</div>
+                                  <div className="small text-secondary">{v.correo}</div>
+                                  <div className="small text-secondary mt-1">
+                                    <i className="fas fa-calendar me-1"></i>
+                                    {new Date((v.fechaProgramada || '').split('T')[0] + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
+                                    {' · '}{v.horaClase ? v.horaClase : v.tipoVisita === 'SoloGym' ? 'Open Gym' : 'Admin'}
+                                  </div>
+                                </div>
+                                <span className={`badge ${v.tipoVisita === 'Clase' ? 'bg-danger' : 'bg-warning text-dark'} rounded-pill`}>
+                                  {v.tipoVisita === 'Clase' ? v.claseNombre : 'Open Gym'}
+                                </span>
+                              </div>
+                              <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                {v.estatus === 'Pendiente' ? (
+                                  <span className="badge bg-secondary border border-secondary text-white rounded-pill"><i className="fas fa-clock me-1"></i>Pendiente</span>
+                                ) : (
+                                  <span className="badge bg-success bg-opacity-25 border border-success text-success rounded-pill"><i className="fas fa-check-circle me-1"></i>Pagado <small>({v.estatus === 'Pagado_Efectivo' ? 'Efectivo' : v.estatus === 'Pagado_Tarjeta' ? 'Tarjeta' : v.estatus === 'Pagado_Transferencia' ? 'Transfer.' : 'Online'})</small></span>
+                                )}
+                                {v.estatus === 'Pendiente' && (
+                                  <div className="d-flex flex-wrap gap-1">
+                                    <BotonSeguro onClick={() => aprobarDropIn(v.idVisita, 'Efectivo')} className="btn btn-sm btn-outline-success fw-bold" textoProcesando="Ok..">
+                                      <i className="fas fa-money-bill-wave"></i>
+                                    </BotonSeguro>
+                                    <BotonSeguro onClick={() => aprobarDropIn(v.idVisita, 'Tarjeta')} className="btn btn-sm btn-outline-info fw-bold" textoProcesando="Ok..">
+                                      <i className="fas fa-credit-card"></i>
+                                    </BotonSeguro>
+                                    <BotonSeguro onClick={() => aprobarDropIn(v.idVisita, 'Transferencia')} className="btn btn-sm btn-outline-primary fw-bold" textoProcesando="Ok..">
+                                      <i className="fas fa-exchange-alt"></i>
+                                    </BotonSeguro>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Vista escritorio: tabla */}
+                        <div className="table-responsive d-none d-lg-block">
+                          <table className="finanzas-table align-middle">
+                            <thead>
+                              <tr>
+                                <th>Fecha / Hora</th>
+                                <th>Atleta (Correo)</th>
+                                <th>Visita</th>
+                                <th>Estado</th>
+                                <th className="text-end">Acción</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {listaDropins.length === 0 ? (
+                                <tr><td colSpan="5"><div className="finanzas-empty py-4 text-center">No hay flujo de turistas recientemente.</div></td></tr>
+                              ) : (
+                                listaDropins.map(v => (
+                                  <tr key={v.idVisita}>
+                                    <td>
+                                      <div className="fw-bold text-white">{new Date((v.fechaProgramada || '').split('T')[0] + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}</div>
+                                      <div className="small text-secondary">{v.horaClase ? v.horaClase : v.tipoVisita === 'SoloGym' ? 'Open Gym' : 'Admin'}</div>
+                                    </td>
+                                    <td>
+                                      <div className="fw-bold">{v.nombreAtletaExterno}</div>
+                                      <div className="small text-secondary">{v.correo} ({v.nivelAtleta})</div>
+                                    </td>
+                                    <td>
+                                      <span className={`badge ${v.tipoVisita === 'Clase' ? 'bg-danger' : 'bg-warning text-dark'} rounded-pill`}>
+                                        {v.tipoVisita === 'Clase' ? v.claseNombre : 'Open Gym'}
+                                      </span>
+                                    </td>
+                                    <td>
+                                      {v.estatus === 'Pendiente' ? (
+                                        <span className="badge bg-secondary border border-secondary text-white rounded-pill"><i className="fas fa-clock me-1"></i>Pendiente</span>
+                                      ) : (
+                                        <span className="badge bg-success bg-opacity-25 border border-success text-success rounded-pill"><i className="fas fa-check-circle me-1"></i>Pagado <small>({v.estatus === 'Pagado_Efectivo' ? 'Efectivo' : v.estatus === 'Pagado_Tarjeta' ? 'Tarjeta' : v.estatus === 'Pagado_Transferencia' ? 'Transfer.' : 'Online'})</small></span>
+                                      )}
+                                    </td>
+                                    <td className="text-end">
+                                      {v.estatus === 'Pendiente' && (
+                                        <div className="d-flex flex-wrap gap-2 justify-content-end">
+                                          <BotonSeguro onClick={() => aprobarDropIn(v.idVisita, 'Efectivo')} className="btn btn-sm btn-outline-success fw-bold" textoProcesando="Ok..">
+                                            <i className="fas fa-money-bill-wave me-1"></i> Efectivo
+                                          </BotonSeguro>
+                                          <BotonSeguro onClick={() => aprobarDropIn(v.idVisita, 'Tarjeta')} className="btn btn-sm btn-outline-info fw-bold" textoProcesando="Ok..">
+                                            <i className="fas fa-credit-card me-1"></i> Tarjeta
+                                          </BotonSeguro>
+                                          <BotonSeguro onClick={() => aprobarDropIn(v.idVisita, 'Transferencia')} className="btn btn-sm btn-outline-primary fw-bold" textoProcesando="Ok..">
+                                            <i className="fas fa-exchange-alt me-1"></i> Transf.
+                                          </BotonSeguro>
+                                        </div>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -915,27 +999,49 @@ export default function GestionFinanzas() {
                     <div className="col-6 col-md-4"><FiltroMesAnoPicker valor={filtroMes} onCambiar={setFiltroMes} /></div>
                   </div>
                 </div>
-                {loadingMov ? <div className="text-center py-5"><div className="spinner-wp"></div></div> : (
-                  <div className="finanzas-card p-0 overflow-hidden d-none d-md-block">
-                    <table className="finanzas-table">
-                      <thead><tr><th>Fecha</th><th>Atleta</th><th>Tipo</th><th>Método</th><th style={{ textAlign: 'right' }}>Monto</th></tr></thead>
-                      <tbody>
-                        {movimientosFiltrados.length === 0 ? (
-                          <tr><td colSpan="5"><div className="finanzas-empty"><p>No hay movimientos que coincidan con la búsqueda.</p></div></td></tr>
-                        ) : (
-                          movimientosFiltrados.map((m, i) => (
-                            <tr key={i}>
-                              <td>{new Date(m.fecha).toLocaleDateString()}</td>
-                              <td>{m.nombreAtleta}</td>
-                              <td><span className={`mov-badge ${getBadgeMov(m.tipo)}`}>{m.tipo}</span></td>
-                              <td>{m.metodoPago}</td>
-                              <td className="text-end text-success fw-bold">${m.monto?.toFixed(2)}</td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                {loadingMov ? <div className="text-center py-5"><AtletifyLoader /></div> : (
+                  <>
+                    {/* Vista móvil: tarjetas */}
+                    <div className="d-md-none">
+                      {movimientosFiltrados.length === 0 ? (
+                        <div className="finanzas-empty"><p>No hay movimientos que coincidan con la búsqueda.</p></div>
+                      ) : movimientosFiltrados.map((m, i) => (
+                        <div key={i} className="finanzas-card mb-2 p-3 h-auto">
+                          <div className="d-flex justify-content-between align-items-center mb-1">
+                            <span className="small text-secondary">{new Date(m.fecha).toLocaleDateString()}</span>
+                            <span className={`mov-badge ${getBadgeMov(m.tipo)}`}>{m.tipo}</span>
+                          </div>
+                          <div className="fw-bold text-white">{m.nombreAtleta}</div>
+                          <div className="d-flex justify-content-between align-items-center mt-1">
+                            <span className="small text-secondary">{m.metodoPago}</span>
+                            <span className="text-success fw-bold">${m.monto?.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Vista escritorio: tabla */}
+                    <div className="finanzas-card p-0 overflow-hidden d-none d-md-block">
+                      <table className="finanzas-table">
+                        <thead><tr><th>Fecha</th><th>Atleta</th><th>Tipo</th><th>Método</th><th style={{ textAlign: 'right' }}>Monto</th></tr></thead>
+                        <tbody>
+                          {movimientosFiltrados.length === 0 ? (
+                            <tr><td colSpan="5"><div className="finanzas-empty"><p>No hay movimientos que coincidan con la búsqueda.</p></div></td></tr>
+                          ) : (
+                            movimientosFiltrados.map((m, i) => (
+                              <tr key={i}>
+                                <td>{new Date(m.fecha).toLocaleDateString()}</td>
+                                <td>{m.nombreAtleta}</td>
+                                <td><span className={`mov-badge ${getBadgeMov(m.tipo)}`}>{m.tipo}</span></td>
+                                <td>{m.metodoPago}</td>
+                                <td className="text-end text-success fw-bold">${m.monto?.toFixed(2)}</td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -1104,11 +1210,7 @@ export default function GestionFinanzas() {
 
                 <div className="col-md-6">
                   <label className="etiqueta-campo">Nivel de Acceso</label>
-                  <select className="finanzas-input" value={formEditPlan.nivelAcceso} onChange={e => setFormEditPlan({ ...formEditPlan, nivelAcceso: e.target.value })}>
-                    <option value="CrossFit">Clases de CrossFit</option>
-                    <option value="OpenGym">Solo Open Gym (Pesas)</option>
-                    <option value="Hibrido">Híbrido (Ambos)</option>
-                  </select>
+                  <NivelAccesoPicker valor={formEditPlan.nivelAcceso} onCambiar={v => setFormEditPlan({ ...formEditPlan, nivelAcceso: v })} />
                 </div>
                 <div className="col-md-6">
                   <label className="etiqueta-campo">Prioridad de Reserva</label>
@@ -1306,7 +1408,7 @@ export default function GestionFinanzas() {
               return (
                 <div>
                   {loadingClasesDropIn ? (
-                    <div className="text-center py-4"><div className="spinner-border text-warning"></div></div>
+                    <div className="text-center py-4"><AtletifyLoader /></div>
                   ) : clasesDropIn.length === 0 ? (
                     <div className="text-center py-4 text-secondary">
                       <i className="fas fa-calendar-times fa-2x mb-2 d-block"></i>
