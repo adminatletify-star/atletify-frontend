@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, Link } from 'react-router-dom';
 import { USUARIOS_ENDPOINT } from '../services/api';
 import BackButton from '../components/BackButton';
@@ -237,13 +238,17 @@ export default function Directorio() {
       return nombreMatches && claseMatches && playeraMatches && pesoMatches && nivelMatches && sangreMatches && membresiasMatches;
     });
 
-    // Ordenamiento por peso si hay algun filtro de peso activo
+    // Ordenamiento: por peso si hay filtro activo, alfabético por defecto
     if (filtroPesoMin !== '' || filtroPesoMax !== '') {
       filtrados.sort((a, b) => {
         const pesoA = parseFloat(a.peso || a.Peso || 0);
         const pesoB = parseFloat(b.peso || b.Peso || 0);
         return pesoA - pesoB;
       });
+    } else {
+      filtrados.sort((a, b) =>
+        (a.nombre || a.Nombre || '').localeCompare(b.nombre || b.Nombre || '', 'es')
+      );
     }
 
     return filtrados;
@@ -455,7 +460,12 @@ export default function Directorio() {
               renderItem={(a) => (
                 <div className="atleta-card" onClick={() => setAtletaSeleccionado(a)} style={{ cursor: 'pointer' }} title="Clic para abrir Expediente Completo">
                   <div className="atleta-card-header">
-                    <div className="atleta-avatar">{(a.nombre || a.Nombre || '?').charAt(0).toUpperCase()}</div>
+                    <div className="atleta-avatar">
+                      {(a.foto || a.Foto)
+                        ? <img src={a.foto || a.Foto} alt={a.nombre || a.Nombre} className="atleta-avatar-img" />
+                        : (a.nombre || a.Nombre || '?').charAt(0).toUpperCase()
+                      }
+                    </div>
                     <div className="atleta-info">
                       <p className="atleta-nombre d-flex align-items-center gap-2">
                         {a.nombre || a.Nombre} {a.apellidos || a.Apellidos || ''}
@@ -527,8 +537,8 @@ export default function Directorio() {
         )}
       </div>
 
-      {/* MODAL MAESTRO */}
-      {atletaSeleccionado && !modalExpedienteAbierto && (
+      {/* MODAL MAESTRO — renderizado via portal para evitar z-index del navbar */}
+      {atletaSeleccionado && !modalExpedienteAbierto && createPortal(
         <div className="directorio-modal-overlay" onClick={() => setAtletaSeleccionado(null)}>
           <div className="directorio-modal" onClick={e => e.stopPropagation()}>
 
@@ -538,7 +548,10 @@ export default function Directorio() {
 
             <div className="directorio-modal-header">
               <div className="directorio-modal-avatar">
-                {(atletaSeleccionado.nombre || atletaSeleccionado.Nombre || '?').charAt(0).toUpperCase()}
+                {(atletaSeleccionado.foto || atletaSeleccionado.Foto)
+                  ? <img src={atletaSeleccionado.foto || atletaSeleccionado.Foto} alt={atletaSeleccionado.nombre || atletaSeleccionado.Nombre} className="atleta-avatar-img" />
+                  : (atletaSeleccionado.nombre || atletaSeleccionado.Nombre || '?').charAt(0).toUpperCase()
+                }
               </div>
               <h3 className="directorio-modal-nombre">{atletaSeleccionado.nombre || atletaSeleccionado.Nombre}</h3>
               <p className="directorio-modal-edad">{calcularEdad(atletaSeleccionado.fechaNacimiento || atletaSeleccionado.FechaNacimiento)}</p>
@@ -595,7 +608,11 @@ export default function Directorio() {
 
               <div className="directorio-seccion-label directorio-seccion-label--danger d-flex justify-content-between align-items-center">
                 <span><i className="fas fa-heartbeat"></i> Expediente Médico</span>
-                <button onClick={() => setModalExpedienteAbierto(true)} className="btn btn-sm btn-outline-danger">
+                <button
+                  onClick={() => setModalExpedienteAbierto(true)}
+                  className="btn btn-sm btn-outline-danger rounded-pill px-3"
+                  style={{ fontSize: '0.75rem', fontFamily: 'var(--font-heading-alt)', fontWeight: 700, letterSpacing: '0.5px' }}
+                >
                   <i className="fas fa-file-medical me-1"></i> Ver Completo
                 </button>
               </div>
@@ -618,7 +635,8 @@ export default function Directorio() {
 
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL EXPEDIENTE MÉDICO COMPLETO */}

@@ -179,8 +179,7 @@ const CardNav = ({
             </span>
           </div>
 
-          <div className="d-flex align-items-center gap-3">
-
+          <div className="d-flex align-items-center gap-2">
 
             {(usuario?.rol === 'Developer') && (
               <BoxPickerModal
@@ -199,6 +198,24 @@ const CardNav = ({
                   }
                 }}
               />
+            )}
+
+            {/* Avatar del usuario — siempre visible en el top bar */}
+            {usuario && (
+              <button
+                type="button"
+                className="cardnav-avatar-btn"
+                onClick={toggleMenu}
+                title={`${usuario.nombre || 'Mi cuenta'} · ${usuario.rol}`}
+              >
+                {usuario.foto ? (
+                  <img src={usuario.foto} alt={usuario.nombre} className="cardnav-avatar-img" />
+                ) : (
+                  <span className="cardnav-avatar-initial">
+                    {(usuario.nombre || 'U').charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </button>
             )}
           </div>
         </div>

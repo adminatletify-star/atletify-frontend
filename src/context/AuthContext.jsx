@@ -29,47 +29,64 @@ export function AuthProvider({ children }) {
     const tokenGuardado = localStorage.getItem('token');
     const cuentasGuardadasStorage = localStorage.getItem('cuentasGuardadas');
 
+    let parsedUser = null;
+    let cuentasFinales = [];
+
+    // Paso 1: parsear y limpiar cuentas guardadas
     if (cuentasGuardadasStorage) {
       try {
         let cuentas = JSON.parse(cuentasGuardadasStorage);
-        
-        // Parche retroactivo para cuentas corruptas (doble stringify)
         cuentas = cuentas.map(c => {
           if (typeof c.boxData === 'string') {
             try { c.boxData = JSON.parse(c.boxData); } catch (e) {}
           }
           return c;
         });
-
-        // Auto-limpiar cuentas con tokens expirados
-        const cuentasValidas = cuentas.filter(c => isTokenValid(c.token));
-        if (cuentasValidas.length !== cuentas.length) {
-          localStorage.setItem('cuentasGuardadas', JSON.stringify(cuentasValidas));
+        cuentasFinales = cuentas.filter(c => isTokenValid(c.token));
+        if (cuentasFinales.length !== cuentas.length) {
+          localStorage.setItem('cuentasGuardadas', JSON.stringify(cuentasFinales));
         }
-        setCuentasGuardadas(cuentasValidas);
       } catch (e) {
         localStorage.removeItem('cuentasGuardadas');
       }
     }
 
+    // Paso 2: parsear usuario activo
     if (usuarioGuardado) {
       try {
-        const userObj = JSON.parse(usuarioGuardado);
-        setUsuario(userObj);
+        parsedUser = JSON.parse(usuarioGuardado);
+        setUsuario(parsedUser);
         if (tokenGuardado) setToken(tokenGuardado);
-
         const boxGuardado = localStorage.getItem('boxActivo');
-        if (boxGuardado) {
-          setBoxActivo(JSON.parse(boxGuardado));
-        } else if (userObj.idBoxPredeterminado) {
-          setBoxActivo(userObj.idBoxPredeterminado);
-        }
+        if (boxGuardado) setBoxActivo(JSON.parse(boxGuardado));
+        else if (parsedUser.idBoxPredeterminado) setBoxActivo(parsedUser.idBoxPredeterminado);
       } catch (error) {
         localStorage.removeItem('usuario');
         localStorage.removeItem('boxActivo');
         localStorage.removeItem('token');
       }
     }
+
+    // Paso 3: sincronizar foto del usuario activo en cuentasGuardadas
+    // (necesario cuando el usuario actualiza su foto en Mi Perfil y recarga)
+    if (parsedUser && cuentasFinales.length > 0) {
+      const idCurrent = parsedUser.idUsuario || parsedUser.IdUsuario || parsedUser.id || parsedUser.Id;
+      let syncNeeded = false;
+      const synced = cuentasFinales.map(c => {
+        const cId = c.usuario?.idUsuario || c.usuario?.IdUsuario || c.usuario?.id || c.usuario?.Id;
+        if (String(cId) === String(idCurrent) && c.usuario?.foto !== parsedUser?.foto) {
+          syncNeeded = true;
+          return { ...c, usuario: { ...c.usuario, foto: parsedUser.foto } };
+        }
+        return c;
+      });
+      if (syncNeeded) {
+        localStorage.setItem('cuentasGuardadas', JSON.stringify(synced));
+        cuentasFinales = synced;
+      }
+    }
+
+    setCuentasGuardadas(cuentasFinales);
     setLoading(false);
   }, []);
 

@@ -199,7 +199,7 @@
   }
 
   .card-nav-top {
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 0.75rem 0.5rem 1rem;
     justify-content: space-between;
   }
 
@@ -217,22 +217,24 @@
     display: none;
   }
 
+  /* Todo scrollea junto — content ocupa desde top:60 hasta el fondo del nav */
   .card-nav-content {
+    bottom: 0;
     flex-direction: column;
     flex-wrap: nowrap;
     align-items: stretch;
     gap: 8px;
-    padding: 0.5rem 0.85rem 0.5rem 0.5rem;
-    box-sizing: border-box;
-    justify-content: flex-start;
-    max-height: calc(100vh - 80px);
+    padding: 0.5rem 0.75rem 0.75rem;
+    max-height: none;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 
   .card-nav-content-footer {
+    flex: 0 0 auto;
+    width: 100%;
     justify-content: stretch;
-    padding-top: 6px;
+    padding-top: 8px;
   }
 
   .card-nav-cta-inside {
@@ -241,6 +243,7 @@
     display: flex !important;
     align-items: center;
     justify-content: center;
+    font-size: 0.9rem;
   }
 
   .nav-card {
@@ -259,6 +262,54 @@
   .nav-card-link {
     font-size: 15px;
   }
+}
+
+/* Pantallas muy pequeñas */
+@media (max-width: 420px) {
+  .cardnav-avatar-btn {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* === Avatar del usuario en top bar === */
+.cardnav-avatar-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(230, 57, 70, 0.45);
+  background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardnav-avatar-btn:hover {
+  border-color: rgba(230, 57, 70, 0.9);
+  box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.2);
+  transform: scale(1.06);
+}
+
+.cardnav-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.cardnav-avatar-initial {
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.88rem;
+  font-family: 'Inter', 'Barlow Condensed', sans-serif;
+  line-height: 1;
+  pointer-events: none;
 }
 
 /* === Box Selector (Developer) === */

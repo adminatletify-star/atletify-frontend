@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { USUARIOS_ENDPOINT } from '../services/api';
 import '../assets/css/AtletasBox.css';
@@ -7,6 +8,13 @@ import AtletifyLoader from '../components/AtletifyLoader';
 import BackButton from '../components/BackButton';
 import FiltroCategoriaPicker from '../components/FiltroCategoriaPicker';
 import BotonSeguro from '../components/BotonSeguro';
+
+const ROLES = [
+  { value: '',         icon: 'fa-users',                label: 'Todos los roles', desc: 'Muestra atletas, coaches y administradores', color: '#A8B2D1' },
+  { value: 'Atleta',   icon: 'fa-running',              label: 'Atleta',          desc: 'Miembros activos del box',                   color: '#2ECC71' },
+  { value: 'Coach',    icon: 'fa-chalkboard-teacher',   label: 'Coach',           desc: 'Entrenadores del box',                       color: '#4FC3F7' },
+  { value: 'AdminBox', icon: 'fa-shield-alt',           label: 'Admin Box',       desc: 'Administradores del box',                    color: '#F5A623' },
+];
 
 export default function AtletasBox() {
   const navigate = useNavigate();
@@ -21,6 +29,7 @@ export default function AtletasBox() {
   const [filtroEstatus, setFiltroEstatus] = useState(searchParams.get('estatus') || '');
   const [filtroCat, setFiltroCat] = useState('');
   const [filtroRol, setFiltroRol] = useState('');
+  const [mostrarModalRol, setMostrarModalRol] = useState(false);
   const [staffSeleccionado, setStaffSeleccionado] = useState(null);
 
   useEffect(() => {
@@ -79,7 +88,9 @@ export default function AtletasBox() {
     const rolActual = a.rol || a.Rol;
     const matchRol = !filtroRol || rolActual === filtroRol;
     return matchNombre && matchCat && matchEstatus && matchRol;
-  });
+  }).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+
+  const rolSeleccionado = ROLES.find(r => r.value === filtroRol) || ROLES[0];
 
   if (loading) {
     return (
@@ -100,8 +111,7 @@ export default function AtletasBox() {
           <BackButton />
           <div>
             <h1 className="atb-header-title">
-              <i className="fas fa-users me-2" style={{ color: 'var(--primary)' }}></i>
-              Atletas del Box
+              Atletas del <span>Box</span>
             </h1>
             <p className="atb-header-sub">{boxNombre}</p>
           </div>
@@ -165,17 +175,20 @@ export default function AtletasBox() {
               </div>
             </div>
             <div className="col-12 col-md-4">
-              <select 
-                className="form-select" 
-                style={{ backgroundColor: 'var(--bg-card-hover)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: '12px', height: '100%', minHeight: '48px', padding: '12px 16px' }} 
-                value={filtroRol} 
-                onChange={e => setFiltroRol(e.target.value)}
+              <button
+                type="button"
+                className={`atb-rol-btn${filtroRol ? ' atb-rol-btn--active' : ''}`}
+                style={{ '--rol-color': rolSeleccionado.color }}
+                onClick={() => setMostrarModalRol(true)}
               >
-                <option value="">Todos los Roles</option>
-                <option value="Atleta">Atletas</option>
-                <option value="Coach">Coaches</option>
-                <option value="AdminBox">Admin Box</option>
-              </select>
+                <span className="atb-rol-btn__left">
+                  <span className="atb-rol-btn__icon">
+                    <i className={`fas ${rolSeleccionado.icon}`} />
+                  </span>
+                  <span className="atb-rol-btn__label">{rolSeleccionado.label}</span>
+                </span>
+                <i className="fas fa-chevron-right atb-rol-btn__arrow" />
+              </button>
             </div>
             <div className="col-12 col-md-4">
               <FiltroCategoriaPicker
@@ -379,6 +392,58 @@ export default function AtletasBox() {
         )}
 
       </div>
+
+      {/* MODAL FILTRO ROL */}
+      {mostrarModalRol && createPortal(
+        <div
+          className="atb-modal-overlay"
+          onClick={e => { if (e.target === e.currentTarget) setMostrarModalRol(false); }}
+        >
+          <div className="atb-modal">
+            <div className="atb-modal__header">
+              <div>
+                <p className="atb-modal__supertitle">ATLETAS</p>
+                <h2 className="atb-modal__title">Filtrar por Rol</h2>
+              </div>
+              <button
+                type="button"
+                className="atb-modal__close"
+                onClick={() => setMostrarModalRol(false)}
+                aria-label="Cerrar"
+              >
+                <i className="fas fa-times" />
+              </button>
+            </div>
+            <p className="atb-modal__hint">
+              Selecciona el tipo de usuario que deseas ver.
+            </p>
+            <div className="atb-modal__list">
+              {ROLES.map(rol => {
+                const activo = filtroRol === rol.value;
+                return (
+                  <button
+                    key={rol.value || 'todos'}
+                    type="button"
+                    className={`atb-rol-opcion${activo ? ' atb-rol-opcion--activo' : ''}`}
+                    style={{ '--rol-color': rol.color }}
+                    onClick={() => { setFiltroRol(rol.value); setMostrarModalRol(false); }}
+                  >
+                    <span className="atb-rol-opcion__icon">
+                      <i className={`fas ${rol.icon}`} />
+                    </span>
+                    <span className="atb-rol-opcion__info">
+                      <span className="atb-rol-opcion__nombre">{rol.label}</span>
+                      <span className="atb-rol-opcion__desc">{rol.desc}</span>
+                    </span>
+                    {activo && <i className="fas fa-check-circle atb-rol-opcion__check" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* MODAL STAFF */}
       {staffSeleccionado && (
