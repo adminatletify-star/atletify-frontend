@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { USUARIOS_ENDPOINT } from '../services/api';
 import BackButton from '../components/BackButton';
 import AnimatedList from '../components/ReactBits/AnimatedList';
@@ -260,9 +260,14 @@ export default function Directorio() {
             <p className="directorio-nav-sub mb-0">Filtros y expedientes</p>
           </div>
         </div>
-        <div className="directorio-nav-badge">
-          <i className="fas fa-users"></i>
-          <span className="directorio-nav-count">{atletas.length}</span>
+        <div className="d-flex align-items-center gap-3 ms-auto">
+          <div className="directorio-nav-badge d-none d-sm-flex">
+            <i className="fas fa-users"></i>
+            <span className="directorio-nav-count">{atletas.length}</span>
+          </div>
+          <Link to="/exportar-bd-box" className="btn btn-danger btn-sm rounded-pill fw-bold px-3 shadow-sm d-flex align-items-center gap-2">
+            <i className="fas fa-database"></i> <span className="d-none d-sm-inline">Exportar BD</span>
+          </Link>
         </div>
       </nav>
 

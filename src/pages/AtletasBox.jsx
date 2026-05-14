@@ -105,6 +105,11 @@ export default function AtletasBox() {
             </h1>
             <p className="atb-header-sub">{boxNombre}</p>
           </div>
+          <div className="ms-auto">
+            <Link to="/exportar-bd-box" className="btn btn-danger btn-sm rounded-pill fw-bold px-3">
+              <i className="fas fa-database me-2"></i>Exportar BD
+            </Link>
+          </div>
         </div>
       </header>
 

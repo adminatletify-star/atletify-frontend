@@ -57,6 +57,7 @@ import ResetPassword from './pages/ResetPassword';
 import SeleccionPlanSaaS from './pages/SeleccionPlanSaaS';
 import RegistroBoxSaaS from './pages/RegistroBoxSaaS';
 import PerfilAdminCoach from './pages/PerfilAdminCoach';
+import ExportarBDBox from './pages/ExportarBDBox';
 import NotFound from './pages/NotFound';
 import PublicLayout from './components/PublicLayout';
 
@@ -358,6 +359,7 @@ function App() {
               <Route path="/admin-competencias/roster/:id" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AdminRosterFinanzas /></ProtectedRoute>} />
               {/* --- ZONA ADMINISTRACIÓN Y COACHES --- */}
               <Route path="/admin-box-panel" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><AdminBoxPanel /></ProtectedRoute>} />
+              <Route path="/exportar-bd-box" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><ExportarBDBox /></ProtectedRoute>} />
               <Route path="/gestion-staff" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><GestionStaff /></ProtectedRoute>} />
               <Route path="/editar-usuario/:id" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox', 'Coach']}><EditarUsuario /></ProtectedRoute>} />
               <Route path="/crear-clase" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><CrearClaseAdminBox /></ProtectedRoute>} />
