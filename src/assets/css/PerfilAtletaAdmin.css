@@ -458,7 +458,7 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(4px);
-  z-index: 1050;
+  z-index: 10000;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -783,4 +783,232 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
+}
+
+/* === TABS BAR === */
+.paa-tabs-bar {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.paa-tabs-bar::-webkit-scrollbar { display: none; }
+
+.paa-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.paa-tab:hover {
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.paa-tab--active {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: rgba(230, 57, 70, 0.45);
+  color: var(--primary);
+}
+
+.paa-tab--asistencias.paa-tab--active {
+  background: rgba(13, 202, 240, 0.1);
+  border-color: rgba(13, 202, 240, 0.4);
+  color: #0dcaf0;
+}
+
+/* === PLAN ACTIVO — dinámica por estatus === */
+.paa-plan-activo {
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  border: 1px solid transparent;
+  border-left: 3px solid transparent;
+}
+
+.paa-plan-activo__label {
+  display: block;
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+
+.paa-plan-activo__nombre {
+  font-family: var(--font-heading-alt);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin: 0 0 0.45rem;
+}
+
+.paa-plan-activo__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.55rem;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+/* Activa — verde */
+.paa-plan-activo--activa {
+  background: rgba(46, 204, 113, 0.07);
+  border-color: rgba(46, 204, 113, 0.25);
+  border-left-color: var(--success);
+}
+.paa-plan-activo__nombre--activa { color: var(--success); }
+.paa-plan-activo__badge--activa {
+  background: rgba(46, 204, 113, 0.14);
+  border-color: rgba(46, 204, 113, 0.35);
+  color: var(--success);
+}
+
+/* Congelada — cian */
+.paa-plan-activo--congelada {
+  background: rgba(79, 195, 247, 0.07);
+  border-color: rgba(79, 195, 247, 0.25);
+  border-left-color: var(--accent-cool);
+}
+.paa-plan-activo__nombre--congelada { color: var(--accent-cool); }
+.paa-plan-activo__badge--congelada {
+  background: rgba(79, 195, 247, 0.12);
+  border-color: rgba(79, 195, 247, 0.35);
+  color: var(--accent-cool);
+}
+
+/* Cancelada — rojo */
+.paa-plan-activo--cancelada {
+  background: rgba(231, 76, 60, 0.07);
+  border-color: rgba(231, 76, 60, 0.25);
+  border-left-color: var(--primary);
+}
+.paa-plan-activo__nombre--cancelada { color: var(--primary); }
+.paa-plan-activo__badge--cancelada {
+  background: rgba(231, 76, 60, 0.12);
+  border-color: rgba(231, 76, 60, 0.35);
+  color: var(--primary);
+}
+
+/* Pendiente / Vencida / otro — naranja */
+.paa-plan-activo--pendiente {
+  background: rgba(245, 166, 35, 0.07);
+  border-color: rgba(245, 166, 35, 0.25);
+  border-left-color: var(--accent);
+}
+.paa-plan-activo__nombre--pendiente { color: var(--accent); }
+.paa-plan-activo__badge--pendiente {
+  background: rgba(245, 166, 35, 0.12);
+  border-color: rgba(245, 166, 35, 0.35);
+  color: var(--accent);
+}
+
+/* Columna Notas: solo visible desde md en tabla normal */
+.paa-td-notas { display: none; }
+@media (min-width: 768px) {
+  .paa-td-notas { display: table-cell; }
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 575.98px) {
+  .paa-avatar-lg,
+  .paa-avatar-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    font-size: 1.5rem;
+  }
+
+  .paa-atleta-nombre {
+    font-size: 1.05rem;
+  }
+
+  .paa-header {
+    padding: 0.65rem 1rem 0.65rem 0.4rem;
+  }
+
+  .paa-action-btn {
+    font-size: 0.62rem;
+    padding: 0.55rem 0.4rem;
+  }
+
+  /* ── Tabla → Tarjetas en móvil ── */
+  .paa-table-wrap { overflow-x: visible !important; }
+
+  .paa-table thead { display: none; }
+
+  .paa-table,
+  .paa-table tbody,
+  .paa-table tr { display: block !important; width: 100%; }
+
+  .paa-table tbody tr {
+    background: rgba(255, 255, 255, 0.025) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px;
+    margin-bottom: 0.55rem;
+    padding: 0.15rem 0;
+  }
+
+  .paa-table tbody td {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    padding: 0.5rem 0.9rem !important;
+    font-size: 0.83rem;
+  }
+
+  .paa-table tbody td:last-child {
+    border-bottom: none !important;
+  }
+
+  .paa-table tbody td::before {
+    content: attr(data-label);
+    font-family: var(--font-heading-alt);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    margin-right: 0.75rem;
+  }
+
+  /* Mostrar columna Notas dentro de la tarjeta */
+  .paa-table tbody .paa-td-notas {
+    display: flex !important;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+  }
+
+  /* Celda de empty-state: no necesita label */
+  .paa-table tbody td[colspan] {
+    justify-content: center;
+  }
+  .paa-table tbody td[colspan]::before { content: none; }
 }

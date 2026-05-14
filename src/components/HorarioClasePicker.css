@@ -212,3 +212,109 @@
 }
 
 .hcp-option--libre .hcp-check { color: #adb5bd; }
+
+/* ── META ROW (días + nivel en la opción) ── */
+.hcp-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.35rem;
+}
+
+/* ── DÍAS PIPS ── */
+.hcp-dia-pip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 18px;
+  border-radius: 5px;
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  border: 1px solid rgba(168, 178, 209, 0.18);
+  background: rgba(168, 178, 209, 0.07);
+  color: var(--text-muted, #888);
+}
+
+.hcp-dia-pip--active {
+  border-color: rgba(79, 195, 247, 0.35);
+  background: rgba(79, 195, 247, 0.1);
+  color: var(--accent-cool, #4fc3f7);
+}
+
+/* Pips dentro del trigger (más pequeños) */
+.hcp-trigger-left .hcp-dia-pip {
+  width: 24px;
+  height: 15px;
+  font-size: 0.55rem;
+}
+
+/* ── FILTRO HINT ── */
+.hcp-filtro-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  background: rgba(79, 195, 247, 0.06);
+  border-bottom: 1px solid rgba(79, 195, 247, 0.1);
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.73rem;
+  color: var(--text-muted, #888);
+  flex-shrink: 0;
+}
+
+.hcp-filtro-hint i { color: var(--accent-cool, #4fc3f7); font-size: 0.68rem; }
+.hcp-filtro-hint strong { color: var(--text-primary, #f0f0f5); }
+
+/* ── NIVEL CHIP ── */
+.hcp-nivel-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--nivel-color) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--nivel-color) 30%, transparent);
+  color: var(--nivel-color);
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  margin-top: 0.35rem;
+  width: fit-content;
+}
+
+/* Chip dentro de meta-row o trigger (sin margin-top propio) */
+.hcp-meta-row .hcp-nivel-chip,
+.hcp-trigger-left .hcp-nivel-chip {
+  margin-top: 0;
+  font-size: 0.6rem;
+  padding: 0.08rem 0.4rem;
+}
+
+/* ── EMPTY STATE ── */
+.hcp-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-muted, #888);
+}
+
+.hcp-empty i {
+  font-size: 1.5rem;
+  display: block;
+  margin-bottom: 0.5rem;
+  opacity: 0.35;
+}
+
+.hcp-empty p {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.hcp-empty strong { color: var(--text-primary, #f0f0f5); }

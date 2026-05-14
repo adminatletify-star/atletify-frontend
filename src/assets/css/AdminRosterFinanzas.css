@@ -109,10 +109,11 @@
 
 .arf-stat-value {
   font-family: var(--font-stats);
-  font-size: 1.75rem;
+  font-size: clamp(1.1rem, 4.5vw, 1.75rem);
   font-weight: 700;
   line-height: 1;
   margin: 0;
+  word-break: break-all;
 }
 
 .arf-stat-value--success { color: var(--success); }
@@ -153,14 +154,20 @@
   letter-spacing: 0.4px;
   color: var(--text-muted);
   flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .arf-desglose-monto {
   font-family: var(--font-stats);
-  font-size: 0.92rem;
+  font-size: clamp(0.75rem, 2.5vw, 0.92rem);
   font-weight: 700;
   color: var(--text-primary);
   text-align: right;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* === FILTROS Y BUSCADOR === */
@@ -337,6 +344,9 @@
   text-transform: uppercase;
   color: var(--text-primary);
   margin: 0 0 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .arf-equipo-codigo {
@@ -369,7 +379,7 @@
   gap: 0.4rem;
   align-items: center;
   flex-shrink: 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
 }
 
@@ -436,6 +446,7 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
   padding: 0.45rem 0.6rem;
+  min-width: 0;
 }
 
 .arf-atleta-info {
@@ -446,6 +457,34 @@
   align-items: center;
   gap: 0.45rem;
   min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.arf-atleta-info-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.arf-atleta-nombre-text {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.arf-atleta-fecha-text {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 0.1rem;
 }
 
 .arf-atleta-nivel {
@@ -460,9 +499,14 @@
   border: 1px solid var(--border);
   color: var(--text-muted);
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
-.arf-atleta-acciones { display: flex; gap: 0.25rem; }
+.arf-atleta-acciones {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
 
 .arf-btn-edit-atl {
   background: none;
@@ -531,6 +575,7 @@
 .arf-pago-btns {
   display: flex;
   gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
 .arf-btn-aprobar-pago {
@@ -797,3 +842,75 @@
 }
 
 .arf-btn-cancel-modal:hover { border-color: var(--border-hover); color: var(--text-primary); }
+
+/* =============================================
+   RESPONSIVE — breakpoints
+   ============================================= */
+
+/* ── sm (< 576px) ── */
+@media (max-width: 575.98px) {
+  .arf-nav {
+    padding: 0.7rem 1rem 0.7rem 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  /* Stats: reduce padding to avoid number wrapping */
+  .arf-stat-card { padding: 0.85rem 0.75rem; }
+  .arf-stat-label { font-size: 0.58rem; }
+
+  .arf-desglose-card { padding: 0.75rem 0.9rem; }
+  .arf-desglose-row { gap: 0.45rem; }
+  .arf-desglose-row i { width: 14px; font-size: 0.82rem; }
+
+  /* Filtros stacks */
+  .arf-filtros { flex-direction: column; align-items: stretch; }
+  .arf-buscador-wrap { min-width: 0; }
+
+  /* Equipo header: info takes full width, acciones below */
+  .arf-equipo-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .arf-equipo-header > .min-w-0 { flex: 1 1 0; min-width: 0; }
+
+  .arf-equipo-acciones {
+    width: 100%;
+    justify-content: flex-end;
+    padding-top: 0.45rem;
+    border-top: 1px solid var(--border);
+    margin-top: 0.1rem;
+  }
+
+  /* Equipo nombre — slightly smaller on very small screens */
+  .arf-equipo-nombre { font-size: 0.88rem; }
+
+  /* Card body tighter */
+  .arf-card-body { padding: 0.85rem 0.9rem; }
+
+  /* Atleta row — keep on one line but tighten gap */
+  .arf-atleta-row { gap: 0.35rem; padding: 0.4rem 0.5rem; }
+  .arf-atleta-nivel { display: none; } /* hidden on very small — visible on md+ */
+
+  /* Pagos aprobados: truncate pagador name */
+  .arf-pago-pagador {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* ── md (576px – 767px) ── */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  /* Two-column roster at medium shows nivel badge */
+  .arf-atleta-nivel { display: inline-flex; }
+
+  /* Equipo header fits on one line */
+  .arf-equipo-header { flex-wrap: nowrap; }
+}
+
+/* ── Ensure nivel badge is always visible on md+ ── */
+@media (min-width: 768px) {
+  .arf-atleta-nivel { display: inline-flex; }
+}

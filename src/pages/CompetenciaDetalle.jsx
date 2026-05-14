@@ -178,7 +178,9 @@ export default function CompetenciaDetalle() {
   const [materialAbiertoId, setMaterialAbiertoId] = useState(null);
   const [materialEditandoId, setMaterialEditandoId] = useState(null);
   const [cantidadRequeridaEdit, setCantidadRequeridaEdit] = useState('');
+  const [minRequeridoEdit, setMinRequeridoEdit] = useState(1);
   const [busquedaInventario, setBusquedaInventario] = useState('');
+  const [filtroTipoInventario, setFiltroTipoInventario] = useState('todos');
   const [formPrestamo, setFormPrestamo] = useState({ boxPrestamo: '', cantidad: '', notas: '' });
   const [formPrestamoManual, setFormPrestamoManual] = useState({ boxPrestamo: '', nombreEquipo: '', cantidad: '', notas: '' });
   const [prestamosExternosAbiertos, setPrestamosExternosAbiertos] = useState(false);
@@ -610,9 +612,7 @@ export default function CompetenciaDetalle() {
 
   const getPrestadoMaterial = (material) => {
     const prestamos = Array.isArray(material.prestamos) ? material.prestamos : [];
-    return prestamos
-      .filter(p => (p.estatus || 'Prestado') !== 'Devuelto')
-      .reduce((acc, p) => acc + Number(p.cantidad || 0), 0);
+    return prestamos.reduce((acc, p) => acc + Number(p.cantidad || 0), 0);
   };
 
   const getFaltanteActual = (material) => {
@@ -768,19 +768,27 @@ export default function CompetenciaDetalle() {
 
   const iniciarEdicionRequerido = (material) => {
     const idMaterial = material.idCompetenciaInventarioMaterial ?? material.id;
+    const tienePrestamos = Array.isArray(material.prestamos) && material.prestamos.length > 0;
+    const minimo = tienePrestamos ? (material.requerido ?? 1) : 1;
     setMaterialEditandoId(idMaterial);
     setCantidadRequeridaEdit(String(material.requerido ?? 0));
+    setMinRequeridoEdit(minimo);
   };
 
   const cancelarEdicionRequerido = () => {
     setMaterialEditandoId(null);
     setCantidadRequeridaEdit('');
+    setMinRequeridoEdit(1);
   };
 
   const guardarEdicionRequerido = async (idMaterial) => {
     const cantidad = Number(cantidadRequeridaEdit);
     if (!Number.isInteger(cantidad) || cantidad <= 0) {
       alert('Error: captura una cantidad requerida válida.');
+      return;
+    }
+    if (cantidad < minRequeridoEdit) {
+      alert(`No puedes reducir la cantidad requerida por debajo de ${minRequeridoEdit} mientras haya préstamos registrados.`);
       return;
     }
 
@@ -1190,6 +1198,8 @@ export default function CompetenciaDetalle() {
 
   const textoBusquedaInventario = busquedaInventario.trim().toLowerCase();
   const materialesFiltrados = (inventarioComp.materiales || []).filter((material) => {
+    if (filtroTipoInventario === 'box' && !material.idHerramienta) return false;
+    if (filtroTipoInventario === 'externo' && material.idHerramienta) return false;
     if (!textoBusquedaInventario) return true;
 
     const nombreMaterial = String(material.nombre || '').toLowerCase();
@@ -1215,6 +1225,7 @@ export default function CompetenciaDetalle() {
   });
 
   const prestamosManualesFiltrados = (inventarioComp.prestamosManuales || []).filter((p) => {
+    if (filtroTipoInventario === 'box') return false;
     if (!textoBusquedaInventario) return true;
     const boxPrestamo = String(p.boxPrestamo || '').toLowerCase();
     const nombreEquipo = String(p.nombreEquipo || '').toLowerCase();
@@ -1423,8 +1434,8 @@ export default function CompetenciaDetalle() {
               </div>
 
               {/* KPI Cards */}
-              <div className="row g-4 mb-4">
-                <div className="col-md-6 col-xl-4">
+              <div className="row g-3 mb-4">
+                <div className="col-12 col-md-6 col-xl-4">
                   <div className="cd-kpi-card cd-kpi-card--success">
                     <div className="cd-kpi-top">
                       <p className="cd-kpi-label cd-kpi-label--success">Ingresos Aprobados</p>
@@ -1438,7 +1449,7 @@ export default function CompetenciaDetalle() {
                   </div>
                 </div>
 
-                <div className="col-md-6 col-xl-4">
+                <div className="col-12 col-md-6 col-xl-4">
                   <div className="cd-kpi-card cd-kpi-card--info">
                     <div className="cd-kpi-top">
                       <p className="cd-kpi-label cd-kpi-label--info">Atletas en Arena</p>
@@ -1449,7 +1460,7 @@ export default function CompetenciaDetalle() {
                   </div>
                 </div>
 
-                <div className="col-md-12 col-xl-4">
+                <div className="col-12 col-md-12 col-xl-4">
                   <div className="cd-kpi-card cd-kpi-card--warning">
                     <div className="cd-kpi-top">
                       <p className="cd-kpi-label cd-kpi-label--warning">Atención Requerida</p>
@@ -1486,17 +1497,18 @@ export default function CompetenciaDetalle() {
                       </BotonSeguro>
                     </div>
                     <div className="cd-card-body">
-                      <div className="d-flex gap-2 mb-3">
+                      <div className="d-flex flex-wrap gap-2 mb-3 cd-gasto-add">
                         <input
                           type="text"
                           className="cd-input"
+                          style={{ flex: '1 1 160px' }}
                           placeholder="Ej: Jueces..."
                           value={nuevoGasto.descripcion}
                           onChange={e => setNuevoGasto({ ...nuevoGasto, descripcion: e.target.value })}
                         />
                         <input
                           type="number"
-                          className="cd-input"
+                          className="cd-input cd-input--monto"
                           style={{ maxWidth: '120px' }}
                           placeholder="Monto $"
                           value={nuevoGasto.monto}
@@ -1558,80 +1570,79 @@ export default function CompetenciaDetalle() {
               <div className="cd-card mb-4">
                 <div className="cd-card-body">
                   <div className="row g-4">
-                    <div className="col-md-6">
-                      <h6 className="text-white mb-3"><i className="fas fa-wallet text-info me-2"></i>Métodos Aceptados</h6>
-                      
-                      <div className="form-check form-switch mb-3 d-flex align-items-center gap-2">
-                        <input className="form-check-input" type="checkbox" role="switch" id="swPagosEnLinea" 
-                               style={{ width: '2.5em', height: '1.25em', cursor: 'pointer' }}
+                    <div className="col-12 col-md-6">
+                      <p className="cd-sublabel-header">
+                        <i className="fas fa-wallet" style={{ color: 'var(--accent-cool)' }} />Métodos Aceptados
+                      </p>
+
+                      <label className="cd-switch-row" htmlFor="swPagosEnLinea">
+                        <div>
+                          <p className="cd-switch-label">Pagos en Línea (Stripe)</p>
+                          <p className="cd-switch-hint">Recomendado para asegurar cupos al instante.</p>
+                        </div>
+                        <input className="cd-switch-input form-check-input" type="checkbox" role="switch" id="swPagosEnLinea"
                                checked={configFinanciera.aceptarPagosEnLinea}
                                onChange={(e) => setConfigFinanciera({...configFinanciera, aceptarPagosEnLinea: e.target.checked})} />
-                        <label className="form-check-label text-light ms-2" htmlFor="swPagosEnLinea" style={{ cursor: 'pointer' }}>
-                          Aceptar Pagos en Línea (Stripe) <br/>
-                          <small className="text-muted">Recomendado para asegurar cupos al instante.</small>
-                        </label>
-                      </div>
+                      </label>
 
-                      <div className="form-check form-switch mb-3 d-flex align-items-center gap-2">
-                        <input className="form-check-input" type="checkbox" role="switch" id="swTransferencias" 
-                               style={{ width: '2.5em', height: '1.25em', cursor: 'pointer' }}
+                      <label className="cd-switch-row" htmlFor="swTransferencias">
+                        <div>
+                          <p className="cd-switch-label">Transferencias / Depósitos</p>
+                          <p className="cd-switch-hint">Requiere validación manual del comprobante.</p>
+                        </div>
+                        <input className="cd-switch-input form-check-input" type="checkbox" role="switch" id="swTransferencias"
                                checked={configFinanciera.aceptarTransferencias}
                                onChange={(e) => setConfigFinanciera({...configFinanciera, aceptarTransferencias: e.target.checked})} />
-                        <label className="form-check-label text-light ms-2" htmlFor="swTransferencias" style={{ cursor: 'pointer' }}>
-                          Aceptar Transferencias / Depósitos <br/>
-                          <small className="text-muted">Requiere validación manual del comprobante.</small>
-                        </label>
-                      </div>
+                      </label>
 
-                      <div className="form-check form-switch mb-3 d-flex align-items-center gap-2">
-                        <input className="form-check-input" type="checkbox" role="switch" id="swEfectivo" 
-                               style={{ width: '2.5em', height: '1.25em', cursor: 'pointer' }}
+                      <label className="cd-switch-row" htmlFor="swEfectivo">
+                        <div>
+                          <p className="cd-switch-label">Efectivo</p>
+                          <p className="cd-switch-hint">Los atletas pagan físicamente en la recepción del box.</p>
+                        </div>
+                        <input className="cd-switch-input form-check-input" type="checkbox" role="switch" id="swEfectivo"
                                checked={configFinanciera.aceptarEfectivo}
                                onChange={(e) => setConfigFinanciera({...configFinanciera, aceptarEfectivo: e.target.checked})} />
-                        <label className="form-check-label text-light ms-2" htmlFor="swEfectivo" style={{ cursor: 'pointer' }}>
-                          Aceptar Efectivo <br/>
-                          <small className="text-muted">Los atletas pagan físicamente en la recepción del box.</small>
-                        </label>
-                      </div>
+                      </label>
                     </div>
 
-                    <div className="col-md-6">
-                      <h6 className="text-white mb-3"><i className="fas fa-percentage text-warning me-2"></i>Comisiones y Anticipos</h6>
-                      
-                      <div className="mb-4">
-                        <label className="cd-label text-light mb-2 d-block">¿Quién paga la comisión de Stripe? (Pagos en línea)</label>
-                        <div className="d-flex gap-3">
-                          <div className="form-check">
-                            <input className="form-check-input" type="radio" name="absorberComision" id="comisionAtleta" 
-                                   checked={!configFinanciera.absorberComisionTarjeta}
-                                   onChange={() => setConfigFinanciera({...configFinanciera, absorberComisionTarjeta: false})} />
-                            <label className="form-check-label text-light" htmlFor="comisionAtleta">El atleta (Se suma al total)</label>
-                          </div>
-                          <div className="form-check">
-                            <input className="form-check-input" type="radio" name="absorberComision" id="comisionBox" 
-                                   checked={configFinanciera.absorberComisionTarjeta}
-                                   onChange={() => setConfigFinanciera({...configFinanciera, absorberComisionTarjeta: true})} />
-                            <label className="form-check-label text-light" htmlFor="comisionBox">El organizador (Se descuenta de tu ingreso)</label>
-                          </div>
-                        </div>
-                        <small className="text-muted mt-1 d-block">
-                          <i className="fas fa-info-circle me-1"></i> No se puede cambiar si ya hay equipos inscritos.
-                        </small>
-                      </div>
+                    <div className="col-12 col-md-6">
+                      <p className="cd-sublabel-header">
+                        <i className="fas fa-percentage" style={{ color: 'var(--accent)' }} />Comisiones y Anticipos
+                      </p>
 
-                      <div>
-                        <label className="cd-label text-light mb-2 d-block">Apartado Mínimo Obligatorio (Efectivo/Transferencia)</label>
-                        <div className="input-group">
-                          <span className="input-group-text bg-dark text-secondary border-secondary">$</span>
-                          <input type="number" className="form-control bg-dark text-light border-secondary" 
-                                 value={configFinanciera.montoMinimoAporte}
-                                 onChange={(e) => setConfigFinanciera({...configFinanciera, montoMinimoAporte: parseFloat(e.target.value) || 0})}
-                                 min="0" step="50" placeholder="0.00" />
-                        </div>
-                        <small className="text-muted mt-1 d-block">
-                          <i className="fas fa-lightbulb me-1"></i> Los pagos con tarjeta siempre requieren el pago total del equipo para minimizar comisiones de Stripe.
-                        </small>
+                      <label className="cd-label mb-2 d-block">¿Quién paga la comisión de Stripe?</label>
+                      <div className="d-flex gap-2 mb-1 flex-wrap">
+                        <label className={`cd-radio-card${!configFinanciera.absorberComisionTarjeta ? ' cd-radio-card--checked' : ''}`} htmlFor="comisionAtleta">
+                          <input type="radio" name="absorberComision" id="comisionAtleta"
+                                 checked={!configFinanciera.absorberComisionTarjeta}
+                                 onChange={() => setConfigFinanciera({...configFinanciera, absorberComisionTarjeta: false})} />
+                          <p className="cd-radio-card-text">El atleta<br/><span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Se suma al total</span></p>
+                        </label>
+                        <label className={`cd-radio-card${configFinanciera.absorberComisionTarjeta ? ' cd-radio-card--checked' : ''}`} htmlFor="comisionBox">
+                          <input type="radio" name="absorberComision" id="comisionBox"
+                                 checked={configFinanciera.absorberComisionTarjeta}
+                                 onChange={() => setConfigFinanciera({...configFinanciera, absorberComisionTarjeta: true})} />
+                          <p className="cd-radio-card-text">El organizador<br/><span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Se descuenta de tu ingreso</span></p>
+                        </label>
                       </div>
+                      <small style={{ color: 'var(--text-muted)', fontSize: '0.7rem', display: 'block', marginBottom: '1.25rem' }}>
+                        <i className="fas fa-info-circle me-1" />No se puede cambiar si ya hay equipos inscritos.
+                      </small>
+
+                      <label className="cd-label mb-2 d-block">Apartado Mínimo Obligatorio (Efectivo/Transferencia)</label>
+                      <div className="cd-prefix-group mb-1">
+                        <span className="cd-prefix">$</span>
+                        <input type="number" className="cd-input"
+                               value={configFinanciera.montoMinimoAporte}
+                               onFocus={e => e.target.select()}
+                               onBlur={e => { if (e.target.value === '') setConfigFinanciera({...configFinanciera, montoMinimoAporte: 0}); }}
+                               onChange={(e) => { if (e.target.value.length <= 6) setConfigFinanciera({...configFinanciera, montoMinimoAporte: e.target.value}); }}
+                               min="0" max={999999} step="50" placeholder="0.00" />
+                      </div>
+                      <small style={{ color: 'var(--text-muted)', fontSize: '0.7rem', display: 'block' }}>
+                        <i className="fas fa-lightbulb me-1" />Los pagos con tarjeta siempre requieren el total del equipo para minimizar comisiones de Stripe.
+                      </small>
                     </div>
                   </div>
                 </div>
@@ -1645,10 +1656,10 @@ export default function CompetenciaDetalle() {
               </div>
               <div className="cd-card">
                 <div className="cd-card-body">
-                  <div className="row g-3 text-center">
+                  <div className="row g-3">
                     {Object.entries(tallasPlayerasList).map(([talla, lista]) => (
-                      <div key={talla} className="col-6 col-md-3">
-                        <div className="cd-talla-card" onClick={() => setModalTallaVisible({ talla, lista })} style={{ cursor: 'pointer', transition: 'transform 0.2s', ':hover': { transform: 'scale(1.05)' } }}>
+                      <div key={talla} className="col-6 col-sm-4 col-md-3">
+                        <div className="cd-talla-card" onClick={() => setModalTallaVisible({ talla, lista })}>
                           <div className="cd-talla-label">Talla</div>
                           <div className="cd-talla-letra">{talla}</div>
                           <div>
@@ -1665,37 +1676,50 @@ export default function CompetenciaDetalle() {
               {/* Modal de Detalle de Tallas */}
               {modalTallaVisible && createPortal(
                 <div className="cd-herramienta-modal-overlay" onClick={() => setModalTallaVisible(null)}>
-                  <div className="cd-herramienta-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '650px' }}>
+                  <div className="cd-herramienta-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
                     <div className="cd-herramienta-modal-head">
-                      <p className="cd-herramienta-modal-title text-danger m-0">
-                        <i className="fas fa-tshirt me-2"></i> Talla {modalTallaVisible.talla} <span className="text-muted ms-2" style={{ fontSize: '0.85rem', textTransform: 'none', letterSpacing: 'normal' }}>({modalTallaVisible.lista.length} atletas)</span>
-                      </p>
-                      <button type="button" onClick={() => setModalTallaVisible(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer' }}>
-                        <i className="fas fa-times"></i>
+                      <div>
+                        <p style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--primary)', margin: '0 0 0.1rem' }}>
+                          Orden para Imprenta
+                        </p>
+                        <p className="cd-herramienta-modal-title m-0">
+                          <i className="fas fa-tshirt me-2" style={{ color: 'var(--primary)' }} />
+                          Talla {modalTallaVisible.talla}
+                          <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.78rem', fontWeight: 400, textTransform: 'none', letterSpacing: 'normal', color: 'var(--text-muted)', marginLeft: '0.6rem' }}>
+                            {modalTallaVisible.lista.length} {modalTallaVisible.lista.length === 1 ? 'atleta' : 'atletas'}
+                          </span>
+                        </p>
+                      </div>
+                      <button type="button" onClick={() => setModalTallaVisible(null)}
+                        style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '0.78rem', flexShrink: 0, transition: 'all 0.18s' }}>
+                        <i className="fas fa-times" />
                       </button>
                     </div>
-                    <div style={{ maxHeight: '60vh', overflowY: 'auto', padding: '0' }}>
+                    <div style={{ overflowY: 'auto', maxHeight: '60vh' }}>
                       {modalTallaVisible.lista.length === 0 ? (
-                        <p className="text-center text-muted py-4 m-0">Nadie ha solicitado esta talla.</p>
+                        <div className="cd-empty" style={{ padding: '2.5rem 1.5rem' }}>
+                          <i className="fas fa-tshirt" />
+                          <p>Nadie ha solicitado esta talla.</p>
+                        </div>
                       ) : (
-                        <table className="table table-dark table-hover mb-0" style={{ fontSize: '0.9rem', backgroundColor: 'transparent' }}>
-                          <thead style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'var(--bg-card)' }}>
+                        <table className="cd-talla-table">
+                          <thead>
                             <tr>
-                              <th style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-muted)' }}>Atleta</th>
-                              <th style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-muted)' }}>Categoría / Rol</th>
-                              <th style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-muted)' }}>Equipo</th>
+                              <th>Atleta</th>
+                              <th>Categoría / Rol</th>
+                              <th>Equipo</th>
                             </tr>
                           </thead>
                           <tbody>
                             {modalTallaVisible.lista.map((item, idx) => (
                               <tr key={idx}>
-                                <td style={{ borderBottom: '1px solid var(--border-light)' }}>{item.nombre}</td>
-                                <td style={{ borderBottom: '1px solid var(--border-light)' }}>
-                                  <span className={`badge ${item.categoria === 'Juez / Staff' ? 'bg-info text-dark' : 'bg-secondary bg-opacity-50'}`}>
+                                <td>{item.nombre}</td>
+                                <td>
+                                  <span className={`cd-talla-badge ${item.categoria === 'Juez / Staff' ? 'cd-talla-badge--staff' : 'cd-talla-badge--atleta'}`}>
                                     {item.categoria}
                                   </span>
                                 </td>
-                                <td style={{ borderBottom: '1px solid var(--border-light)' }}>{item.equipo}</td>
+                                <td style={{ color: 'var(--text-muted)' }}>{item.equipo}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1936,21 +1960,22 @@ export default function CompetenciaDetalle() {
           <div className="cd-tab-fade">
             <div className="cd-section-header">
               <div>
-                <h2 className="cd-section-h">InventarioCompetencia</h2>
+                <h2 className="cd-section-h">Inventario <span>Competencia</span></h2>
                 <p className="cd-section-sub">Agrega materiales requeridos, detecta faltantes y registra préstamos.</p>
               </div>
-              <div className="cd-section-actions">
-                <button className="cd-btn cd-btn--outline" onClick={() => setTabActiva('dashboard')}>
-                  <i className="fas fa-arrow-left"></i>Regresar
-                </button>
-                <BotonSeguro
-                  className="cd-btn cd-btn--primary"
-                  onClick={guardarInventarioCompetencia}
-                  disabled={guardandoInventarioComp}
-                  textoProcesando="Guardando..."
+              <div className="d-flex align-items-center gap-2">
+                <span
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                    fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
+                    letterSpacing: '0.5px', color: 'rgba(34,197,94,0.85)',
+                    background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)',
+                    borderRadius: '20px', padding: '0.3rem 0.75rem'
+                  }}
                 >
-                  <i className="fas fa-save"></i>Guardar
-                </BotonSeguro>
+                  <i className="fas fa-circle" style={{ fontSize: '0.4rem' }}></i>
+                  Guardado automático
+                </span>
               </div>
             </div>
 
@@ -2009,10 +2034,12 @@ export default function CompetenciaDetalle() {
                           <input
                             type="number"
                             min="1"
+                            max="99999"
+                            maxLength={5}
                             className="cd-input"
                             placeholder="Ej: 30"
                             value={formMaterialComp.cantidadRequerida}
-                            onChange={(e) => setFormMaterialComp(prev => ({ ...prev, cantidadRequerida: e.target.value }))}
+                            onChange={(e) => { if (String(e.target.value).length <= 5) setFormMaterialComp(prev => ({ ...prev, cantidadRequerida: e.target.value })); }}
                           />
                         </div>
                         <div className="col-md-2">
@@ -2058,9 +2085,11 @@ export default function CompetenciaDetalle() {
                         <input
                           type="number"
                           min="1"
+                          max="99999"
+                          maxLength={5}
                           className="cd-input"
                           value={formPrestamoManual.cantidad}
-                          onChange={(e) => setFormPrestamoManual(prev => ({ ...prev, cantidad: e.target.value }))}
+                          onChange={(e) => { if (String(e.target.value).length <= 5) setFormPrestamoManual(prev => ({ ...prev, cantidad: e.target.value })); }}
                         />
                       </div>
                       <div className="col-md-8 col-lg-6 col-xxl-8">
@@ -2088,29 +2117,62 @@ export default function CompetenciaDetalle() {
                 <span className="cd-card-titulo cd-card-titulo--white">
                   <i className="fas fa-list-check"></i>Material requerido en competencia
                 </span>
+                <div className="d-flex align-items-center gap-1" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                  <span>{materialesFiltrados.length + prestamosManualesFiltrados.length} resultado{materialesFiltrados.length + prestamosManualesFiltrados.length !== 1 ? 's' : ''}</span>
+                </div>
               </div>
               <div className="cd-card-body">
-                <div className="mb-3" style={{ position: 'relative' }}>
-                  <i
-                    className="fas fa-search"
-                    style={{
-                      position: 'absolute',
-                      left: '0.85rem',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'var(--text-muted)',
-                      fontSize: '0.8rem',
-                      pointerEvents: 'none'
-                    }}
-                  ></i>
-                  <input
-                    type="text"
-                    className="cd-input"
-                    style={{ paddingLeft: '2.2rem' }}
-                    placeholder="Buscar por equipo, notas o box de préstamo..."
-                    value={busquedaInventario}
-                    onChange={(e) => setBusquedaInventario(e.target.value)}
-                  />
+                <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-3 mb-3">
+                  <div className="d-flex align-items-center gap-1 flex-shrink-0">
+                    {[
+                      { key: 'todos', label: 'Todos', icon: 'fa-layer-group' },
+                      { key: 'box', label: 'Herramientas del box', icon: 'fa-toolbox' },
+                      { key: 'externo', label: 'No existente en el box', icon: 'fa-truck-loading' },
+                    ].map(({ key, label, icon }) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setFiltroTipoInventario(key)}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                          padding: '0.3rem 0.7rem', borderRadius: '20px', cursor: 'pointer',
+                          fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
+                          letterSpacing: '0.4px', whiteSpace: 'nowrap',
+                          transition: 'all 0.15s ease',
+                          border: filtroTipoInventario === key
+                            ? (key === 'box' ? '1px solid rgba(79,195,247,0.5)' : key === 'externo' ? '1px solid rgba(230,57,70,0.5)' : '1px solid var(--primary)')
+                            : '1px solid var(--border)',
+                          background: filtroTipoInventario === key
+                            ? (key === 'box' ? 'rgba(79,195,247,0.12)' : key === 'externo' ? 'rgba(230,57,70,0.12)' : 'rgba(230,57,70,0.1)')
+                            : 'transparent',
+                          color: filtroTipoInventario === key
+                            ? (key === 'box' ? 'rgba(79,195,247,0.95)' : key === 'externo' ? 'rgba(230,57,70,0.95)' : 'var(--primary)')
+                            : 'var(--text-muted)',
+                        }}
+                      >
+                        <i className={`fas ${icon}`} style={{ fontSize: '0.65rem' }}></i>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ position: 'relative', flex: 1, minWidth: 0, width: '100%' }}>
+                    <i
+                      className="fas fa-search"
+                      style={{
+                        position: 'absolute', left: '0.85rem', top: '50%',
+                        transform: 'translateY(-50%)', color: 'var(--text-muted)',
+                        fontSize: '0.8rem', pointerEvents: 'none'
+                      }}
+                    ></i>
+                    <input
+                      type="text"
+                      className="cd-input"
+                      style={{ paddingLeft: '2.2rem' }}
+                      placeholder="Buscar por equipo, notas o box de préstamo..."
+                      value={busquedaInventario}
+                      onChange={(e) => setBusquedaInventario(e.target.value)}
+                    />
+                  </div>
                 </div>
                 {cargandoInventarioComp && (
                   <div className="d-flex align-items-center gap-2 mb-3">
@@ -2124,15 +2186,21 @@ export default function CompetenciaDetalle() {
                     {errorInventarioComp}
                   </div>
                 )}
-                {!cargandoInventarioComp && materialesFiltrados.length === 0 && prestamosManualesFiltrados.length === 0 ? (
-                  <div className="cd-empty" style={{ minHeight: '120px' }}>
-                    <i className="fas fa-search-minus"></i>
-                    <p>No hay resultados para tu búsqueda.</p>
-                  </div>
-                ) : inventarioComp.materiales.length === 0 ? (
+                {!cargandoInventarioComp && inventarioComp.materiales.length === 0 && (inventarioComp.prestamosManuales || []).length === 0 ? (
                   <div className="cd-empty" style={{ minHeight: '120px' }}>
                     <i className="fas fa-box-open"></i>
                     <p>Aún no agregas materiales para esta competencia.</p>
+                  </div>
+                ) : !cargandoInventarioComp && materialesFiltrados.length === 0 && prestamosManualesFiltrados.length === 0 ? (
+                  <div className="cd-empty" style={{ minHeight: '120px' }}>
+                    <i className={filtroTipoInventario !== 'todos' ? 'fas fa-filter' : 'fas fa-search-minus'}></i>
+                    <p>
+                      {filtroTipoInventario === 'box'
+                        ? 'No hay herramientas del box registradas.'
+                        : filtroTipoInventario === 'externo'
+                        ? 'No hay préstamos externos registrados.'
+                        : 'No hay resultados para tu búsqueda.'}
+                    </p>
                   </div>
                 ) : (
                   <div className="d-flex flex-column gap-3">
@@ -2143,339 +2211,484 @@ export default function CompetenciaDetalle() {
                       const faltanteActual = getFaltanteActual(material);
                       const tienePrestamosRegistrados = prestamosMaterial.length > 0;
                       const tienePrestamosActivos = prestamosMaterial.some(p => (p.estatus || 'Prestado') !== 'Devuelto');
-                      const mostrarPendiente = material.idHerramienta ? tienePrestamosActivos : faltanteActual > 0;
-                      const mostrarRegresado = material.idHerramienta && tienePrestamosRegistrados && !tienePrestamosActivos;
                       const materialAbierto = materialAbiertoId === idMaterial;
                       const estaEditandoRequerido = materialEditandoId === idMaterial;
+                      const esBox = !!material.idHerramienta;
+                      const colorAccent = esBox ? 'rgba(79,195,247,1)' : 'rgba(230,57,70,1)';
+                      const colorAccentSoft = esBox ? 'rgba(79,195,247,0.12)' : 'rgba(230,57,70,0.12)';
+                      const colorAccentBorder = esBox ? 'rgba(79,195,247,0.3)' : 'rgba(230,57,70,0.3)';
+
+                      const statusBadge = esBox
+                        ? faltanteActual > 0
+                          ? <span className="cd-badge cd-badge--warning"><i className="fas fa-exclamation-triangle me-1" style={{ fontSize: '0.6rem' }}></i>Faltan {faltanteActual}</span>
+                          : tienePrestamosRegistrados && !tienePrestamosActivos
+                            ? <span className="cd-badge cd-badge--success"><i className="fas fa-check-circle me-1" style={{ fontSize: '0.6rem' }}></i>Devuelto</span>
+                            : <span className="cd-badge cd-badge--success"><i className="fas fa-check-circle me-1" style={{ fontSize: '0.6rem' }}></i>Completo</span>
+                        : <span className="cd-badge cd-badge--danger"><i className="fas fa-truck-loading me-1" style={{ fontSize: '0.6rem' }}></i>Préstamo ext.</span>;
+
                       return (
                         <div
                           key={idMaterial}
-                          className="cd-card cd-card--black"
                           style={{
-                            borderLeft: material.idHerramienta ? '4px solid rgba(79, 195, 247, 0.9)' : '4px solid rgba(230, 57, 70, 0.95)',
-                            boxShadow: material.idHerramienta
-                              ? '0 10px 24px rgba(79, 195, 247, 0.07)'
-                              : '0 10px 24px rgba(230, 57, 70, 0.12)',
-                            background: material.idHerramienta
-                              ? 'linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))'
-                              : 'linear-gradient(180deg, rgba(230,57,70,0.08), rgba(255,255,255,0.02))'
+                            borderRadius: '16px',
+                            border: `1px solid ${colorAccentBorder}`,
+                            borderLeft: `4px solid ${colorAccent}`,
+                            background: esBox
+                              ? 'linear-gradient(135deg, rgba(79,195,247,0.04) 0%, rgba(11,11,15,0.8) 100%)'
+                              : 'linear-gradient(135deg, rgba(230,57,70,0.06) 0%, rgba(11,11,15,0.8) 100%)',
+                            overflow: 'hidden',
                           }}
                         >
+                          {/* ── CABECERA COLAPSABLE ── */}
                           <button
                             type="button"
                             onClick={() => setMaterialAbiertoId(prev => (prev === idMaterial ? null : idMaterial))}
-                            className="d-flex align-items-center justify-content-between gap-3 w-100"
                             style={{
-                              background: 'transparent',
-                              border: 'none',
-                              padding: '1rem 1rem 0.9rem',
-                              textAlign: 'left',
-                              cursor: 'pointer'
+                              width: '100%', background: 'transparent', border: 'none',
+                              padding: '1rem 1.1rem', textAlign: 'left', cursor: 'pointer',
                             }}
                           >
-                            <div className="d-flex align-items-start gap-3 flex-wrap">
-                              <div>
+                            <div className="d-flex align-items-start justify-content-between gap-2 flex-wrap">
+                              {/* Izquierda: nombre + tipo + medida */}
+                              <div style={{ minWidth: 0, flex: 1 }}>
                                 <div className="d-flex align-items-center gap-2 flex-wrap mb-1">
-                                  <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '1rem' }}>
-                                    {material.nombre}
-                                  </div>
-                                  {material.idHerramienta ? (
-                                    <span className="cd-badge cd-badge--info">Herramienta del box</span>
-                                  ) : (
-                                    <span className="cd-badge cd-badge--danger">No existente en el box</span>
-                                  )}
-                                </div>
-                                <div className="d-flex align-items-center gap-2 flex-wrap mb-2">
-                                  {material.medidaTexto ? (
-                                    <span
-                                      className="cd-badge"
-                                      style={{
-                                        background: 'rgba(34, 197, 94, 0.12)',
-                                        color: 'var(--text-primary)',
-                                        border: '1px solid rgba(34, 197, 94, 0.2)',
-                                        fontWeight: 700
-                                      }}
-                                    >
-                                      <i className="fas fa-weight-hanging"></i>
-                                      Peso: {material.medidaTexto}
-                                    </span>
-                                  ) : (
-                                    <span className="cd-badge cd-badge--outline">Sin peso definido</span>
-                                  )}
-                                </div>
-                                {material.notasHerramienta ? (
                                   <div
                                     style={{
-                                      color: 'var(--text-muted)',
-                                      fontSize: '0.86rem',
-                                      lineHeight: 1.35,
-                                      maxWidth: '42rem'
+                                      width: 28, height: 28, borderRadius: '8px', flexShrink: 0,
+                                      background: colorAccentSoft, border: `1px solid ${colorAccentBorder}`,
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      color: colorAccent, fontSize: '0.7rem',
                                     }}
                                   >
-                                    <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Notas:</span>{' '}
-                                    {material.notasHerramienta}
+                                    <i className={`fas ${esBox ? 'fa-toolbox' : 'fa-truck-loading'}`}></i>
                                   </div>
-                                ) : (
-                                  <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                                    {material.idHerramienta ? 'Toca para ver préstamos y devolver.' : 'Préstamo externo registrado.'}
+                                  <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.97rem', lineHeight: 1.2 }}>
+                                    {material.nombre}
+                                  </span>
+                                  {esBox
+                                    ? <span className="cd-badge cd-badge--info">Herramienta del box</span>
+                                    : <span className="cd-badge cd-badge--danger">No existente en el box</span>}
+                                </div>
+
+                                {/* Stats en línea: Disponible · Requerido · Faltante */}
+                                {esBox && (
+                                  <div className="d-flex align-items-center gap-3 flex-wrap mt-1" style={{ fontSize: '0.78rem' }}>
+                                    <span style={{ color: 'var(--text-muted)' }}>
+                                      <span style={{ fontWeight: 700, color: 'var(--text-secondary)', marginRight: '0.25rem' }}>Disponible:</span>
+                                      <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{material.disponible}</span>
+                                    </span>
+                                    <span style={{ color: 'var(--border)' }}>|</span>
+                                    <span style={{ color: 'var(--text-muted)' }}>
+                                      <span style={{ fontWeight: 700, color: 'var(--text-secondary)', marginRight: '0.25rem' }}>Requerido:</span>
+                                      <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{material.requerido}</span>
+                                    </span>
+                                    <span style={{ color: 'var(--border)' }}>|</span>
+                                    <span style={{ color: 'var(--text-muted)' }}>
+                                      <span style={{ fontWeight: 700, color: 'var(--text-secondary)', marginRight: '0.25rem' }}>Prestado:</span>
+                                      <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{prestado}</span>
+                                    </span>
+                                    {faltanteActual > 0 && (
+                                      <>
+                                        <span style={{ color: 'var(--border)' }}>|</span>
+                                        <span>
+                                          <span style={{ fontWeight: 700, color: 'rgba(251,191,36,0.9)', marginRight: '0.25rem' }}>Faltante:</span>
+                                          <span style={{ color: 'rgba(251,191,36,1)', fontWeight: 800 }}>{faltanteActual}</span>
+                                        </span>
+                                      </>
+                                    )}
                                   </div>
                                 )}
+
+                                {/* Medida y notas */}
+                                <div className="d-flex align-items-center gap-2 flex-wrap mt-1">
+                                  {material.medidaTexto && (
+                                    <span style={{
+                                      fontSize: '0.72rem', fontWeight: 700, color: 'rgba(34,197,94,0.85)',
+                                      background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)',
+                                      borderRadius: '6px', padding: '0.1rem 0.5rem',
+                                    }}>
+                                      <i className="fas fa-weight-hanging me-1"></i>
+                                      {material.medidaTexto}
+                                    </span>
+                                  )}
+                                  {material.notasHerramienta && (
+                                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                                      {material.notasHerramienta}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                            <div className="d-flex align-items-center gap-2 flex-shrink-0">
-                              {material.idHerramienta ? (
-                                mostrarPendiente ? (
-                                  <span className="cd-badge cd-badge--warning">Faltan {faltanteActual}</span>
-                                ) : mostrarRegresado ? (
-                                  <span className="cd-badge cd-badge--success">Devuelto</span>
-                                ) : faltanteActual > 0 ? (
-                                  <span className="cd-badge cd-badge--warning">Faltan {faltanteActual}</span>
-                                ) : (
-                                  <span className="cd-badge cd-badge--success">Completo</span>
-                                )
-                              ) : (
-                                <span className="cd-badge cd-badge--danger">Préstamo externo</span>
-                              )}
-                              <span className="cd-badge cd-badge--outline">
-                                <i className={`fas ${materialAbierto ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
-                              </span>
+
+                              {/* Derecha: status + chevron */}
+                              <div className="d-flex align-items-center gap-2 flex-shrink-0">
+                                {statusBadge}
+                                <span style={{
+                                  width: 26, height: 26, borderRadius: '50%', display: 'flex',
+                                  alignItems: 'center', justifyContent: 'center',
+                                  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)',
+                                  color: 'var(--text-muted)', fontSize: '0.68rem', flexShrink: 0,
+                                }}>
+                                  <i className={`fas ${materialAbierto ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+                                </span>
+                              </div>
                             </div>
                           </button>
 
+                          {/* ── CUERPO EXPANDIDO ── */}
                           {materialAbierto && (
-                            <div className="cd-card-body" style={{ paddingTop: 0, paddingBottom: '0.9rem' }}>
-                              <div className="d-flex flex-column gap-3">
-                                <div className="d-flex flex-wrap align-items-center gap-2">
-                                  {estaEditandoRequerido ? (
+                            <div style={{ borderTop: `1px solid ${colorAccentBorder}`, padding: '1rem 1.1rem' }}>
+
+                              {/* Grid de stats */}
+                              {esBox && (
+                                <div className="row g-2 mb-3">
+                                  {[
+                                    { label: 'Disponible', value: material.disponible, icon: 'fa-boxes-stacked', color: 'rgba(34,197,94,0.8)' },
+                                    { label: 'Requerido', value: material.requerido, icon: 'fa-bullseye', color: 'rgba(79,195,247,0.8)' },
+                                    { label: 'Prestado', value: prestado, icon: 'fa-handshake', color: 'rgba(251,191,36,0.8)' },
+                                    { label: 'Faltante', value: faltanteActual, icon: 'fa-triangle-exclamation', color: faltanteActual > 0 ? 'rgba(251,191,36,1)' : 'rgba(34,197,94,0.6)' },
+                                  ].map(({ label, value, icon, color }) => (
+                                    <div key={label} className="col-6 col-sm-3">
+                                      <div style={{
+                                        borderRadius: '10px', padding: '0.6rem 0.75rem',
+                                        background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)',
+                                        display: 'flex', flexDirection: 'column', gap: '0.2rem',
+                                      }}>
+                                        <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', color: 'var(--text-muted)' }}>
+                                          <i className={`fas ${icon} me-1`} style={{ color, fontSize: '0.6rem' }}></i>
+                                          {label}
+                                        </span>
+                                        <span style={{ fontSize: '1.2rem', fontWeight: 800, color, lineHeight: 1 }}>
+                                          {value}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Acciones: editar requerido + prestar */}
+                              <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+                                {estaEditandoRequerido ? (
+                                  <div className="d-flex flex-column gap-2" style={{ width: '100%' }}>
                                     <div className="d-flex align-items-center gap-2 flex-wrap">
-                                      <label className="cd-label mb-0">Requerido</label>
+                                      <label className="cd-label mb-0" style={{ fontSize: '0.78rem' }}>Cantidad requerida</label>
                                       <input
                                         type="number"
-                                        min="1"
+                                        min={minRequeridoEdit}
+                                        max="99999"
                                         className="cd-input"
-                                        style={{ width: '120px', height: '34px' }}
+                                        style={{ width: '110px', height: '34px' }}
                                         value={cantidadRequeridaEdit}
-                                        onChange={(e) => setCantidadRequeridaEdit(e.target.value)}
+                                        onChange={(e) => {
+                                          const val = e.target.value;
+                                          if (String(val).length <= 5) setCantidadRequeridaEdit(val);
+                                        }}
                                       />
-                                      <button
-                                        type="button"
-                                        className="cd-btn cd-btn--primary cd-btn--sm"
-                                        onClick={() => guardarEdicionRequerido(idMaterial)}
-                                      >
-                                        Guardar
+                                      <button type="button" className="cd-btn cd-btn--primary cd-btn--sm" onClick={() => guardarEdicionRequerido(idMaterial)}>
+                                        <i className="fas fa-check"></i>Guardar
                                       </button>
-                                      <button
-                                        type="button"
-                                        className="cd-btn cd-btn--outline cd-btn--sm"
-                                        onClick={cancelarEdicionRequerido}
-                                      >
+                                      <button type="button" className="cd-btn cd-btn--outline cd-btn--sm" onClick={cancelarEdicionRequerido}>
                                         Cancelar
                                       </button>
                                     </div>
-                                  ) : (
-                                    <>
-                                      <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                                        Disponible: {material.disponible} · Requerido: {material.requerido} · Prestado: {prestado}
+                                    {minRequeridoEdit > 1 && (
+                                      <div style={{
+                                        display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                                        fontSize: '0.72rem', color: 'rgba(251,191,36,0.85)',
+                                        background: 'rgba(251,191,36,0.07)', border: '1px solid rgba(251,191,36,0.2)',
+                                        borderRadius: '8px', padding: '0.3rem 0.6rem', width: 'fit-content',
+                                      }}>
+                                        <i className="fas fa-lock" style={{ fontSize: '0.6rem' }}></i>
+                                        Mínimo permitido: <strong>{minRequeridoEdit}</strong> — no puedes reducir mientras haya préstamos registrados.
                                       </div>
-                                      <button
-                                        type="button"
-                                        className="cd-btn cd-btn--outline cd-btn--sm"
-                                        onClick={() => iniciarEdicionRequerido(material)}
-                                      >
-                                        <i className="fas fa-pen"></i>Editar
-                                      </button>
-                                    </>
-                                  )}
-                                  {material.idHerramienta && ((faltanteActual > 0 && !tienePrestamosRegistrados) || tienePrestamosActivos) && (
-                                    <button
-                                      type="button"
-                                      className="cd-btn cd-btn--warning-solid cd-btn--sm"
-                                      onClick={() => {
-                                        setPrestamoAbiertoId(idMaterial);
-                                        setFormPrestamo({ boxPrestamo: '', cantidad: '', notas: '' });
-                                      }}
-                                    >
-                                      <i className="fas fa-handshake"></i>Prestar
-                                    </button>
-                                  )}
-                                </div>
-
-                                {prestamoAbiertoId === idMaterial && (
-                                  <div className="row g-2">
-                                    <div className="col-md-3">
-                                      <label className="cd-label">Box de préstamo</label>
-                                      <input
-                                        type="text"
-                                        className="cd-input"
-                                        value={formPrestamo.boxPrestamo}
-                                        onChange={(e) => setFormPrestamo(prev => ({ ...prev, boxPrestamo: e.target.value }))}
-                                      />
-                                    </div>
-                                    <div className="col-md-2">
-                                      <label className="cd-label">Cantidad</label>
-                                      <input
-                                        type="number"
-                                        min="1"
-                                        className="cd-input"
-                                        value={formPrestamo.cantidad}
-                                        onChange={(e) => setFormPrestamo(prev => ({ ...prev, cantidad: e.target.value }))}
-                                      />
-                                    </div>
-                                    <div className="col-md-5">
-                                      <label className="cd-label">Notas</label>
-                                      <input
-                                        type="text"
-                                        className="cd-input"
-                                        value={formPrestamo.notas}
-                                        onChange={(e) => setFormPrestamo(prev => ({ ...prev, notas: e.target.value }))}
-                                      />
-                                    </div>
-                                    <div className="col-md-2 d-flex align-items-end gap-2">
-                                      <button type="button" className="cd-btn cd-btn--primary w-100" onClick={() => guardarPrestamoMaterial(idMaterial)}>
-                                        Guardar
-                                      </button>
-                                      <button type="button" className="cd-btn cd-btn--outline" onClick={() => setPrestamoAbiertoId(null)}>
-                                        X
-                                      </button>
-                                    </div>
+                                    )}
                                   </div>
+                                ) : (
+                                  <button type="button" className="cd-btn cd-btn--outline cd-btn--sm" onClick={() => iniciarEdicionRequerido(material)}>
+                                    <i className="fas fa-pen"></i>Editar requerido
+                                  </button>
                                 )}
-
-                                {prestamosMaterial.length > 0 && (
-                                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.9rem' }}>
-                                    {prestamosMaterial.map(p => (
-                                      <div
-                                        key={p.id}
-                                        className="d-flex justify-content-between align-items-start gap-3"
-                                        style={{
-                                          color: 'var(--text-muted)',
-                                          fontSize: '0.82rem',
-                                          marginBottom: '0.6rem',
-                                          padding: '0.65rem 0.8rem',
-                                          background: 'rgba(255,255,255,0.02)',
-                                          border: '1px solid var(--border)',
-                                          borderRadius: '12px'
-                                        }}
-                                      >
-                                        <div className="d-flex flex-column gap-1">
-                                          <div className="d-flex align-items-center gap-2 flex-wrap">
-                                            <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>
-                                              <i className="fas fa-arrow-right me-1"></i>
-                                              {p.boxPrestamo}
-                                            </span>
-                                            <span className="cd-badge cd-badge--outline">{p.cantidad} uds</span>
-                                            {(p.estatus || 'Prestado') === 'Devuelto' ? (
-                                              <span className="cd-badge cd-badge--success">Devuelto</span>
-                                            ) : (
-                                              <span className="cd-badge cd-badge--warning">Pendiente</span>
-                                            )}
-                                          </div>
-                                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                                            <span>{p.notas || 'Sin notas'}</span>
-                                            <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>
-                                              Prestado: {formatFechaPrestamo(p.fecha)}
-                                              {p.fechaDevolucion ? ` · Devuelto: ${formatFechaPrestamo(p.fechaDevolucion)}` : ''}
-                                            </span>
-                                          </div>
-                                        </div>
-                                        {(p.estatus || 'Prestado') === 'Devuelto' ? (
-                                          <span className="cd-badge cd-badge--success">Devuelto</span>
-                                        ) : (
-                                          <button
-                                            type="button"
-                                            className="cd-btn cd-btn--outline cd-btn--sm"
-                                            onClick={() => marcarPrestamoDevuelto(idMaterial, p.id)}
-                                          >
-                                            Devuelto
-                                          </button>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
+                                {esBox && faltanteActual > 0 && (
+                                  <button
+                                    type="button"
+                                    className="cd-btn cd-btn--warning-solid cd-btn--sm"
+                                    onClick={() => { setPrestamoAbiertoId(idMaterial); setFormPrestamo({ boxPrestamo: '', cantidad: '', notas: '' }); }}
+                                  >
+                                    <i className="fas fa-handshake"></i>Registrar préstamo
+                                  </button>
                                 )}
                               </div>
+
+                              {/* Formulario de nuevo préstamo */}
+                              {prestamoAbiertoId === idMaterial && (
+                                <div
+                                  style={{
+                                    borderRadius: '12px', padding: '0.9rem',
+                                    background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.2)',
+                                    marginBottom: '1rem',
+                                  }}
+                                >
+                                  <p style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', color: 'rgba(251,191,36,0.8)', marginBottom: '0.75rem' }}>
+                                    <i className="fas fa-handshake me-1"></i>Nuevo préstamo
+                                  </p>
+                                  <div className="row g-2">
+                                    <div className="col-12 col-sm-5">
+                                      <label className="cd-label">Box de préstamo</label>
+                                      <input type="text" className="cd-input" placeholder="Ej: CrossFit Norte"
+                                        value={formPrestamo.boxPrestamo}
+                                        onChange={(e) => setFormPrestamo(prev => ({ ...prev, boxPrestamo: e.target.value }))} />
+                                    </div>
+                                    <div className="col-5 col-sm-2">
+                                      <label className="cd-label">Cantidad</label>
+                                      <input type="number" min="1" max="99999" className="cd-input" placeholder="0"
+                                        value={formPrestamo.cantidad}
+                                        onChange={(e) => { if (String(e.target.value).length <= 5) setFormPrestamo(prev => ({ ...prev, cantidad: e.target.value })); }} />
+                                    </div>
+                                    <div className="col-12 col-sm-5">
+                                      <label className="cd-label">Notas</label>
+                                      <input type="text" className="cd-input" placeholder="Observaciones..."
+                                        value={formPrestamo.notas}
+                                        onChange={(e) => setFormPrestamo(prev => ({ ...prev, notas: e.target.value }))} />
+                                    </div>
+                                    <div className="col-12 d-flex justify-content-end align-items-center gap-2" style={{ paddingTop: '0.25rem' }}>
+                                      <button type="button" className="cd-btn cd-btn--outline cd-btn--sm" onClick={() => setPrestamoAbiertoId(null)}>
+                                        <i className="fas fa-times"></i>Cancelar
+                                      </button>
+                                      <button type="button" className="cd-btn cd-btn--primary cd-btn--sm" onClick={() => guardarPrestamoMaterial(idMaterial)}>
+                                        <i className="fas fa-check"></i>Guardar préstamo
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Lista de préstamos existentes */}
+                              {prestamosMaterial.length > 0 && (
+                                <div>
+                                  <p style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                                    <i className="fas fa-list me-1"></i>Préstamos registrados ({prestamosMaterial.length})
+                                  </p>
+                                  <div className="d-flex flex-column gap-2">
+                                    {prestamosMaterial.map(p => {
+                                      const devuelto = (p.estatus || 'Prestado') === 'Devuelto';
+                                      return (
+                                        <div
+                                          key={p.id}
+                                          style={{
+                                            borderRadius: '12px', overflow: 'hidden',
+                                            background: devuelto ? 'rgba(34,197,94,0.04)' : 'rgba(251,191,36,0.05)',
+                                            border: devuelto ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(251,191,36,0.2)',
+                                          }}
+                                        >
+                                          {/* Datos — grid sin columna lateral de acciones */}
+                                          <div className="row g-0" style={{ padding: '0.75rem 0.9rem', rowGap: '0.55rem' }}>
+                                            <div className="col-6 col-md-3" style={{ paddingRight: '0.5rem' }}>
+                                              <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', color: 'var(--text-muted)', marginBottom: '0.1rem' }}>
+                                                <i className="fas fa-building me-1"></i>Box de préstamo
+                                              </div>
+                                              <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.85rem', wordBreak: 'break-word' }}>
+                                                {p.boxPrestamo || '—'}
+                                              </div>
+                                            </div>
+                                            <div className="col-6 col-md-2" style={{ paddingRight: '0.5rem' }}>
+                                              <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', color: 'var(--text-muted)', marginBottom: '0.1rem' }}>
+                                                <i className="fas fa-hashtag me-1"></i>Cantidad
+                                              </div>
+                                              <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.85rem' }}>
+                                                {p.cantidad}<span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: '0.2rem' }}>uds</span>
+                                              </div>
+                                            </div>
+                                            <div className="col-12 col-md-4" style={{ paddingRight: '0.5rem' }}>
+                                              <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', color: 'var(--text-muted)', marginBottom: '0.1rem' }}>
+                                                <i className="fas fa-note-sticky me-1"></i>Notas
+                                              </div>
+                                              <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', wordBreak: 'break-word' }}>
+                                                {p.notas || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Sin notas</span>}
+                                              </div>
+                                            </div>
+                                            <div className="col-12 col-md-3">
+                                              <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', color: 'var(--text-muted)', marginBottom: '0.1rem' }}>
+                                                <i className="fas fa-calendar me-1"></i>Fecha préstamo
+                                              </div>
+                                              <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+                                                {formatFechaPrestamo(p.fecha)}
+                                              </div>
+                                            </div>
+                                            {p.fechaDevolucion && (
+                                              <div className="col-12" style={{ marginTop: '0.1rem' }}>
+                                                <span style={{ fontSize: '0.72rem', color: 'rgba(34,197,94,0.85)' }}>
+                                                  <i className="fas fa-rotate-left me-1"></i>
+                                                  <strong>Devuelto:</strong> {formatFechaPrestamo(p.fechaDevolucion)}
+                                                </span>
+                                              </div>
+                                            )}
+                                          </div>
+                                          {/* Footer de estado — siempre en su propia fila */}
+                                          <div style={{
+                                            borderTop: devuelto ? '1px solid rgba(34,197,94,0.15)' : '1px solid rgba(251,191,36,0.15)',
+                                            padding: '0.5rem 0.9rem',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                            flexWrap: 'wrap', gap: '0.4rem',
+                                            background: devuelto ? 'rgba(34,197,94,0.04)' : 'rgba(251,191,36,0.04)',
+                                          }}>
+                                            {devuelto ? (
+                                              <span className="cd-badge cd-badge--success">
+                                                <i className="fas fa-check-circle me-1"></i>Devuelto
+                                              </span>
+                                            ) : (
+                                              <>
+                                                <span className="cd-badge cd-badge--warning">
+                                                  <i className="fas fa-clock me-1"></i>Pendiente
+                                                </span>
+                                                <button
+                                                  type="button"
+                                                  className="cd-btn cd-btn--outline cd-btn--sm"
+                                                  onClick={() => marcarPrestamoDevuelto(idMaterial, p.id)}
+                                                >
+                                                  <i className="fas fa-rotate-left"></i>Marcar devuelto
+                                                </button>
+                                              </>
+                                            )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
                       );
                     })}
 
+                    {/* ── SECCIÓN: PRÉSTAMOS EXTERNOS (No existentes en el box) ── */}
                     {prestamosManualesFiltrados.length > 0 && (
-                      <div className="mt-2" style={{ borderTop: '1px solid var(--border)', paddingTop: '0.9rem' }}>
+                      <div style={{ marginTop: '0.5rem' }}>
                         <button
                           type="button"
-                          className="d-flex align-items-center justify-content-between gap-2 w-100"
                           onClick={() => setPrestamosExternosAbiertos(prev => !prev)}
                           style={{
-                            background: 'transparent',
-                            border: 'none',
-                            padding: 0,
-                            color: 'var(--primary)',
-                            fontSize: '0.82rem',
-                            fontWeight: 800,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px'
+                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            background: 'rgba(230,57,70,0.06)', border: '1px solid rgba(230,57,70,0.25)',
+                            borderRadius: prestamosExternosAbiertos ? '16px 16px 0 0' : '16px',
+                            padding: '0.75rem 1rem', cursor: 'pointer',
+                            transition: 'border-radius 0.2s ease',
                           }}
                         >
-                          <span className="d-flex align-items-center gap-2">
-                            <i className={`fas ${prestamosExternosAbiertos ? 'fa-chevron-down' : 'fa-chevron-right'}`}></i>
-                            Préstamos no existentes en el box
-                            <span className="cd-badge cd-badge--danger">{prestamosManualesFiltrados.length}</span>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'rgba(230,57,70,0.9)' }}>
+                            <i className={`fas ${prestamosExternosAbiertos ? 'fa-chevron-down' : 'fa-chevron-right'}`} style={{ fontSize: '0.65rem' }}></i>
+                            <i className="fas fa-truck-loading"></i>
+                            Préstamos externos — no existentes en el box
+                            <span style={{
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              minWidth: '20px', height: '20px', borderRadius: '10px', padding: '0 6px',
+                              background: 'rgba(230,57,70,0.2)', border: '1px solid rgba(230,57,70,0.4)',
+                              color: 'rgba(230,57,70,1)', fontSize: '0.72rem', fontWeight: 900,
+                            }}>
+                              {prestamosManualesFiltrados.length}
+                            </span>
                           </span>
-                          <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
                             {prestamosExternosAbiertos ? 'Ocultar' : 'Mostrar'}
                           </span>
                         </button>
 
                         {prestamosExternosAbiertos && (
-                          <div className="mt-3 d-flex flex-column gap-2">
-                            {prestamosManualesFiltrados.map(p => (
-                              <div
-                                key={p.id}
-                                className="d-flex justify-content-between align-items-start gap-3"
-                                style={{
-                                  color: 'var(--text-muted)',
-                                  fontSize: '0.84rem',
-                                  padding: '0.7rem 0.85rem',
-                                  background: 'linear-gradient(180deg, rgba(230,57,70,0.12), rgba(230,57,70,0.04))',
-                                  border: '1px solid rgba(230,57,70,0.3)',
-                                  boxShadow: '0 10px 24px rgba(230,57,70,0.08)',
-                                  borderRadius: '12px'
-                                }}
-                              >
-                                <div className="d-flex flex-column gap-1">
-                                  <div className="d-flex align-items-center gap-2 flex-wrap">
-                                    <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>
-                                      <i className="fas fa-circle me-1" style={{ fontSize: '0.4rem' }}></i>
-                                      {p.nombreEquipo}
-                                    </span>
-                                    <span className="cd-badge cd-badge--danger">No existente en el box</span>
-                                    <span className="cd-badge cd-badge--outline">{p.cantidad} uds</span>
+                          <div style={{
+                            border: '1px solid rgba(230,57,70,0.25)', borderTop: 'none',
+                            borderRadius: '0 0 16px 16px', padding: '0.9rem',
+                            background: 'rgba(230,57,70,0.03)',
+                            display: 'flex', flexDirection: 'column', gap: '0.6rem',
+                          }}>
+                            {prestamosManualesFiltrados.map(p => {
+                              const devuelto = (p.estatus || 'Prestado') === 'Devuelto';
+                              return (
+                                <div
+                                  key={p.id}
+                                  style={{
+                                    borderRadius: '12px', overflow: 'hidden',
+                                    background: devuelto ? 'rgba(34,197,94,0.05)' : 'rgba(230,57,70,0.08)',
+                                    border: devuelto ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(230,57,70,0.3)',
+                                  }}
+                                >
+                                  {/* Datos — grid completo sin columna lateral */}
+                                  <div className="row g-0" style={{ padding: '0.8rem 0.9rem', rowGap: '0.55rem' }}>
+                                    <div className="col-12 col-sm-6 col-md-4" style={{ paddingRight: '0.5rem' }}>
+                                      <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', color: 'var(--text-muted)', marginBottom: '0.1rem' }}>
+                                        <i className="fas fa-box me-1"></i>Equipo / Material
+                                      </div>
+                                      <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.9rem', wordBreak: 'break-word' }}>
+                                        {p.nombreEquipo || '—'}
+                                      </div>
+                                    </div>
+                                    <div className="col-6 col-md-3" style={{ paddingRight: '0.5rem' }}>
+                                      <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', color: 'var(--text-muted)', marginBottom: '0.1rem' }}>
+                                        <i className="fas fa-building me-1"></i>Box de préstamo
+                                      </div>
+                                      <div style={{ fontWeight: 700, color: 'rgba(230,57,70,0.9)', fontSize: '0.85rem', wordBreak: 'break-word' }}>
+                                        {p.boxPrestamo || '—'}
+                                      </div>
+                                    </div>
+                                    <div className="col-6 col-md-2" style={{ paddingRight: '0.5rem' }}>
+                                      <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', color: 'var(--text-muted)', marginBottom: '0.1rem' }}>
+                                        <i className="fas fa-hashtag me-1"></i>Cantidad
+                                      </div>
+                                      <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.85rem' }}>
+                                        {p.cantidad}<span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: '0.2rem' }}>uds</span>
+                                      </div>
+                                    </div>
+                                    <div className="col-12 col-md-3" style={{ paddingRight: '0.5rem' }}>
+                                      <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', color: 'var(--text-muted)', marginBottom: '0.1rem' }}>
+                                        <i className="fas fa-note-sticky me-1"></i>Notas
+                                      </div>
+                                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', wordBreak: 'break-word' }}>
+                                        {p.notas || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Sin notas</span>}
+                                      </div>
+                                    </div>
+                                    <div className="col-12">
+                                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                        <i className="fas fa-calendar me-1"></i>
+                                        <strong>Fecha préstamo:</strong> {formatFechaPrestamo(p.fecha)}
+                                        {p.fechaDevolucion && (
+                                          <span style={{ marginLeft: '0.6rem', color: 'rgba(34,197,94,0.85)' }}>
+                                            <i className="fas fa-rotate-left me-1"></i>
+                                            <strong>Devuelto:</strong> {formatFechaPrestamo(p.fechaDevolucion)}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
                                   </div>
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                                    <span>
-                                      <strong style={{ color: 'var(--text-primary)' }}>{p.boxPrestamo}</strong>
-                                      {p.notas ? ` · ${p.notas}` : ' · Sin notas'}
-                                    </span>
-                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>
-                                      Prestado: {formatFechaPrestamo(p.fecha)}
-                                      {p.fechaDevolucion ? ` · Devuelto: ${formatFechaPrestamo(p.fechaDevolucion)}` : ''}
-                                    </span>
+                                  {/* Footer de estado — fila propia, nunca se sobrepone */}
+                                  <div style={{
+                                    borderTop: devuelto ? '1px solid rgba(34,197,94,0.15)' : '1px solid rgba(230,57,70,0.2)',
+                                    padding: '0.5rem 0.9rem',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    flexWrap: 'wrap', gap: '0.4rem',
+                                    background: devuelto ? 'rgba(34,197,94,0.04)' : 'rgba(230,57,70,0.05)',
+                                  }}>
+                                    {devuelto ? (
+                                      <span className="cd-badge cd-badge--success">
+                                        <i className="fas fa-check-circle me-1"></i>Devuelto
+                                      </span>
+                                    ) : (
+                                      <>
+                                        <span className="cd-badge cd-badge--warning">
+                                          <i className="fas fa-clock me-1"></i>Pendiente
+                                        </span>
+                                        <button
+                                          type="button"
+                                          className="cd-btn cd-btn--outline cd-btn--sm"
+                                          onClick={() => marcarPrestamoManualDevuelto(p.id)}
+                                        >
+                                          <i className="fas fa-rotate-left"></i>Marcar devuelto
+                                        </button>
+                                      </>
+                                    )}
                                   </div>
                                 </div>
-                                {(p.estatus || 'Prestado') === 'Devuelto' ? (
-                                  <span className="cd-badge cd-badge--success">Devuelto</span>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    className="cd-btn cd-btn--outline cd-btn--sm"
-                                    onClick={() => marcarPrestamoManualDevuelto(p.id)}
-                                  >
-                                    Devuelto
-                                  </button>
-                                )}
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { VENTAS_ENDPOINT } from '../services/api';
 import BackButton from '../components/BackButton';
@@ -8,6 +9,21 @@ import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import '../assets/css/HistorialVentas.css';
+
+const PERIODO_OPCIONES = [
+  { value: 'Hoy',               icon: 'fa-sun',           label: 'Hoy',                desc: 'Solo ventas de hoy',              color: '#f59e0b' },
+  { value: 'Esta Semana',       icon: 'fa-calendar-week', label: 'Esta Semana',         desc: 'Lunes hasta hoy',                 color: '#3b82f6' },
+  { value: 'Este Mes',          icon: 'fa-calendar-alt',  label: 'Este Mes',            desc: 'Mes en curso',                    color: '#8b5cf6' },
+  { value: 'Este Año',          icon: 'fa-calendar',      label: 'Este Año',            desc: 'Año en curso',                    color: '#10b981' },
+  { value: 'Todo el Historial', icon: 'fa-history',       label: 'Todo el Historial',   desc: 'Desde el inicio',                 color: '#4FC3F7' },
+  { value: 'Personalizado',     icon: 'fa-sliders-h',     label: 'Personalizado…',      desc: 'Elige un rango de fechas',        color: '#E63946' },
+];
+
+const TIPO_OPCIONES = [
+  { value: 'Todo',       icon: 'fa-list',         label: 'Todas las Transacciones',   desc: 'Ventas, abonos y pendientes', color: '#4FC3F7' },
+  { value: 'Ingresos',   icon: 'fa-check-circle', label: 'Solo Ingresos Confirmados', desc: 'Ventas ya cobradas',          color: '#10b981' },
+  { value: 'Pendientes', icon: 'fa-clock',        label: 'Solo Pendientes',           desc: 'Pedidos sin cobrar',          color: '#f59e0b' },
+];
 
 export default function HistorialVentas() {
   const navigate = useNavigate();
@@ -33,6 +49,8 @@ export default function HistorialVentas() {
   const [reporteFechaInicio, setReporteFechaInicio] = useState('');
   const [reporteFechaFin, setReporteFechaFin] = useState('');
   const [reporteTipo, setReporteTipo] = useState('Todo'); // Todo, Ingresos, Pendientes
+  const [pickerPeriodoOpen, setPickerPeriodoOpen] = useState(false);
+  const [pickerTipoOpen, setPickerTipoOpen] = useState(false);
 
   const apartadoActual = localStorage.getItem('apartadoVentas') || 'General (Box)';
 
@@ -533,193 +551,190 @@ export default function HistorialVentas() {
     return acc;
   }, {});
 
+  const periodoOp = PERIODO_OPCIONES.find(o => o.value === reporteFiltroPeriodo) || PERIODO_OPCIONES[0];
+  const tipoOp    = TIPO_OPCIONES.find(o => o.value === reporteTipo) || TIPO_OPCIONES[0];
+
   return (
     <div className="hv-page">
 
+      {/* ── HEADER ── */}
       <header className="hv-header d-print-none">
-          <div className="d-flex align-items-center gap-3">
-            <BackButton to="/gestion-ventas-productos" />
-            <div className="hv-header-icon d-none d-sm-flex">
-              <i className="fas fa-receipt"></i>
-            </div>
-            <h1 className="hv-header-title">
-              Historial y <span>Pedidos</span>
-            </h1>
+        <div className="d-flex align-items-center gap-3">
+          <BackButton to="/gestion-ventas-productos" />
+          <div className="hv-header-icon d-none d-sm-flex">
+            <i className="fas fa-receipt"></i>
           </div>
+          <h1 className="hv-header-title">
+            Historial y <span>Pedidos</span>
+          </h1>
+        </div>
       </header>
 
       <div className="container-xl px-3 px-md-4 pb-5">
 
-        <div className="hv-tabs d-flex flex-wrap gap-2 mb-4 border-bottom border-secondary pb-3">
-            <button 
-                className={`btn ${tabActual === 'todas' ? 'btn-danger' : 'btn-outline-secondary text-white'} rounded-pill px-3`} 
-                onClick={() => setTabActual('todas')}
+        {/* ── TABS ── */}
+        <div className="hv-tabs-bar d-print-none">
+          {[
+            { id: 'todas',        icon: 'fa-list',          label: 'Historial General'  },
+            { id: 'pendientes',   icon: 'fa-clock',         label: 'Por Cobrar'         },
+            { id: 'por-entregar', icon: 'fa-truck-loading', label: 'Por Entregar'       },
+            { id: 'listos',       icon: 'fa-box-open',      label: 'Listos'             },
+            { id: 'canceladas',   icon: 'fa-ban',           label: 'Cancelados'         },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              className={`hv-tab hv-tab--${tab.id}${tabActual === tab.id ? ' hv-tab--active' : ''}`}
+              onClick={() => setTabActual(tab.id)}
             >
-                <i className="fas fa-list me-2"></i>Historial General
+              <i className={`fas ${tab.icon}`}></i>
+              <span>{tab.label}</span>
             </button>
-            <button 
-                className={`btn ${tabActual === 'pendientes' ? 'btn-warning text-dark fw-bold' : 'btn-outline-secondary text-white'} rounded-pill px-3`} 
-                onClick={() => setTabActual('pendientes')}
-            >
-                <i className="fas fa-clock me-2"></i>Pedidos por Cobrar
-            </button>
-            <button 
-                className={`btn ${tabActual === 'por-entregar' ? 'btn-primary text-white' : 'btn-outline-secondary text-white'} rounded-pill px-3`} 
-                onClick={() => setTabActual('por-entregar')}
-            >
-                <i className="fas fa-truck-loading me-2"></i>Pagados (Por Entregar)
-            </button>
-            <button 
-                className={`btn ${tabActual === 'listos' ? 'btn-info text-dark fw-bold' : 'btn-outline-secondary text-white'} rounded-pill px-3`} 
-                onClick={() => setTabActual('listos')}
-            >
-                <i className="fas fa-box-open me-2"></i>Listos para Recoger
-            </button>
-            <button 
-                className={`btn ${tabActual === 'canceladas' ? 'btn-dark text-danger border-danger' : 'btn-outline-secondary text-white'} rounded-pill px-3`} 
-                onClick={() => setTabActual('canceladas')}
-            >
-                <i className="fas fa-ban me-2"></i>Cancelados
-            </button>
+          ))}
         </div>
 
-
-
         {loading ? (
-          <div className="hv-loading">
-            <AtletifyLoader />
-          </div>
+          <div className="hv-loading"><AtletifyLoader /></div>
         ) : (
           <>
-            {/* PANEL ANALÍTICO SOLO EN HISTORIAL GENERAL */}
+            {/* ── ANALÍTICAS (solo Historial General) ── */}
             {tabActual === 'todas' && (
-              <div className="analytics-section mb-5 border-bottom border-secondary pb-4">
-                <div className="row g-4 mb-4">
-                  <div className="col-12 col-md-6 col-xl-3">
-                    <div className="p-4 bg-dark rounded border border-secondary text-center h-100 d-flex flex-column justify-content-center position-relative">
-                      <p className="text-white-50 mb-1 text-uppercase small fw-bold tracking-wider">Ingreso Total {fechaFiltro ? 'del Día' : 'Histórico'}</p>
-                      <h2 className="text-success fw-bold m-0">${totalIngreso.toFixed(2)}</h2>
-                      <i className="fas fa-info-circle position-absolute text-muted" style={{top: '12px', right: '12px', cursor: 'help'}} title="Suma total de todas las ventas que ya fueron cobradas o entregadas."></i>
+              <div className="mb-4">
+
+                {/* Stats */}
+                <div className="row g-3 mb-3">
+                  <div className="col-6 col-xl-3">
+                    <div className="hv-stat-card hv-stat-card--green">
+                      <i className="fas fa-info-circle hv-stat-info-icon" title="Suma de ventas ya cobradas o entregadas." />
+                      <p className="hv-stat-label">Ingreso {fechaFiltro ? 'del Día' : 'Histórico'}</p>
+                      <p className="hv-stat-value">${totalIngreso.toFixed(2)}</p>
+                      <span className="hv-stat-hint">Ventas cobradas</span>
                     </div>
                   </div>
-                  <div className="col-12 col-md-6 col-xl-3">
-                    <div className="p-4 bg-dark rounded border border-secondary text-center h-100 d-flex flex-column justify-content-center position-relative">
-                      <p className="text-white-50 mb-1 text-uppercase small fw-bold tracking-wider">Pendiente de Cobro</p>
-                      <h2 className="text-warning fw-bold m-0">${pendienteDeCobro.toFixed(2)}</h2>
-                      <i className="fas fa-info-circle position-absolute text-muted" style={{top: '12px', right: '12px', cursor: 'help'}} title="Suma de pedidos que ya se reservaron pero que el atleta no ha pagado en recepción."></i>
+                  <div className="col-6 col-xl-3">
+                    <div className="hv-stat-card hv-stat-card--warning">
+                      <i className="fas fa-info-circle hv-stat-info-icon" title="Pedidos reservados sin cobrar aún." />
+                      <p className="hv-stat-label">Pendiente de Cobro</p>
+                      <p className="hv-stat-value">${pendienteDeCobro.toFixed(2)}</p>
+                      <span className="hv-stat-hint">Sin cobrar aún</span>
                     </div>
                   </div>
-                  <div className="col-12 col-md-6 col-xl-3">
-                    <div className="p-4 bg-dark rounded border border-secondary text-center h-100 d-flex flex-column justify-content-center position-relative">
-                      <p className="text-white-50 mb-1 text-uppercase small fw-bold tracking-wider">Deuda (Fiados)</p>
-                      <h2 className="text-primary fw-bold m-0">${deudaFiado.toFixed(2)}</h2>
-                      <i className="fas fa-info-circle position-absolute text-muted" style={{top: '12px', right: '12px', cursor: 'help'}} title="Dinero en la calle. Ventas autorizadas en crédito (restando abonos realizados)."></i>
+                  <div className="col-6 col-xl-3">
+                    <div className="hv-stat-card hv-stat-card--blue">
+                      <i className="fas fa-info-circle hv-stat-info-icon" title="Ventas en crédito restando abonos." />
+                      <p className="hv-stat-label">Deuda (Fiados)</p>
+                      <p className="hv-stat-value">${deudaFiado.toFixed(2)}</p>
+                      <span className="hv-stat-hint">Crédito autorizado</span>
                     </div>
                   </div>
-                  <div className="col-12 col-md-6 col-xl-3">
-                    <div className="p-4 bg-dark rounded border border-secondary text-center h-100 d-flex flex-column justify-content-center position-relative">
-                      <p className="text-white-50 mb-1 text-uppercase small fw-bold tracking-wider">Productos Sobre Pedido</p>
-                      <h2 className="text-info fw-bold m-0">{porcentajeSobrePedido}%</h2>
-                      <small className="text-white-50" style={{fontSize: '0.75rem'}}>del volumen total vendido</small>
-                      <i className="fas fa-info-circle position-absolute text-muted" style={{top: '12px', right: '12px', cursor: 'help'}} title="Indica qué porcentaje de todos los productos vendidos pertenecen a la modalidad 'Sobre Pedido' frente a productos de stock regular."></i>
+                  <div className="col-6 col-xl-3">
+                    <div className="hv-stat-card hv-stat-card--cool">
+                      <i className="fas fa-info-circle hv-stat-info-icon" title="Porcentaje del volumen total vendido en modalidad Sobre Pedido." />
+                      <p className="hv-stat-label">Sobre Pedido</p>
+                      <p className="hv-stat-value">{porcentajeSobrePedido}%</p>
+                      <span className="hv-stat-hint">del volumen vendido</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="row g-4">
+                {/* Gráficas */}
+                <div className="row g-3 mb-3">
                   <div className="col-12 col-lg-8">
-                    <div className="p-3 bg-dark rounded border border-secondary h-100">
-                      <div className="d-flex justify-content-between align-items-center mb-4 ps-2 flex-wrap gap-2">
-                        <div className="d-flex align-items-center">
-                            <h5 className="text-white m-0"><i className="fas fa-chart-bar text-danger me-2"></i>Historial de Ventas</h5>
-                            <i className="fas fa-info-circle text-muted ms-2" style={{cursor: 'help'}} title="Gráfica de los ingresos confirmados. La línea punteada naranja representa tu meta/promedio del periodo mostrado."></i>
-                        </div>
-                        <div className="btn-group btn-group-sm">
-                            <button className={`btn ${escalaTiempo === 'diario' ? 'btn-danger' : 'btn-outline-secondary text-white'}`} onClick={() => setEscalaTiempo('diario')}>Diario</button>
-                            <button className={`btn ${escalaTiempo === 'semanal' ? 'btn-danger' : 'btn-outline-secondary text-white'}`} onClick={() => setEscalaTiempo('semanal')}>Semana</button>
-                            <button className={`btn ${escalaTiempo === 'mensual' ? 'btn-danger' : 'btn-outline-secondary text-white'}`} onClick={() => setEscalaTiempo('mensual')}>Mes</button>
-                            <button className={`btn ${escalaTiempo === 'anual' ? 'btn-danger' : 'btn-outline-secondary text-white'}`} onClick={() => setEscalaTiempo('anual')}>Año</button>
+                    <div className="hv-chart-card">
+                      <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <p className="hv-chart-title mb-0">
+                          <i className="fas fa-chart-bar" style={{ color: 'var(--primary)' }}></i>
+                          Historial de Ventas
+                        </p>
+                        <div className="hv-escala-wrap">
+                          {[
+                            { id: 'diario',  label: 'Diario'  },
+                            { id: 'semanal', label: 'Semana'  },
+                            { id: 'mensual', label: 'Mes'     },
+                            { id: 'anual',   label: 'Año'     },
+                          ].map(e => (
+                            <button
+                              key={e.id}
+                              className={`hv-escala-btn${escalaTiempo === e.id ? ' hv-escala-btn--active' : ''}`}
+                              onClick={() => setEscalaTiempo(e.id)}
+                            >
+                              {e.label}
+                            </button>
+                          ))}
                         </div>
                       </div>
                       {chartVentasDiarias.length > 0 ? (
-                        <div style={{ width: '100%', height: 300 }}>
+                        <div style={{ width: '100%', height: 280 }}>
                           <ResponsiveContainer>
-                            <BarChart data={chartVentasDiarias} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                              <XAxis dataKey="name" stroke="#888" tick={{fill: '#888'}} />
-                              <YAxis stroke="#888" tick={{fill: '#888'}} tickFormatter={(value) => `$${value}`} />
-                              <Tooltip 
-                                cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                                contentStyle={{ backgroundColor: '#1e1e1e', border: '1px solid #333', borderRadius: '8px' }}
-                                itemStyle={{ color: '#10b981', fontWeight: 'bold' }}
-                                formatter={(value) => [`$${value.toFixed(2)}`, 'Ingreso']}
+                            <BarChart data={chartVentasDiarias} margin={{ top: 20, right: 16, left: 0, bottom: 5 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                              <XAxis dataKey="name" stroke="#555" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                              <YAxis stroke="#555" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickFormatter={v => `$${v}`} />
+                              <Tooltip
+                                cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                                contentStyle={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px' }}
+                                itemStyle={{ color: 'var(--success)', fontWeight: 'bold' }}
+                                formatter={v => [`$${v.toFixed(2)}`, 'Ingreso']}
                               />
-                              <ReferenceLine y={promedioDiario} stroke="#f59e0b" strokeDasharray="3 3" label={{ position: 'top', value: `Promedio: $${promedioDiario.toFixed(2)}`, fill: '#f59e0b', fontSize: 12 }} />
-                              <Bar dataKey="Total" fill="#dc3545" radius={[4, 4, 0, 0]} />
+                              <ReferenceLine y={promedioDiario} stroke="var(--accent)" strokeDasharray="4 4" label={{ position: 'top', value: `Prom: $${promedioDiario.toFixed(0)}`, fill: 'var(--accent)', fontSize: 11 }} />
+                              <Bar dataKey="Total" fill="var(--primary)" radius={[4, 4, 0, 0]} />
                             </BarChart>
                           </ResponsiveContainer>
                         </div>
                       ) : (
-                        <div className="d-flex align-items-center justify-content-center text-muted" style={{height: '300px'}}>No hay datos suficientes para graficar.</div>
+                        <div className="hv-chart-empty">Sin datos suficientes para graficar.</div>
                       )}
                     </div>
                   </div>
+
                   <div className="col-12 col-lg-4">
-                    <div className="p-3 bg-dark rounded border border-secondary h-100">
-                      <div className="d-flex justify-content-between align-items-center mb-4 ps-2">
-                        <h5 className="text-white m-0"><i className="fas fa-chart-pie text-success me-2"></i>Métodos de Pago</h5>
-                        <i className="fas fa-info-circle text-muted" style={{cursor: 'help'}} title="Muestra el volumen de ingresos separado por método de pago (Efectivo, Tarjeta, Transferencia, En línea) de las ventas ya cobradas."></i>
-                      </div>
+                    <div className="hv-chart-card">
+                      <p className="hv-chart-title mb-3">
+                        <i className="fas fa-chart-pie" style={{ color: 'var(--success)' }}></i>
+                        Métodos de Pago
+                      </p>
                       {chartMetodosPago.length > 0 ? (
-                        <div style={{ width: '100%', height: 300 }}>
+                        <div style={{ width: '100%', height: 280 }}>
                           <ResponsiveContainer>
                             <PieChart>
-                              <Pie
-                                data={chartMetodosPago}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={60}
-                                outerRadius={80}
-                                paddingAngle={5}
-                                dataKey="value"
-                              >
-                                {chartMetodosPago.map((entry, index) => (
+                              <Pie data={chartMetodosPago} cx="50%" cy="45%" innerRadius={55} outerRadius={75} paddingAngle={5} dataKey="value">
+                                {chartMetodosPago.map((_, index) => (
                                   <Cell key={`cell-${index}`} fill={COLORS_PAGO[index % COLORS_PAGO.length]} />
                                 ))}
                               </Pie>
-                              <Tooltip 
-                                contentStyle={{ backgroundColor: '#1e1e1e', border: '1px solid #333', borderRadius: '8px' }}
+                              <Tooltip
+                                contentStyle={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px' }}
                                 itemStyle={{ color: '#fff' }}
-                                formatter={(value, name) => [`$${value.toFixed(2)}`, name]}
+                                formatter={(v, name) => [`$${v.toFixed(2)}`, name]}
                               />
-                              <Legend wrapperStyle={{ fontSize: '0.8rem', paddingTop: '10px' }} />
+                              <Legend wrapperStyle={{ fontSize: '0.75rem', paddingTop: '8px' }} />
                             </PieChart>
                           </ResponsiveContainer>
                         </div>
                       ) : (
-                        <div className="d-flex align-items-center justify-content-center text-muted" style={{height: '300px'}}>No hay ingresos registrados.</div>
+                        <div className="hv-chart-empty">Sin ingresos registrados.</div>
                       )}
                     </div>
                   </div>
+
                   <div className="col-12">
-                    <div className="p-3 bg-dark rounded border border-secondary">
-                      <div className="d-flex justify-content-between align-items-center mb-4 ps-2">
-                        <h5 className="text-white m-0"><i className="fas fa-funnel-dollar text-primary me-2"></i>Embudo de Logística (Pedidos en Proceso)</h5>
-                        <i className="fas fa-info-circle text-muted" style={{cursor: 'help'}} title="Visualización del volumen de pedidos en cada etapa del proceso de entrega. Útil para saber dónde hay cuellos de botella logísticos."></i>
-                      </div>
+                    <div className="hv-chart-card">
+                      <p className="hv-chart-title mb-3">
+                        <i className="fas fa-funnel-dollar" style={{ color: 'var(--accent-cool)' }}></i>
+                        Embudo de Logística — Pedidos en Proceso
+                      </p>
                       {chartEmbudo.some(e => e.Cantidad > 0) ? (
-                        <div style={{ width: '100%', height: 250 }}>
+                        <div style={{ width: '100%', height: 210 }}>
                           <ResponsiveContainer>
-                            <BarChart data={chartEmbudo} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="#333" horizontal={false} />
-                              <XAxis type="number" stroke="#888" tick={{fill: '#888'}} allowDecimals={false} />
-                              <YAxis type="category" dataKey="name" stroke="#888" tick={{fill: '#888'}} width={150} />
-                              <Tooltip 
-                                contentStyle={{ backgroundColor: '#1e1e1e', border: '1px solid #333', borderRadius: '8px' }}
+                            <BarChart data={chartEmbudo} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
+                              <XAxis type="number" stroke="#555" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} allowDecimals={false} />
+                              <YAxis type="category" dataKey="name" stroke="#555" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} width={155} />
+                              <Tooltip
+                                contentStyle={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px' }}
                                 itemStyle={{ color: '#fff' }}
-                                cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                                cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                               />
-                              <Bar dataKey="Cantidad" radius={[0, 4, 4, 0]}>
+                              <Bar dataKey="Cantidad" radius={[0, 6, 6, 0]}>
                                 {chartEmbudo.map((entry, index) => (
                                   <Cell key={`cell-${index}`} fill={entry.fill} />
                                 ))}
@@ -728,7 +743,7 @@ export default function HistorialVentas() {
                           </ResponsiveContainer>
                         </div>
                       ) : (
-                        <div className="d-flex align-items-center justify-content-center text-muted" style={{height: '200px'}}>Todos los pedidos han sido entregados o no hay pedidos activos.</div>
+                        <div className="hv-chart-empty">Todos los pedidos han sido entregados o no hay pedidos activos.</div>
                       )}
                     </div>
                   </div>
@@ -736,52 +751,49 @@ export default function HistorialVentas() {
               </div>
             )}
 
-            {/* LISTA DE TRANSACCIONES */}
-            
-            <div className="hv-filtros-row d-print-none mb-4 d-flex flex-column flex-xl-row gap-3 align-items-xl-center">
-              <div className="d-flex align-items-center gap-2 flex-grow-1">
-                <button className="btn btn-outline-danger" onClick={cargarVentas} title="Refrescar datos">
+            {/* ── FILTROS ── */}
+            <div className="hv-filtros-panel d-print-none">
+              <div className="row g-2 align-items-center">
+                <div className="col-auto">
+                  <button className="hv-action-btn hv-action-btn--refresh" onClick={cargarVentas} title="Refrescar">
                     <i className="fas fa-sync-alt"></i>
-                </button>
-                <div className="hv-search-wrap ms-xl-2 flex-grow-1">
-                  <span className="hv-search-icon">
-                    <i className="fas fa-search"></i>
-                  </span>
-                  <input
-                    className="hv-search-input w-100"
-                    placeholder="Buscar por producto o fecha..."
-                    value={buscar}
-                    onChange={e => setBuscar(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="hv-calendar-wrap">
-                <RedGrayDatePicker
-                  value={fechaFiltro}
-                  onChange={setFechaFiltro}
-                  placeholder="Filtrar día"
-                />
-                {fechaFiltro && (
-                  <button
-                    className="hv-clear-date-btn"
-                    onClick={() => setFechaFiltro('')}
-                    title="Quitar filtro de fecha"
-                  >
-                    <i className="fas fa-times"></i>
                   </button>
-                )}
-              </div>
-              
-              <div className="d-flex align-items-center gap-2 flex-wrap">
-                <button className="btn btn-outline-light" onClick={() => setModalReporteOpen(true)} title="Configurar y Generar PDF">
-                  <i className="fas fa-file-pdf text-danger me-2"></i>Reporte Ventas
-                </button>
-                <button className="btn btn-outline-info text-nowrap" onClick={generarListaComprasPDF} title="Generar lista de compras sobre pedido">
-                  <i className="fas fa-clipboard-list me-2"></i>Lista a Proveedor
-                </button>
+                </div>
+                <div className="col">
+                  <div className="hv-search-wrap mb-0">
+                    <span className="hv-search-icon"><i className="fas fa-search"></i></span>
+                    <input
+                      className="hv-search-input w-100"
+                      placeholder="Buscar por producto o fecha..."
+                      value={buscar}
+                      onChange={e => setBuscar(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="col-auto">
+                  <div className="d-flex align-items-center gap-2">
+                    <RedGrayDatePicker value={fechaFiltro} onChange={setFechaFiltro} placeholder="Filtrar día" />
+                    {fechaFiltro && (
+                      <button className="hv-clear-date-btn" onClick={() => setFechaFiltro('')} title="Quitar filtro">
+                        <i className="fas fa-times"></i>
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="col-12 col-sm-auto d-flex gap-2 flex-wrap">
+                  <button className="hv-pdf-btn" onClick={() => setModalReporteOpen(true)}>
+                    <i className="fas fa-file-pdf"></i>
+                    <span>Reporte PDF</span>
+                  </button>
+                  <button className="hv-pdf-btn hv-pdf-btn--proveedor" onClick={generarListaComprasPDF}>
+                    <i className="fas fa-clipboard-list"></i>
+                    <span>Lista Proveedor</span>
+                  </button>
+                </div>
               </div>
             </div>
 
+            {/* ── LISTA ── */}
             {transacciones.length === 0 ? (
               <div className="hv-empty">
                 <i className="fas fa-receipt"></i>
@@ -794,7 +806,7 @@ export default function HistorialVentas() {
                     <div className="hv-dia-header">
                       <i className="fas fa-calendar-day"></i>
                       {label.charAt(0).toUpperCase() + label.slice(1)}
-                      <span className="hv-dia-badge">{items.length} movimiento(s)</span>
+                      <span className="hv-dia-badge">{items.length} movimiento{items.length !== 1 ? 's' : ''}</span>
                     </div>
 
                     <div className="d-flex flex-column gap-2">
@@ -804,19 +816,16 @@ export default function HistorialVentas() {
                         const a = isVenta ? null : t.datos;
 
                         return (
-                          <div key={t.idUnico} className={`hv-venta-card ${!isVenta ? 'border border-primary' : ''}`} style={!isVenta ? { backgroundColor: 'rgba(13, 110, 253, 0.05)' } : {}}>
-                            <div
-                              className="hv-venta-header"
-                              onClick={() => setExpandido(expandido === t.idUnico ? null : t.idUnico)}
-                            >
+                          <div key={t.idUnico} className={`hv-venta-card${!isVenta ? ' hv-venta-card--abono' : ''}`}>
+                            <div className="hv-venta-header" onClick={() => setExpandido(expandido === t.idUnico ? null : t.idUnico)}>
                               <div className="d-flex align-items-center gap-3">
-                                <div className={`hv-venta-icono ${!isVenta ? 'bg-primary' : ''}`}>
+                                <div className={`hv-venta-icono${!isVenta ? ' hv-venta-icono--abono' : ''}`}>
                                   <i className={`fas ${isVenta ? 'fa-receipt' : 'fa-money-bill-wave'}`}></i>
                                 </div>
                                 <div>
                                   <p className="hv-venta-id">
-                                    {isVenta ? `Venta #${v.idVenta}` : `Abono a Deuda`} 
-                                    <span className={`ms-2 badge ${v.usuarioNombre === 'Mostrador' ? 'bg-secondary' : 'bg-info text-dark'}`}>
+                                    {isVenta ? `Venta #${v.idVenta}` : 'Abono a Deuda'}
+                                    <span className={`badge ${v.usuarioNombre === 'Mostrador' ? 'bg-secondary' : 'bg-info text-dark'}`} style={{ fontSize: '0.62rem' }}>
                                       <i className={`fas ${v.usuarioNombre === 'Mostrador' ? 'fa-store' : 'fa-user'} me-1`}></i>
                                       {v.usuarioNombre}
                                     </span>
@@ -824,28 +833,29 @@ export default function HistorialVentas() {
                                   <p className="hv-venta-fecha">
                                     <i className="fas fa-clock"></i>
                                     {formatFecha(t.fecha)}
-                                    {!isVenta && (
-                                      <span className="ms-2 text-primary small fw-bold">
-                                        <i className="fas fa-handshake me-1"></i>Abono de Fiado
-                                      </span>
-                                    )}
+                                    {!isVenta && <span className="hv-abono-tag ms-2"><i className="fas fa-handshake me-1"></i>Abono de Fiado</span>}
                                   </p>
                                 </div>
                               </div>
                               <div className="d-flex align-items-center gap-3">
                                 <div className="text-end">
-                                  <p className={`hv-venta-total ${!isVenta ? 'text-primary fw-bold' : ''}`}>
+                                  <p className={`hv-venta-total${!isVenta ? ' hv-venta-total--abono' : ''}`}>
                                     ${parseFloat(isVenta ? v.totalVenta : a.monto).toFixed(2)}
                                   </p>
-                                  
                                   {isVenta ? (
                                     v.estatus && (
-                                      <span className={`badge bg-${v.estatus === 'Pendiente' ? 'warning text-dark' : v.estatus === 'Listo para Recoger' || v.estatus === 'Pagado y Listo' ? 'info text-dark' : v.estatus.includes('Fiado') ? 'primary' : v.estatus === 'Cancelada' ? 'danger' : 'success'} mt-1`}>
-                                        {v.estatus.includes('Fiado') ? <><i className="fas fa-handshake me-1"></i> {v.estatus}</> : v.estatus}
+                                      <span className={`hv-estatus-badge hv-estatus-${
+                                        v.estatus === 'Pendiente' ? 'warning' :
+                                        v.estatus === 'Cancelada' ? 'danger' :
+                                        v.estatus.includes('Fiado') ? 'blue' :
+                                        (v.estatus === 'Pagado y Listo' || v.estatus === 'Listo para Recoger') ? 'info' :
+                                        'success'
+                                      }`}>
+                                        {v.estatus.includes('Fiado') ? <><i className="fas fa-handshake me-1"></i>{v.estatus}</> : v.estatus}
                                       </span>
                                     )
                                   ) : (
-                                    <span className="badge bg-primary mt-1">
+                                    <span className="hv-estatus-badge hv-estatus-blue">
                                       <i className="fas fa-check-circle me-1"></i>Abono Aprobado
                                     </span>
                                   )}
@@ -857,8 +867,8 @@ export default function HistorialVentas() {
                             {expandido === t.idUnico && (
                               <div className="hv-detalle-zona">
                                 {!isVenta && (
-                                  <div className="mb-4 p-3 bg-dark rounded border border-primary">
-                                    <h6 className="text-primary mb-3"><i className="fas fa-info-circle me-2"></i>Detalle del Abono</h6>
+                                  <div className="hv-abono-detalle mb-4">
+                                    <p className="hv-abono-detalle__title"><i className="fas fa-info-circle me-2"></i>Detalle del Abono</p>
                                     <div className="d-flex flex-wrap justify-content-between gap-3">
                                       <div>
                                         <p className="text-muted small mb-1">Método de pago:</p>
@@ -872,21 +882,21 @@ export default function HistorialVentas() {
                                       <div className="text-end">
                                         <p className="text-muted small mb-1">Comprobante:</p>
                                         {a.comprobanteBase64 ? (
-                                          <button 
-                                            className="btn btn-sm btn-outline-info"
-                                            onClick={(e) => { e.stopPropagation(); setImgAbierta(a.comprobanteBase64); }}
-                                          >
-                                            <i className="fas fa-image me-1"></i> Ver Imagen
+                                          <button className="btn btn-sm btn-outline-info" onClick={(e) => { e.stopPropagation(); setImgAbierta(a.comprobanteBase64); }}>
+                                            <i className="fas fa-image me-1"></i>Ver Imagen
                                           </button>
                                         ) : (
-                                          <span className="text-muted">- Ninguno -</span>
+                                          <span className="text-muted">— Ninguno —</span>
                                         )}
                                       </div>
                                     </div>
                                   </div>
                                 )}
 
-                                <h6 className="text-white mb-3 fw-bold"><i className="fas fa-shopping-basket text-accent-cool me-2"></i>{isVenta ? 'Artículos de la venta' : 'Productos de la Deuda Original'}</h6>
+                                <p className="hv-detalle-seccion-title">
+                                  <i className="fas fa-shopping-basket me-2" style={{ color: 'var(--accent-cool)' }}></i>
+                                  {isVenta ? 'Artículos de la venta' : 'Productos de la Deuda Original'}
+                                </p>
                                 <div className="table-responsive mb-4">
                                   <table className="hv-detalle-table">
                                     <thead>
@@ -902,104 +912,75 @@ export default function HistorialVentas() {
                                         <tr key={d.idDetalle} className="hv-detalle-row">
                                           <td className="hv-detalle-nombre">
                                             {d.producto?.nombre || `Producto #${d.idProducto}`}
-                                            {d.producto?.esSobrePedido && <span className="badge bg-warning text-dark ms-2" style={{fontSize:'0.6rem'}}>Pedido</span>}
+                                            {d.producto?.esSobrePedido && <span className="badge bg-warning text-dark ms-2" style={{ fontSize: '0.6rem' }}>Pedido</span>}
                                           </td>
                                           <td className="hv-detalle-precio text-end">${parseFloat(d.precioUnitario).toFixed(2)}</td>
-                                          <td className="hv-detalle-cell text-center">
-                                            <span className="hv-detalle-cant">{d.cantidad}</span>
-                                          </td>
+                                          <td className="hv-detalle-cell text-center"><span className="hv-detalle-cant">{d.cantidad}</span></td>
                                           <td className="hv-detalle-subtotal text-end">${parseFloat(d.subtotal).toFixed(2)}</td>
                                         </tr>
                                       ))}
                                     </tbody>
                                   </table>
                                 </div>
-                                
+
                                 {isVenta && v.metodoPago !== 'Fiado' && (
-                                  <div className="mt-3 pt-3 border-top border-secondary d-flex align-items-center">
-                                    <span className="text-white small fw-bold me-2">Método de pago:</span>
-                                    <span className="badge bg-dark border border-secondary text-light p-2">
+                                  <div className="hv-metodo-pago-row">
+                                    <span className="hv-metodo-pago-label">Método de pago:</span>
+                                    <span className="hv-metodo-pago-badge">
                                       <i className={`fas ${v.metodoPago === 'Efectivo' || v.metodoPago === 'Efectivo en Recepción' ? 'fa-money-bill-wave text-success' : v.metodoPago?.includes('Tarjeta') ? 'fa-credit-card text-info' : v.metodoPago?.includes('Transferencia') ? 'fa-university text-primary' : 'fa-laptop text-warning'} me-2`}></i>
                                       {v.metodoPago || 'Efectivo'}
                                     </span>
                                   </div>
                                 )}
 
-                                {/* CONTROLES ADMINISTRATIVOS PARA FLUJO SOBRE PEDIDO */}
                                 {isVenta && (
-                                  <div className="mt-4 pt-3 border-top border-secondary d-flex flex-wrap gap-2 justify-content-end align-items-center">
+                                  <div className="hv-acciones-admin">
                                     {v.estatus === 'Pendiente' && v.metodoPago !== 'Fiado' && (
-                                        <>
-                                            <button 
-                                              className="btn btn-outline-danger" 
-                                              onClick={(e) => { e.stopPropagation(); actualizarEstatus(v.idVenta, 'Cancelada'); }}
-                                            >
-                                              <i className="fas fa-ban me-1"></i>Cancelar Pedido
-                                            </button>
-                                            <button 
-                                              className="btn btn-warning text-dark fw-bold" 
-                                              onClick={(e) => { e.stopPropagation(); setVentaACobrar(v); setEstatusObjetivoCobro('Pagado (Pendiente Entrega)'); setModalCobrarOpen(true); }}
-                                            >
-                                              <i className="fas fa-cash-register me-2"></i>Cobrar Pedido (Recibí el Pago)
-                                            </button>
-                                        </>
+                                      <>
+                                        <button className="hv-btn-accion hv-btn-accion--danger" onClick={(e) => { e.stopPropagation(); actualizarEstatus(v.idVenta, 'Cancelada'); }}>
+                                          <i className="fas fa-ban me-1"></i>Cancelar
+                                        </button>
+                                        <button className="hv-btn-accion hv-btn-accion--warning" onClick={(e) => { e.stopPropagation(); setVentaACobrar(v); setEstatusObjetivoCobro('Pagado (Pendiente Entrega)'); setModalCobrarOpen(true); }}>
+                                          <i className="fas fa-cash-register me-2"></i>Cobrar Pedido
+                                        </button>
+                                      </>
                                     )}
                                     {v.estatus === 'Pagado (Pendiente Entrega)' && (
-                                        <>
-                                          <button 
-                                              className="btn btn-outline-danger" 
-                                              onClick={(e) => { e.stopPropagation(); actualizarEstatus(v.idVenta, 'Cancelada'); }}
-                                          >
-                                              <i className="fas fa-ban me-1"></i>Cancelar Pedido
-                                          </button>
-                                          <button 
-                                            className="btn btn-info text-dark fw-bold" 
-                                            onClick={(e) => { e.stopPropagation(); actualizarEstatus(v.idVenta, 'Pagado y Listo'); }}
-                                          >
-                                            <i className="fas fa-box-open me-2"></i>Marcar Listo para Recoger
-                                          </button>
-                                        </>
+                                      <>
+                                        <button className="hv-btn-accion hv-btn-accion--danger" onClick={(e) => { e.stopPropagation(); actualizarEstatus(v.idVenta, 'Cancelada'); }}>
+                                          <i className="fas fa-ban me-1"></i>Cancelar
+                                        </button>
+                                        <button className="hv-btn-accion hv-btn-accion--info" onClick={(e) => { e.stopPropagation(); actualizarEstatus(v.idVenta, 'Pagado y Listo'); }}>
+                                          <i className="fas fa-box-open me-2"></i>Marcar Listo
+                                        </button>
+                                      </>
                                     )}
                                     {(v.estatus === 'Pagado y Listo' || v.estatus === 'Listo para Recoger') && (
-                                        <button 
-                                          className="btn btn-success fw-bold" 
-                                          onClick={(e) => { e.stopPropagation(); actualizarEstatus(v.idVenta, 'Completada'); }}
-                                        >
-                                          <i className="fas fa-check-double me-2"></i>Entregar al Atleta (Completar)
-                                        </button>
+                                      <button className="hv-btn-accion hv-btn-accion--success" onClick={(e) => { e.stopPropagation(); actualizarEstatus(v.idVenta, 'Completada'); }}>
+                                        <i className="fas fa-check-double me-2"></i>Entregar al Atleta
+                                      </button>
                                     )}
                                     {(v.estatus === 'Fiado' || v.estatus === 'Fiado (Entregado)') && (
-                                        <>
-                                          <button 
-                                            className="btn btn-success fw-bold" 
-                                            onClick={(e) => { e.stopPropagation(); setVentaACobrar(v); setEstatusObjetivoCobro('Completada'); setModalCobrarOpen(true); }}
-                                          >
-                                            <i className="fas fa-cash-register me-2"></i>Liquidar Deuda (Cobrar Total)
+                                      <>
+                                        <button className="hv-btn-accion hv-btn-accion--success" onClick={(e) => { e.stopPropagation(); setVentaACobrar(v); setEstatusObjetivoCobro('Completada'); setModalCobrarOpen(true); }}>
+                                          <i className="fas fa-cash-register me-2"></i>Liquidar Deuda
+                                        </button>
+                                        {v.estatus === 'Fiado' && (
+                                          <button className="hv-btn-accion hv-btn-accion--blue" onClick={(e) => { e.stopPropagation(); actualizarEstatus(v.idVenta, 'Fiado (Entregado)'); }}>
+                                            <i className="fas fa-handshake me-2"></i>Marcar Entregado
                                           </button>
-                                          {v.estatus === 'Fiado' && (
-                                            <button 
-                                              className="btn btn-primary fw-bold" 
-                                              onClick={(e) => { e.stopPropagation(); actualizarEstatus(v.idVenta, 'Fiado (Entregado)'); }}
-                                            >
-                                              <i className="fas fa-handshake me-2"></i>Marcar Entregado (Sigue Fiado)
-                                            </button>
-                                          )}
-                                        </>
+                                        )}
+                                      </>
                                     )}
                                     {v.estatus === 'Cancelada' && (
-                                        <button 
-                                          className="btn btn-outline-light" 
-                                          onClick={(e) => { e.stopPropagation(); actualizarEstatus(v.idVenta, 'Pendiente'); }}
-                                        >
-                                          <i className="fas fa-undo me-2"></i>Restaurar a Pendiente
-                                        </button>
+                                      <button className="hv-btn-accion hv-btn-accion--secondary" onClick={(e) => { e.stopPropagation(); actualizarEstatus(v.idVenta, 'Pendiente'); }}>
+                                        <i className="fas fa-undo me-2"></i>Restaurar a Pendiente
+                                      </button>
                                     )}
                                   </div>
                                 )}
-
                               </div>
                             )}
-
                           </div>
                         );
                       })}
@@ -1010,181 +991,204 @@ export default function HistorialVentas() {
             )}
           </>
         )}
-
       </div>
 
+      {/* ── LIGHTBOX ── */}
       {imgAbierta && (
-        <div 
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 9999,
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}
+        <div
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.92)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={() => setImgAbierta(null)}
         >
-          <img src={imgAbierta} alt="Comprobante" style={{maxWidth: '90%', maxHeight: '90%', borderRadius: '8px'}} />
-          <button 
-            style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#fff', fontSize: '2rem', cursor: 'pointer' }}
+          <img src={imgAbierta} alt="Comprobante" style={{ maxWidth: '90%', maxHeight: '90%', borderRadius: '10px' }} />
+          <button
+            style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', width: '38px', height: '38px', color: '#fff', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onClick={() => setImgAbierta(null)}
           >
-            &times;
+            <i className="fas fa-times"></i>
           </button>
         </div>
       )}
 
-      {/* Modal para Confirmar Cobro */}
-      {modalCobrarOpen && ventaACobrar && (
-        <div 
-          onClick={() => !procesandoEstatus && setModalCobrarOpen(false)} 
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.85)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 1060, padding: '1rem'
-          }}
-        >
-          <div 
-            onClick={e => e.stopPropagation()} 
-            style={{
-              width: '100%', maxWidth: '400px', 
-              backgroundColor: '#1e1e1e', 
-              border: '1px solid rgba(255,193,7,0.25)', 
-              boxShadow: '0 12px 40px rgba(0,0,0,0.8)',
-              borderRadius: '12px', overflow: 'hidden'
-            }}
-          >
-            <div className="p-3 border-bottom border-secondary d-flex justify-content-between align-items-center">
-              <h5 className="mb-0 text-white">Confirmar Cobro de Pedido</h5>
-              <button 
-                className="btn-close btn-close-white" 
-                onClick={() => setModalCobrarOpen(false)} 
-                disabled={procesandoEstatus}
-              ></button>
-            </div>
-            <div className="p-4 text-white">
-              <div className="text-center mb-4">
-                <p className="text-white-50 fw-bold mb-1">Total a cobrar al atleta:</p>
-                <h2 className="text-success fw-bold mb-0">${ventaACobrar.totalVenta.toFixed(2)}</h2>
+      {/* ── MODAL COBRAR ── */}
+      {modalCobrarOpen && ventaACobrar && createPortal(
+        <div className="hv-modal-overlay" onClick={() => !procesandoEstatus && setModalCobrarOpen(false)}>
+          <div className="hv-modal" onClick={e => e.stopPropagation()}>
+            <div className="hv-modal__header">
+              <div>
+                <p className="hv-modal__supertitle">PEDIDO</p>
+                <h2 className="hv-modal__title">Confirmar Cobro</h2>
               </div>
-              
-              <div className="mb-4">
-                <label className="form-label text-white-50 fw-bold">¿Con qué método pagó en recepción?</label>
-                <select 
-                  className="form-select bg-dark text-white border-secondary"
-                  value={metodoCobro}
-                  onChange={e => setMetodoCobro(e.target.value)}
-                >
-                  <option value="Efectivo en Recepción">Efectivo en Recepción</option>
-                  <option value="Tarjeta en Recepción">Tarjeta en Recepción</option>
-                  <option value="Transferencia">Transferencia</option>
-                </select>
-              </div>
-
-              <div className="alert alert-warning py-3 mb-4 d-flex align-items-center gap-3" style={{fontSize:'0.85rem'}}>
-                  <i className="fas fa-info-circle fs-5 flex-shrink-0"></i>
-                  <span>
-                    El pedido se marcará como <strong>{estatusObjetivoCobro}</strong>. {estatusObjetivoCobro === 'Completada' ? 'La deuda quedará saldada y se sumará al ingreso general.' : 'Estará a la espera de que el producto llegue al Box.'}
-                  </span>
-              </div>
-
-              <button 
-                className="btn btn-success w-100 fw-bold py-2"
-                onClick={() => {
-                  actualizarEstatus(ventaACobrar.idVenta, estatusObjetivoCobro, metodoCobro);
-                }}
-                disabled={procesandoEstatus}
-              >
-                {procesandoEstatus ? <span className="spinner-border spinner-border-sm me-2"></span> : <i className="fas fa-check-circle me-2"></i>}
-                Confirmar Pago y Avanzar
+              <button className="hv-modal__close" onClick={() => setModalCobrarOpen(false)} disabled={procesandoEstatus} aria-label="Cerrar">
+                <i className="fas fa-times" />
               </button>
             </div>
+
+            <div className="text-center mb-4">
+              <p className="hv-modal__hint mb-1">Total a cobrar al atleta:</p>
+              <p className="hv-modal__monto">${ventaACobrar.totalVenta.toFixed(2)}</p>
+            </div>
+
+            <div className="mb-4">
+              <label className="etiqueta-campo">¿Con qué método pagó?</label>
+              <select className="entrada-oscura" value={metodoCobro} onChange={e => setMetodoCobro(e.target.value)}>
+                <option value="Efectivo en Recepción">Efectivo en Recepción</option>
+                <option value="Tarjeta en Recepción">Tarjeta en Recepción</option>
+                <option value="Transferencia">Transferencia</option>
+              </select>
+            </div>
+
+            <div className="hv-modal__alerta mb-4">
+              <i className="fas fa-info-circle flex-shrink-0"></i>
+              <span>El pedido pasará a <strong>{estatusObjetivoCobro}</strong>. {estatusObjetivoCobro === 'Completada' ? 'La deuda quedará saldada.' : 'Estará en espera de entrega.'}</span>
+            </div>
+
+            <button
+              className="hv-btn-accion hv-btn-accion--success w-100"
+              onClick={() => actualizarEstatus(ventaACobrar.idVenta, estatusObjetivoCobro, metodoCobro)}
+              disabled={procesandoEstatus}
+            >
+              {procesandoEstatus ? <span className="spinner-border spinner-border-sm me-2"></span> : <i className="fas fa-check-circle me-2"></i>}
+              Confirmar Pago y Avanzar
+            </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Modal para Configurar Reporte PDF */}
-      {modalReporteOpen && (
-        <div 
-          onClick={() => setModalReporteOpen(false)} 
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.85)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 1060, padding: '1rem'
-          }}
-        >
-          <div 
-            onClick={e => e.stopPropagation()} 
-            style={{
-              width: '100%', maxWidth: '400px', 
-              backgroundColor: '#1e1e1e', 
-              border: '1px solid rgba(220,53,69,0.25)', 
-              boxShadow: '0 12px 40px rgba(0,0,0,0.8)',
-              borderRadius: '12px', overflow: 'hidden'
-            }}
-          >
-            <div className="p-3 border-bottom border-secondary d-flex justify-content-between align-items-center">
-              <h5 className="mb-0 text-white"><i className="fas fa-file-pdf text-danger me-2"></i>Configurar Reporte</h5>
-              <button className="btn-close btn-close-white" onClick={() => setModalReporteOpen(false)}></button>
-            </div>
-            <div className="p-4 text-white">
-              <div className="mb-3">
-                <label className="form-label text-white-50 fw-bold">Periodo a Exportar</label>
-                <select 
-                  className="form-select bg-dark text-white border-secondary"
-                  value={reporteFiltroPeriodo}
-                  onChange={e => setReporteFiltroPeriodo(e.target.value)}
-                >
-                  <option value="Hoy">Hoy</option>
-                  <option value="Esta Semana">Esta Semana</option>
-                  <option value="Este Mes">Este Mes</option>
-                  <option value="Este Año">Este Año</option>
-                  <option value="Todo el Historial">Todo el Historial</option>
-                  <option value="Personalizado">Personalizado...</option>
-                </select>
+      {/* ── MODAL REPORTE PDF ── */}
+      {modalReporteOpen && createPortal(
+        <div className="hv-modal-overlay" onClick={() => setModalReporteOpen(false)}>
+          <div className="hv-modal" onClick={e => e.stopPropagation()}>
+            <div className="hv-modal__header">
+              <div>
+                <p className="hv-modal__supertitle">EXPORTAR</p>
+                <h2 className="hv-modal__title">Configurar Reporte PDF</h2>
               </div>
-
-              {reporteFiltroPeriodo === 'Personalizado' && (
-                <div className="row g-2 mb-3">
-                    <div className="col-6">
-                        <label className="form-label text-white-50 small">Desde</label>
-                        <input type="date" className="form-control bg-dark text-white border-secondary" value={reporteFechaInicio} onChange={e => setReporteFechaInicio(e.target.value)} />
-                    </div>
-                    <div className="col-6">
-                        <label className="form-label text-white-50 small">Hasta</label>
-                        <input type="date" className="form-control bg-dark text-white border-secondary" value={reporteFechaFin} onChange={e => setReporteFechaFin(e.target.value)} />
-                    </div>
-                </div>
-              )}
-              
-              <div className="mb-4">
-                <label className="form-label text-white-50 fw-bold">Tipo de Transacciones</label>
-                <select 
-                  className="form-select bg-dark text-white border-secondary"
-                  value={reporteTipo}
-                  onChange={e => setReporteTipo(e.target.value)}
-                >
-                  <option value="Todo">Todas las Transacciones</option>
-                  <option value="Ingresos">Solo Ingresos Confirmados</option>
-                  <option value="Pendientes">Solo Pendientes por Cobrar</option>
-                </select>
-              </div>
-
-              <div className="alert alert-secondary py-2 mb-4" style={{fontSize:'0.8rem', backgroundColor: 'rgba(255,255,255,0.05)', border: 'none', color: '#aaa'}}>
-                  <i className="fas fa-info-circle me-2"></i>
-                  El PDF agrupará la información exacta para el periodo que selecciones, ignorando los filtros de la pantalla.
-              </div>
-
-              <button 
-                className="btn btn-danger w-100 fw-bold py-2"
-                onClick={generarReporteVentasPDF}
-                disabled={reporteFiltroPeriodo === 'Personalizado' && (!reporteFechaInicio || !reporteFechaFin)}
-              >
-                <i className="fas fa-download me-2"></i> Descargar PDF
+              <button className="hv-modal__close" onClick={() => setModalReporteOpen(false)} aria-label="Cerrar">
+                <i className="fas fa-times" />
               </button>
             </div>
+
+            <div className="mb-3">
+              <label className="etiqueta-campo">Periodo a Exportar</label>
+              <button type="button" className="hv-selector-btn" onClick={() => setPickerPeriodoOpen(true)}>
+                <span className="hv-selector-btn__left">
+                  <span className="hv-selector-btn__icon" style={{ color: periodoOp.color }}><i className={`fas ${periodoOp.icon}`}></i></span>
+                  <span className="hv-selector-btn__label">{periodoOp.label}</span>
+                </span>
+                <i className="fas fa-chevron-down hv-selector-btn__arrow"></i>
+              </button>
+            </div>
+
+            {reporteFiltroPeriodo === 'Personalizado' && (
+              <div className="row g-2 mb-3">
+                <div className="col-6">
+                  <label className="etiqueta-campo">Desde</label>
+                  <input type="date" className="entrada-oscura" value={reporteFechaInicio} onChange={e => setReporteFechaInicio(e.target.value)} />
+                </div>
+                <div className="col-6">
+                  <label className="etiqueta-campo">Hasta</label>
+                  <input type="date" className="entrada-oscura" value={reporteFechaFin} onChange={e => setReporteFechaFin(e.target.value)} />
+                </div>
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label className="etiqueta-campo">Tipo de Transacciones</label>
+              <button type="button" className="hv-selector-btn" onClick={() => setPickerTipoOpen(true)}>
+                <span className="hv-selector-btn__left">
+                  <span className="hv-selector-btn__icon" style={{ color: tipoOp.color }}><i className={`fas ${tipoOp.icon}`}></i></span>
+                  <span className="hv-selector-btn__label">{tipoOp.label}</span>
+                </span>
+                <i className="fas fa-chevron-down hv-selector-btn__arrow"></i>
+              </button>
+            </div>
+
+            <div className="hv-modal__alerta hv-modal__alerta--muted mb-4">
+              <i className="fas fa-info-circle flex-shrink-0"></i>
+              <span>El PDF agrupará la información del periodo seleccionado, ignorando los filtros de pantalla.</span>
+            </div>
+
+            <button
+              className="hv-btn-accion hv-btn-accion--danger w-100"
+              onClick={generarReporteVentasPDF}
+              disabled={reporteFiltroPeriodo === 'Personalizado' && (!reporteFechaInicio || !reporteFechaFin)}
+            >
+              <i className="fas fa-download me-2"></i>Descargar PDF
+            </button>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── PICKER: Periodo a Exportar ── */}
+      {pickerPeriodoOpen && createPortal(
+        <div className="hv-picker-overlay" onClick={() => setPickerPeriodoOpen(false)}>
+          <div className="hv-picker-modal" onClick={e => e.stopPropagation()}>
+            <div className="hv-picker-modal__header">
+              <div>
+                <p className="hv-picker-modal__supertitle">REPORTE PDF</p>
+                <h3 className="hv-picker-modal__title">Periodo a Exportar</h3>
+              </div>
+              <button className="hv-modal__close" onClick={() => setPickerPeriodoOpen(false)} aria-label="Cerrar">
+                <i className="fas fa-times" />
+              </button>
+            </div>
+            <ul className="hv-picker-list">
+              {PERIODO_OPCIONES.map(op => (
+                <li
+                  key={op.value}
+                  className={`hv-picker-opcion${reporteFiltroPeriodo === op.value ? ' hv-picker-opcion--activo' : ''}`}
+                  style={{ '--picker-color': op.color }}
+                  onClick={() => { setReporteFiltroPeriodo(op.value); setPickerPeriodoOpen(false); }}
+                >
+                  <span className="hv-picker-opcion__icon"><i className={`fas ${op.icon}`}></i></span>
+                  <span className="hv-picker-opcion__info">
+                    <span className="hv-picker-opcion__label">{op.label}</span>
+                    <span className="hv-picker-opcion__desc">{op.desc}</span>
+                  </span>
+                  {reporteFiltroPeriodo === op.value && <i className="fas fa-check hv-picker-opcion__check"></i>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── PICKER: Tipo de Transacciones ── */}
+      {pickerTipoOpen && createPortal(
+        <div className="hv-picker-overlay" onClick={() => setPickerTipoOpen(false)}>
+          <div className="hv-picker-modal" onClick={e => e.stopPropagation()}>
+            <div className="hv-picker-modal__header">
+              <div>
+                <p className="hv-picker-modal__supertitle">REPORTE PDF</p>
+                <h3 className="hv-picker-modal__title">Tipo de Transacciones</h3>
+              </div>
+              <button className="hv-modal__close" onClick={() => setPickerTipoOpen(false)} aria-label="Cerrar">
+                <i className="fas fa-times" />
+              </button>
+            </div>
+            <ul className="hv-picker-list">
+              {TIPO_OPCIONES.map(op => (
+                <li
+                  key={op.value}
+                  className={`hv-picker-opcion${reporteTipo === op.value ? ' hv-picker-opcion--activo' : ''}`}
+                  style={{ '--picker-color': op.color }}
+                  onClick={() => { setReporteTipo(op.value); setPickerTipoOpen(false); }}
+                >
+                  <span className="hv-picker-opcion__icon"><i className={`fas ${op.icon}`}></i></span>
+                  <span className="hv-picker-opcion__info">
+                    <span className="hv-picker-opcion__label">{op.label}</span>
+                    <span className="hv-picker-opcion__desc">{op.desc}</span>
+                  </span>
+                  {reporteTipo === op.value && <i className="fas fa-check hv-picker-opcion__check"></i>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>,
+        document.body
       )}
 
     </div>

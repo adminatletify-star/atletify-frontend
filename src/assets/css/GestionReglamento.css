@@ -1,0 +1,1130 @@
+/* ============================================
+   GESTIÓN REGLAMENTO — WolfPack Design System
+   ============================================ */
+
+.gr-page {
+  background: var(--bg-base);
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+.gr-loading {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-base);
+}
+
+/* === HEADER === */
+.gr-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1rem 0.75rem 0.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .gr-header {
+    padding: 0.85rem 1.5rem 0.85rem 0.6rem;
+    margin-bottom: 2rem;
+  }
+}
+
+.gr-header-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.gr-header-title span {
+  color: var(--primary);
+}
+
+/* === SECTION TITLE === */
+.gr-section-title {
+  font-family: var(--font-heading);
+  font-size: clamp(0.72rem, 2vw, 0.85rem);
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gr-section-title i {
+  color: var(--primary);
+  font-size: 0.85em;
+}
+
+/* === TABS === */
+.gr-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.gr-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+  white-space: nowrap;
+}
+
+.gr-tab-btn i {
+  font-size: 0.85em;
+}
+
+.gr-tab-btn:hover {
+  border-color: rgba(230, 57, 70, 0.35);
+  color: var(--text-primary);
+}
+
+.gr-tab-btn--active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 16px var(--primary-glow);
+}
+
+/* === EDITOR CARD === */
+.gr-editor-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.gr-editor-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.gr-editor-card__title {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gr-editor-card__meta {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.gr-editor-card__body {
+  background: #fff;
+  min-height: 400px;
+}
+
+/* Forzar texto oscuro dentro del editor Quill */
+.gr-editor-card__body .ql-container,
+.gr-editor-card__body .ql-editor {
+  background: #fff;
+  color: #111 !important;
+  font-size: 0.95rem;
+}
+
+.gr-editor-card__body .ql-editor p,
+.gr-editor-card__body .ql-editor h1,
+.gr-editor-card__body .ql-editor h2,
+.gr-editor-card__body .ql-editor h3,
+.gr-editor-card__body .ql-editor li,
+.gr-editor-card__body .ql-editor span,
+.gr-editor-card__body .ql-editor strong {
+  color: #111 !important;
+}
+
+.gr-editor-card__body .ql-toolbar {
+  background: #f5f5f5;
+  border-color: #ddd;
+  border-radius: 0;
+}
+
+.gr-editor-card__body .ql-container {
+  border-color: transparent;
+}
+
+.gr-editor-card__footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+/* === HISTORIAL CARD === */
+.gr-historial-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.gr-historial-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.gr-historial-card__title {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.gr-historial-card__body {
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* === SEARCH === */
+.gr-search-wrapper {
+  display: flex;
+  align-items: center;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: 320px;
+  width: 100%;
+  transition: var(--transition);
+}
+
+.gr-search-wrapper:focus-within {
+  border-color: rgba(230, 57, 70, 0.4);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.gr-search-icon {
+  padding: 0 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}
+
+.gr-search-input {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  width: 100%;
+  padding: 0.6rem 0;
+}
+
+.gr-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.gr-search-clear {
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  transition: var(--transition);
+  border-radius: 6px;
+  margin: 2px;
+}
+
+.gr-search-clear:hover {
+  background: rgba(230, 57, 70, 0.1);
+  color: var(--primary);
+}
+
+/* === FIRMA ROW === */
+.gr-firma-row {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid rgba(230, 57, 70, 0.4);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 576px) {
+  .gr-firma-row {
+    flex-wrap: nowrap;
+    padding: 0.9rem 1.1rem;
+  }
+}
+
+.gr-firma-row:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.gr-firma-row--ok {
+  border-left-color: rgba(46, 204, 113, 0.6);
+}
+
+.gr-firma-row--ok:hover {
+  border-color: rgba(46, 204, 113, 0.35);
+}
+
+.gr-firma-row--desactualizada {
+  border-left-color: rgba(245, 166, 35, 0.6);
+}
+
+.gr-firma-row--desactualizada:hover {
+  border-color: rgba(245, 166, 35, 0.35);
+}
+
+.gr-firma-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-stats);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+  flex-shrink: 0;
+  text-transform: uppercase;
+  overflow: hidden;
+}
+
+.gr-firma-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gr-firma-row--ok .gr-firma-avatar {
+  background: rgba(46, 204, 113, 0.12);
+  border-color: rgba(46, 204, 113, 0.35);
+  color: #2ecc71;
+}
+
+.gr-firma-row--desactualizada .gr-firma-avatar {
+  background: rgba(245, 166, 35, 0.12);
+  border-color: rgba(245, 166, 35, 0.35);
+  color: var(--accent);
+}
+
+/* === BADGE DE ESTADO === */
+.gr-firma-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.22rem 0.6rem;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.gr-firma-status--ok {
+  background: rgba(46, 204, 113, 0.12);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  color: #2ecc71;
+}
+
+.gr-firma-status--desactualizada {
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  color: var(--accent);
+}
+
+.gr-firma-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.gr-firma-nombre {
+  font-family: var(--font-heading-alt);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gr-firma-correo {
+  font-family: var(--font-body);
+  font-size: 0.73rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 0.1rem;
+}
+
+.gr-firma-fecha {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent-cool);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.gr-firma-fecha i {
+  font-size: 0.65em;
+  opacity: 0.7;
+}
+
+.gr-firma-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+/* === ACTION BUTTONS === */
+.gr-action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.78rem;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}
+
+.gr-action-btn--view {
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  color: var(--accent-cool);
+}
+
+.gr-action-btn--view:hover {
+  background: rgba(79, 195, 247, 0.1);
+  border-color: var(--accent-cool);
+  box-shadow: 0 0 10px rgba(79, 195, 247, 0.2);
+}
+
+.gr-action-btn--pdf {
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  color: var(--primary);
+}
+
+.gr-action-btn--pdf:hover:not(:disabled) {
+  background: rgba(230, 57, 70, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+.gr-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* === ATLETA SIN FIRMA === */
+.gr-firma-row--sin-firma {
+  border-left-color: rgba(168, 178, 209, 0.3);
+  opacity: 0.7;
+}
+
+.gr-firma-row--sin-firma .gr-firma-avatar {
+  background: rgba(168, 178, 209, 0.08);
+  border-color: rgba(168, 178, 209, 0.2);
+  color: var(--text-muted);
+}
+
+.gr-firma-status--sin-firma {
+  background: rgba(168, 178, 209, 0.08);
+  border: 1px solid rgba(168, 178, 209, 0.2);
+  color: var(--text-muted);
+}
+
+/* === BOTÓN HISTORIAL === */
+.gr-action-btn--historial {
+  border: 1px solid rgba(168, 178, 209, 0.25);
+  color: var(--secondary, #A8B2D1);
+}
+
+.gr-action-btn--historial:hover:not(:disabled) {
+  background: rgba(168, 178, 209, 0.1);
+  border-color: rgba(168, 178, 209, 0.5);
+  box-shadow: 0 0 10px rgba(168, 178, 209, 0.15);
+}
+
+/* === ITEMS DEL MODAL HISTORIAL === */
+.gr-historial-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  transition: var(--transition);
+}
+
+.gr-historial-item:hover {
+  border-color: rgba(230, 57, 70, 0.25);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.gr-historial-item__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.gr-historial-item__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(245, 166, 35, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  border-radius: 20px;
+  padding: 0.15rem 0.5rem;
+  width: fit-content;
+}
+
+.gr-historial-item__badge i {
+  font-size: 0.6em;
+}
+
+.gr-historial-item__fecha {
+  font-family: var(--font-heading-alt);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.gr-historial-item__fecha i {
+  color: var(--text-muted);
+  font-size: 0.75em;
+}
+
+.gr-historial-item__actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+/* === SAVE BUTTON === */
+.gr-save-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--primary);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.7rem 1.4rem;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+  white-space: nowrap;
+}
+
+.gr-save-btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 16px var(--primary-glow);
+}
+
+.gr-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* === DOWNLOAD BUTTON === */
+.gr-download-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--primary);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+
+.gr-download-btn:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+/* === EMPTY STATE === */
+.gr-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  gap: 0.75rem;
+}
+
+.gr-empty i {
+  font-size: 2.5rem;
+  opacity: 0.25;
+}
+
+.gr-empty p {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+/* === MODALS GENÉRICOS (Firma visualización + PDF) === */
+.gr-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.87);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: gr-fade-in 0.18s ease;
+}
+
+@keyframes gr-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes gr-slide-up {
+  from { transform: translateY(22px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.gr-modal {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  animation: gr-slide-up 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+}
+
+.gr-modal--xl {
+  max-width: 920px;
+  height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.gr-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.gr-modal__title {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  /* Permite que el título se encoja en flex sin empujar los botones fuera */
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.gr-modal__actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.gr-modal__close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}
+
+.gr-modal__close:hover {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.gr-modal__body {
+  padding: 1.25rem;
+}
+
+.gr-modal__body--padless {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* El iframe necesita un ancho mínimo para que el viewer del navegador
+   no oculte su barra de herramientas en pantallas estrechas. */
+.gr-pdf-iframe {
+  display: block;
+  border: none;
+  /* En desktop llena el contenedor */
+  width: 100%;
+  height: 100%;
+  /* En mobile el contenedor es scrollable;
+     min-width mantiene la toolbar visible del PDF viewer */
+  min-width: 520px;
+}
+
+.gr-modal__signature-img {
+  max-width: 100%;
+  border: 1px dashed rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  display: block;
+  margin: 0 auto;
+}
+
+/* === MODAL FIRMA REGLAMENTO (ModalFirmaReglamento) === */
+.gr-firma-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.93);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.gr-firma-modal {
+  background: var(--bg-elevated, #0f0f14);
+  border: 1px solid var(--border, #2a2a3a);
+  border-top: 3px solid var(--primary, #e63946);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+  overflow: hidden;
+  animation: gr-slide-up 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.gr-firma-modal__header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border, #2a2a3a);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.gr-firma-modal__title {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--primary, #e63946);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.gr-firma-modal__meta {
+  font-family: var(--font-body, system-ui);
+  font-size: 0.77rem;
+  color: var(--text-muted, #888);
+  margin: 0;
+}
+
+.gr-firma-modal__body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.25rem 1.5rem;
+  min-height: 0;
+}
+
+.gr-firma-modal__footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border, #2a2a3a);
+  flex-shrink: 0;
+}
+
+/* Contenido reglamento */
+.gr-reglamento-content {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border, #2a2a3a);
+  border-radius: 12px;
+  padding: 1.25rem;
+  color: var(--text-primary, #fff);
+  font-family: var(--font-body, system-ui);
+  line-height: 1.65;
+  font-size: 0.9rem;
+}
+
+/* Pad firma */
+.gr-firma-pad-hint {
+  text-align: center;
+  font-family: var(--font-body, system-ui);
+  font-size: 0.8rem;
+  color: var(--text-muted, #888);
+  margin-bottom: 0.85rem;
+}
+
+.gr-firma-pad-wrapper {
+  background: #fff;
+  border: 2px dashed rgba(230, 57, 70, 0.45);
+  border-radius: 12px;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  transition: border-color 0.2s;
+  max-height: 260px;
+}
+
+.gr-firma-pad-wrapper:hover {
+  border-color: rgba(230, 57, 70, 0.75);
+}
+
+.gr-firma-pad-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Botones del modal firma */
+.gr-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: 1px solid var(--border, #2a2a3a);
+  border-radius: 10px;
+  color: var(--text-muted, #888);
+  font-family: var(--font-heading-alt, sans-serif);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: var(--transition, all 0.15s);
+  touch-action: manipulation;
+}
+
+.gr-btn-outline:hover {
+  border-color: rgba(230, 57, 70, 0.4);
+  color: var(--text-primary, #fff);
+}
+
+.gr-btn-accept {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--primary, #e63946);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--font-heading-alt, sans-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.85rem 1.5rem;
+  cursor: pointer;
+  transition: var(--transition, all 0.15s);
+  width: 100%;
+  touch-action: manipulation;
+}
+
+.gr-btn-accept:hover:not(:disabled) {
+  background: var(--primary-dark, #c62835);
+  box-shadow: 0 4px 16px var(--primary-glow, rgba(230, 57, 70, 0.35));
+}
+
+.gr-btn-accept:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.gr-btn-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border, #2a2a3a);
+  border-radius: 10px;
+  color: var(--text-primary, #fff);
+  font-family: var(--font-heading-alt, sans-serif);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.85rem 1.25rem;
+  cursor: pointer;
+  transition: var(--transition, all 0.15s);
+  touch-action: manipulation;
+  flex-shrink: 0;
+}
+
+.gr-btn-back:hover:not(:disabled) {
+  border-color: rgba(230, 57, 70, 0.4);
+  color: var(--primary, #e63946);
+}
+
+.gr-btn-back:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gr-btn-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #2ecc71;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--font-heading-alt, sans-serif);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.85rem 1.25rem;
+  cursor: pointer;
+  transition: var(--transition, all 0.15s);
+  flex: 1;
+  touch-action: manipulation;
+}
+
+.gr-btn-submit:hover:not(:disabled) {
+  background: #27ae60;
+  box-shadow: 0 4px 16px rgba(46, 204, 113, 0.35);
+}
+
+.gr-btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Fullscreen firma */
+.gr-firma-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  background: #0a0a0e;
+  display: flex;
+  flex-direction: column;
+}
+
+.gr-firma-fullscreen__canvas-wrap {
+  flex: 1;
+  background: #fff;
+  overflow: hidden;
+}
+
+.gr-firma-fullscreen__actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #0a0a0e;
+  border-top: 1px solid var(--border, #2a2a3a);
+}
+
+/* ============================================
+   RESPONSIVE — Modal Previsualización PDF
+   ============================================ */
+
+/* Pantallas medianas: reducir tamaño del modal XL */
+@media (max-width: 768px) {
+  .gr-modal--xl {
+    height: 90dvh;
+  }
+
+  .gr-modal-overlay {
+    padding: 0.5rem;
+  }
+}
+
+/* Pantallas pequeñas: modal ocupa toda la pantalla */
+@media (max-width: 520px) {
+  .gr-modal-overlay {
+    padding: 0;
+  }
+
+  /* Modal normal (firma, historial) */
+  .gr-modal {
+    border-radius: 16px 16px 0 0;
+    max-height: 92dvh;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+  }
+
+  /* Modal XL (PDF preview) — pantalla completa */
+  .gr-modal--xl {
+    border-radius: 0;
+    height: 100dvh;
+    max-width: 100%;
+    border: none;
+    border-top: 3px solid var(--primary);
+  }
+
+  /* Iframe: altura explícita porque el contenedor es scrollable en mobile */
+  .gr-pdf-iframe {
+    height: calc(100dvh - 57px); /* 57px = alto del header */
+  }
+
+  /* Header: título truncado, botones siempre visibles */
+  .gr-modal__header {
+    padding: 0.75rem 1rem;
+    gap: 0.6rem;
+    flex-wrap: nowrap;
+  }
+
+  .gr-modal__title {
+    font-size: 0.8rem;
+    letter-spacing: 0;
+  }
+
+  /* Botón descargar: solo icono en mobile */
+  .gr-download-btn .gr-download-btn__label {
+    display: none;
+  }
+
+  .gr-download-btn {
+    padding: 0.5rem 0.65rem;
+    min-width: 36px;
+    justify-content: center;
+  }
+}

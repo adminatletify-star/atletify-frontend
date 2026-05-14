@@ -51,7 +51,7 @@ export default function Layout() {
       verificarReglamento(b.idBox || b.IdBox, idUsuarioActual);
       verificarExpediente(idUsuarioActual);
     }
-  }, [location.pathname, user?.idUsuario]);
+  }, [location.pathname, user?.idUsuario || user?.id]);
 
   // Refresh de datos del Box desde el servidor — solo cuando cambia el box activo
   useEffect(() => {

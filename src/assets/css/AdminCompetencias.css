@@ -1197,6 +1197,641 @@
   margin-right: 1.1rem;
 }
 
+/* =============================================
+   MODAL WIZARD — Nueva / Editar Categoría
+   ============================================= */
+
+.acomp-wiz-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.acomp-wiz-panel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+}
+
+.acomp-wiz-panel--accent { border-top-color: var(--accent); }
+
+.acomp-wiz-header {
+  padding: 1.25rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.acomp-wiz-supertitle {
+  font-family: var(--font-heading-alt);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--primary);
+  margin: 0 0 0.2rem;
+}
+
+.acomp-wiz-title {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.acomp-wiz-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s;
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}
+
+.acomp-wiz-close:hover {
+  background: rgba(230, 57, 70, 0.1);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Indicador de pasos */
+.acomp-wiz-steps {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.acomp-wiz-steps::-webkit-scrollbar { display: none; }
+
+.acomp-wiz-step {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.acomp-wiz-step-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-stats);
+  font-size: 0.62rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.acomp-wiz-step-dot--active {
+  border-color: var(--primary);
+  background: rgba(230, 57, 70, 0.15);
+  color: var(--primary);
+  box-shadow: 0 0 10px rgba(230, 57, 70, 0.2);
+}
+
+.acomp-wiz-step-dot--done {
+  border-color: var(--success);
+  background: rgba(46, 204, 113, 0.15);
+  color: var(--success);
+}
+
+.acomp-wiz-step-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.acomp-wiz-step-label--active { color: var(--text-primary); }
+
+.acomp-wiz-step-line {
+  flex: 1;
+  min-width: 10px;
+  height: 1px;
+  background: var(--border);
+  margin: 0 0.35rem;
+}
+
+/* Body */
+.acomp-wiz-body { padding: 1.5rem; }
+
+/* Status bar distribución */
+.acomp-wiz-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  margin-top: 0.85rem;
+}
+
+.acomp-wiz-status--ok   { background: rgba(46,204,113,0.1);  border: 1px solid rgba(46,204,113,0.3);  color: var(--success); }
+.acomp-wiz-status--warn { background: rgba(245,166,35,0.1);  border: 1px solid rgba(245,166,35,0.3);  color: var(--accent);  }
+
+/* Paso 3 — sexo */
+.acomp-wiz-sexo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.acomp-wiz-sexo-card {
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  padding: 0.85rem 1rem;
+  transition: all 0.18s;
+}
+
+.acomp-wiz-sexo-card:focus-within {
+  border-color: var(--sx-c, var(--border));
+  background: color-mix(in srgb, var(--sx-c, transparent) 6%, var(--bg-card));
+}
+
+.acomp-wiz-sexo-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 0.5rem;
+}
+
+.acomp-wiz-sexo-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-stats);
+  font-size: 1.6rem;
+  font-weight: 700;
+  padding: 0.3rem 0.5rem;
+  text-align: center;
+  -moz-appearance: textfield;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.acomp-wiz-sexo-input::-webkit-outer-spin-button,
+.acomp-wiz-sexo-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+.acomp-wiz-sexo-input:focus {
+  outline: none;
+  border-color: var(--sx-c, var(--primary));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sx-c, var(--primary)) 15%, transparent);
+}
+
+/* Paso 4 — niveles */
+.acomp-wiz-nivel-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.acomp-wiz-nivel-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  transition: border-color 0.18s, background 0.18s;
+}
+
+.acomp-wiz-nivel-row:focus-within {
+  border-color: var(--niv-c, var(--primary));
+  background: color-mix(in srgb, var(--niv-c, var(--primary)) 5%, var(--bg-card));
+}
+
+.acomp-wiz-nivel-icon {
+  font-size: 1.15rem;
+  width: 26px;
+  text-align: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.acomp-wiz-nivel-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.acomp-wiz-nivel-nombre {
+  font-family: var(--font-heading-alt);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+}
+
+.acomp-wiz-nivel-desc {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+.acomp-wiz-nivel-input {
+  width: 58px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-stats);
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 0.3rem 0.3rem;
+  text-align: center;
+  flex-shrink: 0;
+  -moz-appearance: textfield;
+  transition: border-color 0.18s;
+}
+
+.acomp-wiz-nivel-input::-webkit-outer-spin-button,
+.acomp-wiz-nivel-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+.acomp-wiz-nivel-input:focus {
+  outline: none;
+  border-color: var(--niv-c, var(--primary));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--niv-c, var(--primary)) 18%, transparent);
+}
+
+/* Footer */
+.acomp-wiz-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* =============================================
+   PAYWALL — Pantalla de bloqueo de módulo
+   ============================================= */
+
+.acomp-paywall-wrapper {
+  min-height: 100vh;
+  background: var(--bg-base);
+  display: flex;
+  flex-direction: column;
+}
+
+.acomp-paywall-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 3rem 1.5rem 2rem;
+}
+
+.acomp-paywall-icon-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 22px;
+  background: rgba(230, 57, 70, 0.08);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  color: var(--primary);
+  margin-bottom: 1.5rem;
+  box-shadow: 0 0 40px rgba(230, 57, 70, 0.12);
+}
+
+.acomp-paywall-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.3rem, 4vw, 1.9rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+  margin: 0 0 0.85rem;
+  line-height: 1.2;
+}
+
+.acomp-paywall-title span { color: var(--primary); }
+
+.acomp-paywall-desc {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  max-width: 460px;
+  line-height: 1.65;
+  margin: 0 auto;
+}
+
+/* Tarjetas de plan */
+.acomp-plan-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+}
+
+.acomp-plan-card--featured {
+  border-top-color: var(--primary);
+  box-shadow: 0 0 32px rgba(230, 57, 70, 0.1);
+}
+
+.acomp-plan-card:hover {
+  border-color: rgba(230, 57, 70, 0.3);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  transform: translateY(-4px);
+}
+
+.acomp-plan-nombre {
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin: 0 0 0.85rem;
+}
+
+.acomp-plan-precio-wrap {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.acomp-plan-precio {
+  font-family: var(--font-stats);
+  font-size: clamp(2rem, 5vw, 2.6rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.acomp-plan-precio-currency {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 0.3rem;
+}
+
+.acomp-plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.acomp-plan-feature {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--secondary);
+}
+
+.acomp-plan-feature i {
+  font-size: 0.78rem;
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+}
+
+.acomp-plan-feature--dias  i { color: var(--success); }
+.acomp-plan-feature--cupo  i { color: #4FC3F7; }
+.acomp-plan-feature--extra i { color: var(--accent); }
+
+.acomp-plan-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(230, 57, 70, 0.4);
+  background: rgba(230, 57, 70, 0.08);
+  color: var(--primary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.acomp-plan-btn:hover {
+  background: rgba(230, 57, 70, 0.18);
+  border-color: var(--primary);
+  box-shadow: 0 0 20px rgba(230, 57, 70, 0.15);
+}
+
+.acomp-plan-btn--featured {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.acomp-plan-btn--featured:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 24px rgba(230, 57, 70, 0.35);
+}
+
+/* Sección CTA de contacto */
+.acomp-paywall-cta {
+  text-align: center;
+  padding: 0.5rem 1.5rem 3.5rem;
+}
+
+.acomp-paywall-cta-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-bottom: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.acomp-paywall-cta-title::before,
+.acomp-paywall-cta-title::after {
+  content: '';
+  flex: 1;
+  max-width: 60px;
+  height: 1px;
+  background: var(--border);
+}
+
+.acomp-contact-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.acomp-contact-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--secondary);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.18s;
+  min-width: 145px;
+  justify-content: center;
+}
+
+.acomp-contact-btn i { font-size: 0.95rem; }
+
+.acomp-contact-btn--ig:hover { border-color: rgba(230,57,70,0.5); color: #f77f87; background: rgba(230,57,70,0.05); }
+.acomp-contact-btn--fb:hover { border-color: rgba(59,130,246,0.5); color: #93c5fd; background: rgba(59,130,246,0.05); }
+.acomp-contact-btn--wa:hover { border-color: rgba(37,211,102,0.5); color: #4ade80; background: rgba(37,211,102,0.05); }
+.acomp-contact-btn--email:hover { border-color: rgba(245,166,35,0.5); color: var(--accent); background: rgba(245,166,35,0.05); }
+
+/* Modal activar plan */
+.acomp-plan-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.acomp-plan-modal {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 480px;
+}
+
+.acomp-plan-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.acomp-plan-modal-supertitle {
+  font-family: var(--font-heading-alt);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--primary);
+  margin: 0 0 0.2rem;
+}
+
+.acomp-plan-modal-title {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.acomp-plan-modal-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.acomp-plan-modal-close:hover {
+  background: rgba(230, 57, 70, 0.1);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.acomp-plan-modal-precio {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 1.4rem;
+}
+
 /* === SPINNER === */
 .spinner-wp {
   width: 36px;

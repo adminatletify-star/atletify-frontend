@@ -450,12 +450,6 @@
 .cd-gasto-monto { font-family: var(--font-stats); font-size: 0.9rem; font-weight: 700; color: var(--danger); margin-right: 0.6rem; }
 
 /* === TALLA CARDS === */
-.cd-talla-card {
-  background: rgba(0,0,0,0.3); border: 1px solid var(--border);
-  border-radius: 14px; padding: 1.25rem; text-align: center;
-  transition: border-color 0.18s;
-}
-.cd-talla-card:hover { border-color: rgba(230,57,70,0.3); }
 .cd-talla-label  { font-family: var(--font-heading-alt); font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
 .cd-talla-letra  { font-family: var(--font-heading); font-size: 2rem; font-weight: 700; color: var(--primary); margin: 0.2rem 0; }
 .cd-talla-count  { font-family: var(--font-stats); font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
@@ -717,4 +711,174 @@
   .cd-herramienta-modal-lista {
     padding: 0.7rem 0.75rem 0.9rem;
   }
+}
+
+/* === SWITCH ROW (B2C Config) === */
+.cd-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 0.55rem;
+  cursor: pointer;
+  transition: border-color 0.18s;
+}
+.cd-switch-row:hover { border-color: var(--border-hover, rgba(255,255,255,0.15)); }
+.cd-switch-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-primary);
+  margin: 0 0 0.1rem;
+  line-height: 1.3;
+}
+.cd-switch-hint {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+.cd-switch-input {
+  width: 2.5em;
+  height: 1.25em;
+  cursor: pointer;
+  flex-shrink: 0;
+  accent-color: var(--accent-cool);
+}
+
+/* === RADIO OPTION CARD (B2C Config) === */
+.cd-radio-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  flex: 1;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+  min-width: 0;
+}
+.cd-radio-card--checked {
+  border-color: rgba(79,195,247,0.5);
+  background: rgba(79,195,247,0.06);
+}
+.cd-radio-card-text {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin: 0;
+  cursor: pointer;
+}
+.cd-radio-card input[type="radio"] { accent-color: var(--accent-cool); flex-shrink: 0; margin-top: 0.15rem; cursor: pointer; }
+
+/* === PREFIX INPUT GROUP === */
+.cd-prefix-group { display: flex; align-items: stretch; }
+.cd-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 0.85rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  font-family: var(--font-stats);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.cd-prefix-group .cd-input { border-radius: 0 10px 10px 0; }
+
+/* === SUBLABEL HEADER (Config sections) === */
+.cd-sublabel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--border);
+}
+.cd-sublabel-header i { font-size: 0.75rem; }
+
+/* === TALLA DETAIL TABLE === */
+.cd-talla-table { width: 100%; border-collapse: collapse; }
+.cd-talla-table th {
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  white-space: nowrap;
+}
+.cd-talla-table td {
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  color: var(--text-primary);
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  vertical-align: middle;
+}
+.cd-talla-table tr:last-child td { border-bottom: none; }
+.cd-talla-table tbody tr:hover td { background: rgba(255,255,255,0.025); }
+
+/* === TALLA BADGE === */
+.cd-talla-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-radius: 20px;
+  padding: 0.18rem 0.6rem;
+}
+.cd-talla-badge--atleta { background: rgba(79,195,247,0.1); border: 1px solid rgba(79,195,247,0.3); color: var(--accent-cool); }
+.cd-talla-badge--staff  { background: rgba(245,166,35,0.1);  border: 1px solid rgba(245,166,35,0.3);  color: var(--accent); }
+
+/* === TALLA CARD IMPROVED === */
+.cd-talla-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 14px;
+  padding: 1.1rem 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+}
+.cd-talla-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(230,57,70,0.15);
+}
+
+/* === RESPONSIVE KPI / CENTRO DE MANDO === */
+@media (max-width: 575.98px) {
+  .cd-kpi-valor { font-size: 2rem; }
+  .cd-utilidad-valor { font-size: 2.2rem; }
+  .cd-gasto-add { flex-wrap: wrap; }
+  .cd-gasto-add .cd-input--monto { max-width: 100% !important; }
 }

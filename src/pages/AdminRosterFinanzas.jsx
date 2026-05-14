@@ -22,6 +22,9 @@ export default function AdminRosterFinanzas() {
   const [mostrarDetallesAtleta, setMostrarDetallesAtleta] = useState(false);
   const [atletaDetalle, setAtletaDetalle] = useState(null);
 
+  // MODAL CONFIRMAR APROBACIÓN DE PAGO
+  const [pagoAConfirmar, setPagoAConfirmar] = useState(null);
+
   // FILTROS
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstatus, setFiltroEstatus] = useState('todos');
@@ -76,9 +79,13 @@ export default function AdminRosterFinanzas() {
     try { const res = await fetch(`${COMPETENCIAS_ENDPOINT}/atletas/${idAtl}`, { method: 'DELETE' }); if (res.ok) cargarRoster(true); } catch (e) { alert("Error"); }
   };
 
-  const aprobarPago = async (idPago) => {
-    if (!window.confirm("¿Aprobar esta transferencia? El dinero se sumará al total recaudado.")) return;
-    try { const res = await fetch(`${COMPETENCIAS_ENDPOINT}/pagos/${idPago}/aprobar`, { method: 'PUT' }); if (res.ok) cargarRoster(true); } catch (e) { alert("Error"); }
+  const aprobarPago = (pago) => { setPagoAConfirmar(pago); };
+
+  const confirmarAprobacion = async () => {
+    if (!pagoAConfirmar) return;
+    const id = pagoAConfirmar.idPago;
+    setPagoAConfirmar(null);
+    try { const res = await fetch(`${COMPETENCIAS_ENDPOINT}/pagos/${id}/aprobar`, { method: 'PUT' }); if (res.ok) cargarRoster(true); } catch (e) { alert("Error"); }
   };
 
   const darVistoBueno = async (idEq) => {
@@ -218,13 +225,13 @@ export default function AdminRosterFinanzas() {
             DASHBOARD FINANCIERO
         ══════════════════════════════════ */}
         <div className="row g-3 mb-4">
-          <div className="col-6 col-md-3">
+          <div className="col-6 col-sm-6 col-md-3">
             <div className="arf-stat-card">
               <p className="arf-stat-label">Total Recaudado</p>
               <p className="arf-stat-value arf-stat-value--success">${stats.totalRecaudado.toFixed(2)}</p>
             </div>
           </div>
-          <div className="col-6 col-md-3">
+          <div className="col-12 col-sm-6 col-md-3">
             <div className="arf-desglose-card">
               <div className="arf-desglose-row">
                 <i className="fas fa-money-bill-wave" style={{ color: 'var(--success)' }}></i>
@@ -233,7 +240,7 @@ export default function AdminRosterFinanzas() {
               </div>
               <div className="arf-desglose-row">
                 <i className="fas fa-university" style={{ color: 'var(--accent-cool)' }}></i>
-                <span className="arf-desglose-nombre">Transferencia</span>
+                <span className="arf-desglose-nombre">Transf.</span>
                 <span className="arf-desglose-monto">${stats.totalTransferencia.toFixed(2)}</span>
               </div>
               <div className="arf-desglose-row">
@@ -243,13 +250,13 @@ export default function AdminRosterFinanzas() {
               </div>
             </div>
           </div>
-          <div className="col-6 col-md-3">
+          <div className="col-6 col-sm-6 col-md-3">
             <div className="arf-stat-card" style={{ borderColor: 'rgba(46,204,113,0.2)' }}>
               <p className="arf-stat-label">Equipos Pagados</p>
               <p className="arf-stat-value arf-stat-value--success">{stats.equiposPagados}</p>
             </div>
           </div>
-          <div className="col-6 col-md-3">
+          <div className="col-6 col-sm-6 col-md-3">
             <div className="arf-stat-card" style={{ borderColor: 'rgba(230,57,70,0.2)' }}>
               <p className="arf-stat-label">Con Deuda</p>
               <p className="arf-stat-value arf-stat-value--danger">{stats.equiposConDeuda}</p>
@@ -325,18 +332,30 @@ export default function AdminRosterFinanzas() {
 
                           {/* Header equipo */}
                           <div className="arf-equipo-header">
-                            <div className="min-w-0">
+                            <div className="min-w-0" style={{ flex: '1 1 0', minWidth: 0 }}>
                               <p className="arf-equipo-nombre">{eq.nombre}</p>
                               <div className="d-flex flex-wrap align-items-center gap-2 mt-1">
-                                <p className="arf-equipo-codigo mb-0"><i className="fas fa-key me-1"></i>{eq.codigoInvitacion}</p>
-                                {eq.fechaCreacion && <span className="text-secondary" style={{ fontSize: '0.8rem' }}><i className="fas fa-calendar-alt me-1"></i>Creado: {new Date(eq.fechaCreacion).toLocaleDateString('es-MX')}</span>}
+                                <p className="arf-equipo-codigo mb-0">
+                                  <i className="fas fa-key me-1"></i>{eq.codigoInvitacion}
+                                </p>
+                                {eq.fechaCreacion && (
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                                    <i className="fas fa-calendar-alt me-1"></i>
+                                    {new Date(eq.fechaCreacion).toLocaleDateString('es-MX')}
+                                  </span>
+                                )}
                               </div>
                               {eq.estatusPago === 'Aprobado' && (
-                                <div className="d-flex align-items-center gap-2 mt-2">
+                                <div className="d-flex flex-wrap align-items-center gap-2 mt-2">
                                   <span className="arf-badge-aprobado">
                                     <i className="fas fa-check-double"></i> Oficial
                                   </span>
-                                  {eq.fechaAprobacion && <span className="text-success" style={{ fontSize: '0.8rem' }}><i className="fas fa-calendar-check me-1"></i>Aprobado: {new Date(eq.fechaAprobacion).toLocaleDateString('es-MX')}</span>}
+                                  {eq.fechaAprobacion && (
+                                    <span style={{ fontSize: '0.72rem', color: 'var(--success)', whiteSpace: 'nowrap' }}>
+                                      <i className="fas fa-calendar-check me-1"></i>
+                                      {new Date(eq.fechaAprobacion).toLocaleDateString('es-MX')}
+                                    </span>
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -368,11 +387,15 @@ export default function AdminRosterFinanzas() {
                                       <div className="arf-atleta-info">
                                         <i
                                           className={`fas fa-${atl.genero === 'Femenino' ? 'female' : 'male'}`}
-                                          style={{ color: atl.genero === 'Femenino' ? '#ff7fa8' : 'var(--accent-cool)', width: '12px' }}
+                                          style={{ color: atl.genero === 'Femenino' ? '#ff7fa8' : 'var(--accent-cool)', width: '12px', flexShrink: 0 }}
                                         ></i>
-                                        <div className="d-flex flex-column lh-sm">
-                                          <span className="text-truncate" style={{ fontSize: '13px' }}>{atl.nombreCompleto} {atl.apellidos}</span>
-                                          {atl.fechaRegistro && <span className="text-secondary mt-1" style={{ fontSize: '10px' }}><i className="fas fa-clock me-1"></i>Se unió: {new Date(atl.fechaRegistro).toLocaleDateString('es-MX')}</span>}
+                                        <div className="arf-atleta-info-text">
+                                          <span className="arf-atleta-nombre-text">{atl.nombreCompleto} {atl.apellidos}</span>
+                                          {atl.fechaRegistro && (
+                                            <span className="arf-atleta-fecha-text">
+                                              <i className="fas fa-clock me-1"></i>Se unió: {new Date(atl.fechaRegistro).toLocaleDateString('es-MX')}
+                                            </span>
+                                          )}
                                         </div>
                                         <span className="arf-atleta-nivel">{atl.nivelHabilidad}</span>
                                       </div>
@@ -422,23 +445,28 @@ export default function AdminRosterFinanzas() {
                                           <i className="fas fa-image"></i> Ver foto
                                         </a>
                                       )}
-                                      <BotonSeguro onClick={() => aprobarPago(p.idPago)} className="arf-btn-aprobar-pago" textoProcesando="Aprobando...">
+                                      <button onClick={() => aprobarPago(p)} className="arf-btn-aprobar-pago">
                                         <i className="fas fa-check"></i> Aprobar
-                                      </BotonSeguro>
+                                      </button>
                                     </div>
                                   </div>
                                 ))}
 
                                 {/* Pagos aprobados */}
                                 {(eq.pagos || []).map(p => p.estatus === 'Aprobado' && (
-                                  <div key={p.idPago} className="mt-2 p-2 rounded" style={{ backgroundColor: 'rgba(46, 204, 113, 0.1)', border: '1px solid rgba(46, 204, 113, 0.3)' }}>
-                                    <div className="d-flex justify-content-between align-items-center">
-                                      <span className="text-success small fw-bold"><i className="fas fa-check-circle me-1"></i>${p.montoAbonado}</span>
-                                      <span className="text-secondary" style={{ fontSize: '0.7rem' }}>{p.metodoPago}</span>
+                                  <div key={p.idPago} className="mt-2 p-2 rounded" style={{ backgroundColor: 'rgba(46, 204, 113, 0.1)', border: '1px solid rgba(46, 204, 113, 0.3)', minWidth: 0 }}>
+                                    <div className="d-flex justify-content-between align-items-center gap-2" style={{ minWidth: 0 }}>
+                                      <span className="text-success small fw-bold flex-shrink-0"><i className="fas fa-check-circle me-1"></i>${p.montoAbonado}</span>
+                                      <span className="text-secondary text-truncate" style={{ fontSize: '0.7rem' }}>{p.metodoPago}</span>
                                     </div>
-                                    <span className="d-block text-secondary mt-1 text-truncate" style={{ fontSize: '0.75rem' }}><i className="fas fa-user-circle me-1"></i>{p.nombrePagador}</span>
+                                    <span className="d-block text-secondary mt-1 text-truncate" style={{ fontSize: '0.75rem' }}>
+                                      <i className="fas fa-user-circle me-1"></i>{p.nombrePagador}
+                                    </span>
                                     {p.fechaAprobacionPago && (
-                                      <span className="d-block text-success mt-1" style={{ fontSize: '0.7rem' }}><i className="fas fa-calendar-check me-1"></i>Aprobado: {new Date(p.fechaAprobacionPago).toLocaleDateString('es-MX')} {new Date(p.fechaAprobacionPago).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</span>
+                                      <span className="d-block text-success mt-1" style={{ fontSize: '0.7rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        <i className="fas fa-calendar-check me-1"></i>
+                                        {new Date(p.fechaAprobacionPago).toLocaleDateString('es-MX')} {new Date(p.fechaAprobacionPago).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+                                      </span>
                                     )}
                                   </div>
                                 ))}
@@ -476,7 +504,7 @@ export default function AdminRosterFinanzas() {
 
       {/* === MODAL DETALLES DE ATLETA === */}
       {mostrarDetallesAtleta && atletaDetalle && (() => {
-        let edad = "N/A";
+        let edad = 'N/A';
         if (atletaDetalle.fechaNacimiento) {
           const diff = Date.now() - new Date(atletaDetalle.fechaNacimiento).getTime();
           edad = new Date(diff).getUTCFullYear() - 1970;
@@ -491,100 +519,194 @@ export default function AdminRosterFinanzas() {
           return 0;
         };
 
+        const nivelColor = (s) => {
+          const l = (s || '').toLowerCase();
+          if (l.includes('master')) return 'var(--accent)';
+          if (l.includes('avanzado') || l.includes('rx')) return 'var(--primary)';
+          if (l.includes('intermedio')) return '#4FC3F7';
+          if (l.includes('principiante')) return 'var(--success)';
+          return 'var(--secondary)';
+        };
+
         let escalo = false;
-        let catNivelStr = "";
+        let catNivelStr = '';
         if (!atletaDetalle.esEquipo && atletaDetalle.reqCategoria) {
           const c = atletaDetalle.reqCategoria;
           const athLvl = getLvlVal(atletaDetalle.nivelHabilidad);
           let catLvl = 0;
-          if (c.cupoMaster > 0) { catLvl = 4; catNivelStr = "Master"; }
-          else if (c.cupoAvanzado > 0) { catLvl = 3; catNivelStr = "Avanzado/RX"; }
-          else if (c.cupoIntermedio > 0) { catLvl = 2; catNivelStr = "Intermedio"; }
-          else if (c.cupoPrincipiante > 0) { catLvl = 1; catNivelStr = "Principiante"; }
-          else { catNivelStr = "Novato"; }
-
+          if (c.cupoMaster > 0) { catLvl = 4; catNivelStr = 'Master'; }
+          else if (c.cupoAvanzado > 0) { catLvl = 3; catNivelStr = 'Avanzado/RX'; }
+          else if (c.cupoIntermedio > 0) { catLvl = 2; catNivelStr = 'Intermedio'; }
+          else if (c.cupoPrincipiante > 0) { catLvl = 1; catNivelStr = 'Principiante'; }
+          else { catNivelStr = 'Novato'; }
           if (athLvl < catLvl) escalo = true;
         }
 
+        const esMasc = atletaDetalle.genero === 'Hombre' || atletaDetalle.genero === 'Masculino';
+        const sexColor = esMasc ? '#4FC3F7' : '#ff7fa8';
+        const nivelC = nivelColor(atletaDetalle.nivelHabilidad);
+
         return (
           <div className="arf-modal-overlay">
-            <div className="arf-modal-panel" style={{ maxWidth: '500px', padding: '0', border: '1px solid var(--info)' }}>
-              <div className="arf-modal-header" style={{ padding: '15px 20px', borderBottom: '1px solid var(--border)' }}>
-                <p className="arf-modal-titulo text-info" style={{ fontFamily: 'var(--font-heading)' }}>
-                  <i className="fas fa-id-card me-2"></i>Expediente del Atleta
-                </p>
-                <button className="arf-modal-close" onClick={() => setMostrarDetallesAtleta(false)}>
-                  <i className="fas fa-times"></i>
+            <div className="arf-modal-panel" style={{ maxWidth: '480px', padding: 0 }}>
+
+              {/* Header */}
+              <div style={{ padding: '1.1rem 1.4rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
+                <div>
+                  <p style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--accent-cool)', margin: '0 0 0.15rem' }}>Expediente</p>
+                  <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-primary)', margin: 0 }}>Atleta</h2>
+                </div>
+                <button className="arf-modal-close" onClick={() => setMostrarDetallesAtleta(false)} aria-label="Cerrar">
+                  <i className="fas fa-times" />
                 </button>
               </div>
-              <div style={{ padding: '20px' }}>
-                <div className="text-center mb-4">
-                  <i className={`fas ${atletaDetalle.genero === 'Hombre' || atletaDetalle.genero === 'Masculino' ? 'fa-male text-info' : 'fa-female'} mb-3`} style={{ fontSize: '3rem', color: atletaDetalle.genero === 'Hombre' || atletaDetalle.genero === 'Masculino' ? '' : '#ff7fa8' }}></i>
-                  <h4 className="text-white mb-1">{atletaDetalle.nombreCompleto} {atletaDetalle.apellidos}</h4>
-                  <p className="text-secondary small mb-0">{atletaDetalle.correo || 'Sin correo registrado'}</p>
-                </div>
 
-                <div className="row g-3 mb-3">
-                  <div className="col-6">
-                    <div className="p-3 bg-dark rounded border border-secondary border-opacity-25 text-center">
-                      <small className="text-muted d-block mb-1">Edad</small>
-                      <h6 className="text-white mb-0">{edad} años</h6>
+              {/* Identity */}
+              <div style={{ padding: '1.4rem 1.4rem 0', textAlign: 'center' }}>
+                <div style={{ width: 64, height: 64, borderRadius: '50%', background: `color-mix(in srgb, ${sexColor} 12%, var(--bg-card))`, border: `2px solid ${sexColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.85rem' }}>
+                  <i className={`fas ${esMasc ? 'fa-male' : 'fa-female'}`} style={{ fontSize: '1.6rem', color: sexColor }} />
+                </div>
+                <h4 style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', fontSize: '1.05rem', marginBottom: '0.2rem' }}>
+                  {atletaDetalle.nombreCompleto} {atletaDetalle.apellidos}
+                </h4>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: '0 0 0.75rem' }}>
+                  {atletaDetalle.correo || 'Sin correo registrado'}
+                </p>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, background: `color-mix(in srgb, ${nivelC} 10%, transparent)`, border: `1px solid color-mix(in srgb, ${nivelC} 35%, transparent)`, color: nivelC, borderRadius: 20, padding: '0.2rem 0.75rem', marginBottom: '0.25rem' }}>
+                  <i className="fas fa-layer-group" style={{ fontSize: '0.6rem' }} />
+                  {atletaDetalle.nivelHabilidad}
+                </span>
+              </div>
+
+              <hr style={{ margin: '1rem 1.4rem', borderColor: 'var(--border)' }} />
+
+              {/* Info grid */}
+              <div style={{ padding: '0 1.4rem' }}>
+                <p className="arf-modal-section-titulo"><i className="fas fa-user-circle" />Datos Personales</p>
+                <div className="row g-2 mb-3">
+                  {[
+                    { label: 'Edad',           value: `${edad} años`,                      icon: 'fa-birthday-cake', color: 'var(--text-muted)' },
+                    { label: 'Género',         value: atletaDetalle.genero || 'N/A',        icon: esMasc ? 'fa-mars' : 'fa-venus', color: sexColor },
+                    { label: 'Tipo de Sangre', value: atletaDetalle.tipoSangre || 'N/A',    icon: 'fa-tint',          color: 'var(--primary)' },
+                    { label: 'Talla Playera',  value: atletaDetalle.tallaPlayera || 'N/A',  icon: 'fa-tshirt',        color: 'var(--text-muted)' },
+                  ].map(item => (
+                    <div key={item.label} className="col-6">
+                      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '0.65rem 0.85rem' }}>
+                        <small style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--text-muted)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: '0.25rem' }}>
+                          <i className={`fas ${item.icon}`} style={{ color: item.color }} />{item.label}
+                        </small>
+                        <span style={{ fontFamily: 'var(--font-heading-alt)', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>{item.value}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="col-6">
-                    <div className="p-3 bg-dark rounded border border-secondary border-opacity-25 text-center">
-                      <small className="text-muted d-block mb-1">Talla de Playera</small>
-                      <h6 className="text-white mb-0">{atletaDetalle.tallaPlayera || 'N/A'}</h6>
-                    </div>
-                  </div>
-                  <div className="col-6">
-                    <div className="p-3 bg-dark rounded border border-secondary border-opacity-25 text-center">
-                      <small className="text-muted d-block mb-1">Tipo de Sangre</small>
-                      <h6 className="text-white mb-0">{atletaDetalle.tipoSangre || 'N/A'}</h6>
-                    </div>
-                  </div>
-                  <div className="col-6">
-                    <div className="p-3 bg-dark rounded border border-secondary border-opacity-25 text-center">
-                      <small className="text-muted d-block mb-1">Nivel Declarado</small>
-                      <h6 className="text-white mb-0">{atletaDetalle.nivelHabilidad}</h6>
-                    </div>
-                  </div>
+                  ))}
                 </div>
 
                 {!atletaDetalle.esEquipo && (
-                  <div className="mb-3">
-                    <div className="p-3 bg-dark rounded border border-secondary border-opacity-25 text-center">
-                      <small className="text-muted d-block mb-1">Costo de Inscripción</small>
-                      <h5 className="text-success mb-0 fw-bold">${atletaDetalle.costoCategoria} MXN</h5>
+                  <>
+                    <hr style={{ margin: '0 0 1rem', borderColor: 'var(--border)' }} />
+                    <p className="arf-modal-section-titulo"><i className="fas fa-dollar-sign" />Financiero</p>
+                    <div style={{ background: 'rgba(46,204,113,0.07)', border: '1px solid rgba(46,204,113,0.22)', borderRadius: 10, padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                      <span style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--success)' }}>
+                        Costo de Inscripción
+                      </span>
+                      <span style={{ fontFamily: 'var(--font-stats)', fontSize: '1.25rem', fontWeight: 700, color: 'var(--success)' }}>${atletaDetalle.costoCategoria} MXN</span>
                     </div>
                     {escalo && (
-                      <div className="mt-2 p-3 rounded text-center" style={{ backgroundColor: 'rgba(255, 193, 7, 0.1)', border: '1px solid rgba(255, 193, 7, 0.3)' }}>
-                        <i className="fas fa-exclamation-triangle text-warning mb-2 fs-5"></i>
-                        <p className="small text-warning mb-0"><strong>Escaló de Categoría:</strong> Su nivel real es <strong>{atletaDetalle.nivelHabilidad}</strong> pero asumió el riesgo para competir en <strong>{catNivelStr}</strong>.</p>
+                      <div style={{ background: 'rgba(245,166,35,0.07)', border: '1px solid rgba(245,166,35,0.28)', borderRadius: 10, padding: '0.7rem 0.9rem', marginBottom: '0.6rem', display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
+                        <i className="fas fa-exclamation-triangle" style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '0.1rem' }} />
+                        <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--accent)', lineHeight: 1.45 }}>
+                          <strong>Escaló de Categoría:</strong> Su nivel real es <strong>{atletaDetalle.nivelHabilidad}</strong> pero asumió el riesgo para competir en <strong>{catNivelStr}</strong>.
+                        </p>
                       </div>
                     )}
-                  </div>
+                  </>
                 )}
 
-                <div className="p-3 bg-dark rounded border border-secondary border-opacity-25 text-center mt-3">
-                  <small className="text-muted d-block mb-2">Carta Responsiva</small>
-                  {atletaDetalle.aceptoCartaResponsiva ? (
-                    <>
-                      <i className="fas fa-check-circle text-success fs-4 mb-2"></i>
-                      <p className="small text-success mb-0">Aceptada el: {atletaDetalle.fechaAceptacionCartaResponsiva ? new Date(atletaDetalle.fechaAceptacionCartaResponsiva).toLocaleDateString() : 'N/A'}</p>
-                    </>
-                  ) : (
-                    <>
-                      <i className="fas fa-times-circle text-danger fs-4 mb-2"></i>
-                      <p className="small text-danger mb-0">Falta Aceptar</p>
-                    </>
-                  )}
-                </div>
+                <hr style={{ margin: '0 0 1rem', borderColor: 'var(--border)' }} />
+                <p className="arf-modal-section-titulo"><i className="fas fa-file-signature" />Carta Responsiva</p>
+                {atletaDetalle.aceptoCartaResponsiva ? (
+                  <div style={{ background: 'rgba(46,204,113,0.07)', border: '1px solid rgba(46,204,113,0.22)', borderRadius: 10, padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                    <i className="fas fa-check-circle" style={{ color: 'var(--success)', fontSize: '1.3rem', flexShrink: 0 }} />
+                    <div>
+                      <p style={{ margin: 0, fontFamily: 'var(--font-heading-alt)', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--success)' }}>Aceptada</p>
+                      <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)' }}>{atletaDetalle.fechaAceptacionCartaResponsiva ? new Date(atletaDetalle.fechaAceptacionCartaResponsiva).toLocaleDateString() : 'N/A'}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ background: 'rgba(230,57,70,0.07)', border: '1px solid rgba(230,57,70,0.22)', borderRadius: 10, padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                    <i className="fas fa-times-circle" style={{ color: 'var(--primary)', fontSize: '1.3rem', flexShrink: 0 }} />
+                    <p style={{ margin: 0, fontFamily: 'var(--font-heading-alt)', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)' }}>Pendiente de aceptar</p>
+                  </div>
+                )}
               </div>
+
+              {/* Footer */}
+              <div style={{ padding: '0.9rem 1.4rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
+                <button className="arf-btn-accion" onClick={() => setMostrarDetallesAtleta(false)} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-muted)', borderRadius: 8, padding: '0.45rem 1.1rem', fontSize: '0.82rem', cursor: 'pointer' }}>
+                  Cerrar
+                </button>
+              </div>
+
             </div>
           </div>
         );
       })()}
+
+      {/* === MODAL CONFIRMAR APROBACIÓN DE PAGO === */}
+      {pagoAConfirmar && (
+        <div className="arf-modal-overlay">
+          <div className="arf-modal-panel" style={{ maxWidth: 420, padding: 0 }}>
+
+            <div style={{ padding: '1.1rem 1.4rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
+              <div>
+                <p style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--success)', margin: '0 0 0.15rem' }}>Pago</p>
+                <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-primary)', margin: 0 }}>Confirmar Aprobación</h2>
+              </div>
+              <button className="arf-modal-close" onClick={() => setPagoAConfirmar(null)} aria-label="Cerrar">
+                <i className="fas fa-times" />
+              </button>
+            </div>
+
+            <div style={{ padding: '1.4rem' }}>
+              <div style={{ background: 'rgba(46,204,113,0.07)', border: '1px solid rgba(46,204,113,0.25)', borderRadius: 12, padding: '1rem 1.1rem', marginBottom: '1.1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--text-muted)' }}>
+                    <i className="fas fa-money-bill-wave me-1" />Monto a aprobar
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-stats)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>
+                    ${pagoAConfirmar.montoAbonado}
+                  </span>
+                </div>
+                {pagoAConfirmar.nombrePagador && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                    <i className="fas fa-user-circle" />
+                    <span>{pagoAConfirmar.nombrePagador}</span>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ background: 'rgba(245,166,35,0.07)', border: '1px solid rgba(245,166,35,0.25)', borderRadius: 10, padding: '0.75rem 1rem', display: 'flex', gap: '0.55rem', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+                <i className="fas fa-info-circle" style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '0.1rem', fontSize: '0.85rem' }} />
+                <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--accent)', lineHeight: 1.5 }}>
+                  Al aprobar, este monto se sumará al total recaudado del equipo. Esta acción no se puede deshacer.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'flex-end' }}>
+                <button onClick={() => setPagoAConfirmar(null)}
+                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-muted)', borderRadius: 8, padding: '0.5rem 1.1rem', fontSize: '0.82rem', cursor: 'pointer', fontFamily: 'var(--font-body)', fontWeight: 600 }}>
+                  Cancelar
+                </button>
+                <button onClick={confirmarAprobacion}
+                  style={{ background: 'rgba(46,204,113,0.15)', border: '1px solid rgba(46,204,113,0.45)', color: 'var(--success)', borderRadius: 8, padding: '0.5rem 1.25rem', fontSize: '0.82rem', cursor: 'pointer', fontFamily: 'var(--font-body)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <i className="fas fa-check-circle" />Aprobar
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

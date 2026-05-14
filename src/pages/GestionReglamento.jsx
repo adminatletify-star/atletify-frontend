@@ -1,64 +1,89 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import html2pdf from 'html2pdf.js';
-import { BOXES_ENDPOINT } from '../services/api';
+import { BOXES_ENDPOINT, USUARIOS_ENDPOINT } from '../services/api';
 import BackButton from '../components/BackButton';
 import BotonSeguro from '../components/BotonSeguro';
 import AtletifyLoader from '../components/AtletifyLoader';
-import '../assets/css/AdminBoxPanel.css'; // Reusing existing styles for consistency
+import '../assets/css/GestionReglamento.css';
 
 export default function GestionReglamento() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [box, setBox] = useState(null);
+  const [user, setUser]   = useState(null);
+  const [box,  setBox]    = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [tabActiva, setTabActiva] = useState('editor'); // 'editor' | 'historial'
+  const [tabActiva, setTabActiva] = useState('editor');
 
-  // Editor State
+  // ── Editor ──────────────────────────────────────────────────────
   const [reglamentoHtml, setReglamentoHtml] = useState('');
-  const [actualizadoEn, setActualizadoEn] = useState(null);
-  const [guardando, setGuardando] = useState(false);
+  const [actualizadoEn, setActualizadoEn]   = useState(null);
+  const [guardando, setGuardando]           = useState(false);
 
-  // Historial State
-  const [firmas, setFirmas] = useState([]);
-  const [cargandoFirmas, setCargandoFirmas] = useState(false);
-  const [firmaSeleccionada, setFirmaSeleccionada] = useState(null);
-  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
-  const [firmaSeleccionadaParaPdf, setFirmaSeleccionadaParaPdf] = useState(null);
-  const [generandoPdf, setGenerandoPdf] = useState(false);
-  const [busquedaFirma, setBusquedaFirma] = useState('');
+  // ── Historial ───────────────────────────────────────────────────
+  const [atletas, setAtletas]         = useState([]);
+  const [firmas, setFirmas]           = useState([]);
+  const [cargandoHistorial, setCargandoHistorial] = useState(false);
+  const [busqueda, setBusqueda]       = useState('');
 
-  const firmasFiltradas = firmas.filter(f => {
-    if (!busquedaFirma) return true;
-    const b = busquedaFirma.toLowerCase();
-    const nombre = `${f.usuario.nombre} ${f.usuario.apellidos}`.toLowerCase();
-    const correo = (f.usuario.correo || '').toLowerCase();
-    const fecha = new Date(f.fechaFirma).toLocaleString('es-MX').toLowerCase();
-    return nombre.includes(b) || correo.includes(b) || fecha.includes(b);
+  // ── Modales ─────────────────────────────────────────────────────
+  const [atletaConHistorial, setAtletaConHistorial] = useState(null);
+  const [firmaSeleccionada, setFirmaSeleccionada]   = useState(null);
+  const [pdfPreviewUrl, setPdfPreviewUrl]           = useState(null);
+  const [firmaDelPdf, setFirmaDelPdf]               = useState(null);
+  const [generandoPdf, setGenerandoPdf]             = useState(null); // idFirma en proceso
+
+  // ── Helpers ─────────────────────────────────────────────────────
+
+  const firmasDeAtleta = (atleta) =>
+    firmas
+      .filter(f =>
+        (atleta.idUsuario && f.usuario?.idUsuario)
+          ? f.usuario.idUsuario === atleta.idUsuario
+          : f.usuario?.correo === atleta.correo
+      )
+      .sort((a, b) => new Date(b.fechaFirma) - new Date(a.fechaFirma));
+
+  const ultimaFirma = (atleta) => {
+    const fs = firmasDeAtleta(atleta);
+    return fs.length > 0 ? fs[0] : null;
+  };
+
+  const esFirmaActualizada = (firma) => {
+    if (!actualizadoEn) return true;
+    return new Date(firma.fechaFirma) >= new Date(actualizadoEn);
+  };
+
+  const atletasFiltrados = atletas.filter(a => {
+    if (!busqueda) return true;
+    const q = busqueda.toLowerCase();
+    const nombre = `${a.nombre || ''} ${a.apellidos || a.apellido || ''}`.toLowerCase();
+    return nombre.includes(q) || (a.correo || '').toLowerCase().includes(q);
   });
+
+  const countAlDia     = atletas.filter(a => { const u = ultimaFirma(a); return u && esFirmaActualizada(u); }).length;
+  const countPendiente = atletas.length - countAlDia;
+
+  // ── Lifecycle ───────────────────────────────────────────────────
 
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('usuario'));
     const b = JSON.parse(localStorage.getItem('box'));
-
-    if (!u || !b) {
-      navigate('/login');
-      return;
-    }
-
-    setUser(u);
-    setBox(b);
+    if (!u || !b) { navigate('/login'); return; }
+    setUser(u); setBox(b);
     cargarReglamento(b.idBox);
   }, [navigate]);
 
   useEffect(() => {
-    if (tabActiva === 'historial' && box && firmas.length === 0) {
-      cargarFirmas(box.idBox);
+    if (tabActiva === 'historial' && box && atletas.length === 0 && !cargandoHistorial) {
+      cargarHistorial(box.idBox);
     }
   }, [tabActiva, box]);
+
+  // ── API ─────────────────────────────────────────────────────────
 
   const cargarReglamento = async (idBox) => {
     try {
@@ -75,24 +100,50 @@ export default function GestionReglamento() {
     }
   };
 
-  const cargarFirmas = async (idBox) => {
-    setCargandoFirmas(true);
+  const cargarHistorial = async (idBox) => {
+    setCargandoHistorial(true);
     try {
-      const res = await fetch(`${BOXES_ENDPOINT}/${idBox}/firmas-reglamento`);
-      if (res.ok) {
-        const data = await res.json();
-        setFirmas(data);
+      const [resFirmas, resAtletas] = await Promise.all([
+        fetch(`${BOXES_ENDPOINT}/${idBox}/firmas-reglamento`),
+        fetch(`${USUARIOS_ENDPOINT}/box/${idBox}/miembros`)
+      ]);
+
+      let firmasData = [];
+      if (resFirmas.ok) {
+        firmasData = await resFirmas.json();
+        setFirmas(firmasData);
+      }
+
+      if (resAtletas.ok) {
+        const data = await resAtletas.json();
+        const miembros = (data.miembros || [])
+          .filter(m => m.activo)
+          .sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+        setAtletas(miembros);
+      } else {
+        // Fallback: derivar atletas únicos desde firmas
+        const mapa = new Map();
+        firmasData.forEach(f => {
+          if (f.usuario?.idUsuario && !mapa.has(f.usuario.idUsuario)) {
+            mapa.set(f.usuario.idUsuario, {
+              idUsuario: f.usuario.idUsuario,
+              nombre:    f.usuario.nombre,
+              apellidos: f.usuario.apellidos,
+              correo:    f.usuario.correo
+            });
+          }
+        });
+        setAtletas([...mapa.values()].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es')));
       }
     } catch (err) {
       console.error(err);
     } finally {
-      setCargandoFirmas(false);
+      setCargandoHistorial(false);
     }
   };
 
   const guardarReglamento = async () => {
     if (!await window.wpConfirm("¿Estás seguro de guardar los cambios? Esto obligará a TODOS los atletas a volver a firmar al iniciar sesión.")) return;
-    
     setGuardando(true);
     try {
       const res = await fetch(`${BOXES_ENDPOINT}/${box.idBox}/reglamento`, {
@@ -103,7 +154,9 @@ export default function GestionReglamento() {
       if (res.ok) {
         const data = await res.json();
         setActualizadoEn(data.actualizadoEn);
-        alert("Reglamento guardado exitosamente. Todos los atletas deberán firmarlo de nuevo.");
+        // Forzar recarga de historial al volver a esa tab
+        setFirmas([]); setAtletas([]);
+        alert("Reglamento guardado. Todos los atletas deberán firmarlo de nuevo.");
       } else {
         alert("Error al guardar el reglamento.");
       }
@@ -115,284 +168,305 @@ export default function GestionReglamento() {
     }
   };
 
-  const previsualizarPdf = (firma) => {
-    // 1. Verificación: ¿El atleta firmó antes o después de la última actualización?
-    const fechaFirma = new Date(firma.fechaFirma);
-    const fechaActualizacion = actualizadoEn ? new Date(actualizadoEn) : new Date(0);
-    
-    if (fechaFirma < fechaActualizacion) {
-      alert("⚠️ Esta firma pertenece a una versión anterior del reglamento. El atleta debe firmar el reglamento actual para generar su documento PDF.");
-      return;
-    }
+  // ── PDF ─────────────────────────────────────────────────────────
 
-    setGenerandoPdf(true);
+  const iniciarPdf = (firma, saltarValidacion = false) => {
+    if (!saltarValidacion) {
+      const fechaFirma  = new Date(firma.fechaFirma);
+      const fechaUpdate = actualizadoEn ? new Date(actualizadoEn) : new Date(0);
+      if (fechaFirma < fechaUpdate) {
+        alert("⚠️ Esta firma pertenece a una versión anterior del reglamento.");
+        return;
+      }
+    }
+    setGenerandoPdf(firma.idFirma);
     generarDocumentoPdf(firma);
   };
 
   const generarDocumentoPdf = async (firma) => {
     const nombreCompleto = `${firma.usuario.nombre} ${firma.usuario.apellidos}`;
-    const fechaFirmaStr = new Date(firma.fechaFirma).toLocaleString('es-MX', {
-      year: 'numeric', month: 'long', day: 'numeric',
-      hour: '2-digit', minute: '2-digit'
+    const fechaFirmaStr  = new Date(firma.fechaFirma).toLocaleString('es-MX', {
+      year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
 
-    // 1. Contenedor SOLO con el texto del reglamento (sin firma)
-    const contenedor = document.createElement('div');
-    contenedor.style.padding = '40px';
-    contenedor.style.fontFamily = 'Arial, sans-serif';
-    contenedor.style.color = '#000';
-    contenedor.style.backgroundColor = '#fff';
-
-    contenedor.innerHTML = `
-      <div style="text-align: center; margin-bottom: 30px;">
-        <h2>Reglamento Oficial y Carta Compromiso</h2>
-      </div>
-      <p style="font-size: 14px; line-height: 1.6; text-align: justify; margin-bottom: 20px;">
-        Yo, <strong>${nombreCompleto}</strong>, el día <strong>${fechaFirmaStr}</strong>, declaro haber leído, comprendido y me comprometo a cumplir estrictamente con todo lo estipulado en el siguiente reglamento interno del Box:
+    const div = document.createElement('div');
+    div.style.cssText = 'padding:40px;font-family:Arial,sans-serif;color:#000;background:#fff;';
+    div.innerHTML = `
+      <div style="text-align:center;margin-bottom:30px;"><h2>Reglamento Oficial y Carta Compromiso</h2></div>
+      <p style="font-size:14px;line-height:1.6;text-align:justify;margin-bottom:20px;">
+        Yo, <strong>${nombreCompleto}</strong>, el día <strong>${fechaFirmaStr}</strong>,
+        declaro haber leído, comprendido y me comprometo a cumplir todo lo estipulado en el reglamento interno del Box:
       </p>
-      <hr style="margin-bottom: 20px;" />
-      <div style="font-size: 13px; line-height: 1.5; color: #333; margin-bottom: 80px;">
-        ${reglamentoHtml}
-      </div>
+      <hr style="margin-bottom:20px;" />
+      <div style="font-size:13px;line-height:1.5;color:#333;margin-bottom:80px;">${reglamentoHtml}</div>
     `;
 
-    const opt = {
-      margin:      [15, 15, 25, 15], // margen inferior de 25mm para dejar espacio a la firma
-      filename:    `Reglamento_${firma.usuario.nombre.replace(/\s+/g, '_')}.pdf`,
-      image:       { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    // 2. Generar el PDF con el texto, luego añadir la firma con jsPDF nativo
     try {
-      const pdf = await html2pdf().set(opt).from(contenedor).toPdf().get('pdf');
+      const pdf = await html2pdf()
+        .set({
+          margin: [15, 15, 25, 15],
+          filename: `Reglamento_${firma.usuario.nombre.replace(/\s+/g, '_')}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        })
+        .from(div).toPdf().get('pdf');
 
-      const pageWidth  = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const totalPages = pdf.internal.getNumberOfPages();
+      const W = pdf.internal.pageSize.getWidth();
+      const H = pdf.internal.pageSize.getHeight();
+      pdf.setPage(pdf.internal.getNumberOfPages());
 
-      // Ir a la última página
-      pdf.setPage(totalPages);
-
-      // Línea separadora
-      const sigY = pageHeight - 55;
+      const sigY = H - 55;
       pdf.setDrawColor(180, 180, 180);
-      pdf.line(15, sigY, pageWidth - 15, sigY);
+      pdf.line(15, sigY, W - 15, sigY);
+      pdf.setFontSize(11); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(40, 40, 40);
+      pdf.text('Firma de Conformidad', W / 2, sigY + 7, { align: 'center' });
 
-      // Título "Firma de Conformidad"
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(40, 40, 40);
-      pdf.text('Firma de Conformidad', pageWidth / 2, sigY + 7, { align: 'center' });
-
-      // Imagen de la firma (centrada)
-      const imgW = 55;
-      const imgH = 22;
-      const imgX = (pageWidth - imgW) / 2;
+      const imgW = 55, imgH = 22, imgX = (W - imgW) / 2;
       pdf.addImage(firma.firmaBase64, 'PNG', imgX, sigY + 10, imgW, imgH);
-
-      // Línea bajo la firma
       pdf.setDrawColor(0, 0, 0);
       pdf.line(imgX - 5, sigY + 34, imgX + imgW + 5, sigY + 34);
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(10); pdf.setTextColor(60, 60, 60);
+      pdf.text(nombreCompleto, W / 2, sigY + 40, { align: 'center' });
+      pdf.text(fechaFirmaStr,  W / 2, sigY + 46, { align: 'center' });
 
-      // Nombre y fecha
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(10);
-      pdf.setTextColor(60, 60, 60);
-      pdf.text(nombreCompleto, pageWidth / 2, sigY + 40, { align: 'center' });
-      pdf.text(fechaFirmaStr, pageWidth / 2, sigY + 46, { align: 'center' });
-
-      const pdfUrl = pdf.output('bloburl');
-      setPdfPreviewUrl(pdfUrl);
-      setFirmaSeleccionadaParaPdf(firma);
-      setGenerandoPdf(false);
+      setPdfPreviewUrl(pdf.output('bloburl'));
+      setFirmaDelPdf(firma);
     } catch (err) {
-      console.error('Error generando PDF:', err);
-      setGenerandoPdf(false);
-      alert('Error al generar el PDF. Intenta de nuevo.');
+      console.error(err);
+      alert('Error al generar el PDF.');
+    } finally {
+      setGenerandoPdf(null);
     }
   };
 
   const descargarBlob = () => {
-    if (!pdfPreviewUrl || !firmaSeleccionadaParaPdf) return;
+    if (!pdfPreviewUrl || !firmaDelPdf) return;
     const a = document.createElement('a');
     a.href = pdfPreviewUrl;
-    a.download = `Reglamento_${firmaSeleccionadaParaPdf.usuario.nombre.replace(/\s+/g, '_')}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    a.download = `Reglamento_${firmaDelPdf.usuario.nombre.replace(/\s+/g, '_')}.pdf`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
   };
 
-  if (loading) {
-    return (
-      <div className="abp-loading">
-        <AtletifyLoader />
-      </div>
-    );
-  }
+  // ── Render ──────────────────────────────────────────────────────
+
+  if (loading) return <div className="gr-loading"><AtletifyLoader /></div>;
 
   return (
-    <div className="abp-page" style={{ paddingBottom: '5rem' }}>
+    <div className="gr-page">
+
+      {/* HEADER */}
+      <header className="gr-header">
+        <div className="d-flex align-items-center gap-3">
+          <BackButton />
+          <h1 className="gr-header-title">Reglamento del <span>Box</span></h1>
+        </div>
+      </header>
+
       <div className="container-xl px-3 px-md-4">
-        
-        {/* Header */}
-        <section className="abp-hero" style={{ paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>
-          <div className="d-flex justify-content-between align-items-start gap-3">
-            <div>
-              <BackButton />
-              <h1 className="abp-box-title mt-2">Reglamento del Box</h1>
-              <p className="abp-hero-sub">Define las reglas que todos los atletas deben aceptar y firmar.</p>
-            </div>
-          </div>
-        </section>
 
-        {/* Tabs */}
-        <ul className="nav nav-pills mb-4 gap-2">
-          <li className="nav-item">
-            <button 
-              className={`nav-link ${tabActiva === 'editor' ? 'active bg-danger text-white' : 'bg-dark text-light'}`}
-              onClick={() => setTabActiva('editor')}
-              style={{ borderRadius: '20px', fontWeight: 'bold' }}
-            >
-              <i className="fas fa-edit me-2"></i>Editor del Reglamento
-            </button>
-          </li>
-          <li className="nav-item">
-            <button 
-              className={`nav-link ${tabActiva === 'historial' ? 'active bg-danger text-white' : 'bg-dark text-light'}`}
-              onClick={() => setTabActiva('historial')}
-              style={{ borderRadius: '20px', fontWeight: 'bold' }}
-            >
-              <i className="fas fa-file-signature me-2"></i>Historial de Firmas
-            </button>
-          </li>
-        </ul>
+        {/* TABS */}
+        <div className="gr-tabs">
+          <button
+            className={`gr-tab-btn ${tabActiva === 'editor' ? 'gr-tab-btn--active' : ''}`}
+            onClick={() => setTabActiva('editor')}
+          >
+            <i className="fas fa-edit"></i>Editor
+          </button>
+          <button
+            className={`gr-tab-btn ${tabActiva === 'historial' ? 'gr-tab-btn--active' : ''}`}
+            onClick={() => setTabActiva('historial')}
+          >
+            <i className="fas fa-users"></i>Atletas
+            {atletas.length > 0 && (
+              <span style={{ background: 'rgba(255,255,255,0.15)', borderRadius: '20px', padding: '0 6px', fontSize: '0.72rem', fontWeight: '700' }}>
+                {atletas.length}
+              </span>
+            )}
+          </button>
+        </div>
 
-        {/* Tab Content: Editor */}
+        {/* ── TAB EDITOR ── */}
         {tabActiva === 'editor' && (
-          <div className="card bg-dark text-light border-secondary shadow-lg">
-            <div className="card-header border-secondary d-flex justify-content-between align-items-center py-3">
-              <h5 className="mb-0 text-danger" style={{ fontWeight: '800' }}>
-                <i className="fas fa-file-alt me-2"></i>Redactar Reglamento
+          <div className="gr-editor-card">
+            <div className="gr-editor-card__header">
+              <h5 className="gr-editor-card__title">
+                <i className="fas fa-file-alt"></i>Redactar Reglamento
               </h5>
               {actualizadoEn && (
-                <small className="text-muted">
+                <span className="gr-editor-card__meta">
                   Última actualización: {new Date(actualizadoEn).toLocaleString('es-MX')}
-                </small>
+                </span>
               )}
             </div>
-            <div className="card-body bg-white text-dark p-0" style={{ borderRadius: '0 0 0.375rem 0.375rem' }}>
-              {/* Quill Editor */}
-              <ReactQuill 
-                theme="snow" 
-                value={reglamentoHtml} 
-                onChange={setReglamentoHtml} 
-                style={{ minHeight: '400px', border: 'none' }}
+            <div className="gr-editor-card__body">
+              <ReactQuill
+                theme="snow"
+                value={reglamentoHtml}
+                onChange={setReglamentoHtml}
+                style={{ minHeight: '420px', border: 'none' }}
               />
             </div>
-            <div className="card-footer bg-dark border-secondary text-end py-3">
-              <BotonSeguro 
-                className="btn btn-danger px-4" 
-                style={{ borderRadius: '20px', fontWeight: 'bold' }}
+            <div className="gr-editor-card__footer">
+              <BotonSeguro
+                className="gr-save-btn"
                 onClick={guardarReglamento}
                 disabled={guardando}
                 textoProcesando="Guardando..."
               >
-                <i className="fas fa-save me-2"></i>GUARDAR Y EXIGIR FIRMA
+                <i className="fas fa-save"></i>GUARDAR Y EXIGIR FIRMA
               </BotonSeguro>
             </div>
           </div>
         )}
 
-        {/* Tab Content: Historial de Firmas */}
+        {/* ── TAB ATLETAS ── */}
         {tabActiva === 'historial' && (
-          <div className="card bg-dark text-light border-secondary shadow-lg">
-            <div className="card-header border-secondary py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-              <h5 className="mb-0 text-danger" style={{ fontWeight: '800' }}>
-                <i className="fas fa-list me-2"></i>Atletas que han firmado
-              </h5>
-              <div className="input-group" style={{ maxWidth: '350px' }}>
-                <span className="input-group-text bg-dark border-secondary text-muted">
-                  <i className="fas fa-search"></i>
-                </span>
-                <input 
-                  type="text" 
-                  className="form-control bg-dark text-light border-secondary" 
-                  placeholder="Buscar nombre, correo o fecha..."
-                  value={busquedaFirma}
-                  onChange={(e) => setBusquedaFirma(e.target.value)}
+          <div className="gr-historial-card">
+
+            {/* Header */}
+            <div className="gr-historial-card__header">
+              <div className="d-flex align-items-center gap-2 flex-wrap">
+                <h5 className="gr-historial-card__title">
+                  <i className="fas fa-users"></i>Atletas
+                </h5>
+                {atletas.length > 0 && (
+                  <>
+                    <span className="gr-firma-status gr-firma-status--ok">
+                      <i className="fas fa-check-circle"></i>{countAlDia} al día
+                    </span>
+                    {countPendiente > 0 && (
+                      <span className="gr-firma-status gr-firma-status--desactualizada">
+                        <i className="fas fa-exclamation-triangle"></i>{countPendiente} pendientes
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
+              <div className="gr-search-wrapper">
+                <span className="gr-search-icon"><i className="fas fa-search"></i></span>
+                <input
+                  type="text"
+                  className="gr-search-input"
+                  placeholder="Nombre o correo..."
+                  value={busqueda}
+                  onChange={e => setBusqueda(e.target.value)}
                 />
-                {busquedaFirma && (
-                  <button 
-                    className="btn btn-outline-secondary" 
-                    type="button" 
-                    onClick={() => setBusquedaFirma('')}
-                  >
+                {busqueda && (
+                  <button className="gr-search-clear" onClick={() => setBusqueda('')}>
                     <i className="fas fa-times"></i>
                   </button>
                 )}
               </div>
             </div>
-            <div className="card-body p-0">
-              {cargandoFirmas ? (
-                <div className="text-center py-5 text-muted">
-                  <AtletifyLoader />
-                  <p>Cargando firmas...</p>
+
+            {/* Lista */}
+            <div className="gr-historial-card__body">
+              {cargandoHistorial ? (
+                <div className="gr-empty"><AtletifyLoader /><p>Cargando atletas...</p></div>
+              ) : atletas.length === 0 ? (
+                <div className="gr-empty">
+                  <i className="fas fa-users"></i>
+                  <p>No hay atletas registrados.</p>
                 </div>
-              ) : firmas.length === 0 ? (
-                <div className="text-center py-5 text-muted">
-                  <i className="fas fa-signature fa-3x mb-3" style={{ opacity: 0.3 }}></i>
-                  <p>Aún no hay firmas registradas.</p>
-                </div>
-              ) : firmasFiltradas.length === 0 ? (
-                <div className="text-center py-5 text-muted">
-                  <i className="fas fa-search fa-3x mb-3" style={{ opacity: 0.3 }}></i>
-                  <p>No se encontraron firmas que coincidan con "{busquedaFirma}".</p>
+              ) : atletasFiltrados.length === 0 ? (
+                <div className="gr-empty">
+                  <i className="fas fa-search"></i>
+                  <p>Sin resultados para "{busqueda}".</p>
                 </div>
               ) : (
-                <div className="table-responsive">
-                  <table className="table table-dark table-hover mb-0">
-                    <thead>
-                      <tr>
-                        <th className="text-muted border-secondary">Atleta</th>
-                        <th className="text-muted border-secondary">Correo</th>
-                        <th className="text-muted border-secondary">Fecha de Firma</th>
-                        <th className="text-muted border-secondary text-center">Firma</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {firmasFiltradas.map((f) => (
-                        <tr key={f.idFirma}>
-                          <td className="border-secondary fw-bold text-light">
-                            {f.usuario.nombre} {f.usuario.apellidos}
-                          </td>
-                          <td className="border-secondary">{f.usuario.correo}</td>
-                          <td className="border-secondary text-info">
-                            {new Date(f.fechaFirma).toLocaleString('es-MX')}
-                          </td>
-                          <td className="border-secondary text-center">
-                            <button 
-                              className="btn btn-sm btn-outline-info rounded-pill me-2"
-                              onClick={() => setFirmaSeleccionada(f)}
-                              title="Ver firma"
-                            >
-                              <i className="fas fa-eye"></i>
-                            </button>
-                            <button 
-                              className="btn btn-sm btn-outline-danger rounded-pill"
-                              onClick={() => previsualizarPdf(f)}
-                              title="Previsualizar PDF"
-                              disabled={generandoPdf}
-                            >
-                              <i className={generandoPdf ? "fas fa-spinner fa-spin" : "fas fa-file-pdf"}></i>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                atletasFiltrados.map(atleta => {
+                  const todasFirmas  = firmasDeAtleta(atleta);
+                  const ultima       = todasFirmas[0] || null;
+                  const haFirmado    = !!ultima;
+                  const actualizada  = haFirmado ? esFirmaActualizada(ultima) : false;
+
+                  // Estado visual
+                  let rowClass    = 'gr-firma-row--sin-firma';
+                  let statusClass = 'gr-firma-status--sin-firma';
+                  let statusIcon  = 'fa-minus-circle';
+                  let statusLabel = 'Sin firma';
+
+                  if (haFirmado && actualizada) {
+                    rowClass    = 'gr-firma-row--ok';
+                    statusClass = 'gr-firma-status--ok';
+                    statusIcon  = 'fa-check-circle';
+                    statusLabel = 'Al día';
+                  } else if (haFirmado && !actualizada) {
+                    rowClass    = 'gr-firma-row--desactualizada';
+                    statusClass = 'gr-firma-status--desactualizada';
+                    statusIcon  = 'fa-exclamation-triangle';
+                    statusLabel = 'Pendiente';
+                  }
+
+                  const pdfLoading = generandoPdf === ultima?.idFirma;
+
+                  return (
+                    <div key={atleta.idUsuario} className={`gr-firma-row ${rowClass}`}>
+
+                      <div className="gr-firma-avatar">
+                        {atleta.foto
+                          ? <img src={atleta.foto} alt={atleta.nombre} className="gr-firma-avatar-img" />
+                          : (atleta.nombre || '?').charAt(0).toUpperCase()
+                        }
+                      </div>
+
+                      <div className="gr-firma-info">
+                        <div className="gr-firma-nombre">
+                          {atleta.nombre} {atleta.apellidos || atleta.apellido || ''}
+                        </div>
+                        <div className="gr-firma-correo">{atleta.correo}</div>
+                      </div>
+
+                      <span className={`gr-firma-status ${statusClass}`}>
+                        <i className={`fas ${statusIcon}`}></i>{statusLabel}
+                      </span>
+
+                      {ultima && (
+                        <div className="gr-firma-fecha">
+                          <i className="fas fa-calendar-check"></i>
+                          {new Date(ultima.fechaFirma).toLocaleString('es-MX', {
+                            year: 'numeric', month: 'short', day: 'numeric',
+                            hour: '2-digit', minute: '2-digit'
+                          })}
+                        </div>
+                      )}
+
+                      <div className="gr-firma-actions">
+                        {/* Ver firma actual */}
+                        <button
+                          className="gr-action-btn gr-action-btn--view"
+                          onClick={() => setFirmaSeleccionada(ultima)}
+                          title="Ver firma actual"
+                          disabled={!haFirmado}
+                        >
+                          <i className="fas fa-eye"></i>
+                        </button>
+
+                        {/* PDF firma actual */}
+                        <button
+                          className="gr-action-btn gr-action-btn--pdf"
+                          onClick={() => iniciarPdf(ultima)}
+                          title="Generar PDF"
+                          disabled={!haFirmado || !actualizada || pdfLoading}
+                        >
+                          <i className={pdfLoading ? 'fas fa-spinner fa-spin' : 'fas fa-file-pdf'}></i>
+                        </button>
+
+                        {/* Historial de firmas */}
+                        <button
+                          className="gr-action-btn gr-action-btn--historial"
+                          onClick={() => setAtletaConHistorial(atleta)}
+                          title="Historial de firmas"
+                          disabled={!haFirmado}
+                        >
+                          <i className="fas fa-history"></i>
+                        </button>
+                      </div>
+
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>
@@ -400,64 +474,142 @@ export default function GestionReglamento() {
 
       </div>
 
-      {/* Modal para ver la firma en grande */}
-      {firmaSeleccionada && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1050 }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content bg-dark text-light border-secondary">
-              <div className="modal-header border-secondary">
-                <h5 className="modal-title text-danger fw-bold">
-                  Firma de {firmaSeleccionada.usuario.nombre}
-                </h5>
-                <button type="button" className="btn-close btn-close-white" onClick={() => setFirmaSeleccionada(null)}></button>
-              </div>
-              <div className="modal-body text-center bg-white p-4" style={{ borderBottomLeftRadius: '0.375rem', borderBottomRightRadius: '0.375rem' }}>
-                <img 
-                  src={firmaSeleccionada.firmaBase64} 
-                  alt="Firma del Atleta" 
-                  style={{ maxWidth: '100%', border: '1px dashed #ccc' }} 
-                />
-              </div>
+      {/* ── MODAL HISTORIAL DE FIRMAS (renderiza primero) ── */}
+      {atletaConHistorial && createPortal(
+        <div
+          className="gr-modal-overlay"
+          onClick={e => { if (e.target === e.currentTarget) setAtletaConHistorial(null); }}
+        >
+          <div className="gr-modal" style={{ maxWidth: '500px' }}>
+            <div className="gr-modal__header">
+              <h5 className="gr-modal__title">
+                <i className="fas fa-history"></i>
+                Historial — {atletaConHistorial.nombre}
+              </h5>
+              <button className="gr-modal__close" onClick={() => setAtletaConHistorial(null)} aria-label="Cerrar">
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div className="gr-modal__body" style={{ maxHeight: '65vh', overflowY: 'auto', padding: '1rem' }}>
+              {firmasDeAtleta(atletaConHistorial).length === 0 ? (
+                <div className="gr-empty">
+                  <i className="fas fa-signature"></i>
+                  <p>Sin firmas registradas.</p>
+                </div>
+              ) : (
+                <div className="d-flex flex-column gap-2">
+                  {firmasDeAtleta(atletaConHistorial).map((f, idx) => {
+                    const esActual    = idx === 0;
+                    const pdfCargando = generandoPdf === f.idFirma;
+                    return (
+                      <div key={f.idFirma} className="gr-historial-item">
+                        <div className="gr-historial-item__info">
+                          {esActual && (
+                            <span className="gr-historial-item__badge">
+                              <i className="fas fa-star"></i>Actual
+                            </span>
+                          )}
+                          <div className="gr-historial-item__fecha">
+                            <i className="fas fa-calendar-alt"></i>
+                            {new Date(f.fechaFirma).toLocaleString('es-MX', {
+                              year: 'numeric', month: 'long', day: 'numeric',
+                              hour: '2-digit', minute: '2-digit'
+                            })}
+                          </div>
+                        </div>
+                        <div className="gr-historial-item__actions">
+                          <button
+                            className="gr-action-btn gr-action-btn--view"
+                            onClick={() => setFirmaSeleccionada(f)}
+                            title="Ver firma"
+                          >
+                            <i className="fas fa-eye"></i>
+                          </button>
+                          <button
+                            className="gr-action-btn gr-action-btn--pdf"
+                            onClick={() => iniciarPdf(f, true)}
+                            title="Generar PDF"
+                            disabled={pdfCargando}
+                          >
+                            <i className={pdfCargando ? 'fas fa-spinner fa-spin' : 'fas fa-file-pdf'}></i>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Modal para PREVISUALIZAR el PDF */}
-      {pdfPreviewUrl && firmaSeleccionadaParaPdf && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 1060 }}>
-          <div className="modal-dialog modal-xl modal-dialog-centered">
-            <div className="modal-content bg-dark text-light border-secondary" style={{ height: '85vh' }}>
-              <div className="modal-header border-secondary">
-                <h5 className="modal-title text-danger fw-bold">
-                  <i className="fas fa-file-pdf me-2"></i>Previsualización de Documento
-                </h5>
-                <div>
-                  <button 
-                    type="button" 
-                    className="btn btn-danger me-3" 
-                    onClick={descargarBlob}
-                    style={{ borderRadius: '20px', fontWeight: 'bold' }}
-                  >
-                    <i className="fas fa-download me-2"></i>Descargar PDF
-                  </button>
-                  <button type="button" className="btn-close btn-close-white" onClick={() => {
-                    setPdfPreviewUrl(null);
-                    setFirmaSeleccionadaParaPdf(null);
-                  }}></button>
-                </div>
-              </div>
-              <div className="modal-body p-0 bg-white">
-                <iframe 
-                  src={pdfPreviewUrl} 
-                  style={{ width: '100%', height: '100%', border: 'none' }} 
-                  title="PDF Preview"
-                ></iframe>
-              </div>
+      {/* ── MODAL VER FIRMA (encima del historial por orden DOM) ── */}
+      {firmaSeleccionada && createPortal(
+        <div
+          className="gr-modal-overlay"
+          onClick={e => { if (e.target === e.currentTarget) setFirmaSeleccionada(null); }}
+        >
+          <div className="gr-modal" style={{ maxWidth: '480px' }}>
+            <div className="gr-modal__header">
+              <h5 className="gr-modal__title">
+                <i className="fas fa-signature"></i>
+                Firma de {firmaSeleccionada.usuario.nombre}
+              </h5>
+              <button className="gr-modal__close" onClick={() => setFirmaSeleccionada(null)} aria-label="Cerrar">
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="gr-modal__body" style={{ background: '#fff' }}>
+              <img
+                src={firmaSeleccionada.firmaBase64}
+                alt="Firma"
+                className="gr-modal__signature-img"
+              />
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
+
+      {/* ── MODAL PDF (siempre al frente, último en DOM) ── */}
+      {pdfPreviewUrl && firmaDelPdf && createPortal(
+        <div
+          className="gr-modal-overlay"
+          onClick={e => {
+            if (e.target === e.currentTarget) { setPdfPreviewUrl(null); setFirmaDelPdf(null); }
+          }}
+        >
+          <div className="gr-modal gr-modal--xl">
+            <div className="gr-modal__header">
+              <h5 className="gr-modal__title">
+                <i className="fas fa-file-pdf"></i>
+                Previsualización — {firmaDelPdf.usuario.nombre}
+              </h5>
+              <div className="gr-modal__actions">
+                <button className="gr-download-btn" onClick={descargarBlob}>
+                  <i className="fas fa-download"></i>
+                  <span className="gr-download-btn__label">Descargar</span>
+                </button>
+                <button
+                  className="gr-modal__close"
+                  onClick={() => { setPdfPreviewUrl(null); setFirmaDelPdf(null); }}
+                  aria-label="Cerrar"
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+            <div className="gr-modal__body--padless">
+              <iframe src={pdfPreviewUrl} className="gr-pdf-iframe" title="PDF Preview" />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
     </div>
   );
 }

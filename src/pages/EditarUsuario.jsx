@@ -207,6 +207,7 @@ export default function EditarUsuario() {
                 clases={clases}
                 valor={form.idClasePredeterminada}
                 onCambiar={v => setForm({ ...form, idClasePredeterminada: v })}
+                categoriaUsuario={form.categoriaBase}
               />
               <span className="eu-help-text">
                 <i className="fas fa-info-circle me-1"></i>

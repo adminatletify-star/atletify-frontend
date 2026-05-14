@@ -431,14 +431,43 @@
 .finanzas-promo-nombre { font-family: var(--font-body); font-weight: 600; font-size: 0.95rem; color: var(--text-primary); }
 .finanzas-promo-pct    { font-family: var(--font-stats); font-weight: 700; color: var(--primary); margin-left: 0.3rem; }
 
-/* === DROP-IN === */
-.finanzas-dropin-wrapper { max-width: 480px; margin: 0 auto; }
-.finanzas-dropin-icono {
-  display: block;
-  font-size: 2.75rem;
-  color: var(--accent);
+/* === DROP-IN PANEL === */
+.finanzas-dropin-panel {
+  border-top: 3px solid var(--accent);
   text-align: center;
-  margin-bottom: 0.5rem;
+  padding: 1.5rem 1.25rem !important;
+}
+
+.finanzas-dropin-panel__icono-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-size: 1.4rem;
+  margin: 0 auto 1rem;
+}
+
+.finanzas-dropin-panel__titulo {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.5rem;
+}
+
+.finanzas-dropin-panel__desc {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0 0 1.25rem;
 }
 
 /* === MODAL DE RENOVACIÓN === */
@@ -448,7 +477,7 @@
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  z-index: 1050;
+  z-index: 10000;
   display: flex;
   justify-content: center;
   align-items: center;

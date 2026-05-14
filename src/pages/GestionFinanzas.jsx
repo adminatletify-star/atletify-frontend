@@ -854,12 +854,14 @@ export default function GestionFinanzas() {
               <div className="row g-4">
                 {/* PANEL LATERAL CON BOTÓN */}
                 <div className="col-12 col-lg-4 align-self-lg-start">
-                  <div className="finanzas-card sticky-top h-auto" style={{ top: '80px' }}>
-                    <div className="text-center mb-4">
-                      <i className="fas fa-dumbbell text-warning display-4 mb-2"></i>
-                      <div className="finanzas-card-titulo border-0 mb-1 justify-content-center"><i className="fas fa-dumbbell text-warning me-2"></i>Registrar Drop-In</div>
-                      <p className="text-secondary small">Registra a un turista en una clase del día y cobra el pago en mostrador.</p>
+                  <div className="finanzas-card finanzas-dropin-panel sticky-top h-auto" style={{ top: '80px' }}>
+                    <div className="finanzas-dropin-panel__icono-wrap">
+                      <i className="fas fa-plane-arrival"></i>
                     </div>
+                    <h3 className="finanzas-dropin-panel__titulo">Registrar Drop-In</h3>
+                    <p className="finanzas-dropin-panel__desc">
+                      Registra a un turista en una clase del día y cobra el pago en mostrador.
+                    </p>
                     <button type="button" className="finanzas-btn-submit finanzas-btn-submit--warning w-100" onClick={abrirModalDropIn}>
                       <i className="fas fa-plus me-2"></i>Registrar Drop-In
                     </button>

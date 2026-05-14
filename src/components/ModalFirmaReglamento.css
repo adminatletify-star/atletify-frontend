@@ -1,0 +1,79 @@
+/* ── Contenido Quill: evita que texto, tablas e imágenes se salgan ── */
+.quill-content-renderer {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  overflow-x: hidden;
+}
+
+.quill-content-renderer * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.quill-content-renderer img {
+  height: auto;
+  display: block;
+}
+
+.quill-content-renderer table {
+  width: 100%;
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.quill-content-renderer pre,
+.quill-content-renderer code {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ── Scrollbar del body ── */
+.mfr-body::-webkit-scrollbar { width: 4px; }
+.mfr-body::-webkit-scrollbar-track { background: transparent; }
+.mfr-body::-webkit-scrollbar-thumb {
+  background: rgba(230, 57, 70, 0.35);
+  border-radius: 4px;
+}
+
+/* ── Mobile: centrado, padding reducido ── */
+@media (max-width: 520px) {
+  .mfr-overlay {
+    padding: 0.75rem !important;
+  }
+
+  .mfr-modal {
+    max-height: 96dvh !important;
+  }
+
+  .mfr-header {
+    padding: 1rem 1.1rem 0.85rem !important;
+  }
+
+  .mfr-body {
+    padding: 0.85rem 1rem !important;
+  }
+
+  .mfr-footer {
+    padding: 0.85rem 1rem !important;
+  }
+
+  .mfr-footer-row {
+    flex-direction: column !important;
+  }
+
+  .mfr-footer-row .mfr-btn-volver {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mfr-pad-actions {
+    flex-wrap: wrap;
+  }
+
+  .mfr-pad-actions button {
+    flex: 1;
+    justify-content: center;
+  }
+}

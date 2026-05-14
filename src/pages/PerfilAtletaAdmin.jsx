@@ -324,7 +324,7 @@ export default function PerfilAtletaAdmin() {
         </div>
       </header>
 
-      <div className="container px-3 mt-4">
+      <div className="container-xl px-2 px-sm-3 mt-3 mt-md-4">
         <div className="row g-4">
 
           {/* COLUMNA IZQUIERDA — PERFIL */}
@@ -351,19 +351,30 @@ export default function PerfilAtletaAdmin() {
                   <small className="text-light opacity-75">Acceso vitalicio sin cobros.</small>
                 </div>
               ) : (
-                finanzas?.nombrePlan && (
-                  <div className="paa-medical-item mb-3" style={{ background: 'rgba(231,76,60,0.06)', border: '1px solid rgba(231,76,60,0.2)', borderRadius: '10px', padding: '10px 14px' }}>
-                    <span className="paa-medical-key"><i className="fas fa-id-badge me-1"></i>Plan Activo</span>
-                    <div className="d-flex align-items-center gap-2 flex-wrap">
-                      <span style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 700 }}>{finanzas.nombrePlan}</span>
+                finanzas?.nombrePlan && (() => {
+                  const estatus = finanzas.suscripcion?.estatus;
+                  const mod = estatus === 'Activa' ? 'activa'
+                    : estatus === 'Congelada' ? 'congelada'
+                    : estatus === 'Cancelada' ? 'cancelada'
+                    : 'pendiente';
+                  const iconMap = { activa: 'fa-check-circle', congelada: 'fa-snowflake', cancelada: 'fa-ban', pendiente: 'fa-clock' };
+                  return (
+                    <div className={`paa-plan-activo paa-plan-activo--${mod} mb-3`}>
+                      <span className="paa-plan-activo__label">
+                        <i className="fas fa-id-badge me-1"></i>Plan Activo
+                      </span>
+                      <p className={`paa-plan-activo__nombre paa-plan-activo__nombre--${mod}`}>
+                        {finanzas.nombrePlan}
+                      </p>
                       {finanzas.suscripcion && (
-                        <span className={`badge bg-opacity-75 ${finanzas.suscripcion.estatus === 'Activa' ? 'bg-success' : finanzas.suscripcion.estatus === 'Congelada' ? 'bg-info text-dark' : 'bg-danger'}`} style={{ fontSize: '0.65rem' }}>
-                          {finanzas.suscripcion.estatus}
+                        <span className={`paa-plan-activo__badge paa-plan-activo__badge--${mod}`}>
+                          <i className={`fas ${iconMap[mod]} me-1`}></i>
+                          {estatus}
                         </span>
                       )}
                     </div>
-                  </div>
-                )
+                  );
+                })()
               )}
 
               <div className="paa-toggle-row mb-3 mt-4">
@@ -461,12 +472,12 @@ export default function PerfilAtletaAdmin() {
               ) : (
                 <>
                   <div className="row g-3 mb-3">
-                    <div className="col-md-5">
+                    <div className="col-12 col-md-5">
                       <p className="paa-plan-name">Plan Actual</p>
                       <p className="paa-plan-value">{finanzas.nombrePlan}</p>
                       <p className="paa-atleta-dato mt-1"><i className="fas fa-calendar-alt"></i> Vence:&nbsp;<strong style={{ color: 'var(--text-primary)' }}>{finanzas.suscripcion.fechaVencimiento.split('T')[0].split('-').reverse().join('/')}</strong></p>
                     </div>
-                    <div className="col-md-7">
+                    <div className="col-12 col-md-7">
                       <div className="paa-deuda-block">
                         <p className="paa-deuda-label">Estatus del Plan</p>
                         <p className="paa-deuda-amount mb-0" style={{ color: finanzas.suscripcion.estatus === 'Activa' ? 'var(--success)' : 'var(--danger)' }}>
@@ -476,19 +487,27 @@ export default function PerfilAtletaAdmin() {
                     </div>
                   </div>
 
-                  <div className="d-flex gap-2 flex-wrap">
-                    <button onClick={() => setShowModalPago(true)} disabled={finanzas.suscripcion.estatus === 'Activa'} className="paa-action-btn paa-action-btn-cobrar">
-                      <i className="fas fa-hand-holding-usd"></i>Activar / Cobrar
-                    </button>
-                    <button onClick={() => setShowModalCongelar(true)} disabled={finanzas.suscripcion.estatus !== 'Activa'} className="paa-action-btn paa-action-btn-congelar">
-                      <i className="fas fa-snowflake"></i>Congelar
-                    </button>
-                    <BotonSeguro onClick={() => descongelarPlan(finanzas.suscripcion.idSuscripcion)} disabled={finanzas.suscripcion.estatus !== 'Congelada'} className="paa-action-btn paa-action-btn-descongelar" textoProcesando="Procesando...">
-                      <i className="fas fa-fire"></i>Descongelar
-                    </BotonSeguro>
-                    <button onClick={() => setShowModalEditar(true)} className="paa-action-btn paa-action-btn-editar">
-                      <i className="fas fa-edit"></i>Editar Fechas
-                    </button>
+                  <div className="row g-2 mt-1">
+                    <div className="col-6 col-sm-3">
+                      <button onClick={() => setShowModalPago(true)} disabled={finanzas.suscripcion.estatus === 'Activa'} className="paa-action-btn paa-action-btn-cobrar w-100">
+                        <i className="fas fa-hand-holding-usd"></i>Activar / Cobrar
+                      </button>
+                    </div>
+                    <div className="col-6 col-sm-3">
+                      <button onClick={() => setShowModalCongelar(true)} disabled={finanzas.suscripcion.estatus !== 'Activa'} className="paa-action-btn paa-action-btn-congelar w-100">
+                        <i className="fas fa-snowflake"></i>Congelar
+                      </button>
+                    </div>
+                    <div className="col-6 col-sm-3">
+                      <BotonSeguro onClick={() => descongelarPlan(finanzas.suscripcion.idSuscripcion)} disabled={finanzas.suscripcion.estatus !== 'Congelada'} className="paa-action-btn paa-action-btn-descongelar w-100" textoProcesando="Procesando...">
+                        <i className="fas fa-fire"></i>Descongelar
+                      </BotonSeguro>
+                    </div>
+                    <div className="col-6 col-sm-3">
+                      <button onClick={() => setShowModalEditar(true)} className="paa-action-btn paa-action-btn-editar w-100">
+                        <i className="fas fa-edit"></i>Editar Fechas
+                      </button>
+                    </div>
                   </div>
                 </>
               )}
@@ -496,20 +515,20 @@ export default function PerfilAtletaAdmin() {
 
             {/* HISTORIAL DE TRANSACCIONES Y ASISTENCIAS */}
             <div className="tarjeta-panel p-4">
-              <div className="d-flex gap-3 mb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px' }}>
-                <button 
+              <div className="paa-tabs-bar">
+                <button
+                  className={`paa-tab${activeTab === 'pagos' ? ' paa-tab--active' : ''}`}
                   onClick={() => setActiveTab('pagos')}
-                  className={`btn ${activeTab === 'pagos' ? 'btn-primary' : 'btn-outline-secondary'} fw-bold`}
-                  style={{ borderRadius: '8px' }}
                 >
-                  <i className="fas fa-receipt me-2"></i>Historial de Pagos
+                  <i className="fas fa-receipt"></i>
+                  <span>Historial de Pagos</span>
                 </button>
-                <button 
+                <button
+                  className={`paa-tab paa-tab--asistencias${activeTab === 'asistencias' ? ' paa-tab--active' : ''}`}
                   onClick={() => setActiveTab('asistencias')}
-                  className={`btn ${activeTab === 'asistencias' ? 'btn-info text-dark' : 'btn-outline-secondary'} fw-bold`}
-                  style={{ borderRadius: '8px' }}
                 >
-                  <i className="fas fa-calendar-check me-2"></i>Asistencias
+                  <i className="fas fa-calendar-check"></i>
+                  <span>Asistencias</span>
                 </button>
               </div>
 
@@ -522,7 +541,7 @@ export default function PerfilAtletaAdmin() {
 
                     return (
                       <>
-                        <div className="table-responsive">
+                        <div className="table-responsive paa-table-wrap">
                           <table className="table table-hover paa-table">
                             <thead>
                               <tr>
@@ -531,22 +550,22 @@ export default function PerfilAtletaAdmin() {
                                 <th>Método</th>
                                 <th>Monto</th>
                                 <th>Vencimiento</th>
-                                <th className="d-none d-md-table-cell">Notas</th>
+                                <th className="paa-td-notas">Notas</th>
                               </tr>
                             </thead>
                             <tbody>
                               {historialPaginado.length === 0 ? <tr><td colSpan="6" className="text-center py-4 text-muted">No hay pagos registrados.</td></tr> : (
                                 historialPaginado.map(t => (
                                   <tr key={t.idTransaccion}>
-                                    <td>{new Date(t.fechaPago).toLocaleDateString()}</td>
-                                    <td>{t.tipoTransaccion}</td>
-                                    <td>
+                                    <td data-label="Fecha">{new Date(t.fechaPago).toLocaleDateString()}</td>
+                                    <td data-label="Tipo">{t.tipoTransaccion}</td>
+                                    <td data-label="Método">
                                       <span className="badge bg-secondary bg-opacity-50">{t.metodoPago1}</span>
                                       {t.metodoPago2 && <span className="badge bg-secondary bg-opacity-50 ms-1">{t.metodoPago2}</span>}
                                     </td>
-                                    <td style={{ color: 'var(--success)', fontFamily: 'var(--font-stats)', fontWeight: 700 }}>${t.montoTotal}</td>
-                                    <td style={{ fontWeight: 600 }}>{t.fechaVencimiento ? new Date(t.fechaVencimiento).toLocaleDateString() : '—'}</td>
-                                    <td className="d-none d-md-table-cell" style={{ color: 'var(--text-primary)', fontSize: '0.82rem' }}>{t.notas || '—'}</td>
+                                    <td data-label="Monto" style={{ color: 'var(--success)', fontFamily: 'var(--font-stats)', fontWeight: 700 }}>${t.montoTotal}</td>
+                                    <td data-label="Vencimiento" style={{ fontWeight: 600 }}>{t.fechaVencimiento ? new Date(t.fechaVencimiento).toLocaleDateString() : '—'}</td>
+                                    <td data-label="Notas" className="paa-td-notas">{t.notas || '—'}</td>
                                   </tr>
                                 ))
                               )}
@@ -574,7 +593,7 @@ export default function PerfilAtletaAdmin() {
 
                     return (
                       <>
-                        <div className="table-responsive">
+                        <div className="table-responsive paa-table-wrap">
                           <table className="table table-hover paa-table">
                             <thead>
                               <tr>
@@ -588,10 +607,10 @@ export default function PerfilAtletaAdmin() {
                               {asistenciasPaginado.length === 0 ? <tr><td colSpan="4" className="text-center py-4 text-muted">No hay asistencias registradas.</td></tr> : (
                                 asistenciasPaginado.map(a => (
                                   <tr key={a.idAsistencia}>
-                                    <td>{new Date(a.fecha).toLocaleDateString()}</td>
-                                    <td style={{ fontFamily: 'var(--font-stats)', fontWeight: 600 }}>{a.horaClase.slice(0, 5)}</td>
-                                    <td>{a.nombreClase}</td>
-                                    <td>
+                                    <td data-label="Fecha">{new Date(a.fecha).toLocaleDateString()}</td>
+                                    <td data-label="Hora" style={{ fontFamily: 'var(--font-stats)', fontWeight: 600 }}>{a.horaClase.slice(0, 5)}</td>
+                                    <td data-label="Clase">{a.nombreClase}</td>
+                                    <td data-label="Estatus">
                                       <span className={`badge ${a.estado === 'Asistió' ? 'bg-success' : a.estado === 'Faltó' ? 'bg-danger' : 'bg-warning'} bg-opacity-75`}>
                                         {a.estado}
                                       </span>

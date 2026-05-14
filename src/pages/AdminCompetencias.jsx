@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { COMPETENCIAS_ENDPOINT } from '../services/api';
 import AtletifyLoader from '../components/AtletifyLoader';
@@ -294,114 +294,164 @@ export default function AdminCompetencias() {
   // PANTALLA DE BLOQUEO (PAYWALL) PARA ADMINBOX CUANDO EL MÓDULO ESTÁ APAGADO
   // ===================================================================================
   if (box && (box.moduloCompetenciasActivo === false || box.ModuloCompetenciasActivo === false) && user?.rol !== 'Developer') {
-    return (
-      <div className="d-flex flex-column align-items-center justify-content-center text-center px-4" style={{ minHeight: '80vh', background: 'var(--bg-base)' }}>
-        <i className="fas fa-trophy text-secondary mb-4" style={{ fontSize: '4rem', opacity: 0.5 }}></i>
-        <h2 className="text-white mb-3 fw-bold">¿Quieres gestionar tu competencia?</h2>
-        <p className="text-white-50 mb-5" style={{ maxWidth: '500px' }}>
-          El módulo de Gestión de Competencias no se encuentra activo para tu cuenta. 
-          Contáctanos para conocer nuestros planes y habilitar todas las herramientas profesionales para tu evento.
-        </p>
+    let planes = [];
+    if (configPublica?.planesCompetenciaJson) {
+      try { planes = JSON.parse(configPublica.planesCompetenciaJson); } catch (e) {}
+    }
+    const maxPrecio = planes.length > 0 ? Math.max(...planes.map(p => p.precio)) : 0;
 
+    return (
+      <div className="acomp-paywall-wrapper">
+
+        {/* Header */}
+        <header className="acomp-nav" style={{ marginBottom: 0 }}>
+          <div className="acomp-nav-left">
+            <BackButton to="/admin-box-panel" />
+            <div className="acomp-nav-icono d-none d-sm-flex">
+              <i className="fas fa-trophy"></i>
+            </div>
+            <p className="acomp-nav-titulo">Admin <span>Competencias</span></p>
+          </div>
+        </header>
+
+        {/* Hero */}
+        <div className="acomp-paywall-hero">
+          <div className="acomp-paywall-icon-wrap">
+            <i className="fas fa-trophy"></i>
+          </div>
+          <h2 className="acomp-paywall-title">
+            ¿Quieres gestionar tu <span>competencia?</span>
+          </h2>
+          <p className="acomp-paywall-desc">
+            El módulo de Gestión de Competencias no se encuentra activo para tu cuenta.
+            Selecciona un plan para habilitar todas las herramientas profesionales para tu evento.
+          </p>
+        </div>
+
+        {/* Pricing Cards */}
         {configPublica ? (
           <>
-            {/* PRICING CARDS */}
-            {(() => {
-              let planes = [];
-              if (configPublica.planesCompetenciaJson) {
-                try { planes = JSON.parse(configPublica.planesCompetenciaJson); } catch (e) {}
-              }
-              if (planes.length === 0) return null;
-              
-              return (
-                <div className="row g-4 justify-content-center mb-5 w-100" style={{ maxWidth: '1000px' }}>
-                  {planes.map((plan, idx) => (
-                    <div key={idx} className="col-12 col-md-4">
-                      <div className="card h-100 border-secondary text-center p-4 rounded-4 shadow-lg hover-scale" style={{ background: 'linear-gradient(145deg, #1a1a1a, #121212)' }}>
-                        <h4 className="text-info fw-bold mb-3 text-uppercase" style={{ letterSpacing: '1px' }}>{plan.nombre}</h4>
-                        <h2 className="text-white mb-4 fw-black">${plan.precio} <span className="fs-6 text-white-50 fw-normal">MXN</span></h2>
-                        <ul className="list-unstyled text-start text-white-50 mb-4 mx-auto flex-grow-1" style={{ maxWidth: '220px' }}>
-                          <li className="mb-3"><i className="fas fa-calendar-day text-success me-3"></i> {plan.dias} {plan.dias === 1 ? 'Día' : 'Días'} de duración</li>
-                          <li className="mb-3"><i className="fas fa-users text-primary me-3"></i> {plan.atletasIncluidos} Atletas incluidos</li>
-                          <li className="mb-3"><i className="fas fa-plus-circle text-warning me-3"></i> ${plan.precioAtletaExtra} por atleta extra</li>
-                        </ul>
-                        <button 
-                          className="btn btn-outline-info w-100 rounded-pill mt-auto fw-bold py-2"
-                          onClick={() => setPlanSeleccionado(plan)}
-                        >
-                          Seleccionar Plan
-                        </button>
+            {planes.length > 0 && (
+              <div className="container-xl px-3 px-md-4 mb-5">
+                <div className="row g-4 justify-content-center">
+                  {planes.map((plan, idx) => {
+                    const esFeatured = plan.precio === maxPrecio;
+                    return (
+                      <div key={idx} className="col-12 col-sm-6 col-lg-4">
+                        <div className={`acomp-plan-card${esFeatured ? ' acomp-plan-card--featured' : ''}`}>
+                          <p className="acomp-plan-nombre">{plan.nombre}</p>
+                          <div className="acomp-plan-precio-wrap">
+                            <span className="acomp-plan-precio">${plan.precio}</span>
+                            <span className="acomp-plan-precio-currency">MXN</span>
+                          </div>
+                          <ul className="acomp-plan-features">
+                            <li className="acomp-plan-feature acomp-plan-feature--dias">
+                              <i className="fas fa-calendar-day"></i>
+                              <span>{plan.dias} {plan.dias === 1 ? 'Día' : 'Días'} de duración</span>
+                            </li>
+                            <li className="acomp-plan-feature acomp-plan-feature--cupo">
+                              <i className="fas fa-users"></i>
+                              <span>{plan.atletasIncluidos} Atletas incluidos</span>
+                            </li>
+                            <li className="acomp-plan-feature acomp-plan-feature--extra">
+                              <i className="fas fa-plus-circle"></i>
+                              <span>${plan.precioAtletaExtra} por atleta extra</span>
+                            </li>
+                          </ul>
+                          <button
+                            className={`acomp-plan-btn${esFeatured ? ' acomp-plan-btn--featured' : ''}`}
+                            onClick={() => setPlanSeleccionado(plan)}
+                          >
+                            <i className="fas fa-bolt"></i> Seleccionar Plan
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
-
-            <h5 className="text-white mb-4 fw-bold">¿Listo para llevar tu evento al siguiente nivel?</h5>
-            <div className="d-flex flex-wrap gap-3 align-items-center justify-content-center">
-            {configPublica.linkInstagram && (
-              <a href={configPublica.linkInstagram} target="_blank" rel="noreferrer" className="btn btn-outline-danger px-4 py-2 rounded-pill d-flex align-items-center gap-3 fw-bold" style={{ width: 'auto', minWidth: '200px', justifyContent: 'center' }}>
-                <i className="fab fa-instagram fs-5"></i> Instagram
-              </a>
-            )}
-            {configPublica.linkFacebook && (
-              <a href={configPublica.linkFacebook} target="_blank" rel="noreferrer" className="btn btn-outline-primary px-4 py-2 rounded-pill d-flex align-items-center gap-3 fw-bold" style={{ width: 'auto', minWidth: '200px', justifyContent: 'center' }}>
-                <i className="fab fa-facebook fs-5"></i> Facebook
-              </a>
-            )}
-            {configPublica.telefonoSoporte && (
-              <a href={`https://wa.me/${configPublica.telefonoSoporte.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="btn btn-outline-success px-4 py-2 rounded-pill d-flex align-items-center gap-3 fw-bold" style={{ width: 'auto', minWidth: '200px', justifyContent: 'center' }}>
-                <i className="fab fa-whatsapp fs-5"></i> WhatsApp
-              </a>
-            )}
-            {configPublica.correoContacto && (
-              <a href={`mailto:${configPublica.correoContacto}`} className="btn btn-outline-warning px-4 py-2 rounded-pill d-flex align-items-center gap-3 fw-bold" style={{ width: 'auto', minWidth: '200px', justifyContent: 'center' }}>
-                <i className="fas fa-envelope fs-5"></i> Correo
-              </a>
-            )}
-            </div>
-            
-            {/* Modal Comprar Plan Express */}
-            {planSeleccionado && (
-              <div className="modal-backdrop-wp d-flex align-items-center justify-content-center px-3" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1050, background: 'rgba(0,0,0,0.8)' }}>
-                <div className="tarjeta-panel p-4 w-100 rounded-4" style={{ maxWidth: '500px' }}>
-                  <div className="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
-                    <h4 className="text-info m-0 fw-bold">Activar Plan: {planSeleccionado.nombre}</h4>
-                    <button type="button" className="btn-close btn-close-white" onClick={() => setPlanSeleccionado(null)}></button>
-                  </div>
-                  
-                  <div className="mb-4 text-center">
-                    <h1 className="text-white fw-bold">${planSeleccionado.precio} <span className="fs-5 text-white-50 fw-normal">MXN</span></h1>
-                  </div>
-
-                  <form onSubmit={comprarPlanYCrear}>
-                    <div className="mb-4">
-                      <label className="form-label text-white-50">Nombre de la Competencia <span className="text-danger">*</span></label>
-                      <input 
-                        type="text" 
-                        className="form-control bg-dark text-white border-secondary rounded-pill px-4 py-2" 
-                        placeholder="Ej. Wolfpack Throwdown 2026" 
-                        value={nombreCompetenciaExpress}
-                        onChange={(e) => setNombreCompetenciaExpress(e.target.value)}
-                        required
-                        autoFocus
-                      />
-                    </div>
-                    
-                    <div className="d-flex justify-content-end gap-2">
-                      <button type="button" className="btn btn-outline-secondary rounded-pill px-4" onClick={() => setPlanSeleccionado(null)}>Cancelar</button>
-                      <button type="submit" className="btn btn-info rounded-pill px-4 text-dark fw-bold" disabled={creandoExpress}>
-                        {creandoExpress ? 'Procesando...' : 'Comprar y Crear Competencia'}
-                      </button>
-                    </div>
-                  </form>
+                    );
+                  })}
                 </div>
               </div>
             )}
+
+            {/* CTA Contacto */}
+            <div className="acomp-paywall-cta">
+              <p className="acomp-paywall-cta-title">
+                ¿Listo para llevar tu evento al siguiente nivel?
+              </p>
+              <div className="acomp-contact-btns">
+                {configPublica.linkInstagram && (
+                  <a href={configPublica.linkInstagram} target="_blank" rel="noreferrer" className="acomp-contact-btn acomp-contact-btn--ig">
+                    <i className="fab fa-instagram"></i> Instagram
+                  </a>
+                )}
+                {configPublica.linkFacebook && (
+                  <a href={configPublica.linkFacebook} target="_blank" rel="noreferrer" className="acomp-contact-btn acomp-contact-btn--fb">
+                    <i className="fab fa-facebook"></i> Facebook
+                  </a>
+                )}
+                {configPublica.telefonoSoporte && (
+                  <a href={`https://wa.me/${configPublica.telefonoSoporte.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="acomp-contact-btn acomp-contact-btn--wa">
+                    <i className="fab fa-whatsapp"></i> WhatsApp
+                  </a>
+                )}
+                {configPublica.correoContacto && (
+                  <a href={`mailto:${configPublica.correoContacto}`} className="acomp-contact-btn acomp-contact-btn--email">
+                    <i className="fas fa-envelope"></i> Correo
+                  </a>
+                )}
+              </div>
+            </div>
           </>
         ) : (
-          <div className="mt-4" style={{ transform: 'scale(0.5)' }}><AtletifyLoader /></div>
+          <div className="d-flex justify-content-center py-5">
+            <div style={{ transform: 'scale(0.6)' }}><AtletifyLoader /></div>
+          </div>
+        )}
+
+        {/* Modal Activar Plan Express */}
+        {planSeleccionado && (
+          <div className="acomp-plan-modal-overlay">
+            <div className="acomp-plan-modal">
+              <div className="acomp-plan-modal-header">
+                <div>
+                  <p className="acomp-plan-modal-supertitle">Activar Plan</p>
+                  <h4 className="acomp-plan-modal-title">{planSeleccionado.nombre}</h4>
+                </div>
+                <button className="acomp-plan-modal-close" onClick={() => setPlanSeleccionado(null)}>
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+
+              <div className="acomp-plan-modal-precio">
+                <span className="acomp-plan-precio">${planSeleccionado.precio}</span>
+                <span className="acomp-plan-precio-currency">MXN</span>
+              </div>
+
+              <form onSubmit={comprarPlanYCrear}>
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <label className="acomp-label">
+                    Nombre de la Competencia <span style={{ color: 'var(--primary)' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="acomp-input"
+                    placeholder="Ej. Wolfpack Throwdown 2026"
+                    value={nombreCompetenciaExpress}
+                    onChange={(e) => setNombreCompetenciaExpress(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                </div>
+                <div className="d-flex justify-content-end gap-2">
+                  <button type="button" className="acomp-btn-cancel-sm" onClick={() => setPlanSeleccionado(null)}>
+                    Cancelar
+                  </button>
+                  <BotonSeguro type="submit" disabled={creandoExpress} className="acomp-btn-submit" textoProcesando="Procesando...">
+                    <i className="fas fa-bolt"></i> Comprar y Crear
+                  </BotonSeguro>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
       </div>
     );
@@ -789,335 +839,474 @@ export default function AdminCompetencias() {
             ))}
           </div>
         )}
-        {/* === MODAL WIZARD CATEGORÍA === */}
-        {mostrarWizard && (
-          <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1050 }} tabIndex="-1">
-            <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content text-light border-danger" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border) !important' }}>
-                <div className="modal-header border-bottom border-secondary border-opacity-25">
-                  <h5 className="modal-title text-warning" style={{ fontFamily: 'var(--font-heading)' }}>
-                    {editandoCat ? 'Editar Categoría' : 'Nueva Categoría'} <span className="fs-6 text-secondary ms-2">(Paso {pasoWizard}/5)</span>
-                  </h5>
-                  <button type="button" className="btn-close btn-close-white" onClick={cancelarWizardCategoria}></button>
-                </div>
-                <div className="modal-body">
-                  {pasoWizard === 1 && (
-                    <div className="animate__animated animate__fadeIn">
-                      <label className="form-label text-secondary small text-uppercase fw-bold"><i className="fas fa-tag me-1"></i>Nombre de la categoría</label>
-                      <input type="text" className="form-control bg-dark text-light border-secondary" placeholder="Ej. RX Equipo Mixto" value={formCat.nombre} onChange={e => setFormCat({ ...formCat, nombre: e.target.value })} autoFocus />
-                    </div>
-                  )}
+      </div>
 
-                  {pasoWizard === 2 && (
-                    <div className="animate__animated animate__fadeIn">
-                      <label className="form-label text-secondary small text-uppercase fw-bold"><i className="fas fa-users me-1"></i>Cantidad de Integrantes</label>
-                      <input type="number" min="1" className="form-control bg-dark text-light border-secondary mb-3" value={formCat.cantidadIntegrantes} onChange={e => {
-                        const val = parseInt(e.target.value) || 1;
-                        setFormCat({ ...formCat, cantidadIntegrantes: val, esEquipo: val > 1 });
-                      }} autoFocus />
-                      <div className="p-3 rounded bg-dark border border-secondary border-opacity-50 text-center">
-                        {formCat.esEquipo ? (
-                          <><i className="fas fa-users fs-1 text-info mb-2"></i><h6 className="text-info mb-0">Modalidad por Equipo</h6></>
-                        ) : (
-                          <><i className="fas fa-user fs-1 text-success mb-2"></i><h6 className="text-success mb-0">Modalidad Individual</h6></>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {pasoWizard === 3 && (() => {
-                    const integrantes = Number(formCat.cantidadIntegrantes) || 1;
-                    const totalSexo = Number(formCat.cupoHombres) + Number(formCat.cupoMujeres);
-                    const sexoOk = totalSexo === integrantes;
-                    return (
-                      <div className="animate__animated animate__fadeIn">
-                        <label className="form-label text-secondary small text-uppercase fw-bold mb-3"><i className="fas fa-venus-mars me-1"></i>Distribución de Sexo</label>
-                        <p className="small text-secondary mb-3">Distribuye exactamente <strong>{integrantes}</strong> cupo(s).</p>
-                        <div className="row g-3 mb-3">
-                          <div className="col-6">
-                            <label className="small text-info"><i className="fas fa-male me-1"></i>Hombres</label>
-                            <input type="number" min="0" max={integrantes} className="form-control bg-dark text-light border-info" value={formCat.cupoHombres} onChange={e => setFormCat({ ...formCat, cupoHombres: e.target.value })} />
-                          </div>
-                          <div className="col-6">
-                            <label className="small text-danger"><i className="fas fa-female me-1"></i>Mujeres</label>
-                            <input type="number" min="0" max={integrantes} className="form-control bg-dark text-light border-danger" value={formCat.cupoMujeres} onChange={e => setFormCat({ ...formCat, cupoMujeres: e.target.value })} />
-                          </div>
-                        </div>
-                        <div className={`text-center small fw-bold ${sexoOk ? 'text-success' : 'text-warning'}`}>
-                          {sexoOk ? <><i className="fas fa-check-circle me-1"></i> Distribución Correcta ({totalSexo}/{integrantes})</> : <><i className="fas fa-exclamation-circle me-1"></i> Debes sumar {integrantes} exactos (Actual: {totalSexo})</>}
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {pasoWizard === 4 && (() => {
-                    const integrantes = Number(formCat.cantidadIntegrantes) || 1;
-                    const totalNivel = Number(formCat.cupoAvanzado) + Number(formCat.cupoIntermedio) + Number(formCat.cupoPrincipiante) + Number(formCat.cupoNovato) + Number(formCat.cupoMaster);
-                    const nivelOk = totalNivel === integrantes;
-                    return (
-                      <div className="animate__animated animate__fadeIn">
-                        <label className="form-label text-secondary small text-uppercase fw-bold mb-3"><i className="fas fa-layer-group me-1"></i>Distribución de Niveles</label>
-                        <p className="small text-secondary mb-3">Distribuye exactamente <strong>{integrantes}</strong> cupo(s).</p>
-                        <div className="row g-2 mb-3">
-                          <div className="col-4">
-                            <label className="small text-secondary">Avanzado</label>
-                            <input type="number" min="0" max={integrantes} className="form-control bg-dark text-light border-secondary" value={formCat.cupoAvanzado} onChange={e => setFormCat({ ...formCat, cupoAvanzado: e.target.value })} />
-                          </div>
-                          <div className="col-4">
-                            <label className="small text-secondary">Intermedio</label>
-                            <input type="number" min="0" max={integrantes} className="form-control bg-dark text-light border-secondary" value={formCat.cupoIntermedio} onChange={e => setFormCat({ ...formCat, cupoIntermedio: e.target.value })} />
-                          </div>
-                          <div className="col-4">
-                            <label className="small text-secondary">Principiante</label>
-                            <input type="number" min="0" max={integrantes} className="form-control bg-dark text-light border-secondary" value={formCat.cupoPrincipiante} onChange={e => setFormCat({ ...formCat, cupoPrincipiante: e.target.value })} />
-                          </div>
-                          <div className="col-6">
-                            <label className="small text-secondary">Novato</label>
-                            <input type="number" min="0" max={integrantes} className="form-control bg-dark text-light border-secondary" value={formCat.cupoNovato} onChange={e => setFormCat({ ...formCat, cupoNovato: e.target.value })} />
-                          </div>
-                          <div className="col-6">
-                            <label className="small text-secondary">Master</label>
-                            <input type="number" min="0" max={integrantes} className="form-control bg-dark text-light border-secondary" value={formCat.cupoMaster} onChange={e => setFormCat({ ...formCat, cupoMaster: e.target.value })} />
-                          </div>
-                        </div>
-                        <div className={`text-center small fw-bold ${nivelOk ? 'text-success' : 'text-warning'}`}>
-                          {nivelOk ? <><i className="fas fa-check-circle me-1"></i> Distribución Correcta ({totalNivel}/{integrantes})</> : <><i className="fas fa-exclamation-circle me-1"></i> Debes sumar {integrantes} exactos (Actual: {totalNivel})</>}
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {pasoWizard === 5 && (
-                    <div className="animate__animated animate__fadeIn">
-                      <label className="form-label text-secondary small text-uppercase fw-bold mb-3"><i className="fas fa-money-bill-wave me-1"></i>Costos y Cupos</label>
-                      <div className="row g-3">
-                        <div className="col-6">
-                          <label className="small text-secondary">Costo de Inscripción ($)</label>
-                          <input type="number" className="form-control bg-dark text-light border-secondary text-success fw-bold" placeholder="0.00" value={formCat.costo} onChange={e => setFormCat({ ...formCat, costo: e.target.value })} />
-                        </div>
-                        <div className="col-6">
-                          <label className="small text-secondary">Cupo Máximo (Lugares)</label>
-                          <input type="number" min="1" className="form-control bg-dark text-light border-secondary" value={formCat.cupoMaximo} onChange={e => setFormCat({ ...formCat, cupoMaximo: e.target.value })} />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="modal-footer border-top border-secondary border-opacity-25 d-flex justify-content-between">
-                  {pasoWizard > 1 ? (
-                    <button className="btn btn-outline-secondary" onClick={() => setPasoWizard(p => p - 1)}><i className="fas fa-arrow-left me-1"></i>Atrás</button>
-                  ) : (
-                    <div></div>
-                  )}
-                  {pasoWizard < 5 ? (
-                    <button className="btn btn-warning fw-bold text-dark" onClick={() => {
-                      if (pasoWizard === 1 && !formCat.nombre) return alert('Ingresa un nombre');
-                      if (pasoWizard === 3 && (Number(formCat.cupoHombres) + Number(formCat.cupoMujeres) !== Number(formCat.cantidadIntegrantes))) return alert('La distribución de sexo no cuadra con la cantidad de integrantes');
-                      if (pasoWizard === 4 && (Number(formCat.cupoAvanzado) + Number(formCat.cupoIntermedio) + Number(formCat.cupoPrincipiante) + Number(formCat.cupoNovato) + Number(formCat.cupoMaster) !== Number(formCat.cantidadIntegrantes))) return alert('La distribución de niveles no cuadra con la cantidad de integrantes');
-                      setPasoWizard(p => p + 1);
-                    }}>Siguiente<i className="fas fa-arrow-right ms-2"></i></button>
-                  ) : (
-                    <BotonSeguro className="btn btn-success fw-bold px-4" onClick={(e) => {
-                      if (!formCat.costo) return alert('Ingresa un costo válido');
-                      guardarCategoria(e);
-                    }} textoProcesando="Guardando...">
-                      <i className="fas fa-check-circle me-1"></i>Finalizar
-                    </BotonSeguro>
-                  )}
-                </div>
+      {/* === MODAL WIZARD CATEGORÍA === */}
+      {mostrarWizard && (
+        <div className="acomp-wiz-overlay" tabIndex="-1">
+          <div className="acomp-wiz-panel">
+            <div className="acomp-wiz-header">
+              <div>
+                <p className="acomp-wiz-supertitle">{editandoCat ? 'Editar Categoría' : 'Nueva Categoría'}</p>
+                <h2 className="acomp-wiz-title">
+                  {pasoWizard === 1 && 'Nombre'}
+                  {pasoWizard === 2 && 'Integrantes'}
+                  {pasoWizard === 3 && 'Distribución de Sexo'}
+                  {pasoWizard === 4 && 'Distribución de Niveles'}
+                  {pasoWizard === 5 && 'Costos y Cupos'}
+                </h2>
               </div>
+              <button className="acomp-wiz-close" onClick={cancelarWizardCategoria} aria-label="Cerrar">
+                <i className="fas fa-times" />
+              </button>
+            </div>
+
+            <div className="acomp-wiz-steps">
+              {['Nombre', 'Integrantes', 'Sexo', 'Niveles', 'Costos'].map((label, idx) => {
+                const stepNum = idx + 1;
+                const isActive = pasoWizard === stepNum;
+                const isDone = pasoWizard > stepNum;
+                return (
+                  <Fragment key={stepNum}>
+                    <div className="acomp-wiz-step">
+                      <span className={`acomp-wiz-step-dot${isActive ? ' acomp-wiz-step-dot--active' : isDone ? ' acomp-wiz-step-dot--done' : ''}`}>
+                        {isDone ? <i className="fas fa-check" style={{ fontSize: '0.55rem' }} /> : stepNum}
+                      </span>
+                      <span className={`acomp-wiz-step-label${isActive ? ' acomp-wiz-step-label--active' : ''}`}>{label}</span>
+                    </div>
+                    {idx < 4 && <div className="acomp-wiz-step-line" />}
+                  </Fragment>
+                );
+              })}
+            </div>
+
+            <div className="acomp-wiz-body">
+              {pasoWizard === 1 && (
+                <div>
+                  <label className="acomp-label"><i className="fas fa-tag me-1" />Nombre de la categoría</label>
+                  <input
+                    type="text"
+                    className="acomp-input"
+                    placeholder="Ej. RX Equipo Mixto"
+                    value={formCat.nombre}
+                    onChange={e => setFormCat({ ...formCat, nombre: e.target.value })}
+                    autoFocus
+                  />
+                </div>
+              )}
+
+              {pasoWizard === 2 && (
+                <div>
+                  <label className="acomp-label"><i className="fas fa-users me-1" />Cantidad de Integrantes</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max={9999}
+                    className="acomp-input"
+                    value={formCat.cantidadIntegrantes}
+                    onFocus={e => e.target.select()}
+                    onBlur={e => { if (e.target.value === '') setFormCat({ ...formCat, cantidadIntegrantes: 1, esEquipo: false }); }}
+                    onChange={e => {
+                      const val = Math.min(parseInt(e.target.value) || 1, 9999);
+                      setFormCat({ ...formCat, cantidadIntegrantes: val, esEquipo: val > 1 });
+                    }}
+                    autoFocus
+                    style={{ fontSize: '1.5rem', fontFamily: 'var(--font-stats)', textAlign: 'center', fontWeight: 700 }}
+                  />
+                  <div className="acomp-wiz-status mt-3" style={{ background: formCat.esEquipo ? 'rgba(79,195,247,0.1)' : 'rgba(46,204,113,0.1)', border: `1px solid ${formCat.esEquipo ? 'rgba(79,195,247,0.3)' : 'rgba(46,204,113,0.3)'}`, color: formCat.esEquipo ? 'var(--accent-cool)' : 'var(--success)' }}>
+                    {formCat.esEquipo
+                      ? <><i className="fas fa-users me-2" />Modalidad por Equipo</>
+                      : <><i className="fas fa-user me-2" />Modalidad Individual</>
+                    }
+                  </div>
+                </div>
+              )}
+
+              {pasoWizard === 3 && (() => {
+                const integrantes = Number(formCat.cantidadIntegrantes) || 1;
+                const totalSexo = Number(formCat.cupoHombres) + Number(formCat.cupoMujeres);
+                const sexoOk = totalSexo === integrantes;
+                return (
+                  <div>
+                    <p className="acomp-label mb-2">Distribuye exactamente <strong style={{ color: 'var(--text-primary)' }}>{integrantes}</strong> cupo(s).</p>
+                    <div className="acomp-wiz-sexo-grid">
+                      <div className="acomp-wiz-sexo-card" style={{ '--sx-c': '#4FC3F7' }}>
+                        <div className="acomp-wiz-sexo-label" style={{ color: '#4FC3F7' }}>
+                          <i className="fas fa-mars" /><span>Hombres</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          max={integrantes}
+                          className="acomp-wiz-sexo-input"
+                          style={{ color: '#4FC3F7' }}
+                          value={formCat.cupoHombres}
+                          onFocus={e => e.target.select()}
+                          onBlur={e => { if (e.target.value === '') setFormCat({ ...formCat, cupoHombres: 0 }); }}
+                          onChange={e => { if (e.target.value.length <= 4) setFormCat({ ...formCat, cupoHombres: e.target.value }); }}
+                        />
+                      </div>
+                      <div className="acomp-wiz-sexo-card" style={{ '--sx-c': '#ff7fa8' }}>
+                        <div className="acomp-wiz-sexo-label" style={{ color: '#ff7fa8' }}>
+                          <i className="fas fa-venus" /><span>Mujeres</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          max={integrantes}
+                          className="acomp-wiz-sexo-input"
+                          style={{ color: '#ff7fa8' }}
+                          value={formCat.cupoMujeres}
+                          onFocus={e => e.target.select()}
+                          onBlur={e => { if (e.target.value === '') setFormCat({ ...formCat, cupoMujeres: 0 }); }}
+                          onChange={e => { if (e.target.value.length <= 4) setFormCat({ ...formCat, cupoMujeres: e.target.value }); }}
+                        />
+                      </div>
+                    </div>
+                    <div className={`acomp-wiz-status ${sexoOk ? 'acomp-wiz-status--ok' : 'acomp-wiz-status--warn'}`}>
+                      {sexoOk
+                        ? <><i className="fas fa-check-circle me-1" /><span>Distribución correcta ({totalSexo}/{integrantes})</span></>
+                        : <><i className="fas fa-exclamation-circle me-1" /><span>Debes sumar {integrantes} exactos (Actual: {totalSexo})</span></>
+                      }
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {pasoWizard === 4 && (() => {
+                const integrantes = Number(formCat.cantidadIntegrantes) || 1;
+                const totalNivel = Number(formCat.cupoMaster) + Number(formCat.cupoAvanzado) + Number(formCat.cupoIntermedio) + Number(formCat.cupoPrincipiante) + Number(formCat.cupoNovato);
+                const nivelOk = totalNivel === integrantes;
+                const niveles = [
+                  { key: 'cupoMaster',       nombre: 'Master',        desc: 'Élite — alto rendimiento',  color: 'var(--accent)' },
+                  { key: 'cupoAvanzado',     nombre: 'Avanzado / RX', desc: 'Competitivo avanzado',      color: 'var(--primary)' },
+                  { key: 'cupoIntermedio',   nombre: 'Intermedio',     desc: 'Nivel intermedio',          color: '#4FC3F7' },
+                  { key: 'cupoPrincipiante', nombre: 'Principiante',   desc: 'En desarrollo',             color: 'var(--success)' },
+                  { key: 'cupoNovato',       nombre: 'Novato',         desc: 'Comenzando',                color: 'var(--secondary)' },
+                ];
+                return (
+                  <div>
+                    <p className="acomp-label mb-2">Distribuye exactamente <strong style={{ color: 'var(--text-primary)' }}>{integrantes}</strong> cupo(s).</p>
+                    <div className="acomp-wiz-nivel-grid">
+                      {niveles.map(niv => (
+                        <div key={niv.key} className="acomp-wiz-nivel-row" style={{ '--niv-c': niv.color }}>
+                          <div className="acomp-wiz-nivel-info">
+                            <p className="acomp-wiz-nivel-nombre" style={{ color: niv.color }}>{niv.nombre}</p>
+                            <p className="acomp-wiz-nivel-desc">{niv.desc}</p>
+                          </div>
+                          <input
+                            type="number"
+                            min="0"
+                            max={integrantes}
+                            className="acomp-wiz-nivel-input"
+                            style={{ color: niv.color }}
+                            value={formCat[niv.key]}
+                            onFocus={e => e.target.select()}
+                            onBlur={e => { if (e.target.value === '') setFormCat({ ...formCat, [niv.key]: 0 }); }}
+                            onChange={e => { if (e.target.value.length <= 4) setFormCat({ ...formCat, [niv.key]: e.target.value }); }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div className={`acomp-wiz-status ${nivelOk ? 'acomp-wiz-status--ok' : 'acomp-wiz-status--warn'}`}>
+                      {nivelOk
+                        ? <><i className="fas fa-check-circle me-1" /><span>Distribución correcta ({totalNivel}/{integrantes})</span></>
+                        : <><i className="fas fa-exclamation-circle me-1" /><span>Debes sumar {integrantes} exactos (Actual: {totalNivel})</span></>
+                      }
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {pasoWizard === 5 && (
+                <div className="row g-3">
+                  <div className="col-6">
+                    <label className="acomp-label"><i className="fas fa-dollar-sign me-1" />Costo de Inscripción</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max={9999}
+                      className="acomp-input"
+                      placeholder="0.00"
+                      value={formCat.costo}
+                      onFocus={e => e.target.select()}
+                      onBlur={e => { if (e.target.value === '') setFormCat({ ...formCat, costo: 0 }); }}
+                      onChange={e => { if (e.target.value.length <= 5) setFormCat({ ...formCat, costo: e.target.value }); }}
+                      style={{ color: 'var(--success)', fontFamily: 'var(--font-stats)', fontWeight: 700, fontSize: '1.3rem', textAlign: 'center' }}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="col-6">
+                    <label className="acomp-label"><i className="fas fa-ticket-alt me-1" />Cupo Máximo</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max={9999}
+                      className="acomp-input"
+                      value={formCat.cupoMaximo}
+                      onFocus={e => e.target.select()}
+                      onBlur={e => { if (e.target.value === '') setFormCat({ ...formCat, cupoMaximo: 1 }); }}
+                      onChange={e => { if (e.target.value.length <= 4) setFormCat({ ...formCat, cupoMaximo: e.target.value }); }}
+                      style={{ fontFamily: 'var(--font-stats)', fontWeight: 700, fontSize: '1.3rem', textAlign: 'center' }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="acomp-wiz-footer">
+              {pasoWizard > 1 ? (
+                <button className="acomp-btn-cancel-sm" onClick={() => setPasoWizard(p => p - 1)}>
+                  <i className="fas fa-arrow-left me-1" />Atrás
+                </button>
+              ) : (
+                <button className="acomp-btn-cancel-sm" onClick={cancelarWizardCategoria}>Cancelar</button>
+              )}
+              {pasoWizard < 5 ? (
+                <button className="acomp-btn-submit" onClick={() => {
+                  if (pasoWizard === 1 && !formCat.nombre) return alert('Ingresa un nombre');
+                  if (pasoWizard === 3 && (Number(formCat.cupoHombres) + Number(formCat.cupoMujeres) !== Number(formCat.cantidadIntegrantes))) return alert('La distribución de sexo no cuadra con la cantidad de integrantes');
+                  if (pasoWizard === 4 && (Number(formCat.cupoMaster) + Number(formCat.cupoAvanzado) + Number(formCat.cupoIntermedio) + Number(formCat.cupoPrincipiante) + Number(formCat.cupoNovato) !== Number(formCat.cantidadIntegrantes))) return alert('La distribución de niveles no cuadra con la cantidad de integrantes');
+                  setPasoWizard(p => p + 1);
+                }}>
+                  Siguiente<i className="fas fa-arrow-right ms-2" />
+                </button>
+              ) : (
+                <BotonSeguro className="acomp-btn-submit" onClick={(e) => {
+                  if (!formCat.costo) return alert('Ingresa un costo válido');
+                  guardarCategoria(e);
+                }} textoProcesando="Guardando...">
+                  <i className="fas fa-check-circle me-1" />Finalizar
+                </BotonSeguro>
+              )}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* === MODAL DETALLES CATEGORÍA === */}
-        {mostrarDetalles && categoriaDetalle && (
-          <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1050 }} tabIndex="-1">
-            <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content text-light border-info" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border) !important' }}>
-                <div className="modal-header border-bottom border-secondary border-opacity-25">
-                  <h5 className="modal-title text-info" style={{ fontFamily: 'var(--font-heading)' }}>
-                    <i className="fas fa-info-circle me-2"></i>Detalles de la Categoría
-                  </h5>
-                  <button type="button" className="btn-close btn-close-white" onClick={() => setMostrarDetalles(false)}></button>
+      {/* === MODAL DETALLES CATEGORÍA === */}
+      {mostrarDetalles && categoriaDetalle && (
+        <div className="acomp-wiz-overlay" tabIndex="-1">
+          <div className="acomp-wiz-panel acomp-wiz-panel--accent">
+            <div className="acomp-wiz-header">
+              <div>
+                <p className="acomp-wiz-supertitle" style={{ color: 'var(--accent)' }}>Detalle</p>
+                <h2 className="acomp-wiz-title">La Receta</h2>
+              </div>
+              <button className="acomp-wiz-close" onClick={() => setMostrarDetalles(false)} aria-label="Cerrar">
+                <i className="fas fa-times" />
+              </button>
+            </div>
+
+            <div className="acomp-wiz-body">
+              <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+                <h3 style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
+                  {categoriaDetalle.nombre || categoriaDetalle.Nombre}
+                </h3>
+                <span style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--text-muted)', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, padding: '0.2rem 0.85rem' }}>
+                  {(categoriaDetalle.esEquipo || categoriaDetalle.EsEquipo) ? 'Modalidad por Equipo' : 'Modalidad Individual'}
+                </span>
+              </div>
+
+              <div className="row g-2 mb-3">
+                <div className="col-6">
+                  <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '0.85rem', textAlign: 'center' }}>
+                    <i className="fas fa-users mb-1" style={{ color: 'var(--text-muted)', display: 'block' }} />
+                    <span style={{ fontFamily: 'var(--font-stats)', fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)', display: 'block' }}>{categoriaDetalle.cantidadIntegrantes || categoriaDetalle.CantidadIntegrantes}</span>
+                    <small style={{ color: 'var(--text-muted)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: 1 }}>Integrantes</small>
+                  </div>
                 </div>
-                <div className="modal-body">
-                  <div className="text-center mb-4">
-                    <h4 className="text-white mb-1" style={{ fontFamily: 'var(--font-heading)' }}>{categoriaDetalle.nombre || categoriaDetalle.Nombre}</h4>
-                    <span className="badge bg-secondary border border-secondary text-light">
-                      {(categoriaDetalle.esEquipo || categoriaDetalle.EsEquipo) ? 'Modalidad por Equipo' : 'Modalidad Individual'}
-                    </span>
+                <div className="col-6">
+                  <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '0.85rem', textAlign: 'center' }}>
+                    <i className="fas fa-ticket-alt mb-1" style={{ color: 'var(--accent)', display: 'block' }} />
+                    <span style={{ fontFamily: 'var(--font-stats)', fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)', display: 'block' }}>{categoriaDetalle.cupoMaximo || categoriaDetalle.CupoMaximo}</span>
+                    <small style={{ color: 'var(--text-muted)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: 1 }}>Cupo Máximo</small>
                   </div>
-
-                  <div className="row g-3 mb-4">
-                    <div className="col-6">
-                      <div className="p-3 bg-dark rounded border border-secondary border-opacity-25 text-center">
-                        <i className="fas fa-users text-secondary mb-2 fs-4"></i>
-                        <h6 className="mb-0 text-white">{(categoriaDetalle.cantidadIntegrantes || categoriaDetalle.CantidadIntegrantes)}</h6>
-                        <small className="text-muted">Integrantes</small>
-                      </div>
-                    </div>
-                    <div className="col-6">
-                      <div className="p-3 bg-dark rounded border border-secondary border-opacity-25 text-center">
-                        <i className="fas fa-ticket-alt text-warning mb-2 fs-4"></i>
-                        <h6 className="mb-0 text-white">{(categoriaDetalle.cupoMaximo || categoriaDetalle.CupoMaximo)}</h6>
-                        <small className="text-muted">Cupo Máximo</small>
-                      </div>
-                    </div>
-                  </div>
-
-                  <h6 className="text-secondary small fw-bold mb-3 border-bottom border-secondary border-opacity-25 pb-2 text-uppercase">La Receta</h6>
-                  <div className="d-flex flex-wrap gap-2 mb-4">
-                    {(categoriaDetalle.cupoHombres > 0 || categoriaDetalle.CupoHombres > 0) && <span className="badge bg-info bg-opacity-25 text-info border border-info px-3 py-2"><i className="fas fa-male me-1"></i>Hombres: {categoriaDetalle.cupoHombres || categoriaDetalle.CupoHombres}</span>}
-                    {(categoriaDetalle.cupoMujeres > 0 || categoriaDetalle.CupoMujeres > 0) && <span className="badge bg-danger bg-opacity-25 text-danger border border-danger px-3 py-2"><i className="fas fa-female me-1"></i>Mujeres: {categoriaDetalle.cupoMujeres || categoriaDetalle.CupoMujeres}</span>}
-
-                    {(categoriaDetalle.cupoAvanzado > 0 || categoriaDetalle.CupoAvanzado > 0) && <span className="badge bg-secondary text-light border border-secondary px-3 py-2">Avanzado: {categoriaDetalle.cupoAvanzado || categoriaDetalle.CupoAvanzado}</span>}
-                    {(categoriaDetalle.cupoIntermedio > 0 || categoriaDetalle.CupoIntermedio > 0) && <span className="badge bg-secondary text-light border border-secondary px-3 py-2">Intermedio: {categoriaDetalle.cupoIntermedio || categoriaDetalle.CupoIntermedio}</span>}
-                    {(categoriaDetalle.cupoPrincipiante > 0 || categoriaDetalle.CupoPrincipiante > 0) && <span className="badge bg-secondary text-light border border-secondary px-3 py-2">Principiante: {categoriaDetalle.cupoPrincipiante || categoriaDetalle.CupoPrincipiante}</span>}
-                    {(categoriaDetalle.cupoNovato > 0 || categoriaDetalle.CupoNovato > 0) && <span className="badge bg-secondary text-light border border-secondary px-3 py-2">Novato: {categoriaDetalle.cupoNovato || categoriaDetalle.CupoNovato}</span>}
-                    {(categoriaDetalle.cupoMaster > 0 || categoriaDetalle.CupoMaster > 0) && <span className="badge bg-warning bg-opacity-25 text-warning border border-warning px-3 py-2">Master: {categoriaDetalle.cupoMaster || categoriaDetalle.CupoMaster}</span>}
-                  </div>
-
-                  <div className="p-3 bg-success bg-opacity-10 border border-success border-opacity-25 rounded d-flex justify-content-between align-items-center">
-                    <span className="text-success fw-bold"><i className="fas fa-dollar-sign me-1"></i>Costo de Inscripción</span>
-                    <h4 className="text-success mb-0 fw-bold" style={{ fontFamily: 'var(--font-stats)' }}>${categoriaDetalle.costo || categoriaDetalle.Costo}</h4>
-                  </div>
-
-                </div>
-                <div className="modal-footer border-top border-secondary border-opacity-25">
-                  <button className="btn btn-secondary w-100" onClick={() => setMostrarDetalles(false)}>Cerrar</button>
                 </div>
               </div>
+
+              <p className="acomp-label mb-2">Distribución</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1rem' }}>
+                {(categoriaDetalle.cupoHombres > 0 || categoriaDetalle.CupoHombres > 0) && (
+                  <span style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, background: 'rgba(79,195,247,0.1)', border: '1px solid rgba(79,195,247,0.3)', color: '#4FC3F7', borderRadius: 20, padding: '0.25rem 0.75rem' }}>
+                    <i className="fas fa-mars me-1" />{categoriaDetalle.cupoHombres || categoriaDetalle.CupoHombres} Hombres
+                  </span>
+                )}
+                {(categoriaDetalle.cupoMujeres > 0 || categoriaDetalle.CupoMujeres > 0) && (
+                  <span style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, background: 'rgba(255,127,168,0.1)', border: '1px solid rgba(255,127,168,0.3)', color: '#ff7fa8', borderRadius: 20, padding: '0.25rem 0.75rem' }}>
+                    <i className="fas fa-venus me-1" />{categoriaDetalle.cupoMujeres || categoriaDetalle.CupoMujeres} Mujeres
+                  </span>
+                )}
+                {(categoriaDetalle.cupoMaster > 0 || categoriaDetalle.CupoMaster > 0) && (
+                  <span style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, background: 'rgba(245,166,35,0.1)', border: '1px solid rgba(245,166,35,0.3)', color: 'var(--accent)', borderRadius: 20, padding: '0.25rem 0.75rem' }}>
+                    🏆 {categoriaDetalle.cupoMaster || categoriaDetalle.CupoMaster} Master
+                  </span>
+                )}
+                {(categoriaDetalle.cupoAvanzado > 0 || categoriaDetalle.CupoAvanzado > 0) && (
+                  <span style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, background: 'rgba(230,57,70,0.1)', border: '1px solid rgba(230,57,70,0.3)', color: 'var(--primary)', borderRadius: 20, padding: '0.25rem 0.75rem' }}>
+                    ⚡ {categoriaDetalle.cupoAvanzado || categoriaDetalle.CupoAvanzado} Avanzado
+                  </span>
+                )}
+                {(categoriaDetalle.cupoIntermedio > 0 || categoriaDetalle.CupoIntermedio > 0) && (
+                  <span style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, background: 'rgba(79,195,247,0.1)', border: '1px solid rgba(79,195,247,0.3)', color: '#4FC3F7', borderRadius: 20, padding: '0.25rem 0.75rem' }}>
+                    💪 {categoriaDetalle.cupoIntermedio || categoriaDetalle.CupoIntermedio} Intermedio
+                  </span>
+                )}
+                {(categoriaDetalle.cupoPrincipiante > 0 || categoriaDetalle.CupoPrincipiante > 0) && (
+                  <span style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, background: 'rgba(46,204,113,0.1)', border: '1px solid rgba(46,204,113,0.3)', color: 'var(--success)', borderRadius: 20, padding: '0.25rem 0.75rem' }}>
+                    🌱 {categoriaDetalle.cupoPrincipiante || categoriaDetalle.CupoPrincipiante} Principiante
+                  </span>
+                )}
+                {(categoriaDetalle.cupoNovato > 0 || categoriaDetalle.CupoNovato > 0) && (
+                  <span style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, background: 'rgba(108,117,125,0.1)', border: '1px solid rgba(108,117,125,0.3)', color: 'var(--secondary)', borderRadius: 20, padding: '0.25rem 0.75rem' }}>
+                    🔰 {categoriaDetalle.cupoNovato || categoriaDetalle.CupoNovato} Novato
+                  </span>
+                )}
+              </div>
+
+              <div style={{ background: 'rgba(46,204,113,0.08)', border: '1px solid rgba(46,204,113,0.25)', borderRadius: 12, padding: '0.85rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--success)' }}>
+                  <i className="fas fa-dollar-sign me-1" />Costo de Inscripción
+                </span>
+                <span style={{ fontFamily: 'var(--font-stats)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>
+                  ${categoriaDetalle.costo || categoriaDetalle.Costo}
+                </span>
+              </div>
+            </div>
+
+            <div className="acomp-wiz-footer" style={{ justifyContent: 'flex-end' }}>
+              <button className="acomp-btn-cancel-sm" onClick={() => setMostrarDetalles(false)}>Cerrar</button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* === MODAL DETALLES DE ATLETA === */}
-        {mostrarDetallesAtleta && atletaDetalle && (() => {
-          let edad = "N/A";
-          if (atletaDetalle.fechaNacimiento) {
-            const diff = Date.now() - new Date(atletaDetalle.fechaNacimiento).getTime();
-            edad = new Date(diff).getUTCFullYear() - 1970;
-          }
+      {/* === MODAL DETALLES ATLETA === */}
+      {mostrarDetallesAtleta && atletaDetalle && (() => {
+        let edad = 'N/A';
+        if (atletaDetalle.fechaNacimiento) {
+          const diff = Date.now() - new Date(atletaDetalle.fechaNacimiento).getTime();
+          edad = new Date(diff).getUTCFullYear() - 1970;
+        }
 
-          const getLvlVal = (s) => {
-            const l = (s || '').toLowerCase();
-            if (l.includes('master')) return 4;
-            if (l.includes('avanzado') || l.includes('rx')) return 3;
-            if (l.includes('intermedio')) return 2;
-            if (l.includes('principiante')) return 1;
-            return 0;
-          };
+        const getLvlVal = (s) => {
+          const l = (s || '').toLowerCase();
+          if (l.includes('master')) return 4;
+          if (l.includes('avanzado') || l.includes('rx')) return 3;
+          if (l.includes('intermedio')) return 2;
+          if (l.includes('principiante')) return 1;
+          return 0;
+        };
 
-          let escalo = false;
-          let catNivelStr = "";
-          if (!atletaDetalle.esEquipo && atletaDetalle.reqCategoria) {
-            const c = atletaDetalle.reqCategoria;
-            const athLvl = getLvlVal(atletaDetalle.nivelHabilidad);
-            let catLvl = 0;
-            if (c.cupoMaster > 0) { catLvl = 4; catNivelStr = "Master"; }
-            else if (c.cupoAvanzado > 0) { catLvl = 3; catNivelStr = "Avanzado/RX"; }
-            else if (c.cupoIntermedio > 0) { catLvl = 2; catNivelStr = "Intermedio"; }
-            else if (c.cupoPrincipiante > 0) { catLvl = 1; catNivelStr = "Principiante"; }
-            else { catNivelStr = "Novato"; }
+        let escalo = false;
+        let catNivelStr = '';
+        if (!atletaDetalle.esEquipo && atletaDetalle.reqCategoria) {
+          const c = atletaDetalle.reqCategoria;
+          const athLvl = getLvlVal(atletaDetalle.nivelHabilidad);
+          let catLvl = 0;
+          if (c.cupoMaster > 0) { catLvl = 4; catNivelStr = 'Master'; }
+          else if (c.cupoAvanzado > 0) { catLvl = 3; catNivelStr = 'Avanzado/RX'; }
+          else if (c.cupoIntermedio > 0) { catLvl = 2; catNivelStr = 'Intermedio'; }
+          else if (c.cupoPrincipiante > 0) { catLvl = 1; catNivelStr = 'Principiante'; }
+          else { catNivelStr = 'Novato'; }
+          if (athLvl < catLvl) escalo = true;
+        }
 
-            if (athLvl < catLvl) escalo = true;
-          }
+        const esMasc = atletaDetalle.genero === 'Hombre' || atletaDetalle.genero === 'Masculino';
+        const sexColor = esMasc ? '#4FC3F7' : '#ff7fa8';
 
-          return (
-            <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1060 }} tabIndex="-1">
-              <div className="modal-dialog modal-dialog-centered">
-                <div className="modal-content text-light border-info" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border) !important' }}>
-                  <div className="modal-header border-bottom border-secondary border-opacity-25">
-                    <h5 className="modal-title text-info" style={{ fontFamily: 'var(--font-heading)' }}>
-                      <i className="fas fa-id-card me-2"></i>Expediente del Atleta
-                    </h5>
-                    <button type="button" className="btn-close btn-close-white" onClick={() => setMostrarDetallesAtleta(false)}></button>
-                  </div>
-                  <div className="modal-body py-4">
-                    <div className="text-center mb-4">
-                      <i className={`fas ${atletaDetalle.genero === 'Hombre' || atletaDetalle.genero === 'Masculino' ? 'fa-male text-info' : 'fa-female'} mb-3`} style={{ fontSize: '3rem', color: atletaDetalle.genero === 'Hombre' || atletaDetalle.genero === 'Masculino' ? '' : '#ff7fa8' }}></i>
-                      <h4 className="text-white mb-1">{atletaDetalle.nombreCompleto} {atletaDetalle.apellidos}</h4>
-                      <p className="text-secondary small mb-0">{atletaDetalle.correo || 'Sin correo registrado'}</p>
-                    </div>
+        return (
+          <div className="acomp-wiz-overlay" tabIndex="-1">
+            <div className="acomp-wiz-panel">
+              <div className="acomp-wiz-header">
+                <div>
+                  <p className="acomp-wiz-supertitle">Expediente</p>
+                  <h2 className="acomp-wiz-title">Atleta</h2>
+                </div>
+                <button className="acomp-wiz-close" onClick={() => setMostrarDetallesAtleta(false)} aria-label="Cerrar">
+                  <i className="fas fa-times" />
+                </button>
+              </div>
 
-                    <div className="row g-3 mb-3">
-                      <div className="col-6">
-                        <div className="p-3 bg-dark rounded border border-secondary border-opacity-25">
-                          <small className="text-muted d-block mb-1">Edad</small>
-                          <h6 className="text-white mb-0">{edad} años</h6>
-                        </div>
-                      </div>
-                      <div className="col-6">
-                        <div className="p-3 bg-dark rounded border border-secondary border-opacity-25">
-                          <small className="text-muted d-block mb-1">Talla de Playera</small>
-                          <h6 className="text-white mb-0">{atletaDetalle.tallaPlayera || 'N/A'}</h6>
-                        </div>
-                      </div>
-                      <div className="col-6">
-                        <div className="p-3 bg-dark rounded border border-secondary border-opacity-25">
-                          <small className="text-muted d-block mb-1">Tipo de Sangre</small>
-                          <h6 className="text-white mb-0">{atletaDetalle.tipoSangre || 'N/A'}</h6>
-                        </div>
-                      </div>
-                      <div className="col-6">
-                        <div className="p-3 bg-dark rounded border border-secondary border-opacity-25">
-                          <small className="text-muted d-block mb-1">Nivel Declarado</small>
-                          <h6 className="text-white mb-0">{atletaDetalle.nivelHabilidad}</h6>
-                        </div>
+              <div className="acomp-wiz-body">
+                <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+                  <i className={`fas ${esMasc ? 'fa-male' : 'fa-female'}`} style={{ fontSize: '2.5rem', color: sexColor, marginBottom: '0.5rem', display: 'block' }} />
+                  <h4 style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', marginBottom: '0.2rem' }}>
+                    {atletaDetalle.nombreCompleto} {atletaDetalle.apellidos}
+                  </h4>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>{atletaDetalle.correo || 'Sin correo registrado'}</p>
+                </div>
+
+                <div className="row g-2 mb-3">
+                  {[
+                    { label: 'Edad',           value: `${edad} años`,                      icon: 'fa-birthday-cake', color: 'var(--text-muted)' },
+                    { label: 'Playera',        value: atletaDetalle.tallaPlayera || 'N/A', icon: 'fa-tshirt',        color: 'var(--text-muted)' },
+                    { label: 'Tipo de Sangre', value: atletaDetalle.tipoSangre || 'N/A',   icon: 'fa-tint',          color: 'var(--primary)' },
+                    { label: 'Nivel Declarado',value: atletaDetalle.nivelHabilidad,        icon: 'fa-layer-group',   color: 'var(--accent)' },
+                  ].map(item => (
+                    <div key={item.label} className="col-6">
+                      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '0.7rem 0.85rem' }}>
+                        <small style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                          <i className={`fas ${item.icon} me-1`} style={{ color: item.color }} />{item.label}
+                        </small>
+                        <span style={{ fontFamily: 'var(--font-heading-alt)', fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{item.value}</span>
                       </div>
                     </div>
+                  ))}
+                </div>
 
-                    {!atletaDetalle.esEquipo && (
-                      <div className="mb-3">
-                        <div className="p-3 bg-dark rounded border border-secondary border-opacity-25">
-                          <small className="text-muted d-block mb-1">Costo de Inscripción</small>
-                          <h5 className="text-success mb-0 fw-bold">${atletaDetalle.costoCategoria} MXN</h5>
-                        </div>
-                        {escalo && (
-                          <div className="mt-2 p-3 rounded text-center" style={{ backgroundColor: 'rgba(255, 193, 7, 0.1)', border: '1px solid rgba(255, 193, 7, 0.3)' }}>
-                            <i className="fas fa-exclamation-triangle text-warning mb-2 fs-5"></i>
-                            <p className="small text-warning mb-0"><strong>Escaló de Categoría:</strong> Su nivel real es <strong>{atletaDetalle.nivelHabilidad}</strong> pero asumió el riesgo para competir en <strong>{catNivelStr}</strong>.</p>
-                          </div>
-                        )}
+                {!atletaDetalle.esEquipo && (
+                  <>
+                    <div style={{ background: 'rgba(46,204,113,0.08)', border: '1px solid rgba(46,204,113,0.25)', borderRadius: 10, padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                      <span style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--success)' }}>
+                        <i className="fas fa-dollar-sign me-1" />Costo de Inscripción
+                      </span>
+                      <span style={{ fontFamily: 'var(--font-stats)', fontSize: '1.3rem', fontWeight: 700, color: 'var(--success)' }}>${atletaDetalle.costoCategoria} MXN</span>
+                    </div>
+                    {escalo && (
+                      <div style={{ background: 'rgba(245,166,35,0.08)', border: '1px solid rgba(245,166,35,0.3)', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: '0.6rem' }}>
+                        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--accent)' }}>
+                          <i className="fas fa-exclamation-triangle me-2" />
+                          <strong>Escaló de Categoría:</strong> Su nivel real es <strong>{atletaDetalle.nivelHabilidad}</strong> pero asumió el riesgo para competir en <strong>{catNivelStr}</strong>.
+                        </p>
                       </div>
                     )}
+                  </>
+                )}
 
-                    <div className="p-3 bg-dark rounded border border-secondary border-opacity-25 text-center mt-3">
-                      <small className="text-muted d-block mb-2">Carta Responsiva</small>
-                      {atletaDetalle.aceptoCartaResponsiva ? (
-                        <>
-                          <i className="fas fa-check-circle text-success fs-4 mb-2"></i>
-                          <p className="small text-success mb-0">Aceptada el: {atletaDetalle.fechaAceptacionCartaResponsiva ? new Date(atletaDetalle.fechaAceptacionCartaResponsiva).toLocaleDateString() : 'N/A'}</p>
-                        </>
-                      ) : (
-                        <>
-                          <i className="fas fa-times-circle text-danger fs-4 mb-2"></i>
-                          <p className="small text-danger mb-0">Falta Aceptar</p>
-                        </>
-                      )}
-                    </div>
-
-                  </div>
-                  <div className="modal-footer border-top border-secondary border-opacity-25">
-                    <button className="btn btn-secondary w-100" onClick={() => setMostrarDetallesAtleta(false)}>Cerrar</button>
-                  </div>
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '0.75rem 1rem', textAlign: 'center' }}>
+                  <small style={{ color: 'var(--text-muted)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: '0.4rem' }}>Carta Responsiva</small>
+                  {atletaDetalle.aceptoCartaResponsiva ? (
+                    <>
+                      <i className="fas fa-check-circle" style={{ color: 'var(--success)', fontSize: '1.4rem', display: 'block', marginBottom: '0.25rem' }} />
+                      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--success)' }}>Aceptada el: {atletaDetalle.fechaAceptacionCartaResponsiva ? new Date(atletaDetalle.fechaAceptacionCartaResponsiva).toLocaleDateString() : 'N/A'}</p>
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-times-circle" style={{ color: 'var(--primary)', fontSize: '1.4rem', display: 'block', marginBottom: '0.25rem' }} />
+                      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--primary)' }}>Falta Aceptar</p>
+                    </>
+                  )}
                 </div>
               </div>
-            </div>
-          );
-        })()}
 
-        <PlanesModal 
-          isOpen={!!compParaPagar} 
-          onClose={() => setCompParaPagar(null)} 
-          idCompetencia={compParaPagar?.idCompetencia || compParaPagar?.IdCompetencia} 
-          onSuccess={() => {
-            setCompParaPagar(null);
-            cargarCompetencias(box.idBox || box.IdBox);
-          }} 
-        />
-      </div>
+              <div className="acomp-wiz-footer" style={{ justifyContent: 'flex-end' }}>
+                <button className="acomp-btn-cancel-sm" onClick={() => setMostrarDetallesAtleta(false)}>Cerrar</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      <PlanesModal
+        isOpen={!!compParaPagar}
+        onClose={() => setCompParaPagar(null)}
+        idCompetencia={compParaPagar?.idCompetencia || compParaPagar?.IdCompetencia}
+        onSuccess={() => {
+          setCompParaPagar(null);
+          cargarCompetencias(box.idBox || box.IdBox);
+        }}
+      />
     </div>
   );
 }
