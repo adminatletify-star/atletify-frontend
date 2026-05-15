@@ -47,6 +47,7 @@ import PortalCompetencias from './pages/PortalCompetencias';
 import PortalLeaderboard from './pages/PortalLeaderboard';
 import PortalAtleta from './pages/PortalAtleta';
 import GestionFinanzas from './pages/GestionFinanzas';
+import AdminFinanzasGlobales from './pages/AdminFinanzasGlobales';
 import PerfilAtletaAdmin from './pages/PerfilAtletaAdmin';
 import RankingManual from './pages/RankingManual';
 import Comunidad from './pages/Comunidad';
@@ -376,6 +377,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['Developer', 'AdminBox']}>
                     <GestionFinanzas />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/finanzas-globales"
+                element={
+                  <ProtectedRoute allowedRoles={['Developer', 'AdminBox']}>
+                    <AdminFinanzasGlobales />
                   </ProtectedRoute>
                 }
               />

@@ -105,6 +105,7 @@ export default function AdminBoxPanel() {
     ...(isAdmin ? [
       { link: '/gestion-clases', text: 'CLASES Y WODS', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80' },
       { link: '/gestion-ventas-productos', text: 'TIENDA Y POS', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80' },
+      { link: '/finanzas-globales', text: 'FINANZAS GLOBALES', image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=600&q=80' },
       { link: '/gestion-reglamento', text: 'REGLAMENTO', image: 'https://images.unsplash.com/photo-1544367567-0f2fcb046eb9?w=600&q=80' }
     ] : [])
   ];
@@ -132,9 +133,9 @@ export default function AdminBoxPanel() {
               </span>
               <div className="d-flex align-items-center gap-3">
                 {box?.logo && (
-                  <img 
-                    src={box.logo} 
-                    alt={box?.nombre || 'Logo Box'} 
+                  <img
+                    src={box.logo}
+                    alt={box?.nombre || 'Logo Box'}
                     style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '14px', background: '#1c1c24', border: '1px solid rgba(255,255,255,0.1)' }}
                   />
                 )}

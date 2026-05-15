@@ -1,0 +1,270 @@
+.finanzas-globales-container {
+    background-color: var(--bg-dark, #121212);
+    min-height: 100vh;
+    padding-bottom: 3rem;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .finanzas-globales-nav {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: rgba(30, 30, 38, 0.8);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  .finanzas-globales-nav-icono {
+    background: linear-gradient(135deg, var(--accent-cool, #4fc3f7), #2980b9);
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+    margin-right: 15px;
+    box-shadow: 0 4px 15px rgba(79, 195, 247, 0.3);
+  }
+  
+  .finanzas-globales-nav-titulo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.5px;
+  }
+  
+  .finanzas-globales-tabs-wrapper {
+    background: rgba(255,255,255,0.03);
+    padding: 6px;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+  }
+  
+  .finanzas-globales-tabs {
+    display: flex;
+    position: relative;
+    gap: 10px;
+    min-width: max-content;
+  }
+  
+  .finanzas-globales-tab {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.6);
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    z-index: 2;
+  }
+  
+  .finanzas-globales-tab:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.05);
+  }
+  
+  .finanzas-globales-tab.activo {
+    color: #fff;
+  }
+  
+  .finanzas-globales-tab-slider {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, var(--danger, #dc3545), #c0392b);
+    border-radius: 10px;
+    z-index: 1;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+  }
+  
+  .finanzas-globales-kpi-card {
+    background: #1e1e26;
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .finanzas-globales-kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  }
+  
+  .finanzas-globales-kpi-title {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .finanzas-globales-kpi-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -1px;
+  }
+  
+  .finanzas-globales-kpi-value.ingresos { color: var(--success, #2ecc71); }
+  .finanzas-globales-kpi-value.egresos { color: var(--danger, #e74c3c); }
+  .finanzas-globales-kpi-value.balance { color: var(--accent-cool, #4fc3f7); }
+  
+  .finanzas-globales-card {
+    background: #1e1e26;
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255,255,255,0.05);
+    margin-bottom: 1.5rem;
+  }
+  
+  .finanzas-globales-card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+  }
+  
+  .finanzas-globales-chart-container {
+    width: 100%;
+    height: 300px;
+    position: relative;
+  }
+  
+  .finanzas-globales-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: rgba(255,255,255,0.4);
+    font-size: 1.1rem;
+  }
+  
+  .finanzas-globales-empty i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+    opacity: 0.5;
+  }
+  
+  .finanzas-globales-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+  }
+  
+  .finanzas-globales-table th {
+    color: rgba(255,255,255,0.5);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0 1rem 0.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  
+  .finanzas-globales-table td {
+    background: rgba(255,255,255,0.02);
+    padding: 1rem;
+    font-size: 0.95rem;
+  }
+  
+  .finanzas-globales-table tr td:first-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+  .finanzas-globales-table tr td:last-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+  
+  .finanzas-globales-table tr:hover td {
+    background: rgba(255,255,255,0.05);
+  }
+  
+  .finanzas-globales-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-block;
+  }
+  
+  .badge-pago-coach { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+  .badge-mantenimiento { background: rgba(241, 196, 15, 0.2); color: #f1c40f; }
+  .badge-servicios { background: rgba(155, 89, 182, 0.2); color: #9b59b6; }
+  .badge-equipo { background: rgba(230, 126, 34, 0.2); color: #e67e22; }
+  .badge-otros { background: rgba(149, 165, 166, 0.2); color: #95a5a6; }
+  
+  .finanzas-globales-input {
+    width: 100%;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: white;
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    transition: border-color 0.3s ease;
+  }
+  
+  .finanzas-globales-input:focus {
+    outline: none;
+    border-color: var(--danger, #dc3545);
+    background: rgba(0,0,0,0.3);
+  }
+  
+  .finanzas-globales-btn {
+    background: linear-gradient(135deg, var(--danger, #dc3545), #c0392b);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+  }
+  
+  .finanzas-globales-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+  }
+  
+  .finanzas-globales-btn-danger {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  
+  .finanzas-globales-btn-danger:hover {
+    background: #dc3545;
+    color: white;
+  }
+  
+  @media (max-width: 768px) {
+    .finanzas-globales-kpi-value { font-size: 2rem; }
+    .finanzas-globales-table { display: block; overflow-x: auto; }
+  }

@@ -130,6 +130,7 @@ export default function Layout() {
             { label: 'Inventario de Almacén', href: '/almacen-panel' },
             { label: 'Gestión de Clases', href: '/gestion-clases' },
             { label: 'Mensualidades', href: "/gestion-finanzas" },
+            { label: 'Finanzas Globales', href: '/finanzas-globales' },
             { label: 'Gestión Competencias', href: '/admin-competencias' },
             { label: 'Historial Competencias', href: '/admin-competencias/historial' },
             { label: 'Beneficios', href: '/wolf-beneficios' },
