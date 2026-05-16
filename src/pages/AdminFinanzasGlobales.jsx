@@ -46,10 +46,11 @@ export default function AdminFinanzasGlobales() {
   const cargarDatos = async (idBox, m, a) => {
     setLoading(true);
     try {
+      const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
       const [resResumen, resEgresos, resIngresos] = await Promise.all([
-        fetch(`${API_BASE}/resumen/${idBox}?mes=${m}&anio=${a}`),
-        fetch(`${API_BASE}/egresos/${idBox}?mes=${m}&anio=${a}`),
-        fetch(`${API_BASE}/ingresos/${idBox}?mes=${m}&anio=${a}`)
+        fetch(`${API_BASE}/resumen/${idBox}?mes=${m}&anio=${a}`, { headers }),
+        fetch(`${API_BASE}/egresos/${idBox}?mes=${m}&anio=${a}`, { headers }),
+        fetch(`${API_BASE}/ingresos/${idBox}?mes=${m}&anio=${a}`, { headers })
       ]);
       if (resResumen.ok) setResumen(await resResumen.json());
       if (resEgresos.ok) setEgresos(await resEgresos.json());
@@ -68,7 +69,10 @@ export default function AdminFinanzasGlobales() {
     try {
       const res = await fetch(`${API_BASE}/egresos`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({
           idBox: box.idBox,
           monto: parseFloat(formEgreso.monto),
@@ -94,7 +98,10 @@ export default function AdminFinanzasGlobales() {
   const eliminarEgreso = async (id) => {
     if (!window.confirm('¿Seguro que deseas eliminar este registro de egreso?')) return;
     try {
-      const res = await fetch(`${API_BASE}/egresos/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE}/egresos/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
       if (res.ok) {
         cargarDatos(box.idBox, mes, anio);
       } else {

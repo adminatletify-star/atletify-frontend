@@ -178,7 +178,8 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
         setDatosExportados(data.usuarios || []);
         setExportPreview(true);
       } else {
-        alert('Error al cargar datos. Verifica permisos.');
+        const errorData = await res.json().catch(() => null);
+        alert(errorData?.mensaje || 'Error al cargar datos. Verifica permisos.');
       }
     } catch (e) {
       console.error(e);
