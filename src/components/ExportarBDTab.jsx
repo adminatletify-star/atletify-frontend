@@ -87,8 +87,9 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
   const [mostrarModalPDF, setMostrarModalPDF] = useState(false);
 
   useEffect(() => {
-    if (fixedBox && fixedBox.idBox) {
-      setExportBoxId(String(fixedBox.idBox));
+    const id = fixedBox?.idBox || fixedBox?.IdBox;
+    if (id) {
+      setExportBoxId(String(id));
     }
   }, [fixedBox]);
 
@@ -197,9 +198,10 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
     
     let boxName = 'Box';
     if (fixedBox) {
-      boxName = fixedBox.nombre;
+      boxName = fixedBox.nombre || fixedBox.Nombre || 'Box';
     } else if (boxes) {
-      boxName = boxes.find(b => b.idBox === parseInt(exportBoxId))?.nombre || 'Box';
+      const foundBox = boxes.find(b => String(b.idBox || b.IdBox) === exportBoxId);
+      boxName = foundBox?.nombre || foundBox?.Nombre || 'Box';
     }
 
     // Crear filas de datos
@@ -512,7 +514,11 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
                 onChange={e => { setExportBoxId(e.target.value); setExportPreview(false); setDatosExportados([]); }}
               >
                 <option value="">Selecciona un Box...</option>
-                {boxes && boxes.map(b => <option key={b.idBox} value={b.idBox}>{b.nombre}</option>)}
+                {boxes && boxes.map(b => (
+                  <option key={b.idBox || b.IdBox} value={b.idBox || b.IdBox}>
+                    {b.nombre || b.Nombre}
+                  </option>
+                ))}
               </select>
             </div>
           )}
