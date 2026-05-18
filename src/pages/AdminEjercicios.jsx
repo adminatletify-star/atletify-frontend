@@ -12,6 +12,13 @@ import '../assets/css/AdminEjercicios.css';
 
 const CATEGORIAS = ['Piernas', 'Full Body', 'Fuerza', 'Olímpico', 'Gimnástico', 'Cardio', 'Core'];
 
+const handleVideoClick = (e) => {
+  if (!document.fullscreenElement) {
+    e.preventDefault();
+    e.currentTarget.requestFullscreen();
+  }
+};
+
 // Color fijo por categoría — se asigna automáticamente
 const CAT_COLOR = {
   'Piernas':    '#4FC3F7',
@@ -669,7 +676,7 @@ export default function AdminEjercicios() {
             <p className="ae-detail-texto">{ejDetalle.instruccion}</p>
             {ejDetalle.videoUrl && (
                <div className="mt-3">
-                 <video src={ejDetalle.videoUrl} controls style={{ width: '100%', borderRadius: '8px', border: `1px solid ${ejDetalle.color}40` }}></video>
+                 <video src={ejDetalle.videoUrl} controls autoPlay muted loop onClick={handleVideoClick} onContextMenu={e => e.preventDefault()} controlsList="nodownload noremoteplayback noplaybackrate" disablePictureInPicture style={{ width: '100%', borderRadius: '8px', border: `1px solid ${ejDetalle.color}40`, cursor: 'zoom-in' }}></video>
                </div>
             )}
           </div>

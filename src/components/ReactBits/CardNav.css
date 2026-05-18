@@ -151,6 +151,44 @@
   letter-spacing: -0.5px;
 }
 
+/* Header de sección */
+.nav-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-card-chevron {
+  display: none;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.4);
+  transition: transform 0.32s ease;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+
+.nav-card-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Links wrap — grid trick para animación suave sin calcular altura */
+.nav-card-links-wrap {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.3s ease, opacity 0.3s ease;
+  opacity: 1;
+}
+
+.nav-card-links-wrap.collapsed {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+/* El hijo directo necesita overflow:hidden para el grid trick */
+.nav-card-links-wrap > .nav-card-links {
+  overflow: hidden;
+}
+
 .nav-card-links {
   margin-top: 10px;
   display: flex;
@@ -189,6 +227,55 @@
 }
 
 @media (max-width: 1200px) {
+  /* Acordeón: las secciones dejan de ser cards separadas */
+  .nav-card {
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    background: transparent !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  .nav-card:last-of-type {
+    border-bottom: none !important;
+  }
+
+  .nav-card-header {
+    cursor: pointer;
+    user-select: none;
+    padding: 14px 4px;
+    transition: opacity 0.15s ease;
+  }
+
+  .nav-card-header:active {
+    opacity: 0.7;
+  }
+
+  .nav-card-chevron {
+    display: block;
+  }
+
+  .nav-card-label {
+    font-size: 17px !important;
+    margin-bottom: 0 !important;
+  }
+
+  .nav-card-links {
+    margin-top: 0;
+    padding: 0 4px 12px 4px;
+  }
+
+  .nav-card-link {
+    font-size: 14px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .nav-card-link:last-child {
+    border-bottom: none;
+  }
+
   .card-nav-container {
     width: 94%;
     top: 0.75em;
@@ -223,10 +310,11 @@
     flex-direction: column;
     flex-wrap: nowrap;
     align-items: stretch;
-    gap: 8px;
-    padding: 0.5rem 0.75rem 0.75rem;
-    max-height: none;
+    gap: 0;
+    padding: 0.5rem 0.75rem 1rem;
+    max-height: calc(100vh - 80px);
     overflow-y: auto;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -261,6 +349,18 @@
 
   .nav-card-link {
     font-size: 15px;
+  }
+}
+
+/* Desktop: siempre mostrar links, quitar animación de acordeón */
+@media (min-width: 1201px) {
+  .nav-card-links-wrap {
+    grid-template-rows: 1fr !important;
+    opacity: 1 !important;
+    transition: none !important;
+  }
+  .nav-card-chevron {
+    display: none !important;
   }
 }
 

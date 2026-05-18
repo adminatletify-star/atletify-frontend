@@ -674,3 +674,8 @@
   overflow-wrap: break-word;
   margin: 0;
 }
+
+video::-webkit-media-controls-overflow-button {
+  display: none !important;
+}
+

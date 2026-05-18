@@ -7,6 +7,13 @@ import '../assets/css/Ejercicios.css';
 
 const CATEGORIAS_BASE = ['Todas'];
 
+const handleVideoClick = (e) => {
+  if (!document.fullscreenElement) {
+    e.preventDefault();
+    e.currentTarget.requestFullscreen();
+  }
+};
+
 export default function Ejercicios() {
   const [ejercicios, setEjercicios] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -252,10 +259,17 @@ export default function Ejercicios() {
                   <i className="fas fa-video me-2"></i>Ejemplo de Ejecución
                 </h4>
                 {seleccionado.videoUrl ? (
-                  <video 
-                    src={seleccionado.videoUrl} 
-                    controls 
-                    style={{ width: '100%', borderRadius: '8px', border: `1px solid ${seleccionado.color}40`, background: '#000' }}
+                  <video
+                    src={seleccionado.videoUrl}
+                    controls
+                    autoPlay
+                    muted
+                    loop
+                    onClick={handleVideoClick}
+                    onContextMenu={e => e.preventDefault()}
+                    controlsList="nodownload noremoteplayback noplaybackrate"
+                    disablePictureInPicture
+                    style={{ width: '100%', borderRadius: '8px', border: `1px solid ${seleccionado.color}40`, background: '#000', cursor: 'zoom-in' }}
                   ></video>
                 ) : (
                   <div className="d-flex flex-column align-items-center justify-content-center p-4" style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px dashed rgba(255,255,255,0.1)' }}>

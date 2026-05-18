@@ -434,3 +434,56 @@
   color: var(--text-muted, #6B7280);
   margin: 0;
 }
+
+/* ── Responsive — tablet ── */
+@media (max-width: 768px) {
+  .ej-navbar-title      { font-size: 1.3rem; letter-spacing: 2px; }
+  .ej-titulo            { font-size: clamp(1.6rem, 6vw, 2.4rem); }
+  .ej-subtitulo         { font-size: 0.9rem; }
+  .ej-nombre            { font-size: 1.35rem; }
+  .ej-instruccion       { font-size: 0.82rem; }
+  .ej-modal-nombre      { font-size: 1.6rem; }
+  .ej-modal-texto       { font-size: 0.88rem; line-height: 1.7; }
+  .ej-filtro-btn        { font-size: 0.72rem; padding: 0.3rem 0.85rem; }
+  .ej-ver-mas           { font-size: 0.75rem; }
+  .ej-contador          { font-size: 0.8rem; }
+  .ej-modal             { padding: 1.5rem; }
+  .ej-card              { height: auto; min-height: 300px; padding: 1.4rem; }
+}
+
+/* ── Responsive — móvil ── */
+@media (max-width: 576px) {
+  .ej-navbar-title      { font-size: 1.1rem; letter-spacing: 1.5px; }
+  .ej-titulo            { font-size: clamp(1.3rem, 7vw, 1.9rem); letter-spacing: 1px; }
+  .ej-subtitulo         { font-size: 0.8rem; }
+  .ej-tag               { font-size: 0.65rem; letter-spacing: 2px; padding: 0.25rem 0.9rem; }
+  .ej-nombre            { font-size: 1.15rem; }
+  .ej-categoria         { font-size: 0.65rem; }
+  .ej-instruccion       { font-size: 0.78rem; }
+  .ej-modal-nombre      { font-size: 1.3rem; letter-spacing: 1px; }
+  .ej-modal-texto       { font-size: 0.82rem; line-height: 1.65; }
+  .ej-filtro-btn        { font-size: 0.67rem; padding: 0.25rem 0.7rem; }
+  .ej-ver-mas           { font-size: 0.7rem; }
+  .ej-contador          { font-size: 0.75rem; }
+  .ej-modal             { padding: 1.2rem; border-radius: 16px; }
+  .ej-modal-overlay     { padding: 1rem; }
+  .ej-card              { padding: 1.2rem; min-height: 260px; }
+  .ej-icono             { width: 40px; height: 40px; font-size: 1rem; }
+  .ej-modal-icono       { width: 44px; height: 44px; font-size: 1.1rem; }
+  .ej-hero              { padding-top: 5rem; padding-bottom: 1.8rem; }
+}
+
+/* ── Responsive — móvil muy pequeño ── */
+@media (max-width: 380px) {
+  .ej-titulo            { font-size: clamp(1.1rem, 8vw, 1.5rem); }
+  .ej-subtitulo         { font-size: 0.74rem; }
+  .ej-nombre            { font-size: 1rem; }
+  .ej-modal-nombre      { font-size: 1.1rem; }
+  .ej-modal-texto       { font-size: 0.76rem; }
+  .ej-filtro-btn        { font-size: 0.62rem; padding: 0.2rem 0.6rem; }
+}
+
+video::-webkit-media-controls-overflow-button {
+  display: none !important;
+}
+
