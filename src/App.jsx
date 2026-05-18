@@ -312,8 +312,6 @@ function App() {
               <Route path="/competencias" element={<ListaCompetencias />} />
               <Route path="/historial-competencias" element={<HistorialCompetenciasPublico />} />
               <Route path="/historial-competencias/:idBox" element={<HistorialBoxDetalle />} />
-              <Route path="/admin-archivadas" element={<AdminArchivadasDev />} />
-              <Route path="/admin-archivadas/:idBox" element={<AdminArchivadasDevDetalle />} />
               <Route path="/simulador-barra-publico" element={<SimuladorBarraPublico />} />
               <Route path="/wolfpack" element={<WolfPackPage />} />
               <Route path="/ejercicios" element={<Ejercicios />} />
@@ -408,6 +406,8 @@ function App() {
               <Route path="/gestion-clases" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><GestionClases /></ProtectedRoute>} />
               <Route path="/diccionario-ejercicios" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><DiccionarioEjercicios /></ProtectedRoute>} />
               <Route path="/admin-ejercicios" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><AdminEjercicios /></ProtectedRoute>} />
+              <Route path="/admin-archivadas" element={<ProtectedRoute allowedRoles={['Developer']}><AdminArchivadasDev /></ProtectedRoute>} />
+              <Route path="/admin-archivadas/:idBox" element={<ProtectedRoute allowedRoles={['Developer']}><AdminArchivadasDevDetalle /></ProtectedRoute>} />
               <Route path="/editar-box" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><EditarBox /></ProtectedRoute>} />
               <Route path="/admin-competencias/panel/:id" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><CompetenciaDetalle /></ProtectedRoute>} />
               <Route path="/atletas-box" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><AtletasBox /></ProtectedRoute>} />

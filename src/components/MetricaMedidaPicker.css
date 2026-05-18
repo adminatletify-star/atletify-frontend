@@ -103,3 +103,27 @@
 .mmp-option--distancia .mmp-check { color: var(--accent-cool, #4fc3f7); }
 .mmp-option--calorias  .mmp-check { color: var(--primary, #e63946); }
 .mmp-option--tiempo    .mmp-check { color: #9b59b6; }
+
+/* ── Responsive ── */
+@media (max-width: 576px) {
+  .mmp-trigger      { font-size: 0.78rem; padding: 0.48rem 0.75rem; }
+  .mmp-overlay      { align-items: flex-end; padding: 0; }
+  .mmp-panel        { max-width: 100%; border-radius: 20px 20px 0 0; }
+  .mmp-header       { padding: 0.85rem 1rem; }
+  .mmp-title        { font-size: 0.75rem; }
+  .mmp-options      { padding: 0.5rem 0.6rem; gap: 0.25rem; }
+  .mmp-option       { padding: 0.65rem 0.85rem; border-radius: 10px; }
+  .mmp-icon-wrap    { width: 30px; height: 30px; font-size: 0.82rem; }
+  .mmp-nombre       { font-size: 0.82rem; }
+  .mmp-desc         { font-size: 0.64rem; }
+  @keyframes mmp-up {
+    from { opacity: 0; transform: translateY(100%); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@media (max-width: 380px) {
+  .mmp-trigger      { font-size: 0.72rem; }
+  .mmp-option       { padding: 0.55rem 0.75rem; }
+  .mmp-nombre       { font-size: 0.76rem; }
+}

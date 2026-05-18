@@ -8,6 +8,7 @@ import '../assets/css/LoginPage.css';
 export default function Login() {
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
+  const [verPassword, setVerPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -99,7 +100,12 @@ export default function Login() {
 
             <div className="login-form-group">
               <label className="login-label">Contraseña</label>
-              <input type="password" className="login-input" placeholder="Tu contraseña" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <div className="login-input-wrapper">
+                <input type={verPassword ? 'text' : 'password'} className="login-input login-input--pass" placeholder="Tu contraseña" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <button type="button" className="login-eye-btn" onClick={() => setVerPassword(v => !v)} tabIndex={-1} aria-label={verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                  <i className={`fas ${verPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                </button>
+              </div>
             </div>
 
             <div className="text-end mb-4">

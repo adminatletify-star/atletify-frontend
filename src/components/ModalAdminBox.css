@@ -1,347 +1,422 @@
 /* =============================================
-   MODAL ADMIN BOX — WolfPack
+   MODAL ADMIN BOX — WolfPack Design System
+   Sigue el patrón de gc-nivel-modal
    ============================================= */
 
 /* ── OVERLAY ── */
 .mab-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  z-index: 9999;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  animation: mab-fade-in 0.22s ease-out;
+  padding: 0;
+  animation: mab-fade-in 0.2s ease;
+}
+
+@media (min-width: 576px) {
+  .mab-overlay {
+    align-items: center;
+    padding: 1rem;
+  }
 }
 
 @keyframes mab-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* ── PANEL ── */
 .mab-panel {
-  background: linear-gradient(135deg, #0f0f15 0%, #1a1a24 100%);
-  border: 1px solid rgba(230, 57, 70, 0.25);
-  border-radius: 16px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  width: 90%;
-  max-width: 480px;
-  max-height: 90vh;
-  overflow-y: auto;
+  width: 100%;
+  max-width: 500px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 20px 20px 0 0;
   animation: mab-slide-up 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-height: 92dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (min-width: 576px) {
+  .mab-panel {
+    border-radius: 20px;
+    max-height: 88dvh;
+  }
 }
 
 @keyframes mab-slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
 
 /* ── HEADER ── */
 .mab-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid rgba(230, 57, 70, 0.15);
   gap: 1rem;
+  padding: 1.4rem 1.25rem 1rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .mab-header-content {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.1rem;
   flex: 1;
+  min-width: 0;
 }
 
-.mab-header-icon {
-  font-size: 1.8rem;
-  color: #e63946;
-  flex-shrink: 0;
-}
-
-.mab-header h5 {
-  margin: 0;
-  font-size: 1.1rem;
+.mab-header-supertitle {
+  font-family: var(--font-heading-alt);
+  font-size: clamp(0.58rem, 1.8vw, 0.68rem);
   font-weight: 700;
-  color: #f0f0f5;
-  letter-spacing: 0.5px;
+  letter-spacing: 2px;
+  color: var(--primary);
+  text-transform: uppercase;
+  margin: 0;
 }
 
-.mab-header small {
-  display: block;
-  font-size: 0.75rem;
-  color: #8a8a95;
-  margin-top: 0.25rem;
+.mab-header-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 3.5vw, 1.2rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.mab-header-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+  touch-action: manipulation;
+}
+
+.mab-header-close:hover {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 /* ── BODY ── */
 .mab-body {
-  padding: 1.5rem;
+  padding: 1.25rem;
 }
 
-.mab-body .mb-3 {
-  margin-bottom: 1.25rem;
+@media (min-width: 576px) {
+  .mab-body {
+    padding: 1.5rem 1.75rem;
+  }
 }
 
-.mab-body .form-label {
-  display: block;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #d0d0d5;
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.mab-body .form-control {
-  border-radius: 8px;
-  font-size: 0.95rem;
-  padding: 0.75rem 1rem;
-  transition: all 0.2s ease;
-}
-
-.mab-body .form-control:focus {
-  background-color: #1a1a24;
-  border-color: #e63946;
-  box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.1);
-  color: #f0f0f5;
-}
-
-.mab-body .form-control::placeholder {
-  color: #6a6a75;
-}
-
-/* ── Username Status ── */
-.mab-body small {
-  display: block;
-  margin-top: 0.5rem;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.mab-body small.text-success {
-  color: #00d98e !important;
-}
-
-.mab-body small.text-danger {
-  color: #ff6b6b !important;
-}
-
-.mab-body small.text-muted {
-  color: #6a6a75 !important;
-}
-
-/* ── Input Group ── */
-.mab-body .input-group {
+/* ── INPUT GROUP (campo + botón) ── */
+.mab-input-group {
   display: flex;
   gap: 0.5rem;
+  align-items: stretch;
 }
 
-.mab-body .input-group .form-control {
+.mab-input-group .entrada-oscura {
   flex: 1;
+  min-width: 0;
 }
 
-.mab-body .input-group .btn {
+.mab-copy-btn {
+  width: 42px;
   flex-shrink: 0;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.82rem;
+  touch-action: manipulation;
 }
 
-.mab-body .btn-outline-secondary {
-  border-color: rgba(255, 255, 255, 0.2);
-  color: #a0a0a5;
-  transition: all 0.2s ease;
+.mab-copy-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.06);
 }
 
-.mab-body .btn-outline-secondary:hover:not(:disabled) {
-  background-color: rgba(230, 57, 70, 0.1);
-  border-color: #e63946;
-  color: #e63946;
-}
-
-.mab-body .btn-outline-secondary:disabled {
-  opacity: 0.5;
+.mab-copy-btn:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-/* ── Alert ── */
-.mab-body .alert {
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  padding: 0.85rem 1rem;
-  font-size: 0.9rem;
-  border: 1px solid rgba(220, 53, 69, 0.3);
-  background-color: rgba(220, 53, 69, 0.1);
-  color: #ff9a9a;
+/* ── ESTADO USERNAME ── */
+.mab-status {
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.4rem 0 0;
 }
 
-/* ── SUCCESS MESSAGE ── */
+.mab-status--ok    { color: var(--success); }
+.mab-status--error { color: var(--primary); }
+.mab-status--hint  { color: var(--text-muted); }
+
+/* ── ALERT ERROR ── */
+.mab-alert {
+  background: rgba(230, 57, 70, 0.08);
+  border: 1px solid rgba(230, 57, 70, 0.28);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-body);
+  font-size: clamp(0.78rem, 2vw, 0.88rem);
+  color: #ff9a9a;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.1rem;
+}
+
+.mab-alert i {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+/* ── VALIDACIÓN VISUAL DEL INPUT ── */
+.mab-input-group .entrada-oscura--ok {
+  border-color: var(--success) !important;
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+}
+
+.mab-input-group .entrada-oscura--error {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* ── SUCCESS STATE ── */
 .mab-success {
   padding: 2rem 1.5rem;
   text-align: center;
-}
-
-.mab-success-content {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   align-items: center;
+  gap: 1rem;
 }
 
-.mab-success-content i {
+.mab-success__icon {
   font-size: 3rem;
-  color: #00d98e;
+  color: var(--success);
   animation: mab-bounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 @keyframes mab-bounce {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-  }
+  0%   { opacity: 0; transform: scale(0.3); }
+  50%  { opacity: 1; }
+  100% { transform: scale(1); }
 }
 
-.mab-success-content h6 {
-  margin: 0;
-  color: #f0f0f5;
-  font-size: 1.1rem;
+.mab-success__title {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 3vw, 1.2rem);
   font-weight: 700;
-}
-
-.mab-success-content p {
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   margin: 0;
-  color: #a0a0a5;
-  font-size: 0.9rem;
+  line-height: 1.2;
 }
 
-/* ── PASSWORD DISPLAY ── */
-.mab-password-display {
+.mab-success__desc {
+  font-family: var(--font-body);
+  font-size: clamp(0.8rem, 2vw, 0.9rem);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.mab-success__box {
+  width: 100%;
+  background: rgba(46, 204, 113, 0.06);
+  border: 1px solid rgba(46, 204, 113, 0.25);
+  border-radius: 12px;
+  padding: 1rem;
   display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: left;
 }
 
-.mab-password-display .form-control {
-  background-color: rgba(0, 217, 142, 0.1);
-  border-color: #00d98e;
-  color: #00d98e;
+.mab-success__cred {
   font-family: 'Monaco', 'Menlo', monospace;
-  font-size: 0.85rem;
-  padding: 0.75rem;
+  font-size: clamp(0.72rem, 2vw, 0.82rem);
+  color: var(--success);
+  word-break: break-all;
+  line-height: 1.6;
+  margin: 0;
 }
 
-.mab-password-display .btn {
-  padding: 0.75rem 1rem;
+.mab-success__copy-btn {
+  width: 100%;
+  background: rgba(46, 204, 113, 0.12);
+  border: 1px solid rgba(46, 204, 113, 0.35);
   border-radius: 8px;
-  border-color: #00d98e;
-  color: #00d98e;
-  font-size: 0.9rem;
+  color: var(--success);
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  touch-action: manipulation;
 }
 
-.mab-password-display .btn:hover {
-  background-color: rgba(0, 217, 142, 0.15);
+.mab-success__copy-btn:hover {
+  background: rgba(46, 204, 113, 0.2);
+  border-color: rgba(46, 204, 113, 0.55);
 }
 
-.mab-success-content small {
-  color: #ffd460;
-  font-size: 0.8rem;
-  font-weight: 500;
+.mab-success__warn {
+  font-family: var(--font-body);
+  font-size: 0.73rem;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
 }
 
 /* ── FOOTER ── */
 .mab-footer {
   display: flex;
   gap: 0.75rem;
-  padding: 1.25rem 1.5rem;
-  border-top: 1px solid rgba(230, 57, 70, 0.15);
+  padding: 0.75rem 1.25rem 1.5rem;
 }
 
-.mab-footer .btn {
+@media (min-width: 576px) {
+  .mab-footer {
+    padding: 0.75rem 1.75rem 1.75rem;
+  }
+}
+
+.mab-save-btn {
   flex: 1;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  padding: 0.75rem 1.25rem;
-  transition: all 0.2s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.mab-footer .btn-outline-secondary {
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #a0a0a5;
-}
-
-.mab-footer .btn-outline-secondary:hover:not(:disabled) {
-  background-color: rgba(230, 57, 70, 0.1);
-  border-color: #e63946;
-  color: #e63946;
-}
-
-.mab-footer .btn-danger {
-  background: linear-gradient(135deg, #e63946 0%, #dc3545 100%);
+  background: var(--primary);
   border: none;
-  color: white;
-  box-shadow: 0 4px 15px rgba(230, 57, 70, 0.25);
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-size: clamp(0.78rem, 2.2vw, 0.9rem);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  touch-action: manipulation;
 }
 
-.mab-footer .btn-danger:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(230, 57, 70, 0.35);
+.mab-save-btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 16px var(--primary-glow);
 }
 
-.mab-footer .btn-danger:disabled {
+.mab-save-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.mab-footer .btn-danger .spinner-border {
-  width: 1rem;
-  height: 1rem;
-  border-width: 0.2em;
+.mab-cancel-btn {
+  width: 46px;
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.85rem;
+  touch-action: manipulation;
 }
 
-/* ── RESPONSIVE ── */
-@media (max-width: 480px) {
-  .mab-panel {
-    width: 95%;
-    border-radius: 12px;
-  }
+.mab-cancel-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.06);
+}
 
-  .mab-header {
-    padding: 1rem;
-  }
+.mab-cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
-  .mab-body {
-    padding: 1.25rem;
-  }
+/* ============================================
+   RESPONSIVE — según CLAUDE.md
+   ============================================ */
 
-  .mab-footer {
-    padding: 1rem;
-    flex-direction: column;
-  }
+/* Tablet ≤ 768px */
+@media (max-width: 768px) {
+  .mab-header-title      { font-size: 1.05rem; }
+  .mab-header-supertitle { font-size: 0.62rem; }
+  .mab-header            { padding: 1.2rem 1.1rem 0.85rem; }
+  .mab-save-btn          { font-size: 0.8rem; }
+}
 
-  .mab-footer .btn {
-    width: 100%;
-  }
+/* Móvil ≤ 576px */
+@media (max-width: 576px) {
+  .mab-header            { padding: 1.1rem 1rem 0.8rem; }
+  .mab-header-title      { font-size: 0.95rem; }
+  .mab-header-supertitle { font-size: 0.58rem; }
+  .mab-body              { padding: 1rem; }
+  .mab-footer            { padding: 0.65rem 1rem 1.25rem; }
+  .mab-save-btn          { font-size: 0.75rem; padding: 0.65rem 1rem; }
+  .mab-cancel-btn        { width: 42px; }
+  .mab-alert             { font-size: 0.76rem; padding: 0.65rem 0.85rem; }
+  .mab-success           { padding: 1.5rem 1rem; }
+  .mab-success__icon     { font-size: 2.5rem; }
+}
+
+/* Móvil pequeño ≤ 380px */
+@media (max-width: 380px) {
+  .mab-header-title      { font-size: 0.88rem; }
+  .mab-header-supertitle { font-size: 0.55rem; }
+  .mab-save-btn          { font-size: 0.7rem; padding: 0.6rem 0.85rem; }
+  .mab-cancel-btn        { width: 40px; font-size: 0.78rem; }
+  .mab-body              { padding: 0.85rem; }
+  .mab-success__title    { font-size: 0.92rem; }
+  .mab-success__cred     { font-size: 0.68rem; }
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import * as XLSX from 'xlsx';
 import XLSX_STYLE from 'xlsx-js-style';
 import { jsPDF } from 'jspdf';
@@ -78,6 +79,7 @@ export const COLORES_CATEGORIA = {
 export default function ExportarBDTab({ boxes, fixedBox }) {
   // === ESTADOS PARA EXPORTAR BD ===
   const [exportBoxId, setExportBoxId] = useState('');
+  const [exportBoxNombre, setExportBoxNombre] = useState('');
   const [columnasSeleccionadas, setColumnasSeleccionadas] = useState(new Set(['nombre', 'apellidos', 'correo', 'telefono']));
   const [filtroRolExport, setFiltroRolExport] = useState('Todos');
   const [filtroEstatusExport, setFiltroEstatusExport] = useState('Todas');
@@ -85,6 +87,8 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
   const [cargandoExport, setCargandoExport] = useState(false);
   const [exportPreview, setExportPreview] = useState(false);
   const [mostrarModalPDF, setMostrarModalPDF] = useState(false);
+  const [modalBoxOpen, setModalBoxOpen] = useState(false);
+  const [busquedaBox, setBusquedaBox] = useState('');
 
   useEffect(() => {
     const id = fixedBox?.idBox || fixedBox?.IdBox;
@@ -508,18 +512,25 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
           {!fixedBox && (
             <div className="mb-4">
               <label className="form-label text-white-50 fw-bold"><i className="fas fa-building me-1"></i> Box a exportar</label>
-              <select 
-                className="entrada-oscura"
-                value={exportBoxId}
-                onChange={e => { setExportBoxId(e.target.value); setExportPreview(false); setDatosExportados([]); }}
+              <button
+                type="button"
+                onClick={() => { setBusquedaBox(''); setModalBoxOpen(true); }}
+                style={{
+                  width: '100%', background: 'var(--bg-input, #1a1a2e)', border: '1px solid var(--border, rgba(255,255,255,0.1))',
+                  borderRadius: '8px', color: exportBoxNombre ? '#fff' : 'rgba(255,255,255,0.4)',
+                  fontFamily: 'inherit', fontSize: '0.9rem', padding: '0.6rem 1rem',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  gap: '0.5rem', transition: 'border-color 0.2s', textAlign: 'left',
+                }}
               >
-                <option value="">Selecciona un Box...</option>
-                {boxes && boxes.map(b => (
-                  <option key={b.idBox || b.IdBox} value={b.idBox || b.IdBox}>
-                    {b.nombre || b.Nombre}
-                  </option>
-                ))}
-              </select>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
+                  <i className="fas fa-warehouse" style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0 }} />
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {exportBoxNombre || 'Selecciona un Box...'}
+                  </span>
+                </span>
+                <i className="fas fa-search" style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0, fontSize: '0.8rem' }} />
+              </button>
             </div>
           )}
 
@@ -722,6 +733,104 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
           )}
         </div>
       </div>
+
+      {/* MODAL: Selector de Box con buscador */}
+      {modalBoxOpen && createPortal(
+        <div
+          onClick={() => setModalBoxOpen(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: '#141420', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '1.5rem', width: '90%', maxWidth: '480px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 60px rgba(0,0,0,0.6)' }}
+          >
+            {/* Header modal */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <i className="fas fa-warehouse" style={{ color: 'var(--primary, #e63946)' }} />
+                Seleccionar Box
+              </span>
+              <button
+                onClick={() => setModalBoxOpen(false)}
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '1rem', cursor: 'pointer', padding: '0.25rem' }}
+              >
+                <i className="fas fa-times" />
+              </button>
+            </div>
+
+            {/* Buscador */}
+            <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
+              <i className="fas fa-search" style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.35)', fontSize: '0.82rem', pointerEvents: 'none' }} />
+              <input
+                type="text"
+                autoFocus
+                placeholder="Buscar por nombre o ubicación..."
+                value={busquedaBox}
+                onChange={e => setBusquedaBox(e.target.value)}
+                style={{
+                  width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: '8px', color: '#fff', fontSize: '0.88rem', padding: '0.6rem 1rem 0.6rem 2.3rem', outline: 'none',
+                }}
+              />
+            </div>
+
+            {/* Lista de boxes */}
+            <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              {(() => {
+                const filtrados = (boxes || []).filter(b => {
+                  const q = busquedaBox.toLowerCase();
+                  return (b.nombre || b.Nombre || '').toLowerCase().includes(q) ||
+                         (b.ubicacion || b.Ubicacion || '').toLowerCase().includes(q);
+                });
+                if (!filtrados.length) return (
+                  <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.35)', padding: '2rem', fontSize: '0.85rem' }}>
+                    <i className="fas fa-search" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '1.5rem' }} />
+                    Sin resultados
+                  </div>
+                );
+                return filtrados.map(b => {
+                  const id  = String(b.idBox || b.IdBox);
+                  const nom = b.nombre || b.Nombre;
+                  const ubi = b.ubicacion || b.Ubicacion;
+                  const activo = id === exportBoxId;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => {
+                        setExportBoxId(id);
+                        setExportBoxNombre(nom);
+                        setExportPreview(false);
+                        setDatosExportados([]);
+                        setModalBoxOpen(false);
+                      }}
+                      style={{
+                        background: activo ? 'rgba(230,57,70,0.12)' : 'rgba(255,255,255,0.03)',
+                        border: activo ? '1px solid rgba(230,57,70,0.4)' : '1px solid rgba(255,255,255,0.07)',
+                        borderRadius: '10px', padding: '0.65rem 0.9rem', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', transition: 'all 0.15s',
+                      }}
+                    >
+                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {b.logo && b.logo.trim() !== ''
+                          ? <img src={b.logo} alt={nom} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                          : <i className="fas fa-warehouse" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }} />
+                        }
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ color: activo ? '#fff' : 'rgba(255,255,255,0.85)', fontWeight: 700, fontSize: '0.88rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nom}</div>
+                        {ubi && <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.74rem', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.15rem' }}><i className="fas fa-map-marker-alt" />{ubi}</div>}
+                      </div>
+                      {activo && <i className="fas fa-check-circle" style={{ color: 'var(--primary, #e63946)', fontSize: '0.9rem', flexShrink: 0 }} />}
+                    </button>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* MODAL: Advertencia PDF muchas columnas */}
       {mostrarModalPDF && (

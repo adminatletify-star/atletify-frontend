@@ -360,14 +360,14 @@ export default function AdminEjercicios() {
                   </div>
 
                   <div className="row g-2">
-                    <div className="col-12 col-md-6">
+                    <div className="col-12">
                       <label className="ae-label">Equipamiento</label>
                       <EquipamientoPicker
                         valor={form.equipamiento}
                         onCambiar={value => setForm(f => ({ ...f, equipamiento: value }))}
                       />
                     </div>
-                    <div className="col-12 col-md-6">
+                    <div className="col-12">
                       <label className="ae-label">¿Cómo se mide?</label>
                       <MetricaMedidaPicker
                         valor={form.metricaPrincipal}
@@ -395,46 +395,6 @@ export default function AdminEjercicios() {
                       <small>Guarda PR en el perfil del atleta.</small>
                     </span>
                   </label>
-
-                  {/* Ícono */}
-                  <div>
-                    <div className="d-flex align-items-center justify-content-between mb-1">
-                      <label className="ae-label mb-0">Clase de ícono FontAwesome</label>
-                      {iconoAuto && (
-                        <span style={{
-                          background: 'rgba(46,204,113,0.12)', color: '#2ECC71',
-                          fontSize: '0.65rem', fontFamily: 'var(--font-body)', fontWeight: 600,
-                          padding: '0.1rem 0.5rem', borderRadius: 20,
-                          border: '1px solid rgba(46,204,113,0.3)',
-                        }}>
-                          <i className="fas fa-magic me-1" />Por categoría
-                        </span>
-                      )}
-                    </div>
-                    <div className="d-flex gap-2 align-items-center">
-                      <input
-                        className="ae-input flex-grow-1"
-                        name="icono"
-                        value={form.icono}
-                        onChange={handleChange}
-                        placeholder="fas fa-dumbbell"
-                        autoComplete="off"
-                      />
-                      <div
-                        className="ae-icon-preview"
-                        style={{
-                          color: form.color,
-                          borderColor: form.color + '40',
-                          background: form.color + '15',
-                        }}
-                      >
-                        <i className={form.icono} />
-                      </div>
-                    </div>
-                    <small style={{ color: 'var(--text-muted)', fontSize: '0.72rem', fontFamily: 'var(--font-body)' }}>
-                      Se asigna automáticamente al elegir categoría. Puedes editarlo manualmente si quieres otro.
-                    </small>
-                  </div>
 
                   {/* Instrucción */}
                   <div>
@@ -475,10 +435,10 @@ export default function AdminEjercicios() {
                     </p>
                   )}
 
-                  <div className="d-flex gap-2">
+                  <div className="d-flex gap-2 align-items-stretch ae-form-actions">
                     <BotonSeguro type="button" onClick={guardar} className="ae-btn-primary flex-grow-1" textoProcesando={<><i className="fas fa-spinner fa-spin" /> Guardando...</>}>
                       {editando
-                        ? <><i className="fas fa-save" /> Guardar Cambios</>
+                        ? <><i className="fas fa-save" /> Guardar</>
                         : <><i className="fas fa-plus" /> Publicar Ejercicio</>
                       }
                     </BotonSeguro>

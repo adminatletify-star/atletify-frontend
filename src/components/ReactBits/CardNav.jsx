@@ -4,7 +4,6 @@ import { GoArrowUpRight } from 'react-icons/go';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from "../../context/AuthContext";
 import './CardNav.css';
-import { COMPETENCIAS_ENDPOINT } from '../../services/api';
 import BoxPickerModal from '../BoxPickerModal';
 
 const CardNav = ({
@@ -23,10 +22,7 @@ const CardNav = ({
   const location = useLocation();
   const navigate = useNavigate();
   const clickTimeout = useRef(null);
-  const [listaBoxes, setListaBoxes] = useState([]);
-
-  // 👇 EXTRAEMOS EL USUARIO Y LA FUNCIÓN DE CAMBIAR BOX 👇
-  const { usuario, boxActivo, cambiarBox, cuentasGuardadas, prepararCambioCuenta } = useAuth();
+  const { usuario, boxActivo, cambiarBox, cuentasGuardadas, prepararCambioCuenta, listaBoxes } = useAuth();
 
   const getHomeRoute = () => {
     if (!usuario) return '/';
@@ -85,32 +81,6 @@ const CardNav = ({
     }
   }, [location.pathname]);
 
-  // 👇 NUEVO: Buscamos los boxes en C# en cuanto carga el menú 👇
-  useEffect(() => {
-    if (usuario?.rol === 'Developer' || usuario?.rol === 'AdminBox') {
-      const cargarBoxesReales = async () => {
-        try {
-          // Extraemos la URL base (ej. http://localhost:5000/api)
-          const baseUrl = COMPETENCIAS_ENDPOINT.split('/competencias')[0];
-
-          // Hacemos la petición (si tu controlador es singular, cambia '/boxes' por '/box')
-          const res = await fetch(`${baseUrl}/box`);
-          const data = await res.json();
-
-          // Escudo: Solo guardamos si realmente nos devolvió una lista
-          if (Array.isArray(data)) {
-            setListaBoxes(data);
-          } else {
-            console.error("La API devolvió algo que no es una lista:", data);
-            // Si la API devolvió un 1 u otra cosa, evitamos que el .map() explote.
-          }
-        } catch (error) {
-          console.error("Error de red al cargar los boxes reales", error);
-        }
-      };
-      cargarBoxesReales();
-    }
-  }, [usuario]);
 
   const calculateHeight = () => {
     const navEl = navRef.current;
@@ -246,11 +216,11 @@ const CardNav = ({
 
             {(usuario?.rol === 'Developer') && (
               <BoxPickerModal
-                boxes={listaBoxes.map(b => ({ idBox: b.idBox || b.IdBox, nombre: b.nombre || b.Nombre }))}
+                boxes={listaBoxes}
                 boxSeleccionado={boxActivo}
                 onChange={(boxId) => {
                   if (boxId === null) return;
-                  const boxSel = listaBoxes.find(b => (b.idBox || b.IdBox) === boxId);
+                  const boxSel = listaBoxes.find(b => b.idBox === boxId);
                   if (boxSel) {
                     localStorage.setItem('box', JSON.stringify({
                       idBox: boxSel.idBox || boxSel.IdBox,
