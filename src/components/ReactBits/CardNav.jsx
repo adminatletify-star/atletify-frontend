@@ -35,6 +35,16 @@ const CardNav = ({
   // Mantiene el ref sincronizado con el estado
   useEffect(() => { isExpandedRef.current = isExpanded; }, [isExpanded]);
 
+  // Ref que siempre apunta a closeMenu actualizado (evita stale closure)
+  const closeMenuRef = useRef(null);
+
+  // Cierra el menú cuando el sidebar del Dashboard se abre
+  useEffect(() => {
+    const handler = () => { if (closeMenuRef.current) closeMenuRef.current(); };
+    window.addEventListener('atletify:dashsidebar-open', handler);
+    return () => window.removeEventListener('atletify:dashsidebar-open', handler);
+  }, []);
+
   // Detecta cambios de breakpoint
   useEffect(() => {
     const handleResize = () => setIsMobileNav(window.innerWidth <= 1200);
@@ -132,6 +142,7 @@ const CardNav = ({
     tl.eventCallback('onReverseComplete', () => setIsExpanded(false));
     tl.reverse();
   };
+  closeMenuRef.current = closeMenu;
 
   const openMenu = () => {
     const tl = tlRef.current;
@@ -140,6 +151,7 @@ const CardNav = ({
     setIsHamburgerOpen(true);
     setIsExpanded(true);
     tl.play(0);
+    window.dispatchEvent(new CustomEvent('atletify:cardnav-open'));
   };
 
   const toggleMenu = () => {

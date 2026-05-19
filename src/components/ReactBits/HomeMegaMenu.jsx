@@ -250,7 +250,7 @@ export default function HomeMegaMenu({ user, mobileMenuOpen, setMobileMenuOpen }
                 <div className="hmm-dropdown-grid" style={{ gridTemplateColumns: '1fr' }}>
                   <div className="hmm-col" style={{ padding: '1rem 1.5rem' }}>
                     <Link to="/sobre-nosotros" className="hmm-link-simple" onClick={handleLinkClick}>Sobre Nosotros</Link>
-                    <Link to="/wolfpack" className="hmm-link-simple" onClick={handleLinkClick}>Wolfpack</Link>
+                    <a href="/wolfpack" className="hmm-link-simple" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>Wolfpack</a>
                   </div>
                 </div>
               </div>
@@ -321,7 +321,7 @@ export default function HomeMegaMenu({ user, mobileMenuOpen, setMobileMenuOpen }
             <li><Link to="/ejercicios" onClick={handleLinkClick}>Ejercicios</Link></li>
             <li><Link to="/simulador-barra-publico" onClick={handleLinkClick}>Simulador de Barra</Link></li>
             <li><Link to="/sobre-nosotros" onClick={handleLinkClick}>Nosotros</Link></li>
-            <li><Link to="/wolfpack" onClick={handleLinkClick}>Wolfpack</Link></li>
+            <li><a href="/wolfpack" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>Wolfpack</a></li>
           </ul>
 
           <div className="hmm-mobile-footer mt-5">

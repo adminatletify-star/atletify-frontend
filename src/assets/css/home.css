@@ -24,6 +24,41 @@
   --home-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ========== CULTURA PAGE HERO ========== */
+.cultura-hero-seccion {
+  padding: 7rem 1.5rem 4rem;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(230,57,70,0.08) 0%, transparent 100%);
+  border-bottom: 1px solid var(--home-border);
+}
+
+.cultura-hero-titulo {
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--home-text);
+  line-height: 1;
+  margin: 0.5rem 0 1rem;
+}
+
+.cultura-hero-sub {
+  font-size: clamp(0.95rem, 2vw, 1.2rem);
+  color: var(--home-secondary);
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .cultura-hero-seccion { padding: 6rem 1rem 3rem; }
+  .cultura-hero-sub { font-size: 0.95rem; }
+}
+
+@media (max-width: 576px) {
+  .cultura-hero-seccion { padding: 5rem 1rem 2.5rem; }
+  .cultura-hero-titulo { letter-spacing: 0.06em; }
+}
+
 /* ========== BASE WRAPPER ========== */
 .home-wrapper {
   min-height: 100vh;
@@ -145,176 +180,323 @@
 }
 
 /* ========================================================
-   HERO SCROLL — CONTENEDOR LARGO + STICKY LAYER
+   HERO SAAS — FOTO FULLSCREEN + BRANDING
    ======================================================== */
-.hero-scroll-container {
+.hero-saas {
   position: relative;
   height: 100vh;
-}
-
-.hero-sticky-layer {
-  position: relative;
-  height: 100vh;
-  width: 100%;
-  overflow: hidden;
-  background-color: #000;
-}
-
-/* ========== COLLAGE GRID ========== */
-.collage-grid {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: 2fr 1.4fr 1.4fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 3px;
-  z-index: 1;
-}
-
-.collage-cell {
-  position: relative;
-  overflow: hidden;
-  will-change: opacity;
-}
-
-.collage-cell--1 {
-  grid-column: 1;
-  grid-row: 1 / 3;
-}
-
-.collage-cell--2 {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.collage-cell--3 {
-  grid-column: 3;
-  grid-row: 1;
-}
-
-.collage-cell--4 {
-  grid-column: 2;
-  grid-row: 2;
-}
-
-.collage-cell--5 {
-  grid-column: 3;
-  grid-row: 2;
-}
-
-.collage-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  display: block;
-}
-
-.collage-cell--1 .collage-img {
-  object-position: center 30%;
-}
-
-.collage-cell--2 .collage-img {
-  object-position: center 20%;
-}
-
-.collage-cell--3 .collage-img {
-  object-position: center 40%;
-}
-
-.collage-cell--4 .collage-img {
-  object-position: center 50%;
-}
-
-.collage-cell--5 .collage-img {
-  object-position: center 30%;
-}
-
-.collage-cell-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom,
-      rgba(0, 0, 0, 0.1) 0%,
-      rgba(0, 0, 0, 0.5) 100%);
-}
-
-/* Overlay global oscuro sobre el collage (para legibilidad del texto) */
-.collage-master-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg,
-      rgba(0, 0, 0, 0.55) 0%,
-      rgba(0, 0, 0, 0.35) 50%,
-      rgba(0, 0, 0, 0.65) 100%);
-  z-index: 2;
-  pointer-events: none;
-}
-
-/* ========== HERO LOGO BLOCK ========== */
-.hero-logo-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.hero-logo-icono {
-  width: clamp(80px, 14vw, 140px);
-  height: auto;
-  object-fit: contain;
-  filter: drop-shadow(0 0 24px rgba(230, 57, 70, 0.55)) drop-shadow(0 4px 16px rgba(0, 0, 0, 0.8));
-  margin-bottom: 0.75rem;
-}
-
-.hero-brand-name {
-  font-family: var(--font-heading);
-  font-size: clamp(1.1rem, 3vw, 2rem);
-  font-weight: 700;
-  letter-spacing: 5px;
-  color: #F0F0F5;
-  margin: 0;
-  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.9);
-}
-
-.hero-brand-letra-roja {
-  color: #E63946;
-}
-
-/* ========== TAGLINE INICIAL ========== */
-.hero-tagline-wrapper {
-  position: absolute;
-  inset: 0;
+  min-height: 680px;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+/* ── Imagen de fondo ── */
+.hero-saas-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hero-saas-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+  display: block;
+}
+
+.hero-saas-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 5, 12, 0.62);
+}
+
+.hero-saas-glow-bottom {
+  display: none;
+}
+
+/* ── Contenido dividido ── */
+.hero-saas-content {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: 75px 6vw 0;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* Lado izquierdo: logo */
+.hero-saas-left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Lado derecho: texto */
+.hero-saas-right {
+  display: flex;
   flex-direction: column;
-  z-index: 10;
-  pointer-events: none;
-  padding-top: 75px;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
 }
 
-.hero-title {
-  font-family: var(--font-hero);
-  font-size: clamp(2.5rem, 7vw, 5.5rem);
-  font-weight: 400;
+/* Badge */
+.hero-saas-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.35);
+  color: #F5A0A6;
+  font-family: var(--font-heading-alt, sans-serif);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  letter-spacing: 6px;
-  text-shadow: 0 4px 40px rgba(0, 0, 0, 0.8);
-  margin-bottom: 0;
-  line-height: 1;
-  color: var(--home-text);
-}
-
-.hero-subtitle {
-  font-family: var(--font-heading-alt);
-  font-size: clamp(0.9rem, 2vw, 1.2rem);
-  color: var(--home-secondary);
-  font-weight: 400;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  margin-top: 1rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: 100px;
   margin-bottom: 2rem;
+  backdrop-filter: blur(8px);
+}
+
+.hero-saas-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #E63946;
+  box-shadow: 0 0 8px rgba(230, 57, 70, 0.9);
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.7); }
+}
+
+/* Logo */
+.hero-saas-logo {
+  width: clamp(180px, 28vw, 340px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 24px rgba(0, 0, 0, 0.7));
+}
+
+/* Marca */
+.hero-saas-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1;
+  margin-bottom: 1.2rem;
+}
+
+.hero-saas-atletify {
+  font-family: var(--font-heading, sans-serif);
+  font-size: clamp(2rem, 6.5vw, 5.8rem);
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: #F0F0F5;
+  text-shadow:
+    0 0 60px rgba(255, 255, 255, 0.12),
+    0 4px 40px rgba(0, 0, 0, 0.95);
+  line-height: 1;
+}
+
+.hero-saas-system {
+  font-family: var(--font-heading-alt, sans-serif);
+  font-size: clamp(0.9rem, 2.8vw, 1.8rem);
+  font-weight: 700;
+  letter-spacing: 0.55em;
+  color: #E63946;
+  text-transform: uppercase;
+  text-shadow: 0 0 24px rgba(230, 57, 70, 0.7);
+  margin-top: 0.35rem;
+}
+
+/* Línea divisora */
+.hero-saas-divider {
+  width: 120px;
+  height: 2px;
+  background: linear-gradient(90deg, #E63946, transparent);
+  margin: 0 0 1.5rem 0;
+  transform-origin: left center;
+}
+
+/* Tagline */
+.hero-saas-tagline {
+  font-family: var(--font-body, sans-serif);
+  font-size: clamp(0.88rem, 1.6vw, 1.15rem);
+  color: rgba(240, 240, 245, 0.75);
+  line-height: 1.7;
+  margin-bottom: 2rem;
+  max-width: min(520px, 100%);
+}
+
+/* CTAs */
+.hero-saas-ctas {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-bottom: 0;
+}
+
+.hero-saas-cta-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  color: #fff;
+  font-family: var(--font-heading, sans-serif);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  text-decoration: none;
+  cursor: pointer;
+  position: relative;
+  transition: gap 0.3s ease;
+}
+
+.hero-saas-cta-primary::after {
+  content: '';
+  display: block;
+  width: 44px;
+  height: 1px;
+  background: #E63946;
+  transition: width 0.3s ease;
+}
+
+.hero-saas-cta-primary:hover {
+  color: #fff;
+  gap: 18px;
+  background: transparent;
+  transform: none;
+  box-shadow: none;
+}
+
+.hero-saas-cta-primary:hover::after {
+  width: 64px;
+}
+
+.hero-saas-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: #F0F0F5;
+  font-family: var(--font-heading, sans-serif);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  padding: 0.85rem 2rem;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  text-decoration: none;
+  backdrop-filter: blur(8px);
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.hero-saas-cta-secondary:hover {
+  color: #F0F0F5;
+  background: rgba(255, 255, 255, 0.11);
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px);
+}
+
+
+/* Scroll hint posicionado al fondo del hero */
+.hero-saas .hero-scroll-hint {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE HERO — todos los breakpoints
+   ═══════════════════════════════════════ */
+
+/* ── Tablet landscape / pantallas medianas (≤1100px) ── */
+@media (max-width: 1100px) {
+  .hero-saas-content { gap: clamp(1.5rem, 3vw, 3rem); padding: 75px 3vw 0; }
+}
+
+/* ── Tablet portrait (≤900px): apila logo arriba, texto abajo ── */
+@media (max-width: 900px) {
+  .hero-saas-content {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 1.2rem;
+    padding: 90px 2rem 5rem;
+  }
+  .hero-saas-right   { align-items: center; text-align: center; }
+  .hero-saas-brand   { align-items: center; }
+  .hero-saas-divider {
+    margin: 0 auto 1.3rem;
+    background: linear-gradient(90deg, transparent, #E63946, transparent);
+    transform-origin: center;
+  }
+  .hero-saas-logo    { width: clamp(100px, 18vw, 200px); }
+  .hero-saas-ctas    { justify-content: center; }
+  .hero-saas-tagline { max-width: 100%; }
+}
+
+/* ── Tablet pequeña / móvil grande (≤768px) ── */
+@media (max-width: 768px) {
+  .hero-saas-badge    { font-size: 0.73rem; margin-bottom: 1.2rem; }
+  .hero-saas-logo     { width: clamp(90px, 20vw, 160px); }
+  .hero-saas-atletify { letter-spacing: 0.12em; }
+  .hero-saas-system   { letter-spacing: 0.4em; }
+  .hero-saas-tagline  { font-size: 0.92rem; margin-bottom: 1.8rem; }
+}
+
+/* ── Móvil (≤576px) ── */
+@media (max-width: 576px) {
+  .hero-saas          { min-height: 100svh; }
+  .hero-saas-content  { padding: 80px 1.25rem 4rem; gap: 0.9rem; }
+  .hero-saas-logo     { width: clamp(72px, 24vw, 120px); }
+  .hero-saas-badge    {
+    font-size: 0.64rem;
+    letter-spacing: 0.12em;
+    padding: 0.35rem 0.8rem;
+    margin-bottom: 0.9rem;
+  }
+  .hero-saas-atletify {
+    font-size: clamp(1.9rem, 9vw, 3rem);
+    letter-spacing: 0.08em;
+  }
+  .hero-saas-system   { letter-spacing: 0.28em; font-size: 0.8rem; }
+  .hero-saas-divider  { width: 80px; margin-bottom: 1rem; }
+  .hero-saas-tagline  { font-size: 0.85rem; margin-bottom: 1.4rem; line-height: 1.6; }
+  .hero-saas-cta-primary,
+  .hero-saas-cta-secondary { padding: 0.7rem 1.3rem; font-size: 0.86rem; }
+}
+
+/* ── Móvil pequeño — iPhone SE, Galaxy A serie (≤380px) ── */
+@media (max-width: 380px) {
+  .hero-saas-content  { padding: 75px 1rem 3rem; }
+  .hero-saas-logo     { width: clamp(60px, 22vw, 96px); }
+  .hero-saas-atletify {
+    font-size: clamp(1.6rem, 9.5vw, 2.2rem);
+    letter-spacing: 0.05em;
+  }
+  .hero-saas-system   { letter-spacing: 0.2em; font-size: 0.74rem; }
+  .hero-saas-badge    { font-size: 0.6rem; letter-spacing: 0.1em; }
+  .hero-saas-tagline  { font-size: 0.8rem; }
+  .hero-saas-ctas     { flex-direction: column; align-items: center; width: 100%; }
+  .hero-saas-cta-primary,
+  .hero-saas-cta-secondary { width: 100%; justify-content: center; font-size: 0.84rem; }
 }
 
 .hero-scroll-hint {

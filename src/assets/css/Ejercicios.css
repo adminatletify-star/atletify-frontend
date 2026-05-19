@@ -219,6 +219,20 @@
   white-space: nowrap;
 }
 
+/* ── Card header layout ── */
+.ej-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  overflow: hidden;
+}
+
+.ej-card-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
 /* ── Ícono ── */
 .ej-icono {
   width: 48px;
@@ -245,6 +259,19 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: block;
+  max-width: 100%;
+}
+
+/* ── Subnombre (Alt) ── */
+.ej-subnombre {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted, #6B7280);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* ── Categoría ── */
@@ -420,6 +447,96 @@
   word-break: break-word;
 }
 
+/* ── Contador página ── */
+.ej-contador-pagina {
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted, #6B7280);
+}
+
+/* ── Paginación ── */
+.ej-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.ej-pag-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--secondary, #A8B2D1);
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.ej-pag-btn:hover:not(:disabled) {
+  background: rgba(230,57,70,0.12);
+  border-color: rgba(230,57,70,0.35);
+  color: var(--primary, #E63946);
+}
+
+.ej-pag-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.ej-pag-numeros {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ej-pag-num {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.5rem;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--secondary, #A8B2D1);
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ej-pag-num:hover {
+  background: rgba(230,57,70,0.1);
+  border-color: rgba(230,57,70,0.3);
+  color: var(--text-primary, #F0F0F5);
+}
+
+.ej-pag-num.activo {
+  background: var(--primary, #E63946);
+  border-color: var(--primary, #E63946);
+  color: #fff;
+  font-weight: 700;
+}
+
+.ej-pag-dots {
+  color: var(--text-muted, #6B7280);
+  font-size: 0.85rem;
+  padding: 0 0.2rem;
+  user-select: none;
+}
+
 /* ── Footer ── */
 .ej-footer {
   padding: 2rem 0;
@@ -435,7 +552,7 @@
   margin: 0;
 }
 
-/* ── Responsive — tablet ── */
+/* ── Responsive — tablet ≤ 768px ── */
 @media (max-width: 768px) {
   .ej-navbar-title      { font-size: 1.3rem; letter-spacing: 2px; }
   .ej-titulo            { font-size: clamp(1.6rem, 6vw, 2.4rem); }
@@ -448,39 +565,69 @@
   .ej-ver-mas           { font-size: 0.75rem; }
   .ej-contador          { font-size: 0.8rem; }
   .ej-modal             { padding: 1.5rem; }
-  .ej-card              { height: auto; min-height: 300px; padding: 1.4rem; }
+  .ej-card              { height: auto; min-height: 280px; padding: 1.4rem; }
 }
 
-/* ── Responsive — móvil ── */
+/* ── Responsive — móvil ≤ 576px (2 columnas) ── */
 @media (max-width: 576px) {
-  .ej-navbar-title      { font-size: 1.1rem; letter-spacing: 1.5px; }
+  /* Hero */
+  .ej-hero              { padding-top: 5rem; padding-bottom: 1.5rem; }
   .ej-titulo            { font-size: clamp(1.3rem, 7vw, 1.9rem); letter-spacing: 1px; }
   .ej-subtitulo         { font-size: 0.8rem; }
   .ej-tag               { font-size: 0.65rem; letter-spacing: 2px; padding: 0.25rem 0.9rem; }
-  .ej-nombre            { font-size: 1.15rem; }
-  .ej-categoria         { font-size: 0.65rem; }
-  .ej-instruccion       { font-size: 0.78rem; }
+
+  /* Filtros y buscador */
+  .ej-filtro-btn        { font-size: 0.65rem; padding: 0.22rem 0.65rem; }
+  .ej-buscador          { padding: 0.6rem 1rem; }
+  .ej-buscador-input    { font-size: 0.85rem; }
+  .ej-contador          { font-size: 0.75rem; }
+
+  /* Gutter más compacto entre cards */
+  .ej-seccion .row      { --bs-gutter-x: 0.75rem; --bs-gutter-y: 0.75rem; }
+
+  /* Cards (2 col → ~160px ancho en iPhone SE) */
+  .ej-card              { padding: 1rem 0.85rem; min-height: 210px; gap: 0.6rem; border-radius: 16px; }
+  .ej-card-header       { gap: 0.5rem; }
+  .ej-subnombre         { display: none; }
+  .ej-icono             { width: 34px; height: 34px; font-size: 0.82rem; border-radius: 10px; }
+  .ej-nombre            { font-size: 1rem; letter-spacing: 0.5px; }
+  .ej-categoria         { font-size: 0.6rem; margin-top: 0.15rem; }
+  .ej-instruccion       { font-size: 0.75rem; line-height: 1.5; -webkit-line-clamp: 3; }
+  .ej-ver-mas           { font-size: 0.65rem; gap: 0.25rem; }
+  .ej-watermark         { font-size: clamp(2.5rem, 8vw, 4rem); }
+
+  /* Modal */
+  .ej-modal-overlay     { padding: 0.75rem; }
+  .ej-modal             { padding: 1.1rem; border-radius: 16px; }
   .ej-modal-nombre      { font-size: 1.3rem; letter-spacing: 1px; }
   .ej-modal-texto       { font-size: 0.82rem; line-height: 1.65; }
-  .ej-filtro-btn        { font-size: 0.67rem; padding: 0.25rem 0.7rem; }
-  .ej-ver-mas           { font-size: 0.7rem; }
-  .ej-contador          { font-size: 0.75rem; }
-  .ej-modal             { padding: 1.2rem; border-radius: 16px; }
-  .ej-modal-overlay     { padding: 1rem; }
-  .ej-card              { padding: 1.2rem; min-height: 260px; }
-  .ej-icono             { width: 40px; height: 40px; font-size: 1rem; }
   .ej-modal-icono       { width: 44px; height: 44px; font-size: 1.1rem; }
-  .ej-hero              { padding-top: 5rem; padding-bottom: 1.8rem; }
+  .ej-navbar-title      { font-size: 1.1rem; letter-spacing: 1.5px; }
+
+  /* Paginación */
+  .ej-pag-btn           { width: 34px; height: 34px; font-size: 0.75rem; }
+  .ej-pag-num           { min-width: 32px; height: 32px; font-size: 0.76rem; }
+  .ej-pagination        { gap: 0.35rem; margin-top: 1.75rem; }
 }
 
-/* ── Responsive — móvil muy pequeño ── */
+/* ── Responsive — móvil pequeño ≤ 380px ── */
 @media (max-width: 380px) {
   .ej-titulo            { font-size: clamp(1.1rem, 8vw, 1.5rem); }
   .ej-subtitulo         { font-size: 0.74rem; }
-  .ej-nombre            { font-size: 1rem; }
+
+  /* Cards más compactas aún */
+  .ej-card              { padding: 0.75rem 0.65rem; min-height: 185px; border-radius: 12px; }
+  .ej-card-header       { gap: 0.4rem; }
+  .ej-icono             { width: 28px; height: 28px; font-size: 0.72rem; border-radius: 8px; }
+  .ej-nombre            { font-size: 0.88rem; }
+  .ej-categoria         { font-size: 0.56rem; }
+  .ej-instruccion       { font-size: 0.7rem; -webkit-line-clamp: 3; }
+  .ej-ver-mas           { font-size: 0.6rem; }
+  .ej-filtro-btn        { font-size: 0.6rem; padding: 0.18rem 0.55rem; }
+
+  /* Modal */
   .ej-modal-nombre      { font-size: 1.1rem; }
   .ej-modal-texto       { font-size: 0.76rem; }
-  .ej-filtro-btn        { font-size: 0.62rem; padding: 0.2rem 0.6rem; }
 }
 
 video::-webkit-media-controls-overflow-button {

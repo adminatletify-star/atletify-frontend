@@ -37,6 +37,8 @@ export default function Dashboard() {
 
   const [modalSuccessAdmin, setModalSuccessAdmin] = useState({ open: false, username: '', contrasenaGenerada: '' });
   const [modalEliminarPlan, setModalEliminarPlan] = useState({ open: false, index: null, nombre: '' });
+  const [modalEliminarBox, setModalEliminarBox] = useState({ open: false, idBox: null, nombre: '' });
+  const [eliminandoBox, setEliminandoBox] = useState(false);
   const [copiado, setCopiado] = useState(null);
 
   const copiar = (texto, campo) => {
@@ -52,6 +54,12 @@ export default function Dashboard() {
     setUser(u);
     cargarDataGlobal();
   }, [navigate]);
+
+  useEffect(() => {
+    const handler = () => setSidebarOpen(false);
+    window.addEventListener('atletify:cardnav-open', handler);
+    return () => window.removeEventListener('atletify:cardnav-open', handler);
+  }, []);
 
   useEffect(() => {
     if (activeSection !== 'configglobal') return;
@@ -101,6 +109,29 @@ export default function Dashboard() {
     const mins = Math.floor(diff / 60000);
     const segs = Math.floor((diff % 60000) / 1000);
     return diff === 0 ? 'Expirado' : `${mins}m ${segs.toString().padStart(2, '0')}s`;
+  }
+
+  async function eliminarBoxCascade() {
+    const { idBox, nombre } = modalEliminarBox;
+    setEliminandoBox(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/box/${idBox}/cascade`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setMetricasBoxes(prev => prev.filter(b => b.idBox !== idBox));
+        setBoxes(prev => prev.filter(b => b.idBox !== idBox));
+        setStats(prev => ({ ...prev, boxes: prev.boxes - 1 }));
+        setModalEliminarBox({ open: false, idBox: null, nombre: '' });
+        alert(`Box "${nombre}" eliminado con éxito.`);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.mensaje || 'Error al eliminar el box.');
+      }
+    } catch { alert('Error de conexión al eliminar el box.'); }
+    finally { setEliminandoBox(false); }
   }
 
   async function eliminarUsuario(id) {
@@ -314,7 +345,7 @@ export default function Dashboard() {
 
       {/* ── Topbar móvil ─────────────────────────────────────── */}
       <header className="dash-topbar d-flex d-lg-none align-items-center gap-3 px-3">
-        <button className="dash-topbar-toggle" onClick={() => setSidebarOpen(true)} aria-label="Abrir menú">
+        <button className="dash-topbar-toggle" onClick={() => { setSidebarOpen(true); window.dispatchEvent(new CustomEvent('atletify:dashsidebar-open')); }} aria-label="Abrir menú">
           <i className="fas fa-bars"></i>
         </button>
         <i className="fas fa-terminal" style={{ color: 'var(--primary)', fontSize: '1rem' }}></i>
@@ -697,6 +728,17 @@ export default function Dashboard() {
                           {b.moduloCompetenciasActivo ? 'ON' : 'OFF'}
                         </button>
                       </div>
+
+                      <div className="scb-divider"></div>
+
+                      {/* Eliminar Box en cascada */}
+                      <button
+                        className="scb-delete-box-btn"
+                        onClick={() => setModalEliminarBox({ open: true, idBox: b.idBox, nombre: b.nombre })}
+                        title="Eliminar Box permanentemente"
+                      >
+                        <i className="fas fa-trash-alt"></i> Eliminar Box
+                      </button>
 
                     </div>
                   );
@@ -1194,6 +1236,41 @@ export default function Dashboard() {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* ══ MODAL: Eliminar Box en Cascada ══ */}
+      {modalEliminarBox.open && (
+        <div className="dam-overlay" style={{ zIndex: 1300 }}>
+          <div className="dam-panel dam-panel--danger">
+            <div className="dep-icon-wrap">
+              <i className="fas fa-exclamation-triangle"></i>
+            </div>
+            <h5 className="dep-title">¿Eliminar Box permanentemente?</h5>
+            <p className="dep-msg">
+              Esto eliminará <span className="dep-plan-name">"{modalEliminarBox.nombre}"</span> y{' '}
+              <strong>todos sus datos</strong> (atletas, clases, ventas, finanzas, etc.) de forma{' '}
+              <span style={{ color: 'var(--primary)' }}>irreversible</span>.
+            </p>
+            <div className="dam-footer" style={{ justifyContent: 'center', gap: '0.75rem' }}>
+              <button
+                className="dam-btn-cancel"
+                disabled={eliminandoBox}
+                onClick={() => setModalEliminarBox({ open: false, idBox: null, nombre: '' })}
+              >
+                Cancelar
+              </button>
+              <button
+                className="dam-btn-danger"
+                disabled={eliminandoBox}
+                onClick={eliminarBoxCascade}
+              >
+                {eliminandoBox
+                  ? <><i className="fas fa-spinner fa-spin"></i> Eliminando...</>
+                  : <><i className="fas fa-trash-alt"></i> Sí, eliminar todo</>}
+              </button>
+            </div>
           </div>
         </div>
       )}

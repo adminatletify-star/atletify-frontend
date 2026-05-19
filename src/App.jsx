@@ -313,7 +313,6 @@ function App() {
               <Route path="/historial-competencias" element={<HistorialCompetenciasPublico />} />
               <Route path="/historial-competencias/:idBox" element={<HistorialBoxDetalle />} />
               <Route path="/simulador-barra-publico" element={<SimuladorBarraPublico />} />
-              <Route path="/wolfpack" element={<WolfPackPage />} />
               <Route path="/ejercicios" element={<Ejercicios />} />
               <Route path="/directorio-boxes" element={<DirectorioBoxes />} />
               <Route path="/box/:id" element={<BoxDetalle />} />
@@ -324,6 +323,7 @@ function App() {
             {/* ========================================= */}
             {/* RUTAS COMPLETAMENTE SIN NAVBAR            */}
             {/* ========================================= */}
+            <Route path="/wolfpack" element={<WolfPackPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/terminos" element={<TerminosCondiciones />} />
             <Route path="/politica-cookies" element={<PoliticaCookies />} />

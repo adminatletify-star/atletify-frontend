@@ -1,0 +1,701 @@
+/* ═══════════════════════════════════════════════════════════════
+   HomeAliado.css — Sección "Nuestro Aliado: Wolfpack"
+   ═══════════════════════════════════════════════════════════════ */
+
+.ha-section {
+  --ha-red:       #E63946;
+  --ha-red-glow:  rgba(230, 57, 70, 0.45);
+  --ha-dark:      #080810;
+  --ha-surface:   rgba(255, 255, 255, 0.04);
+  --ha-border:    rgba(255, 255, 255, 0.08);
+  --ha-text:      #E8E8F0;
+  --ha-muted:     rgba(232, 232, 240, 0.55);
+  --ha-radius:    16px;
+}
+
+.ha-section {
+  position: relative;
+  overflow: hidden;
+  background: var(--ha-dark);
+  padding: 0 0 80px;
+  isolation: isolate;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FONDO — sin parallax JS para mejor rendimiento
+══════════════════════════════════════════════════════════════ */
+.ha-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.ha-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  display: block;
+  /* GPU layer para no bloquear el hilo principal */
+  transform: translateZ(0);
+  will-change: auto;
+}
+
+.ha-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(8, 8, 16, 0.5) 0%,
+    rgba(8, 8, 16, 0.82) 40%,
+    rgba(8, 8, 16, 0.97) 70%,
+    #080810 100%
+  );
+}
+
+.ha-bg-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(8, 8, 16, 0.7) 100%);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HERO
+══════════════════════════════════════════════════════════════ */
+.ha-hero {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 120px 24px 64px;
+  gap: 20px;
+}
+
+.ha-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(230, 57, 70, 0.14);
+  border: 1px solid rgba(230, 57, 70, 0.35);
+  border-radius: 100px;
+  padding: 6px 18px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--ha-red);
+  text-transform: uppercase;
+}
+
+.ha-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ha-red);
+  box-shadow: 0 0 8px var(--ha-red);
+  animation: ha-pulse 2s ease-in-out infinite;
+}
+
+/* ── Animaciones CSS del hero (sin JS) ── */
+.ha-anim-1,
+.ha-anim-2,
+.ha-anim-3,
+.ha-anim-4 {
+  opacity: 0;
+  transform: translateY(28px);
+}
+
+.ha-hero--visible .ha-anim-1 {
+  animation: ha-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.05s forwards;
+}
+.ha-hero--visible .ha-anim-2 {
+  animation: ha-fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.18s forwards;
+}
+.ha-hero--visible .ha-anim-3 {
+  animation: ha-scale-x  0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.42s forwards;
+}
+.ha-hero--visible .ha-anim-4 {
+  animation: ha-fade-up 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.55s forwards;
+}
+
+@keyframes ha-fade-up {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ha-scale-x {
+  from { opacity: 0; transform: scaleX(0) translateY(0); }
+  to   { opacity: 1; transform: scaleX(1) translateY(0); }
+}
+
+@keyframes ha-pulse {
+  0%, 100% { opacity: 1;   transform: scale(1);   }
+  50%       { opacity: 0.5; transform: scale(1.4); }
+}
+
+.ha-wolfpack-title {
+  font-size: clamp(4.5rem, 13vw, 11rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 0.9;
+  color: #fff;
+  text-shadow:
+    0 0 60px rgba(230, 57, 70, 0.2),
+    0 0 120px rgba(230, 57, 70, 0.1);
+  margin: 0;
+  user-select: none;
+}
+
+.ha-wolfpack-accent {
+  color: var(--ha-red);
+  text-shadow:
+    0 0 40px var(--ha-red-glow),
+    0 0 80px rgba(230, 57, 70, 0.3);
+}
+
+.ha-hero-divider {
+  width: 120px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--ha-red), transparent);
+  transform-origin: center center;
+}
+
+.ha-hero-sub {
+  font-size: clamp(0.95rem, 2.2vw, 1.2rem);
+  color: var(--ha-muted);
+  letter-spacing: 0.04em;
+  margin: 0;
+  max-width: 520px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CONTENIDO PRINCIPAL
+══════════════════════════════════════════════════════════════ */
+.ha-main {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 40px 72px;
+}
+
+.ha-text-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+}
+
+.ha-text-heading {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 800;
+  color: var(--ha-text);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.ha-text-accent { color: var(--ha-red); }
+
+.ha-text-body {
+  font-size: clamp(0.9rem, 1.6vw, 1.05rem);
+  color: var(--ha-muted);
+  line-height: 1.75;
+  margin: 0;
+}
+
+.ha-text-body strong {
+  color: var(--ha-text);
+  font-weight: 600;
+}
+
+
+/* ── Botón Conoce Wolfpack ── */
+.ha-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 8px;
+  width: fit-content;
+  text-decoration: none;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(230, 57, 70, 0.5);
+  transition: border-color 0.3s, box-shadow 0.3s;
+  box-shadow: 0 4px 20px rgba(230, 57, 70, 0.15);
+}
+
+.ha-btn:hover {
+  border-color: var(--ha-red);
+  box-shadow: 0 8px 32px rgba(230, 57, 70, 0.3);
+  text-decoration: none;
+}
+
+.ha-btn-text {
+  padding: 14px 24px;
+  background: rgba(230, 57, 70, 0.08);
+  color: var(--ha-text);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: background 0.3s, color 0.3s;
+}
+
+.ha-btn:hover .ha-btn-text {
+  background: rgba(230, 57, 70, 0.14);
+  color: #fff;
+}
+
+.ha-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 100%;
+  background: var(--ha-red);
+  color: #fff;
+  font-size: 0.85rem;
+  align-self: stretch;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.ha-btn:hover .ha-btn-icon {
+  background: #c0303b;
+}
+
+.ha-btn:hover .ha-btn-icon i {
+  transform: translateX(3px);
+}
+
+.ha-btn-icon i {
+  transition: transform 0.25s;
+}
+
+/* Mosaico */
+.ha-mosaic-col {
+  display: flex;
+  align-items: center;
+}
+
+.ha-mosaic {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  height: 500px;
+}
+
+.ha-mosaic-cell {
+  overflow: hidden;
+  border-radius: 12px;
+  position: relative;
+  background: #111;
+}
+
+.ha-mosaic-cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+  display: block;
+  /* GPU layer en cada imagen del mosaico */
+  transform: translateZ(0);
+}
+
+.ha-mosaic-cell:hover img { transform: scale(1.05) translateZ(0); }
+
+.ha-mosaic-cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 60%, rgba(230, 57, 70, 0.06) 100%);
+  pointer-events: none;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   FILA DE FOTOS ESTÁTICA
+══════════════════════════════════════════════════════════════ */
+.ha-photo-row {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 8px 40px;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.ha-photo-row-item {
+  height: 200px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ha-photo-row-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+  transform: translateZ(0);
+}
+
+.ha-photo-row-item:hover img {
+  transform: scale(1.04) translateZ(0);
+}
+
+@media (max-width: 768px) {
+  .ha-photo-row { padding: 8px 24px; }
+  .ha-photo-row-item { height: 150px; }
+}
+
+@media (max-width: 576px) {
+  .ha-photo-row { padding: 8px 16px; gap: 6px; }
+  .ha-photo-row-item { height: 110px; border-radius: 8px; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   SILVIA — DUEÑA Y FUNDADORA
+══════════════════════════════════════════════════════════════ */
+.ha-silvia-section {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  max-width: 1240px;
+  margin: 80px auto 0;
+  padding: 0 40px;
+  align-items: center;
+}
+
+.ha-silvia-img-col {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.ha-silvia-img-frame {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 3 / 4;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  box-shadow:
+    0 0 0 1px rgba(230, 57, 70, 0.1),
+    0 32px 80px rgba(0, 0, 0, 0.6),
+    0 0 60px rgba(230, 57, 70, 0.12);
+}
+
+.ha-silvia-img-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+  transition: transform 0.7s ease;
+  transform: translateZ(0);
+}
+
+.ha-silvia-img-frame:hover img {
+  transform: scale(1.04) translateZ(0);
+}
+
+.ha-silvia-img-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 55%,
+    rgba(230, 57, 70, 0.15) 80%,
+    rgba(8, 8, 16, 0.5) 100%
+  );
+  pointer-events: none;
+}
+
+.ha-silvia-img-secondary {
+  position: absolute;
+  bottom: -24px;
+  right: -24px;
+  width: 38%;
+  aspect-ratio: 3 / 4;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 3px solid var(--ha-dark);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+}
+
+.ha-silvia-img-secondary img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+  transform: translateZ(0);
+}
+
+.ha-silvia-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ha-silvia-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(230, 57, 70, 0.2), rgba(230, 57, 70, 0.08));
+  border: 1px solid rgba(230, 57, 70, 0.4);
+  border-radius: 100px;
+  padding: 7px 18px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: var(--ha-red);
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.ha-silvia-badge-icon {
+  font-size: 0.75rem;
+  filter: drop-shadow(0 0 4px var(--ha-red));
+}
+
+.ha-silvia-name {
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-weight: 900;
+  line-height: 1.0;
+  color: var(--ha-text);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.ha-silvia-name-accent {
+  color: var(--ha-red);
+  text-shadow: 0 0 40px var(--ha-red-glow);
+  display: block;
+}
+
+.ha-silvia-divider {
+  width: 60px;
+  height: 3px;
+  background: var(--ha-red);
+  border-radius: 2px;
+  box-shadow: 0 0 12px var(--ha-red-glow);
+}
+
+.ha-silvia-bio {
+  font-size: clamp(0.9rem, 1.5vw, 1.05rem);
+  color: var(--ha-muted);
+  line-height: 1.75;
+  margin: 0;
+}
+
+.ha-silvia-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.ha-silvia-tag {
+  padding: 5px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--ha-border);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--ha-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  background: var(--ha-surface);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COACHES GRID
+══════════════════════════════════════════════════════════════ */
+.ha-coaches-section {
+  position: relative;
+  z-index: 2;
+  max-width: 1240px;
+  margin: 80px auto 0;
+  padding: 0 40px;
+}
+
+.ha-coaches-heading {
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  font-weight: 700;
+  color: var(--ha-text);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.ha-coaches-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.ha-coach-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.ha-coach-img-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--ha-border);
+  background: #111;
+}
+
+.ha-coach-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+  transition: transform 0.5s ease;
+  transform: translateZ(0);
+}
+
+.ha-coach-card:hover .ha-coach-img-wrap img {
+  transform: scale(1.06) translateZ(0);
+}
+
+.ha-coach-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(8, 8, 16, 0.7) 100%);
+  transition: background 0.4s;
+}
+
+.ha-coach-card:hover .ha-coach-overlay {
+  background: linear-gradient(180deg, transparent 40%, rgba(230, 57, 70, 0.15) 100%);
+}
+
+.ha-coach-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ha-muted);
+  transition: color 0.3s;
+}
+
+.ha-coach-card:hover .ha-coach-name { color: var(--ha-red); }
+
+/* ══════════════════════════════════════════════════════════════
+   CTA FINAL
+══════════════════════════════════════════════════════════════ */
+.ha-cta-block {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 80px 24px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.ha-cta-text {
+  font-size: clamp(1.05rem, 2.5vw, 1.55rem);
+  font-style: italic;
+  color: var(--ha-muted);
+  max-width: 640px;
+  margin: 0;
+  line-height: 1.55;
+}
+
+.ha-cta-line {
+  width: 80px;
+  height: 2px;
+  background: var(--ha-red);
+  box-shadow: 0 0 12px var(--ha-red-glow);
+  border-radius: 2px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════════════ */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .ha-hero { padding: 90px 20px 44px; gap: 16px; }
+  .ha-wolfpack-title { font-size: clamp(3.8rem, 14vw, 6rem); }
+
+  .ha-main {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    padding: 0 24px 52px;
+  }
+
+  .ha-mosaic { height: 320px; }
+
+  .ha-silvia-section {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    margin: 60px auto 0;
+    padding: 0 24px;
+  }
+  .ha-silvia-img-frame { max-width: 340px; }
+  .ha-silvia-img-secondary { right: calc(50% - 340px / 2 - 10px); }
+
+  .ha-coaches-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .ha-coaches-section { padding: 0 24px; margin-top: 56px; }
+}
+
+/* Móvil */
+@media (max-width: 576px) {
+  .ha-hero { padding: 72px 16px 32px; }
+  .ha-wolfpack-title { font-size: clamp(3rem, 18vw, 4.5rem); }
+
+  .ha-main { padding: 0 16px 40px; gap: 28px; }
+
+  .ha-mosaic { height: 240px; gap: 5px; }
+  .ha-mosaic-cell { border-radius: 8px; }
+
+  .ha-silvia-section { padding: 0 16px; margin-top: 48px; gap: 28px; }
+  .ha-silvia-img-frame { max-width: 280px; }
+  .ha-silvia-img-secondary {
+    width: 42%;
+    right: calc(50% - 280px / 2 - 8px);
+    bottom: -16px;
+  }
+  .ha-silvia-name { font-size: clamp(2rem, 10vw, 3rem); }
+  .ha-silvia-bio { font-size: 0.88rem; }
+
+  .ha-coaches-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .ha-coaches-section { padding: 0 16px; margin-top: 44px; }
+  .ha-coaches-heading { font-size: 0.88rem; margin-bottom: 16px; }
+
+  .ha-cta-block { padding: 52px 16px 0; }
+  .ha-cta-text { font-size: 0.95rem; }
+}
+
+/* Móvil pequeño */
+@media (max-width: 380px) {
+  .ha-wolfpack-title { font-size: clamp(2.4rem, 20vw, 3.2rem); }
+  .ha-text-heading { font-size: 1.2rem; }
+  .ha-text-body { font-size: 0.85rem; }
+  .ha-coaches-grid { grid-template-columns: repeat(2, 1fr); }
+  .ha-strip-item { width: 130px; height: 88px; }
+}
