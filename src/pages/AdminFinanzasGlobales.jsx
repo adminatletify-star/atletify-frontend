@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import AtletifyLoader from '../components/AtletifyLoader';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
@@ -14,6 +14,7 @@ export default function AdminFinanzasGlobales() {
   const [resumen, setResumen] = useState(null);
   const [egresos, setEgresos] = useState([]);
   const [ingresos, setIngresos] = useState([]);
+  const [dashboardData, setDashboardData] = useState(null);
   
   const [pestaña, setPestaña] = useState('dashboard');
   const tabRefs = useRef({});
@@ -47,14 +48,16 @@ export default function AdminFinanzasGlobales() {
     setLoading(true);
     try {
       const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
-      const [resResumen, resEgresos, resIngresos] = await Promise.all([
+      const [resResumen, resEgresos, resIngresos, resDashboard] = await Promise.all([
         fetch(`${API_BASE}/resumen/${idBox}?mes=${m}&anio=${a}`, { headers }),
         fetch(`${API_BASE}/egresos/${idBox}?mes=${m}&anio=${a}`, { headers }),
-        fetch(`${API_BASE}/ingresos/${idBox}?mes=${m}&anio=${a}`, { headers })
+        fetch(`${API_BASE}/ingresos/${idBox}?mes=${m}&anio=${a}`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/finanzas/dashboard/${idBox}`, { headers })
       ]);
       if (resResumen.ok) setResumen(await resResumen.json());
       if (resEgresos.ok) setEgresos(await resEgresos.json());
       if (resIngresos.ok) setIngresos(await resIngresos.json());
+      if (resDashboard.ok) setDashboardData(await resDashboard.json());
     } catch (error) {
       console.error('Error al cargar finanzas globales', error);
     } finally {
@@ -192,10 +195,14 @@ export default function AdminFinanzasGlobales() {
                   {resumen.estadisticas && (
                     <>
                       <div className="col-12 col-md-4">
-                        <div className="finanzas-globales-kpi-card" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
-                          <div className="finanzas-globales-kpi-title text-secondary"><i className="fas fa-users text-primary"></i> Mensualidades Cobradas</div>
-                          <div className="finanzas-globales-kpi-value fs-4 text-white">{resumen.estadisticas.mensualidades} <span className="fs-6 text-secondary">atletas</span></div>
-                        </div>
+                        <Link to="/gestion-finanzas" state={{ fromTab: 'semaforo' }} style={{ textDecoration: 'none' }}>
+                          <div className="finanzas-globales-kpi-card finanzas-globales-clickable-card" style={{ borderColor: 'rgba(46, 204, 113, 0.25)' }}>
+                            <div className="finanzas-globales-kpi-title text-secondary"><i className="fas fa-users text-primary"></i> Mensualidades Activas</div>
+                            <div className="finanzas-globales-kpi-value fs-4 text-white">
+                              {dashboardData?.estadoAtletas?.alDia ?? 0} <span className="fs-6 text-secondary">atletas al día</span>
+                            </div>
+                          </div>
+                        </Link>
                       </div>
                       <div className="col-12 col-md-4">
                         <div className="finanzas-globales-kpi-card" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>

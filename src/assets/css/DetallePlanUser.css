@@ -11,6 +11,10 @@
   color: var(--text-primary);
 }
 
+.dpu-page .text-muted {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
 /* === NAVBAR STICKY (glassmorphism) === */
 .dpu-navbar {
   background: var(--glass-bg);
@@ -508,4 +512,452 @@
 
 @keyframes dpu-spin {
   to { transform: rotate(360deg); }
+}
+
+/* === BADGES DE MÉTODOS DE PAGO === */
+.dpu-pm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 10px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid;
+}
+
+.dpu-pm--online {
+  background: rgba(46, 204, 113, 0.08);
+  border-color: rgba(46, 204, 113, 0.25);
+  color: var(--success);
+  box-shadow: 0 0 10px rgba(46, 204, 113, 0.05);
+}
+
+.dpu-pm--transfer {
+  background: rgba(52, 152, 219, 0.08);
+  border-color: rgba(52, 152, 219, 0.25);
+  color: var(--accent-cool);
+  box-shadow: 0 0 10px rgba(52, 152, 219, 0.05);
+}
+
+.dpu-pm--cash {
+  background: rgba(243, 156, 18, 0.08);
+  border-color: rgba(243, 156, 18, 0.25);
+  color: var(--warning);
+  box-shadow: 0 0 10px rgba(243, 156, 18, 0.05);
+}
+
+/* === INTERACTIVE TOGGLE SWITCH === */
+.dpu-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.dpu-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.dpu-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 34px;
+}
+
+.dpu-switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--text-muted);
+  transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.dpu-switch input:checked + .dpu-switch-slider {
+  background-color: rgba(46, 204, 113, 0.2);
+  border-color: rgba(46, 204, 113, 0.5);
+}
+
+.dpu-switch input:checked + .dpu-switch-slider:before {
+  transform: translateX(22px);
+  background-color: var(--success);
+  box-shadow: 0 0 8px rgba(46, 204, 113, 0.6);
+}
+
+.dpu-switch input:disabled + .dpu-switch-slider {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* === ACCIONES DEL PLAN === */
+.dpu-btn-action--change {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  padding: 0.55rem 1.1rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.dpu-btn-action--change:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.dpu-btn-action--change:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dpu-btn-action--cancel {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--text-muted);
+  padding: 0.55rem 1.1rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.dpu-btn-action--cancel:hover {
+  color: var(--danger);
+  background: rgba(231, 76, 60, 0.05);
+  border-color: rgba(231, 76, 60, 0.15);
+  transform: translateY(-1px);
+}
+
+.dpu-cancel-badge-small {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--warning);
+  background: rgba(243, 156, 18, 0.06);
+  border: 1px solid rgba(243, 156, 18, 0.15);
+}
+
+/* === BANNERS & WARNINGS === */
+.dpu-cancel-banner {
+  background: rgba(231, 76, 60, 0.03);
+  border: 1px solid rgba(231, 76, 60, 0.15);
+  border-left: 4px solid var(--danger);
+  border-radius: 16px;
+  padding: 1.25rem;
+  animation: dpuPulseAlert 3s infinite ease-in-out;
+}
+
+.dpu-pending-banner {
+  border-radius: 16px;
+  padding: 1.25rem;
+  border: 1px solid;
+}
+
+.dpu-pending-banner--cash {
+  background: rgba(243, 156, 18, 0.04);
+  border-color: rgba(243, 156, 18, 0.2);
+  border-left: 4px solid var(--warning);
+}
+
+.dpu-pending-banner--transfer {
+  background: rgba(52, 152, 219, 0.04);
+  border-color: rgba(52, 152, 219, 0.2);
+  border-left: 4px solid var(--accent-cool);
+}
+
+.dpu-banner-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.dpu-receipt-preview-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dpu-receipt-preview-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-hover);
+}
+
+@keyframes dpuPulseAlert {
+  0%, 100% { border-color: rgba(231, 76, 60, 0.15); }
+  50% { border-color: rgba(231, 76, 60, 0.4); }
+}
+
+/* === OVERLAY MODALS === */
+.dpu-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999 !important;
+  padding: 1.5rem;
+  animation: dpuFadeIn 0.2s ease;
+}
+
+.dpu-modal-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  width: 100%;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  animation: dpuSlideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dpu-modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dpu-modal-header h5 {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+}
+
+.dpu-modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.dpu-modal-close:hover {
+  color: var(--text-primary);
+}
+
+.dpu-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.dpu-modal-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  display: block;
+}
+
+.dpu-modal-label .badge {
+  font-family: var(--font-stats);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  padding: 0;
+}
+
+/* === RADIO CARDS PERIODS === */
+.dpu-radio-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.9rem 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: block;
+  margin: 0;
+}
+
+.dpu-radio-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.dpu-radio-card.active {
+  background: rgba(230, 57, 70, 0.03);
+  border-color: rgba(230, 57, 70, 0.4);
+  box-shadow: 0 0 15px rgba(230, 57, 70, 0.05);
+}
+
+.dpu-radio-card.active strong {
+  color: var(--primary);
+}
+
+.dpu-radio-price {
+  font-family: var(--font-stats);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* === PAYMENT METHOD CHOICE CARDS === */
+.dpu-pm-select-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
+  height: 100%;
+  margin: 0;
+}
+
+.dpu-pm-select-card i {
+  font-size: 1.35rem;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.dpu-pm-select-card span {
+  font-family: var(--font-heading-alt);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+}
+
+.dpu-pm-select-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.dpu-pm-select-card.active {
+  background: rgba(230, 57, 70, 0.03);
+  border-color: rgba(230, 57, 70, 0.4);
+  box-shadow: 0 0 15px rgba(230, 57, 70, 0.05);
+}
+
+.dpu-pm-select-card.active i {
+  color: var(--primary);
+  transform: scale(1.1);
+}
+
+.dpu-pm-select-card.active span {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+/* === UPLOAD COMPROBANTE ZONE === */
+.dpu-upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.dpu-upload-zone:hover {
+  border-color: rgba(52, 152, 219, 0.4);
+  background: rgba(52, 152, 219, 0.02);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* === EXTRA FONTS & UTILS === */
+.text-xxs { font-size: 0.65rem !important; }
+.text-sm { font-size: 0.8rem !important; }
+.text-xs { font-size: 0.72rem !important; }
+
+/* === KEYFRAME ANIMATIONS === */
+@keyframes dpuFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dpuSlideIn {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* === RESPONSIVE STYLE TWEAKS === */
+@media (max-width: 576px) {
+  .dpu-modal-overlay {
+    padding: 0.75rem;
+  }
+  .dpu-modal-container {
+    border-radius: 16px;
+  }
+  .dpu-modal-body {
+    padding: 1.1rem;
+  }
+  .dpu-radio-card {
+    padding: 0.75rem 1rem;
+  }
 }

@@ -21,9 +21,13 @@ export default function GestionFinanzas() {
   const location = useLocation();
   const { usuario } = useAuth();
 
+  const token = localStorage.getItem('token');
+  const headersGet = useMemo(() => ({ 'Authorization': `Bearer ${token}` }), [token]);
+  const headersPost = useMemo(() => ({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }), [token]);
+
   const [box, setBox] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [pestaña, setPestaña] = useState(location.state?.fromTab || 'dashboard');
+  const [pestaña, setPestaña] = useState(location.state?.fromTab || 'semaforo');
   const tabRefs = useRef({});
   const [sliderStyle, setSliderStyle] = useState(null);
   useLayoutEffect(() => {
@@ -34,15 +38,73 @@ export default function GestionFinanzas() {
   const [descuentos, setDescuentos] = useState([]);
   const [formDescuento, setFormDescuento] = useState({ nombre: '', porcentaje: '' });
 
+  // ── SOLICITUDES DE CAMBIO DE FACTURACIÓN ──
+  const [solicitudes, setSolicitudes] = useState([]);
+  const [loadingSolicitudes, setLoadingSolicitudes] = useState(false);
+  const [fotoModalUrl, setFotoModalUrl] = useState(null);
+
+  const cargarSolicitudes = useCallback(async () => {
+    setLoadingSolicitudes(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/solicitudes-cambio`, {
+        headers: headersGet
+      });
+      if (res.ok) {
+        setSolicitudes(await res.json());
+      }
+    } catch (e) {
+      console.error('Error al cargar solicitudes:', e);
+    } finally {
+      setLoadingSolicitudes(false);
+    }
+  }, [headersGet]);
+
+  const manejarAprobar = async (idSuscripcion) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/suscripcion/${idSuscripcion}/aprobar-cambio`, {
+        method: 'PUT',
+        headers: headersGet
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.mensaje || 'Solicitud aprobada con éxito');
+        cargarSolicitudes();
+        if (box) cargarDatos(box.idBox);
+      } else {
+        alert(data.mensaje || 'Error al aprobar la solicitud');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error de red al aprobar.');
+    }
+  };
+
+  const manejarRechazar = async (idSuscripcion) => {
+    if (!window.confirm('¿Seguro que deseas rechazar y cancelar esta solicitud de cambio?')) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/suscripcion/${idSuscripcion}/rechazar-cambio`, {
+        method: 'PUT',
+        headers: headersGet
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.mensaje || 'Solicitud rechazada con éxito');
+        cargarSolicitudes();
+      } else {
+        alert(data.mensaje || 'Error al rechazar la solicitud');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error de red al rechazar.');
+    }
+  };
 
 
-  const token = localStorage.getItem('token');
-  const headersGet = { 'Authorization': `Bearer ${token}` };
-  const headersPost = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
 
   const [semaforo, setSemaforo] = useState([]);
   const [busquedaSemaforo, setBusquedaSemaforo] = useState('');
   const [ordenSemaforo, setOrdenSemaforo] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState(location.state?.filterEstado || '');
   const [planes, setPlanes] = useState([]);
 
   const [formPlan, setFormPlan] = useState({
@@ -215,7 +277,8 @@ export default function GestionFinanzas() {
   useEffect(() => {
     if (pestaña === 'movimientos' && box) cargarMovimientos(box.idBox, filtroMes, filtroTipoMov);
     if (pestaña === 'dropin' && box) cargarDropins(box.idBox);
-  }, [pestaña, box, filtroMes, filtroTipoMov]);
+    if (pestaña === 'solicitudes') cargarSolicitudes();
+  }, [pestaña, box, filtroMes, filtroTipoMov, cargarSolicitudes]);
 
   const crearDescuento = async (e) => {
     e.preventDefault();
@@ -498,7 +561,8 @@ export default function GestionFinanzas() {
     const term = busquedaSemaforo.toLowerCase();
     const nombreMatch = s.nombre?.toLowerCase().includes(term);
     const telefonoMatch = s.telefono?.includes(term);
-    return !term || nombreMatch || telefonoMatch;
+    const estatusMatch = !filtroEstado || s.estado === filtroEstado;
+    return (!term || nombreMatch || telefonoMatch) && estatusMatch;
   }).sort((a, b) => {
     if (!ordenSemaforo) return 0;
     const diasA = a.diasRestantes ?? 0;
@@ -535,7 +599,7 @@ export default function GestionFinanzas() {
       <nav className="finanzas-nav">
         <BackButton to="/admin-box-panel" />
         <div className="finanzas-nav-icono"><i className="fas fa-money-bill-wave"></i></div>
-        <h1 className="finanzas-nav-titulo">Centro Financiero</h1>
+        <h1 className="finanzas-nav-titulo">Gestión de Mensualidades</h1>
       </nav>
 
       <div className="container py-4">
@@ -543,12 +607,14 @@ export default function GestionFinanzas() {
         <div className="finanzas-tabs-wrapper mb-4">
           <div className="finanzas-tabs">
             {sliderStyle && <div className="finanzas-tab-slider" style={sliderStyle} />}
-            <button ref={el => tabRefs.current['dashboard'] = el} className={`finanzas-tab ${pestaña === 'dashboard' ? 'activo' : ''}`} onClick={() => setPestaña('dashboard')}><i className="fas fa-chart-pie"></i>Dashboard</button>
             <button ref={el => tabRefs.current['semaforo'] = el} className={`finanzas-tab ${pestaña === 'semaforo' ? 'activo' : ''}`} onClick={() => setPestaña('semaforo')}><i className="fas fa-traffic-light"></i>Semáforo</button>
             <button ref={el => tabRefs.current['planes'] = el} className={`finanzas-tab ${pestaña === 'planes' ? 'activo' : ''}`} onClick={() => setPestaña('planes')}><i className="fas fa-tags"></i>Planes</button>
             <button ref={el => tabRefs.current['descuentos'] = el} className={`finanzas-tab ${pestaña === 'descuentos' ? 'activo' : ''}`} onClick={() => setPestaña('descuentos')}><i className="fas fa-percent"></i>Promos</button>
             <button ref={el => tabRefs.current['dropin'] = el} className={`finanzas-tab ${pestaña === 'dropin' ? 'activo' : ''}`} onClick={() => setPestaña('dropin')}><i className="fas fa-plane-arrival"></i>Drop-In</button>
             <button ref={el => tabRefs.current['movimientos'] = el} className={`finanzas-tab ${pestaña === 'movimientos' ? 'activo' : ''}`} onClick={() => setPestaña('movimientos')}><i className="fas fa-history"></i>Movimientos</button>
+            {['Admin', 'AdminBox', 'Coach', 'Staff', 'Developer'].includes(usuario?.rol) && (
+              <button ref={el => tabRefs.current['solicitudes'] = el} className={`finanzas-tab ${pestaña === 'solicitudes' ? 'activo' : ''}`} onClick={() => setPestaña('solicitudes')}><i className="fas fa-file-invoice-dollar"></i>Solicitudes</button>
+            )}
           </div>
         </div>
 
@@ -556,44 +622,47 @@ export default function GestionFinanzas() {
           <div className="text-center py-5"><AtletifyLoader /></div>
         ) : (
           <>
-            {/* TAB: DASHBOARD */}
-            {pestaña === 'dashboard' && dashboardData && (
-              <div className="row g-4">
-                <div className="col-12">
-                  <div className="finanzas-stat-principal">
-                    <p className="finanzas-stat-label"><i className="fas fa-calendar-check me-1"></i>Ingresos del Mes</p>
-                    <p className="finanzas-stat-valor">${dashboardData.ingresosMes.toFixed(2)}</p>
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <div className="finanzas-card">
-                    <div className="finanzas-card-titulo"><i className="fas fa-users" style={{ color: 'var(--accent-cool)' }}></i> Salud de la Manada</div>
-                    <div className="finanzas-salud-row"><span className="finanzas-salud-label" style={{ color: 'var(--success)' }}><i className="fas fa-check-circle"></i>Al Día</span><span className="finanzas-salud-cnt finanzas-salud-cnt--verde">{dashboardData.estadoAtletas.alDia} atletas</span></div>
-                    <div className="finanzas-salud-row"><span className="finanzas-salud-label" style={{ color: 'var(--danger)' }}><i className="fas fa-times-circle"></i>Vencidos</span><span className="finanzas-salud-cnt finanzas-salud-cnt--rojo">{dashboardData.estadoAtletas.morosos} atletas</span></div>
-                    <div className="finanzas-salud-row"><span className="finanzas-salud-label" style={{ color: 'var(--accent-cool)' }}><i className="fas fa-snowflake"></i>Congelados</span><span className="finanzas-salud-cnt finanzas-salud-cnt--azul">{dashboardData.estadoAtletas.congelados} atletas</span></div>
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <div className="finanzas-card finanzas-card--peligro">
-                    <div className="finanzas-card-titulo"><i className="fas fa-skull-crossbones" style={{ color: 'var(--danger)' }}></i> Próximos Vencimientos</div>
-                    {dashboardData.topMorosos.length === 0 ? <div className="finanzas-empty"><i className="fas fa-glass-cheers"></i><p>Todo en orden.</p></div> : (
-                      dashboardData.topMorosos.map((m, index) => (
-                        <div key={index} className="finanzas-moroso-item">
-                          <div>
-                            <div className="finanzas-moroso-nombre">{m.nombre}</div>
-                            <div className="finanzas-moroso-fecha"><i className="fas fa-calendar-times me-1"></i>Vence: {new Date(m.fechaVencimiento).toLocaleDateString()}</div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* TAB: SEMÁFORO */}
             {pestaña === 'semaforo' && (
-              <div className="finanzas-card">
+              <div className="d-flex flex-column gap-4">
+                {/* Métricas del Dashboard */}
+                {dashboardData && (
+                  <div className="row g-4">
+                    <div className="col-12 col-lg-4">
+                      <div className="finanzas-stat-principal h-100 d-flex flex-column justify-content-center">
+                        <p className="finanzas-stat-label"><i className="fas fa-calendar-check me-1"></i>Ingresos del Mes</p>
+                        <p className="finanzas-stat-valor">${dashboardData.ingresosMes.toFixed(2)}</p>
+                        <p className="finanzas-stat-nota">Facturación total actual</p>
+                      </div>
+                    </div>
+                    <div className="col-12 col-md-6 col-lg-4">
+                      <div className="finanzas-card">
+                        <div className="finanzas-card-titulo"><i className="fas fa-users" style={{ color: 'var(--accent-cool)' }}></i> Salud de la Manada</div>
+                        <div className="finanzas-salud-row"><span className="finanzas-salud-label" style={{ color: 'var(--success)' }}><i className="fas fa-check-circle"></i>Al Día</span><span className="finanzas-salud-cnt finanzas-salud-cnt--verde">{dashboardData.estadoAtletas.alDia} atletas</span></div>
+                        <div className="finanzas-salud-row"><span className="finanzas-salud-label" style={{ color: 'var(--danger)' }}><i className="fas fa-times-circle"></i>Vencidos</span><span className="finanzas-salud-cnt finanzas-salud-cnt--rojo">{dashboardData.estadoAtletas.morosos} atletas</span></div>
+                        <div className="finanzas-salud-row"><span className="finanzas-salud-label" style={{ color: 'var(--accent-cool)' }}><i className="fas fa-snowflake"></i>Congelados</span><span className="finanzas-salud-cnt finanzas-salud-cnt--azul">{dashboardData.estadoAtletas.congelados} atletas</span></div>
+                      </div>
+                    </div>
+                    <div className="col-12 col-md-6 col-lg-4">
+                      <div className="finanzas-card finanzas-card--peligro">
+                        <div className="finanzas-card-titulo"><i className="fas fa-skull-crossbones" style={{ color: 'var(--danger)' }}></i> Próximos Vencimientos</div>
+                        {dashboardData.topMorosos.length === 0 ? <div className="finanzas-empty"><i className="fas fa-glass-cheers"></i><p>Todo en orden.</p></div> : (
+                          dashboardData.topMorosos.map((m, index) => (
+                            <div key={index} className="finanzas-moroso-item">
+                              <div>
+                                <div className="finanzas-moroso-nombre">{m.nombre}</div>
+                                <div className="finanzas-moroso-fecha"><i className="fas fa-calendar-times me-1"></i>Vence: {new Date(m.fechaVencimiento).toLocaleDateString()}</div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Listado de Semáforo */}
+                <div className="finanzas-card">
                 <div className="finanzas-card-titulo d-flex justify-content-between align-items-center flex-wrap gap-2">
                   <span><i className="fas fa-traffic-light" style={{ color: 'var(--success)' }}></i> Estado de Atletas</span>
                   <div className="d-flex gap-2 flex-wrap w-100 w-md-auto">
@@ -605,6 +674,20 @@ export default function GestionFinanzas() {
                       value={busquedaSemaforo}
                       onChange={(e) => setBusquedaSemaforo(e.target.value)}
                     />
+                    <select
+                      className="finanzas-input mb-0 py-1 px-2"
+                      style={{ width: 'auto', fontSize: '0.9rem' }}
+                      value={filtroEstado}
+                      onChange={(e) => setFiltroEstado(e.target.value)}
+                    >
+                      <option value="">Todos los Estados</option>
+                      <option value="Verde">Al Día</option>
+                      <option value="Amarillo">Por Vencer</option>
+                      <option value="Rojo">Vencidos (Adeudos)</option>
+                      <option value="Azul">Congelados</option>
+                      <option value="VIP">Pase Libre</option>
+                      <option value="Gris">Cancelados</option>
+                    </select>
                     <select
                       className="finanzas-input mb-0 py-1 px-2"
                       style={{ width: 'auto', fontSize: '0.9rem' }}
@@ -695,7 +778,8 @@ export default function GestionFinanzas() {
                   </table>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
             {/* TAB: PLANES (Se mantiene intacto) */}
             {pestaña === 'planes' && (
@@ -1040,6 +1124,148 @@ export default function GestionFinanzas() {
                               </tr>
                             ))
                           )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* TAB: SOLICITUDES */}
+            {pestaña === 'solicitudes' && (
+              <div className="finanzas-card">
+                <div className="finanzas-card-titulo">
+                  <i className="fas fa-file-invoice-dollar" style={{ color: 'var(--accent-cool)' }}></i> Solicitudes de Cambio de Facturación
+                </div>
+                {loadingSolicitudes ? (
+                  <div className="text-center py-4"><AtletifyLoader /></div>
+                ) : solicitudes.length === 0 ? (
+                  <div className="finanzas-empty py-4 text-center">No hay solicitudes pendientes de validación.</div>
+                ) : (
+                  <>
+                    {/* Tarjetas Móvil */}
+                    <div className="d-md-none">
+                      {solicitudes.map(s => (
+                        <div key={s.idSuscripcion} className="finanzas-card mb-2 p-3 h-auto" style={{ border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                          <div className="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <div>
+                              <div className="fw-bold text-white">{s.nombreAtleta}</div>
+                              <div className="small text-secondary">{s.nombrePlan}</div>
+                              <div className="small text-secondary mt-1">
+                                <i className="fas fa-calendar me-1"></i>
+                                {new Date(s.fechaSolicitudCambio).toLocaleDateString()}
+                              </div>
+                            </div>
+                            <span className="badge bg-warning text-dark font-stats" style={{ fontSize: '0.85rem' }}>
+                              ${s.montoPendiente?.toFixed(2)}
+                            </span>
+                          </div>
+                          
+                          <div className="p-2 rounded mb-3" style={{ background: 'rgba(0,0,0,0.2)', fontSize: '0.8rem' }}>
+                            <div className="text-secondary small mb-1">Cambio Solicitado:</div>
+                            <div className="d-flex align-items-center gap-2 flex-wrap">
+                              <span className="text-muted">{s.periodoFacturacion} ({s.metodoPago})</span>
+                              <i className="fas fa-arrow-right text-success"></i>
+                              <span className="text-white fw-bold">{s.cambioPeriodoPendiente} ({s.metodoPagoPendiente})</span>
+                            </div>
+                          </div>
+
+                          {s.metodoPagoPendiente === 'Transferencia' && s.comprobanteUrlPendiente && (
+                            <div className="mb-3">
+                              <div className="text-secondary small mb-1">Comprobante de Transferencia:</div>
+                              <img 
+                                src={s.comprobanteUrlPendiente.startsWith('http') ? s.comprobanteUrlPendiente : `${import.meta.env.VITE_API_URL}${s.comprobanteUrlPendiente}`}
+                                alt="Miniatura" 
+                                className="img-thumbnail bg-dark border-secondary cursor-pointer" 
+                                style={{ maxHeight: '80px', cursor: 'zoom-in', objectFit: 'cover' }}
+                                onClick={() => setFotoModalUrl(s.comprobanteUrlPendiente)}
+                              />
+                            </div>
+                          )}
+
+                          <div className="d-flex gap-2">
+                            <BotonSeguro 
+                              onClick={() => manejarAprobar(s.idSuscripcion)} 
+                              className="btn btn-success btn-sm w-50 fw-bold"
+                              textoProcesando="Aprobando..."
+                            >
+                              <i className="fas fa-check me-1"></i> Aprobar
+                            </BotonSeguro>
+                            <BotonSeguro 
+                              onClick={() => manejarRechazar(s.idSuscripcion)} 
+                              className="btn btn-danger btn-sm w-50 fw-bold"
+                              textoProcesando="Rechazando..."
+                            >
+                              <i className="fas fa-times me-1"></i> Rechazar
+                            </BotonSeguro>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Tabla Escritorio */}
+                    <div className="table-responsive d-none d-md-block">
+                      <table className="finanzas-table align-middle">
+                        <thead>
+                          <tr>
+                            <th>Fecha</th>
+                            <th>Atleta</th>
+                            <th>Plan</th>
+                            <th>Cambio Propuesto</th>
+                            <th>Comprobante</th>
+                            <th>Monto</th>
+                            <th className="text-end">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {solicitudes.map(s => (
+                            <tr key={s.idSuscripcion}>
+                              <td>{new Date(s.fechaSolicitudCambio).toLocaleDateString()}</td>
+                              <td><div className="fw-bold">{s.nombreAtleta}</div></td>
+                              <td><span className="text-secondary">{s.nombrePlan}</span></td>
+                              <td>
+                                <div className="d-flex align-items-center gap-2">
+                                  <span className="text-muted small">{s.periodoFacturacion} ({s.metodoPago})</span>
+                                  <i className="fas fa-long-arrow-alt-right text-success"></i>
+                                  <span className="text-white fw-bold small">{s.cambioPeriodoPendiente} ({s.metodoPagoPendiente})</span>
+                                </div>
+                              </td>
+                              <td>
+                                {s.metodoPagoPendiente === 'Transferencia' && s.comprobanteUrlPendiente ? (
+                                  <img 
+                                    src={s.comprobanteUrlPendiente.startsWith('http') ? s.comprobanteUrlPendiente : `${import.meta.env.VITE_API_URL}${s.comprobanteUrlPendiente}`}
+                                    alt="Miniatura" 
+                                    className="img-thumbnail bg-dark border-secondary cursor-pointer" 
+                                    style={{ maxHeight: '50px', maxWidth: '80px', cursor: 'zoom-in', objectFit: 'cover' }}
+                                    onClick={() => setFotoModalUrl(s.comprobanteUrlPendiente)}
+                                    title="Click para ampliar"
+                                  />
+                                ) : (
+                                  <span className="text-secondary small"><i className="fas fa-wallet me-1"></i>En Recepción</span>
+                                )}
+                              </td>
+                              <td className="text-success fw-bold font-stats">${s.montoPendiente?.toFixed(2)}</td>
+                              <td className="text-end">
+                                <div className="d-flex gap-2 justify-content-end">
+                                  <BotonSeguro 
+                                    onClick={() => manejarAprobar(s.idSuscripcion)} 
+                                    className="btn btn-success btn-sm fw-bold px-3"
+                                    textoProcesando="Aprobando..."
+                                  >
+                                    <i className="fas fa-check me-1"></i> Aprobar
+                                  </BotonSeguro>
+                                  <BotonSeguro 
+                                    onClick={() => manejarRechazar(s.idSuscripcion)} 
+                                    className="btn btn-danger btn-sm fw-bold px-3"
+                                    textoProcesando="Rechazando..."
+                                  >
+                                    <i className="fas fa-times me-1"></i> Rechazar
+                                  </BotonSeguro>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
                         </tbody>
                       </table>
                     </div>
@@ -1525,6 +1751,33 @@ export default function GestionFinanzas() {
               </div>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {fotoModalUrl && (
+        <div 
+          className="modal fade show" 
+          style={{ display: 'block', background: 'rgba(0,0,0,0.85)', zIndex: 1050 }}
+          onClick={() => setFotoModalUrl(null)}
+        >
+          <div className="modal-dialog modal-dialog-centered modal-lg" onClick={e => e.stopPropagation()}>
+            <div className="modal-content border-0 bg-transparent text-end">
+              <button 
+                type="button" 
+                className="btn-close btn-close-white ms-auto mb-2 fs-4" 
+                onClick={() => setFotoModalUrl(null)}
+                style={{ filter: 'none', color: 'white', opacity: 1, border: 'none', background: 'none' }}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+              <img 
+                src={fotoModalUrl.startsWith('http') ? fotoModalUrl : `${import.meta.env.VITE_API_URL}${fotoModalUrl}`} 
+                alt="Comprobante de pago" 
+                className="img-fluid rounded shadow-lg" 
+                style={{ maxHeight: '80vh', objectFit: 'contain', width: '100%', margin: '0 auto' }}
+              />
+            </div>
           </div>
         </div>
       )}
