@@ -12,6 +12,13 @@ import '../assets/css/AdminEjercicios.css';
 
 const CATEGORIAS = ['Piernas', 'Full Body', 'Fuerza', 'Olímpico', 'Gimnástico', 'Cardio', 'Core'];
 
+const handleVideoClick = (e) => {
+  if (!document.fullscreenElement) {
+    e.preventDefault();
+    e.currentTarget.requestFullscreen();
+  }
+};
+
 // Color fijo por categoría — se asigna automáticamente
 const CAT_COLOR = {
   'Piernas':    '#4FC3F7',
@@ -124,6 +131,8 @@ export default function AdminEjercicios() {
   const [editando, setEditando] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('Todas');
+  const [paginaEjercicios, setPaginaEjercicios] = useState(1);
+  const EJERCICIOS_POR_PAGINA = 20;
   const [error, setError] = useState('');
   const [iconoAuto, setIconoAuto] = useState(false);
   const [ejDetalle, setEjDetalle] = useState(null);
@@ -263,11 +272,17 @@ export default function AdminEjercicios() {
   }
 
   const filtrados = ejercicios.filter(ej => {
-    const matchNombre = ej.nombre.toLowerCase().includes(busqueda.toLowerCase()) || 
+    const matchNombre = ej.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
                         (ej.subnombre && ej.subnombre.toLowerCase().includes(busqueda.toLowerCase()));
     const matchCat = filtroCategoria === 'Todas' || ej.categoria === filtroCategoria;
     return matchNombre && matchCat;
   });
+
+  const totalPaginasEj = Math.ceil(filtrados.length / EJERCICIOS_POR_PAGINA);
+  const ejerciciosPaginados = filtrados.slice(
+    (paginaEjercicios - 1) * EJERCICIOS_POR_PAGINA,
+    paginaEjercicios * EJERCICIOS_POR_PAGINA
+  );
 
   return (
     <div className="ae-page">
@@ -353,14 +368,14 @@ export default function AdminEjercicios() {
                   </div>
 
                   <div className="row g-2">
-                    <div className="col-12 col-md-6">
+                    <div className="col-12">
                       <label className="ae-label">Equipamiento</label>
                       <EquipamientoPicker
                         valor={form.equipamiento}
                         onCambiar={value => setForm(f => ({ ...f, equipamiento: value }))}
                       />
                     </div>
-                    <div className="col-12 col-md-6">
+                    <div className="col-12">
                       <label className="ae-label">¿Cómo se mide?</label>
                       <MetricaMedidaPicker
                         valor={form.metricaPrincipal}
@@ -388,46 +403,6 @@ export default function AdminEjercicios() {
                       <small>Guarda PR en el perfil del atleta.</small>
                     </span>
                   </label>
-
-                  {/* Ícono */}
-                  <div>
-                    <div className="d-flex align-items-center justify-content-between mb-1">
-                      <label className="ae-label mb-0">Clase de ícono FontAwesome</label>
-                      {iconoAuto && (
-                        <span style={{
-                          background: 'rgba(46,204,113,0.12)', color: '#2ECC71',
-                          fontSize: '0.65rem', fontFamily: 'var(--font-body)', fontWeight: 600,
-                          padding: '0.1rem 0.5rem', borderRadius: 20,
-                          border: '1px solid rgba(46,204,113,0.3)',
-                        }}>
-                          <i className="fas fa-magic me-1" />Por categoría
-                        </span>
-                      )}
-                    </div>
-                    <div className="d-flex gap-2 align-items-center">
-                      <input
-                        className="ae-input flex-grow-1"
-                        name="icono"
-                        value={form.icono}
-                        onChange={handleChange}
-                        placeholder="fas fa-dumbbell"
-                        autoComplete="off"
-                      />
-                      <div
-                        className="ae-icon-preview"
-                        style={{
-                          color: form.color,
-                          borderColor: form.color + '40',
-                          background: form.color + '15',
-                        }}
-                      >
-                        <i className={form.icono} />
-                      </div>
-                    </div>
-                    <small style={{ color: 'var(--text-muted)', fontSize: '0.72rem', fontFamily: 'var(--font-body)' }}>
-                      Se asigna automáticamente al elegir categoría. Puedes editarlo manualmente si quieres otro.
-                    </small>
-                  </div>
 
                   {/* Instrucción */}
                   <div>
@@ -468,10 +443,10 @@ export default function AdminEjercicios() {
                     </p>
                   )}
 
-                  <div className="d-flex gap-2">
+                  <div className="d-flex gap-2 align-items-stretch ae-form-actions">
                     <BotonSeguro type="button" onClick={guardar} className="ae-btn-primary flex-grow-1" textoProcesando={<><i className="fas fa-spinner fa-spin" /> Guardando...</>}>
                       {editando
-                        ? <><i className="fas fa-save" /> Guardar Cambios</>
+                        ? <><i className="fas fa-save" /> Guardar</>
                         : <><i className="fas fa-plus" /> Publicar Ejercicio</>
                       }
                     </BotonSeguro>
@@ -507,13 +482,13 @@ export default function AdminEjercicios() {
                         className="ae-input ae-search-input"
                         placeholder="Buscar..."
                         value={busqueda}
-                        onChange={e => setBusqueda(e.target.value)}
+                        onChange={e => { setBusqueda(e.target.value); setPaginaEjercicios(1); }}
                         style={{ paddingLeft: '2.2rem' }}
                       />
                     </div>
                     <FiltroEjerciciosPicker
                       valor={filtroCategoria}
-                      onCambiar={setFiltroCategoria}
+                      onCambiar={v => { setFiltroCategoria(v); setPaginaEjercicios(1); }}
                     />
                   </div>
                 </div>
@@ -532,7 +507,7 @@ export default function AdminEjercicios() {
                   </div>
                 ) : (
                   <div className="row g-2 p-3">
-                    {filtrados.map(ej => {
+                    {ejerciciosPaginados.map(ej => {
                       const cat = CAT_BADGE_STYLE[ej.categoria] || { bg: 'rgba(255,255,255,0.08)', color: '#A8B2D1' };
                       return (
                         <div key={ej.id} className="col-12 col-sm-6">
@@ -610,6 +585,41 @@ export default function AdminEjercicios() {
                     })}
                   </div>
                 )}
+
+                {/* Paginación */}
+                {totalPaginasEj > 1 && (
+                  <div className="ae-pagination">
+                    <button
+                      className="ae-page-btn"
+                      onClick={() => setPaginaEjercicios(p => Math.max(1, p - 1))}
+                      disabled={paginaEjercicios === 1}
+                    >
+                      <i className="fas fa-chevron-left" />
+                    </button>
+
+                    {Array.from({ length: totalPaginasEj }, (_, i) => i + 1).map(num => (
+                      <button
+                        key={num}
+                        className={`ae-page-btn${paginaEjercicios === num ? ' ae-page-btn--active' : ''}`}
+                        onClick={() => setPaginaEjercicios(num)}
+                      >
+                        {num}
+                      </button>
+                    ))}
+
+                    <button
+                      className="ae-page-btn"
+                      onClick={() => setPaginaEjercicios(p => Math.min(totalPaginasEj, p + 1))}
+                      disabled={paginaEjercicios === totalPaginasEj}
+                    >
+                      <i className="fas fa-chevron-right" />
+                    </button>
+
+                    <span className="ae-page-info">
+                      {(paginaEjercicios - 1) * EJERCICIOS_POR_PAGINA + 1}–{Math.min(paginaEjercicios * EJERCICIOS_POR_PAGINA, filtrados.length)} de {filtrados.length}
+                    </span>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>
@@ -669,7 +679,7 @@ export default function AdminEjercicios() {
             <p className="ae-detail-texto">{ejDetalle.instruccion}</p>
             {ejDetalle.videoUrl && (
                <div className="mt-3">
-                 <video src={ejDetalle.videoUrl} controls style={{ width: '100%', borderRadius: '8px', border: `1px solid ${ejDetalle.color}40` }}></video>
+                 <video src={ejDetalle.videoUrl} controls autoPlay muted loop onClick={handleVideoClick} onContextMenu={e => e.preventDefault()} controlsList="nodownload noremoteplayback noplaybackrate" disablePictureInPicture style={{ width: '100%', borderRadius: '8px', border: `1px solid ${ejDetalle.color}40`, cursor: 'zoom-in' }}></video>
                </div>
             )}
           </div>

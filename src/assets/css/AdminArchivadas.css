@@ -1,0 +1,384 @@
+/* =============================================
+   ADMIN ARCHIVADAS — WolfPack Design System
+   Header: patrón AdminEjercicios
+   Cards:  patrón GestionClases
+   ============================================= */
+
+/* === PÁGINA === */
+.aa-page {
+  background: var(--bg-base);
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+/* === HEADER STICKY — igual que AdminEjercicios === */
+.aa-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.5rem 0.85rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  margin-bottom: 1.5rem;
+}
+
+.aa-header-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+.aa-header-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+.aa-header-title span { color: var(--primary); }
+
+.aa-badge-count {
+  background: rgba(230, 57, 70, 0.15);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  color: var(--primary);
+  font-family: var(--font-stats);
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+}
+
+/* === BANNER DE PELIGRO === */
+.aa-danger-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: rgba(230, 57, 70, 0.07);
+  border: 1px solid rgba(230, 57, 70, 0.22);
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  color: var(--primary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.aa-danger-banner i { flex-shrink: 0; }
+
+/* === BÚSQUEDA === */
+.aa-search-wrap {
+  position: relative;
+}
+.aa-search-icon {
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+.aa-search-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 0.65rem 1rem 0.65rem 2.4rem;
+  outline: none;
+  transition: var(--transition);
+}
+.aa-search-input::placeholder { color: var(--text-muted); }
+.aa-search-input:focus {
+  border-color: rgba(230, 57, 70, 0.45);
+  box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.1);
+}
+
+/* === CARD DE BOX — patrón gc-clase-card === */
+.aa-box-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid rgba(230, 57, 70, 0.4);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  height: 100%;
+}
+.aa-box-card:hover {
+  border-color: rgba(230, 57, 70, 0.3);
+  border-left-color: var(--primary);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+  transform: translateY(-2px);
+}
+
+.aa-box-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+}
+.aa-box-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.aa-box-info {
+  flex: 1;
+  min-width: 0;
+}
+.aa-box-nombre {
+  font-family: var(--font-heading-alt);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin: 0 0 0.3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.aa-box-sub {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.aa-box-arrow {
+  color: var(--primary);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: var(--transition);
+}
+.aa-box-card:hover .aa-box-arrow {
+  opacity: 1;
+  transform: translateX(3px);
+}
+
+/* === LOADER === */
+.aa-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem 2rem;
+}
+.aa-loader-spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid rgba(230, 57, 70, 0.15);
+  border-top-color: var(--primary);
+  animation: aa-spin 0.8s linear infinite;
+}
+@keyframes aa-spin { to { transform: rotate(360deg); } }
+.aa-loader-texto {
+  color: var(--primary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+/* === EMPTY STATE === */
+.aa-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 4rem 2rem;
+}
+.aa-empty-icon {
+  font-size: 2.5rem;
+  color: var(--text-muted);
+  opacity: 0.35;
+}
+.aa-empty-titulo {
+  font-family: var(--font-heading-alt);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin: 0;
+}
+.aa-empty-sub {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  opacity: 0.6;
+  margin: 0;
+}
+
+/* === CARD DE COMPETENCIA === */
+.aa-comp-card {
+  background: var(--bg-elevated);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: var(--transition);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.aa-comp-card:hover {
+  border-color: rgba(230, 57, 70, 0.5);
+  box-shadow: 0 6px 24px rgba(230, 57, 70, 0.12);
+  transform: translateY(-2px);
+}
+
+.aa-comp-banner {
+  position: relative;
+  height: 130px;
+  background: rgba(230, 57, 70, 0.06);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.aa-comp-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(100%) opacity(0.45);
+}
+.aa-comp-banner-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: var(--text-muted);
+  opacity: 0.25;
+}
+.aa-comp-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 30%, rgba(15, 15, 20, 0.85));
+}
+.aa-comp-badge {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  background: rgba(230, 57, 70, 0.15);
+  border: 1px solid rgba(230, 57, 70, 0.35);
+  color: var(--primary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 20px;
+}
+
+.aa-comp-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+.aa-comp-nombre {
+  font-family: var(--font-heading-alt);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin: 0;
+  line-height: 1.3;
+}
+.aa-comp-id {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+}
+
+.aa-delete-btn {
+  width: 100%;
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.35);
+  border-radius: 8px;
+  color: var(--primary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+.aa-delete-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(230, 57, 70, 0.35);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .aa-header        { padding: 0.75rem 1rem 0.75rem 0.5rem; margin-bottom: 1.25rem; }
+  .aa-header-title  { font-size: 1.05rem; }
+  .aa-badge-count   { font-size: 0.88rem; padding: 0.2rem 0.6rem; }
+}
+
+@media (max-width: 576px) {
+  .aa-header        { padding: 0.6rem 0.75rem; margin-bottom: 1rem; }
+  .aa-header-icon   { width: 32px; height: 32px; font-size: 0.78rem; }
+  .aa-header-title  { font-size: 0.9rem; }
+  .aa-badge-count   { font-size: 0.78rem; padding: 0.18rem 0.5rem; }
+  .aa-box-card      { padding: 0.85rem 0.9rem; }
+  .aa-box-logo      { width: 44px; height: 44px; font-size: 1rem; }
+  .aa-box-nombre    { font-size: 0.9rem; }
+  .aa-danger-banner { font-size: 0.75rem; padding: 0.55rem 0.85rem; }
+  .aa-search-input  { font-size: 0.85rem; }
+  .aa-comp-banner   { height: 110px; }
+  .aa-comp-nombre   { font-size: 0.88rem; }
+  .aa-delete-btn    { font-size: 0.75rem; padding: 0.55rem 0.9rem; }
+}
+
+@media (max-width: 380px) {
+  .aa-header-title  { font-size: 0.8rem; }
+  .aa-badge-count   { font-size: 0.7rem; }
+  .aa-box-nombre    { font-size: 0.82rem; }
+}

@@ -10,11 +10,11 @@ import '../assets/css/GestionClases.css';
 const API_BASE = import.meta.env.VITE_API_URL;;
 
 const NIVELES = [
-  { value: 'Todos',        emoji: '📊', label: 'Todas las categorías', desc: 'Abierto para todos los atletas',        color: '#A8B2D1' },
-  { value: 'Novato',       emoji: '🐣', label: 'Novato',               desc: 'Primeras semanas de entrenamiento',    color: '#adb5bd' },
-  { value: 'Principiante', emoji: '🏃', label: 'Principiante',         desc: 'Movimientos básicos dominados',         color: '#2ECC71' },
-  { value: 'Intermedio',   emoji: '💪', label: 'Intermedio',            desc: 'Técnica sólida y buena capacidad',     color: '#4FC3F7' },
-  { value: 'RX',           emoji: '🔥', label: 'RX (Avanzado)',         desc: 'Atleta avanzado — pesos y tiempos RX', color: '#F5A623' },
+  { value: 'Todos', emoji: '📊', label: 'Todas las categorías', desc: 'Abierto para todos los atletas', color: '#A8B2D1' },
+  { value: 'Novato', emoji: '🐣', label: 'Novato', desc: 'Primeras semanas de entrenamiento', color: '#adb5bd' },
+  { value: 'Principiante', emoji: '🏃', label: 'Principiante', desc: 'Movimientos básicos dominados', color: '#2ECC71' },
+  { value: 'Intermedio', emoji: '💪', label: 'Intermedio', desc: 'Técnica sólida y buena capacidad', color: '#4FC3F7' },
+  { value: 'RX', emoji: '🔥', label: 'RX (Avanzado)', desc: 'Atleta avanzado — pesos y tiempos RX', color: '#F5A623' },
 ];
 
 export default function GestionClases() {
@@ -403,7 +403,7 @@ export default function GestionClases() {
                   {/* Toggle Drop-Ins */}
                   <div className="d-flex justify-content-between align-items-center mb-3">
                     <label className="text-white fw-bold mb-0" style={{ fontSize: '0.875rem' }}>
-                      Permitir Turistas / Drop-Ins 🌍
+                      Permitir Turistas / Drop-Ins
                     </label>
                     <div className="form-check form-switch p-0 m-0" style={{ width: '45px', height: '24px', flexShrink: 0 }}>
                       <input

@@ -4,7 +4,6 @@ import { GoArrowUpRight } from 'react-icons/go';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from "../../context/AuthContext";
 import './CardNav.css';
-import { COMPETENCIAS_ENDPOINT } from '../../services/api';
 import BoxPickerModal from '../BoxPickerModal';
 
 const CardNav = ({
@@ -13,17 +12,17 @@ const CardNav = ({
 }) => {
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [openSections, setOpenSections] = useState({});
+  const [isMobileNav, setIsMobileNav] = useState(() => window.innerWidth <= 1200);
   const navRef = useRef(null);
   const cardsRef = useRef([]);
+  const linksWrapRefs = useRef([]);
   const tlRef = useRef(null);
   const isExpandedRef = useRef(false);
   const location = useLocation();
   const navigate = useNavigate();
   const clickTimeout = useRef(null);
-  const [listaBoxes, setListaBoxes] = useState([]);
-
-  // 👇 EXTRAEMOS EL USUARIO Y LA FUNCIÓN DE CAMBIAR BOX 👇
-  const { usuario, boxActivo, cambiarBox, cuentasGuardadas, prepararCambioCuenta } = useAuth();
+  const { usuario, boxActivo, cambiarBox, cuentasGuardadas, prepararCambioCuenta, listaBoxes } = useAuth();
 
   const getHomeRoute = () => {
     if (!usuario) return '/';
@@ -36,6 +35,55 @@ const CardNav = ({
   // Mantiene el ref sincronizado con el estado
   useEffect(() => { isExpandedRef.current = isExpanded; }, [isExpanded]);
 
+  // Ref que siempre apunta a closeMenu actualizado (evita stale closure)
+  const closeMenuRef = useRef(null);
+
+  // Cierra el menú cuando el sidebar del Dashboard se abre
+  useEffect(() => {
+    const handler = () => { if (closeMenuRef.current) closeMenuRef.current(); };
+    window.addEventListener('atletify:dashsidebar-open', handler);
+    return () => window.removeEventListener('atletify:dashsidebar-open', handler);
+  }, []);
+
+  // Detecta cambios de breakpoint
+  useEffect(() => {
+    const handleResize = () => setIsMobileNav(window.innerWidth <= 1200);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Reacciona al cambio de modo mobile ↔ desktop
+  useEffect(() => {
+    if (isMobileNav) {
+      // Desktop → Mobile: cerrar todas las secciones y recalcular altura del nav
+      setOpenSections({});
+      if (isExpandedRef.current && navRef.current) {
+        // Espera a que la transición CSS de colapso termine (300ms) antes de recalcular
+        setTimeout(() => {
+          if (navRef.current) {
+            gsap.to(navRef.current, { height: calculateHeight(), duration: 0.25, ease: 'power2.out' });
+          }
+        }, 350);
+      }
+    } else {
+      // Mobile → Desktop: limpiar GSAP inline styles de los wraps y recalcular nav
+      linksWrapRefs.current.forEach(wrap => {
+        if (wrap) gsap.set(wrap, { clearProps: 'all' });
+      });
+      if (isExpandedRef.current && navRef.current) {
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          gsap.to(navRef.current, { height: calculateHeight(), duration: 0.3, ease: 'power2.out' });
+        }));
+      }
+    }
+  }, [isMobileNav]);
+
+  // Inicializa openSections cuando llegan los items
+  useEffect(() => {
+    if (!items) return;
+    setOpenSections({});
+  }, [items]);
+
   useEffect(() => {
     if (isExpanded) {
       setIsHamburgerOpen(false); setIsExpanded(false);
@@ -43,32 +91,6 @@ const CardNav = ({
     }
   }, [location.pathname]);
 
-  // 👇 NUEVO: Buscamos los boxes en C# en cuanto carga el menú 👇
-  useEffect(() => {
-    if (usuario?.rol === 'Developer' || usuario?.rol === 'AdminBox') {
-      const cargarBoxesReales = async () => {
-        try {
-          // Extraemos la URL base (ej. http://localhost:5000/api)
-          const baseUrl = COMPETENCIAS_ENDPOINT.split('/competencias')[0];
-
-          // Hacemos la petición (si tu controlador es singular, cambia '/boxes' por '/box')
-          const res = await fetch(`${baseUrl}/box`);
-          const data = await res.json();
-
-          // Escudo: Solo guardamos si realmente nos devolvió una lista
-          if (Array.isArray(data)) {
-            setListaBoxes(data);
-          } else {
-            console.error("La API devolvió algo que no es una lista:", data);
-            // Si la API devolvió un 1 u otra cosa, evitamos que el .map() explote.
-          }
-        } catch (error) {
-          console.error("Error de red al cargar los boxes reales", error);
-        }
-      };
-      cargarBoxesReales();
-    }
-  }, [usuario]);
 
   const calculateHeight = () => {
     const navEl = navRef.current;
@@ -120,6 +142,7 @@ const CardNav = ({
     tl.eventCallback('onReverseComplete', () => setIsExpanded(false));
     tl.reverse();
   };
+  closeMenuRef.current = closeMenu;
 
   const openMenu = () => {
     const tl = tlRef.current;
@@ -128,6 +151,7 @@ const CardNav = ({
     setIsHamburgerOpen(true);
     setIsExpanded(true);
     tl.play(0);
+    window.dispatchEvent(new CustomEvent('atletify:cardnav-open'));
   };
 
   const toggleMenu = () => {
@@ -144,6 +168,27 @@ const CardNav = ({
   };
 
   const setCardRef = i => el => { if (el) cardsRef.current[i] = el; };
+  const setLinksWrapRef = i => el => { if (el) linksWrapRefs.current[i] = el; };
+
+  const isSectionOpen = (idx) => !!openSections[idx];
+
+  const toggleSection = (idx) => {
+    if (!isMobileNav) return;
+
+    // Acordeón: cierra todas excepto la clickeada
+    setOpenSections(prev => {
+      const next = {};
+      (items || []).forEach((_, i) => { next[i] = i === idx ? !prev[idx] : false; });
+      return next;
+    });
+
+    // Recalcula la altura del nav tras la transición CSS (300ms)
+    setTimeout(() => {
+      if (navRef.current && isExpandedRef.current) {
+        gsap.to(navRef.current, { height: calculateHeight(), duration: 0.25, ease: 'power2.out' });
+      }
+    }, 320);
+  };
 
   return (
     <div className={`card-nav-container ${className}`}>
@@ -183,11 +228,11 @@ const CardNav = ({
 
             {(usuario?.rol === 'Developer') && (
               <BoxPickerModal
-                boxes={listaBoxes.map(b => ({ idBox: b.idBox || b.IdBox, nombre: b.nombre || b.Nombre }))}
+                boxes={listaBoxes}
                 boxSeleccionado={boxActivo}
                 onChange={(boxId) => {
                   if (boxId === null) return;
-                  const boxSel = listaBoxes.find(b => (b.idBox || b.IdBox) === boxId);
+                  const boxSel = listaBoxes.find(b => b.idBox === boxId);
                   if (boxSel) {
                     localStorage.setItem('box', JSON.stringify({
                       idBox: boxSel.idBox || boxSel.IdBox,
@@ -223,14 +268,25 @@ const CardNav = ({
         <div className="card-nav-content" aria-hidden={!isExpanded}>
           {(items || []).slice(0, 3).map((item, idx) => (
             <div key={`${item.label}-${idx}`} className="nav-card" ref={setCardRef(idx)} style={{ backgroundColor: item.bgColor, color: item.textColor, border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div className="nav-card-label fw-bold mb-2"><i className={`fas ${item.icon} me-2 opacity-50`}></i>{item.label}</div>
-              <div className="nav-card-links">
-                {item.links?.map((lnk, i) => (
-                  <Link key={`${lnk.label}-${i}`} className="nav-card-link text-white text-decoration-none py-1" to={lnk.href} onClick={(event) => handleNavLinkClick(lnk.href, event)}>
-                    <GoArrowUpRight className="nav-card-link-icon text-secondary" aria-hidden="true" />
-                    {lnk.label}
-                  </Link>
-                ))}
+              <div
+                className="nav-card-label fw-bold mb-2 nav-card-header"
+                onClick={() => toggleSection(idx)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => e.key === 'Enter' && toggleSection(idx)}
+              >
+                <span><i className={`fas ${item.icon} me-2 opacity-50`}></i>{item.label}</span>
+                <i className={`fas fa-chevron-down nav-card-chevron ${isSectionOpen(idx) ? 'open' : ''}`}></i>
+              </div>
+              <div className={`nav-card-links-wrap ${isSectionOpen(idx) ? 'open' : 'collapsed'}`} ref={setLinksWrapRef(idx)}>
+                <div className="nav-card-links">
+                  {item.links?.map((lnk, i) => (
+                    <Link key={`${lnk.label}-${i}`} className="nav-card-link text-white text-decoration-none py-1" to={lnk.href} onClick={(event) => handleNavLinkClick(lnk.href, event)}>
+                      <GoArrowUpRight className="nav-card-link-icon text-secondary" aria-hidden="true" />
+                      {lnk.label}
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
           ))}

@@ -34,6 +34,7 @@ import MiPerfil from './pages/MiPerfil';
 import Directorio from './pages/Directorio';
 import DiccionarioEjercicios from './pages/DiccionarioEjercicios';
 import AdminEjercicios from './pages/AdminEjercicios';
+import AdminGruposFamiliares from './pages/AdminGruposFamiliares';
 import CreadorWods from './pages/CreadorWods';
 import CalendarioWods from './pages/CalendarioWods';
 import EditarWod from './pages/EditarWod';
@@ -312,10 +313,7 @@ function App() {
               <Route path="/competencias" element={<ListaCompetencias />} />
               <Route path="/historial-competencias" element={<HistorialCompetenciasPublico />} />
               <Route path="/historial-competencias/:idBox" element={<HistorialBoxDetalle />} />
-              <Route path="/admin-archivadas" element={<AdminArchivadasDev />} />
-              <Route path="/admin-archivadas/:idBox" element={<AdminArchivadasDevDetalle />} />
               <Route path="/simulador-barra-publico" element={<SimuladorBarraPublico />} />
-              <Route path="/wolfpack" element={<WolfPackPage />} />
               <Route path="/ejercicios" element={<Ejercicios />} />
               <Route path="/directorio-boxes" element={<DirectorioBoxes />} />
               <Route path="/box/:id" element={<BoxDetalle />} />
@@ -326,6 +324,7 @@ function App() {
             {/* ========================================= */}
             {/* RUTAS COMPLETAMENTE SIN NAVBAR            */}
             {/* ========================================= */}
+            <Route path="/wolfpack" element={<WolfPackPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/terminos" element={<TerminosCondiciones />} />
             <Route path="/politica-cookies" element={<PoliticaCookies />} />
@@ -360,6 +359,7 @@ function App() {
               <Route path="/admin-competencias/roster/:id" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AdminRosterFinanzas /></ProtectedRoute>} />
               {/* --- ZONA ADMINISTRACIÓN Y COACHES --- */}
               <Route path="/admin-box-panel" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><AdminBoxPanel /></ProtectedRoute>} />
+              <Route path="/admin-box/grupos-familiares" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><AdminGruposFamiliares /></ProtectedRoute>} />
               <Route path="/exportar-bd-box" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><ExportarBDBox /></ProtectedRoute>} />
               <Route path="/gestion-staff" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><GestionStaff /></ProtectedRoute>} />
               <Route path="/editar-usuario/:id" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox', 'Coach']}><EditarUsuario /></ProtectedRoute>} />
@@ -408,6 +408,8 @@ function App() {
               <Route path="/gestion-clases" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><GestionClases /></ProtectedRoute>} />
               <Route path="/diccionario-ejercicios" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><DiccionarioEjercicios /></ProtectedRoute>} />
               <Route path="/admin-ejercicios" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><AdminEjercicios /></ProtectedRoute>} />
+              <Route path="/admin-archivadas" element={<ProtectedRoute allowedRoles={['Developer']}><AdminArchivadasDev /></ProtectedRoute>} />
+              <Route path="/admin-archivadas/:idBox" element={<ProtectedRoute allowedRoles={['Developer']}><AdminArchivadasDevDetalle /></ProtectedRoute>} />
               <Route path="/editar-box" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><EditarBox /></ProtectedRoute>} />
               <Route path="/admin-competencias/panel/:id" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><CompetenciaDetalle /></ProtectedRoute>} />
               <Route path="/atletas-box" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><AtletasBox /></ProtectedRoute>} />

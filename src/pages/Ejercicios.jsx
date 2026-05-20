@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BackButton from '../components/BackButton';
 import { api } from '../services/api';
@@ -7,17 +7,32 @@ import '../assets/css/Ejercicios.css';
 
 const CATEGORIAS_BASE = ['Todas'];
 
+const handleVideoClick = (e) => {
+  if (!document.fullscreenElement) {
+    e.preventDefault();
+    e.currentTarget.requestFullscreen();
+  }
+};
+
+const POR_PAGINA = 20;
+
 export default function Ejercicios() {
   const [ejercicios, setEjercicios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState('');
   const [categoriaActiva, setCategoriaActiva] = useState('Todas');
   const [seleccionado, setSeleccionado] = useState(null);
+  const [pagina, setPagina] = useState(1);
+  const seccionRef = useRef(null);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
     cargar();
   }, []);
+
+  useEffect(() => {
+    setPagina(1);
+  }, [busqueda, categoriaActiva]);
 
   async function cargar() {
     setLoading(true);
@@ -40,6 +55,14 @@ export default function Ejercicios() {
     const matchCategoria = categoriaActiva === 'Todas' || ej.categoria === categoriaActiva;
     return matchNombre && matchCategoria;
   });
+
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
+  const paginados = filtrados.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+
+  function irAPagina(nueva) {
+    setPagina(nueva);
+    seccionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   return (
     <div className="ejercicios-wrapper">
@@ -113,7 +136,7 @@ export default function Ejercicios() {
       </section>
 
       {/* Grid de ejercicios */}
-      <section className="ej-seccion">
+      <section className="ej-seccion" ref={seccionRef}>
         <div className="container">
 
           {loading ? (
@@ -129,8 +152,13 @@ export default function Ejercicios() {
             </div>
           ) : (
             <>
-              <div className="ej-contador mb-4">
+              <div className="ej-contador mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <span>{filtrados.length} ejercicio{filtrados.length !== 1 ? 's' : ''}</span>
+                {totalPaginas > 1 && (
+                  <span className="ej-contador-pagina">
+                    Página {pagina} de {totalPaginas}
+                  </span>
+                )}
               </div>
 
               {filtrados.length === 0 ? (
@@ -141,49 +169,98 @@ export default function Ejercicios() {
                   </p>
                 </div>
               ) : (
-                <div className="row g-4">
-                  {filtrados.map((ej, i) => (
-                    <div key={ej.id} className="col-12 col-md-6 col-lg-4">
-                      <motion.div
-                        className="ej-card"
-                        style={{ '--ej-color': ej.color }}
-                        initial={{ opacity: 0, y: 40 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.15 }}
-                        transition={{ duration: 0.5, delay: (i % 6) * 0.07 }}
-                        onClick={() => setSeleccionado(ej)}
+                <>
+                  <div className="row g-3">
+                    {paginados.map((ej, i) => (
+                      <div key={ej.id} className="col-6 col-md-6 col-lg-4">
+                        <motion.div
+                          className="ej-card"
+                          style={{ '--ej-color': ej.color }}
+                          initial={{ opacity: 0, y: 30 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: (i % 6) * 0.05 }}
+                          onClick={() => setSeleccionado(ej)}
+                        >
+                          {/* Watermark */}
+                          <span className="ej-watermark" aria-hidden="true">
+                            {ej.nombre.split(' ')[0]}
+                          </span>
+
+                          {/* Header */}
+                          <div className="ej-card-header">
+                            <div className="ej-icono">
+                              <i className={ej.icono} />
+                            </div>
+                            <div className="ej-card-text">
+                              <h3 className="ej-nombre mb-0">{ej.nombre}</h3>
+                              {ej.subnombre && (
+                                <p className="ej-subnombre">Alt: {ej.subnombre}</p>
+                              )}
+                              <span className="ej-categoria">{ej.categoria}</span>
+                            </div>
+                          </div>
+
+                          {/* Instrucción (truncada) */}
+                          <p className="ej-instruccion">{ej.instruccion}</p>
+
+                          {/* Ver más */}
+                          <span className="ej-ver-mas">
+                            <i className="fas fa-expand-alt" /> Ver técnica completa
+                          </span>
+
+                          {/* Glow */}
+                          <div className="ej-glow" aria-hidden="true" />
+                        </motion.div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Paginación */}
+                  {totalPaginas > 1 && (
+                    <div className="ej-pagination">
+                      <button
+                        className="ej-pag-btn"
+                        onClick={() => irAPagina(pagina - 1)}
+                        disabled={pagina === 1}
+                        aria-label="Página anterior"
                       >
-                        {/* Watermark */}
-                        <span className="ej-watermark" aria-hidden="true">
-                          {ej.nombre.split(' ')[0]}
-                        </span>
+                        <i className="fas fa-chevron-left" />
+                      </button>
 
-                        {/* Header */}
-                        <div className="ej-card-header d-flex align-items-start gap-3">
-                          <div className="ej-icono">
-                            <i className={ej.icono} />
-                          </div>
-                          <div className="flex-grow-1 min-w-0">
-                            <h3 className="ej-nombre mb-0">{ej.nombre}</h3>
-                            {ej.subnombre && <p style={{margin:0, fontSize:'0.8rem', color:'var(--text-muted)'}}>Alt: {ej.subnombre}</p>}
-                            <span className="ej-categoria">{ej.categoria}</span>
-                          </div>
-                        </div>
+                      <div className="ej-pag-numeros">
+                        {Array.from({ length: totalPaginas }, (_, idx) => idx + 1)
+                          .filter(n => n === 1 || n === totalPaginas || Math.abs(n - pagina) <= 1)
+                          .reduce((acc, n, i, arr) => {
+                            if (i > 0 && n - arr[i - 1] > 1) acc.push('...');
+                            acc.push(n);
+                            return acc;
+                          }, [])
+                          .map((item, idx) =>
+                            item === '...' ? (
+                              <span key={`dots-${idx}`} className="ej-pag-dots">…</span>
+                            ) : (
+                              <button
+                                key={item}
+                                className={`ej-pag-num${item === pagina ? ' activo' : ''}`}
+                                onClick={() => irAPagina(item)}
+                              >
+                                {item}
+                              </button>
+                            )
+                          )}
+                      </div>
 
-                        {/* Instrucción (truncada) */}
-                        <p className="ej-instruccion">{ej.instruccion}</p>
-
-                        {/* Ver más */}
-                        <span className="ej-ver-mas">
-                          <i className="fas fa-expand-alt" /> Ver técnica completa
-                        </span>
-
-                        {/* Glow */}
-                        <div className="ej-glow" aria-hidden="true" />
-                      </motion.div>
+                      <button
+                        className="ej-pag-btn"
+                        onClick={() => irAPagina(pagina + 1)}
+                        disabled={pagina === totalPaginas}
+                        aria-label="Página siguiente"
+                      >
+                        <i className="fas fa-chevron-right" />
+                      </button>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               )}
             </>
           )}
@@ -252,10 +329,17 @@ export default function Ejercicios() {
                   <i className="fas fa-video me-2"></i>Ejemplo de Ejecución
                 </h4>
                 {seleccionado.videoUrl ? (
-                  <video 
-                    src={seleccionado.videoUrl} 
-                    controls 
-                    style={{ width: '100%', borderRadius: '8px', border: `1px solid ${seleccionado.color}40`, background: '#000' }}
+                  <video
+                    src={seleccionado.videoUrl}
+                    controls
+                    autoPlay
+                    muted
+                    loop
+                    onClick={handleVideoClick}
+                    onContextMenu={e => e.preventDefault()}
+                    controlsList="nodownload noremoteplayback noplaybackrate"
+                    disablePictureInPicture
+                    style={{ width: '100%', borderRadius: '8px', border: `1px solid ${seleccionado.color}40`, background: '#000', cursor: 'zoom-in' }}
                   ></video>
                 ) : (
                   <div className="d-flex flex-column align-items-center justify-content-center p-4" style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px dashed rgba(255,255,255,0.1)' }}>

@@ -10,6 +10,13 @@ import '../assets/css/DiccionarioEjercicios.css';
 
 const API_BASE = import.meta.env.VITE_API_URL;;
 
+const handleVideoClick = (e) => {
+  if (!document.fullscreenElement) {
+    e.preventDefault();
+    e.currentTarget.requestFullscreen();
+  }
+};
+
 export default function DiccionarioEjercicios() {
   const navigate = useNavigate();
   const [box, setBox] = useState(null);
@@ -367,7 +374,7 @@ export default function DiccionarioEjercicios() {
                         
                         {ej.videoUrl && (
                           <div className="mb-3">
-                            <video src={ej.videoUrl} controls style={{ width: '100%', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}></video>
+                            <video src={ej.videoUrl} controls autoPlay muted loop onClick={handleVideoClick} onContextMenu={e => e.preventDefault()} controlsList="nodownload noremoteplayback noplaybackrate" disablePictureInPicture style={{ width: '100%', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', cursor: 'zoom-in' }}></video>
                           </div>
                         )}
 

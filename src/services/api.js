@@ -408,6 +408,81 @@ export const api = {
   obtenerPagosDelKid: async (idKid) => {
     const response = await fetch(`${API_BASE_URL}/pagos/kid/${idKid}`);
     return handleResponse(response);
+  },
+
+  // ============================================================
+  //  GRUPOS FAMILIARES — Escuadrones de Atletas
+  // ============================================================
+  obtenerGruposFamiliaresPorBox: async (idBox) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/GruposFamiliares/box/${idBox}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
+  obtenerDetalleGrupoFamiliar: async (idGrupo) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/GruposFamiliares/${idGrupo}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
+  crearGrupoFamiliar: async (payload) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/GruposFamiliares`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    return handleResponse(response);
+  },
+
+  pagarGrupoFamiliar: async (idGrupo, pago) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/GruposFamiliares/${idGrupo}/pagar`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(pago)
+    });
+    return handleResponse(response);
+  },
+
+  editarMiembrosGrupoFamiliar: async (idGrupo, payload) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/GruposFamiliares/${idGrupo}/miembros`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    return handleResponse(response);
+  },
+
+  disolverGrupoFamiliar: async (idGrupo) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/GruposFamiliares/${idGrupo}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
+  obtenerAtletasDisponiblesParaGrupo: async (idBox) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/GruposFamiliares/box/${idBox}/atletas-disponibles`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
   }
 };
 

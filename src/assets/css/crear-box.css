@@ -1,71 +1,192 @@
 /* ============================================
    WOLFPACK SYSTEM - CREAR BOX
-   Usa variables de global.css + componentes.css
+   Sigue el patrón visual de GestionClases.css
    ============================================ */
 
 /* === PÁGINA === */
-.crearbox-page {
+.cb-page {
   background: var(--bg-base);
   color: var(--text-primary);
+  min-height: 100vh;
+  padding-bottom: 4rem;
 }
 
-/* === HEADER BAR === */
-.crearbox-header {
-  background: var(--bg-elevated);
+/* === HEADER STICKY GLASSMORPHISM === */
+.cb-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1rem 0.75rem 0.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  margin-bottom: 1.5rem;
 }
 
-.crearbox-header-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+@media (min-width: 768px) {
+  .cb-header {
+    padding: 0.85rem 1.5rem 0.85rem 0.6rem;
+    margin-bottom: 2rem;
+  }
+}
+
+.cb-header-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   background: rgba(230, 57, 70, 0.12);
   border: 1px solid rgba(230, 57, 70, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: clamp(0.88rem, 2.5vw, 1rem);
   color: var(--primary);
   flex-shrink: 0;
 }
 
-.crearbox-header-title {
+.cb-header-title {
   font-family: var(--font-heading);
+  font-size: clamp(1rem, 3vw, 1.25rem);
   font-weight: 700;
-  font-size: 1.25rem;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--text-primary);
-}
-
-.crearbox-header-accent {
-  color: var(--primary);
-}
-
-/* === TÍTULO === */
-
-.crearbox-subtitle {
-  font-family: var(--font-heading-alt);
-  font-weight: 500;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--secondary);
+  line-height: 1.1;
   margin: 0;
 }
 
-/* === BOTÓN CANCELAR === */
-.crearbox-btn-cancel {
-  background: transparent;
+.cb-header-title span {
+  color: var(--primary);
+}
+
+.cb-header-sub {
+  font-family: var(--font-heading-alt);
+  font-size: clamp(0.62rem, 1.8vw, 0.75rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* === TARJETA DE FORMULARIO === */
+.cb-form-card {
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
-  color: var(--secondary);
-  font-weight: 500;
-  text-decoration: none;
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
+  padding: 1.1rem;
   transition: var(--transition);
 }
 
-.crearbox-btn-cancel:hover {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: var(--text-primary);
+@media (min-width: 576px) {
+  .cb-form-card {
+    padding: 1.5rem;
+  }
+}
+
+/* === TÍTULO DE SECCIÓN === */
+.cb-section-title {
+  font-family: var(--font-heading);
+  font-size: clamp(0.68rem, 2vw, 0.85rem);
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cb-section-title i {
+  color: var(--primary);
+  font-size: 0.85em;
+}
+
+/* === BOTÓN GUARDAR === */
+.cb-save-btn {
+  flex: 1;
+  background: var(--primary);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-size: clamp(0.78rem, 2.2vw, 0.9rem);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  touch-action: manipulation;
+}
+
+.cb-save-btn:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 16px var(--primary-glow);
+}
+
+/* === BOTÓN CANCELAR === */
+.cb-cancel-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: var(--transition);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}
+
+.cb-cancel-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.06);
+}
+
+/* ============================================
+   RESPONSIVE — según CLAUDE.md
+   ============================================ */
+
+/* Tablet ≤ 768px */
+@media (max-width: 768px) {
+  .cb-header-title   { font-size: clamp(0.9rem, 2.8vw, 1.1rem); }
+  .cb-header-sub     { font-size: 0.63rem; }
+  .cb-section-title  { font-size: 0.72rem; }
+  .cb-save-btn       { font-size: 0.8rem; }
+  .cb-form-card      { padding: 1rem; border-radius: 14px; }
+}
+
+/* Móvil ≤ 576px */
+@media (max-width: 576px) {
+  .cb-header         { padding: 0.6rem 0.75rem; margin-bottom: 1rem; }
+  .cb-header-icon    { width: 34px; height: 34px; font-size: 0.82rem; border-radius: 8px; }
+  .cb-header-title   { font-size: 0.92rem; }
+  .cb-header-sub     { font-size: 0.59rem; }
+  .cb-form-card      { padding: 0.9rem; border-radius: 12px; }
+  .cb-section-title  { font-size: 0.64rem; letter-spacing: 1.5px; margin-bottom: 0.9rem; }
+  .cb-save-btn       { font-size: 0.75rem; padding: 0.65rem 1rem; }
+  .cb-cancel-btn     { width: 42px; height: 42px; }
+}
+
+/* Móvil pequeño ≤ 380px */
+@media (max-width: 380px) {
+  .cb-header-title   { font-size: 0.85rem; }
+  .cb-header-sub     { font-size: 0.56rem; }
+  .cb-form-card      { padding: 0.75rem; }
+  .cb-section-title  { font-size: 0.58rem; }
+  .cb-save-btn       { font-size: 0.7rem; padding: 0.6rem 0.85rem; }
+  .cb-cancel-btn     { width: 40px; height: 40px; font-size: 0.78rem; }
 }

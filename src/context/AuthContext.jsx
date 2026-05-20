@@ -1,5 +1,6 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { COMPETENCIAS_ENDPOINT } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -9,6 +10,7 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
   const [cuentasGuardadas, setCuentasGuardadas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [listaBoxes, setListaBoxes] = useState([]);
 
   // Helper robusto para obtener el ID de un usuario sin importar el casing
   const getIdFromUser = (u) => u?.idUsuario || u?.IdUsuario || u?.id || u?.Id || null;
@@ -227,6 +229,24 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const refetchBoxes = useCallback(async () => {
+    if (!(usuario?.rol === 'Developer' || usuario?.rol === 'AdminBox')) return;
+    try {
+      const baseUrl = COMPETENCIAS_ENDPOINT.split('/competencias')[0];
+      const res = await fetch(`${baseUrl}/box`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setListaBoxes(data.map(b => ({ idBox: b.idBox || b.IdBox, nombre: b.nombre || b.Nombre })));
+      }
+    } catch (e) {
+      console.error('Error al cargar boxes:', e);
+    }
+  }, [usuario]);
+
+  useEffect(() => {
+    refetchBoxes();
+  }, [refetchBoxes]);
+
   const cambiarBox = (idBox) => {
     setBoxActivo(idBox);
     localStorage.setItem('boxActivo', JSON.stringify(idBox));
@@ -267,6 +287,8 @@ export function AuthProvider({ children }) {
       boxActivo,
       token,
       cuentasGuardadas,
+      listaBoxes,
+      refetchBoxes,
       cambiarBox,
       cambiarCuenta,
       prepararCambioCuenta,

@@ -1,7 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { USUARIOS_ENDPOINT } from '../services/api';
-import FlowingMenu from '../components/ReactBits/FlowingMenu';
+import {
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend
+} from 'recharts';
 import '../assets/css/AdminBoxPanel.css';
 
 export default function AdminBoxPanel() {
@@ -11,8 +23,10 @@ export default function AdminBoxPanel() {
   const [atletas, setAtletas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [solicitudes, setSolicitudes] = useState([]);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
 
-  // Filtros
+  // Filtros (Se conservan variables para estabilidad del componente)
   const [busqueda, setBusqueda] = useState('');
   const [filtroCat, setFiltroCat] = useState('');
   const [filtroEstatus, setFiltroEstatus] = useState('');
@@ -29,7 +43,30 @@ export default function AdminBoxPanel() {
     setUser(u);
     setBox(b);
     cargarAtletas(b?.idBox);
+
+    const isAdminUser = u.rol === 'AdminBox' || u.rol === 'Developer' || u.Rol === 'AdminBox' || u.Rol === 'Developer';
+    if (isAdminUser && b?.idBox) {
+      cargarDashboard(b.idBox);
+    }
   }, [navigate]);
+
+  async function cargarDashboard(idBox) {
+    setDashboardLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/finanzas/dashboard/${idBox}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDashboardData(data);
+      }
+    } catch (err) {
+      console.error("Error al cargar dashboard financiero:", err);
+    } finally {
+      setDashboardLoading(false);
+    }
+  }
 
   async function cargarAtletas(idBox) {
     try {
@@ -50,31 +87,10 @@ export default function AdminBoxPanel() {
       setAtletas(atletasFiltrados);
       setSolicitudes(solicitudesFiltradas);
 
-    } catch (err) { console.error(err); }
-    finally {
-      setLoading(false);
-    }
-  }
-
-  async function expulsarAtleta(idUsuario) {
-    if (!await window.wpConfirm("¿Seguro que deseas expulsar a este atleta del Box? Quedará como usuario independiente.")) return;
-
-    try {
-      const res = await fetch(`${USUARIOS_ENDPOINT}/${idUsuario}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idBoxPredeterminado: 0, rol: 'Usuario' })
-      });
-
-      if (res.ok) {
-        alert("Atleta expulsado correctamente");
-        cargarAtletas(box?.idBox);
-      } else {
-        alert("Error al expulsar al atleta");
-      }
     } catch (err) {
       console.error(err);
-      alert("Error de conexión");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -82,33 +98,33 @@ export default function AdminBoxPanel() {
   const atletasActivos = atletas.filter(a => a.activo);
   const atletasInactivos = atletas.filter(a => !a.activo);
 
-  // Categorías únicas para el select
+  // Categorías únicas
   const categorias = [...new Set(atletas.map(a => a.categoriaBase).filter(Boolean))].sort();
 
-  // Atletas filtrados por búsqueda + categoría + estatus
-  const atletasMostrados = atletas.filter(a => {
-    const termino = busqueda.toLowerCase();
-    const matchNombre = !busqueda ||
-      a.nombre?.toLowerCase().includes(termino) ||
-      a.correo?.toLowerCase().includes(termino);
-    const matchCat = !filtroCat || a.categoriaBase === filtroCat;
-    const matchEstatus = !filtroEstatus ||
-      (filtroEstatus === 'activo' ? a.activo : !a.activo);
-    return matchNombre && matchCat && matchEstatus;
-  });
-
-  const menuItems = [
-    { link: '/perfil-admin', text: 'MI PERFIL / EXPEDIENTE', image: 'https://images.unsplash.com/photo-1526506190301-3d47c062c54c?w=600&q=80' },
-    { link: '/registro-manual', text: 'NUEVO ATLETA', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&q=80' },
-    { link: '/pase-de-lista', text: 'PASE DE LISTA', image: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=600&q=80' },
-    { link: '/calendario-wods', text: 'PROGRAMAR WODS', image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&q=80' },
-    ...(isAdmin ? [
-      { link: '/gestion-clases', text: 'CLASES Y WODS', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80' },
-      { link: '/gestion-ventas-productos', text: 'TIENDA Y POS', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80' },
-      { link: '/finanzas-globales', text: 'FINANZAS GLOBALES', image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=600&q=80' },
-      { link: '/gestion-reglamento', text: 'REGLAMENTO', image: 'https://images.unsplash.com/photo-1544367567-0f2fcb046eb9?w=600&q=80' }
-    ] : [])
+  // 6 meses de datos reales de facturación e ingresos vs egresos jalados de DB
+  const trendData = dashboardData?.historico || [
+    { mes: 'Dic', Ingresos: 0, Egresos: 0 },
+    { mes: 'Ene', Ingresos: 0, Egresos: 0 },
+    { mes: 'Feb', Ingresos: 0, Egresos: 0 },
+    { mes: 'Mar', Ingresos: 0, Egresos: 0 },
+    { mes: 'Abr', Ingresos: 0, Egresos: 0 },
+    { mes: 'May', Ingresos: 0, Egresos: 0 }
   ];
+
+  const formatearDinero = (monto) => {
+    return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(monto || 0);
+  };
+
+  const calcularDiasVencidos = (fechaString) => {
+    if (!fechaString) return 0;
+    const dif = new Date() - new Date(fechaString);
+    return Math.max(0, Math.floor(dif / (1000 * 60 * 60 * 24)));
+  };
+
+  const enviarRecordatorioWhatsApp = (nombre) => {
+    const mensaje = `Hola ${nombre}, te saludamos de ${box?.nombre || 'tu Box'}. Te recordamos que tu mensualidad ha vencido. Te esperamos en recepción para renovar tu plan y seguir entrenando con todo. ¡Que tengas un excelente día! 🐺💪`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, '_blank');
+  };
 
   if (loading) {
     return (
@@ -225,25 +241,376 @@ export default function AdminBoxPanel() {
           </div>
         </section>
 
-
         {/* ══════════════════════════════════
-            ACCESOS RÁPIDOS (FLOWING MENU)
+            DISTRIBUCIÓN DEL DASHBOARD
         ══════════════════════════════════ */}
-        <p className="abp-section-label">Accesos Rápidos</p>
-        <div className="abp-menu-wrapper" style={{ height: 'auto' }}>
-          <FlowingMenu
-            items={menuItems}
-            speed={20}
-            textColor="#ffffff"
-            bgColor="transparent"
-            marqueeBgColor="#dc3545"
-            marqueeTextColor="#ffffff"
-            borderColor="rgba(255, 255, 255, 0.05)"
-          />
-        </div>
+        <div className="abp-dashboard-grid">
 
+          {/* COLUMNA PRINCIPAL (IZQUIERDA) */}
+          <div className="abp-main-col">
+
+            {/* GRID DE ACCESOS RÁPIDOS CATEGORIZADOS */}
+            <section className="abp-section mb-4">
+              <p className="abp-section-label">
+                <i className="fas fa-th-large me-2"></i>Accesos Rápidos
+              </p>
+
+              <div className="abp-category-container">
+                <h3 className="abp-category-title">
+                  <i className="fas fa-running me-2 text-success"></i>Operaciones Diarias
+                </h3>
+                <div className="abp-quick-grid">
+                  <Link to="/perfil-admin" className="abp-quick-card">
+                    <div className="abp-card-icon-wrapper" style={{ '--icon-color': '#3498db' }}>
+                      <i className="fas fa-id-card"></i>
+                    </div>
+                    <div className="abp-card-content">
+                      <div className="abp-card-title">Mi Perfil / Expediente</div>
+                      <div className="abp-card-desc">Información personal y médica del coach</div>
+                    </div>
+                  </Link>
+                  <Link to="/pase-de-lista" className="abp-quick-card">
+                    <div className="abp-card-icon-wrapper" style={{ '--icon-color': '#2ecc71' }}>
+                      <i className="fas fa-clipboard-check"></i>
+                    </div>
+                    <div className="abp-card-content">
+                      <div className="abp-card-title">Pase de Lista</div>
+                      <div className="abp-card-desc">Registra las asistencias del día</div>
+                    </div>
+                  </Link>
+                  <Link to="/calendario-wods" className="abp-quick-card">
+                    <div className="abp-card-icon-wrapper" style={{ '--icon-color': '#e67e22' }}>
+                      <i className="fas fa-calendar-plus"></i>
+                    </div>
+                    <div className="abp-card-content">
+                      <div className="abp-card-title">Programar WODs</div>
+                      <div className="abp-card-desc">Planifica entrenamientos diarios</div>
+                    </div>
+                  </Link>
+                  <Link to="/registro-manual" className="abp-quick-card">
+                    <div className="abp-card-icon-wrapper" style={{ '--icon-color': '#9b59b6' }}>
+                      <i className="fas fa-user-plus"></i>
+                    </div>
+                    <div className="abp-card-content">
+                      <div className="abp-card-title">Nuevo Atleta</div>
+                      <div className="abp-card-desc">Da de alta atletas manualmente</div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="abp-category-container mt-4">
+                <h3 className="abp-category-title">
+                  <i className="fas fa-dumbbell me-2 text-info"></i>Administración de Clases
+                </h3>
+                <div className="abp-quick-grid">
+                  <Link to="/gestion-clases" className="abp-quick-card">
+                    <div className="abp-card-icon-wrapper" style={{ '--icon-color': '#e74c3c' }}>
+                      <i className="fas fa-dumbbell"></i>
+                    </div>
+                    <div className="abp-card-content">
+                      <div className="abp-card-title">Clases y WODs</div>
+                      <div className="abp-card-desc">Horarios, instructores y reservas</div>
+                    </div>
+                  </Link>
+                  <Link to="/gestion-reglamento" className="abp-quick-card">
+                    <div className="abp-card-icon-wrapper" style={{ '--icon-color': '#1abc9c' }}>
+                      <i className="fas fa-gavel"></i>
+                    </div>
+                    <div className="abp-card-content">
+                      <div className="abp-card-title">Reglamento</div>
+                      <div className="abp-card-desc">Políticas y reglamentos internos</div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
+              {isAdmin && (
+                <div className="abp-category-container mt-4">
+                  <h3 className="abp-category-title">
+                    <i className="fas fa-hand-holding-usd me-2 text-warning"></i>Finanzas & Escuadrones
+                  </h3>
+                  <div className="abp-quick-grid">
+                    <Link to="/gestion-ventas-productos" className="abp-quick-card">
+                      <div className="abp-card-icon-wrapper" style={{ '--icon-color': '#f1c40f' }}>
+                        <i className="fas fa-cash-register"></i>
+                      </div>
+                      <div className="abp-card-content">
+                        <div className="abp-card-title">Tienda y POS</div>
+                        <div className="abp-card-desc">Venta de suplementos y abono de fiados</div>
+                      </div>
+                    </Link>
+                    <Link to="/finanzas-globales" className="abp-quick-card">
+                      <div className="abp-card-icon-wrapper" style={{ '--icon-color': '#2ecc71' }}>
+                        <i className="fas fa-chart-line"></i>
+                      </div>
+                      <div className="abp-card-content">
+                        <div className="abp-card-title">Finanzas Globales</div>
+                        <div className="abp-card-desc">Ingresos, egresos y balance general</div>
+                      </div>
+                    </Link>
+                    <Link to="/admin-box/grupos-familiares" className="abp-quick-card">
+                      <div className="abp-card-icon-wrapper" style={{ '--icon-color': '#e74c3c' }}>
+                        <i className="fas fa-users-cog"></i>
+                      </div>
+                      <div className="abp-card-content">
+                        <div className="abp-card-title">Grupos Familiares</div>
+                        <div className="abp-card-desc">Planes de descuento para escuadrones</div>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* GRÁFICOS INTERACTIVOS (RECHARTS) */}
+            <section className="abp-section mb-4">
+              <p className="abp-section-label">
+                <i className="fas fa-chart-bar me-2"></i>Métricas y Rendimiento
+              </p>
+
+              <div className="row g-3">
+
+                {/* 1. GRÁFICO DE AREA: INGRESOS Y EGRESOS (REALES) */}
+                <div className="col-12 col-xl-8">
+                  <div className="abp-glass-card h-100">
+                    <div className="abp-card-header d-flex justify-content-between align-items-center mb-3">
+                      <div>
+                        <h4 className="abp-card-title mb-0">Rendimiento Histórico Real</h4>
+                        <span className="text-muted small">Tendencias mensuales de Ingresos vs Egresos</span>
+                      </div>
+                      <div className="d-flex align-items-center gap-2">
+                        <span className="badge bg-success-glow text-success px-2 py-1 small">6 Meses</span>
+                      </div>
+                    </div>
+
+                    <div className="abp-chart-container" style={{ height: '280px', width: '100%' }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#2ecc71" stopOpacity={0.2}/>
+                              <stop offset="95%" stopColor="#2ecc71" stopOpacity={0}/>
+                            </linearGradient>
+                            <linearGradient id="colorEgresos" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#e74c3c" stopOpacity={0.2}/>
+                              <stop offset="95%" stopColor="#e74c3c" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                          <XAxis dataKey="mes" stroke="#888899" fontSize={11} tickLine={false} />
+                          <YAxis stroke="#888899" fontSize={10} tickLine={false} tickFormatter={v => `$${v}`} />
+                          <Tooltip
+                            contentStyle={{ backgroundColor: '#16161e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                            labelStyle={{ color: '#fff', fontWeight: 'bold' }}
+                            formatter={(value, name) => [`$${value}`, name]}
+                          />
+                          <Area type="monotone" dataKey="Ingresos" name="Ingresos" stroke="#2ecc71" strokeWidth={2} fillOpacity={1} fill="url(#colorIngresos)" />
+                          <Area type="monotone" dataKey="Egresos" name="Egresos" stroke="#e74c3c" strokeWidth={2} fillOpacity={1} fill="url(#colorEgresos)" />
+                          <Legend wrapperStyle={{ fontSize: 11, color: '#aaa', paddingTop: '10px' }} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. VENTAS DE LA TIENDA Y POS (NUEVO WIDGET CON REDIRECCIÓN) */}
+                <div className="col-12 col-xl-4">
+                  <Link to="/gestion-ventas-productos" className="text-decoration-none d-block h-100">
+                    <div className="abp-glass-card h-100 d-flex flex-column justify-content-between abp-clickable-card" style={{ borderLeft: '3px solid #f1c40f', cursor: 'pointer' }}>
+                      <div className="abp-card-header d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                          <h4 className="abp-card-title mb-0">Ventas de la Tienda</h4>
+                          <span className="text-muted small">Suplementos, bebidas y más</span>
+                        </div>
+                        <div className="abp-widget-icon text-warning">
+                          <i className="fas fa-store"></i>
+                        </div>
+                      </div>
+
+                      <div className="d-flex flex-column gap-2 my-auto pt-2">
+                        {/* Hoy */}
+                        <div className="d-flex align-items-center justify-content-between p-2 rounded bg-dark-glow">
+                          <div className="d-flex align-items-center gap-2">
+                            <span className="badge bg-warning-glow text-warning px-2 py-1 small">Hoy</span>
+                          </div>
+                          <span className="fw-bold text-white fs-6">
+                            {dashboardLoading ? (
+                              <span className="spinner-border spinner-border-sm text-warning" role="status"></span>
+                            ) : (
+                              formatearDinero(dashboardData?.ventasTienda?.hoy)
+                            )}
+                          </span>
+                        </div>
+
+                        {/* Semana */}
+                        <div className="d-flex align-items-center justify-content-between p-2 rounded bg-dark-glow">
+                          <div className="d-flex align-items-center gap-2">
+                            <span className="badge bg-success-glow text-success px-2 py-1 small">Esta Semana</span>
+                          </div>
+                          <span className="fw-bold text-white fs-6">
+                            {dashboardLoading ? (
+                              <span className="spinner-border spinner-border-sm text-success" role="status"></span>
+                            ) : (
+                              formatearDinero(dashboardData?.ventasTienda?.semana)
+                            )}
+                          </span>
+                        </div>
+
+                        {/* Mes */}
+                        <div className="d-flex align-items-center justify-content-between p-2 rounded bg-dark-glow">
+                          <div className="d-flex align-items-center gap-2">
+                            <span className="badge bg-info-glow text-info px-2 py-1 small">Este Mes</span>
+                          </div>
+                          <span className="fw-bold text-white fs-6">
+                            {dashboardLoading ? (
+                              <span className="spinner-border spinner-border-sm text-info" role="status"></span>
+                            ) : (
+                              formatearDinero(dashboardData?.ventasTienda?.mes)
+                            )}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="text-warning text-center mt-3 fw-bold" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>
+                        <i className="fas fa-cash-register me-1"></i>Ir a Tienda y POS <i className="fas fa-chevron-right ms-1"></i>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+
+              </div>
+            </section>
+
+          </div>
+
+          {/* COLUMNA SIDEBAR (DERECHA) */}
+          <div className="abp-sidebar-col">
+
+            {/* WIDGET 1: TERMÓMETRO DE INGRESOS (Solo Admin) */}
+            {isAdmin && (
+              <div className="abp-glass-card mb-4" style={{ borderLeft: '3px solid #2ecc71' }}>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h4 className="abp-card-title mb-0">Facturación Mensual</h4>
+                  <div className="abp-widget-icon text-success">
+                    <i className="fas fa-hand-holding-usd"></i>
+                  </div>
+                </div>
+                <div className="fs-2 fw-bold text-success mb-1">
+                  {dashboardLoading ? (
+                    <span className="spinner-border spinner-border-sm text-success" role="status"></span>
+                  ) : (
+                    formatearDinero(dashboardData?.ingresosMes || 0)
+                  )}
+                </div>
+                <p className="text-muted small mb-3">Ingresos acumulados de mensualidades y visitas</p>
+
+                {/* Meta de ingresos */}
+                <div className="abp-revenue-goal">
+                  <div className="d-flex justify-content-between text-muted small mb-1" style={{ fontSize: '10px' }}>
+                    <span>Meta Mensual: $50,000.00</span>
+                    <span className="fw-bold text-white">{Math.min(100, Math.round(((dashboardData?.ingresosMes || 0) / 50000) * 100))}%</span>
+                  </div>
+                  <div className="progress bg-dark-glow" style={{ height: '6px', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div
+                      className="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                      role="progressbar"
+                      style={{ width: `${Math.min(100, ((dashboardData?.ingresosMes || 0) / 50000) * 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* WIDGET 2: SOLICITUDES DE ACCESO */}
+            {isAdmin && solicitudes.length > 0 && (
+              <div className="abp-glass-card abp-warning-card mb-4">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <h4 className="abp-card-title mb-0 text-warning">Solicitudes Pendientes</h4>
+                  <span className="badge bg-warning-glow text-warning animate-pulse px-2 py-1">{solicitudes.length}</span>
+                </div>
+                <p className="text-white-50 small mb-3">Hay atletas esperando aprobación para ingresar al Box.</p>
+                <Link to="/gestion-solicitudes" className="abp-card-action-btn bg-warning-glow text-warning w-100 text-center py-2 rounded-10 text-decoration-none d-block fw-bold" style={{ fontSize: '12px' }}>
+                  <i className="fas fa-check-double me-1"></i>Revisar Solicitudes
+                </Link>
+              </div>
+            )}
+
+            {/* WIDGET 3: LOBOS EN RIESGO / DELINCUENTES */}
+            {isAdmin && (
+              <div className="abp-glass-card mb-4">
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h4 className="abp-card-title mb-0">Atletas con Adeudos</h4>
+                  <div className="abp-widget-icon text-danger">
+                    <i className="fas fa-exclamation-triangle"></i>
+                  </div>
+                </div>
+
+                {dashboardLoading ? (
+                  <div className="text-center py-3">
+                    <span className="spinner-border spinner-border-sm text-danger" role="status"></span>
+                  </div>
+                ) : !dashboardData?.topMorosos || dashboardData.topMorosos.length === 0 ? (
+                  <div className="text-center text-muted py-3 small">
+                    <i className="fas fa-check-circle text-success fs-3 mb-2 d-block"></i>
+                    ¡Excelente! Sin mensualidades vencidas.
+                  </div>
+                ) : (
+                  <div className="abp-debt-list">
+                    {dashboardData.topMorosos.map((m, idx) => {
+                      const diasVencidos = calcularDiasVencidos(m.fechaVencimiento);
+                      return (
+                        <div key={idx} className="abp-debt-item d-flex align-items-center justify-content-between p-2 mb-2 rounded bg-dark-glow">
+                          <div>
+                            <div className="fw-bold text-white small truncate" style={{ maxWidth: '140px' }}>{m.nombre}</div>
+                            <span className="text-danger" style={{ fontSize: '9px' }}>
+                              Vencido hace {diasVencidos} días
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => enviarRecordatorioWhatsApp(m.nombre)}
+                            className="btn btn-outline-success btn-xs py-1 px-2 d-flex align-items-center gap-1 border-0"
+                            style={{ fontSize: '10px' }}
+                            title="Enviar recordatorio de WhatsApp"
+                          >
+                            <i className="fab fa-whatsapp fs-6"></i>
+                            <span>Cobrar</span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* RESUMEN DE CONTROL GENERAL */}
+            <div className="abp-glass-card">
+              <h4 className="abp-card-title mb-3">Resumen de Control</h4>
+              <div className="d-flex align-items-center justify-content-between mb-2 small text-muted">
+                <span>Total de Atletas</span>
+                <span className="fw-bold text-white">{atletas.length}</span>
+              </div>
+              <div className="d-flex align-items-center justify-content-between mb-2 small text-muted">
+                <span>Atletas Activos</span>
+                <span className="fw-bold text-success">{atletasActivos.length}</span>
+              </div>
+              <div className="d-flex align-items-center justify-content-between mb-2 small text-muted">
+                <span>Atletas Inactivos</span>
+                <span className="fw-bold text-danger">{atletasInactivos.length}</span>
+              </div>
+              <div className="d-flex align-items-center justify-content-between small text-muted">
+                <span>Categorías del Box</span>
+                <span className="fw-bold text-info">{categorias.length}</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
 
       </div>
     </div>
   );
 }
+
