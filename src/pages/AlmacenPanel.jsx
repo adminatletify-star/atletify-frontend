@@ -14,6 +14,10 @@ const PESOS_KETTLEBELL_KG = [1, 1.5, 2, 2.5, 3, 4, 6, 8, 10, 12, 14, 16, 18, 20,
 const PESOS_KETTLEBELL_LB = [2, 3, 4, 5, 7, 8, 9, 13, 18, 22, 26, 31, 35, 40, 44, 53, 62, 70, 80, 88, 97, 106, 123, 150, 176, 203];
 const PESOS_MANCUERNA_KG = [2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 30, 35, 40, 45, 50];
 const PESOS_MANCUERNA_LB = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100];
+const PESOS_PELOTA_KG = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 15, 20];
+const PESOS_PELOTA_LB = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25, 30, 40, 44];
+const VERIF_POR_PAGINA = 10;
+const INVENTARIO_POR_PAGINA = 10;
 
 export default function AlmacenPanel() {
   const navigate = useNavigate();
@@ -29,6 +33,8 @@ export default function AlmacenPanel() {
   const [showVerificacionModal, setShowVerificacionModal] = useState(false);
   const [busquedaVerificacion, setBusquedaVerificacion] = useState('');
   const [cantidadRapida, setCantidadRapida] = useState(1);
+  const [paginaVerificacion, setPaginaVerificacion] = useState(1);
+  const [paginaInventario, setPaginaInventario] = useState(1);
 
   // Wizard de agregar: paso 1 = tipo+unidad, paso2 = peso+cantidad+ejercicios
   const [pasoAgregar, setPasoAgregar] = useState(1);
@@ -38,13 +44,13 @@ export default function AlmacenPanel() {
   const [nuevaHerramienta, setNuevaHerramienta] = useState({
     nombre: '', descripcionAdicional: '', medida: 0, cantidad: 0,
     esKilo: false, esLibra: false, esMetro: false, esMaquina: false,
-    esBarra: true, esBumpers: false, esKettlebell: false, esMancuerna: false, esCajon: false, esOtra: false, ejerciciosIds: []
+    esBarra: true, esBumpers: false, esKettlebell: false, esMancuerna: false, esCajon: false, esOtra: false, esPelota: false, ejerciciosIds: []
   });
 
   const [edicion, setEdicion] = useState({
     idHerramienta: '', nombre: '', descripcionAdicional: '', medida: 0, cantidad: 0,
     esKilo: false, esLibra: false, esMetro: false, esMaquina: false,
-    esBarra: true, esBumpers: false, esKettlebell: false, esMancuerna: false, esCajon: false, esOtra: false, ejerciciosIds: []
+    esBarra: true, esBumpers: false, esKettlebell: false, esMancuerna: false, esCajon: false, esOtra: false, esPelota: false, ejerciciosIds: []
   });
 
   useEffect(() => {
@@ -69,12 +75,49 @@ export default function AlmacenPanel() {
   }, [herramientas, edicion.idHerramienta]);
 
   const herramientasFiltradas = useMemo(() => {
-    const termino = busquedaHerramienta.trim().toLowerCase();
-    if (!termino) return herramientas;
-    return herramientas.filter(herramienta => {
-      const nombre = (herramienta.nombre ?? herramienta.Nombre ?? '').toLowerCase();
-      const medida = String(herramienta.medida ?? herramienta.Medida ?? herramienta.descripcion ?? herramienta.Descripcion ?? '').toLowerCase();
-      return nombre.includes(termino) || medida.includes(termino);
+    if (!busquedaHerramienta.trim()) return herramientas;
+
+    // Normaliza: quita acentos y pasa a minúsculas
+    const norm = (s) =>
+      (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    // Compacta: además quita todos los espacios
+    const comp = (s) => norm(s).replace(/\s+/g, '');
+
+    const terminoNorm = norm(busquedaHerramienta.trim());
+    const terminoComp = comp(busquedaHerramienta.trim());
+    const palabras = terminoNorm.split(/\s+/).filter(Boolean);
+
+    return herramientas.filter(h => {
+      const nombre = norm(h.nombre ?? h.Nombre ?? '');
+      const notas  = norm(h.descripcionAdicional ?? h.DescripcionAdicional ?? '');
+      const medidaStr = String(h.medida ?? h.Medida ?? 0);
+      const unidadTexto = norm([
+        (h.esKilo      ?? h.EsKilo)      ? 'kilo kg kilogramo kilogramos'       : '',
+        (h.esLibra     ?? h.EsLibra)     ? 'libra lb lbs libras'                : '',
+        (h.esMetro     ?? h.EsMetro)     ? 'metro metros'                       : '',
+        (h.esMaquina   ?? h.EsMaquina)   ? 'maquina maquina'                    : '',
+      ].join(' '));
+      const tipoTexto = norm([
+        (h.esBarra     ?? h.EsBarra)     ? 'barra'                              : '',
+        (h.esBumpers   ?? h.EsBumpers)   ? 'bumper disco discos bumpers'        : '',
+        (h.esKettlebell?? h.EsKettlebell)? 'kettlebell'                         : '',
+        (h.esMancuerna ?? h.EsMancuerna) ? 'mancuerna mancuernas'              : '',
+        (h.esCajon     ?? h.EsCajon)     ? 'cajon cajón'                        : '',
+        (h.esOtra      ?? h.EsOtra)      ? 'otra otro equipo'                   : '',
+        (h.esPelota    ?? h.EsPelota)    ? 'pelota'                             : '',
+      ].join(' '));
+
+      const todo = `${nombre} ${notas} ${medidaStr} ${unidadTexto} ${tipoTexto}`;
+
+      // Modo 1: cada palabra del término aparece en algún lugar del texto
+      const porPalabras = palabras.every(p => todo.includes(p));
+
+      // Modo 2: sin espacios — "barradehombre" encuentra "barra de hombre"
+      const nombreComp = comp(h.nombre ?? h.Nombre ?? '');
+      const notasComp  = comp(h.descripcionAdicional ?? h.DescripcionAdicional ?? '');
+      const sinEspacios = nombreComp.includes(terminoComp) || notasComp.includes(terminoComp);
+
+      return porPalabras || sinEspacios;
     });
   }, [herramientas, busquedaHerramienta]);
 
@@ -96,6 +139,7 @@ export default function AlmacenPanel() {
       const hMancuerna = h.esMancuerna ?? h.EsMancuerna;
       const hCajon = h.esCajon ?? h.EsCajon;
       const hOtra = h.esOtra ?? h.EsOtra;
+      const hPelota = h.esPelota ?? h.EsPelota;
 
       const catMatch =
         (nuevaHerramienta.esBarra && hBarra) ||
@@ -103,7 +147,8 @@ export default function AlmacenPanel() {
         (nuevaHerramienta.esKettlebell && hKettlebell) ||
         (nuevaHerramienta.esMancuerna && hMancuerna) ||
         (nuevaHerramienta.esCajon && hCajon) ||
-        (nuevaHerramienta.esOtra && hOtra);
+        (nuevaHerramienta.esOtra && hOtra) ||
+        (nuevaHerramienta.esPelota && hPelota);
 
       if (!catMatch) return false;
 
@@ -122,11 +167,18 @@ export default function AlmacenPanel() {
         if (!unidadMatch) return false;
       }
 
-      const termino = busquedaVerificacion.toLowerCase().trim();
-      if (termino) {
-        const nombre = (h.nombre ?? h.Nombre ?? '').toLowerCase();
-        const notas = (h.descripcionAdicional ?? h.DescripcionAdicional ?? '').toLowerCase();
-        return nombre.includes(termino) || notas.includes(termino);
+      if (busquedaVerificacion.trim()) {
+        const norm = (s) => (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+        const comp = (s) => norm(s).replace(/\s+/g, '');
+        const terminoNorm = norm(busquedaVerificacion.trim());
+        const terminoComp = comp(busquedaVerificacion.trim());
+        const palabras = terminoNorm.split(/\s+/).filter(Boolean);
+        const nombre = norm(h.nombre ?? h.Nombre ?? '');
+        const notas  = norm(h.descripcionAdicional ?? h.DescripcionAdicional ?? '');
+        const todo = `${nombre} ${notas}`;
+        const porPalabras = palabras.every(p => todo.includes(p));
+        const sinEspacios = comp(nombre).includes(terminoComp) || comp(notas).includes(terminoComp);
+        return porPalabras || sinEspacios;
       }
       return true;
     });
@@ -161,6 +213,7 @@ export default function AlmacenPanel() {
     if (h.esKettlebell ?? h.EsKettlebell) return 'Kettlebell';
     if (h.esMancuerna ?? h.EsMancuerna) return 'Mancuerna';
     if (h.esCajon ?? h.EsCajon) return 'Cajón';
+    if (h.esPelota ?? h.EsPelota) return 'Pelota';
     if (h.esOtra ?? h.EsOtra) return 'Otro equipo';
     return 'Sin categoría';
   }
@@ -186,19 +239,20 @@ export default function AlmacenPanel() {
       esMancuerna: seleccionada.esMancuerna ?? seleccionada.EsMancuerna ?? false,
       esCajon: seleccionada.esCajon ?? seleccionada.EsCajon ?? false,
       esOtra: seleccionada.esOtra ?? seleccionada.EsOtra ?? false,
+      esPelota: seleccionada.esPelota ?? seleccionada.EsPelota ?? false,
       ejerciciosIds
     });
   }
 
   // Reset del wizard de agregar
   function resetFormAgregar() {
-    setNuevaHerramienta({ nombre: '', descripcionAdicional: '', medida: 0, cantidad: 0, esKilo: false, esLibra: false, esMetro: false, esMaquina: false, esBarra: true, esBumpers: false, esKettlebell: false, esMancuerna: false, esCajon: false, esOtra: false, ejerciciosIds: [] });
+    setNuevaHerramienta({ nombre: '', descripcionAdicional: '', medida: 0, cantidad: 0, esKilo: false, esLibra: false, esMetro: false, esMaquina: false, esBarra: true, esBumpers: false, esKettlebell: false, esMancuerna: false, esCajon: false, esOtra: false, esPelota: false, ejerciciosIds: [] });
     setPasoAgregar(1);
   }
 
   // Cerrar panel de edición y limpiar selección
   function cancelarEdicion() {
-    setEdicion({ idHerramienta: '', nombre: '', descripcionAdicional: '', medida: 0, cantidad: 0, esKilo: false, esLibra: false, esMetro: false, esMaquina: false, esBarra: true, esBumpers: false, esKettlebell: false, esMancuerna: false, esCajon: false, esOtra: false, ejerciciosIds: [] });
+    setEdicion({ idHerramienta: '', nombre: '', descripcionAdicional: '', medida: 0, cantidad: 0, esKilo: false, esLibra: false, esMetro: false, esMaquina: false, esBarra: true, esBumpers: false, esKettlebell: false, esMancuerna: false, esCajon: false, esOtra: false, esPelota: false, ejerciciosIds: [] });
   }
 
   // Buscar si ya existen items idénticos (nombre + medida + unidad)
@@ -232,7 +286,7 @@ export default function AlmacenPanel() {
     // Nombre automático para categorías predefinidas
     const nombreFinal = nuevaHerramienta.esOtra
       ? nuevaHerramienta.nombre
-      : nuevaHerramienta.esBarra ? 'Barra' : nuevaHerramienta.esBumpers ? 'Disco' : nuevaHerramienta.esKettlebell ? 'Kettlebell' : nuevaHerramienta.esMancuerna ? 'Mancuerna' : 'Cajón';
+      : nuevaHerramienta.esBarra ? 'Barra' : nuevaHerramienta.esBumpers ? 'Disco' : nuevaHerramienta.esKettlebell ? 'Kettlebell' : nuevaHerramienta.esMancuerna ? 'Mancuerna' : nuevaHerramienta.esPelota ? 'Pelota' : 'Cajón';
 
     if (!forzar) {
       // Verificar duplicados
@@ -290,6 +344,7 @@ export default function AlmacenPanel() {
           esMancuerna: h.esMancuerna ?? h.EsMancuerna ?? false,
           esCajon: h.esCajon ?? h.EsCajon ?? false,
           esOtra: h.esOtra ?? h.EsOtra ?? false,
+          esPelota: h.esPelota ?? h.EsPelota ?? false,
         })
       });
       const data = await res.json().catch(() => ({}));
@@ -315,7 +370,7 @@ export default function AlmacenPanel() {
           medida: Number(edicion.medida), cantidad: Number(edicion.cantidad),
           esKilo: edicion.esKilo, esLibra: edicion.esLibra,
           esMetro: edicion.esMetro, esMaquina: edicion.esMaquina,
-          esBarra: edicion.esBarra, esBumpers: edicion.esBumpers, esKettlebell: edicion.esKettlebell, esMancuerna: edicion.esMancuerna, esCajon: edicion.esCajon, esOtra: edicion.esOtra
+          esBarra: edicion.esBarra, esBumpers: edicion.esBumpers, esKettlebell: edicion.esKettlebell, esMancuerna: edicion.esMancuerna, esCajon: edicion.esCajon, esOtra: edicion.esOtra, esPelota: edicion.esPelota
         })
       });
       const data = await res.json().catch(() => ({}));
@@ -351,6 +406,7 @@ export default function AlmacenPanel() {
     if (nuevaHerramienta.esBumpers) return nuevaHerramienta.esKilo ? PESOS_BUMPER_KG : PESOS_BUMPER_LB;
     if (nuevaHerramienta.esKettlebell) return nuevaHerramienta.esKilo ? PESOS_KETTLEBELL_KG : PESOS_KETTLEBELL_LB;
     if (nuevaHerramienta.esMancuerna) return nuevaHerramienta.esKilo ? PESOS_MANCUERNA_KG : PESOS_MANCUERNA_LB;
+    if (nuevaHerramienta.esPelota) return nuevaHerramienta.esKilo ? PESOS_PELOTA_KG : PESOS_PELOTA_LB;
     return [];
   }
 
@@ -361,7 +417,17 @@ export default function AlmacenPanel() {
     return '';
   }
 
-  const mostrarGridPesos = (nuevaHerramienta.esBarra || nuevaHerramienta.esBumpers || nuevaHerramienta.esKettlebell || nuevaHerramienta.esMancuerna) && (nuevaHerramienta.esKilo || nuevaHerramienta.esLibra);
+  const mostrarGridPesos = (nuevaHerramienta.esBarra || nuevaHerramienta.esBumpers || nuevaHerramienta.esKettlebell || nuevaHerramienta.esMancuerna || nuevaHerramienta.esPelota) && (nuevaHerramienta.esKilo || nuevaHerramienta.esLibra);
+  const totalPaginasInventario = Math.ceil(herramientasFiltradas.length / INVENTARIO_POR_PAGINA);
+  const herramientasPagina = herramientasFiltradas.slice(
+    (paginaInventario - 1) * INVENTARIO_POR_PAGINA,
+    paginaInventario * INVENTARIO_POR_PAGINA
+  );
+  const totalPaginasVerif = Math.ceil(herramientasFiltradasVerificacion.length / VERIF_POR_PAGINA);
+  const herramientasVerifPagina = herramientasFiltradasVerificacion.slice(
+    (paginaVerificacion - 1) * VERIF_POR_PAGINA,
+    paginaVerificacion * VERIF_POR_PAGINA
+  );
   const requiereUnidad = !nuevaHerramienta.esCajon;
   const unidadSeleccionada = nuevaHerramienta.esKilo || nuevaHerramienta.esLibra || nuevaHerramienta.esMetro || nuevaHerramienta.esMaquina;
 
@@ -404,20 +470,22 @@ export default function AlmacenPanel() {
           <div className="almacen-card">
             <div className="almacen-card-body">
 
-              <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
+              {/* ── Header con stepper ── */}
+              <div className="ag-header">
                 <h2 className="almacen-section-title mb-0">
-                  <i className="fas fa-plus-circle"></i>Agregar Nuevo Equipamiento
+                  <i className="fas fa-plus-circle"></i>Agregar Equipamiento
                 </h2>
-                <div className="almacen-paso-indicator">
-                  <div className={`almacen-paso-dot ${pasoAgregar >= 1 ? 'activo' : ''}`}>
-                    <span>1</span>
+                <div className="ag-steps">
+                  <div className={`ag-step ${pasoAgregar >= 1 ? 'active' : ''} ${pasoAgregar > 1 ? 'done' : ''}`}>
+                    <div className="ag-step-circle">
+                      {pasoAgregar > 1 ? <i className="fas fa-check"></i> : '1'}
+                    </div>
+                    <span className="ag-step-label">Tipo</span>
                   </div>
-                  <div className="almacen-paso-linea"></div>
-                  <div className={`almacen-paso-dot ${pasoAgregar >= 2 ? 'activo' : ''}`}>
-                    <span>2</span>
-                  </div>
-                  <div className="almacen-paso-etiqueta">
-                    {pasoAgregar === 1 ? 'Tipo y unidad' : 'Peso y cantidad'}
+                  <div className="ag-step-line"></div>
+                  <div className={`ag-step ${pasoAgregar >= 2 ? 'active' : ''}`}>
+                    <div className="ag-step-circle">2</div>
+                    <span className="ag-step-label">Detalles</span>
                   </div>
                 </div>
               </div>
@@ -426,163 +494,161 @@ export default function AlmacenPanel() {
 
                 {/* ── PASO 1: Tipo + Unidad ── */}
                 {pasoAgregar === 1 && (
-                  <div className="almacen-paso-contenido">
+                  <>
+                    {/* Tipo */}
+                    <div className="ag-section">
+                      <p className="ag-section-label">
+                        <i className="fas fa-tag"></i>Tipo de Equipamiento
+                      </p>
+                      <div className="ag-tipo-grid">
 
-                    <div className="almacen-options-group">
-                      <label className="almacen-options-label">
-                        <i className="fas fa-tag me-2" style={{ color: 'var(--primary)' }}></i>Tipo de Equipamiento
-                      </label>
-                      <div className="almacen-options cols-4">
-                        <label className={`almacen-option almacen-option--tipo ${nuevaHerramienta.esBarra ? 'selected' : ''}`}>
+                        <label className={`ag-tipo-card ${nuevaHerramienta.esBarra ? 'selected' : ''}`}>
                           <input type="radio" name="nuevo-categoria" checked={nuevaHerramienta.esBarra}
-                            onChange={() => setNuevaHerramienta(prev => ({ ...prev, esBarra: true, esBumpers: false, esKettlebell: false, esMancuerna: false, esCajon: false, esOtra: false, medida: 0, esMetro: false, esMaquina: false }))} />
-                          <span className="almacen-option-indicator"></span>
-                          <div className="almacen-option-tipo-body">
-                            <i className="fas fa-grip-lines-vertical almacen-option-tipo-icon"></i>
-                            <span className="almacen-option-text">Barra</span>
-                          </div>
+                            onChange={() => setNuevaHerramienta(prev => ({ ...prev, esBarra: true, esBumpers: false, esKettlebell: false, esMancuerna: false, esCajon: false, esOtra: false, esPelota: false, medida: 0, esMetro: false, esMaquina: false }))} />
+                          <i className="fas fa-grip-lines-vertical ag-tipo-icon"></i>
+                          <span className="ag-tipo-name">Barra</span>
                         </label>
-                        <label className={`almacen-option almacen-option--tipo ${nuevaHerramienta.esBumpers ? 'selected' : ''}`}>
+
+                        <label className={`ag-tipo-card ${nuevaHerramienta.esBumpers ? 'selected' : ''}`}>
                           <input type="radio" name="nuevo-categoria" checked={nuevaHerramienta.esBumpers}
-                            onChange={() => setNuevaHerramienta(prev => ({ ...prev, esBarra: false, esBumpers: true, esKettlebell: false, esMancuerna: false, esCajon: false, esOtra: false, medida: 0, esMetro: false, esMaquina: false }))} />
-                          <span className="almacen-option-indicator"></span>
-                          <div className="almacen-option-tipo-body">
-                            <i className="fas fa-circle almacen-option-tipo-icon"></i>
-                            <span className="almacen-option-text">Discos / Bumpers</span>
-                          </div>
+                            onChange={() => setNuevaHerramienta(prev => ({ ...prev, esBarra: false, esBumpers: true, esKettlebell: false, esMancuerna: false, esCajon: false, esOtra: false, esPelota: false, medida: 0, esMetro: false, esMaquina: false }))} />
+                          <i className="fas fa-circle ag-tipo-icon"></i>
+                          <span className="ag-tipo-name">Disco / Bumper</span>
                         </label>
-                        <label className={`almacen-option almacen-option--tipo ${nuevaHerramienta.esKettlebell ? 'selected' : ''}`}>
+
+                        <label className={`ag-tipo-card ${nuevaHerramienta.esKettlebell ? 'selected' : ''}`}>
                           <input type="radio" name="nuevo-categoria" checked={nuevaHerramienta.esKettlebell}
-                            onChange={() => setNuevaHerramienta(prev => ({ ...prev, esBarra: false, esBumpers: false, esKettlebell: true, esMancuerna: false, esCajon: false, esOtra: false, medida: 0, esMetro: false, esMaquina: false }))} />
-                          <span className="almacen-option-indicator"></span>
-                          <div className="almacen-option-tipo-body">
-                            <i className="fas fa-weight-hanging almacen-option-tipo-icon"></i>
-                            <span className="almacen-option-text">Kettlebell</span>
-                          </div>
+                            onChange={() => setNuevaHerramienta(prev => ({ ...prev, esBarra: false, esBumpers: false, esKettlebell: true, esMancuerna: false, esCajon: false, esOtra: false, esPelota: false, medida: 0, esMetro: false, esMaquina: false }))} />
+                          <i className="fas fa-weight-hanging ag-tipo-icon"></i>
+                          <span className="ag-tipo-name">Kettlebell</span>
                         </label>
-                        <label className={`almacen-option almacen-option--tipo ${nuevaHerramienta.esMancuerna ? 'selected' : ''}`}>
+
+                        <label className={`ag-tipo-card ${nuevaHerramienta.esMancuerna ? 'selected' : ''}`}>
                           <input type="radio" name="nuevo-categoria" checked={nuevaHerramienta.esMancuerna}
-                            onChange={() => setNuevaHerramienta(prev => ({ ...prev, esBarra: false, esBumpers: false, esKettlebell: false, esMancuerna: true, esCajon: false, esOtra: false, medida: 0, esMetro: false, esMaquina: false }))} />
-                          <span className="almacen-option-indicator"></span>
-                          <div className="almacen-option-tipo-body">
-                            <i className="fas fa-dumbbell almacen-option-tipo-icon"></i>
-                            <span className="almacen-option-text">Mancuerna</span>
-                          </div>
+                            onChange={() => setNuevaHerramienta(prev => ({ ...prev, esBarra: false, esBumpers: false, esKettlebell: false, esMancuerna: true, esCajon: false, esOtra: false, esPelota: false, medida: 0, esMetro: false, esMaquina: false }))} />
+                          <i className="fas fa-dumbbell ag-tipo-icon"></i>
+                          <span className="ag-tipo-name">Mancuerna</span>
                         </label>
-                        <label className={`almacen-option almacen-option--tipo ${nuevaHerramienta.esCajon ? 'selected' : ''}`}>
+
+                        <label className={`ag-tipo-card ${nuevaHerramienta.esPelota ? 'selected' : ''}`}>
+                          <input type="radio" name="nuevo-categoria" checked={nuevaHerramienta.esPelota}
+                            onChange={() => setNuevaHerramienta(prev => ({ ...prev, esBarra: false, esBumpers: false, esKettlebell: false, esMancuerna: false, esCajon: false, esOtra: false, esPelota: true, medida: 0, esMetro: false, esMaquina: false }))} />
+                          <i className="fas fa-volleyball-ball ag-tipo-icon"></i>
+                          <span className="ag-tipo-name">Pelota</span>
+                        </label>
+
+                        <label className={`ag-tipo-card ${nuevaHerramienta.esCajon ? 'selected' : ''}`}>
                           <input type="radio" name="nuevo-categoria" checked={nuevaHerramienta.esCajon}
-                            onChange={() => setNuevaHerramienta(prev => ({ ...prev, esBarra: false, esBumpers: false, esKettlebell: false, esMancuerna: false, esCajon: true, esOtra: false, medida: 0, esKilo: false, esLibra: false, esMetro: false, esMaquina: false }))} />
-                          <span className="almacen-option-indicator"></span>
-                          <div className="almacen-option-tipo-body">
-                            <i className="fas fa-cube almacen-option-tipo-icon"></i>
-                            <span className="almacen-option-text">Cajón</span>
-                          </div>
+                            onChange={() => setNuevaHerramienta(prev => ({ ...prev, esBarra: false, esBumpers: false, esKettlebell: false, esMancuerna: false, esCajon: true, esOtra: false, esPelota: false, medida: 0, esKilo: false, esLibra: false, esMetro: false, esMaquina: false }))} />
+                          <i className="fas fa-cube ag-tipo-icon"></i>
+                          <span className="ag-tipo-name">Cajón</span>
                         </label>
-                        <label className={`almacen-option almacen-option--tipo ${nuevaHerramienta.esOtra ? 'selected' : ''}`}>
+
+                        <label className={`ag-tipo-card ${nuevaHerramienta.esOtra ? 'selected' : ''}`}>
                           <input type="radio" name="nuevo-categoria" checked={nuevaHerramienta.esOtra}
-                            onChange={() => setNuevaHerramienta(prev => ({ ...prev, esBarra: false, esBumpers: false, esKettlebell: false, esMancuerna: false, esCajon: false, esOtra: true, medida: 0 }))} />
-                          <span className="almacen-option-indicator"></span>
-                          <div className="almacen-option-tipo-body">
-                            <i className="fas fa-dumbbell almacen-option-tipo-icon"></i>
-                            <span className="almacen-option-text">Otro Equipo</span>
-                          </div>
+                            onChange={() => setNuevaHerramienta(prev => ({ ...prev, esBarra: false, esBumpers: false, esKettlebell: false, esMancuerna: false, esCajon: false, esOtra: true, esPelota: false, medida: 0 }))} />
+                          <i className="fas fa-toolbox ag-tipo-icon"></i>
+                          <span className="ag-tipo-name">Otro</span>
                         </label>
+
                       </div>
                     </div>
 
-                    <div className="almacen-options-group">
-                      <label className="almacen-options-label">
-                        <i className="fas fa-ruler me-2" style={{ color: 'var(--primary)' }}></i>Unidad de Medida
-                      </label>
-                      <div className={`almacen-options ${nuevaHerramienta.esOtra ? 'cols-4' : 'cols-2'}`}>
-                        {!nuevaHerramienta.esCajon && (
-                          <>
-                            <label className={`almacen-option ${nuevaHerramienta.esKilo ? 'selected' : ''}`}>
-                              <input type="radio" name="nuevo-tipo-unidad" checked={nuevaHerramienta.esKilo}
-                                onChange={() => setNuevaHerramienta(prev => ({ ...prev, esKilo: true, esLibra: false, esMetro: false, esMaquina: false, medida: 0 }))} />
-                              <span className="almacen-option-indicator"></span>
-                              <span className="almacen-option-text">Kilogramos (kg)</span>
-                            </label>
-                            <label className={`almacen-option ${nuevaHerramienta.esLibra ? 'selected' : ''}`}>
-                              <input type="radio" name="nuevo-tipo-unidad" checked={nuevaHerramienta.esLibra}
-                                onChange={() => setNuevaHerramienta(prev => ({ ...prev, esKilo: false, esLibra: true, esMetro: false, esMaquina: false, medida: 0 }))} />
-                              <span className="almacen-option-indicator"></span>
-                              <span className="almacen-option-text">Libras (lbs)</span>
-                            </label>
-                            {nuevaHerramienta.esOtra && (
-                              <>
-                                <label className={`almacen-option ${nuevaHerramienta.esMetro ? 'selected' : ''}`}>
-                                  <input type="radio" name="nuevo-tipo-unidad" checked={nuevaHerramienta.esMetro}
-                                    onChange={() => setNuevaHerramienta(prev => ({ ...prev, esKilo: false, esLibra: false, esMetro: true, esMaquina: false }))} />
-                                  <span className="almacen-option-indicator"></span>
-                                  <span className="almacen-option-text">Metros (m)</span>
-                                </label>
-                                <label className={`almacen-option ${nuevaHerramienta.esMaquina ? 'selected' : ''}`}>
-                                  <input type="radio" name="nuevo-tipo-unidad" checked={nuevaHerramienta.esMaquina}
-                                    onChange={() => setNuevaHerramienta(prev => ({ ...prev, esKilo: false, esLibra: false, esMetro: false, esMaquina: true }))} />
-                                  <span className="almacen-option-indicator"></span>
-                                  <span className="almacen-option-text">Máquina</span>
-                                </label>
-                              </>
-                            )}
-                          </>
+                    {/* Unidad */}
+                    {!nuevaHerramienta.esCajon && (
+                      <div className="ag-section">
+                        <p className="ag-section-label">
+                          <i className="fas fa-ruler"></i>Unidad de Medida
+                        </p>
+                        <div className="ag-unidad-pills">
+                          <button type="button"
+                            className={`ag-pill ${nuevaHerramienta.esKilo ? 'selected' : ''}`}
+                            onClick={() => setNuevaHerramienta(prev => ({ ...prev, esKilo: true, esLibra: false, esMetro: false, esMaquina: false, medida: 0 }))}>
+                            <i className="fas fa-weight"></i>
+                            <span>Kilogramos</span>
+                            <small>kg</small>
+                          </button>
+                          <button type="button"
+                            className={`ag-pill ${nuevaHerramienta.esLibra ? 'selected' : ''}`}
+                            onClick={() => setNuevaHerramienta(prev => ({ ...prev, esKilo: false, esLibra: true, esMetro: false, esMaquina: false, medida: 0 }))}>
+                            <i className="fas fa-weight"></i>
+                            <span>Libras</span>
+                            <small>lbs</small>
+                          </button>
+                          {nuevaHerramienta.esOtra && (
+                            <>
+                              <button type="button"
+                                className={`ag-pill ${nuevaHerramienta.esMetro ? 'selected' : ''}`}
+                                onClick={() => setNuevaHerramienta(prev => ({ ...prev, esKilo: false, esLibra: false, esMetro: true, esMaquina: false }))}>
+                                <i className="fas fa-ruler-horizontal"></i>
+                                <span>Metros</span>
+                                <small>m</small>
+                              </button>
+                              <button type="button"
+                                className={`ag-pill ${nuevaHerramienta.esMaquina ? 'selected' : ''}`}
+                                onClick={() => setNuevaHerramienta(prev => ({ ...prev, esKilo: false, esLibra: false, esMetro: false, esMaquina: true }))}>
+                                <i className="fas fa-cogs"></i>
+                                <span>Máquina</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                        {requiereUnidad && !unidadSeleccionada && (
+                          <p className="ag-hint-error">
+                            <i className="fas fa-circle-exclamation"></i>
+                            Selecciona una unidad para continuar
+                          </p>
                         )}
                       </div>
-                    </div>
+                    )}
 
-                    <div className="d-flex justify-content-end mt-3">
+                    <div className="ag-footer">
+                      <button type="button" className="almacen-btn almacen-btn-secondary" onClick={resetFormAgregar}>
+                        <i className="fas fa-redo"></i>Reiniciar
+                      </button>
                       <button
                         type="button"
                         className="almacen-btn almacen-btn-primary"
                         onClick={() => {
                           if (herramientasFiltradasVerificacion.length > 0) {
+                            setPaginaVerificacion(1);
+                            setBusquedaVerificacion('');
                             setShowVerificacionModal(true);
                           } else {
                             setPasoAgregar(2);
                           }
                         }}
-                        disabled={requiereUnidad && !unidadSeleccionada}
-                      >
-                        Siguiente <i className="fas fa-arrow-right ms-2"></i>
+                        disabled={requiereUnidad && !unidadSeleccionada}>
+                        Siguiente <i className="fas fa-arrow-right"></i>
                       </button>
                     </div>
-                    {requiereUnidad && !unidadSeleccionada && (
-                      <small className="text-danger d-block mt-2">
-                        Debes seleccionar una unidad de medida para continuar.
-                      </small>
-                    )}
-                  </div>
+                  </>
                 )}
 
-                {/* ── PASO 2: Peso / Nombre + Cantidad + Ejercicios ── */}
+                {/* ── PASO 2: Peso + Cantidad + Notas ── */}
                 {pasoAgregar === 2 && (
-                  <div className="almacen-paso-contenido">
-
-                    {/* Resumen del tipo/unidad seleccionado */}
-                    <div className="almacen-paso2-resumen">
-                      <span className="almacen-paso2-tag">
-                        <i className="fas fa-tag me-1"></i>
-                        {nuevaHerramienta.esBarra ? 'Barra' : nuevaHerramienta.esBumpers ? 'Disco / Bumper' : nuevaHerramienta.esKettlebell ? 'Kettlebell' : nuevaHerramienta.esMancuerna ? 'Mancuerna' : nuevaHerramienta.esCajon ? 'Cajón' : 'Otro equipo'}
+                  <>
+                    {/* Resumen tipo/unidad */}
+                    <div className="ag-resumen">
+                      <span className="ag-resumen-chip">
+                        <i className="fas fa-tag"></i>
+                        {nuevaHerramienta.esBarra ? 'Barra' : nuevaHerramienta.esBumpers ? 'Disco / Bumper' : nuevaHerramienta.esKettlebell ? 'Kettlebell' : nuevaHerramienta.esMancuerna ? 'Mancuerna' : nuevaHerramienta.esCajon ? 'Cajón' : nuevaHerramienta.esPelota ? 'Pelota' : 'Otro equipo'}
                       </span>
-                      <span className="almacen-paso2-tag">
-                        <i className="fas fa-ruler me-1"></i>
-                        {nuevaHerramienta.esCajon ? 'Sin unidad' : (nuevaHerramienta.esKilo ? 'Kilogramos' : nuevaHerramienta.esLibra ? 'Libras' : nuevaHerramienta.esMetro ? 'Metros' : 'Máquina')}
-                      </span>
+                      {!nuevaHerramienta.esCajon && (
+                        <span className="ag-resumen-chip">
+                          <i className="fas fa-ruler"></i>
+                          {nuevaHerramienta.esKilo ? 'Kilogramos (kg)' : nuevaHerramienta.esLibra ? 'Libras (lbs)' : nuevaHerramienta.esMetro ? 'Metros (m)' : 'Máquina'}
+                        </span>
+                      )}
                     </div>
 
-                    {/* Grid de pesos predefinidos + opción de peso personalizado */}
+                    {/* Grid de pesos predefinidos */}
                     {mostrarGridPesos && (
-                      <div className="almacen-options-group">
-                        <label className="almacen-options-label">
-                          <i className="fas fa-weight me-2" style={{ color: 'var(--primary)' }}></i>
-                          {nuevaHerramienta.esBarra
-                            ? 'Peso de la Barra'
-                            : nuevaHerramienta.esBumpers
-                              ? 'Peso del Disco / Bumper'
-                              : nuevaHerramienta.esKettlebell
-                                ? 'Peso de la Kettlebell'
-                                : 'Peso de la Mancuerna'}
-                        </label>
+                      <div className="ag-section">
+                        <p className="ag-section-label">
+                          <i className="fas fa-weight"></i>
+                          {nuevaHerramienta.esBarra ? 'Peso de la Barra' : nuevaHerramienta.esBumpers ? 'Peso del Disco / Bumper' : nuevaHerramienta.esKettlebell ? 'Peso de la Kettlebell' : nuevaHerramienta.esPelota ? 'Peso de la Pelota' : 'Peso de la Mancuerna'}
+                        </p>
                         <div className="almacen-peso-grid">
                           {getPesosActuales().map(p => (
                             <button key={p} type="button"
@@ -593,54 +659,12 @@ export default function AlmacenPanel() {
                             </button>
                           ))}
                         </div>
-
-                        <div className="almacen-field-group cols-2 mt-3">
-                          <div>
-                            <label className="almacen-label">Agregar otro peso ({getUnidadLabel()})</label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              max="999"
-                              className="form-control almacen-input"
-                              placeholder={`Ej: ${nuevaHerramienta.esKilo ? '13.5' : '27.5'}`}
-                              value={nuevaHerramienta.medida || ''}
-                              onChange={(e) => {
-                                const v = e.target.value;
-                                if (v === '' || /^\d{0,3}(\.\d{0,2})?$/.test(v)) {
-                                  setNuevaHerramienta(prev => ({ ...prev, medida: v === '' ? 0 : v }));
-                                }
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        {nuevaHerramienta.medida > 0 && (
-                          <p className="almacen-selected-peso-label">
-                            <i className="fas fa-check-circle me-1"></i>
-                            Seleccionaste: <strong>{nuevaHerramienta.medida} {getUnidadLabel()}</strong>
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Para Otro equipo: nombre + medida libre */}
-                    {nuevaHerramienta.esOtra && (
-                      <div className="almacen-field-group cols-2">
-                        <div>
-                          <label className="almacen-label">Nombre del equipo</label>
-                          <input type="text" className="form-control almacen-input"
-                            placeholder="Ej: Mancuerna, Kettlebell, Cuerda..." required
-                            maxLength={50}
-                            value={nuevaHerramienta.nombre}
-                            onChange={(e) => setNuevaHerramienta(prev => ({ ...prev, nombre: e.target.value }))} />
-                        </div>
-                        <div>
-                          <label className="almacen-label">
-                            Peso / Medida {nuevaHerramienta.esMaquina ? '(opcional)' : ''}
-                          </label>
-                          <input type="number" step="0.01" min="0" max="999" className="form-control almacen-input"
-                            placeholder="Ej: 10, 20, 1.5..."
+                        <div className="ag-custom-peso">
+                          <label className="almacen-label">Otro peso ({getUnidadLabel()})</label>
+                          <input
+                            type="number" step="0.01" min="0" max="999"
+                            className="form-control almacen-input"
+                            placeholder={`Ej: ${nuevaHerramienta.esKilo ? '13.5' : '27.5'}`}
                             value={nuevaHerramienta.medida || ''}
                             onChange={(e) => {
                               const v = e.target.value;
@@ -649,48 +673,86 @@ export default function AlmacenPanel() {
                               }
                             }} />
                         </div>
+                        {nuevaHerramienta.medida > 0 && (
+                          <p className="ag-selected-peso">
+                            <i className="fas fa-check-circle"></i>
+                            <strong>{nuevaHerramienta.medida} {getUnidadLabel()}</strong> seleccionado
+                          </p>
+                        )}
                       </div>
                     )}
 
-                    {/* Cantidad */}
-                    <div style={{ maxWidth: '260px', marginBottom: '1.25rem' }}>
-                      <label className="almacen-label">
-                        <i className="fas fa-layer-group me-1"></i> Unidades disponibles
-                      </label>
-                      <input type="number" className="form-control almacen-input" min="1" max="9999" placeholder="Ej: 10" required
-                        value={nuevaHerramienta.cantidad || ''}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          if (v === '' || /^\d{0,4}$/.test(v)) {
-                            setNuevaHerramienta(prev => ({ ...prev, cantidad: v }));
-                          }
-                        }} />
+                    {/* Para Otro equipo: nombre + medida libre */}
+                    {nuevaHerramienta.esOtra && (
+                      <div className="ag-section">
+                        <p className="ag-section-label"><i className="fas fa-pen"></i>Datos del equipo</p>
+                        <div className="almacen-field-group cols-2">
+                          <div>
+                            <label className="almacen-label">Nombre del equipo</label>
+                            <input type="text" className="form-control almacen-input"
+                              placeholder="Ej: Cuerda, Balón..." required maxLength={50}
+                              value={nuevaHerramienta.nombre}
+                              onChange={(e) => setNuevaHerramienta(prev => ({ ...prev, nombre: e.target.value }))} />
+                          </div>
+                          {!nuevaHerramienta.esMaquina && (
+                            <div>
+                              <label className="almacen-label">Peso / Medida</label>
+                              <input type="number" step="0.01" min="0" max="999" className="form-control almacen-input"
+                                placeholder="Ej: 10, 1.5..."
+                                value={nuevaHerramienta.medida || ''}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  if (v === '' || /^\d{0,3}(\.\d{0,2})?$/.test(v)) {
+                                    setNuevaHerramienta(prev => ({ ...prev, medida: v === '' ? 0 : v }));
+                                  }
+                                }} />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Cantidad + Notas en fila */}
+                    <div className="ag-section">
+                      <p className="ag-section-label"><i className="fas fa-boxes"></i>Stock y descripción</p>
+                      <div className="almacen-field-group cols-2">
+                        <div>
+                          <label className="almacen-label">
+                            <i className="fas fa-layer-group me-1"></i>Unidades disponibles
+                          </label>
+                          <input type="number" className="form-control almacen-input" min="1" max="9999"
+                            placeholder="Ej: 10" required
+                            value={nuevaHerramienta.cantidad || ''}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              if (v === '' || /^\d{0,4}$/.test(v)) {
+                                setNuevaHerramienta(prev => ({ ...prev, cantidad: v }));
+                              }
+                            }} />
+                        </div>
+                        <div>
+                          <label className="almacen-label">
+                            <i className="fas fa-note-sticky me-1"></i>{nuevaHerramienta.esCajon ? 'Cómo se mide' : 'Notas adicionales'}
+                          </label>
+                          <textarea className="form-control almacen-input" rows="1"
+                            maxLength={200}
+                            required={nuevaHerramienta.esCajon}
+                            placeholder={nuevaHerramienta.esCajon ? 'Ej: largo x ancho x alto, por módulo...' : 'Marca, condición, observaciones...'}
+                            value={nuevaHerramienta.descripcionAdicional || ''}
+                            onChange={(e) => setNuevaHerramienta(prev => ({ ...prev, descripcionAdicional: e.target.value }))} />
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Descripción adicional / forma de medir */}
-                    <div className="mb-3">
-                      <label className="almacen-label">
-                        <i className="fas fa-note-sticky me-1"></i> {nuevaHerramienta.esCajon ? 'Cómo se mide' : 'Descripción adicional'}
-                      </label>
-                      <textarea className="form-control almacen-input" rows="2" required={nuevaHerramienta.esCajon}
-                        maxLength={200}
-                        placeholder={nuevaHerramienta.esCajon ? 'Ej: se mide por largo x ancho x alto, por módulo, por cavidades...' : 'Agrrega detalles adicionales (ej: marca, condición, observaciones...)'}
-                        value={nuevaHerramienta.descripcionAdicional || ''}
-                        onChange={(e) => setNuevaHerramienta(prev => ({ ...prev, descripcionAdicional: e.target.value }))} />
-                    </div>
-
-
-
-                    {/* Botones de paso */}
-                    <div className="d-flex flex-column flex-sm-row gap-2 justify-content-between align-items-stretch align-items-sm-center mt-3">
+                    <div className="ag-footer">
                       <button type="button" className="almacen-btn almacen-btn-secondary" onClick={() => setPasoAgregar(1)}>
-                        <i className="fas fa-arrow-left me-2"></i>Atrás
+                        <i className="fas fa-arrow-left"></i>Atrás
                       </button>
                       <button type="submit" form="form-agregar" className="almacen-btn almacen-btn-primary" disabled={saving}>
-                        <i className="fas fa-save me-2"></i>{saving ? 'Guardando...' : 'Guardar Equipamiento'}
+                        <i className="fas fa-save"></i>{saving ? 'Guardando...' : 'Guardar Equipamiento'}
                       </button>
                     </div>
-                  </div>
+                  </>
                 )}
 
               </form>
@@ -871,12 +933,24 @@ export default function AlmacenPanel() {
         {vistaActiva === 'ver' && (
           <div className="almacen-card">
             <div className="almacen-card-body">
+
+              {/* Header con buscador */}
               <div className="almacen-table-header">
-                <h2 className="almacen-table-title"><i className="fas fa-boxes me-2 text-danger"></i>Inventario Actual</h2>
+                <div>
+                  <h2 className="almacen-table-title"><i className="fas fa-boxes" style={{ color: 'var(--primary)' }}></i>Inventario Actual</h2>
+                  {herramientasFiltradas.length !== herramientas.length && herramientas.length > 0 && (
+                    <p className="inv-search-hint">
+                      <strong>{herramientasFiltradas.length}</strong> resultado{herramientasFiltradas.length !== 1 ? 's' : ''} de {herramientas.length} equipos
+                    </p>
+                  )}
+                </div>
                 <div className="almacen-search">
-                  <input type="text" className="form-control almacen-input" placeholder="Buscar equipo..."
-                    maxLength={50}
-                    value={busquedaHerramienta} onChange={(e) => setBusquedaHerramienta(e.target.value)} />
+                  <div style={{ position: 'relative' }}>
+                    <i className="fas fa-search" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '0.8rem', pointerEvents: 'none' }}></i>
+                    <input type="text" className="form-control almacen-input" placeholder="Buscar por nombre, tipo, unidad, notas..."
+                      maxLength={50} style={{ paddingLeft: '2.5rem' }}
+                      value={busquedaHerramienta} onChange={(e) => { setBusquedaHerramienta(e.target.value); setPaginaInventario(1); }} />
+                  </div>
                 </div>
               </div>
 
@@ -885,31 +959,58 @@ export default function AlmacenPanel() {
                   <i className="fas fa-inbox"></i>
                   <p>No hay equipamiento registrado</p>
                 </div>
+              ) : herramientasFiltradas.length === 0 ? (
+                <div className="almacen-empty">
+                  <i className="fas fa-search"></i>
+                  <p>Sin resultados para "{busquedaHerramienta}"</p>
+                </div>
               ) : (
+                <>
                 <div className="almacen-inventory-grid">
-                  {herramientasFiltradas.map((h) => {
+                  {herramientasPagina.map((h) => {
                     const idHerramienta = getHerramientaId(h);
                     const nombre = h.nombre ?? h.Nombre;
                     const cantidad = h.cantidad ?? h.Cantidad;
                     const medida = getHerramientaMedida(h);
+                    const unidad = getTipoUnidadHerramienta(h);
+                    const tipo = getCategoriaHerramienta(h);
+                    const notas = h.descripcionAdicional ?? h.DescripcionAdicional;
                     return (
                       <div key={idHerramienta} className="almacen-inventory-item">
+
+                        {/* Fila 1: nombre + stock */}
                         <div className="almacen-inventory-header">
-                          <div>
-                            <div className="almacen-inventory-name">{nombre}</div>
-                            <div className="almacen-inventory-measure">{medida > 0 ? `${medida} ${getTipoUnidadHerramienta(h).toLowerCase()}` : 'Sin medida'}</div>
-                          </div>
+                          <div className="almacen-inventory-name">{nombre}</div>
                           <span className="almacen-inventory-qty">{cantidad} uds</span>
                         </div>
-                        {(h.descripcionAdicional ?? h.DescripcionAdicional) && (
+
+                        {/* Fila 2: badges tipo + unidad */}
+                        <div className="inv-badges-row">
+                          <span className="av-badge av-badge--tipo">
+                            <i className="fas fa-tag"></i>{tipo}
+                          </span>
+                          {unidad !== 'Sin unidad' && (
+                            <span className="av-badge av-badge--unidad">
+                              <i className="fas fa-ruler"></i>{unidad}
+                            </span>
+                          )}
+                          {medida > 0 && (
+                            <span className="inv-medida-badge">
+                              <i className="fas fa-weight"></i>
+                              <strong>{medida}</strong>
+                              <span>{unidad !== 'Sin unidad' ? unidad.toLowerCase() : ''}</span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Notas */}
+                        {notas && (
                           <div className="almacen-inventory-description">
-                            <small><i className="fas fa-note-sticky me-1"></i>{h.descripcionAdicional ?? h.DescripcionAdicional}</small>
+                            <i className="fas fa-note-sticky"></i> {notas}
                           </div>
                         )}
-                        <div className="almacen-inventory-tags">
-                          <span className="almacen-inventory-tag"><i className="fas fa-ruler me-1"></i>{getTipoUnidadHerramienta(h)}</span>
-                          <span className="almacen-inventory-tag"><i className="fas fa-tag me-1"></i>{getCategoriaHerramienta(h)}</span>
-                        </div>
+
+                        {/* Eliminar */}
                         <div className="almacen-inventory-actions">
                           <button onClick={() => eliminarHerramienta(idHerramienta, nombre)} className="almacen-delete-btn" title="Eliminar" disabled={saving}>
                             <i className="fas fa-trash"></i>
@@ -919,6 +1020,20 @@ export default function AlmacenPanel() {
                     );
                   })}
                 </div>
+
+                {/* Paginación */}
+                {totalPaginasInventario > 1 && (
+                  <div className="av-pagination" style={{ marginTop: '1rem' }}>
+                    <button className="av-page-btn" disabled={paginaInventario === 1} onClick={() => setPaginaInventario(p => p - 1)}>
+                      <i className="fas fa-chevron-left"></i>
+                    </button>
+                    <span className="av-page-info">{paginaInventario} / {totalPaginasInventario}</span>
+                    <button className="av-page-btn" disabled={paginaInventario === totalPaginasInventario} onClick={() => setPaginaInventario(p => p + 1)}>
+                      <i className="fas fa-chevron-right"></i>
+                    </button>
+                  </div>
+                )}
+                </>
               )}
             </div>
           </div>
@@ -930,92 +1045,166 @@ export default function AlmacenPanel() {
       {showVerificacionModal && (
         <div className="almacen-confirm-overlay" onClick={() => setShowVerificacionModal(false)}>
           <div className="almacen-confirm-modal modal-grande" onClick={e => e.stopPropagation()}>
-            <div className="almacen-confirm-icon bg-warning">
-              <i className="fas fa-clipboard-check"></i>
-            </div>
-            <h3 className="almacen-confirm-titulo">Verifica tu Inventario</h3>
-            <p className="almacen-confirm-desc destacado text-center mb-4 mx-3">
-              Por favor revisa si el material no existe ya en el inventario para evitar duplicados innecesarios.
-            </p>
 
-            <div className="px-3">
-              <div className="almacen-verificacion-search">
-                <i className="fas fa-search"></i>
-                <input
-                  type="text"
-                  className="form-control almacen-input"
-                  placeholder="Buscar por nombre o notas..."
-                  maxLength={50}
-                  value={busquedaVerificacion}
-                  onChange={e => setBusquedaVerificacion(e.target.value)}
-                />
+            {/* Header */}
+            <div className="av-modal-header">
+              <div className="av-modal-icon">
+                <i className="fas fa-clipboard-check"></i>
+              </div>
+              <div>
+                <p className="av-modal-supertitle">Paso previo</p>
+                <h3 className="almacen-confirm-titulo" style={{ margin: 0 }}>Verifica tu Inventario</h3>
               </div>
             </div>
 
-            <div className="almacen-verificacion-lista px-3" style={{ maxHeight: '350px', overflowY: 'auto' }}>
+            <p className="almacen-confirm-desc" style={{ margin: '0.75rem 0 1.1rem', textAlign: 'center' }}>
+              Revisa si el equipo ya existe en tu inventario para evitar duplicados.
+            </p>
+
+            {/* Botones de acción — antes del listado */}
+            <div className="almacen-confirm-btns" style={{ marginBottom: '1rem' }}>
+              <button className="almacen-btn almacen-btn-secondary" onClick={() => setShowVerificacionModal(false)}>
+                <i className="fas fa-arrow-left"></i> Regresar
+              </button>
+              <button className="almacen-btn almacen-btn-primary" onClick={() => { setShowVerificacionModal(false); setPasoAgregar(2); }}>
+                No está aquí <i className="fas fa-arrow-right"></i>
+              </button>
+            </div>
+
+            {/* Buscador */}
+            <div className="av-search-wrap">
+              <i className="fas fa-search av-search-icon"></i>
+              <input
+                type="text"
+                className="form-control almacen-input av-search-input"
+                placeholder="Buscar por nombre o notas..."
+                maxLength={50}
+                value={busquedaVerificacion}
+                onChange={e => { setBusquedaVerificacion(e.target.value); setPaginaVerificacion(1); }}
+              />
+            </div>
+
+            {/* Contador */}
+            {herramientasFiltradasVerificacion.length > 0 && (
+              <p className="av-count-info">
+                <strong>{herramientasFiltradasVerificacion.length}</strong> coincidencia{herramientasFiltradasVerificacion.length !== 1 ? 's' : ''} encontrada{herramientasFiltradasVerificacion.length !== 1 ? 's' : ''}
+                {totalPaginasVerif > 1 && <> · Página <strong>{paginaVerificacion}</strong> de <strong>{totalPaginasVerif}</strong></>}
+              </p>
+            )}
+
+            {/* Lista */}
+            <div className="av-lista">
               {herramientasFiltradasVerificacion.length === 0 ? (
-                <div className="almacen-empty py-5">
-                  <i className="fas fa-ghost mb-2"></i>
-                  <p>No hay coincidencias exactas en tu inventario actual.</p>
+                <div className="almacen-empty" style={{ padding: '2.5rem 1rem' }}>
+                  <i className="fas fa-ghost"></i>
+                  <p>Sin coincidencias en tu inventario actual.</p>
                 </div>
               ) : (
-                herramientasFiltradasVerificacion.map((h, idx) => (
-                  <div key={getHerramientaId(h)} className="almacen-verificacion-card" style={{ animationDelay: `${idx * 0.05}s` }}>
-                    <div className="almacen-verificacion-info">
-                      <div className="almacen-verificacion-nombre">{h.nombre ?? h.Nombre}</div>
-                      <div className="almacen-verificacion-meta">
-                        <span className="almacen-verificacion-badge peso">
-                          <i className="fas fa-weight"></i> {getHerramientaMedida(h)} {getTipoUnidadHerramienta(h).toLowerCase()}
-                        </span>
-                        <span className="almacen-verificacion-badge">
-                          <i className="fas fa-tag"></i> {getCategoriaHerramienta(h)}
-                        </span>
+                herramientasVerifPagina.map((h, idx) => {
+                  const idH = getHerramientaId(h);
+                  const medida = getHerramientaMedida(h);
+                  const cantidad = h.cantidad ?? h.Cantidad ?? 0;
+                  const notas = h.descripcionAdicional ?? h.DescripcionAdicional;
+                  const unidad = getTipoUnidadHerramienta(h);
+                  const tipo = getCategoriaHerramienta(h);
+                  return (
+                    <div key={idH} className="av-card" style={{ animationDelay: `${idx * 0.04}s` }}>
+
+                      {/* Fila superior: nombre + badges */}
+                      <div className="av-card-header">
+                        <span className="av-card-nombre">{h.nombre ?? h.Nombre}</span>
+                        <div className="av-card-badges">
+                          <span className="av-badge av-badge--tipo">
+                            <i className="fas fa-tag"></i>{tipo}
+                          </span>
+                          {unidad !== 'Sin unidad' && (
+                            <span className="av-badge av-badge--unidad">
+                              <i className="fas fa-ruler"></i>{unidad}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      {(h.descripcionAdicional ?? h.DescripcionAdicional) && (
-                        <div className="almacen-verificacion-notas">
-                          <i className="fas fa-quote-left text-primary opacity-50"></i>
-                          <span>{h.descripcionAdicional ?? h.DescripcionAdicional}</span>
+
+                      {/* Fila de métricas */}
+                      <div className="av-card-body">
+                        {medida > 0 && (
+                          <div className="av-meta-item av-meta-item--medida">
+                            <i className="fas fa-weight av-meta-icon"></i>
+                            <span className="av-meta-val">{medida}</span>
+                            <span className="av-meta-unit">{unidad.toLowerCase()}</span>
+                          </div>
+                        )}
+                        <div className="av-meta-item av-meta-item--qty">
+                          <i className="fas fa-layer-group av-meta-icon"></i>
+                          <span className="av-meta-val">{cantidad}</span>
+                          <span className="av-meta-unit">en stock</span>
+                        </div>
+                      </div>
+
+                      {/* Notas */}
+                      {notas && (
+                        <div className="av-notas">
+                          <i className="fas fa-note-sticky"></i>
+                          <span>{notas}</span>
                         </div>
                       )}
-                    </div>
 
-                    <div className="almacen-verificacion-actions">
-                      <input
-                        type="number"
-                        className="form-control almacen-verificacion-qty"
-                        defaultValue={1}
-                        min={1}
-                        max={999}
-                        id={`qty-${getHerramientaId(h)}`}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          if (v !== '' && Number(v) > 999) e.target.value = 999;
-                        }}
-                      />
-                      <button
-                        className="almacen-verificacion-add"
-                        title="Sumar al inventario"
-                        onClick={() => {
-                          const val = document.getElementById(`qty-${getHerramientaId(h)}`).value;
-                          sumarCantidadExistente(h, val);
-                        }}
-                      >
-                        <i className="fas fa-plus"></i>
-                      </button>
+                      {/* Acción: sumar cantidad */}
+                      <div className="av-card-actions">
+                        <div className="av-qty-ctrl">
+                          <label className="av-qty-label">Agregar:</label>
+                          <input
+                            type="number"
+                            className="form-control av-qty-input"
+                            defaultValue={1}
+                            max={999}
+                            id={`qty-${idH}`}
+                            onFocus={(e) => e.target.select()}
+                            onInvalid={(e) => e.preventDefault()}
+                            onChange={(e) => {
+                              const v = Number(e.target.value);
+                              if (e.target.value !== '' && v > 999) e.target.value = 999;
+                              if (e.target.value !== '' && v < 1) e.target.value = 1;
+                            }}
+                          />
+                        </div>
+                        <button
+                          className="av-add-btn"
+                          disabled={saving}
+                          onClick={() => {
+                            const el = document.getElementById(`qty-${idH}`);
+                            const val = Number(el?.value ?? 0);
+                            if (!val || val < 1) {
+                              window.alert('La cantidad a agregar debe ser al menos 1.');
+                              el?.focus();
+                              return;
+                            }
+                            sumarCantidadExistente(h, val);
+                          }}
+                        >
+                          <i className="fas fa-plus"></i> Sumar al inventario
+                        </button>
+                      </div>
+
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
-            <div className="almacen-confirm-btns mt-4 px-3 pb-3">
-              <button className="almacen-btn almacen-btn-secondary" onClick={() => setShowVerificacionModal(false)}>
-                Regresar
-              </button>
-              <button className="almacen-btn almacen-btn-primary" onClick={() => { setShowVerificacionModal(false); setPasoAgregar(2); }}>
-                No está aquí, continuar <i className="fas fa-arrow-right ms-2"></i>
-              </button>
-            </div>
+            {/* Paginación */}
+            {totalPaginasVerif > 1 && (
+              <div className="av-pagination">
+                <button className="av-page-btn" disabled={paginaVerificacion === 1} onClick={() => setPaginaVerificacion(p => p - 1)}>
+                  <i className="fas fa-chevron-left"></i>
+                </button>
+                <span className="av-page-info">{paginaVerificacion} / {totalPaginasVerif}</span>
+                <button className="av-page-btn" disabled={paginaVerificacion === totalPaginasVerif} onClick={() => setPaginaVerificacion(p => p + 1)}>
+                  <i className="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            )}
+
           </div>
         </div>
       )}
@@ -1024,57 +1213,83 @@ export default function AlmacenPanel() {
       {confirmSuma && (
         <div className="almacen-confirm-overlay" onClick={() => setConfirmSuma(null)}>
           <div className="almacen-confirm-modal modal-grande" onClick={e => e.stopPropagation()}>
-            <div className="almacen-confirm-icon bg-warning">
-              <i className="fas fa-exclamation-triangle"></i>
+
+            {/* Header */}
+            <div className="av-modal-header">
+              <div className="av-modal-icon" style={{ background: 'rgba(255,193,7,0.1)', borderColor: 'rgba(255,193,7,0.3)', color: '#ffc107' }}>
+                <i className="fas fa-exclamation-triangle"></i>
+              </div>
+              <div>
+                <p className="av-modal-supertitle" style={{ color: '#ffc107' }}>Duplicado detectado</p>
+                <h3 className="almacen-confirm-titulo" style={{ margin: 0 }}>¿Sumar o crear nuevo?</h3>
+              </div>
             </div>
-            <h3 className="almacen-confirm-titulo">¡Equipamiento similar detectado!</h3>
-            <p className="almacen-confirm-desc destacado text-center mb-4">
-              Hemos encontrado <strong>{confirmSuma.herramientas.length}</strong> registro(s) con las mismas especificaciones.
-              ¿Deseas sumarlo a uno existente o guardarlo como un registro nuevo?
+
+            <p className="almacen-confirm-desc" style={{ margin: '0.75rem 0 1rem', textAlign: 'center' }}>
+              Encontramos <strong>{confirmSuma.herramientas.length}</strong> registro{confirmSuma.herramientas.length !== 1 ? 's' : ''} con las mismas especificaciones. Suma al existente o guarda como entrada nueva.
             </p>
 
-            <div className="almacen-verificacion-lista px-3" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-              {confirmSuma.herramientas.map((h, idx) => (
-                <div key={getHerramientaId(h)} className="almacen-verificacion-card" style={{ animationDelay: `${idx * 0.05}s` }}>
-                  <div className="almacen-verificacion-info">
-                    <div className="almacen-verificacion-nombre">{h.nombre ?? h.Nombre}</div>
-                    <div className="almacen-verificacion-meta">
-                      <span className="almacen-verificacion-badge peso">
-                        <i className="fas fa-weight"></i> {getHerramientaMedida(h)} {getTipoUnidadHerramienta(h).toLowerCase()}
-                      </span>
-                      <span className="almacen-verificacion-badge">
-                        <i className="fas fa-layer-group"></i> Stock: {h.cantidad ?? h.Cantidad} uds
-                      </span>
+            <div className="av-lista" style={{ maxHeight: '42dvh' }}>
+              {confirmSuma.herramientas.map((h, idx) => {
+                const idH = getHerramientaId(h);
+                const medida = getHerramientaMedida(h);
+                const cantidad = h.cantidad ?? h.Cantidad ?? 0;
+                const notas = h.descripcionAdicional ?? h.DescripcionAdicional;
+                const unidad = getTipoUnidadHerramienta(h);
+                const tipo = getCategoriaHerramienta(h);
+                return (
+                  <div key={idH} className="av-card" style={{ animationDelay: `${idx * 0.04}s` }}>
+                    <div className="av-card-header">
+                      <span className="av-card-nombre">{h.nombre ?? h.Nombre}</span>
+                      <div className="av-card-badges">
+                        <span className="av-badge av-badge--tipo"><i className="fas fa-tag"></i>{tipo}</span>
+                        {unidad !== 'Sin unidad' && <span className="av-badge av-badge--unidad"><i className="fas fa-ruler"></i>{unidad}</span>}
+                      </div>
                     </div>
-                    {(h.descripcionAdicional ?? h.DescripcionAdicional) && (
-                      <div className="almacen-verificacion-notas">
-                        <i className="fas fa-info-circle me-1"></i>
-                        <span>{h.descripcionAdicional ?? h.DescripcionAdicional}</span>
+                    <div className="av-card-body">
+                      {medida > 0 && (
+                        <div className="av-meta-item av-meta-item--medida">
+                          <i className="fas fa-weight av-meta-icon"></i>
+                          <span className="av-meta-val">{medida}</span>
+                          <span className="av-meta-unit">{unidad.toLowerCase()}</span>
+                        </div>
+                      )}
+                      <div className="av-meta-item av-meta-item--qty">
+                        <i className="fas fa-layer-group av-meta-icon"></i>
+                        <span className="av-meta-val">{cantidad}</span>
+                        <span className="av-meta-unit">en stock</span>
+                      </div>
+                    </div>
+                    {notas && (
+                      <div className="av-notas">
+                        <i className="fas fa-note-sticky"></i>
+                        <span>{notas}</span>
                       </div>
                     )}
+                    <div className="av-card-actions">
+                      <button
+                        className="av-add-btn"
+                        style={{ background: 'rgba(255,193,7,0.1)', borderColor: 'rgba(255,193,7,0.3)', color: '#ffd94a' }}
+                        onClick={() => sumarCantidadExistente(h, confirmSuma.cantidadNueva)}
+                        disabled={saving}>
+                        <i className="fas fa-plus"></i>
+                        Sumar {confirmSuma.cantidadNueva} ud{confirmSuma.cantidadNueva > 1 ? 's' : ''}
+                      </button>
+                    </div>
                   </div>
-
-                  <div className="almacen-verificacion-actions">
-                    <button
-                      className="almacen-btn almacen-btn-success btn-sm"
-                      onClick={() => sumarCantidadExistente(h, confirmSuma.cantidadNueva)}
-                      disabled={saving}
-                    >
-                      <i className="fas fa-plus me-1"></i> Sumar {confirmSuma.cantidadNueva}
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
-            <div className="almacen-confirm-btns mt-4 px-3 pb-3">
+            <div className="almacen-confirm-btns" style={{ marginTop: '1.25rem' }}>
               <button className="almacen-btn almacen-btn-secondary" onClick={() => setConfirmSuma(null)} disabled={saving}>
                 Cancelar
               </button>
               <button className="almacen-btn almacen-btn-primary" onClick={() => crearHerramienta(null, true)} disabled={saving}>
-                <i className="fas fa-save me-2"></i>{saving ? 'Guardando...' : 'Guardar como nuevo'}
+                <i className="fas fa-save"></i>{saving ? 'Guardando...' : 'Guardar como nuevo'}
               </button>
             </div>
+
           </div>
         </div>
       )}

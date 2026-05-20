@@ -8,6 +8,7 @@ import MetricaMedidaPicker from '../components/MetricaMedidaPicker';
 import NivelRecomendadoPicker from '../components/NivelRecomendadoPicker';
 import { api } from '../services/api';
 import BotonSeguro from '../components/BotonSeguro';
+import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/AdminEjercicios.css';
 
 const CATEGORIAS = ['Piernas', 'Full Body', 'Fuerza', 'Olímpico', 'Gimnástico', 'Cardio', 'Core'];
@@ -131,6 +132,7 @@ export default function AdminEjercicios() {
   const [editando, setEditando] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('Todas');
+  const [soloSinVideo, setSoloSinVideo] = useState(false);
   const [paginaEjercicios, setPaginaEjercicios] = useState(1);
   const EJERCICIOS_POR_PAGINA = 20;
   const [error, setError] = useState('');
@@ -275,7 +277,8 @@ export default function AdminEjercicios() {
     const matchNombre = ej.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
                         (ej.subnombre && ej.subnombre.toLowerCase().includes(busqueda.toLowerCase()));
     const matchCat = filtroCategoria === 'Todas' || ej.categoria === filtroCategoria;
-    return matchNombre && matchCat;
+    const matchVideo = !soloSinVideo || !ej.videoUrl;
+    return matchNombre && matchCat && matchVideo;
   });
 
   const totalPaginasEj = Math.ceil(filtrados.length / EJERCICIOS_POR_PAGINA);
@@ -490,12 +493,25 @@ export default function AdminEjercicios() {
                       valor={filtroCategoria}
                       onCambiar={v => { setFiltroCategoria(v); setPaginaEjercicios(1); }}
                     />
+                    <button
+                      className={`ae-filter-video-btn${soloSinVideo ? ' ae-filter-video-btn--active' : ''}`}
+                      onClick={() => { setSoloSinVideo(v => !v); setPaginaEjercicios(1); }}
+                      title="Mostrar solo ejercicios sin video"
+                    >
+                      <i className={`fas ${soloSinVideo ? 'fa-video-slash' : 'fa-video-slash'}`} />
+                      Sin video
+                      {soloSinVideo && (
+                        <span className="ae-filter-video-count">
+                          {ejercicios.filter(ej => !ej.videoUrl).length}
+                        </span>
+                      )}
+                    </button>
                   </div>
                 </div>
 
                 {loading ? (
                   <div className="d-flex justify-content-center align-items-center py-5">
-                    <div className="ae-spinner" />
+                    <AtletifyLoader />
                   </div>
                 ) : filtrados.length === 0 ? (
                   <div className="ae-empty">

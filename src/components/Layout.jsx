@@ -18,7 +18,10 @@ export default function Layout() {
   const [statusExpediente, setStatusExpediente] = useState(null);
 
   const hideNavRoutes = ['/', '/login'];
-  const shouldHideNav = hideNavRoutes.includes(location.pathname);
+  const shouldHideNav =
+    hideNavRoutes.includes(location.pathname) ||
+    location.pathname.startsWith('/box/') ||
+    location.pathname.startsWith('/registro/');
   const isStaticNavRoute = location.pathname === '/admin-competencias/panel/1';
 
   // Sync de box desde localStorage — solo actualiza el estado si el ID cambió,

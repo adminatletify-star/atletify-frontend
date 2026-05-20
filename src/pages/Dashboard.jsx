@@ -22,6 +22,8 @@ export default function Dashboard() {
   const [paginaUsuarios, setPaginaUsuarios] = useState(1);
   const USUARIOS_POR_PAGINA = 20;
   const [filtroSaas, setFiltroSaas] = useState('');
+  const [paginaBoxes, setPaginaBoxes] = useState(1);
+  const BOXES_POR_PAGINA = 9;
 
   const [cuentasBloqueadas, setCuentasBloqueadas] = useState([]);
   const [desbloqueando, setDesbloqueando] = useState(null);
@@ -219,6 +221,11 @@ export default function Dashboard() {
     const q = normalizar(filtroSaas);
     return normalizar(b.nombre).includes(q) || normalizar(b.ubicacion).includes(q);
   });
+  const totalPaginasBoxes = Math.ceil(metricasBoxesFiltradas.length / BOXES_POR_PAGINA);
+  const metricasBoxesPagina = metricasBoxesFiltradas.slice(
+    (paginaBoxes - 1) * BOXES_POR_PAGINA,
+    paginaBoxes * BOXES_POR_PAGINA
+  );
 
   const rolesUnicos = [...new Set(usuarios.map(u => u.rol))];
   const usuariosFiltrados = usuarios.filter(u => {
@@ -352,7 +359,7 @@ export default function Dashboard() {
     <div className="dash-page">
 
       {/* ── Topbar móvil ─────────────────────────────────────── */}
-      <header className="dash-topbar d-flex d-lg-none align-items-center gap-3 px-3">
+      <header className={`dash-topbar d-lg-none align-items-center gap-3 px-3${sidebarOpen ? ' dash-topbar--hidden' : ' d-flex'}`}>
         <button className="dash-topbar-toggle" onClick={() => { setSidebarOpen(true); window.dispatchEvent(new CustomEvent('atletify:dashsidebar-open')); }} aria-label="Abrir menú">
           <i className="fas fa-bars"></i>
         </button>
@@ -525,37 +532,50 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              {/* Recuento de resultados */}
+              <div className="dgr-recuento">
+                <i className="fas fa-filter dgr-recuento-icon" />
+                <span>
+                  {usuariosFiltrados.length === usuarios.length
+                    ? <><strong>{usuarios.length}</strong> usuarios en total</>
+                    : <><strong>{usuariosFiltrados.length}</strong> {usuariosFiltrados.length === 1 ? 'usuario encontrado' : 'usuarios encontrados'}{filtroRol && <> · <span className="dgr-recuento-tag">{filtroRol}</span></>}{filtroBox && <> en <span className="dgr-recuento-tag">{boxes.find(b => b.idBox.toString() === filtroBox)?.nombre}</span></>}</>
+                  }
+                </span>
+              </div>
+
               {/* Tabla Desktop */}
               <div className="d-none d-md-block">
-                <div className="table-responsive rounded-3 overflow-hidden">
-                  <table className="table table-dark table-hover mb-0">
+                <div className="dgr-table-wrap">
+                  <table className="dgr-table">
                     <thead>
                       <tr>
-                        <th>USUARIO</th>
-                        <th>ROL</th>
-                        <th>BOX</th>
-                        <th className="text-center">ACCIONES</th>
+                        <th>Usuario</th>
+                        <th>Rol</th>
+                        <th>Box</th>
+                        <th>Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
                       {usuariosPaginados.map(u => (
-                        <tr key={u.idUsuario} className="align-middle">
+                        <tr key={u.idUsuario}>
                           <td>
-                            <div className="d-flex align-items-center gap-3">
+                            <div className="dgr-user-cell">
                               <div className="avatar-inicial">{u.nombre?.charAt(0).toUpperCase()}</div>
                               <div>
-                                <div className="fw-bold">{u.nombre}</div>
-                                <small className="dash-text-muted">{u.correo}</small>
+                                <div className="dgr-user-name">{u.nombre}</div>
+                                <div className="dgr-user-email">{u.correo}</div>
                               </div>
                             </div>
                           </td>
-                          <td><span className={`badge-estado ${rolBadgeClass(u.rol)}`}>{u.rol}</span></td>
-                          <td className="dash-text-muted">
+                          <td>
+                            <span className={`badge-estado ${rolBadgeClass(u.rol)}`}>{u.rol}</span>
+                          </td>
+                          <td className="dgr-box-cell">
                             {boxes.find(b => b.idBox === u.idBoxPredeterminado)?.nombre || 'Sin Box'}
                           </td>
-                          <td className="text-center">
+                          <td>
                             {u.idUsuario !== user.idUsuario && u.rol !== 'Developer' ? (
-                              <div className="d-flex justify-content-center gap-2">
+                              <div className="dgr-actions">
                                 <Link to={`/editar-usuario/${u.idUsuario}`} className="dash-action-btn dash-action-edit" title="Editar">
                                   <i className="fas fa-pen"></i>
                                 </Link>
@@ -662,12 +682,12 @@ export default function Dashboard() {
                   className="entrada-oscura dash-search-input w-100"
                   placeholder="Buscar por nombre o ubicación..."
                   value={filtroSaas}
-                  onChange={e => setFiltroSaas(e.target.value)}
+                  onChange={e => { setFiltroSaas(e.target.value); setPaginaBoxes(1); }}
                 />
               </div>
 
               <div className="scb-grid">
-                {metricasBoxesFiltradas.map(b => {
+                {metricasBoxesPagina.map(b => {
                   const estatus = b.estatusSaaS || 'Pendiente';
                   const estatusClass = `scb-saas-select--${estatus.toLowerCase()}`;
                   return (
@@ -687,25 +707,26 @@ export default function Dashboard() {
                         </div>
                       )}
 
-                      {/* Stats: Atletas / Coaches / Admins */}
+                      {/* Stats: Atletas / AdminBox */}
                       <div className="scb-stats-row">
-                        <span className="scb-stat scb-stat--atletas">
-                          <i className="fas fa-users"></i>{b.totalAtletas}
-                        </span>
-                        <span className="scb-stat scb-stat--coaches">
-                          <i className="fas fa-chalkboard-teacher"></i>{b.totalCoaches}
-                        </span>
-                        <span className="scb-stat scb-stat--admins">
-                          <i className="fas fa-user-shield"></i>{b.totalAdmins}
-                        </span>
-                        <button
-                          className="scb-add-admin-btn"
-                          title="Crear AdminBox"
-                          onClick={() => setModalAdminBox({ open: true, idBox: b.idBox, nombreBox: b.nombre })}
-                        >
-                          <i className="fas fa-plus"></i>
-                        </button>
+                        <div className="scb-stat-block scb-stat-block--atletas">
+                          <span className="scb-stat-num">{b.totalAtletas}</span>
+                          <span className="scb-stat-label"><i className="fas fa-users"></i> Atletas</span>
+                        </div>
+                        <div className="scb-stat-block scb-stat-block--admins">
+                          <span className="scb-stat-num">{b.totalAdmins}</span>
+                          <span className="scb-stat-label"><i className="fas fa-user-shield"></i> AdminBox</span>
+                        </div>
                       </div>
+
+                      {/* Botón Agregar AdminBox */}
+                      <button
+                        className="scb-add-admin-btn"
+                        onClick={() => setModalAdminBox({ open: true, idBox: b.idBox, nombreBox: b.nombre })}
+                      >
+                        <i className="fas fa-user-plus"></i>
+                        Agregar Admin Box
+                      </button>
 
                       <div className="scb-divider"></div>
 
@@ -787,6 +808,42 @@ export default function Dashboard() {
                   );
                 })}
               </div>
+
+              {/* Paginador */}
+              {totalPaginasBoxes > 1 && (
+                <div className="dash-pagination">
+                  <button
+                    className="dash-page-btn"
+                    disabled={paginaBoxes === 1}
+                    onClick={() => setPaginaBoxes(p => p - 1)}
+                  >
+                    <i className="fas fa-chevron-left" />
+                  </button>
+
+                  {Array.from({ length: totalPaginasBoxes }, (_, i) => i + 1).map(n => (
+                    <button
+                      key={n}
+                      className={`dash-page-btn${n === paginaBoxes ? ' dash-page-btn--active' : ''}`}
+                      onClick={() => setPaginaBoxes(n)}
+                    >
+                      {n}
+                    </button>
+                  ))}
+
+                  <button
+                    className="dash-page-btn"
+                    disabled={paginaBoxes === totalPaginasBoxes}
+                    onClick={() => setPaginaBoxes(p => p + 1)}
+                  >
+                    <i className="fas fa-chevron-right" />
+                  </button>
+
+                  <span className="dash-pag-info">
+                    {(paginaBoxes - 1) * BOXES_POR_PAGINA + 1}–{Math.min(paginaBoxes * BOXES_POR_PAGINA, metricasBoxesFiltradas.length)} de {metricasBoxesFiltradas.length}
+                  </span>
+                </div>
+              )}
+
             </section>
 
             }

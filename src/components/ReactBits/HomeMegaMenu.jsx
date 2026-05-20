@@ -249,7 +249,23 @@ export default function HomeMegaMenu({ user, mobileMenuOpen, setMobileMenuOpen }
               <div className={`hmm-dropdown ${activeMenu === 'nosotros' ? 'open' : ''}`}>
                 <div className="hmm-dropdown-grid" style={{ gridTemplateColumns: '1fr' }}>
                   <div className="hmm-col" style={{ padding: '1rem 1.5rem' }}>
-                    <Link to="/sobre-nosotros" className="hmm-link-simple" onClick={handleLinkClick}>Sobre Nosotros</Link>
+                    {/* Sobre Nosotros: bloqueada — no navega */}
+                    <span
+                      className="hmm-link-simple"
+                      style={{ opacity: 0.4, cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                      title="Próximamente"
+                    >
+                      Sobre Nosotros
+                      <span style={{
+                        fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase',
+                        letterSpacing: '0.08em', padding: '0.15rem 0.55rem',
+                        borderRadius: '50px', background: 'rgba(230,57,70,0.15)',
+                        color: '#E63946', border: '1px solid rgba(230,57,70,0.3)',
+                        flexShrink: 0,
+                      }}>
+                        Próximamente
+                      </span>
+                    </span>
                     <a href="/wolfpack" className="hmm-link-simple" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>Wolfpack</a>
                   </div>
                 </div>
@@ -320,7 +336,9 @@ export default function HomeMegaMenu({ user, mobileMenuOpen, setMobileMenuOpen }
             <li><Link to="/historial-competencias" onClick={handleLinkClick}>Historial de Compes</Link></li>
             <li><Link to="/ejercicios" onClick={handleLinkClick}>Ejercicios</Link></li>
             <li><Link to="/simulador-barra-publico" onClick={handleLinkClick}>Simulador de Barra</Link></li>
-            <li><Link to="/sobre-nosotros" onClick={handleLinkClick}>Nosotros</Link></li>
+            <li style={{ opacity: 0.4, pointerEvents: 'none' }}>
+              <span>Nosotros <small style={{ fontSize: '0.65rem', color: '#E63946' }}>Próximamente</small></span>
+            </li>
             <li><a href="/wolfpack" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>Wolfpack</a></li>
           </ul>
 

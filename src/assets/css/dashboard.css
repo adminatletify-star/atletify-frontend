@@ -22,6 +22,11 @@
   z-index: 1040;
 }
 
+.dash-topbar.dash-topbar--hidden,
+.dash-topbar--hidden {
+  display: none !important;
+}
+
 .dash-topbar-toggle {
   width: 36px;
   height: 36px;
@@ -527,6 +532,116 @@
   color: var(--primary);
 }
 
+/* ── Tabla Control Global de Roles ───────────────────────── */
+.dgr-recuento {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.dgr-recuento strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.dgr-recuento-icon {
+  color: var(--primary);
+  font-size: 0.72rem;
+  flex-shrink: 0;
+}
+
+.dgr-recuento-tag {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ── Tabla Control Global de Roles ───────────────────────── */
+.dgr-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dgr-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: transparent;
+}
+
+.dgr-table thead tr {
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--border);
+}
+
+.dgr-table thead th {
+  padding: 12px 16px;
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.dgr-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.15s;
+}
+
+.dgr-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.dgr-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dgr-table tbody td {
+  padding: 13px 16px;
+  vertical-align: middle;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.dgr-user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dgr-user-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.dgr-user-email {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.dgr-box-cell {
+  color: var(--text-secondary) !important;
+  font-size: 0.82rem !important;
+}
+
+.dgr-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Cards móvil usuarios ─────────────────────────────────── */
 .dash-user-card {
   background: rgba(28, 28, 38, 0.5);
   border: 1px solid var(--border);
@@ -610,6 +725,8 @@
 
   .dash-sidebar--open {
     transform: translateX(0);
+    top: 0;
+    height: 100%;
     box-shadow: 6px 0 28px rgba(0, 0, 0, 0.5);
   }
 
@@ -617,6 +734,11 @@
     top: 52px;
     height: calc(100% - 52px);
     z-index: 1062;
+  }
+
+  .dash-overlay--visible {
+    top: 0 !important;
+    height: 100% !important;
   }
 
   .dash-inner {
@@ -636,9 +758,19 @@
     height: calc(100% - 52px);
   }
 
+  .dash-sidebar--open {
+    top: 0;
+    height: 100%;
+  }
+
   .dash-overlay {
     top: 52px;
     height: calc(100% - 52px);
+  }
+
+  .dash-overlay--visible {
+    top: 0 !important;
+    height: 100% !important;
   }
 }
 
@@ -1613,64 +1745,84 @@
 
 /* ── Stats row ─────────────────────────────────────────────── */
 .scb-stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.scb-stat-block {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.scb-stat {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 11px;
-  border-radius: 20px;
-  font-family: var(--font-heading);
-  font-size: clamp(0.7rem, 1.6vw, 0.78rem);
-  font-weight: 700;
-  letter-spacing: 0.3px;
-}
-
-.scb-stat i { font-size: 0.78em; }
-
-.scb-stat--atletas {
-  background: rgba(0, 123, 255, 0.14);
-  border: 1px solid rgba(0, 123, 255, 0.3);
-  color: #5ea3ff;
-}
-
-.scb-stat--coaches {
-  background: rgba(79, 195, 247, 0.14);
-  border: 1px solid rgba(79, 195, 247, 0.3);
-  color: var(--accent-cool);
-}
-
-.scb-stat--admins {
-  background: rgba(245, 166, 35, 0.14);
-  border: 1px solid rgba(245, 166, 35, 0.3);
-  color: var(--accent);
-}
-
-.scb-add-admin-btn {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 1.5px solid var(--accent);
-  background: transparent;
-  color: var(--accent);
-  display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 0.62rem;
+  padding: 12px 8px;
+  border-radius: 12px;
+  gap: 2px;
+}
+
+.scb-stat-block--atletas {
+  background: rgba(0, 123, 255, 0.1);
+  border: 1px solid rgba(0, 123, 255, 0.25);
+}
+
+.scb-stat-block--admins {
+  background: rgba(245, 166, 35, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+}
+
+.scb-stat-num {
+  font-family: var(--font-heading);
+  font-size: 1.7rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.scb-stat-block--atletas .scb-stat-num { color: #5ea3ff; }
+.scb-stat-block--admins  .scb-stat-num { color: var(--accent); }
+
+.scb-stat-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.scb-stat-block--atletas .scb-stat-label { color: #5ea3ff; }
+.scb-stat-block--admins  .scb-stat-label { color: var(--accent); }
+
+.scb-add-admin-btn {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #E63946 0%, #c0000d 100%);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   cursor: pointer;
-  transition: var(--transition);
-  padding: 0;
-  flex-shrink: 0;
+  transition: opacity 0.2s, transform 0.15s;
+  box-shadow: 0 4px 14px rgba(230, 57, 70, 0.35);
 }
 
 .scb-add-admin-btn:hover {
-  background: var(--accent);
-  color: #000;
+  opacity: 0.88;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(230, 57, 70, 0.5);
+}
+
+.scb-add-admin-btn:active {
+  transform: translateY(0);
+  opacity: 1;
 }
 
 /* ── Divider interno ───────────────────────────────────────── */
@@ -1862,11 +2014,11 @@
 
 /* ── Responsive SaaS grid ──────────────────────────────────── */
 @media (max-width: 768px) {
-  .scb-grid      { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-  .scb-card      { padding: 14px; gap: 12px; }
-  .scb-card-name { font-size: 0.9rem; }
-  .scb-stat      { font-size: 0.72rem; padding: 3px 9px; }
-  .scb-ubicacion { font-size: 0.7rem; }
+  .scb-grid        { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .scb-card        { padding: 14px; gap: 12px; }
+  .scb-card-name   { font-size: 0.9rem; }
+  .scb-stat-num    { font-size: 1.4rem; }
+  .scb-ubicacion   { font-size: 0.7rem; }
 }
 
 @media (max-width: 576px) {
@@ -1875,17 +2027,19 @@
   .scb-card-id       { font-size: 0.6rem; }
   .scb-card-name     { font-size: 0.84rem; }
   .scb-ubicacion     { font-size: 0.66rem; }
-  .scb-stat          { font-size: 0.68rem; padding: 3px 8px; }
+  .scb-stat-num      { font-size: 1.3rem; }
+  .scb-stat-label    { font-size: 0.6rem; }
   .scb-saas-select   { font-size: 0.76rem; }
   .scb-compe-btn     { font-size: 0.68rem; padding: 4px 12px; }
   .scb-saas-label,
   .scb-compe-label   { font-size: 0.6rem; }
+  .scb-add-admin-btn { font-size: 0.74rem; padding: 9px 12px; }
 }
 
 @media (max-width: 380px) {
   .scb-card-name     { font-size: 0.78rem; }
   .scb-ubicacion     { font-size: 0.62rem; }
-  .scb-stat          { font-size: 0.62rem; padding: 2px 7px; }
+  .scb-stat-num      { font-size: 1.2rem; }
   .scb-saas-select   { font-size: 0.72rem; }
   .scb-compe-btn     { font-size: 0.64rem; padding: 4px 10px; }
 }

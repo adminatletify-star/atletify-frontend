@@ -66,9 +66,16 @@
   align-items: center;
   gap: 0.25rem;
   margin: 0 auto;
+  position: relative; /* containing block para los dropdowns principales */
 }
 
-.hmm-nav-item {
+/* Items del menú principal: static → el dropdown sube a .hmm-nav-menu */
+.hmm-nav-menu > .hmm-nav-item {
+  position: static;
+}
+
+/* Items dentro de .hmm-actions (p.ej. Cuentas): mantiene relative propio */
+.hmm-actions .hmm-nav-item {
   position: relative;
 }
 
@@ -105,9 +112,9 @@
 
 /* ── MEGA DROPDOWN ── */
 .hmm-dropdown {
-  position: fixed;
-  top: 64px;
-  left: 50%;
+  position: absolute;            /* relativo a .hmm-nav-menu */
+  top: calc(100% + 10px);       /* justo debajo de los botones del menú */
+  left: 50%;                     /* centro del .hmm-nav-menu */
   transform: translateX(-50%) translateY(10px);
   width: max-content;
   min-width: 520px;
@@ -131,18 +138,21 @@
   transform: translateX(-50%) translateY(0);
 }
 
+/* Dropdown de Cuentas: relativo a su propio .hmm-nav-item */
+.hmm-dropdown-cuentas {
+  position: absolute;
+  top: calc(100% + 10px) !important;
+  left: auto !important;
+  right: 0 !important;
+  transform: translateY(10px) !important;
+  min-width: 270px !important;
+}
+
 .hmm-dropdown-cuentas.open {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
   transform: translateY(0) !important;
-}
-
-.hmm-dropdown-cuentas {
-  left: auto !important;
-  right: 2rem !important;
-  transform: translateY(10px) !important;
-  min-width: 270px !important;
 }
 
 .hmm-dropdown-grid {

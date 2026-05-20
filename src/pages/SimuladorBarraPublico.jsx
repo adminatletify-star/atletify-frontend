@@ -1,9 +1,13 @@
 import { useMemo, useState } from 'react';
-import BackButton from '../components/BackButton';
 import TipoBarraPicker from '../components/TipoBarraPicker';
+import BackButton from '../components/BackButton';
+import { useAuth } from '../context/AuthContext';
 import '../assets/css/SimuladorBarra.css';
 
 export default function SimuladorBarraPublico() {
+  const { usuario } = useAuth();
+  const esAtleta = !!usuario;
+
   const [unidad, setUnidad] = useState('lb');
   const [tipoBarra, setTipoBarra] = useState(45);
   const [pesoObjetivo, setPesoObjetivo] = useState('');
@@ -16,6 +20,13 @@ export default function SimuladorBarraPublico() {
   const [unidadSeguro, setUnidadSeguro] = useState('kg');
   const [modoSimulador, setModoSimulador] = useState('casual');
   const [alternativas, setAlternativas] = useState({ visible: false, objetivoPedido: 0, arriba: null, abajo: null });
+  const [discosBloqueados, setDiscosBloqueados] = useState([]);
+
+  const toggleBloqueo = (peso) => {
+    setDiscosBloqueados(prev =>
+      prev.includes(peso) ? prev.filter(p => p !== peso) : [...prev, peso]
+    );
+  };
 
   const LB_PER_KG = 2.20462;
 
@@ -136,15 +147,19 @@ export default function SimuladorBarraPublico() {
   }, [tipoBarra, pesoPorLado, pesoSegurosTotal]);
 
   const restricciones = useMemo(() => {
-    return [
+    const items = [
       `Barra seleccionada: ${tipoBarra} ${config.etiqueta}`,
       `Máximo de discos por lado: ${config.maxDiscosPorLado}`,
       `Máximo peso por lado: ${config.maxPesoPorLado} ${config.etiqueta}`,
       'Orden automático: de mayor a menor (pesados al centro)',
       `El peso total debe avanzar en saltos de ${config.pasoTotal} ${config.etiqueta}`,
-      'Discos ilimitados — modo público'
+      'Discos ilimitados'
     ];
-  }, [tipoBarra, config]);
+    if (discosBloqueados.length > 0) {
+      items.push(`🔒 Bloqueados: ${discosBloqueados.map(p => `${p}${config.etiqueta}`).join(', ')}`);
+    }
+    return items;
+  }, [tipoBarra, config, discosBloqueados]);
 
   const resumenDiscosLado = useMemo(() => {
     if (discosOrdenados.length === 0) return 'Sin discos por lado';
@@ -169,11 +184,13 @@ export default function SimuladorBarraPublico() {
 
   const obtenerComboMinimoPorLado = (lado) => {
     const objetivoUnidad = Math.round(lado * 4);
-    const candidatos = config.discos.map((peso) => ({
-      peso,
-      unidad: Math.round(peso * 4),
-      maximoPorLado: disponiblesPorLado[peso] ?? 0
-    }));
+    const candidatos = config.discos
+      .filter(peso => !discosBloqueados.includes(peso))
+      .map((peso) => ({
+        peso,
+        unidad: Math.round(peso * 4),
+        maximoPorLado: disponiblesPorLado[peso] ?? 0
+      }));
     let mejor = null;
     function resolver(index, restanteUnidad, comboActual) {
       if (restanteUnidad === 0) {
@@ -310,6 +327,7 @@ export default function SimuladorBarraPublico() {
     setModo('manual');
     setSugerencia({ visible: false, texto: '', combo: [] });
     setAlternativas({ visible: false, objetivoPedido: 0, arriba: null, abajo: null });
+    setDiscosBloqueados([]);
   };
 
   const aplicarSugerencia = () => {
@@ -380,17 +398,18 @@ export default function SimuladorBarraPublico() {
         fontSize: Math.max(10, Math.round(paleta.h * 0.18))
       };
     });
-    const quitarDiscoPorIndice = (idx) => {
+    const quitarDiscoPorPeso = (peso) => {
       const nuevosDiscos = [...discosOrdenados];
-      nuevosDiscos.splice(idx, 1);
+      const idx = nuevosDiscos.indexOf(peso);
+      if (idx !== -1) nuevosDiscos.splice(idx, 1);
       actualizarEstado(nuevosDiscos, 'manual');
       evaluarSugerencia([...nuevosDiscos].sort((a, b) => b - a));
     };
 
     return (
-      <div className="rounded-4 p-3 p-md-4" style={{ background: '#141f4a', minHeight: `${alturaArea}px`, border: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="small text-white fw-semibold mb-3">Coloca los discos en su lugar</div>
-        <div style={{ position: 'relative', height: '240px', overflow: 'hidden', borderRadius: '14px', background: '#1f2a63' }}>
+      <div className="rounded-4 p-3 p-md-4" style={{ background: 'var(--bg-elevated)', minHeight: `${alturaArea}px`, border: '1px solid var(--border)' }}>
+        <div className="small fw-semibold mb-3" style={{ color: 'var(--text-muted)' }}>Coloca los discos en su lugar</div>
+        <div style={{ position: 'relative', height: '240px', overflow: 'hidden', borderRadius: '14px', background: 'var(--bg-base)' }}>
           <div
             style={{
               position: 'absolute', left: '6%', top: '12px', width: '96px', height: '30px',
@@ -408,25 +427,27 @@ export default function SimuladorBarraPublico() {
                 <div style={{ width: '12px', height: '94px', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', border: '1px dashed rgba(255,255,255,0.2)' }}></div>
               )}
               {plateSpecs.map((plate) => (
-                <div key={plate.key}>
-                  <div
-                    className="d-flex align-items-center justify-content-center"
-                    style={{
-                      width: `${plate.width}px`, height: `${plate.height}px`, borderRadius: '4px',
-                      background: plate.color, color: plate.textColor, fontSize: `${plate.fontSize}px`,
-                      fontWeight: 800, lineHeight: 1,
-                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.14), 0 8px 14px rgba(0,0,0,0.28)',
-                      textShadow: '0 1px 2px rgba(0,0,0,0.35)', cursor: 'pointer',
-                      transition: 'transform 0.15s', userSelect: 'none'
-                    }}
-                    onClick={() => quitarDiscoPorIndice(plate.index)}
-                    title="Click para quitar disco"
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && quitarDiscoPorIndice(plate.index)}
-                  >
-                    {plate.peso}
-                  </div>
+                <div
+                  key={plate.key}
+                  className="d-flex align-items-center justify-content-center sb-plate-clickable"
+                  style={{
+                    width: `${plate.width}px`, height: `${plate.height}px`, borderRadius: '4px',
+                    background: plate.color, color: plate.textColor, fontSize: `${plate.fontSize}px`,
+                    fontWeight: 800, lineHeight: 1,
+                    boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.14), 0 8px 14px rgba(0,0,0,0.28)',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.35)', cursor: 'pointer',
+                    transition: 'transform 0.15s, filter 0.15s', userSelect: 'none',
+                    position: 'relative'
+                  }}
+                  onClick={() => quitarDiscoPorPeso(plate.peso)}
+                  title={`Clic para quitar ${plate.peso} ${config.etiqueta}`}
+                  role="button"
+                  tabIndex={0}
+                  onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.25)'; e.currentTarget.style.transform = 'scaleX(0.88)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.filter = ''; e.currentTarget.style.transform = ''; }}
+                  onKeyDown={(e) => e.key === 'Enter' && quitarDiscoPorPeso(plate.peso)}
+                >
+                  {plate.peso}
                 </div>
               ))}
             </div>
@@ -439,16 +460,18 @@ export default function SimuladorBarraPublico() {
   };
 
   return (
-    <div className="sb-page" style={{ paddingTop: '80px' }}>
+    <div className="sb-page">
 
       {/* ── HEADER STICKY ── */}
       <header className="sb-nav">
+        {esAtleta && <BackButton to="/user-panel" />}
         <div className="sb-nav-icon d-none d-sm-flex">
           <i className="fas fa-dumbbell" />
         </div>
-        <h1 className="sb-title">
-          Simulador de <span>Barra</span>
-        </h1>
+        <div>
+          <h1 className="sb-title mb-0">Simulador de <span>Barra</span></h1>
+          <p className="sb-nav-sub mb-0">Arma tu carga perfecta</p>
+        </div>
       </header>
 
       <div className="container-fluid px-3 px-md-4 px-lg-5" style={{ maxWidth: '1440px', margin: '0 auto' }}>
@@ -585,19 +608,48 @@ export default function SimuladorBarraPublico() {
                 <span className="sb-discs-hint">Ilimitados</span>
               </div>
               <div className="sb-card-body">
+                {esAtleta && discosBloqueados.length > 0 && (
+                  <div className="sb-bloqueo-hint">
+                    <i className="fas fa-lock" /> Los discos bloqueados no se usan en la calculadora ni en sugerencias
+                  </div>
+                )}
                 <div className="sb-discs-grid mb-4">
                   {config.discos.map((peso) => {
                     const estilo = colorDisco(peso);
                     const size = Math.max(52, Math.round(estilo.w * 0.44));
+                    const bloqueado = discosBloqueados.includes(peso);
                     return (
                       <div key={`agregar-${peso}`} className="d-flex flex-column align-items-center gap-1">
-                        <button type="button" className="sb-disc-btn"
-                          style={{ width: `${size}px`, height: `${size}px`, backgroundColor: estilo.fondo, color: estilo.texto }}
-                          onClick={() => agregarDiscoManual(peso)}
-                          title={`${peso} ${config.etiqueta}`}>
-                          <span className="sb-disc-num">{peso}</span>
-                        </button>
-                        <span className="sb-disc-avail" style={{ color: 'var(--success)' }}>∞</span>
+                        <div style={{ position: 'relative' }}>
+                          <button type="button" className="sb-disc-btn"
+                            style={{
+                              width: `${size}px`, height: `${size}px`,
+                              backgroundColor: estilo.fondo, color: estilo.texto,
+                              filter: bloqueado ? 'grayscale(1) brightness(0.38)' : 'none',
+                            }}
+                            onClick={() => agregarDiscoManual(peso)}
+                            disabled={bloqueado}
+                            title={bloqueado ? `${peso} ${config.etiqueta} — bloqueado` : `${peso} ${config.etiqueta}`}>
+                            <span className="sb-disc-num">{peso}</span>
+                          </button>
+                          {bloqueado && (
+                            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', zIndex: 2 }}>
+                              <i className="fas fa-lock" style={{ color: '#e63946', fontSize: '1rem', filter: 'drop-shadow(0 0 5px rgba(230,57,70,0.8))' }} />
+                            </div>
+                          )}
+                        </div>
+                        {esAtleta ? (
+                          <button
+                            type="button"
+                            className={`sb-lock-btn${bloqueado ? ' sb-lock-btn--on' : ''}`}
+                            onClick={() => toggleBloqueo(peso)}
+                            title={bloqueado ? 'Desbloquear disco' : 'Bloquear de calculadora'}
+                          >
+                            <i className={`fas fa-${bloqueado ? 'lock' : 'lock-open'}`} />
+                          </button>
+                        ) : (
+                          <span className="sb-disc-avail" style={{ color: 'var(--success)' }}>∞</span>
+                        )}
                       </div>
                     );
                   })}

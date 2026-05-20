@@ -427,3 +427,171 @@
   align-items: center;
   justify-content: center;
 }
+
+/* === HOVER EFFECTS FOR CLICKABLE WIDGET CARDS === */
+.abp-clickable-card {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+.abp-clickable-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 255, 255, 0.05) !important;
+}
+
+.abp-clickable-card-link {
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+/* === PERIOD SELECTOR (GLASS BUTTON GROUP) === */
+.abp-period-selector {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 2px;
+  display: inline-flex;
+  gap: 2px;
+}
+
+.abp-period-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.65);
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 4px 12px;
+  border-radius: 18px;
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+  cursor: pointer;
+  outline: none;
+  white-space: nowrap;
+}
+
+.abp-period-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.abp-period-btn.active {
+  color: #2ecc71;
+  background: rgba(46, 204, 113, 0.12);
+  border: 1px solid rgba(46, 204, 113, 0.2);
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(46, 204, 113, 0.08);
+}
+
+/* === RESPONSIVE MOBILE OPTIMIZATIONS === */
+@media (max-width: 576px) {
+  .abp-hero > div {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 1.2rem !important;
+  }
+  
+  .abp-config-btn {
+    align-self: flex-start;
+    width: auto;
+  }
+
+  .abp-stats-row {
+    margin-top: 1rem;
+  }
+
+  .abp-stat-card {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .abp-stat-number {
+    font-size: 1.4rem;
+  }
+
+  .abp-stat-label {
+    font-size: 0.58rem;
+    letter-spacing: 0.8px;
+    margin-top: 2px;
+  }
+
+  .abp-stat-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+
+  .abp-category-container {
+    padding: 0.85rem;
+  }
+
+  .abp-quick-grid {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .abp-quick-card {
+    padding: 0.75rem 0.85rem;
+    gap: 0.75rem;
+  }
+
+  .abp-card-icon-wrapper {
+    width: 36px;
+    height: 36px;
+    font-size: 0.95rem;
+  }
+
+  .abp-card-title {
+    font-size: 0.8rem;
+  }
+
+  .abp-card-desc {
+    font-size: 0.65rem;
+  }
+
+  .abp-glass-card {
+    padding: 1rem;
+  }
+
+  .abp-chart-container {
+    height: 240px !important;
+  }
+
+  .abp-period-selector {
+    width: 100%;
+    margin-top: 0.5rem;
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .abp-period-btn {
+    flex: 1;
+    text-align: center;
+    padding: 4px 6px;
+    font-size: 0.62rem;
+  }
+}
+
+/* === MICRO-ANIMACIONES DE DESPLEGADO (VER MÁS) === */
+.animate-fade-in {
+  animation: abp-fadeIn 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+  will-change: opacity, transform;
+}
+
+@keyframes abp-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover style for category buttons */
+.abp-category-container button:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}

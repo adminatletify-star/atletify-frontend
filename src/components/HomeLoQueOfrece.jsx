@@ -6,6 +6,7 @@ const TABS = [
   {
     id: 'wods',
     label: 'Programa tus WODs',
+    icon: 'fas fa-dumbbell',
     tag: 'Entrenamiento',
     titulo: 'Programa tus WODs con total control',
     bullets: [
@@ -14,12 +15,11 @@ const TABS = [
       'Historial completo de entrenamientos',
       'Añade notas y escalas por nivel',
     ],
-    screenshot: '/Lo%20que%20ofrece/Programa%20tus%20WODs.png',
-    screenshotAlt: 'Pantalla Programa tus WODs',
   },
   {
     id: 'clases',
     label: 'Declara tus clases',
+    icon: 'fas fa-calendar-alt',
     tag: 'Gestión',
     titulo: 'Declara tus clases a tu medida',
     bullets: [
@@ -28,16 +28,40 @@ const TABS = [
       'Control de inscripciones en tiempo real',
       'Pase de lista integrado y sin papel',
     ],
-    screenshot: '/Lo%20que%20ofrece/Declara%20tus%20clases%20a%20tu%20medida.png',
-    screenshotAlt: 'Pantalla Declara tus clases',
+  },
+  {
+    id: 'atletas',
+    label: 'Gestiona atletas',
+    icon: 'fas fa-users',
+    tag: 'Atletas',
+    titulo: 'Gestiona a tus atletas en un solo lugar',
+    bullets: [
+      'Perfil completo de cada atleta',
+      'Seguimiento de asistencia',
+      'Membresías activas e historial de pagos',
+      'Consulta los PRs y récords de cada atleta',
+    ],
+  },
+  {
+    id: 'finanzas',
+    label: 'Controla finanzas',
+    icon: 'fas fa-chart-line',
+    tag: 'Finanzas',
+    titulo: 'Controla las finanzas de tu box',
+    bullets: [
+      'Registro de pagos y membresías al día',
+      'Reportes de ingresos por período',
+      'Alertas de pagos vencidos automáticas',
+      'Vista clara de tu flujo de caja mensual',
+    ],
   },
 ];
 
-const SWIPE_THRESHOLD = 60; // px mínimos para considerar un swipe
+const SWIPE_THRESHOLD = 60;
 
 export default function HomeLoQueOfrece() {
-  const [activo, setActivo] = useState(0); // índice numérico
-  const [direction, setDirection] = useState(1); // 1 = siguiente, -1 = anterior
+  const [activo, setActivo] = useState(0);
+  const [direction, setDirection] = useState(1);
   const tab = TABS[activo];
 
   const irA = (idx) => {
@@ -63,7 +87,6 @@ export default function HomeLoQueOfrece() {
   return (
     <section className="ofrece-seccion">
 
-      {/* ── Título principal ── */}
       <motion.div
         className="ofrece-header"
         initial={{ opacity: 0, y: 28 }}
@@ -96,7 +119,7 @@ export default function HomeLoQueOfrece() {
         ))}
       </motion.div>
 
-      {/* ── Card principal (con swipe) ── */}
+      {/* ── Card con swipe ── */}
       <div className="ofrece-card-wrap">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
@@ -115,48 +138,23 @@ export default function HomeLoQueOfrece() {
             style={{ cursor: 'grab' }}
             whileDrag={{ cursor: 'grabbing' }}
           >
-            {/* IZQUIERDA — foto + screenshot */}
-            <div className="ofrece-col-visual">
-              <div className="ofrece-foto-wrap">
-                <img
-                  src="/Coaches/Andr%C3%A9/IMG_9992.jpg"
-                  alt="Coach Atletify"
-                  className="ofrece-foto"
-                  draggable={false}
-                />
-                <div className="ofrece-foto-gradiente" />
-              </div>
-
-              {/* Screenshot flotante */}
-              <motion.div
-                className="ofrece-screenshot"
-                key={tab.id + '-ss'}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, delay: 0.2 }}
-              >
-                <img src={tab.screenshot} alt={tab.screenshotAlt} draggable={false} />
-              </motion.div>
+            <div className="ofrece-card-icon">
+              <i className={tab.icon} />
             </div>
-
-            {/* DERECHA — texto */}
-            <div className="ofrece-col-texto">
-              <span className="ofrece-tag">{tab.tag}</span>
-              <h3 className="ofrece-subtitulo">{tab.titulo}</h3>
-              <ul className="ofrece-bullets">
-                {tab.bullets.map(b => (
-                  <li key={b}>
-                    <i className="fas fa-bolt ofrece-bullet-icono"></i>
-                    {b}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
+            <span className="ofrece-tag">{tab.tag}</span>
+            <h3 className="ofrece-subtitulo">{tab.titulo}</h3>
+            <ul className="ofrece-bullets">
+              {tab.bullets.map(b => (
+                <li key={b}>
+                  <i className="fas fa-bolt ofrece-bullet-icono" />
+                  {b}
+                </li>
+              ))}
+            </ul>
           </motion.div>
         </AnimatePresence>
 
-        {/* Indicadores de punto */}
+        {/* Dots */}
         <div className="ofrece-dots">
           {TABS.map((_, i) => (
             <button

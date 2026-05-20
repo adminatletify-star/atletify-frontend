@@ -19,6 +19,7 @@ export default function Home() {
             src="/Box%20interno/IMG_0030.jpg"
             alt="CrossFit box Atletify"
             className="hero-saas-img"
+            fetchPriority="high"
           />
           <div className="hero-saas-overlay" />
           <div className="hero-saas-glow-bottom" />
