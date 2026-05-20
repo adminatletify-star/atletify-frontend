@@ -431,6 +431,59 @@
 .ae-empty i { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4; }
 .ae-empty p { font-family: var(--font-body); font-size: 0.9rem; margin: 0; }
 
+/* ---- PAGINACIÓN ---- */
+.ae-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 16px 12px 20px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+.ae-page-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.83rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ae-page-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.ae-page-btn--active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
+  font-weight: 700;
+}
+
+.ae-page-btn:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+}
+
+.ae-page-info {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-left: 6px;
+}
+
 /* ---- SPINNER ---- */
 .ae-spinner {
   width: 40px;
@@ -755,4 +808,5 @@ video::-webkit-media-controls-overflow-button {
   .ae-detail-nombre   { font-size: 0.9rem; }
   .ae-detail-texto    { font-size: 0.78rem; }
 }
+
 

@@ -131,6 +131,8 @@ export default function AdminEjercicios() {
   const [editando, setEditando] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('Todas');
+  const [paginaEjercicios, setPaginaEjercicios] = useState(1);
+  const EJERCICIOS_POR_PAGINA = 20;
   const [error, setError] = useState('');
   const [iconoAuto, setIconoAuto] = useState(false);
   const [ejDetalle, setEjDetalle] = useState(null);
@@ -270,11 +272,17 @@ export default function AdminEjercicios() {
   }
 
   const filtrados = ejercicios.filter(ej => {
-    const matchNombre = ej.nombre.toLowerCase().includes(busqueda.toLowerCase()) || 
+    const matchNombre = ej.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
                         (ej.subnombre && ej.subnombre.toLowerCase().includes(busqueda.toLowerCase()));
     const matchCat = filtroCategoria === 'Todas' || ej.categoria === filtroCategoria;
     return matchNombre && matchCat;
   });
+
+  const totalPaginasEj = Math.ceil(filtrados.length / EJERCICIOS_POR_PAGINA);
+  const ejerciciosPaginados = filtrados.slice(
+    (paginaEjercicios - 1) * EJERCICIOS_POR_PAGINA,
+    paginaEjercicios * EJERCICIOS_POR_PAGINA
+  );
 
   return (
     <div className="ae-page">
@@ -474,13 +482,13 @@ export default function AdminEjercicios() {
                         className="ae-input ae-search-input"
                         placeholder="Buscar..."
                         value={busqueda}
-                        onChange={e => setBusqueda(e.target.value)}
+                        onChange={e => { setBusqueda(e.target.value); setPaginaEjercicios(1); }}
                         style={{ paddingLeft: '2.2rem' }}
                       />
                     </div>
                     <FiltroEjerciciosPicker
                       valor={filtroCategoria}
-                      onCambiar={setFiltroCategoria}
+                      onCambiar={v => { setFiltroCategoria(v); setPaginaEjercicios(1); }}
                     />
                   </div>
                 </div>
@@ -499,7 +507,7 @@ export default function AdminEjercicios() {
                   </div>
                 ) : (
                   <div className="row g-2 p-3">
-                    {filtrados.map(ej => {
+                    {ejerciciosPaginados.map(ej => {
                       const cat = CAT_BADGE_STYLE[ej.categoria] || { bg: 'rgba(255,255,255,0.08)', color: '#A8B2D1' };
                       return (
                         <div key={ej.id} className="col-12 col-sm-6">
@@ -575,6 +583,41 @@ export default function AdminEjercicios() {
                         </div>
                       );
                     })}
+                  </div>
+                )}
+
+                {/* Paginación */}
+                {totalPaginasEj > 1 && (
+                  <div className="ae-pagination">
+                    <button
+                      className="ae-page-btn"
+                      onClick={() => setPaginaEjercicios(p => Math.max(1, p - 1))}
+                      disabled={paginaEjercicios === 1}
+                    >
+                      <i className="fas fa-chevron-left" />
+                    </button>
+
+                    {Array.from({ length: totalPaginasEj }, (_, i) => i + 1).map(num => (
+                      <button
+                        key={num}
+                        className={`ae-page-btn${paginaEjercicios === num ? ' ae-page-btn--active' : ''}`}
+                        onClick={() => setPaginaEjercicios(num)}
+                      >
+                        {num}
+                      </button>
+                    ))}
+
+                    <button
+                      className="ae-page-btn"
+                      onClick={() => setPaginaEjercicios(p => Math.min(totalPaginasEj, p + 1))}
+                      disabled={paginaEjercicios === totalPaginasEj}
+                    >
+                      <i className="fas fa-chevron-right" />
+                    </button>
+
+                    <span className="ae-page-info">
+                      {(paginaEjercicios - 1) * EJERCICIOS_POR_PAGINA + 1}–{Math.min(paginaEjercicios * EJERCICIOS_POR_PAGINA, filtrados.length)} de {filtrados.length}
+                    </span>
                   </div>
                 )}
               </div>

@@ -34,6 +34,7 @@ import MiPerfil from './pages/MiPerfil';
 import Directorio from './pages/Directorio';
 import DiccionarioEjercicios from './pages/DiccionarioEjercicios';
 import AdminEjercicios from './pages/AdminEjercicios';
+import AdminGruposFamiliares from './pages/AdminGruposFamiliares';
 import CreadorWods from './pages/CreadorWods';
 import CalendarioWods from './pages/CalendarioWods';
 import EditarWod from './pages/EditarWod';
@@ -358,6 +359,7 @@ function App() {
               <Route path="/admin-competencias/roster/:id" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AdminRosterFinanzas /></ProtectedRoute>} />
               {/* --- ZONA ADMINISTRACIÓN Y COACHES --- */}
               <Route path="/admin-box-panel" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><AdminBoxPanel /></ProtectedRoute>} />
+              <Route path="/admin-box/grupos-familiares" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><AdminGruposFamiliares /></ProtectedRoute>} />
               <Route path="/exportar-bd-box" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><ExportarBDBox /></ProtectedRoute>} />
               <Route path="/gestion-staff" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><GestionStaff /></ProtectedRoute>} />
               <Route path="/editar-usuario/:id" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox', 'Coach']}><EditarUsuario /></ProtectedRoute>} />

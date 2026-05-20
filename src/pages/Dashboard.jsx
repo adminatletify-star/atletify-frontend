@@ -19,6 +19,8 @@ export default function Dashboard() {
   const [filtroNombre, setFiltroNombre] = useState('');
   const [filtroRol, setFiltroRol] = useState('');
   const [filtroBox, setFiltroBox] = useState('');
+  const [paginaUsuarios, setPaginaUsuarios] = useState(1);
+  const USUARIOS_POR_PAGINA = 20;
   const [filtroSaas, setFiltroSaas] = useState('');
 
   const [cuentasBloqueadas, setCuentasBloqueadas] = useState([]);
@@ -225,6 +227,12 @@ export default function Dashboard() {
     const coincideBox  = !filtroBox  || u.idBoxPredeterminado?.toString() === filtroBox;
     return coincideTexto && coincideRol && coincideBox;
   });
+
+  const totalPaginasUsuarios = Math.ceil(usuariosFiltrados.length / USUARIOS_POR_PAGINA);
+  const usuariosPaginados = usuariosFiltrados.slice(
+    (paginaUsuarios - 1) * USUARIOS_POR_PAGINA,
+    paginaUsuarios * USUARIOS_POR_PAGINA
+  );
 
   const handleConfigChange = (e) => {
     const { name, value } = e.target;
@@ -499,12 +507,12 @@ export default function Dashboard() {
                 </h2>
                 <div className="d-flex flex-column flex-sm-row gap-2 dash-filters">
                   <select className="entrada-oscura dash-filter-select flex-shrink-0"
-                    value={filtroBox} onChange={e => setFiltroBox(e.target.value)}>
+                    value={filtroBox} onChange={e => { setFiltroBox(e.target.value); setPaginaUsuarios(1); }}>
                     <option value="">Todos los Boxes</option>
                     {boxes.map(b => <option key={b.idBox} value={b.idBox.toString()}>{b.nombre}</option>)}
                   </select>
                   <select className="entrada-oscura dash-filter-select flex-shrink-0"
-                    value={filtroRol} onChange={e => setFiltroRol(e.target.value)}>
+                    value={filtroRol} onChange={e => { setFiltroRol(e.target.value); setPaginaUsuarios(1); }}>
                     <option value="">Todos los Roles</option>
                     {rolesUnicos.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
@@ -512,7 +520,7 @@ export default function Dashboard() {
                     <i className="fas fa-search dash-search-icon"></i>
                     <input type="text" className="entrada-oscura dash-search-input w-100"
                       placeholder="Buscar por nombre o correo..."
-                      onChange={e => setFiltroNombre(e.target.value.toLowerCase())} />
+                      onChange={e => { setFiltroNombre(e.target.value.toLowerCase()); setPaginaUsuarios(1); }} />
                   </div>
                 </div>
               </div>
@@ -530,7 +538,7 @@ export default function Dashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {usuariosFiltrados.map(u => (
+                      {usuariosPaginados.map(u => (
                         <tr key={u.idUsuario} className="align-middle">
                           <td>
                             <div className="d-flex align-items-center gap-3">
@@ -568,7 +576,7 @@ export default function Dashboard() {
 
               {/* Cards Móvil */}
               <div className="d-md-none d-flex flex-column gap-3">
-                {usuariosFiltrados.map(u => (
+                {usuariosPaginados.map(u => (
                   <div key={u.idUsuario} className="dash-user-card p-3">
                     <div className="d-flex align-items-center gap-3 mb-3">
                       <div className="avatar-inicial">{u.nombre?.charAt(0).toUpperCase()}</div>
@@ -599,6 +607,41 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
+
+              {/* Paginación */}
+              {totalPaginasUsuarios > 1 && (
+                <div className="dash-pagination">
+                  <button
+                    className="dash-page-btn"
+                    onClick={() => setPaginaUsuarios(p => Math.max(1, p - 1))}
+                    disabled={paginaUsuarios === 1}
+                  >
+                    <i className="fas fa-chevron-left"></i>
+                  </button>
+
+                  {Array.from({ length: totalPaginasUsuarios }, (_, i) => i + 1).map(num => (
+                    <button
+                      key={num}
+                      className={`dash-page-btn${paginaUsuarios === num ? ' dash-page-btn--active' : ''}`}
+                      onClick={() => setPaginaUsuarios(num)}
+                    >
+                      {num}
+                    </button>
+                  ))}
+
+                  <button
+                    className="dash-page-btn"
+                    onClick={() => setPaginaUsuarios(p => Math.min(totalPaginasUsuarios, p + 1))}
+                    disabled={paginaUsuarios === totalPaginasUsuarios}
+                  >
+                    <i className="fas fa-chevron-right"></i>
+                  </button>
+
+                  <span className="dash-page-info">
+                    {(paginaUsuarios - 1) * USUARIOS_POR_PAGINA + 1}–{Math.min(paginaUsuarios * USUARIOS_POR_PAGINA, usuariosFiltrados.length)} de {usuariosFiltrados.length}
+                  </span>
+                </div>
+              )}
             </section>
 
             }
