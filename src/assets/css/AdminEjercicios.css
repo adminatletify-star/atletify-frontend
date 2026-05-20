@@ -316,6 +316,48 @@
   padding-left: 2.2rem;
 }
 
+/* ── Filtro sin video ── */
+.ae-filter-video-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(240, 240, 245, 0.6);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ae-filter-video-btn:hover {
+  background: rgba(230, 57, 70, 0.1);
+  border-color: rgba(230, 57, 70, 0.35);
+  color: #F0F0F5;
+}
+
+.ae-filter-video-btn--active {
+  background: rgba(230, 57, 70, 0.15);
+  border-color: #E63946;
+  color: #ff6b75;
+  box-shadow: 0 0 10px rgba(230, 57, 70, 0.25);
+}
+
+.ae-filter-video-count {
+  background: #E63946;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  border-radius: 20px;
+  padding: 1px 7px;
+  line-height: 1.4;
+}
+
 /* tabla */
 .ae-table {
   width: 100%;

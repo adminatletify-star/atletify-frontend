@@ -1,5 +1,5 @@
 /* ============================================================
-   HOME — LO QUE OFRECEMOS  (estilo Wodify: tabs + card grande)
+   HOME — LO QUE OFRECEMOS  (carrusel sin fotos)
    ============================================================ */
 
 .ofrece-seccion {
@@ -69,111 +69,67 @@
   box-shadow: 0 0 18px rgba(230, 57, 70, 0.4);
 }
 
-/* ── Card contenedor ── */
+/* ── Card wrap ── */
 .ofrece-card-wrap {
-  max-width: 1100px;
+  max-width: 720px;
   margin: 0 auto;
 }
 
+/* ── Card ── */
 .ofrece-card {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  border-radius: 24px;
-  overflow: hidden;
   background: #13131e;
   border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 24px;
+  padding: clamp(2rem, 5vw, 3.5rem) clamp(2rem, 5vw, 4rem);
   box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
-  min-height: 520px;
-}
-
-/* ═══════════════════════════════════
-   COLUMNA IZQUIERDA — visual
-   ═══════════════════════════════════ */
-.ofrece-col-visual {
-  position: relative;
-  /* overflow: hidden está en .ofrece-card */
-}
-
-.ofrece-foto-wrap {
-  position: absolute;
-  inset: 0;
-}
-
-.ofrece-foto {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center top;   /* cara siempre arriba */
-  display: block;
-}
-
-/* Gradiente en la foto: oscurece el borde inferior para que el screenshot contraste */
-.ofrece-foto-gradiente {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(5, 5, 12, 0.10) 40%,
-    rgba(5, 5, 12, 0.75) 100%
-  );
-}
-
-/* Screenshot flotante — esquina inferior derecha */
-.ofrece-screenshot {
-  position: absolute;
-  bottom: 1.75rem;
-  right: 1.75rem;
-  /* En desktop la columna mide ~530px → 44% ≈ 233px, buen tamaño */
-  width: 44%;
-  max-width: 240px;     /* nunca más ancho que esto */
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow:
-    0 16px 40px rgba(0, 0, 0, 0.80),
-    0 0 0 1px rgba(255, 255, 255, 0.13);
-  z-index: 2;
-}
-
-.ofrece-screenshot img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-/* ═══════════════════════════════════
-   COLUMNA DERECHA — texto
-   ═══════════════════════════════════ */
-.ofrece-col-texto {
-  padding: clamp(2rem, 4vw, 3.5rem);
+  min-height: 360px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 0;
 }
 
+/* Icono */
+.ofrece-card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(230, 57, 70, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.ofrece-card-icon i {
+  color: #E63946;
+  font-size: 1.3rem;
+}
+
+/* Tag */
 .ofrece-tag {
   display: inline-block;
   color: #E63946;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.7rem;
 }
 
+/* Título */
 .ofrece-subtitulo {
-  font-size: clamp(1.4rem, 2.8vw, 2.1rem);
+  font-size: clamp(1.4rem, 3vw, 2rem);
   font-weight: 900;
   color: #F0F0F5;
   line-height: 1.2;
-  margin-bottom: 1.8rem;
+  margin-bottom: 1.75rem;
 }
 
 /* Bullets */
 .ofrece-bullets {
   list-style: none;
   padding: 0;
-  margin: 0 0 2rem;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
@@ -195,12 +151,12 @@
   flex-shrink: 0;
 }
 
-/* Indicadores de punto */
+/* ── Dots ── */
 .ofrece-dots {
   display: flex;
   justify-content: center;
   gap: 0.5rem;
-  margin-top: 1.2rem;
+  margin-top: 1.5rem;
 }
 
 .ofrece-dot {
@@ -219,82 +175,28 @@
   transform: scale(1.3);
 }
 
-/* ═══════════════════════════════════
-   RESPONSIVE
-   ═══════════════════════════════════ */
+/* ── Responsive ── */
 
-/* Tablet landscape (≤1024px): columnas lado a lado pero más altas */
-@media (max-width: 1024px) {
-  .ofrece-card { min-height: 480px; }
+@media (max-width: 768px) {
+  .ofrece-seccion { padding: 5rem 1.25rem 6rem; }
+  .ofrece-card { min-height: 320px; }
+  .ofrece-subtitulo { font-size: clamp(1.25rem, 4vw, 1.6rem); }
 }
 
-/* Tablet portrait (≤860px): apila columnas */
-@media (max-width: 860px) {
-  .ofrece-card {
-    grid-template-columns: 1fr;
-    min-height: unset;
-  }
-
-  /*
-   * Alto grande para que la cara (top) esté bien separada
-   * del screenshot (bottom). Con max-width:180px el screenshot
-   * ocupa solo ~180px de altura aprox., dejando >370px para la cara.
-   */
-  .ofrece-col-visual { min-height: 560px; }
-
-  .ofrece-screenshot {
-    max-width: 180px;
-    width: 30%;
-    bottom: 1.25rem;
-    right: 1.25rem;
-    left: auto;
-  }
-
-  .ofrece-col-texto { padding: 2rem 1.75rem; }
-}
-
-/* Móvil (≤576px) */
 @media (max-width: 576px) {
-  .ofrece-seccion { padding: 4.5rem 1rem 5rem; }
-
+  .ofrece-seccion { padding: 4rem 1rem 5rem; }
   .ofrece-titulo-principal { font-size: clamp(1.5rem, 6vw, 1.9rem); }
-
-  .ofrece-tab { font-size: 0.82rem; padding: 0.5rem 1.1rem; }
-
-  .ofrece-col-visual { min-height: 460px; }
-
-  .ofrece-screenshot {
-    max-width: 160px;
-    width: 35%;
-    bottom: 1rem;
-    right: 1rem;
-    left: auto;
-    border-radius: 10px;
-  }
-
-  .ofrece-col-texto  { padding: 1.5rem 1.25rem; }
-
-  .ofrece-subtitulo  { font-size: clamp(1.15rem, 5vw, 1.4rem); margin-bottom: 1rem; }
-
-  .ofrece-bullets    { gap: 0.65rem; margin-bottom: 1.4rem; }
-  .ofrece-bullets li { font-size: 0.86rem; }
-
+  .ofrece-tab { font-size: 0.82rem; padding: 0.5rem 1rem; }
+  .ofrece-card { padding: 1.75rem 1.5rem; border-radius: 18px; min-height: unset; }
+  .ofrece-card-icon { width: 44px; height: 44px; margin-bottom: 1.1rem; }
+  .ofrece-subtitulo { font-size: clamp(1.15rem, 5vw, 1.4rem); margin-bottom: 1.25rem; }
+  .ofrece-bullets li { font-size: 0.87rem; }
+  .ofrece-bullets { gap: 0.65rem; }
 }
 
-/* Móvil pequeño (≤380px) */
 @media (max-width: 380px) {
   .ofrece-tabs { gap: 0.4rem; }
-  .ofrece-tab  { font-size: 0.76rem; padding: 0.42rem 0.85rem; }
-
-  .ofrece-col-visual  { min-height: 400px; }
-
-  .ofrece-screenshot  {
-    max-width: 145px;
-    width: 38%;
-    right: 0.75rem;
-    bottom: 0.75rem;
-    left: auto;
-  }
-
+  .ofrece-tab { font-size: 0.76rem; padding: 0.42rem 0.85rem; }
+  .ofrece-subtitulo { font-size: 1rem; }
+  .ofrece-bullets li { font-size: 0.8rem; }
 }
-

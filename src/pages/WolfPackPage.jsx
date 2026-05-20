@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
 import logoWolfpack from './Wolfpack/logo.jpg';
 import '../assets/css/WolfPackPage.css';
@@ -93,8 +93,9 @@ const SILVIA = {
   nombre: 'Coach Silvia',
   titulo: 'Fundadora · Head Coach',
   bio: [
-    'Hace varios años, Silvia tomó una decisión que cambiaría no solo su vida, sino la de decenas de atletas: fundó The Wolf Pack con la visión de crear algo más que un gym — una comunidad donde cada persona, sin importar su nivel, pudiera descubrir lo que realmente es capaz de lograr.',
-    'Con años de experiencia en CrossFit y múltiples disciplinas, Silvia ha formado a cientos de atletas y llevado al box a competir a nivel nacional. Su metodología combina técnica de élite con una mentalidad de crecimiento que transforma a cada atleta desde adentro.',
+    'El Wolf Pack nació de una convicción profunda: que moverse es un derecho de todos, no un privilegio de unos pocos. Silvia fundó este espacio con una misión clara — crear un lugar donde cualquier persona, sin importar su edad, condición física o experiencia previa, pudiera descubrir lo que su cuerpo es capaz de lograr cuando se le da la oportunidad.',
+    'Aquí no se trata solo de rendimiento. Se trata de construir salud desde adentro, de fortalecer el cuerpo, equilibrar la mente y encontrar una comunidad que te reciba con los brazos abiertos. Cada persona que entra por primera vez a este box merece sentir que este lugar también es suyo.',
+    'Silvia ha acompañado a cientos de personas en ese camino — desde quienes llegaron sin haber hecho ejercicio en años, hasta atletas de competencia. Lo que los une no es su nivel, sino las ganas de mejorar.',
   ],
   especialidades: [
     { icono: 'fas fa-dumbbell', texto: 'CrossFit Certified' },
@@ -104,7 +105,7 @@ const SILVIA = {
     { icono: 'fas fa-medal', texto: 'Competition Prep' },
     { icono: 'fas fa-brain', texto: 'Mindset Coaching' },
   ],
-  cita: '"Cada atleta llega con una historia distinta. Mi trabajo es ayudarte a escribir el próximo capítulo — el más fuerte de todos."',
+  cita: '"No importa de dónde vienes ni cuánto tiempo llevas sin moverte. Lo que importa es que estás aquí — y eso ya es el paso más difícil."',
   fotos: [
     '/Coaches/Silvia/IMG_9845.jpg',
     '/Coaches/Silvia/IMG_9833.jpg',
@@ -122,14 +123,14 @@ const COACHES = [
     nombre: 'André',
     rol: 'Coach',
     fotos: [
+      '/Coaches/André/IMG_0007.jpg',
+      '/Coaches/André/IMG_0004.jpg',
       '/Coaches/André/IMG_9992.jpg',
       '/Coaches/André/IMG_9990.jpg',
       '/Coaches/André/IMG_9987.jpg',
-      '/Coaches/André/IMG_0007.jpg',
-      '/Coaches/André/IMG_0004.jpg',
     ],
     especialidades: ['CrossFit', 'Strength & Conditioning', 'Weightlifting'],
-    mensaje: '[ Texto escrito por André — su motivación, filosofía de entrenamiento y lo que lo apasiona de ser parte de WolfPack. ]',
+    bio: ['[ Texto por André — próximamente. ]'],
     color: '#E63946',
   },
   {
@@ -142,7 +143,7 @@ const COACHES = [
       '/Coaches/Edgar/IMG_9814.jpg',
     ],
     especialidades: ['CrossFit', 'Endurance', 'Mobility'],
-    mensaje: '[ Texto escrito por Edgar — su motivación, filosofía de entrenamiento y lo que lo apasiona de ser parte de WolfPack. ]',
+    bio: ['[ Texto por Edgar — próximamente. ]'],
     color: '#F5A623',
   },
   {
@@ -156,21 +157,27 @@ const COACHES = [
       '/Coaches/Esperanza/IMG_9933.jpg',
     ],
     especialidades: ['CrossFit', 'Gymnastics', 'Foundations'],
-    mensaje: '[ Texto escrito por Esperanza — su motivación, filosofía de entrenamiento y lo que la apasiona de ser parte de WolfPack. ]',
+    bio: ['[ Texto por Esperanza — próximamente. ]'],
     color: '#4FC3F7',
   },
   {
     nombre: 'Liz',
     rol: 'Coach',
     fotos: [
-      '/Coaches/Liz/IMG_9850.jpg',
-      '/Coaches/Liz/IMG_9860.jpg',
       '/Coaches/Liz/IMG_9872.jpg',
       '/Coaches/Liz/IMG_9873.jpg',
       '/Coaches/Liz/IMG_9853.jpg',
+      '/Coaches/Liz/IMG_9860.jpg',
     ],
-    especialidades: ['CrossFit', 'Nutrition', 'Beginner Programs'],
-    mensaje: '[ Texto escrito por Liz — su motivación, filosofía de entrenamiento y lo que la apasiona de ser parte de WolfPack. ]',
+    especialidades: ['CrossFit'],
+    bio: [
+      'Mi nombre es Lizet de Guadalupe Cime Lizama. Llevo aproximadamente 10 años practicando CrossFit.',
+      'Lo que me llevó a iniciar fue el deseo de bajar de peso. Comencé en un pequeño box cerca de mi casa; tiempo después, un compañero me invitó al que hoy es mi segundo hogar: Wolf Pack.',
+      'He participado en competencias individuales y por equipos, logrando llegar al podio. También he debutado dos veces en Hyrox en la modalidad de dúos.',
+      'Lo que más amo es ver la capacidad de evolución de un cuerpo — y más allá del cambio físico, la mentalidad tan fuerte que te forja este deporte.',
+      'Hace cinco años tuve la oportunidad de entrenar durante ocho meses de mi embarazo, una experiencia que me hizo ser mucho más consciente de mi cuerpo.',
+      'Hoy entreno por salud y por pasión — y lo que más espero de este camino es que algún día alguien diga: Liz me inspiró. ❤️🍂',
+    ],
     color: '#A855F7',
   },
   {
@@ -183,32 +190,105 @@ const COACHES = [
       '/Coaches/Margarita/IMG_9914.jpg',
       '/Coaches/Margarita/IMG_9924.jpg',
     ],
-    especialidades: ['CrossFit', 'Olympic Lifting', 'Competition'],
-    mensaje: '[ Texto escrito por Margarita — su motivación, filosofía de entrenamiento y lo que la apasiona de ser parte de WolfPack. ]',
+    especialidades: ['CrossFit', 'Olympic Lifting', 'Competition', 'Fisioterapia', 'Gimnasia', 'Mentalidad Deportiva'],
+    bio: [
+      'Me llamo Margarita, aunque todos me conocen como Magui. Tengo 21 años y llevo 12 dentro del deporte de alto rendimiento, desarrollándome principalmente en el levantamiento de pesas olímpico a nivel nacional — disciplina con la que he representado a mi estado en cuatro ocasiones.',
+      'El CrossFit ha sido parte de mi vida desde siempre. Es un deporte que jamás dejaría de lado, porque no exige únicamente fortaleza física: también forja una mentalidad que te transforma por dentro.',
+      'Desde hace cuatro años me dedico a la enseñanza, compartiendo todo lo que he aprendido con personas de todas las edades — acompañándolas a superarse, ganar confianza y alcanzar sus metas dentro y fuera del entrenamiento.',
+    ],
     color: '#10B981',
   },
 ];
 
-// ─── BOX GALLERY ──────────────────────────────────────────────────────────────
-const BOX_FOTOS = [
-  '/Box interno/IMG_0025.jpg',
-  '/Box interno/IMG_0027.jpg',
-  '/Box interno/IMG_0029.jpg',
-  '/Box interno/IMG_0030.jpg',
-  '/Box interno/IMG_0031.jpg',
-  '/Box interno/IMG_0032.jpg',
-  '/Box interno/IMG_0034.jpg',
-  '/Box interno/IMG_0036.jpg',
-  '/Box interno/IMG_0038.jpg',
-  '/Grupal/IMG_9766.jpg',
-  '/Grupal/IMG_9772.jpg',
-  '/Grupal/IMG_9784.jpg',
+// ─── BOX SLIDES ───────────────────────────────────────────────────────────────
+const BOX_SLIDES = [
+  { src: '/Box interno/IMG_0025.jpg',          frase: 'El lugar donde tu salud se convierte en prioridad' },
+  { src: '/Coaches/André/IMG_9951.jpg',         frase: 'Aquí todos empezamos desde cero — Coach André' },
+  { src: '/Coaches/André/IMG_9988.jpg',         frase: 'Cada movimiento suma, cada día cuenta — Coach André', pos: '50% 45%' },
+  { src: '/Box interno/IMG_0027.jpg',          frase: 'Donde el ejercicio se convierte en estilo de vida' },
+  { src: '/Box interno/IMG_0029.jpg',          frase: 'Un espacio pensado para ti, sin importar tu nivel' },
+  { src: '/Coaches/André/IMG_9965.jpg',         frase: 'El primer paso es el más valioso — Coach André' },
+  { src: '/Box interno/IMG_0036.jpg',          frase: 'Tu segunda casa te está esperando' },
+  { src: '/Box interno/IMG_0038.jpg',          frase: 'Muévete. Crece. Siéntete bien en tu cuerpo' },
+  { src: '/Coaches/Silvia/IMG_9832.jpg',       frase: 'Fundado con la misión de transformar vidas — Coach Silvia' },
+  { src: '/Box interno/IMG_0031.jpg',          frase: 'El ejercicio más importante es el que haces hoy' },
+  { src: '/Coaches/Esperanza/IMG_9941.jpg',    frase: 'Moverte es cuidarte — Coach Esperanza' },
 ];
+
+// ─── BOX CAROUSEL COMPONENT ───────────────────────────────────────────────────
+function BoxCarousel({ slides }) {
+  const [current, setCurrent] = useState(0);
+  const total = slides.length;
+  const touchStartX = useRef(null);
+
+  const goTo = (idx) => setCurrent((idx + total) % total);
+  const next  = () => goTo(current + 1);
+  const back  = () => goTo(current - 1);
+
+  useEffect(() => {
+    const t = setTimeout(next, 5500);
+    return () => clearTimeout(t);
+  }, [current]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function onTouchStart(e) {
+    touchStartX.current = e.touches[0].clientX;
+  }
+
+  function onTouchEnd(e) {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) diff > 0 ? next() : back();
+    touchStartX.current = null;
+  }
+
+  return (
+    <div className="wp-bc" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      {/* Fotos */}
+      {slides.map((s, i) => (
+        <div key={i} className={`wp-bc-slide${i === current ? ' wp-bc-slide--active' : ''}`}>
+          <img src={s.src} alt={s.frase} loading="lazy" decoding="async" style={s.pos ? { objectPosition: s.pos } : undefined} />
+        </div>
+      ))}
+
+      {/* Degradado inferior */}
+      <div className="wp-bc-overlay" />
+
+      {/* Caption */}
+      <div className="wp-bc-caption">
+        <span className="wp-bc-caption-tag">Wolf Pack CrossFit</span>
+        <p className="wp-bc-frase">"{slides[current].frase}"</p>
+      </div>
+
+      {/* Flechas */}
+      <button className="wp-bc-arrow wp-bc-arrow--prev" onClick={back} aria-label="Anterior">
+        <i className="fas fa-chevron-left" />
+      </button>
+      <button className="wp-bc-arrow wp-bc-arrow--next" onClick={next} aria-label="Siguiente">
+        <i className="fas fa-chevron-right" />
+      </button>
+
+      {/* Progreso */}
+      <div className="wp-bc-progress">
+        <div
+          className="wp-bc-progress-bar"
+          style={{ width: `${((current + 1) / total) * 100}%` }}
+        />
+      </div>
+
+      {/* Contador */}
+      <div className="wp-bc-counter">
+        <span className="wp-bc-counter-current">{String(current + 1).padStart(2, '0')}</span>
+        <span className="wp-bc-counter-sep"> / </span>
+        <span className="wp-bc-counter-total">{String(total).padStart(2, '0')}</span>
+      </div>
+    </div>
+  );
+}
 
 export default function WolfPackPage() {
   const heroRef = useRef(null);
   const heroInView = useInView(heroRef, { once: true });
-  const [activeCoach, setActiveCoach] = useState(null);
+  const [activeCoach, setActiveCoach] = useState(null); // eslint-disable-line no-unused-vars
 
   return (
     <div className="wp-page">
@@ -228,9 +308,9 @@ export default function WolfPackPage() {
           animate={heroInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.3 }}
         >
-          <span>Cross Training</span>
+          <span>Salud & Bienestar</span>
           <span className="wp-hero-topbar-dot" />
-          <span>Todos los niveles</span>
+          <span>Todos los Niveles</span>
           <span className="wp-hero-topbar-dot" />
           <span>Comunidad</span>
         </motion.div>
@@ -293,7 +373,7 @@ export default function WolfPackPage() {
               animate={heroInView ? { opacity: 1 } : {}}
               transition={{ duration: 0.8, delay: 1.08 }}
             >
-              Entrena duro · Confía en el proceso · <em>Rompe límites</em>
+              Tu salud es tu mayor inversión · Empieza donde estás · <em>Aquí todos son bienvenidos</em>
             </motion.p>
 
           </div>
@@ -307,8 +387,8 @@ export default function WolfPackPage() {
           transition={{ duration: 0.7, delay: 1.3 }}
         >
           <div className="wp-hero-val">
-            <i className="fas fa-fire" />
-            <span>Disciplina</span>
+            <i className="fas fa-heartbeat" />
+            <span>Salud</span>
           </div>
           <div className="wp-hero-val-sep" />
           <div className="wp-hero-val">
@@ -317,8 +397,8 @@ export default function WolfPackPage() {
           </div>
           <div className="wp-hero-val-sep" />
           <div className="wp-hero-val">
-            <i className="fas fa-trophy" />
-            <span>Resultados</span>
+            <i className="fas fa-leaf" />
+            <span>Bienestar</span>
           </div>
         </motion.div>
       </section>
@@ -338,11 +418,11 @@ export default function WolfPackPage() {
                 initial="hidden"
                 animate="visible"
               >
-                <span className="wp-stag wp-stag--gold">La Fundadora</span>
+                <span className="wp-stag wp-stag--gold">Nuestra Misión</span>
                 <h2 className="wp-silvia-banner-title">
-                  La Visionaria Detrás<br />de <span>La Manada</span>
+                  Salud y Bienestar<br />para <span>Todos</span>
                 </h2>
-                <p className="wp-silvia-banner-sub">{SILVIA.titulo}</p>
+                <p className="wp-silvia-banner-sub">Un espacio que te recibe sin importar tu punto de partida</p>
               </motion.div>
             </AnimSection>
           </div>
@@ -388,7 +468,7 @@ export default function WolfPackPage() {
                     initial="hidden"
                     animate="visible"
                   >
-                    <span className="wp-stag wp-stag--red">Su Historia</span>
+                    <span className="wp-stag wp-stag--red">La Fundadora</span>
                     <h3 className="wp-silvia-nombre">{SILVIA.nombre}</h3>
                     <p className="wp-silvia-rol">{SILVIA.titulo}</p>
 
@@ -399,26 +479,19 @@ export default function WolfPackPage() {
                     <div className="wp-silvia-esp-wrap">
                       <p className="wp-silvia-esp-label">Especialidades</p>
                       <div className="wp-silvia-esp-grid">
-                        {SILVIA.especialidades.map((esp, i) => (
-                          <motion.div
-                            key={i}
-                            className="wp-silvia-esp-chip"
-                            variants={fadeUp}
-                            initial="hidden"
-                            animate="visible"
-                            custom={i * 0.6}
-                          >
-                            <i className={esp.icono} />
-                            <span>{esp.texto}</span>
-                          </motion.div>
+                        {SILVIA.especialidades.map((e, i) => (
+                          <span key={i} className="wp-silvia-esp-chip">
+                            <i className={e.icono} />
+                            {e.texto}
+                          </span>
                         ))}
                       </div>
                     </div>
 
-                    <blockquote className="wp-silvia-quote">
+                    <div className="wp-silvia-quote">
                       <i className="fas fa-quote-left wp-quote-icon" />
                       <span>{SILVIA.cita}</span>
-                    </blockquote>
+                    </div>
                   </motion.div>
                 </AnimSection>
               </div>
@@ -440,86 +513,65 @@ export default function WolfPackPage() {
           >
             <span className="wp-stag wp-stag--red">Nuestro Equipo</span>
             <h2 className="wp-section-titulo">
-              Los Coaches que te{' '}
-              <span>llevan al siguiente nivel</span>
+              Coaches dedicados a{' '}
+              <span>tu salud y bienestar</span>
             </h2>
-            <p className="wp-section-sub">
-              Cada uno con una historia, una especialidad y una pasión genuina
-              por transformar vidas a través del movimiento.
+            <p className="wp-section-sub mt-3">
+              Cada coach de Wolf Pack está comprometido a guiarte desde donde estás — con paciencia, técnica y la motivación que necesitas para construir un estilo de vida más saludable.
             </p>
           </motion.div>
 
-          <div className="row g-4 justify-content-center">
+          <div className="wp-coaches-list">
             {COACHES.map((coach, i) => (
-              <div className="col-12 col-sm-6 col-xl-4" key={coach.nombre}>
-                <motion.div
-                  className={`wp-coach-card${activeCoach === i ? ' is-open' : ''}`}
-                  style={{ '--cc': coach.color }}
-                  variants={fadeUp}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, margin: '-80px' }}
-                  custom={i}
-                >
-                    {/* Carrusel de fotos */}
-                    <div className="wp-coach-photo-wrap">
-                      <CoachCarousel
-                        fotos={coach.fotos}
-                        nombre={coach.nombre}
-                        color={coach.color}
-                      />
-                      <div className="wp-coach-photo-tags">
-                        {coach.especialidades.slice(0, 2).map((e, j) => (
-                          <span key={j} className="wp-coach-ptag">{e}</span>
-                        ))}
-                      </div>
-                    </div>
+              <motion.div
+                key={coach.nombre}
+                className={`wp-coach-row${i % 2 === 1 ? ' wp-coach-row--reverse' : ''}`}
+                style={{ '--cc': coach.color }}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: '-80px' }}
+                custom={i * 0.1}
+              >
+                {/* Foto */}
+                <div className="wp-coach-photo-col">
+                  <div className="wp-coach-photo-wrap">
+                    <CoachCarousel
+                      fotos={coach.fotos}
+                      nombre={coach.nombre}
+                      color={coach.color}
+                    />
+                  </div>
+                </div>
 
-                    {/* Info */}
-                    <div className="wp-coach-body">
-                      <div
-                        className="wp-coach-header"
-                        onClick={() =>
-                          setActiveCoach(activeCoach === i ? null : i)
-                        }
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={e =>
-                          e.key === 'Enter' &&
-                          setActiveCoach(activeCoach === i ? null : i)
-                        }
-                      >
-                        <div className="wp-coach-nameblock">
-                          <h4 className="wp-coach-nombre">{coach.nombre}</h4>
-                          <p className="wp-coach-rol">{coach.rol}</p>
-                        </div>
-                        <button
-                          className="wp-coach-toggle"
-                          aria-label="Ver más"
-                          onClick={e => {
-                            e.stopPropagation();
-                            setActiveCoach(activeCoach === i ? null : i);
-                          }}
-                        >
-                          <i
-                            className={`fas fa-${activeCoach === i ? 'minus' : 'plus'}`}
-                          />
-                        </button>
-                      </div>
-
-                      <div
-                        className={`wp-coach-expand${activeCoach === i ? ' open' : ''}`}
-                      >
-                        <p className="wp-coach-mensaje">{coach.mensaje}</p>
-                        <div className="wp-coach-chips">
-                          {coach.especialidades.map((e, j) => (
-                            <span key={j} className="wp-coach-chip">{e}</span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                </motion.div>
-              </div>
+                {/* Texto */}
+                <div className="wp-coach-text-col">
+                  <span className="wp-coach-tag">{coach.rol}</span>
+                  <h3 className="wp-coach-nombre">{coach.nombre}</h3>
+                  <div className="wp-coach-divider" />
+                  <div className="wp-coach-chips">
+                    {coach.especialidades.map((e, j) => (
+                      <span key={j} className="wp-coach-chip">{e}</span>
+                    ))}
+                  </div>
+                  <div className="wp-coach-bio">
+                    {coach.bio.map((p, j) => {
+                      if (p.startsWith('¿')) {
+                        const qEnd = p.indexOf('?') + 1;
+                        const question = p.slice(0, qEnd);
+                        const answer = p.slice(qEnd).trim();
+                        return (
+                          <div key={j} className="wp-coach-qa">
+                            <span className="wp-coach-q">{question}</span>
+                            {answer && <p className="wp-coach-a">{answer}</p>}
+                          </div>
+                        );
+                      }
+                      return <p key={j}>{p}</p>;
+                    })}
+                  </div>
+                </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -527,43 +579,94 @@ export default function WolfPackPage() {
 
       {/* ══════════════════════ EL BOX ════════════════════════════ */}
       <section className="wp-box-section">
-        <div className="container">
-          <AnimSection>
-            <motion.div
-              className="text-center mb-5"
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-            >
-              <span className="wp-stag wp-stag--gold">Nuestras Instalaciones</span>
-              <h2 className="wp-section-titulo">
-                El Box donde nacen<br className="d-none d-md-block" /> los{' '}
-                <span>campeones</span>
-              </h2>
-              <p className="wp-section-sub">
-                Un espacio diseñado para sacar lo mejor de ti. Equipamiento de
-                primer nivel, ambiente inigualable y una energía que sientes
-                desde que entras.
-              </p>
-            </motion.div>
-          </AnimSection>
+        <motion.div
+          className="wp-box-header"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+        >
+          <span className="wp-stag wp-stag--gold">Nuestras Instalaciones</span>
+          <h2 className="wp-section-titulo">
+            Tu nuevo espacio de <span>salud y movimiento</span>
+          </h2>
+          <p className="wp-section-sub mt-2">
+            Un ambiente diseñado para que te sientas cómodo desde el primer día — sin juicios, sin comparaciones, solo tú y tus metas.
+          </p>
+        </motion.div>
 
-          <div className="wp-box-grid">
-            {BOX_FOTOS.map((src, i) => (
-              <AnimSection key={i}>
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.15 }}
+        >
+          <BoxCarousel slides={BOX_SLIDES} />
+        </motion.div>
+      </section>
+
+      {/* ══════════════════════ CTA SALUD ════════════════════════ */}
+      <section className="wp-final-cta">
+        <div className="wp-final-cta-bg">
+          <img src="/Grupal/IMG_9780.jpg" alt="" className="wp-final-cta-img" />
+          <div className="wp-final-cta-overlay" />
+        </div>
+        <div className="container position-relative" style={{ zIndex: 2 }}>
+          <motion.div
+            className="wp-final-cta-head text-center"
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.75 }}
+          >
+            <span className="wp-stag wp-stag--red">Da el primer paso</span>
+            <h2 className="wp-final-cta-title">
+              Tu cuerpo merece<br /><span>moverse y sentirse bien</span>
+            </h2>
+            <p className="wp-final-cta-sub">
+              No necesitas experiencia, no necesitas estar "en forma". Solo necesitas querer empezar. En Wolf Pack te recibimos donde estás y te acompañamos en cada paso del camino hacia una vida más saludable.
+            </p>
+
+            {/* Tres pilares de salud */}
+            <div className="row justify-content-center g-4 mb-5">
+              {[
+                { icon: 'fas fa-heartbeat', titulo: 'Salud Cardiovascular', texto: 'Fortalece tu corazón y mejora tu resistencia con movimientos funcionales adaptados a ti.' },
+                { icon: 'fas fa-brain',     titulo: 'Bienestar Mental',     texto: 'El ejercicio reduce el estrés, mejora el sueño y eleva tu estado de ánimo de forma natural.' },
+                { icon: 'fas fa-users',     titulo: 'Comunidad que Motiva', texto: 'Rodearte de personas con las mismas metas es la herramienta más poderosa para mantenerte constante.' },
+              ].map((p, i) => (
                 <motion.div
-                  className={`wp-box-cell wp-box-cell--${i + 1}`}
-                  variants={fadeUp}
-                  initial="hidden"
-                  animate="visible"
-                  custom={i * 0.4}
+                  key={i}
+                  className="col-12 col-md-4"
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: i * 0.12 }}
                 >
-                  <img src={src} alt={`WolfPack Box ${i + 1}`} />
-                  <div className="wp-box-cell-overlay" />
+                  <div style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.09)',
+                    borderRadius: '16px',
+                    padding: '1.8rem 1.5rem',
+                    height: '100%',
+                  }}>
+                    <i className={p.icon} style={{ fontSize: '1.6rem', color: '#E63946', marginBottom: '0.8rem', display: 'block' }} />
+                    <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.1rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#F0F0F5', marginBottom: '0.6rem' }}>{p.titulo}</h4>
+                    <p style={{ fontSize: '0.88rem', color: 'rgba(200,208,225,0.72)', lineHeight: 1.75, margin: 0 }}>{p.texto}</p>
+                  </div>
                 </motion.div>
-              </AnimSection>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            <a
+              href="https://www.instagram.com/thewolfpackcrossfit/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="wp-final-btn"
+            >
+              <i className="fab fa-instagram" />
+              Escríbenos y empieza hoy
+            </a>
+          </motion.div>
         </div>
       </section>
 

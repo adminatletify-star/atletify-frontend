@@ -42,8 +42,8 @@
 }
 
 .bpm-trigger:hover {
-  background: var(--bg-card, #1c1c26);
-  border-color: rgba(230, 57, 70, 0.35);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
   transform: translateY(-1px);
 }
 

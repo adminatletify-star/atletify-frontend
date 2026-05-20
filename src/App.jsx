@@ -316,7 +316,6 @@ function App() {
               <Route path="/simulador-barra-publico" element={<SimuladorBarraPublico />} />
               <Route path="/ejercicios" element={<Ejercicios />} />
               <Route path="/directorio-boxes" element={<DirectorioBoxes />} />
-              <Route path="/box/:id" element={<BoxDetalle />} />
               <Route path="/public-drop-in" element={<PublicDropIn />} />
               <Route path="/public-drop-in/:idBox" element={<PublicDropIn />} />
             </Route>
@@ -324,6 +323,7 @@ function App() {
             {/* ========================================= */}
             {/* RUTAS COMPLETAMENTE SIN NAVBAR            */}
             {/* ========================================= */}
+            <Route path="/box/:id" element={<BoxDetalle />} />
             <Route path="/wolfpack" element={<WolfPackPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/terminos" element={<TerminosCondiciones />} />
@@ -436,7 +436,7 @@ function App() {
 
               {/* Nuevos Módulos del Atleta */}
               <Route path="/mis-resultados" element={<ProtectedRoute allowedRoles={['Usuario', 'Atleta']}><MisResultados /></ProtectedRoute>} />
-              <Route path="/simulador-barra" element={<ProtectedRoute allowedRoles={['Usuario', 'Atleta']}><SimuladorBarra /></ProtectedRoute>} />
+              <Route path="/simulador-barra" element={<ProtectedRoute allowedRoles={['Usuario', 'Atleta']}><SimuladorBarraPublico /></ProtectedRoute>} />
               <Route path="/detalle-plan-user" element={<ProtectedRoute allowedRoles={['Atleta', 'Usuario']}><DetallePlanUser /></ProtectedRoute>} />
               <Route path="/mis-deudas" element={<ProtectedRoute allowedRoles={['Atleta', 'Usuario']}><MisFiados /></ProtectedRoute>} />
 

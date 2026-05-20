@@ -174,6 +174,8 @@ export default function CompetenciaDetalle() {
   const [formMaterialComp, setFormMaterialComp] = useState({ idHerramienta: '', cantidadRequerida: '' });
   const [selectorHerramientaAbierto, setSelectorHerramientaAbierto] = useState(false);
   const [busquedaHerramienta, setBusquedaHerramienta] = useState('');
+  const [filtroUnidadHerramienta, setFiltroUnidadHerramienta] = useState('todos');
+  const [filtroTipoHerramienta, setFiltroTipoHerramienta] = useState('todos');
   const [prestamoAbiertoId, setPrestamoAbiertoId] = useState(null);
   const [materialAbiertoId, setMaterialAbiertoId] = useState(null);
   const [materialEditandoId, setMaterialEditandoId] = useState(null);
@@ -1242,19 +1244,68 @@ export default function CompetenciaDetalle() {
     return idH === String(formMaterialComp.idHerramienta || '');
   });
 
-  const herramientasFiltradas = herramientasBox.filter(h => {
-    const idH = h.idHerramienta ?? h.IdHerramienta;
-    // No mostrar si ya está en el inventario de la competencia
-    const yaEnComp = (inventarioComp.materiales || []).some(m => (m.idHerramienta ?? m.IdHerramienta) === idH);
-    if (yaEnComp) return false;
+  const herramientasFiltradas = useMemo(() => {
+    const norm = (s) => (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const comp = (s) => norm(s).replace(/\s+/g, '');
 
-    const texto = busquedaHerramienta.trim().toLowerCase();
-    if (!texto) return true;
-    const nombre = (h.nombre ?? h.Nombre ?? '').toString().toLowerCase();
-    const descripcion = getHerramientaDescripcion(h).toLowerCase();
-    const unidad = getHerramientaUnidadLabel(h).toLowerCase();
-    return nombre.includes(texto) || descripcion.includes(texto) || unidad.includes(texto);
-  });
+    return herramientasBox.filter(h => {
+      const idH = h.idHerramienta ?? h.IdHerramienta;
+      const yaEnComp = (inventarioComp.materiales || []).some(m => (m.idHerramienta ?? m.IdHerramienta) === idH);
+      if (yaEnComp) return false;
+
+      if (filtroUnidadHerramienta !== 'todos') {
+        if (filtroUnidadHerramienta === 'kg'  && !(h.esKilo    ?? h.EsKilo))    return false;
+        if (filtroUnidadHerramienta === 'lb'  && !(h.esLibra   ?? h.EsLibra))   return false;
+        if (filtroUnidadHerramienta === 'm'   && !(h.esMetro   ?? h.EsMetro))   return false;
+        if (filtroUnidadHerramienta === 'maq' && !(h.esMaquina ?? h.EsMaquina)) return false;
+      }
+
+      if (filtroTipoHerramienta !== 'todos') {
+        if (filtroTipoHerramienta === 'barra'      && !(h.esBarra      ?? h.EsBarra))      return false;
+        if (filtroTipoHerramienta === 'bumper'     && !(h.esBumpers    ?? h.EsBumpers))    return false;
+        if (filtroTipoHerramienta === 'kettlebell' && !(h.esKettlebell ?? h.EsKettlebell)) return false;
+        if (filtroTipoHerramienta === 'mancuerna'  && !(h.esMancuerna  ?? h.EsMancuerna))  return false;
+        if (filtroTipoHerramienta === 'pelota'     && !(h.esPelota     ?? h.EsPelota))     return false;
+        if (filtroTipoHerramienta === 'cajon'      && !(h.esCajon      ?? h.EsCajon))      return false;
+        if (filtroTipoHerramienta === 'otra'       && !(h.esOtra       ?? h.EsOtra))       return false;
+      }
+
+      const texto = busquedaHerramienta.trim();
+      if (!texto) return true;
+
+      const terminoNorm = norm(texto);
+      const terminoComp = comp(texto);
+      const palabras = terminoNorm.split(/\s+/).filter(Boolean);
+
+      const nombre = norm(h.nombre ?? h.Nombre ?? '');
+      const notas  = norm(h.descripcionAdicional ?? h.DescripcionAdicional ?? '');
+      const medidaStr = String(h.medida ?? h.Medida ?? 0);
+      const unidadTexto = norm([
+        (h.esKilo    ?? h.EsKilo)    ? 'kilo kg kilogramo kilogramos' : '',
+        (h.esLibra   ?? h.EsLibra)   ? 'libra lb lbs libras'          : '',
+        (h.esMetro   ?? h.EsMetro)   ? 'metro metros'                  : '',
+        (h.esMaquina ?? h.EsMaquina) ? 'maquina'                       : '',
+      ].join(' '));
+      const tipoTexto = norm([
+        (h.esBarra      ?? h.EsBarra)      ? 'barra'                       : '',
+        (h.esBumpers    ?? h.EsBumpers)    ? 'bumper disco discos bumpers'  : '',
+        (h.esKettlebell ?? h.EsKettlebell) ? 'kettlebell'                   : '',
+        (h.esMancuerna  ?? h.EsMancuerna)  ? 'mancuerna mancuernas'         : '',
+        (h.esCajon      ?? h.EsCajon)      ? 'cajon cajón'                  : '',
+        (h.esOtra       ?? h.EsOtra)       ? 'otra otro equipo'             : '',
+        (h.esPelota     ?? h.EsPelota)     ? 'pelota'                       : '',
+      ].join(' '));
+
+      const todo = `${nombre} ${notas} ${medidaStr} ${unidadTexto} ${tipoTexto}`;
+      const porPalabras = palabras.every(p => todo.includes(p));
+
+      const nombreComp = comp(h.nombre ?? h.Nombre ?? '');
+      const notasComp  = comp(h.descripcionAdicional ?? h.DescripcionAdicional ?? '');
+      const sinEspacios = nombreComp.includes(terminoComp) || notasComp.includes(terminoComp);
+
+      return porPalabras || sinEspacios;
+    });
+  }, [herramientasBox, inventarioComp.materiales, busquedaHerramienta, filtroUnidadHerramienta, filtroTipoHerramienta]);
 
   if (loading) {
     return (
@@ -2002,6 +2053,8 @@ export default function CompetenciaDetalle() {
                             className="cd-btn cd-btn--outline w-100 cd-herramienta-picker-btn"
                             onClick={() => {
                               setBusquedaHerramienta('');
+                              setFiltroUnidadHerramienta('todos');
+                              setFiltroTipoHerramienta('todos');
                               setSelectorHerramientaAbierto(true);
                             }}
                           >
@@ -3577,7 +3630,12 @@ export default function CompetenciaDetalle() {
         <div
           className="cd-herramienta-modal-overlay"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setSelectorHerramientaAbierto(false);
+            if (e.target === e.currentTarget) {
+              setSelectorHerramientaAbierto(false);
+              setBusquedaHerramienta('');
+              setFiltroUnidadHerramienta('todos');
+              setFiltroTipoHerramienta('todos');
+            }
           }}
         >
           <div className="cd-herramienta-modal">
@@ -3588,7 +3646,12 @@ export default function CompetenciaDetalle() {
               <button
                 type="button"
                 className="cd-btn cd-btn--ghost"
-                onClick={() => setSelectorHerramientaAbierto(false)}
+                onClick={() => {
+                  setSelectorHerramientaAbierto(false);
+                  setBusquedaHerramienta('');
+                  setFiltroUnidadHerramienta('todos');
+                  setFiltroTipoHerramienta('todos');
+                }}
               >
                 <i className="fas fa-times"></i>
               </button>
@@ -3599,11 +3662,59 @@ export default function CompetenciaDetalle() {
               <input
                 type="text"
                 className="cd-input"
-                placeholder="Buscar por nombre, unidad o notas..."
+                placeholder="Buscar por nombre, peso, unidad, notas..."
                 value={busquedaHerramienta}
                 onChange={(e) => setBusquedaHerramienta(e.target.value)}
                 autoFocus
               />
+            </div>
+
+            <div className="cd-herramienta-modal-filtros">
+              <div className="cd-herramienta-filtro-grupo">
+                <span className="cd-herramienta-filtro-label">Unidad:</span>
+                <div className="cd-herramienta-filtro-chips">
+                  {[
+                    { key: 'todos', label: 'Todos' },
+                    { key: 'kg',  label: 'kg' },
+                    { key: 'lb',  label: 'lb' },
+                    { key: 'm',   label: 'm' },
+                    { key: 'maq', label: 'Máq.' },
+                  ].map(({ key, label }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`cd-filtro-chip${filtroUnidadHerramienta === key ? ' cd-filtro-chip--active' : ''}`}
+                      onClick={() => setFiltroUnidadHerramienta(key)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="cd-herramienta-filtro-grupo">
+                <span className="cd-herramienta-filtro-label">Tipo:</span>
+                <div className="cd-herramienta-filtro-chips">
+                  {[
+                    { key: 'todos',      label: 'Todos' },
+                    { key: 'barra',      label: 'Barra' },
+                    { key: 'bumper',     label: 'Disco/Bumper' },
+                    { key: 'kettlebell', label: 'Kettlebell' },
+                    { key: 'mancuerna',  label: 'Mancuerna' },
+                    { key: 'pelota',     label: 'Pelota' },
+                    { key: 'cajon',      label: 'Cajón' },
+                    { key: 'otra',       label: 'Otro' },
+                  ].map(({ key, label }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`cd-filtro-chip${filtroTipoHerramienta === key ? ' cd-filtro-chip--active' : ''}`}
+                      onClick={() => setFiltroTipoHerramienta(key)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="cd-herramienta-modal-lista">

@@ -290,7 +290,21 @@
     justify-content: space-between;
   }
 
+  .card-nav-top {
+    justify-content: flex-start;
+  }
+
+  .logo-container,
+  .card-nav-top > div:not(.hamburger-menu):not(.cardnav-right):nth-child(2) {
+    margin-right: auto;
+  }
+
   .hamburger-menu {
+    order: 3;
+    margin-left: 6px;
+  }
+
+  .cardnav-right {
     order: 2;
   }
 
@@ -390,8 +404,8 @@
 }
 
 .cardnav-avatar-btn:hover {
-  border-color: rgba(230, 57, 70, 0.9);
-  box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: none;
   transform: scale(1.06);
 }
 
@@ -437,14 +451,14 @@
 }
 
 .cardnav-box-select:hover {
-  border-color: rgba(230, 57, 70, 0.6);
-  box-shadow: 0 0 12px rgba(230, 57, 70, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: none;
 }
 
 .cardnav-box-select:focus {
   outline: none;
-  border-color: #E63946;
-  box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: none;
 }
 
 .cardnav-box-select option {
