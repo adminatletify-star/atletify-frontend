@@ -709,6 +709,15 @@ export default function AdminBoxPanel() {
                       <div className="abp-card-desc">Tus datos médicos y de contrato</div>
                     </div>
                   </Link>
+                  <Link to="/preguntas-frecuentes" className="abp-quick-card py-2">
+                    <div className="abp-card-icon-wrapper" style={{ '--icon-color': '#22c55e' }}>
+                      <i className="fas fa-question-circle"></i>
+                    </div>
+                    <div className="abp-card-content">
+                      <div className="abp-card-title" style={{ fontSize: '0.8rem' }}>Preguntas Frecuentes</div>
+                      <div className="abp-card-desc">Guías y respuestas para tu rol</div>
+                    </div>
+                  </Link>
                 </div>
               </section>
 

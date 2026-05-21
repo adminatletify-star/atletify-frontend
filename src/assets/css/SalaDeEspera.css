@@ -90,9 +90,13 @@
   font-family: var(--font-heading);
   font-size: 1rem;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   color: var(--text-primary);
   text-transform: uppercase;
+  max-width: 340px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ── Card Body ── */
@@ -398,8 +402,9 @@
   }
 
   .sde-card-header span {
-    font-size: 0.9rem;
-    letter-spacing: 1px;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    max-width: 220px;
   }
 
   .sde-icon-wrapper {
@@ -429,7 +434,8 @@
 
 @media (max-width: 360px) {
   .sde-card-header span {
-    display: none;
+    max-width: 140px;
+    font-size: 0.75rem;
   }
 
   .sde-title {

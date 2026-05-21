@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import DateWheelPicker from '../components/DateWheelPicker';
 import BackButton from '../components/BackButton';
@@ -33,9 +33,13 @@ export default function RegistroManual() {
     notas: '', cobrarInscripcion: false, montoInscripcion: ''
   });
 
-  const [pinAdmin, setPinAdmin] = useState('');
-  const [mostrarModalPin, setMostrarModalPin] = useState(false);
+  const [passwordAdmin, setPasswordAdmin] = useState('');
+  const [mostrarModalPassword, setMostrarModalPassword] = useState(false);
+  const [verificandoPassword, setVerificandoPassword] = useState(false);
   const [contrasenaGenerada, setContrasenaGenerada] = useState(null);
+  // Username live-check: 'idle' | 'invalid' | 'short' | 'checking' | 'available' | 'taken'
+  const [usernameEstado, setUsernameEstado] = useState('idle');
+  const usernameDebounceRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [loadingPlanes, setLoadingPlanes] = useState(false);
   const [mostrarDatePicker, setMostrarDatePicker] = useState(false);
@@ -43,8 +47,36 @@ export default function RegistroManual() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    if (name === 'username') {
+      const limpio = value.replace(/\s+/g, '').replace(/[^a-zA-Z0-9._-]/g, '');
+      setFormData(prev => ({ ...prev, username: limpio }));
+      return;
+    }
     setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
   };
+
+  // Username live-check con debounce 400ms
+  useEffect(() => {
+    const u = (formData.username || '').trim();
+    if (!u) { setUsernameEstado('idle'); return; }
+    if (!/^[a-zA-Z0-9._-]+$/.test(u)) { setUsernameEstado('invalid'); return; }
+    if (u.length < 3) { setUsernameEstado('short'); return; }
+
+    setUsernameEstado('checking');
+    if (usernameDebounceRef.current) clearTimeout(usernameDebounceRef.current);
+    usernameDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/usuarios/verificar-username/${encodeURIComponent(u)}`);
+        if (!res.ok) { setUsernameEstado('idle'); return; }
+        const data = await res.json();
+        setUsernameEstado(data.disponible ? 'available' : 'taken');
+      } catch {
+        setUsernameEstado('idle');
+      }
+    }, 400);
+
+    return () => { if (usernameDebounceRef.current) clearTimeout(usernameDebounceRef.current); };
+  }, [formData.username]);
 
   // Cargar planes y descuentos cuando se monta el componente
   const cargarDatos = async () => {
@@ -114,19 +146,41 @@ export default function RegistroManual() {
     }
   }, [restante, formCobro.monto1]);
 
-  const verificarPinYGenerar = (e) => {
+  const verificarPasswordYGenerar = async (e) => {
     e.preventDefault();
-    if (pinAdmin === '1234') {
-      const prefijo = formData.nombre ? formData.nombre.substring(0, 3).toUpperCase() : 'WOLF';
-      const randomNum = Math.floor(1000 + Math.random() * 9000);
-      const nuevaPass = `${prefijo}-${randomNum}*`;
-
-      setContrasenaGenerada(nuevaPass);
-      setMostrarModalPin(false);
-      setPinAdmin('');
-      showAlert('Contraseña genérica generada. Anótala y dásela al atleta.', 'success');
-    } else {
-      showAlert('PIN de Administrador incorrecto.', 'danger');
+    if (!passwordAdmin) {
+      showAlert('Ingresa tu contraseña para confirmar.', 'warning');
+      return;
+    }
+    setVerificandoPassword(true);
+    try {
+      const adminUser = JSON.parse(localStorage.getItem('usuario') || 'null');
+      const idAdmin = adminUser?.idUsuario || adminUser?.id;
+      if (!idAdmin) {
+        showAlert('No se pudo identificar al usuario logueado. Vuelve a iniciar sesión.', 'danger');
+        return;
+      }
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/verificar-password-admin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idUsuario: idAdmin, contrasena: passwordAdmin })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.valido === true) {
+        const prefijo = formData.nombre ? formData.nombre.substring(0, 3).toUpperCase() : 'WOLF';
+        const randomNum = Math.floor(1000 + Math.random() * 9000);
+        const nuevaPass = `${prefijo}-${randomNum}*`;
+        setContrasenaGenerada(nuevaPass);
+        setMostrarModalPassword(false);
+        setPasswordAdmin('');
+        showAlert('Contraseña genérica generada. Anótala y dásela al atleta.', 'success');
+      } else {
+        showAlert(data?.mensaje || 'Contraseña incorrecta.', 'danger');
+      }
+    } catch {
+      showAlert('Error de conexión al verificar.', 'danger');
+    } finally {
+      setVerificandoPassword(false);
     }
   };
 
@@ -134,12 +188,28 @@ export default function RegistroManual() {
     e.preventDefault();
 
     if (!contrasenaGenerada) {
-      showAlert('¡Alto! Primero genera una contraseña con el PIN de Admin', 'warning');
+      showAlert('Primero genera una contraseña genérica para el atleta (sección Credenciales).', 'warning');
       return;
     }
 
     if (!formData.username) {
       showAlert('El Username (Alias) es obligatorio.', 'warning');
+      return;
+    }
+    if (usernameEstado === 'taken') {
+      showAlert('Ese username ya está ocupado. Elige otro.', 'warning');
+      return;
+    }
+    if (usernameEstado === 'invalid') {
+      showAlert('El username solo puede tener letras, números, punto, guión y guión bajo.', 'warning');
+      return;
+    }
+    if (usernameEstado === 'short') {
+      showAlert('El username debe tener al menos 3 caracteres.', 'warning');
+      return;
+    }
+    if (usernameEstado === 'checking') {
+      showAlert('Espera a que termine la verificación del username.', 'warning');
       return;
     }
 
@@ -202,7 +272,7 @@ export default function RegistroManual() {
           metodoPago2: esEquipoTrabajo && suscripcionPermanente ? null : (m2 > 0 ? formCobro.metodo2 : null),
           idDescuento: (!esEquipoTrabajo && descuentoSeleccionado) ? parseInt(descuentoSeleccionado) : null,
           cobrarInscripcion: esEquipoTrabajo && suscripcionPermanente ? false : formCobro.cobrarInscripcion,
-          notas: esEquipoTrabajo ? `Registro de ${rolEquipo} al equipo de trabajo` : (formCobro.notas || `Registro manual de ${formData.nombre}`),
+          notas: esEquipoTrabajo ? null : (formCobro.notas?.trim() || null),
           rol: esEquipoTrabajo ? rolEquipo : 'Atleta',
           exentoDePago: esEquipoTrabajo && suscripcionPermanente
         })
@@ -216,6 +286,7 @@ export default function RegistroManual() {
           nombre: '', apellidos: '', correo: '', username: '', telefono: '', genero: '', fechaNacimiento: '',
           peso: '', tallaPlayera: '', categoria: 'Novato', experiencia: '', esDeConfianza: false
         });
+        setUsernameEstado('idle');
         setPlanSeleccionado('');
         setDescuentoSeleccionado('');
         const montoInsc = configBox?.montoInscripcion || 250;
@@ -269,7 +340,52 @@ export default function RegistroManual() {
                   <div className="row">
                     <div className="col-md-4 mb-4 registro-col-mobile">
                       <label className="form-label registro-label text-warning"><i className="fas fa-at me-1"></i>Username Único</label>
-                      <input type="text" className="form-control registro-input border-warning" name="username" maxLength={30} value={formData.username} onChange={handleChange} placeholder="Ej. juanperez99" required />
+                      <div className="registro-username-wrap">
+                        <input
+                          type="text"
+                          className={`form-control registro-input registro-username-input ${
+                            usernameEstado === 'available' ? 'is-valid-username' :
+                            usernameEstado === 'taken' || usernameEstado === 'invalid' ? 'is-invalid-username' :
+                            'border-warning'
+                          }`}
+                          name="username"
+                          maxLength={30}
+                          value={formData.username}
+                          onChange={handleChange}
+                          placeholder="Ej. juanperez99"
+                          autoComplete="off"
+                          required
+                        />
+                        {usernameEstado !== 'idle' && (
+                          <span className={`registro-username-indicator registro-username-indicator--${usernameEstado}`}>
+                            <i className={`fas ${
+                              usernameEstado === 'checking'  ? 'fa-circle-notch fa-spin' :
+                              usernameEstado === 'available' ? 'fa-check-circle' :
+                              usernameEstado === 'taken'     ? 'fa-times-circle' :
+                                                                'fa-exclamation-circle'
+                            }`}></i>
+                          </span>
+                        )}
+                      </div>
+                      {usernameEstado !== 'idle' && (
+                        <p className={`registro-username-hint registro-username-hint--${
+                          usernameEstado === 'available' ? 'ok' :
+                          usernameEstado === 'taken'     ? 'err' :
+                          usernameEstado === 'checking'  ? 'check' : 'warn'
+                        }`}>
+                          <i className={`fas ${
+                            usernameEstado === 'checking'  ? 'fa-circle-notch fa-spin' :
+                            usernameEstado === 'available' ? 'fa-check-circle' :
+                            usernameEstado === 'taken'     ? 'fa-times-circle' :
+                                                              'fa-exclamation-circle'
+                          }`}></i>
+                          {usernameEstado === 'checking'  && 'Verificando disponibilidad...'}
+                          {usernameEstado === 'available' && '¡Username disponible!'}
+                          {usernameEstado === 'taken'     && 'Este username ya está ocupado'}
+                          {usernameEstado === 'short'     && 'Mínimo 3 caracteres'}
+                          {usernameEstado === 'invalid'   && 'Solo letras, números, punto, guión y guión bajo'}
+                        </p>
+                      )}
                     </div>
                     <div className="col-md-4 mb-4 registro-col-mobile">
                       <label className="form-label registro-label text-warning"><i className="fas fa-phone-alt me-1"></i>Teléfono</label>
@@ -407,7 +523,7 @@ export default function RegistroManual() {
                 <div className="mb-4">
                   <div className="registro-security-icon"><i className="fas fa-shield-alt text-danger fa-2x"></i></div>
                   <h4 className="registro-security-title">Credenciales</h4>
-                  <p className="registro-security-desc">Genera una contraseña genérica para este atleta protegido por tu PIN.</p>
+                  <p className="registro-security-desc">Genera una contraseña genérica para este atleta. Confirma con tu contraseña de acceso para autorizar la acción.</p>
                 </div>
 
                 {contrasenaGenerada ? (
@@ -417,17 +533,39 @@ export default function RegistroManual() {
                   </div>
                 ) : (
                   <>
-                    {mostrarModalPin ? (
-                      <div className="registro-pin-container">
-                        <label className="form-label registro-label">Ingresa tu PIN</label>
-                        <input type="password" className="form-control registro-input registro-pin-input mb-3" value={pinAdmin} onChange={(e) => setPinAdmin(e.target.value)} maxLength="4" autoFocus />
+                    {mostrarModalPassword ? (
+                      <form className="registro-pin-container" onSubmit={verificarPasswordYGenerar}>
+                        <label className="form-label registro-label">Confirma tu contraseña</label>
+                        <input
+                          type="password"
+                          className="form-control registro-input registro-pin-input mb-3"
+                          value={passwordAdmin}
+                          onChange={(e) => setPasswordAdmin(e.target.value)}
+                          placeholder="Tu contraseña de acceso"
+                          autoFocus
+                          autoComplete="current-password"
+                          disabled={verificandoPassword}
+                        />
                         <div className="d-flex gap-2">
-                          <button className="btn btn-outline-secondary w-50 registro-btn" onClick={() => setMostrarModalPin(false)}>Cancelar</button>
-                          <button className="btn btn-danger w-50 registro-btn" onClick={verificarPinYGenerar}>Generar</button>
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary w-50 registro-btn"
+                            onClick={() => { setMostrarModalPassword(false); setPasswordAdmin(''); }}
+                            disabled={verificandoPassword}
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="submit"
+                            className="btn btn-danger w-50 registro-btn"
+                            disabled={verificandoPassword || !passwordAdmin}
+                          >
+                            {verificandoPassword ? <><i className="fas fa-spinner fa-spin me-1"></i>Verificando</> : 'Generar'}
+                          </button>
                         </div>
-                      </div>
+                      </form>
                     ) : (
-                      <button className="btn btn-outline-danger w-100 py-3 registro-btn" onClick={() => setMostrarModalPin(true)} disabled={!formData.nombre} title={!formData.nombre ? "Escribe un nombre primero" : ""}>
+                      <button className="btn btn-outline-danger w-100 py-3 registro-btn" onClick={() => setMostrarModalPassword(true)} disabled={!formData.nombre} title={!formData.nombre ? "Escribe un nombre primero" : ""}>
                         <i className="fas fa-key me-2"></i>Generar Contraseña
                       </button>
                     )}

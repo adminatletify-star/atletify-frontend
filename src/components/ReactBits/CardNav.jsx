@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { gsap } from 'gsap';
 import { GoArrowUpRight } from 'react-icons/go';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -14,6 +15,7 @@ const CardNav = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [openSections, setOpenSections] = useState({});
   const [isMobileNav, setIsMobileNav] = useState(() => window.innerWidth <= 1200);
+  const [showSelectBoxModal, setShowSelectBoxModal] = useState(false);
   const navRef = useRef(null);
   const cardsRef = useRef([]);
   const linksWrapRefs = useRef([]);
@@ -160,6 +162,12 @@ const CardNav = ({
   };
 
   const handleNavLinkClick = (href, event) => {
+    // Developer sin box seleccionado: bloquear navegación y pedir que elija uno.
+    if (usuario?.rol === 'Developer' && !boxActivo) {
+      event.preventDefault();
+      setShowSelectBoxModal(true);
+      return;
+    }
     // If user clicks the current route, avoid redundant navigation and just close safely.
     if (href === location.pathname) {
       event.preventDefault();
@@ -468,6 +476,68 @@ const CardNav = ({
           </div>
         </div>
       </nav>
+
+      {showSelectBoxModal && createPortal(
+        <div
+          className="bpm-overlay"
+          onClick={() => setShowSelectBoxModal(false)}
+          style={{ zIndex: 10000 }}
+        >
+          <div
+            className="bpm-panel"
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '420px', textAlign: 'center' }}
+          >
+            <div className="bpm-header" style={{ flexDirection: 'column', alignItems: 'center', gap: '12px', borderBottom: 'none' }}>
+              <div
+                className="bpm-header-icon"
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  fontSize: '1.6rem',
+                  background: 'linear-gradient(135deg, var(--primary, #dc3545), #ff6b6b)',
+                }}
+              >
+                <i className="fas fa-warehouse"></i>
+              </div>
+              <div>
+                <p className="bpm-header-title" style={{ fontSize: '1.05rem', textAlign: 'center' }}>
+                  Selecciona un Box
+                </p>
+                <p
+                  className="bpm-header-sub"
+                  style={{ textAlign: 'center', marginTop: '6px', lineHeight: 1.4 }}
+                >
+                  Para entrar a esta sección debes elegir un Box específico desde el selector del navbar.
+                  Actualmente tienes <strong>"Todos los Boxes"</strong> activo.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ padding: '8px 18px 18px', display: 'flex', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setShowSelectBoxModal(false)}
+                style={{
+                  padding: '10px 22px',
+                  border: 'none',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, var(--primary, #dc3545), #ff6b6b)',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  letterSpacing: '0.02em',
+                  cursor: 'pointer',
+                  boxShadow: '0 6px 18px rgba(220,53,69,0.35)',
+                }}
+              >
+                <i className="fas fa-check me-2"></i>Entendido
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

@@ -336,6 +336,9 @@ export default function HomeMegaMenu({ user, mobileMenuOpen, setMobileMenuOpen }
             <li><Link to="/historial-competencias" onClick={handleLinkClick}>Historial de Compes</Link></li>
             <li><Link to="/ejercicios" onClick={handleLinkClick}>Ejercicios</Link></li>
             <li><Link to="/simulador-barra-publico" onClick={handleLinkClick}>Simulador de Barra</Link></li>
+            {haySessionActiva && (
+              <li><Link to="/preguntas-frecuentes" onClick={handleLinkClick}>Preguntas frecuentes</Link></li>
+            )}
             <li style={{ opacity: 0.4, pointerEvents: 'none' }}>
               <span>Nosotros <small style={{ fontSize: '0.65rem', color: '#E63946' }}>Próximamente</small></span>
             </li>

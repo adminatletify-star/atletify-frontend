@@ -887,6 +887,20 @@ export default function UserPanel() {
                 </div>
               </div>
 
+              {/* Preguntas Frecuentes */}
+              <div className="up-card up-card-clickable" onClick={() => navigate('/preguntas-frecuentes')}>
+                <div className="up-mini-card">
+                  <div className="up-mini-icon up-mini-icon-info">
+                    <i className="fas fa-question-circle"></i>
+                  </div>
+                  <div className="flex-grow-1">
+                    <div className="up-mini-label">Preguntas frecuentes</div>
+                    <div className="up-mini-value">Guías y respuestas</div>
+                  </div>
+                  <i className="fas fa-chevron-right text-secondary small"></i>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>

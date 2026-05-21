@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import { jwtDecode } from "jwt-decode";
 import Mantenimiento from './pages/Mantenimiento';
+import { switchToAccountByEmail } from './services/accountSwitch';
 
 // Importaciones de Páginas
 import Home from './pages/Home';
@@ -16,6 +17,7 @@ import CookieBanner from './components/CookieBanner';
 import CrearBox from './pages/CrearBox';
 import Dashboard from './pages/Dashboard';
 import CompletarRegistro from './pages/CompletarRegistro';
+import CorregirSolicitud from './pages/CorregirSolicitud';
 import RegistroManual from './pages/RegistroManual';
 import UserPanel from './pages/UserPanel';
 import AdminBoxPanel from './pages/AdminBoxPanel';
@@ -54,6 +56,8 @@ import RankingManual from './pages/RankingManual';
 import Comunidad from './pages/Comunidad';
 import UserResenas from './pages/UserResenas';
 import SalaDeEspera from './pages/SalaDeEspera'; // O la ruta donde lo hayas guardado
+import PreguntasRespuestasDev from './pages/PreguntasRespuestasDev';
+import PreguntasFrecuentes from './pages/PreguntasFrecuentes';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import SeleccionPlanSaaS from './pages/SeleccionPlanSaaS';
@@ -185,15 +189,60 @@ window.fetch = async function () {
   return response;
 };
 
+// === RESOLUTOR DE CONFLICTO DE CUENTA ===
+// Se activa cuando una ruta protegida recibe ?correo= que no coincide
+// con la sesión activa (típicamente al abrir un link de correo con otra cuenta logueada).
+// Intenta cambiar a la cuenta correcta desde cuentasGuardadas; si no existe,
+// manda a /login con redirect de vuelta y correo prellenado.
+const AccountConflictResolver = ({ expectedCorreo, currentUrl }) => {
+  useEffect(() => {
+    const ok = switchToAccountByEmail(expectedCorreo);
+    if (ok) {
+      window.location.replace(currentUrl);
+    } else {
+      const params = new URLSearchParams();
+      params.set('correo', expectedCorreo);
+      params.set('redirect', currentUrl);
+      window.location.replace(`/login?${params.toString()}`);
+    }
+  }, [expectedCorreo, currentUrl]);
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#0a0a14',
+      color: '#fff',
+      fontFamily: "'Inter', sans-serif",
+      flexDirection: 'column',
+      gap: '1rem',
+      padding: '1rem',
+      textAlign: 'center'
+    }}>
+      <div className="spinner-border text-light" role="status" aria-hidden="true" />
+      <p style={{ margin: 0, fontSize: '0.95rem', color: 'rgba(255,255,255,0.75)' }}>
+        Verificando la cuenta correcta...
+      </p>
+      <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)' }}>
+        Este enlace fue enviado a <strong style={{ color: '#fff' }}>{expectedCorreo}</strong>
+      </p>
+    </div>
+  );
+};
+
 // === EL CADENERO (Protector de Rutas VIP) ===
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const storedUserStr = localStorage.getItem('usuario');
   const storedToken = localStorage.getItem('token');
+  const currentUrl = window.location.pathname + window.location.search;
+  const loginWithRedirect = `/login?redirect=${encodeURIComponent(currentUrl)}`;
 
   // Validaciones estrictas: Si falta usuario o token
   if (!storedUserStr || !storedToken) {
     console.error("CADENERO: Faltan credenciales (usuario o token). Mandando a /login");
-    return <Navigate to="/login" replace />;
+    return <Navigate to={loginWithRedirect} replace />;
   }
 
   // Validar si el token expiró decodificándolo
@@ -205,14 +254,23 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
       localStorage.removeItem('usuario');
       localStorage.removeItem('token');
       localStorage.removeItem('boxActivo');
-      return <Navigate to="/login" replace />;
+      return <Navigate to={loginWithRedirect} replace />;
     }
   } catch (error) {
     console.error("CADENERO: Error decodificando el token:", error);
-    return <Navigate to="/login" replace />;
+    return <Navigate to={loginWithRedirect} replace />;
   }
 
   const storedUser = JSON.parse(storedUserStr);
+
+  // 👇 GUARDIA DE CONFLICTO DE CUENTA (links de correo con otra sesión activa)
+  // Si la URL trae ?correo= y no coincide con la sesión activa, intentamos
+  // cambiar a la cuenta correcta antes de aplicar redirecciones por rol.
+  const expectedCorreo = new URLSearchParams(window.location.search).get('correo')?.toLowerCase().trim();
+  const activeCorreo = (storedUser.correo || '').toLowerCase().trim();
+  if (expectedCorreo && activeCorreo && expectedCorreo !== activeCorreo) {
+    return <AccountConflictResolver expectedCorreo={expectedCorreo} currentUrl={currentUrl} />;
+  }
 
   // 👇 Interceptar si no aceptó los términos o si es undefined (usuarios viejos)
   if (!storedUser.aceptoTerminos) {
@@ -336,6 +394,7 @@ function App() {
             <Route path="/atleta/:compId" element={<PortalAtleta />} />
             <Route path="/atleta" element={<PortalAtleta />} />
             <Route path="/sala-espera" element={<SalaDeEspera />} />
+            <Route path="/corregir-solicitud" element={<CorregirSolicitud />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/seleccionar-plan" element={<SeleccionPlanSaaS />} />
@@ -351,6 +410,8 @@ function App() {
               <Route path="/registro-manual" element={<RegistroManual />} />
               <Route path="/seleccion-plan-saas" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach']}><SeleccionPlanSaaS /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['Developer']}><Dashboard /></ProtectedRoute>} />
+              <Route path="/dashboard/faq" element={<ProtectedRoute allowedRoles={['Developer']}><PreguntasRespuestasDev /></ProtectedRoute>} />
+              <Route path="/preguntas-frecuentes" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Atleta', 'Usuario', 'Developer']}><PreguntasFrecuentes /></ProtectedRoute>} />
               <Route path="/admin-saas" element={<ProtectedRoute allowedRoles={['Developer']}><AdminSaaS /></ProtectedRoute>} />
               <Route path="/admin-preregistros" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AdminPreregistros /></ProtectedRoute>} />
               <Route path="/crear-box" element={<ProtectedRoute allowedRoles={['Developer']}><CrearBox /></ProtectedRoute>} />

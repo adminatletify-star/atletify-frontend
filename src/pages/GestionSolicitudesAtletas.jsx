@@ -15,6 +15,7 @@ export default function GestionSolicitudesAtletas() {
   const [pendientes, setPendientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [box, setBox] = useState(null);
+  const [busqueda, setBusqueda] = useState('');
 
   // Modales
   const [modalRechazo, setModalRechazo] = useState({ visible: false, idUsuario: null, motivo: '' });
@@ -118,32 +119,106 @@ export default function GestionSolicitudesAtletas() {
         <div className="gs-page-header">
           <h1 className="gs-page-title">SOLICI<span>TUDES</span></h1>
           <div className="gs-accent-line"></div>
-          {!loading && (
-            <p className="gs-page-count">
-              <strong>{pendientes.length}</strong> solicitudes pendientes de revisión
-            </p>
+          {!loading && (() => {
+            const correcciones = pendientes.filter(p => Number(p.vecesRechazado || 0) > 0 && p.estatus !== 'Rechazado' && p.estadoSolicitud !== 'Rechazado').length;
+            return (
+              <p className="gs-page-count">
+                <strong>{pendientes.length}</strong> solicitudes pendientes de revisión
+                {correcciones > 0 && (
+                  <span className="gs-page-count-correcciones">
+                    <i className="fas fa-redo-alt"></i> {correcciones} corrección{correcciones === 1 ? '' : 'es'}
+                  </span>
+                )}
+              </p>
+            );
+          })()}
+
+          {!loading && pendientes.length > 0 && (
+            <div className="gs-search">
+              <i className="fas fa-search gs-search-icon"></i>
+              <input
+                type="text"
+                className="gs-search-input"
+                placeholder="Buscar por nombre, apellido, usuario o correo..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                aria-label="Buscar solicitud"
+              />
+              {busqueda && (
+                <button
+                  type="button"
+                  className="gs-search-clear"
+                  onClick={() => setBusqueda('')}
+                  aria-label="Limpiar búsqueda"
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              )}
+            </div>
           )}
         </div>
 
-        {loading ? (
-          <div className="gs-spinner-wrap"><AtletifyLoader /></div>
-        ) : pendientes.length === 0 ? (
-          <div className="gs-empty">
-            <i className="fas fa-check-circle gs-empty-icon"></i>
-            <h4 className="gs-empty-title">Todo al día</h4>
-            <p className="gs-empty-text">No hay solicitudes pendientes de revisión.</p>
-          </div>
-        ) : (
+        {(() => {
+          if (loading) {
+            return <div className="gs-spinner-wrap"><AtletifyLoader /></div>;
+          }
+          if (pendientes.length === 0) {
+            return (
+              <div className="gs-empty">
+                <i className="fas fa-check-circle gs-empty-icon"></i>
+                <h4 className="gs-empty-title">Todo al día</h4>
+                <p className="gs-empty-text">No hay solicitudes pendientes de revisión.</p>
+              </div>
+            );
+          }
+          const normalizar = (s) => String(s || '')
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '')
+            .toLowerCase()
+            .trim();
+          const tokens = normalizar(busqueda).split(/\s+/).filter(Boolean);
+          const pendientesFiltrados = tokens.length === 0
+            ? pendientes
+            : pendientes.filter(p => {
+                const haystack = normalizar(
+                  [p.username, p.correo, p.nombre, p.apellidos].filter(Boolean).join(' ')
+                );
+                return tokens.every(token => haystack.includes(token));
+              });
+
+          if (pendientesFiltrados.length === 0) {
+            return (
+              <div className="gs-empty">
+                <i className="fas fa-search gs-empty-icon"></i>
+                <h4 className="gs-empty-title">Sin resultados</h4>
+                <p className="gs-empty-text">
+                  No se encontró ninguna solicitud que coincida con <strong style={{ color: '#fff' }}>"{busqueda}"</strong>.
+                </p>
+                <button
+                  type="button"
+                  className="gs-empty-action"
+                  onClick={() => setBusqueda('')}
+                >
+                  <i className="fas fa-times me-1"></i> Limpiar búsqueda
+                </button>
+              </div>
+            );
+          }
+
+          return (
           <div className="row g-4">
-            {pendientes.map(p => {
+            {pendientesFiltrados.map(p => {
               const precioPlan = Number(p.planElegido?.precio || 0);
               const requiereInscripcion = p.planElegido?.requiereInscripcion ?? false;
               const inscripcion = requiereInscripcion ? Number(p.montoInscripcion || 0) : 0;
               const total = Number(p.montoCobrar ?? (precioPlan + inscripcion));
+              const intentos = Number(p.vecesRechazado || 0);
+              const fueRechazado = p.estatus === 'Rechazado' || p.estadoSolicitud === 'Rechazado';
+              const esCorreccion = intentos > 0 && !fueRechazado;
 
               return (
                 <div key={p.idUsuario} className="col-lg-6">
-                  <div className={`gs-card${p.vecesRechazado > 0 ? ' gs-card--warned' : ''}`}>
+                  <div className={`gs-card${esCorreccion ? ' gs-card--corrected' : intentos > 0 ? ' gs-card--warned' : ''}`}>
 
                     {/*  ETIQUETAS DE MUDANZA Y PAGOS  */}
                     <div className="d-flex justify-content-between p-2">
@@ -155,10 +230,26 @@ export default function GestionSolicitudesAtletas() {
                           {p.metodoPago || 'Sin pago'}
                         </span>
                       )}
-                      {p.vecesRechazado > 0 && (
-                        <span className="badge bg-danger rounded-pill"><i className="fas fa-exclamation-triangle"></i> Rechazado {p.vecesRechazado}x</span>
-                      )}
+                      {esCorreccion ? (
+                        <span className="badge gs-badge-correccion rounded-pill"><i className="fas fa-redo-alt me-1"></i> Corrección</span>
+                      ) : intentos > 0 ? (
+                        <span className="badge bg-danger rounded-pill"><i className="fas fa-exclamation-triangle me-1"></i> Rechazado {intentos}x</span>
+                      ) : null}
                     </div>
+
+                    {esCorreccion && (
+                      <div className="gs-correction-banner">
+                        <div className="gs-correction-banner-icon">
+                          <i className="fas fa-redo-alt"></i>
+                        </div>
+                        <div className="gs-correction-banner-text">
+                          <strong>Solicitud corregida</strong>
+                          <span>
+                            El atleta reenvió su solicitud tras {intentos} rechazo{intentos === 1 ? '' : 's'} previo{intentos === 1 ? '' : 's'}. Revisa los cambios antes de aprobar.
+                          </span>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="gs-card-body pt-0">
                       <div className="gs-athlete-header">
@@ -232,7 +323,8 @@ export default function GestionSolicitudesAtletas() {
               );
             })}
           </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* ── MODAL APROBAR (con método de pago) ── */}

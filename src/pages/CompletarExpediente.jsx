@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
+import TallaPlayeraPicker from '../components/TallaPlayeraPicker';
+import CategoriaBasePicker from '../components/CategoriaBasePicker';
+import '../assets/css/CompletarExpediente.css';
 
 export default function CompletarExpediente() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [clases, setClases] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [alerts, setAlerts] = useState([]);
 
   const [formData, setFormData] = useState({
     peso: '',
@@ -14,19 +18,18 @@ export default function CompletarExpediente() {
     categoria: 'Novato',
     experiencia: '',
     idClaseBase: '',
-    comprobante: null // Aquí iría el archivo en un escenario real
+    comprobante: null
   });
 
   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('usuario'));
-    if (!u || u.rol !== 'Usuario') { // Solo los "Usuarios" (Standby) entran aquí
+    if (!u || u.rol !== 'Usuario') {
       navigate('/login');
       return;
     }
     setUser(u);
-    // Cargamos las clases del box para que elija su horario
     if (u.idBoxPredeterminado) {
       cargarClases(u.idBoxPredeterminado);
     }
@@ -40,9 +43,15 @@ export default function CompletarExpediente() {
         setClases(data);
       }
     } catch (err) {
-      console.error("Error cargando clases:", err);
+      console.error('Error cargando clases:', err);
     }
   }
+
+  const showAlert = (mensaje, tipo = 'danger') => {
+    const a = { id: Date.now(), mensaje, tipo };
+    setAlerts(prev => [...prev, a]);
+    setTimeout(() => setAlerts(prev => prev.filter(x => x.id !== a.id)), 5000);
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -54,9 +63,11 @@ export default function CompletarExpediente() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    if (!formData.peso || Number(formData.peso) <= 0) return showAlert('Ingresa tu peso en kilogramos.');
+    if (!formData.tallaPlayera) return showAlert('Selecciona tu talla de playera.');
+    if (!formData.idClaseBase) return showAlert('Selecciona un horario de entrenamiento.');
 
-    // Aquí le avisamos a C# que este usuario ya llenó sus datos
+    setLoading(true);
     try {
       const userId = user.idUsuario || user.id;
       const response = await fetch(`${API_URL}/usuarios/${userId}/expediente`, {
@@ -72,111 +83,186 @@ export default function CompletarExpediente() {
       });
 
       if (response.ok) {
-        alert("¡Expediente enviado a revisión! Tu Coach te aprobará pronto.");
-        // Lo mandamos de regreso al panel para que siga viendo el reloj de arena (hasta que Liz lo apruebe)
-        // Le inyectamos el peso a la memoria para saber que ya llenó los datos
+        showAlert('Expediente enviado. El administrador del box lo revisará y activará tu cuenta en breve.', 'success');
         const usuarioActualizado = { ...user, peso: formData.peso };
         localStorage.setItem('usuario', JSON.stringify(usuarioActualizado));
-        navigate('/user-panel');
+        setTimeout(() => navigate('/user-panel'), 2200);
       } else {
-        alert("Hubo un error al enviar tu expediente.");
+        showAlert('No fue posible enviar el expediente. Intenta de nuevo.');
       }
-    } catch (error) {
-      alert("Error de conexión con el servidor.");
+    } catch {
+      showAlert('Error de conexión con el servidor.');
     } finally {
       setLoading(false);
     }
   };
 
-  // ESTILOS CUPERTINO
-  const cupertinoCard = {
-    background: 'rgba(30, 30, 30, 0.6)',
-    backdropFilter: 'blur(15px)',
-    borderRadius: '24px',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)'
-  };
-
-  const cupertinoInput = {
-    borderRadius: '12px',
-    background: 'rgba(0, 0, 0, 0.2)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    color: '#fff',
-    padding: '12px 16px'
-  };
-
   return (
-    <div className="bg-dark text-white min-vh-100 py-5" style={{ background: 'linear-gradient(135deg, #121212 0%, #1e1e1e 100%)' }}>
-      <div className="container" style={{ maxWidth: '700px' }}>
+    <div className="cex-root">
+      <div className="container cex-container">
 
-        <BackButton to="/user-panel" className="me-3 mb-4" />
-
-        <h2 className="fw-bold mb-2">Completar <span className="text-danger">Expediente</span></h2>
-        <p className="text-secondary mb-4">Ayúdanos a conocerte mejor y selecciona tu horario fijo de entrenamiento.</p>
-
-        <div className="card text-white border-0" style={cupertinoCard}>
-          <div className="card-body p-4 p-md-5">
-            <form onSubmit={handleSubmit}>
-
-              <h5 className="text-danger fw-bold mb-3"><i className="fas fa-dumbbell me-2"></i>Tus Datos Físicos</h5>
-              <div className="row mb-4">
-                <div className="col-md-6 mb-3">
-                  <label className="small text-secondary fw-bold mb-2">PESO (KG/LBS)</label>
-                  <input type="number" name="peso" className="form-control shadow-none" style={cupertinoInput} value={formData.peso} onChange={handleChange} required />
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label className="small text-secondary fw-bold mb-2">TALLA DE PLAYERA</label>
-                  <select name="tallaPlayera" className="form-select shadow-none" style={cupertinoInput} value={formData.tallaPlayera} onChange={handleChange} required>
-                    <option value="">Selecciona...</option>
-                    <option value="XS">XS</option><option value="S">S</option>
-                    <option value="M">M</option><option value="L">L</option><option value="XL">XL</option>
-                  </select>
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label className="small text-secondary fw-bold mb-2">NIVEL ACTUAL</label>
-                  <select name="categoria" className="form-select shadow-none" style={cupertinoInput} value={formData.categoria} onChange={handleChange}>
-                    <option value="Novato">Novato (Clase técnica)</option>
-                    <option value="Escalado">Escalado</option>
-                    <option value="Intermedio">Intermedio</option>
-                    <option value="RX">RX (Avanzado)</option>
-                  </select>
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label className="small text-secondary fw-bold mb-2">LESIONES O EXPERIENCIA PREVIA</label>
-                  <input type="text" name="experiencia" className="form-control shadow-none" style={cupertinoInput} value={formData.experiencia} onChange={handleChange} placeholder="Ej. Lesión en rodilla, 2 años Gym..." />
-                </div>
-              </div>
-
-              <hr className="border-secondary opacity-25 my-4" />
-
-              <h5 className="text-danger fw-bold mb-3"><i className="far fa-calendar-check me-2"></i>Tu Clase Fija</h5>
-              <p className="small text-secondary mb-3">Elige el horario al que asistirás regularmente. No te preocupes, como atleta podrás reservar horas extras después.</p>
-
-              <div className="mb-4">
-                <select name="idClaseBase" className="form-select shadow-none fs-5 py-3" style={{ ...cupertinoInput, borderColor: '#dc3545' }} value={formData.idClaseBase} onChange={handleChange} required>
-                  <option value="">-- Elige tu horario --</option>
-                  {clases.map(c => (
-                    <option key={c.idClase} value={c.idClase}>{c.nombre} ({c.horarioInicio} - {c.horarioFin})</option>
-                  ))}
-                </select>
-              </div>
-
-              <hr className="border-secondary opacity-25 my-4" />
-
-              <h5 className="text-danger fw-bold mb-3"><i className="fas fa-receipt me-2"></i>Pago de Mensualidad</h5>
-              <div className="mb-5">
-                <label className="small text-secondary fw-bold mb-2">SUBIR COMPROBANTE (FOTO O PDF)</label>
-                <input type="file" className="form-control shadow-none" style={cupertinoInput} onChange={handleFileChange} accept="image/*,.pdf" />
-                <small className="text-muted mt-2 d-block">Una vez enviado, el administrador validará tu pago para activar tu cuenta.</small>
-              </div>
-
-              <button type="submit" className="btn btn-danger w-100 py-3 fw-bold fs-5" style={{ borderRadius: '14px' }} disabled={loading}>
-                {loading ? 'Enviando...' : 'Enviar Expediente a Revisión'}
-              </button>
-
-            </form>
-          </div>
+        <div className="cex-back">
+          <BackButton to="/user-panel" />
         </div>
+
+        {/* Hero */}
+        <div className="cex-hero">
+          <div className="cex-hero-badge">
+            <i className="fas fa-file-medical-alt"></i>
+            <span>Expediente Deportivo</span>
+          </div>
+          <h1 className="cex-hero-title">
+            Completar <span className="cex-hero-accent">Expediente</span>
+          </h1>
+          <p className="cex-hero-sub">
+            Proporciona tu información física y selecciona tu horario de entrenamiento.
+          </p>
+        </div>
+
+        {/* Alertas */}
+        <div className="cex-alerts">
+          {alerts.map(a => (
+            <div key={a.id} className={`cex-alert cex-alert-${a.tipo}`}>
+              <i className={`fas ${a.tipo === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i>
+              {a.mensaje}
+            </div>
+          ))}
+        </div>
+
+        {/* Card */}
+        <div className="cex-card">
+          <form onSubmit={handleSubmit}>
+
+            {/* 01 — Datos físicos */}
+            <div className="cex-section-head">
+              <span className="cex-section-num">01</span>
+              <div>
+                <p className="cex-section-title">Datos Físicos</p>
+                <p className="cex-section-desc">Información requerida para tu expediente en el box.</p>
+              </div>
+              <i className="fas fa-weight cex-section-icon"></i>
+            </div>
+
+            <div className="row g-3 mb-2">
+              <div className="col-12 col-md-6">
+                <label className="cex-label">Peso (kg)</label>
+                <input
+                  type="number"
+                  name="peso"
+                  className="form-control"
+                  value={formData.peso}
+                  onChange={e => {
+                    const v = e.target.value;
+                    if (v === '' || /^\d{0,3}(\.\d{0,2})?$/.test(v)) setFormData(prev => ({ ...prev, peso: v }));
+                  }}
+                  placeholder="Ej. 70"
+                  step="0.1"
+                  min="1"
+                  max="999"
+                  required
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="cex-label">Talla de Playera</label>
+                <TallaPlayeraPicker
+                  valor={formData.tallaPlayera}
+                  onCambiar={v => setFormData(prev => ({ ...prev, tallaPlayera: v }))}
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="cex-label">Nivel de CrossFit</label>
+                <CategoriaBasePicker
+                  valor={formData.categoria}
+                  onCambiar={v => setFormData(prev => ({ ...prev, categoria: v }))}
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="cex-label">Lesiones o Experiencia Previa (Opcional)</label>
+                <input
+                  type="text"
+                  name="experiencia"
+                  className="form-control"
+                  value={formData.experiencia}
+                  onChange={handleChange}
+                  placeholder="Ej. Lesión de rodilla, 2 años en gimnasio..."
+                />
+              </div>
+            </div>
+
+            {/* 02 — Clase fija */}
+            <div className="cex-section-head">
+              <span className="cex-section-num">02</span>
+              <div>
+                <p className="cex-section-title">Clase Asignada</p>
+                <p className="cex-section-desc">Selecciona el horario al que asistirás regularmente.</p>
+              </div>
+              <i className="far fa-calendar-check cex-section-icon"></i>
+            </div>
+
+            <div className="mb-2">
+              <label className="cex-label">Horario de Entrenamiento</label>
+              <select
+                name="idClaseBase"
+                className="form-select"
+                value={formData.idClaseBase}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Selecciona un horario...</option>
+                {clases.map(c => (
+                  <option key={c.idClase} value={c.idClase}>
+                    {c.nombre} ({c.horarioInicio} - {c.horarioFin})
+                  </option>
+                ))}
+              </select>
+              {clases.length === 0 && (
+                <span className="cex-helper-text">
+                  <i className="fas fa-info-circle me-1"></i>
+                  No hay horarios disponibles. Consulta con el administrador del box.
+                </span>
+              )}
+            </div>
+
+            {/* 03 — Comprobante */}
+            <div className="cex-section-head">
+              <span className="cex-section-num">03</span>
+              <div>
+                <p className="cex-section-title">Comprobante de Pago</p>
+                <p className="cex-section-desc">Adjunta la imagen del recibo o transferencia bancaria.</p>
+              </div>
+              <i className="fas fa-receipt cex-section-icon"></i>
+            </div>
+
+            <div className="mb-2">
+              <label className="cex-label">Comprobante (Imagen o PDF)</label>
+              <input
+                type="file"
+                className="form-control"
+                onChange={handleFileChange}
+                accept="image/*,.pdf"
+              />
+              <span className="cex-helper-text">
+                El administrador validará el pago para activar tu cuenta.
+              </span>
+            </div>
+
+            {/* CTA */}
+            <div className="cex-cta">
+              <button type="submit" className="cex-btn-submit w-100" disabled={loading}>
+                {loading
+                  ? <><i className="fas fa-spinner fa-spin"></i> Enviando...</>
+                  : <><i className="fas fa-paper-plane"></i> Enviar Expediente a Revisión</>
+                }
+              </button>
+              <p className="cex-cta-helper">
+                <i className="fas fa-info-circle"></i>
+                Recibirás una notificación cuando el administrador apruebe tu expediente.
+              </p>
+            </div>
+
+          </form>
+        </div>
+
       </div>
     </div>
   );

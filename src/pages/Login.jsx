@@ -6,14 +6,17 @@ import BackButton from '../components/BackButton';
 import '../assets/css/LoginPage.css';
 
 export default function Login() {
-  const [correo, setCorreo] = useState('');
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const isAddingAccount = queryParams.get('addAccount') === 'true';
+  const correoPrellenado = queryParams.get('correo') || '';
+  const redirectAfter = queryParams.get('redirect') || location.state?.from || null;
+
+  const [correo, setCorreo] = useState(correoPrellenado);
   const [password, setPassword] = useState('');
   const [verPassword, setVerPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const isAddingAccount = queryParams.get('addAccount') === 'true';
 
   const { login, logout, usuario } = useAuth();
 
@@ -47,12 +50,24 @@ export default function Login() {
           return;
         }
 
+        // Si venía con redirect específico (ej. desde un correo a /gestion-solicitudes o /corregir-solicitud),
+        // y el rol del usuario está permitido en esa ruta, respetamos ese destino.
+        if (redirectAfter) {
+          navigate(redirectAfter, { replace: true });
+          return;
+        }
+
         // Redirección inteligente
         switch (userObj.rol) {
           case 'Developer': navigate('/dashboard'); break;
           case 'AdminBox':
           case 'Coach': navigate('/admin-box-panel'); break;
-          case 'Usuario': navigate('/sala-espera'); break; // 👈 Los novatos van directo a la sala
+          case 'Usuario': {
+            // Si su solicitud fue rechazada, va directo a corregirla. Si no, a la sala de espera.
+            const rechazado = userObj.estadoSolicitud === 'Rechazado' || userObj.estatus === 'Rechazado';
+            navigate(rechazado ? '/corregir-solicitud' : '/sala-espera');
+            break;
+          }
           case 'Juez':
             if (userObj.idCompetenciaAsignada) {
               navigate(`/juez/${userObj.idCompetenciaAsignada}`);

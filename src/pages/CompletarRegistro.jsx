@@ -1,6 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import GeneroPicker from '../components/GeneroPicker';
+import CategoriaBasePicker from '../components/CategoriaBasePicker';
+import TallaPlayeraPicker from '../components/TallaPlayeraPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import PasswordRulesHint from '../components/PasswordRulesHint';
 import { usePasswordStrength } from '../hooks/usePasswordStrength';
@@ -29,10 +32,14 @@ export default function CompletarRegistro() {
     confirmarContrasena: '',
     genero: '',
     categoriaBase: 'Novato',
-    fechaNacimiento: ''
+    fechaNacimiento: '',
+    peso: '',
+    tallaPlayera: ''
   });
 
   const [alerts, setAlerts] = useState([]);
+  const [modalExitoOpen, setModalExitoOpen] = useState(false);
+  const [metodoPagoConfirmado, setMetodoPagoConfirmado] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [showPassConfirm, setShowPassConfirm] = useState(false);
 
@@ -219,6 +226,9 @@ export default function CompletarRegistro() {
     if (!reglasPassword.esValida)     return showAlert('La contraseña no cumple los requisitos de seguridad.');
     if (formData.contrasena !== formData.confirmarContrasena) return showAlert('Las contraseñas no coinciden.');
 
+    if (!formData.peso || Number(formData.peso) <= 0) return showAlert('Ingresa tu peso (kg).');
+    if (!formData.tallaPlayera) return showAlert('Selecciona tu talla de playera.');
+
     if (requierePlan) {
       if (!planSeleccionadoId) return showAlert('Selecciona un plan de membresía.');
       if (!metodoPago)         return showAlert('Selecciona un método de pago.');
@@ -231,6 +241,7 @@ export default function CompletarRegistro() {
         correo: correoParam,
         token,
         ...formData,
+        peso: formData.peso ? Number(formData.peso) : null,
         ...(requierePlan && {
           idPlan: planSeleccionadoId,
           metodoPago,
@@ -245,8 +256,8 @@ export default function CompletarRegistro() {
       });
       const data = await response.json();
       if (response.ok) {
-        showAlert(data.mensaje, 'success');
-        setTimeout(() => navigate('/sala-espera'), 2500);
+        setMetodoPagoConfirmado(requierePlan ? metodoPago : '');
+        setModalExitoOpen(true);
       } else {
         showAlert(data.mensaje || 'Error al completar registro.');
       }
@@ -296,7 +307,9 @@ export default function CompletarRegistro() {
     formData.nombre.trim().length > 0 &&
     formData.fechaNacimiento &&
     formData.telefono.length === 10 &&
-    usernameEstado === 'available';
+    usernameEstado === 'available' &&
+    !!formData.peso && Number(formData.peso) > 0 &&
+    !!formData.tallaPlayera;
 
   const pasoPlanCompleto = !requierePlan
     ? true
@@ -415,7 +428,18 @@ export default function CompletarRegistro() {
 
               <div className="col-12 col-md-6">
                 <label className="reg-label">Fecha de Nacimiento</label>
-                <input type="date" name="fechaNacimiento" className="reg-input bg-dark text-white" value={formData.fechaNacimiento} onChange={handleChange} required />
+                <input
+                  type="date"
+                  name="fechaNacimiento"
+                  className="reg-input bg-dark text-white"
+                  value={formData.fechaNacimiento}
+                  onChange={(e) => {
+                    const year = e.target.value.split('-')[0] || '';
+                    if (year.length <= 4) handleChange(e);
+                  }}
+                  max="9999-12-31"
+                  required
+                />
               </div>
             </div>
 
@@ -462,16 +486,59 @@ export default function CompletarRegistro() {
               </div>
               <div className="col-12 col-md-6">
                 <label className="reg-label">Categoría Base</label>
-                <select name="categoriaBase" className="reg-input" value={formData.categoriaBase} onChange={handleChange}>
-                  <option value="Novato">Novato — aprendizaje de movimientos</option>
-                  <option value="Principiante">Principiante — movimientos modificados</option>
-                  <option value="Intermedio">Intermedio — buen dominio técnico</option>
-                  <option value="RX">RX — avanzado, pesos completos</option>
-                </select>
+                <CategoriaBasePicker
+                  valor={formData.categoriaBase}
+                  onCambiar={v => setFormData(prev => ({ ...prev, categoriaBase: v }))}
+                />
               </div>
               <div className="col-12 col-md-6">
                 <label className="reg-label">Género de Competencia</label>
                 <GeneroPicker valor={formData.genero} onCambiar={v => setFormData(prev => ({ ...prev, genero: v }))} />
+              </div>
+            </div>
+
+            {/* ── Datos Físicos ── */}
+            <div className="cr-section-head">
+              <span className="cr-section-num">2.5</span>
+              <div>
+                <p className="cr-section-title">Datos Físicos</p>
+                <p className="cr-section-desc">Necesitamos tu peso y talla para tu expediente y tu kit del Box.</p>
+              </div>
+              <i className="fas fa-weight cr-section-icon"></i>
+            </div>
+            <div className="row g-3 mb-4">
+              <div className="col-12 col-md-6">
+                <label className="reg-label d-flex justify-content-between">
+                  <span>Peso (kg)</span>
+                  <span style={{ fontSize: '0.75rem', color: formData.peso && Number(formData.peso) > 0 ? '#22c55e' : 'rgba(255,255,255,0.35)' }}>
+                    {formData.peso ? `${formData.peso} kg` : '—'}
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  name="peso"
+                  step="0.1"
+                  min="1"
+                  max="999"
+                  className="reg-input"
+                  value={formData.peso}
+                  onChange={e => {
+                    const v = e.target.value;
+                    if (v === '' || /^\d{0,3}(\.\d{0,2})?$/.test(v)) {
+                      setFormData(prev => ({ ...prev, peso: v }));
+                    }
+                  }}
+                  placeholder="Ej. 70"
+                  required
+                  style={{ borderColor: formData.peso && Number(formData.peso) > 0 ? '#22c55e' : '' }}
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="reg-label">Talla de Playera</label>
+                <TallaPlayeraPicker
+                  valor={formData.tallaPlayera}
+                  onCambiar={v => setFormData(prev => ({ ...prev, tallaPlayera: v }))}
+                />
               </div>
             </div>
 
@@ -728,6 +795,60 @@ export default function CompletarRegistro() {
           </form>
         </div>
       </div>
+
+      {/* ══ MODAL: Registro completado ══ */}
+      {modalExitoOpen && createPortal(
+        <div className="cr-exito-overlay" role="dialog" aria-modal="true">
+          <div className="cr-exito-panel">
+            <div className="cr-exito-icon-wrap">
+              <i className="fas fa-check"></i>
+            </div>
+            <h2 className="cr-exito-title">¡Gracias por tu registro!</h2>
+            <p className="cr-exito-sub">Tu solicitud fue recibida correctamente.</p>
+
+            {metodoPagoConfirmado === 'Transferencia' ? (
+              <div className="cr-exito-box cr-exito-box--info">
+                <i className="fas fa-hourglass-half cr-exito-box-icon" />
+                <div className="cr-exito-box-text">
+                  <strong>Espera la confirmación del administrador</strong>
+                  <span>
+                    Tu pago por transferencia será revisado por los administradores del Box.
+                    Te notificaremos por correo en cuanto se valide.
+                  </span>
+                </div>
+              </div>
+            ) : (metodoPagoConfirmado === 'Efectivo' || metodoPagoConfirmado === 'Tarjeta') ? (
+              <div className="cr-exito-box cr-exito-box--warn">
+                <i className="fas fa-map-marker-alt cr-exito-box-icon" />
+                <div className="cr-exito-box-text">
+                  <strong>Acude a la sucursal para completar tu pago</strong>
+                  <span>
+                    Declaraste pago en modalidad <b>presencial ({metodoPagoConfirmado.toLowerCase()})</b>.
+                    Debes acudir a la sucursal de tu Box para realizar tu pago. Tu cuenta se activará una vez confirmado.
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="cr-exito-box cr-exito-box--info">
+                <i className="fas fa-info-circle cr-exito-box-icon" />
+                <div className="cr-exito-box-text">
+                  <strong>Espera la confirmación del administrador</strong>
+                  <span>Te notificaremos por correo en cuanto tu cuenta sea aprobada.</span>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="cr-exito-btn"
+              onClick={() => { setModalExitoOpen(false); navigate('/login'); }}
+            >
+              <i className="fas fa-sign-in-alt"></i> Ir al Login
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

@@ -20,6 +20,12 @@ export default function SalaDeEspera() {
     tipoDeSangre: '', deporteExperiencia: '', tieneDiscapacidad: ''
   });
   const [guardando, setGuardando] = useState(false);
+  const [boxNombre] = useState(() => {
+    try {
+      const b = JSON.parse(localStorage.getItem('box') || 'null');
+      return b?.nombre || b?.Nombre || null;
+    } catch { return null; }
+  });
 
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('usuario'));
@@ -35,6 +41,13 @@ export default function SalaDeEspera() {
       const res = await fetch(`${USUARIOS_ENDPOINT}/${idUsuario}`);
       if (res.ok) {
         const data = await res.json();
+        // Si su solicitud fue rechazada, debe ir a la página de corrección — no a la sala de espera
+        const rechazado = data.estatus === 'Rechazado' || data.estadoSolicitud === 'Rechazado';
+        const baneado = data.estadoSolicitud === 'Baneado';
+        if (rechazado && !baneado) {
+          navigate('/corregir-solicitud', { replace: true });
+          return;
+        }
         setUsuarioDB(data);
         setForm({
           peso: data.peso || '', tallaPlayera: data.tallaPlayera || '',
@@ -54,7 +67,7 @@ export default function SalaDeEspera() {
         body: JSON.stringify({ ...form, peso: form.peso ? parseFloat(form.peso) : null })
       });
       if (res.ok) {
-        alert("¡Expediente guardado! 🐺 La Coach ahora tiene toda tu información.");
+        alert("Expediente guardado. El administrador del box ya tiene acceso a tu información.");
         fetchExpediente(userAuth.id || userAuth.idUsuario);
       }
     } catch (error) { alert("Error de conexión."); } finally { setGuardando(false); }
@@ -71,7 +84,10 @@ export default function SalaDeEspera() {
       <div className="sde-container">
         <div className="sde-card">
           <div className="sde-back-btn"><button className="sde-btn-logout" onClick={() => { logout(); navigate('/login', { replace: true }); }}><i className="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</button></div>
-          <div className="sde-card-header"><i className="fas fa-paw"></i><span>WOLFPACK</span></div>
+          <div className="sde-card-header">
+            <i className="fas fa-dumbbell"></i>
+            <span>{boxNombre || 'Centro Deportivo'}</span>
+          </div>
 
           <div className="sde-card-body">
             {estaBaneado && (
@@ -86,25 +102,25 @@ export default function SalaDeEspera() {
               <div className="sde-state-section sde-state-rejected">
                 <div className="sde-icon-wrapper sde-icon-rejected"><i className="fas fa-clipboard-list"></i></div>
                 <h2 className="sde-title">Corrección Requerida</h2>
-                <div className="sde-feedback-box"><strong><i className="fas fa-comment-dots me-2"></i>Coach:</strong><p>"{usuarioDB.motivoRechazo}"</p></div>
+                <div className="sde-feedback-box"><strong><i className="fas fa-comment-dots me-2"></i>Nota del administrador:</strong><p>"{usuarioDB.motivoRechazo}"</p></div>
               </div>
             )}
 
             {!estaBaneado && !estaRechazado && (
               <div className="sde-state-section sde-state-pending">
                 <div className="sde-icon-wrapper sde-icon-pending"><i className="fas fa-hourglass-half"></i></div>
-                <h2 className="sde-title">{usuarioDB.esMudanza ? "¡Bienvenido a la nueva App! 🐺" : "¡Casi listo, Lobo! 🐺"}</h2>
+                <h2 className="sde-title">{usuarioDB.esMudanza ? "Transferencia en proceso" : "Solicitud en revisión"}</h2>
                 <p className="sde-message">
-                  {usuarioDB.esMudanza 
-                    ? "Estamos validando tu mudanza con recepción. Mientras te activan, por favor completa tu expediente médico abajo para tener tus datos actualizados."
-                    : "Tu solicitud y pago han sido recibidos. Por favor completa tu expediente médico abajo; es un requisito obligatorio para que los Coaches te den acceso."}
+                  {usuarioDB.esMudanza
+                    ? "Tu solicitud de traslado se encuentra en proceso de validación con recepción. Mientras tanto, completa tu expediente médico para mantener tus datos actualizados."
+                    : "Tu solicitud y pago han sido recibidos. Completa tu expediente médico; es un requisito obligatorio para que el administrador del box te otorgue acceso."}
                 </p>
               </div>
             )}
 
             {(!estaBaneado && expedienteVacio) || !estaBaneado ? (
               <form onSubmit={handleGuardarExpediente} className="sde-form mt-4">
-                <div className="sde-form-header"><i className="fas fa-heartbeat"></i><span>Tu Expediente Médico y Deportivo</span></div>
+                <div className="sde-form-header"><i className="fas fa-file-medical-alt"></i><span>Expediente Médico y Deportivo</span></div>
                 <div className="row g-3 g-lg-4">
                   <div className="col-12 col-sm-6 col-lg-4"><label className="sde-label">Peso (kg)</label><input type="number" step="0.1" min="1" max="999" required className="form-control sde-input" value={form.peso} onChange={e => { const v = e.target.value; if (v === '' || /^\d{0,3}(\.\d*)?$/.test(v)) setForm({...form, peso: v}); }} placeholder="70" /></div>
                   <div className="col-12 col-sm-6 col-lg-4"><label className="sde-label">Talla</label><TallaPlayeraPicker valor={form.tallaPlayera} onCambiar={v => setForm({...form, tallaPlayera: v})} /></div>

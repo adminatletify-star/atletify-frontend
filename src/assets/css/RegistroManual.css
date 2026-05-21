@@ -132,6 +132,70 @@
   transition: var(--transition);
 }
 
+/* === USERNAME LIVE-CHECK === */
+.registro-username-wrap {
+  position: relative;
+}
+
+.registro-username-input {
+  padding-right: 42px !important;
+}
+
+.registro-username-input.is-valid-username {
+  border-color: rgba(34, 197, 94, 0.6) !important;
+}
+
+.registro-username-input.is-invalid-username {
+  border-color: rgba(239, 68, 68, 0.6) !important;
+}
+
+.registro-username-indicator {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.registro-username-indicator--available { color: #22c55e; }
+.registro-username-indicator--taken,
+.registro-username-indicator--invalid   { color: #ef4444; }
+.registro-username-indicator--short,
+.registro-username-indicator--checking  { color: #f59e0b; }
+
+.registro-username-hint {
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  letter-spacing: 0.2px;
+}
+
+.registro-username-hint--ok    { color: #22c55e; }
+.registro-username-hint--err   { color: #f08090; }
+.registro-username-hint--warn  { color: #f59e0b; }
+.registro-username-hint--check { color: rgba(255, 255, 255, 0.6); }
+
+/* Responsive: ajustes para móvil */
+@media (max-width: 768px) {
+  .registro-username-hint { font-size: 0.74rem; }
+}
+
+@media (max-width: 576px) {
+  .registro-username-hint { font-size: 0.7rem; }
+  .registro-username-indicator { right: 12px; font-size: 0.9rem; }
+}
+
+@media (max-width: 380px) {
+  .registro-username-hint { font-size: 0.66rem; }
+}
+
 .registro-input:focus {
   background: rgba(0, 0, 0, 0.3) !important;
   border-color: rgba(230, 57, 70, 0.5) !important;

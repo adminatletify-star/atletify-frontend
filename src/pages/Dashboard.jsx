@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, Link } from 'react-router-dom';
 import { BOXES_ENDPOINT, USUARIOS_ENDPOINT } from '../services/api';
 import AtletifyLoader from '../components/AtletifyLoader';
+import { useAuth } from '../context/AuthContext';
 import '../assets/css/dashboard.css';
+import '../components/BoxPickerModal.css';
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { refetchBoxes } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('inicio');
   const [user, setUser] = useState(null);
@@ -19,6 +23,8 @@ export default function Dashboard() {
   const [filtroNombre, setFiltroNombre] = useState('');
   const [filtroRol, setFiltroRol] = useState('');
   const [filtroBox, setFiltroBox] = useState('');
+  const [modalFiltroBoxOpen, setModalFiltroBoxOpen] = useState(false);
+  const [modalFiltroRolOpen, setModalFiltroRolOpen] = useState(false);
   const [paginaUsuarios, setPaginaUsuarios] = useState(1);
   const USUARIOS_POR_PAGINA = 20;
   const [filtroSaas, setFiltroSaas] = useState('');
@@ -35,6 +41,8 @@ export default function Dashboard() {
     nombre: '', apellidos: '', username: '', correo: '', telefono: '', fechaNacimiento: ''
   });
   const [creandoAdmin, setCreandoAdmin] = useState(false);
+  const [usernameDisponible, setUsernameDisponible] = useState(null);
+  const [usernameChecking, setUsernameChecking] = useState(false);
 
   const [modalActivarCompe, setModalActivarCompe] = useState({ open: false, idBox: null, planSaaS: null, estatusSaaS: '', fechaVencimientoSaaS: null, nombre: '' });
   const [activandoCompe, setActivandoCompe] = useState(false);
@@ -64,6 +72,21 @@ export default function Dashboard() {
     window.addEventListener('atletify:cardnav-open', handler);
     return () => window.removeEventListener('atletify:cardnav-open', handler);
   }, []);
+
+  useEffect(() => {
+    const val = formDataAdmin.username.trim();
+    if (val.length < 3) { setUsernameDisponible(null); return; }
+    setUsernameChecking(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`${USUARIOS_ENDPOINT}/verificar-username/${encodeURIComponent(val)}`);
+        const data = await res.json();
+        setUsernameDisponible(data.disponible);
+      } catch { setUsernameDisponible(null); }
+      finally { setUsernameChecking(false); }
+    }, 500);
+    return () => { clearTimeout(timer); setUsernameChecking(false); };
+  }, [formDataAdmin.username]);
 
   useEffect(() => {
     if (activeSection !== 'configglobal') return;
@@ -125,11 +148,10 @@ export default function Dashboard() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
-        setMetricasBoxes(prev => prev.filter(b => b.idBox !== idBox));
-        setBoxes(prev => prev.filter(b => b.idBox !== idBox));
-        setStats(prev => ({ ...prev, boxes: prev.boxes - 1 }));
         setModalEliminarBox({ open: false, idBox: null, nombre: '' });
         alert(`Box "${nombre}" eliminado con éxito.`);
+        await cargarDataGlobal();
+        await refetchBoxes?.();
       } else {
         const data = await res.json().catch(() => ({}));
         alert(data.mensaje || 'Error al eliminar el box.');
@@ -290,6 +312,8 @@ export default function Dashboard() {
         setModalSuccessAdmin({ open: true, username: data.username, contrasenaGenerada: data.contrasenaGenerada });
         setModalAdminBox({ open: false, idBox: null, nombreBox: '' });
         setFormDataAdmin({ nombre: '', apellidos: '', username: '', correo: '', telefono: '', fechaNacimiento: '' });
+        setUsernameDisponible(null);
+        setUsernameChecking(false);
         cargarDataGlobal();
       } else {
         const data = await res.json();
@@ -356,6 +380,7 @@ export default function Dashboard() {
   );
 
   return (
+    <>
     <div className="dash-page">
 
       {/* ── Topbar móvil ─────────────────────────────────────── */}
@@ -489,6 +514,10 @@ export default function Dashboard() {
               style={{ '--lnk': 'var(--accent)' }}>
               <i className="fas fa-book-open"></i><span>Ejercicios</span>
             </Link>
+            <Link to="/dashboard/faq" className="dash-nav-link" onClick={() => setSidebarOpen(false)}
+              style={{ '--lnk': '#3498db' }}>
+              <i className="fas fa-question-circle"></i><span>Preguntas y Respuestas</span>
+            </Link>
             <Link to="/admin-archivadas" className="dash-nav-link" onClick={() => setSidebarOpen(false)}
               style={{ '--lnk': '#e74c3c' }}>
               <i className="fas fa-database"></i><span>Administrar Competencias</span>
@@ -513,16 +542,33 @@ export default function Dashboard() {
                   <i className="fas fa-users-cog"></i> Control Global de Roles
                 </h2>
                 <div className="d-flex flex-column flex-sm-row gap-2 dash-filters">
-                  <select className="entrada-oscura dash-filter-select flex-shrink-0"
-                    value={filtroBox} onChange={e => { setFiltroBox(e.target.value); setPaginaUsuarios(1); }}>
-                    <option value="">Todos los Boxes</option>
-                    {boxes.map(b => <option key={b.idBox} value={b.idBox.toString()}>{b.nombre}</option>)}
-                  </select>
-                  <select className="entrada-oscura dash-filter-select flex-shrink-0"
-                    value={filtroRol} onChange={e => { setFiltroRol(e.target.value); setPaginaUsuarios(1); }}>
-                    <option value="">Todos los Roles</option>
-                    {rolesUnicos.map(r => <option key={r} value={r}>{r}</option>)}
-                  </select>
+                  {/* ── Trigger: Filtro Box ── */}
+                  <button
+                    type="button"
+                    className={`bpm-trigger flex-shrink-0${filtroBox ? ' bpm-trigger--activo' : ''}`}
+                    onClick={() => setModalFiltroBoxOpen(true)}
+                    title="Filtrar por Box"
+                  >
+                    <i className="fas fa-warehouse bpm-trigger-icon" />
+                    <span className="bpm-trigger-label">
+                      {filtroBox ? boxes.find(b => b.idBox.toString() === filtroBox)?.nombre ?? 'Box' : 'Todos los Boxes'}
+                    </span>
+                    <i className="fas fa-chevron-down bpm-trigger-chevron" />
+                  </button>
+
+                  {/* ── Trigger: Filtro Rol ── */}
+                  <button
+                    type="button"
+                    className={`bpm-trigger flex-shrink-0${filtroRol ? ' bpm-trigger--activo' : ''}`}
+                    onClick={() => setModalFiltroRolOpen(true)}
+                    title="Filtrar por Rol"
+                  >
+                    <i className="fas fa-user-tag bpm-trigger-icon" />
+                    <span className="bpm-trigger-label">
+                      {filtroRol || 'Todos los Roles'}
+                    </span>
+                    <i className="fas fa-chevron-down bpm-trigger-chevron" />
+                  </button>
                   <div className="dash-search-wrapper flex-grow-1">
                     <i className="fas fa-search dash-search-icon"></i>
                     <input type="text" className="entrada-oscura dash-search-input w-100"
@@ -1189,9 +1235,27 @@ export default function Dashboard() {
 
                 <div className="dam-field dam-grid--full">
                   <label className="etiqueta-campo">Username *</label>
-                  <input type="text" className="entrada-oscura" required
-                    value={formDataAdmin.username}
-                    onChange={e => setFormDataAdmin({ ...formDataAdmin, username: e.target.value })} />
+                  <div style={{ position: 'relative' }}>
+                    <input type="text" required minLength={3}
+                      className={`entrada-oscura${usernameDisponible === true ? ' entrada-oscura--ok' : usernameDisponible === false ? ' entrada-oscura--error' : ''}`}
+                      value={formDataAdmin.username}
+                      onChange={e => setFormDataAdmin({ ...formDataAdmin, username: e.target.value })} />
+                    {usernameChecking && (
+                      <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#888' }}>
+                        <i className="fas fa-spinner fa-spin" />
+                      </span>
+                    )}
+                  </div>
+                  {usernameDisponible === true && (
+                    <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: '#22c55e' }}>
+                      <i className="fas fa-check-circle me-1" />Username disponible
+                    </p>
+                  )}
+                  {usernameDisponible === false && (
+                    <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: '#ef4444' }}>
+                      <i className="fas fa-times-circle me-1" />Username no disponible
+                    </p>
+                  )}
                 </div>
 
                 <div className="dam-field dam-grid--full">
@@ -1232,7 +1296,7 @@ export default function Dashboard() {
                   onClick={() => setModalAdminBox({ open: false, idBox: null, nombreBox: '' })}>
                   Cancelar
                 </button>
-                <button type="submit" className="dam-btn-primary" disabled={creandoAdmin}>
+                <button type="submit" className="dam-btn-primary" disabled={creandoAdmin || !usernameDisponible}>
                   {creandoAdmin
                     ? <><i className="fas fa-spinner fa-spin"></i>Creando...</>
                     : <><i className="fas fa-user-plus"></i>Crear AdminBox</>}
@@ -1427,5 +1491,113 @@ export default function Dashboard() {
       )}
 
     </div>
+
+      {/* ══ MODAL: Filtro por Box ══ */}
+      {modalFiltroBoxOpen && createPortal(
+        <div className="bpm-overlay" onClick={() => setModalFiltroBoxOpen(false)}>
+          <div className="bpm-panel" onClick={e => e.stopPropagation()}>
+            <div className="bpm-header">
+              <div className="bpm-header-left">
+                <div className="bpm-header-icon"><i className="fas fa-warehouse" /></div>
+                <div>
+                  <p className="bpm-header-title">Filtrar por Box</p>
+                  <p className="bpm-header-sub">{boxes.length} boxes disponibles</p>
+                </div>
+              </div>
+              <button type="button" className="bpm-close" onClick={() => setModalFiltroBoxOpen(false)}>
+                <i className="fas fa-times" />
+              </button>
+            </div>
+            <div className="bpm-options">
+              <button
+                type="button"
+                className={`bpm-option bpm-option--todos${!filtroBox ? ' bpm-option--activo' : ''}`}
+                onClick={() => { setFiltroBox(''); setPaginaUsuarios(1); setModalFiltroBoxOpen(false); }}
+              >
+                <span className="bpm-option-dot bpm-option-dot--todos" />
+                <span className="bpm-option-label">Todos los Boxes</span>
+                {!filtroBox && <i className="fas fa-check bpm-option-check" />}
+              </button>
+              {boxes.map((b, i) => (
+                <button
+                  key={b.idBox}
+                  type="button"
+                  className={`bpm-option${b.idBox.toString() === filtroBox ? ' bpm-option--activo' : ''}`}
+                  onClick={() => { setFiltroBox(b.idBox.toString()); setPaginaUsuarios(1); setModalFiltroBoxOpen(false); }}
+                >
+                  <span className="bpm-option-num">{i + 1}</span>
+                  <span className="bpm-option-label">{b.nombre}</span>
+                  {b.idBox.toString() === filtroBox && <i className="fas fa-check bpm-option-check" />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ══ MODAL: Filtro por Rol ══ */}
+      {modalFiltroRolOpen && createPortal(
+        <div className="bpm-overlay" onClick={() => setModalFiltroRolOpen(false)}>
+          <div className="bpm-panel" onClick={e => e.stopPropagation()}>
+            <div className="bpm-header">
+              <div className="bpm-header-left">
+                <div className="bpm-header-icon"><i className="fas fa-user-tag" /></div>
+                <div>
+                  <p className="bpm-header-title">Filtrar por Rol</p>
+                  <p className="bpm-header-sub">{rolesUnicos.length} roles en el sistema</p>
+                </div>
+              </div>
+              <button type="button" className="bpm-close" onClick={() => setModalFiltroRolOpen(false)}>
+                <i className="fas fa-times" />
+              </button>
+            </div>
+            <div className="bpm-options">
+              <button
+                type="button"
+                className={`bpm-option bpm-option--todos${!filtroRol ? ' bpm-option--activo' : ''}`}
+                onClick={() => { setFiltroRol(''); setPaginaUsuarios(1); setModalFiltroRolOpen(false); }}
+              >
+                <span className="bpm-option-dot bpm-option-dot--todos" />
+                <span className="bpm-option-label">Todos los Roles</span>
+                {!filtroRol && <i className="fas fa-check bpm-option-check" />}
+              </button>
+              {rolesUnicos.map(rol => {
+                const meta = {
+                  Developer: { icon: 'fa-code',     color: '#4FC3F7' },
+                  AdminBox:  { icon: 'fa-store',    color: '#f5a623' },
+                  Coach:     { icon: 'fa-dumbbell', color: '#34d399' },
+                  Atleta:    { icon: 'fa-running',  color: '#e63946' },
+                  Usuario:   { icon: 'fa-user',     color: '#aaa'    },
+                  Juez:      { icon: 'fa-gavel',    color: '#8b5cf6' },
+                }[rol] || { icon: 'fa-circle', color: '#888' };
+                const activo = rol === filtroRol;
+                return (
+                  <button
+                    key={rol}
+                    type="button"
+                    className={`bpm-option${activo ? ' bpm-option--activo' : ''}`}
+                    onClick={() => { setFiltroRol(rol); setPaginaUsuarios(1); setModalFiltroRolOpen(false); }}
+                  >
+                    <span style={{
+                      width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: `${meta.color}18`,
+                      border: `1px solid ${meta.color}40`,
+                      color: meta.color, fontSize: '0.8rem',
+                    }}>
+                      <i className={`fas ${meta.icon}`} />
+                    </span>
+                    <span className="bpm-option-label">{rol}</span>
+                    {activo && <i className="fas fa-check bpm-option-check" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }

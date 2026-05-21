@@ -148,6 +148,7 @@ export default function Layout() {
             { label: 'Editar Box', href: '/editar-box' },
             { label: 'Bandeja de pagos', href: '/admin-roster' },
             { label: 'Buzón de Sugerencias', href: '/buzon-sugerencias' },
+            { label: 'Preguntas y Respuestas', href: '/preguntas-frecuentes' },
             { label: 'Mi Perfil', href: '/perfil-admin' },
           ]
         }
@@ -180,6 +181,7 @@ export default function Layout() {
             { label: 'Mis Mensualidades', href: '/detalle-plan-user' },
             { label: 'Estado de Cuenta (Tienda)', href: '/mis-deudas' },
             { label: 'Expediente Médico', href: '/expediente-medico' },
+            { label: 'Preguntas y Respuestas', href: '/preguntas-frecuentes' },
             { label: 'Buzón de Sugerencias', href: '/buzon-sugerencias' },
           ]
         }
@@ -194,6 +196,7 @@ export default function Layout() {
           { label: 'Pase de Lista', href: '/pase-de-lista' },
           { label: 'Calendario de WODs', href: '/calendario-wods' },
           { label: 'Buzón de Sugerencias', href: '/buzon-sugerencias' },
+          { label: 'Preguntas y Respuestas', href: '/preguntas-frecuentes' },
           { label: 'Mi Perfil', href: '/perfil-admin' },
         ]
       }
