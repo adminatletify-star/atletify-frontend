@@ -24,6 +24,8 @@ export default function GestionStaff() {
   const [modalContratoVisible, setModalContratoVisible] = useState(false);
   const [formContrato, setFormContrato] = useState({ tipoPago: 'PorClase', monto: 0, diaCorte: 15 });
   const [nominaActual, setNominaActual] = useState(null);
+  const [asistenciasCoach, setAsistenciasCoach] = useState([]);
+  const [cargandoAsistencias, setCargandoAsistencias] = useState(false);
   // ⭐ Estados para Evaluaciones
   const [modalResenasVisible, setModalResenasVisible] = useState(false);
 
@@ -188,21 +190,104 @@ export default function GestionStaff() {
   };
 
   // --- LÓGICA DE CONTRATOS Y NÓMINA ---
+  const cargarAsistencias = async (idCoach) => {
+    setCargandoAsistencias(true);
+    try {
+      const hoy = new Date();
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/asistencias-coach/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAsistenciasCoach(data);
+      }
+    } catch (e) {
+      console.error("Error al cargar asistencias:", e);
+    } finally {
+      setCargandoAsistencias(false);
+    }
+  };
+
+  const validarAsistenciaClase = async (idClase, fecha, estado, montoPago) => {
+    try {
+      const idCoach = coachSeleccionado.idUsuario || coachSeleccionado.id;
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/validar-clase`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          IdCoach: idCoach,
+          IdClase: idClase,
+          Fecha: fecha,
+          Estado: estado,
+          MontoPago: parseFloat(montoPago)
+        })
+      });
+      if (res.ok) {
+        await cargarAsistencias(idCoach);
+        const hoy = new Date();
+        const resNomina = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (resNomina.ok) {
+          setNominaActual(await resNomina.json());
+        }
+      }
+    } catch (e) {
+      alert("Error al validar asistencia de la clase");
+    }
+  };
+
+  const pagarNominaMes = async () => {
+    if (!window.confirm(`¿Seguro que deseas proceder con el pago definitivo de la nómina de ${coachSeleccionado.nombre} por $${nominaActual.granTotal.toFixed(2)}? Se registrará un Egreso Financiero y se cerrará el mes.`)) return;
+    try {
+      const idCoach = coachSeleccionado.idUsuario || coachSeleccionado.id;
+      const hoy = new Date();
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/pagar/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.mensaje || "Nómina pagada con éxito. ✅");
+        setModalContratoVisible(false);
+      } else {
+        alert(data.mensaje || "Error al pagar la nómina");
+      }
+    } catch (e) {
+      alert("Error al procesar el pago");
+    }
+  };
+
   const abrirModalContrato = async (coach) => {
     setCoachSeleccionado(coach);
     setModalContratoVisible(true);
     setNominaActual(null);
+    setAsistenciasCoach([]);
+    const idCoach = coach.idUsuario || coach.id;
+    const token = localStorage.getItem('token');
+    
+    cargarAsistencias(idCoach);
+
     try {
-      const idCoach = coach.idUsuario || coach.id;
       // 1. Traer el Contrato
-      const resContrato = await fetch(`${API_URL}/nomina/contrato/${idCoach}`);
+      const resContrato = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/contrato/${idCoach}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (resContrato.ok) {
         const data = await resContrato.json();
         setFormContrato({ tipoPago: data.tipoPago, monto: data.monto, diaCorte: data.diaCorte });
       }
       // 2. Traer el cálculo de Nómina de este mes
       const hoy = new Date();
-      const resNomina = await fetch(`${API_URL}/nomina/calcular/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`);
+      const resNomina = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (resNomina.ok) {
         setNominaActual(await resNomina.json());
       }
@@ -211,12 +296,19 @@ export default function GestionStaff() {
 
   const guardarContrato = async () => {
     try {
+      const idCoach = coachSeleccionado.idUsuario || coachSeleccionado.id;
+      const token = localStorage.getItem('token');
       const payload = {
-        IdUsuario: coachSeleccionado.idUsuario || coachSeleccionado.id,
+        IdUsuario: idCoach,
         TipoPago: formContrato.tipoPago, Monto: parseFloat(formContrato.monto), DiaCorte: parseInt(formContrato.diaCorte), Activo: true
       };
-      const res = await fetch(`${API_URL}/nomina/contrato`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/contrato`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         alert("Contrato financiero actualizado. 💸");
@@ -657,13 +749,94 @@ export default function GestionStaff() {
                 </div>
                 <div className="col-12">
                   <BotonSeguro onClick={guardarContrato} className="staff-btn-guardar-contrato" textoProcesando="Guardando...">
-                    <i className="fas fa-save"></i>Guardar Contrato
+                    <i className="fas fa-save me-1"></i>Guardar Contrato
                   </BotonSeguro>
                 </div>
               </div>
 
+              {formContrato.tipoPago === 'PorClase' && (
+                <div className="mt-4">
+                  <div className="staff-modal-section-title">
+                    <i className="fas fa-calendar-check me-2"></i>Validación de Clases (Este Mes)
+                  </div>
+                  {cargandoAsistencias ? (
+                    <div className="text-center py-3">
+                      <div className="spinner-border text-danger spinner-border-sm" role="status"></div>
+                    </div>
+                  ) : asistenciasCoach.length === 0 ? (
+                    <p className="text-muted small py-2">No hay clases programadas o registradas este mes.</p>
+                  ) : (
+                    <div className="table-responsive" style={{ maxHeight: '220px', overflowY: 'auto' }}>
+                      <table className="table table-dark table-striped table-hover align-middle mb-0" style={{ fontSize: '11px', background: 'rgba(0,0,0,0.2)' }}>
+                        <thead>
+                          <tr>
+                            <th>Fecha</th>
+                            <th>Clase</th>
+                            <th>Estado</th>
+                            <th className="text-end">Tarifa</th>
+                            <th className="text-center">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {asistenciasCoach.map((ast, idx) => {
+                            const dateObj = new Date(ast.fecha);
+                            const fechaFormateada = dateObj.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' });
+                            return (
+                              <tr key={idx}>
+                                <td className="text-white-50">
+                                  {fechaFormateada} <span className="small text-muted">{ast.horario}</span>
+                                  {ast.esSustituto && <span className="badge bg-info ms-1" style={{ fontSize: '8px' }}>Sustituto</span>}
+                                </td>
+                                <td className="fw-bold">{ast.nombreClase}</td>
+                                <td>
+                                  {ast.estado === 'Validada' && <span className="badge bg-success-glow text-success">Validada</span>}
+                                  {ast.estado === 'Falta' && <span className="badge bg-danger-glow text-danger">Falta</span>}
+                                  {ast.estado === 'Pendiente' && <span className="badge bg-warning-glow text-warning">Pendiente</span>}
+                                </td>
+                                <td className="text-end fw-bold text-success">${ast.montoPago.toFixed(2)}</td>
+                                <td className="text-center">
+                                  <div className="d-flex justify-content-center gap-1">
+                                    <button
+                                      type="button"
+                                      className="btn btn-xs btn-success py-1 px-2"
+                                      style={{ fontSize: '10px' }}
+                                      onClick={() => validarAsistenciaClase(ast.idClase, ast.fecha, 'Validada', ast.montoPago)}
+                                      title="Validar Clase"
+                                    >
+                                      <i className="fas fa-check"></i>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn btn-xs btn-danger py-1 px-2"
+                                      style={{ fontSize: '10px' }}
+                                      onClick={() => validarAsistenciaClase(ast.idClase, ast.fecha, 'Falta', ast.montoPago)}
+                                      title="Registrar Falta"
+                                    >
+                                      <i className="fas fa-times"></i>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn btn-xs btn-secondary py-1 px-2"
+                                      style={{ fontSize: '10px' }}
+                                      onClick={() => validarAsistenciaClase(ast.idClase, ast.fecha, 'Pendiente', ast.montoPago)}
+                                      title="Restablecer"
+                                    >
+                                      <i className="fas fa-undo"></i>
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {nominaActual && (
-                <div className="staff-nomina-card">
+                <div className="staff-nomina-card mt-4">
                   <div className="staff-modal-section-title">
                     <i className="fas fa-calculator me-2"></i>Nómina Proyectada (Este Mes)
                   </div>
@@ -673,7 +846,7 @@ export default function GestionStaff() {
                   </div>
                   {nominaActual.tipoPago === 'PorClase' && (
                     <div className="staff-nomina-note">
-                      Calculado sobre ~{nominaActual.clasesCalculadas} clases al mes
+                      Calculado sobre {nominaActual.clasesValidadas} clases validadas este mes
                     </div>
                   )}
                   <div className="staff-nomina-row">
@@ -692,6 +865,14 @@ export default function GestionStaff() {
                     <span className="staff-nomina-total-label">A Pagar</span>
                     <span className="staff-nomina-total-valor">${nominaActual.granTotal.toFixed(2)}</span>
                   </div>
+                  <button
+                    type="button"
+                    onClick={pagarNominaMes}
+                    className="btn btn-success w-100 mt-3 py-2 fw-bold text-uppercase"
+                    style={{ borderRadius: '12px', fontSize: '12px', letterSpacing: '0.5px' }}
+                  >
+                    <i className="fas fa-hand-holding-usd me-1"></i> Pagar Nómina del Mes
+                  </button>
                 </div>
               )}
 
