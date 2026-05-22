@@ -113,8 +113,8 @@ export default function PerfilAtletaAdmin() {
   // Saldo a favor
   const saldoAplicado = formPago.usarSaldoAFavor ? (atleta?.saldoAFavor || 0) : 0;
 
-  // TOTAL FINAL: precio con descuento personal - promo extra + inscripción - saldo
-  const totalACobrar = Math.max(0, (precioConDescuento - descuentoPromoExtra) + cobrarInscripcionFinal - saldoAplicado);
+  // TOTAL FINAL: precio con descuento personal - promo extra + inscripción + recargo - saldo
+  const totalACobrar = Math.max(0, (precioConDescuento - descuentoPromoExtra) + cobrarInscripcionFinal + (calculoActivo?.recargo || 0) - saldoAplicado);
   const restante = totalACobrar - (parseFloat(formPago.monto1) || 0);
 
   // Auto-calcular el segundo método de pago
@@ -295,7 +295,7 @@ export default function PerfilAtletaAdmin() {
 
     try {
       const res = await fetch(
-        `${API_PRECIO}/calcular/${idUsuario}/box/${b.idBox}/plan/${finanzas.suscripcion.idPlan}`,
+        `${API_PRECIO}/calcular/${idUsuario}/box/${b.idBox}/plan/${finanzas.suscripcion.idPlan}?metodoPago=Recepción`,
         { headers: headersGet }
       );
       if (res.ok) {
@@ -675,6 +675,15 @@ export default function PerfilAtletaAdmin() {
                     <i className="fas fa-id-card me-1"></i>Inscripción Anual
                   </span>
                   <span style={{ fontSize: '0.8rem', color: 'var(--warning)', fontWeight: 600 }}>+${cobrarInscripcionFinal.toFixed(2)}</span>
+                </div>
+              )}
+
+              {calculoActivo?.recargo > 0 && (
+                <div className="d-flex justify-content-between mb-1">
+                  <span style={{ fontSize: '0.8rem', color: 'var(--danger)' }}>
+                    <i className="fas fa-exclamation-triangle me-1"></i>Recargo por Pago Tardío
+                  </span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--danger)', fontWeight: 600 }}>+${calculoActivo.recargo.toFixed(2)}</span>
                 </div>
               )}
 

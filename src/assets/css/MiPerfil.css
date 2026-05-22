@@ -689,3 +689,619 @@
   line-height: 1.1;
 }
 .mp-calc-unit { font-size: 0.65rem; color: var(--text-muted); font-weight: 400; }
+
+/* ============================================================
+   ESTADOS DE CONGELAMIENTO & BAJAS (Baja Temporal / Permanente)
+   ============================================================ */
+
+/* Banner de cuenta congelada */
+.mp-frozen-banner {
+  background: linear-gradient(135deg, rgba(79, 195, 247, 0.12) 0%, rgba(13, 202, 240, 0.04) 100%);
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  border-left: 4px solid #4fc3f7;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  animation: mp-pulse-glow 3s infinite ease-in-out;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.mp-frozen-banner i {
+  color: #4fc3f7;
+  font-size: 1.5rem;
+  margin-top: 0.15rem;
+  animation: mp-spin-slow 8s linear infinite;
+}
+
+.mp-frozen-banner-content {
+  flex: 1;
+}
+
+.mp-frozen-banner-title {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #4fc3f7;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 0.25rem 0;
+}
+
+.mp-frozen-banner-text {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Efecto de congelado en los formularios */
+.mp-form-frozen {
+  opacity: 0.55;
+  pointer-events: none;
+  position: relative;
+  user-select: none;
+}
+
+.mp-foto-btn-frozen {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* Tarjetas y botones de bajas */
+.mp-btn-freeze {
+  display: flex;
+  width: 100%;
+  background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #fff;
+  cursor: pointer;
+  transition: var(--transition);
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+.mp-btn-freeze:hover:not(:disabled) {
+  box-shadow: 0 4px 14px rgba(52, 152, 219, 0.4);
+  transform: translateY(-1px);
+}
+
+.mp-btn-unfreeze {
+  display: flex;
+  width: 100%;
+  background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 0.8rem 1.5rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #fff;
+  cursor: pointer;
+  transition: var(--transition);
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+.mp-btn-unfreeze:hover:not(:disabled) {
+  box-shadow: 0 4px 16px rgba(0, 198, 255, 0.45);
+  transform: translateY(-1px);
+}
+
+.mp-btn-delete {
+  display: flex;
+  width: 100%;
+  background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #fff;
+  cursor: pointer;
+  transition: var(--transition);
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+.mp-btn-delete:hover:not(:disabled) {
+  box-shadow: 0 4px 14px rgba(211, 47, 47, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Espaciados y alertas dentro del sidebar */
+.mp-sidebar-alert {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+}
+
+.mp-sidebar-alert--danger {
+  color: #ff6b6b;
+  background: rgba(220, 53, 69, 0.05);
+  border-color: rgba(220, 53, 69, 0.15);
+}
+
+.mp-sidebar-alert--info {
+  color: #4fc3f7;
+  background: rgba(79, 195, 247, 0.05);
+  border-color: rgba(79, 195, 247, 0.15);
+}
+
+.mp-sidebar-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 1.5rem 0;
+}
+
+/* Animaciones */
+@keyframes mp-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(79, 195, 247, 0.15);
+    border-color: rgba(79, 195, 247, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
+    border-color: rgba(79, 195, 247, 0.55);
+  }
+}
+
+@keyframes mp-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   REDISEÑO DINÁMICO DE BAJAS DE CUENTA (SIDEBAR COLAPSABLE)
+   ============================================================ */
+
+.mp-deactivation-triggers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+}
+
+.mp-btn-trigger-freeze,
+.mp-btn-trigger-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  border-radius: 10px;
+  padding: 0.75rem 1.25rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent;
+  outline: none;
+}
+
+/* Disparador de Baja Temporal (Estilo Frost/Hielo) */
+.mp-btn-trigger-freeze {
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  color: #4fc3f7;
+  background: linear-gradient(135deg, rgba(79, 195, 247, 0.03) 0%, rgba(13, 202, 240, 0.01) 100%);
+}
+
+.mp-btn-trigger-freeze:hover {
+  border-color: #4fc3f7;
+  background: linear-gradient(135deg, rgba(79, 195, 247, 0.12) 0%, rgba(13, 202, 240, 0.06) 100%);
+  box-shadow: 0 4px 16px rgba(79, 195, 247, 0.2);
+  transform: translateY(-1px);
+}
+
+.mp-btn-trigger-freeze i {
+  font-size: 0.85rem;
+}
+
+/* Disparador de Baja Permanente (Estilo Warning/Alerta) */
+.mp-btn-trigger-delete {
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  color: #ff6b6b;
+  background: linear-gradient(135deg, rgba(230, 57, 70, 0.03) 0%, rgba(220, 53, 69, 0.01) 100%);
+}
+
+.mp-btn-trigger-delete:hover {
+  border-color: #e63946;
+  background: linear-gradient(135deg, rgba(230, 57, 70, 0.12) 0%, rgba(220, 53, 69, 0.06) 100%);
+  box-shadow: 0 4px 16px rgba(230, 57, 70, 0.2);
+  transform: translateY(-1px);
+}
+
+.mp-btn-trigger-delete i {
+  font-size: 0.85rem;
+}
+
+/* Contenedores de Secciones Expandidas */
+.mp-expanded-section {
+  background: rgba(255, 255, 255, 0.012);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.1rem;
+  margin-top: 0.25rem;
+}
+
+.mp-expanded-section--freeze {
+  border-color: rgba(79, 195, 247, 0.25);
+  box-shadow: 0 8px 24px rgba(13, 202, 240, 0.05);
+}
+
+.mp-expanded-section--delete {
+  border-color: rgba(230, 57, 70, 0.25);
+  box-shadow: 0 8px 24px rgba(230, 57, 70, 0.05);
+}
+
+/* Animación de Despliegue Suave */
+.mp-slide-down {
+  animation: mpSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes mpSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Listas Informativas Premium con Iconos */
+.mp-info-list {
+  list-style: none;
+  padding-left: 0 !important;
+  margin: 0.65rem 0 0 0 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.mp-info-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.mp-info-list li i {
+  font-size: 0.76rem;
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+  width: 14px;
+  text-align: center;
+}
+
+/* Colores Dinámicos de los Iconos de Lista */
+.mp-expanded-section--freeze .mp-info-list li i.fa-ban { color: #ff6b6b; }
+.mp-expanded-section--freeze .mp-info-list li i.fa-history { color: #ffca28; }
+.mp-expanded-section--freeze .mp-info-list li i.fa-sync-alt { color: #4fc3f7; }
+.mp-expanded-section--freeze .mp-info-list li i.fa-shield-alt { color: #81c784; }
+.mp-expanded-section--freeze .mp-info-list li i.fa-bolt { color: #ffb74d; }
+
+.mp-expanded-section--delete .mp-info-list li i.fa-exclamation-triangle { color: #ff5252; }
+.mp-expanded-section--delete .mp-info-list li i.fa-hand-holding-usd { color: #ffca28; }
+.mp-expanded-section--delete .mp-info-list li i.fa-handshake { color: #81c784; }
+
+/* Fila de Botones de Confirmación y Cancelación */
+.mp-btn-row {
+  display: flex;
+  gap: 0.55rem;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.mp-btn-cancel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+  height: 40px;
+}
+
+.mp-btn-cancel:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.mp-expanded-section .mp-btn-freeze,
+.mp-expanded-section .mp-btn-delete {
+  flex: 1.4;
+  margin-top: 0 !important;
+  height: 40px;
+}
+
+/* ── CUSTOM CONFIRMATION MODAL (GLASSMORPHIC PREMIUM) ── */
+.mp-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 8, 12, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: mpFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.mp-confirm-modal {
+  background: rgba(22, 22, 30, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  overflow: hidden;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  animation: mpScaleUp 0.33s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.mp-confirm-modal--freeze {
+  border-top: 4px solid #4fc3f7;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.85), 0 0 30px rgba(79, 195, 247, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.mp-confirm-modal--delete {
+  border-top: 4px solid #ff5252;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.85), 0 0 30px rgba(255, 82, 82, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.mp-confirm-modal-header {
+  padding: 1.75rem 1.75rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mp-confirm-modal-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.mp-confirm-modal--freeze .mp-confirm-modal-icon {
+  background: rgba(79, 195, 247, 0.1);
+  border: 1px solid rgba(79, 195, 247, 0.25);
+  color: #4fc3f7;
+}
+
+.mp-confirm-modal--delete .mp-confirm-modal-icon {
+  background: rgba(255, 82, 82, 0.1);
+  border: 1px solid rgba(255, 82, 82, 0.25);
+  color: #ff5252;
+}
+
+.mp-confirm-modal-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f0f0f5;
+  letter-spacing: -0.3px;
+}
+
+.mp-confirm-modal-body {
+  padding: 0 1.75rem 1.5rem;
+}
+
+.mp-confirm-modal-body p {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #aaaabb;
+}
+
+.mp-confirm-modal-footer {
+  padding: 1.25rem 1.75rem 1.75rem;
+  background: rgba(14, 14, 20, 0.4);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  gap: 0.75rem;
+}
+
+.mp-confirm-btn-cancel {
+  flex: 1;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  color: #a0a0b0;
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mp-confirm-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.mp-confirm-btn-action {
+  flex: 1.3;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mp-confirm-btn-action--freeze {
+  background: linear-gradient(135deg, #0ea5e9, #4fc3f7);
+  box-shadow: 0 4px 15px rgba(14, 165, 233, 0.25);
+}
+
+.mp-confirm-btn-action--freeze:hover {
+  background: linear-gradient(135deg, #0284c7, #0ea5e9);
+  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.35);
+  transform: translateY(-1px);
+}
+
+.mp-confirm-btn-action--delete {
+  background: linear-gradient(135deg, #d32f2f, #ff5252);
+  box-shadow: 0 4px 15px rgba(211, 47, 47, 0.25);
+}
+
+.mp-confirm-btn-action--delete:hover {
+  background: linear-gradient(135deg, #b71c1c, #d32f2f);
+  box-shadow: 0 6px 20px rgba(211, 47, 47, 0.35);
+  transform: translateY(-1px);
+}
+
+.mp-confirm-btn-action:active,
+.mp-confirm-btn-cancel:active {
+  transform: translateY(1px);
+}
+
+/* Modifiers */
+.mp-confirm-modal--success {
+  border-top: 4px solid #2ecc71;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.85), 0 0 30px rgba(46, 204, 113, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.mp-confirm-modal--error {
+  border-top: 4px solid #ff5252;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.85), 0 0 30px rgba(255, 82, 82, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.mp-confirm-modal--info {
+  border-top: 4px solid #00c6ff;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 198, 255, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.mp-confirm-modal--success .mp-confirm-modal-icon {
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid rgba(46, 204, 113, 0.25);
+  color: #2ecc71;
+}
+
+.mp-confirm-modal--error .mp-confirm-modal-icon {
+  background: rgba(255, 82, 82, 0.1);
+  border: 1px solid rgba(255, 82, 82, 0.25);
+  color: #ff5252;
+}
+
+.mp-confirm-modal--info .mp-confirm-modal-icon {
+  background: rgba(0, 198, 255, 0.1);
+  border: 1px solid rgba(0, 198, 255, 0.25);
+  color: #00c6ff;
+}
+
+.mp-confirm-btn-action--success {
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  box-shadow: 0 4px 15px rgba(46, 204, 113, 0.25);
+}
+
+.mp-confirm-btn-action--success:hover {
+  background: linear-gradient(135deg, #1e8449, #27ae60);
+  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.35);
+  transform: translateY(-1px);
+}
+
+.mp-confirm-btn-action--error {
+  background: linear-gradient(135deg, #c0392b, #e74c3c);
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.25);
+}
+
+.mp-confirm-btn-action--error:hover {
+  background: linear-gradient(135deg, #962d22, #c0392b);
+  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.35);
+  transform: translateY(-1px);
+}
+
+.mp-confirm-btn-action--info {
+  background: linear-gradient(135deg, #0072ff, #00c6ff);
+  box-shadow: 0 4px 15px rgba(0, 198, 255, 0.25);
+}
+
+.mp-confirm-btn-action--info:hover {
+  background: linear-gradient(135deg, #0052d4, #0072ff);
+  box-shadow: 0 6px 20px rgba(0, 198, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+@keyframes mpFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes mpScaleUp {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+

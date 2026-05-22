@@ -406,7 +406,14 @@ export default function UserPanel() {
                     <div className="card bg-black border-danger shadow-lg p-4 p-md-5 text-center">
                         <i className="fas fa-exclamation-triangle text-danger fs-1 mb-3"></i>
                         <h2 className="text-white fw-bold mb-3" style={{fontFamily: 'var(--font-heading)'}}>MEMBRESÍA VENCIDA</h2>
-                        <p className="text-secondary mb-4">Tu acceso a clases y reservas ha sido suspendido. Por favor, regulariza tu pago para volver a la manada.</p>
+                        <p className="text-secondary mb-4">
+                          Tu acceso a clases y reservas ha sido suspendido. Por favor, regulariza tu pago para volver a la manada.
+                          {finanzas?.recargo > 0 && (
+                            <span className="d-block mt-2 text-danger fw-bold">
+                              ⚠️ Se ha aplicado un recargo por pago tardío de ${finanzas.recargo} MXN.
+                            </span>
+                          )}
+                        </p>
                         
                         <div className="row g-3 justify-content-center">
                             {finanzas?.configuracionBox?.aceptarPagosEnLinea !== false && (
@@ -442,10 +449,17 @@ export default function UserPanel() {
 
           {/* 👇 GRACIA ALERT 👇 */}
           {finanzas?.suscripcion?.estatus === 'Gracia' && (
-            <div className="alert bg-warning text-dark border-warning mb-4 shadow-sm fw-bold animate__animated animate__fadeInDown">
-                <i className="fas fa-clock me-2"></i> 
-                Tuvimos un problema con tu último pago o te encuentras en tus días de gracia. Tu acceso será bloqueado pronto si no lo regularizas. 
-                <button onClick={handlePagarEnLinea} className="btn btn-sm btn-dark ms-3 fw-bold text-warning rounded-pill">Pagar Ahora</button>
+            <div className="alert bg-warning text-dark border-warning mb-4 shadow-sm fw-bold animate__animated animate__fadeInDown d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                  <i className="fas fa-clock me-2"></i> 
+                  Tuvimos un problema con tu último pago o te encuentras en tus días de gracia. Tu acceso será bloqueado pronto si no lo regularizas. 
+                  {finanzas?.configuracionBox?.recargoMontoFijo > 0 && (
+                    <span className="d-block mt-1 text-dark" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                      💡 Evita pagar un recargo de ${finanzas.configuracionBox.recargoMontoFijo} MXN realizando tu pago en línea a tiempo.
+                    </span>
+                  )}
+                </div>
+                <button onClick={handlePagarEnLinea} className="btn btn-sm btn-dark fw-bold text-warning rounded-pill">Pagar Ahora</button>
             </div>
           )}
 

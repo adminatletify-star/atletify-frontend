@@ -175,6 +175,19 @@ export default function DetallePlanUser() {
       return;
     }
 
+    if (sub?.metodoPago === 'En Línea' && (metodoPago === 'Recepción' || metodoPago === 'Transferencia')) {
+      const isOverdueOrGrace = sub?.estatus === 'Vencida' || sub?.estatus === 'Gracia' || (principal?.diasRestantes ?? 0) < 0;
+      if (isOverdueOrGrace) {
+        const recargoMonto = data?.configuracionBox?.recargoMontoFijo || 50;
+        const confirmacion = await window.wpConfirm(
+          `⚠️ ¡Atención! Si dejas de pagar de forma automática "En Línea", perderás tus días de gracia/prórroga y se te aplicará un recargo por pago tardío de $${recargoMonto} MXN de forma inmediata.\n\n¿Estás seguro de que deseas continuar con el cambio?`
+        );
+        if (!confirmacion) {
+          return;
+        }
+      }
+    }
+
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE}/usuarios/suscripcion/${sub.idSuscripcion}/cambiar-facturacion`, {

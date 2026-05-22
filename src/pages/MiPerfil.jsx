@@ -36,13 +36,53 @@ export default function MiPerfil() {
     tipoDeSangre: '', tieneExperiencia: false, deporteExperiencia: '',
     tieneDiscapacidad: '', genero: '', apodo: '', estadoDelDia: '',
     nivelGamer: 'Cachorro', coachFavorito: '', movimientoFavorito: '',
-    movimientoOdiado: '', objetivo: '', esDeConfianza: false, deudaTienda: 0
+    movimientoOdiado: '', objetivo: '', esDeConfianza: false, deudaTienda: 0,
+    estatus: 'Activo'
   });
 
   const [passForm, setPassForm] = useState({
     contrasenaActual: '', nuevaContrasena: '', confirmarContrasena: ''
   });
   const reglasPassword = usePasswordStrength(passForm.nuevaContrasena);
+
+  const [freezePassword, setFreezePassword] = useState('');
+  const [freezing, setFreezing] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [unfreezePassword, setUnfreezePassword] = useState('');
+  const [unfreezing, setUnfreezing] = useState(false);
+  const [seccionActiva, setSeccionActiva] = useState(null); // 'congelar' | 'eliminar' | null
+
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'default',
+    isAlertOnly: false,
+    onConfirm: null
+  });
+
+  function triggerConfirm({ title, message, type, onConfirm }) {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      type,
+      isAlertOnly: false,
+      onConfirm
+    });
+  }
+
+  function triggerAlert({ title, message, type, onConfirm }) {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      type: type || 'info',
+      isAlertOnly: true,
+      onConfirm: onConfirm || null
+    });
+  }
 
   const [ejerciciosOlimpicos, setEjerciciosOlimpicos] = useState([]);
   const [formMarca, setFormMarca] = useState({ idEjercicio: '', valor: '', unidad: 'lbs' });
@@ -110,11 +150,19 @@ export default function MiPerfil() {
           movimientoOdiado: data.MovimientoOdiado || data.movimientoOdiado || '',
           objetivo: data.Objetivo || data.objetivo || '',
           esDeConfianza: data.EsDeConfianza || data.esDeConfianza || false,
-          deudaTienda: data.DeudaTienda || data.deudaTienda || 0
+          deudaTienda: data.DeudaTienda || data.deudaTienda || 0,
+          estatus: data.Estatus || data.estatus || 'Activo'
         };
         setRachaVisible(data.RachaActual || data.rachaActual || 0);
         setForm(datosCargados);
         calcularProgreso(datosCargados);
+        
+        // Sync local storage
+        const current = JSON.parse(localStorage.getItem('usuario'));
+        if (current) {
+          current.estatus = data.Estatus || data.estatus || 'Activo';
+          localStorage.setItem('usuario', JSON.stringify(current));
+        }
       }
     } catch (error) { console.error('Error:', error); }
     finally { setLoading(false); }
@@ -167,15 +215,32 @@ export default function MiPerfil() {
         if (current) { current.foto = base64Foto; localStorage.setItem('usuario', JSON.stringify(current)); }
         window.location.reload();
       } else {
-        alert('Hubo un error al guardar la foto en la base de datos.');
+        triggerAlert({
+          title: 'Error de Foto',
+          message: 'Hubo un error al guardar la foto en la base de datos.',
+          type: 'error'
+        });
       }
-    } catch { alert('Error de conexión al guardar la foto.'); }
+    } catch (err) {
+      triggerAlert({
+        title: 'Error de Conexión',
+        message: 'Error de conexión al guardar la foto.',
+        type: 'error'
+      });
+    }
   };
 
   const handleSubirFoto = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { alert('La imagen es muy pesada. El tamaño máximo es 2MB.'); return; }
+    if (file.size > 2 * 1024 * 1024) {
+      triggerAlert({
+        title: 'Archivo Muy Grande',
+        message: 'La imagen es muy pesada. El tamaño máximo es 2MB.',
+        type: 'error'
+      });
+      return;
+    }
     setImageToCrop(URL.createObjectURL(file));
     e.target.value = '';
   };
@@ -192,19 +257,38 @@ export default function MiPerfil() {
         method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
       });
       if (res.ok) {
-        alert('¡Player Card actualizada con éxito! 🎮🐺');
         calcularProgreso(form);
         const current = JSON.parse(localStorage.getItem('usuario'));
-        current.nombre = form.nombre;
-        current.apodo = form.apodo;
-        current.estadoDelDia = form.estadoDelDia;
-        current.categoriaBase = form.categoriaBase;
-        current.nivelGamer = form.nivelGamer;
-        if (form.foto) current.foto = form.foto;
-        localStorage.setItem('usuario', JSON.stringify(current));
-        window.location.reload();
-      } else { alert('Hubo un error al guardar los datos.'); }
-    } catch { alert('Error de conexión.'); }
+        if (current) {
+          current.nombre = form.nombre;
+          current.apodo = form.apodo;
+          current.estadoDelDia = form.estadoDelDia;
+          current.categoriaBase = form.categoriaBase;
+          current.nivelGamer = form.nivelGamer;
+          current.estatus = form.estatus;
+          if (form.foto) current.foto = form.foto;
+          localStorage.setItem('usuario', JSON.stringify(current));
+        }
+        triggerAlert({
+          title: '¡Actualizado! 🎮🐺',
+          message: '¡Player Card actualizada con éxito!',
+          type: 'success',
+          onConfirm: () => window.location.reload()
+        });
+      } else {
+        triggerAlert({
+          title: 'Error de Guardado',
+          message: 'Hubo un error al guardar los datos.',
+          type: 'error'
+        });
+      }
+    } catch (err) {
+      triggerAlert({
+        title: 'Error de Conexión',
+        message: 'Error de conexión al guardar los datos.',
+        type: 'error'
+      });
+    }
   }
 
   async function handleGuardarPR(e) {
@@ -222,31 +306,245 @@ export default function MiPerfil() {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
       });
       if (res.ok) {
-        alert('¡PR registrado con éxito! 🔥');
+        triggerAlert({
+          title: '¡PR Registrado! 🔥',
+          message: '¡PR registrado con éxito!',
+          type: 'success'
+        });
         setFormMarca({ idEjercicio: '', valor: '', unidad: 'lbs' });
         cargarDatosPRs(JSON.parse(localStorage.getItem('box')).idBox, userAuth.id || userAuth.idUsuario);
       }
-    } catch { alert('Error al guardar PR'); }
-    finally { setGuardandoPR(false); }
+    } catch (err) {
+      triggerAlert({
+        title: 'Error al Guardar',
+        message: 'Error al guardar el PR.',
+        type: 'error'
+      });
+    } finally {
+      setGuardandoPR(false);
+    }
   }
 
   async function handleCambiarContrasena(e) {
     e.preventDefault();
-    if (passForm.nuevaContrasena !== passForm.confirmarContrasena) { alert('Las contraseñas no coinciden.'); return; }
-    if (passForm.nuevaContrasena.length < 8) { alert('Mínimo 8 caracteres.'); return; }
+    if (passForm.nuevaContrasena !== passForm.confirmarContrasena) {
+      triggerAlert({
+        title: 'Contraseñas No Coinciden',
+        message: 'Las contraseñas no coinciden.',
+        type: 'error'
+      });
+      return;
+    }
+    if (passForm.nuevaContrasena.length < 8) {
+      triggerAlert({
+        title: 'Contraseña Muy Corta',
+        message: 'Mínimo 8 caracteres.',
+        type: 'error'
+      });
+      return;
+    }
     try {
       const res = await fetch(`${USUARIOS_ENDPOINT}/${userAuth.id || userAuth.idUsuario}/password`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contrasenaActual: passForm.contrasenaActual, nuevaContrasena: passForm.nuevaContrasena })
       });
       if (res.ok) {
-        alert('¡Contraseña actualizada!');
+        triggerAlert({
+          title: '¡Actualizado!',
+          message: '¡Contraseña actualizada con éxito!',
+          type: 'success'
+        });
         setPassForm({ contrasenaActual: '', nuevaContrasena: '', confirmarContrasena: '' });
       } else {
         const err = await res.json();
-        alert(err.mensaje || 'Error al cambiar la contraseña.');
+        triggerAlert({
+          title: 'Error de Actualización',
+          message: err.mensaje || 'Error al cambiar la contraseña.',
+          type: 'error'
+        });
       }
-    } catch { alert('Error de conexión.'); }
+    } catch (err) {
+      triggerAlert({
+        title: 'Error de Conexión',
+        message: 'Error de conexión al cambiar la contraseña.',
+        type: 'error'
+      });
+    }
+  }
+
+  async function ejecutarCongelarCuenta() {
+    setFreezing(true);
+    try {
+      const res = await fetch(`${USUARIOS_ENDPOINT}/${userAuth.id || userAuth.idUsuario}/dar-de-baja-temporal`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ contrasenaConfirmacion: freezePassword })
+      });
+      if (res.ok) {
+        const updatedUser = await res.json();
+        const current = JSON.parse(localStorage.getItem('usuario'));
+        if (current) {
+          current.estatus = 'TemporalmenteInactivo';
+          localStorage.setItem('usuario', JSON.stringify(current));
+        }
+        setFreezePassword('');
+        triggerAlert({
+          title: '¡Cuenta Congelada! ❄️',
+          message: 'Tu cuenta ha sido congelada con éxito. La renovación automática de tu membresía se ha pausado y tus reservas activas han sido canceladas.',
+          type: 'success'
+        });
+        fetchExpediente(userAuth.id || userAuth.idUsuario);
+      } else {
+        const err = await res.json();
+        triggerAlert({
+          title: 'Error de Solicitud',
+          message: err.mensaje || 'Hubo un error al congelar la cuenta. Por favor verifica tus credenciales.',
+          type: 'error'
+        });
+      }
+    } catch (err) {
+      triggerAlert({
+        title: 'Error de Conexión',
+        message: 'No se pudo establecer comunicación con el servidor. Verifica tu conexión a internet.',
+        type: 'error'
+      });
+    } finally {
+      setFreezing(false);
+    }
+  }
+
+  function handleCongelarCuenta(e) {
+    e.preventDefault();
+    if (!freezePassword.trim()) {
+      triggerAlert({
+        title: 'Contraseña Requerida',
+        message: 'Por favor, ingresa tu contraseña para autorizar la congelación de tu cuenta.',
+        type: 'info'
+      });
+      return;
+    }
+    triggerConfirm({
+      title: '¿Confirmar Baja Temporal?',
+      message: '¿Estás seguro de que deseas congelar tu cuenta temporalmente? Tus reservas y la renovación automática de tu membresía se pausarán de inmediato.',
+      type: 'freeze',
+      onConfirm: ejecutarCongelarCuenta
+    });
+  }
+
+  async function handleDescongelarCuenta(e) {
+    e.preventDefault();
+    if (!unfreezePassword.trim()) {
+      triggerAlert({
+        title: 'Contraseña Requerida',
+        message: 'Por favor, ingresa tu contraseña para descongelar tu cuenta.',
+        type: 'info'
+      });
+      return;
+    }
+    setUnfreezing(true);
+    try {
+      const res = await fetch(`${USUARIOS_ENDPOINT}/${userAuth.id || userAuth.idUsuario}/descongelar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ contrasenaConfirmacion: unfreezePassword })
+      });
+      if (res.ok) {
+        const updatedUser = await res.json();
+        const current = JSON.parse(localStorage.getItem('usuario'));
+        if (current) {
+          current.estatus = 'Activo';
+          localStorage.setItem('usuario', JSON.stringify(current));
+        }
+        setUnfreezePassword('');
+        triggerAlert({
+          title: '¡Bienvenido de Vuelta! 🐺🔥',
+          message: 'Tu cuenta ha sido descongelada y reactivada con éxito. ¡Ya puedes disfrutar de todos los servicios del Box!',
+          type: 'success'
+        });
+        fetchExpediente(userAuth.id || userAuth.idUsuario);
+      } else {
+        const err = await res.json();
+        triggerAlert({
+          title: 'Error de Reactivación',
+          message: err.mensaje || 'Error al descongelar la cuenta. Por favor verifica tu contraseña.',
+          type: 'error'
+        });
+      }
+    } catch (err) {
+      triggerAlert({
+        title: 'Error de Conexión',
+        message: 'No se pudo conectar con el servidor. Por favor verifica tu conexión a internet.',
+        type: 'error'
+      });
+    } finally {
+      setUnfreezing(false);
+    }
+  }
+
+  async function ejecutarEliminarCuenta() {
+    setDeleting(true);
+    try {
+      const res = await fetch(`${USUARIOS_ENDPOINT}/${userAuth.id || userAuth.idUsuario}/dar-de-baja-permanente`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ contrasenaConfirmacion: deletePassword })
+      });
+      if (res.ok) {
+        triggerAlert({
+          title: 'Cuenta Eliminada 🐺',
+          message: 'Tu cuenta ha sido eliminada permanentemente del sistema de manera exitosa. Agradecemos enormemente tu tiempo en nuestra manada.',
+          type: 'success',
+          onConfirm: () => {
+            localStorage.removeItem('usuario');
+            localStorage.removeItem('token');
+            localStorage.removeItem('box');
+            navigate('/login');
+          }
+        });
+      } else {
+        const err = await res.json();
+        triggerAlert({
+          title: 'Error de Eliminación',
+          message: err.mensaje || 'Hubo un error al eliminar tu cuenta. Por favor verifica tu contraseña.',
+          type: 'error'
+        });
+      }
+    } catch (err) {
+      triggerAlert({
+        title: 'Error de Conexión',
+        message: 'No se pudo establecer comunicación con el servidor. Verifica tu conexión a internet.',
+        type: 'error'
+      });
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function handleEliminarCuenta(e) {
+    e.preventDefault();
+    if (!deletePassword.trim()) {
+      triggerAlert({
+        title: 'Contraseña Requerida',
+        message: 'Por favor, ingresa tu contraseña para confirmar esta acción irreversible.',
+        type: 'error'
+      });
+      return;
+    }
+    triggerConfirm({
+      title: '🚨 ADVERTENCIA CRÍTICA',
+      message: '¿Estás completamente seguro de que deseas eliminar permanentemente tu cuenta? Todos tus datos, scores y marcas se borrarán en cascada. Esta acción es irreversible.',
+      type: 'delete',
+      onConfirm: ejecutarEliminarCuenta
+    });
   }
 
   if (loading) return (
@@ -268,6 +566,18 @@ export default function MiPerfil() {
 
         <div className="mp-content">
 
+          {form.estatus === 'TemporalmenteInactivo' && (
+            <div className="mp-frozen-banner">
+              <i className="fas fa-snowflake" />
+              <div className="mp-frozen-banner-content">
+                <h4 className="mp-frozen-banner-title">Cuenta Congelada</h4>
+                <p className="mp-frozen-banner-text">
+                  Tu cuenta está inactiva temporalmente. Todos tus datos y marcas están a salvo, pero no podrás reservar clases, registrar PRs o modificar tu información hasta que la descongeles. La renovación automática de tu membresía ha sido desactivada. Reactívala usando tu contraseña en el panel lateral.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* HERO */}
           <div className="mp-hero">
             <div className="mp-hero-body">
@@ -278,8 +588,8 @@ export default function MiPerfil() {
                     : (form.nombre ? form.nombre.charAt(0).toUpperCase() : 'W')}
                   <span className="mp-hero-level-badge">LVL: {form.nivelGamer}</span>
                 </div>
-                <input type="file" id="fotoUpload" accept="image/*" style={{ display: 'none' }} onChange={handleSubirFoto} />
-                <label htmlFor="fotoUpload" className="mp-foto-btn">
+                <input type="file" id="fotoUpload" accept="image/*" style={{ display: 'none' }} onChange={handleSubirFoto} disabled={form.estatus === 'TemporalmenteInactivo'} />
+                <label htmlFor="fotoUpload" className={`mp-foto-btn ${form.estatus === 'TemporalmenteInactivo' ? 'mp-foto-btn-frozen' : ''}`}>
                   <i className="fas fa-camera" /> Cambiar
                 </label>
               </div>
@@ -313,7 +623,7 @@ export default function MiPerfil() {
           <div className="mp-layout">
 
             {/* ── FORMULARIO PRINCIPAL ── */}
-            <div className="mp-card">
+            <div className={`mp-card ${form.estatus === 'TemporalmenteInactivo' ? 'mp-form-frozen' : ''}`}>
               <div className="mp-card-body-lg">
                 <form onSubmit={handleGuardarExpediente}>
 
@@ -520,7 +830,7 @@ export default function MiPerfil() {
                         <BotonSeguro
                           type="button"
                           onClick={handleGuardarPR}
-                          disabled={!formMarca.idEjercicio || !formMarca.valor || guardandoPR}
+                          disabled={!formMarca.idEjercicio || !formMarca.valor || guardandoPR || form.estatus === 'TemporalmenteInactivo'}
                           className="mp-btn-pr"
                           textoProcesando={<i className="fas fa-spinner fa-spin" />}
                         >
@@ -590,6 +900,7 @@ export default function MiPerfil() {
                     type="submit"
                     className="mp-btn-save"
                     textoProcesando={<><i className="fas fa-spinner fa-spin" /> Guardando...</>}
+                    disabled={form.estatus === 'TemporalmenteInactivo'}
                   >
                     <i className="fas fa-save" /> Guardar Player Card
                   </BotonSeguro>
@@ -597,49 +908,230 @@ export default function MiPerfil() {
               </div>
             </div>
 
-            {/* ── SIDEBAR SEGURIDAD ── */}
+            {/* ── SIDEBAR SEGURIDAD & ACCIONES DE CUENTA ── */}
             <div className="mp-card mp-sidebar-sticky">
               <div className="mp-card-body">
-                <h5 className="mp-section-title">
-                  <i className="fas fa-lock" /> Seguridad
-                </h5>
-                <form onSubmit={handleCambiarContrasena}>
-                  <div className="mb-3">
-                    <label className="mp-label">Contraseña Actual</label>
-                    <input type="password" className="mp-input" required value={passForm.contrasenaActual} onChange={e => setPassForm({ ...passForm, contrasenaActual: e.target.value })} />
-                  </div>
-                  <div className="mb-3">
-                    <label className="mp-label">Nueva Contraseña</label>
-                    <input type="password" className="mp-input" required value={passForm.nuevaContrasena} onChange={e => setPassForm({ ...passForm, nuevaContrasena: e.target.value })} />
-                  </div>
-                  <div className="mb-3">
-                    <label className="mp-label">Confirmar Contraseña</label>
-                    <input type="password" className="mp-input" required value={passForm.confirmarContrasena} onChange={e => setPassForm({ ...passForm, confirmarContrasena: e.target.value })} />
-                  </div>
-
-                  {(passForm.nuevaContrasena.length > 0 || passForm.confirmarContrasena.length > 0) && (
+                {form.estatus === 'TemporalmenteInactivo' ? (
+                  /* Formulario Descongelar Cuenta */
+                  <form onSubmit={handleDescongelarCuenta}>
+                    <h5 className="mp-section-title" style={{ color: '#4fc3f7' }}>
+                      <i className="fas fa-snowflake" /> Reactivar Cuenta
+                    </h5>
+                    <div className="mp-sidebar-alert mp-sidebar-alert--info">
+                      Tu cuenta está temporalmente congelada. Ingresa tu contraseña para reactivar tu perfil y restaurar todos tus accesos y reservas al instante.
+                    </div>
                     <div className="mb-3">
-                      <PasswordRulesHint
-                        reglas={reglasPassword}
-                        password={passForm.nuevaContrasena}
-                        passwordConfirm={passForm.confirmarContrasena}
+                      <label className="mp-label">Contraseña de Confirmación</label>
+                      <input
+                        type="password"
+                        className="mp-input"
+                        required
+                        value={unfreezePassword}
+                        onChange={e => setUnfreezePassword(e.target.value)}
+                        placeholder="Ingresa tu contraseña"
                       />
                     </div>
-                  )}
+                    <BotonSeguro
+                      type="submit"
+                      className="mp-btn-unfreeze"
+                      textoProcesando={<><i className="fas fa-spinner fa-spin" /> Reactivando...</>}
+                      disabled={unfreezing || !unfreezePassword.trim()}
+                    >
+                      <i className="fas fa-bolt" /> Descongelar Cuenta
+                    </BotonSeguro>
+                  </form>
+                ) : (
+                  /* Formularios Activos: Cambiar Contraseña, Congelar y Eliminar */
+                  <>
+                    {/* Cambiar Contraseña */}
+                    <form onSubmit={handleCambiarContrasena}>
+                      <h5 className="mp-section-title">
+                        <i className="fas fa-lock" /> Seguridad
+                      </h5>
+                      <div className="mb-3">
+                        <label className="mp-label">Contraseña Actual</label>
+                        <input type="password" className="mp-input" required value={passForm.contrasenaActual} onChange={e => setPassForm({ ...passForm, contrasenaActual: e.target.value })} />
+                      </div>
+                      <div className="mb-3">
+                        <label className="mp-label">Nueva Contraseña</label>
+                        <input type="password" className="mp-input" required value={passForm.nuevaContrasena} onChange={e => setPassForm({ ...passForm, nuevaContrasena: e.target.value })} />
+                      </div>
+                      <div className="mb-3">
+                        <label className="mp-label">Confirmar Contraseña</label>
+                        <input type="password" className="mp-input" required value={passForm.confirmarContrasena} onChange={e => setPassForm({ ...passForm, confirmarContrasena: e.target.value })} />
+                      </div>
 
-                  <BotonSeguro
-                    type="submit"
-                    className="mp-btn-security"
-                    textoProcesando={<><i className="fas fa-spinner fa-spin" /> Actualizando...</>}
-                    disabled={
-                      !reglasPassword.esValida ||
-                      passForm.nuevaContrasena !== passForm.confirmarContrasena ||
-                      passForm.contrasenaActual.trim().length === 0
-                    }
-                  >
-                    <i className="fas fa-key" /> Actualizar Clave
-                  </BotonSeguro>
-                </form>
+                      {(passForm.nuevaContrasena.length > 0 || passForm.confirmarContrasena.length > 0) && (
+                        <div className="mb-3">
+                          <PasswordRulesHint
+                            reglas={reglasPassword}
+                            password={passForm.nuevaContrasena}
+                            passwordConfirm={passForm.confirmarContrasena}
+                          />
+                        </div>
+                      )}
+
+                      <BotonSeguro
+                        type="submit"
+                        className="mp-btn-security"
+                        textoProcesando={<><i className="fas fa-spinner fa-spin" /> Actualizando...</>}
+                        disabled={
+                          !reglasPassword.esValida ||
+                          passForm.nuevaContrasena !== passForm.confirmarContrasena ||
+                          passForm.contrasenaActual.trim().length === 0
+                        }
+                      >
+                        <i className="fas fa-key" /> Actualizar Clave
+                      </BotonSeguro>
+                    </form>
+
+                    <div className="mp-sidebar-divider" />
+
+                    {/* Acciones de Baja de Cuenta (Colapsables/Dinámicas) */}
+                    {seccionActiva === null && (
+                      <div className="mp-deactivation-triggers">
+                        <button
+                          type="button"
+                          className="mp-btn-trigger-freeze"
+                          onClick={() => setSeccionActiva('congelar')}
+                        >
+                          <i className="fas fa-snowflake" /> Baja Temporal (Congelar)
+                        </button>
+                        <button
+                          type="button"
+                          className="mp-btn-trigger-delete"
+                          onClick={() => setSeccionActiva('eliminar')}
+                        >
+                          <i className="fas fa-trash-alt" /> Baja Permanente (Eliminar)
+                        </button>
+                      </div>
+                    )}
+
+                    {seccionActiva === 'congelar' && (
+                      <div className="mp-expanded-section mp-expanded-section--freeze mp-slide-down">
+                        <h5 className="mp-section-title" style={{ color: '#4fc3f7' }}>
+                          <i className="fas fa-snowflake" /> Congelar Cuenta
+                        </h5>
+                        
+                        <div className="mp-sidebar-alert mp-sidebar-alert--info">
+                          <strong>¿Qué sucede al congelar tu cuenta?</strong>
+                          <ul className="mp-info-list">
+                            <li>
+                              <i className="fas fa-ban" />
+                              <span><strong>Bloqueo de Actividad:</strong> No podrás reservar clases, registrar marcas personales (PRs) ni modificar datos de tu Player Card mientras esté congelada.</span>
+                            </li>
+                            <li>
+                              <i className="fas fa-history" />
+                              <span><strong>Uso de Membresía Actual:</strong> Tus días restantes de mensualidad seguirán corriendo hasta su vencimiento. No hay reembolsos ni reposición de días no utilizados.</span>
+                            </li>
+                            <li>
+                              <i className="fas fa-sync-alt" />
+                              <span><strong>Sin Auto-Renovación:</strong> La renovación automática de tu suscripción activa se desactivará de inmediato para evitar cobros automáticos futuros.</span>
+                            </li>
+                            <li>
+                              <i className="fas fa-shield-alt" />
+                              <span><strong>Preservación Total:</strong> Todos tus PRs, historial de asistencia, scores y nivel gamer se mantendrán guardados de forma 100% segura.</span>
+                            </li>
+                            <li>
+                              <i className="fas fa-bolt" />
+                              <span><strong>Reactivación Instantánea:</strong> Podrás reactivar tu perfil e interactuar de nuevo ingresando tu contraseña en cualquier momento.</span>
+                            </li>
+                          </ul>
+                        </div>
+
+                        <form onSubmit={handleCongelarCuenta}>
+                          <div className="mb-3">
+                            <label className="mp-label">Contraseña de Confirmación</label>
+                            <input
+                              type="password"
+                              className="mp-input"
+                              required
+                              value={freezePassword}
+                              onChange={e => setFreezePassword(e.target.value)}
+                              placeholder="Ingresa tu contraseña"
+                            />
+                          </div>
+                          <div className="mp-btn-row">
+                            <button
+                              type="button"
+                              className="mp-btn-cancel"
+                              onClick={() => {
+                                setSeccionActiva(null);
+                                setFreezePassword('');
+                              }}
+                            >
+                              Cancelar
+                            </button>
+                            <BotonSeguro
+                              type="submit"
+                              className="mp-btn-freeze"
+                              textoProcesando={<><i className="fas fa-spinner fa-spin" /> Procesando...</>}
+                              disabled={freezing || !freezePassword.trim()}
+                            >
+                              <i className="fas fa-snowflake" /> Congelar
+                            </BotonSeguro>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+
+                    {seccionActiva === 'eliminar' && (
+                      <div className="mp-expanded-section mp-expanded-section--delete mp-slide-down">
+                        <h5 className="mp-section-title" style={{ color: '#ff6b6b' }}>
+                          <i className="fas fa-trash-alt" /> Eliminar Cuenta
+                        </h5>
+
+                        <div className="mp-sidebar-alert mp-sidebar-alert--danger">
+                          <strong>🚨 ADVERTENCIA CRÍTICA e IRREVERSIBLE</strong>
+                          <ul className="mp-info-list">
+                            <li>
+                              <i className="fas fa-exclamation-triangle" />
+                              <span><strong>Borrado Definitivo:</strong> Tu perfil, fotos, PRs, scores de entrenamientos y nivel gamer se purgarán permanentemente. Esta acción no se puede deshacer.</span>
+                            </li>
+                            <li>
+                              <i className="fas fa-hand-holding-usd" />
+                              <span><strong>Pérdida de Membresía:</strong> Tu membresía activa será cancelada de inmediato de forma definitiva, perdiendo los días que te sobraban sin derecho a reembolsos.</span>
+                            </li>
+                          </ul>
+                        </div>
+
+                        <form onSubmit={handleEliminarCuenta}>
+                          <div className="mb-3">
+                            <label className="mp-label">Contraseña de Confirmación</label>
+                            <input
+                              type="password"
+                              className="mp-input"
+                              required
+                              value={deletePassword}
+                              onChange={e => setDeletePassword(e.target.value)}
+                              placeholder="Ingresa tu contraseña"
+                            />
+                          </div>
+                          <div className="mp-btn-row">
+                            <button
+                              type="button"
+                              className="mp-btn-cancel"
+                              onClick={() => {
+                                setSeccionActiva(null);
+                                setDeletePassword('');
+                              }}
+                            >
+                              Cancelar
+                            </button>
+                            <BotonSeguro
+                              type="submit"
+                              className="mp-btn-delete"
+                              textoProcesando={<><i className="fas fa-spinner fa-spin" /> Eliminando...</>}
+                              disabled={deleting || !deletePassword.trim()}
+                            >
+                              <i className="fas fa-trash-alt" /> Eliminar
+                            </BotonSeguro>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </div>
 
@@ -678,6 +1170,54 @@ export default function MiPerfil() {
           }}
           onCancel={() => setImageToCrop(null)}
         />
+      )}
+
+      {/* CUSTOM PREMIUM CONFIRM MODAL */}
+      {confirmModal.isOpen && (
+        <div 
+          className="mp-confirm-overlay" 
+          onClick={() => !confirmModal.isAlertOnly && setConfirmModal({ ...confirmModal, isOpen: false })}
+        >
+          <div className={`mp-confirm-modal mp-confirm-modal--${confirmModal.type}`} onClick={e => e.stopPropagation()}>
+            <div className="mp-confirm-modal-header">
+              <div className="mp-confirm-modal-icon">
+                {confirmModal.type === 'delete' && <i className="fas fa-exclamation-triangle" />}
+                {confirmModal.type === 'freeze' && <i className="fas fa-snowflake" />}
+                {confirmModal.type === 'success' && <i className="fas fa-check-circle" />}
+                {confirmModal.type === 'error' && <i className="fas fa-times-circle" />}
+                {confirmModal.type !== 'delete' && confirmModal.type !== 'freeze' && confirmModal.type !== 'success' && confirmModal.type !== 'error' && (
+                  <i className="fas fa-info-circle" />
+                )}
+              </div>
+              <h3 className="mp-confirm-modal-title">{confirmModal.title}</h3>
+            </div>
+            <div className="mp-confirm-modal-body">
+              <p>{confirmModal.message}</p>
+            </div>
+            <div className="mp-confirm-modal-footer">
+              {!confirmModal.isAlertOnly && (
+                <button 
+                  type="button" 
+                  className="mp-confirm-btn-cancel" 
+                  onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                >
+                  Cancelar
+                </button>
+              )}
+              <button 
+                type="button" 
+                className={`mp-confirm-btn-action mp-confirm-btn-action--${confirmModal.type}`}
+                style={confirmModal.isAlertOnly ? { flex: 1 } : {}}
+                onClick={() => {
+                  if (confirmModal.onConfirm) confirmModal.onConfirm();
+                  setConfirmModal({ ...confirmModal, isOpen: false });
+                }}
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

@@ -454,7 +454,7 @@ export default function GestionFinanzas() {
       const b = JSON.parse(localStorage.getItem('box'));
       const token = localStorage.getItem('token');
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/precioespecial/calcular/${atletaARenovar.idUsuario}/box/${b.idBox}/plan/${planSeleccionado}`,
+        `${import.meta.env.VITE_API_URL}/api/precioespecial/calcular/${atletaARenovar.idUsuario}/box/${b.idBox}/plan/${planSeleccionado}?metodoPago=Recepción`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       if (res.ok) {
@@ -487,7 +487,8 @@ export default function GestionFinanzas() {
 
   const descuentoPromo = descSeleccionado ? (precioConDescuentoPersonal * (descSeleccionado.porcentaje / 100)) : 0;
   const costoInscripcion = formCobro.cobrarInscripcion ? (parseFloat(formCobro.montoInscripcion) || 0) : 0;
-  const totalACobrar = Math.max(0, (precioConDescuentoPersonal - descuentoPromo) + costoInscripcion);
+  const recargoMonto = calculoSemaforo?.recargo || 0;
+  const totalACobrar = Math.max(0, (precioConDescuentoPersonal - descuentoPromo) + costoInscripcion + recargoMonto);
   const restante = totalACobrar - (parseFloat(formCobro.monto1) || 0);
 
   useEffect(() => {
@@ -1342,6 +1343,12 @@ export default function GestionFinanzas() {
                   <div className="d-flex justify-content-between mb-1">
                     <small style={{ color: 'var(--warning)' }}><i className="fas fa-id-card me-1"></i>Inscripción</small>
                     <small style={{ color: 'var(--warning)', fontWeight: 600 }}>+${costoInscripcion.toFixed(2)}</small>
+                  </div>
+                )}
+                {recargoMonto > 0 && (
+                  <div className="d-flex justify-content-between mb-1">
+                    <small style={{ color: 'var(--danger)' }}><i className="fas fa-exclamation-triangle me-1"></i>Recargo por Pago Tardío</small>
+                    <small style={{ color: 'var(--danger)', fontWeight: 600 }}>+${recargoMonto.toFixed(2)}</small>
                   </div>
                 )}
                 <hr style={{ borderColor: 'rgba(46,204,113,0.3)', margin: '6px 0' }} />
