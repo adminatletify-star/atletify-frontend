@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import { jwtDecode } from "jwt-decode";
 import Mantenimiento from './pages/Mantenimiento';
+import { Analytics } from '@vercel/analytics/react';
 
 // Importaciones de Páginas
 import Home from './pages/Home';
@@ -300,6 +301,7 @@ function MaintenanceGuard({ children }) {
 function App() {
   return (
     <AuthProvider>
+      <Analytics />
       <Router>
         <MaintenanceGuard>
           <CookieBanner />
