@@ -12,6 +12,7 @@
   "dependencies": {
     "@react-three/fiber": "^9.5.0",
     "@reduxjs/toolkit": "^2.11.2",
+    "@vercel/analytics": "^2.0.1",
     "bootstrap": "^5.3.8",
     "core-js": "^3.49.0",
     "flubber": "^0.4.2",

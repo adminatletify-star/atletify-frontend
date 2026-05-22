@@ -134,10 +134,10 @@ export default function Layout() {
             { label: 'Gestión de Clases', href: '/gestion-clases' },
             { label: 'Mensualidades', href: "/gestion-finanzas" },
             { label: 'Finanzas Globales', href: '/finanzas-globales' },
+            { label: 'Anuncios y Campañas', href: '/gestion-anuncios' },
             { label: 'Gestión Competencias', href: '/admin-competencias' },
             { label: 'Historial Competencias', href: '/admin-competencias/historial' },
             { label: 'Beneficios', href: '/wolf-beneficios' },
-
           ]
         },
         {

@@ -189,7 +189,7 @@ export default function GlobalAlertBridge() {
   };
   const iconSymbol = iconByVariant[variant] || 'i';
 
-  return (
+  const portalContent = (
     <>
       {renderToasts()}
       <div className={`wp-alert-overlay wp-alert-overlay-${variant}`} role="dialog" aria-modal="true" aria-label="Notificacion">
@@ -230,4 +230,6 @@ export default function GlobalAlertBridge() {
       </div>
     </>
   );
+
+  return createPortal(portalContent, document.body);
 }

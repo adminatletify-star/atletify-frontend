@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import GlobalAlertBridge from './components/GlobalAlertBridge.jsx';
+import { Analytics } from '@vercel/analytics/react';
 
 // Bootstrap CSS & JS
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -15,5 +16,6 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <GlobalAlertBridge />
     <App />
+    <Analytics />
   </StrictMode>,
 )

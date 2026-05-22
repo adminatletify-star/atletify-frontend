@@ -363,7 +363,7 @@ export default function DetallePlanUser() {
                     <div className="flex-grow-1">
                       <strong className="d-block text-warning mb-1" style={{ fontSize: '0.9rem' }}>Pago en Recepción Pendiente</strong>
                       <p className="mb-2 text-muted text-xs" style={{ lineHeight: '1.4' }}>
-                        Solicitaste cambiar a <strong className="text-white">{pendingPlanName}</strong> con pago en Recepción por <strong className="text-white">${sub.montoPendiente?.toFixed(2)}</strong>.
+                        Solicitaste cambiar a <strong className="text-white">{pendingPlanName}</strong> con pago en Recepción {sub.estatus === 'Vencida' ? '+ atraso ' : ''}por <strong className="text-white">${sub.montoPendiente?.toFixed(2)}</strong>.
                       </p>
                       <div className="d-flex align-items-center justify-content-between bg-black bg-opacity-30 rounded px-3 py-2">
                         <span className="text-muted text-xs"><i className="far fa-clock me-1"></i> Plazo restante:</span>

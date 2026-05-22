@@ -464,6 +464,7 @@ export default function GestionFinanzas() {
           ...prev,
           cobrarInscripcion: calculo.debeInscripcion,
           montoInscripcion: String(calculo.montoInscripcion || 0),
+          monto1: String(calculo.totalConInscripcion || 0),
           _calculo: calculo // Guardamos el cálculo completo para usarlo en el desglose
         }));
       }
@@ -528,7 +529,7 @@ export default function GestionFinanzas() {
           metodoPago1: formCobro.metodo1,
           montoMetodo2: m2 > 0 ? m2 : null,
           metodoPago2: m2 > 0 ? formCobro.metodo2 : null,
-          notas: formCobro.notas,
+          notas: formCobro.notas + (recargoMonto > 0 ? ` (+ Recargo por pago tardío $${recargoMonto.toFixed(2)})` : ''),
           usarSaldoAFavor: false, // En esta vista rápida no usamos saldo, el saldo es desde su Perfil
           cobrarInscripcion: formCobro.cobrarInscripcion,
           idDescuento: formCobro.idDescuento ? parseInt(formCobro.idDescuento) : null,

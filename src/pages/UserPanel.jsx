@@ -6,6 +6,7 @@ import WolfLanyard from '../components/ReactBits/WolfLanyard';
 import BotonSeguro from '../components/BotonSeguro';
 import '../assets/css/user-panel.css';
 import AtletifyLoader from '../components/AtletifyLoader';
+import AnunciosEngine from '../components/AnunciosEngine';
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -398,6 +399,8 @@ export default function UserPanel() {
 
         {/* MAIN CONTENT */}
         <div className="container py-4 mb-5 flex-grow-1">
+          
+          <AnunciosEngine box={box} user={user} />
 
           {/* 👇 BLOQUEO DE MEMBRESÍA VENCIDA 👇 */}
           {finanzas?.suscripcion?.estatus === 'Vencida' && (

@@ -8,7 +8,7 @@
   position: fixed;
   top: 16px;
   right: 16px;
-  z-index: 100000;
+  z-index: 1000000 !important;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -87,7 +87,7 @@
 .wp-alert-overlay {
   position: fixed;
   inset: 0;
-  z-index: 99999;
+  z-index: 999999 !important;
   display: flex;
   align-items: center;
   justify-content: center;
