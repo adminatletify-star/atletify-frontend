@@ -140,111 +140,112 @@ export default function PreguntasFrecuentes() {
   }
 
   if (loading) {
-    return <div className="faq-root faq-loading"><AtletifyLoader /></div>;
+    return <div className="faq-root faq-loading-wrap"><AtletifyLoader /></div>;
   }
 
   return (
     <div className="faq-root">
       <header className="faq-header">
-        <BackButton />
-        <div className="faq-header-text">
-          <h1 className="faq-title">Preguntas Frecuentes</h1>
-          <p className="faq-subtitle">Encuentra respuestas a las dudas más comunes</p>
+        <div className="faq-header-inner">
+          <BackButton />
+          <div className="faq-header-text">
+            <h1 className="faq-title">Preguntas <span>Frecuentes</span></h1>
+            <p className="faq-subtitle">Encuentra respuestas a las dudas más comunes</p>
+          </div>
         </div>
       </header>
 
-      {secciones.length > 0 && (
-        <div className="faq-search">
-          <i className="fas fa-search faq-search-icon"></i>
-          <input
-            type="text"
-            className="faq-search-input"
-            placeholder="Buscar pregunta o tema..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            aria-label="Buscar"
-          />
-          {busqueda && (
-            <button
-              type="button"
-              className="faq-search-clear"
-              onClick={() => setBusqueda('')}
-              aria-label="Limpiar búsqueda"
-            >
-              <i className="fas fa-times"></i>
+      <div className="faq-content">
+        {secciones.length > 0 && (
+          <div className="faq-search-wrap">
+            <i className="fas fa-search faq-search-icon"></i>
+            <input
+              type="text"
+              className="faq-search-input"
+              placeholder="Buscar pregunta o tema..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              aria-label="Buscar"
+            />
+            {busqueda && (
+              <button
+                type="button"
+                className="faq-search-clear"
+                onClick={() => setBusqueda('')}
+                aria-label="Limpiar búsqueda"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            )}
+          </div>
+        )}
+
+        {secciones.length === 0 ? (
+          <div className="faq-empty">
+            <i className="fas fa-circle-question faq-empty-icon"></i>
+            <h2 className="faq-empty-title">Aún no hay preguntas</h2>
+            <p className="faq-empty-text">El administrador de la plataforma todavía no ha publicado preguntas para tu rol. Vuelve más tarde.</p>
+          </div>
+        ) : seccionesFiltradas.length === 0 ? (
+          <div className="faq-empty">
+            <i className="fas fa-search faq-empty-icon"></i>
+            <h2 className="faq-empty-title">Sin resultados</h2>
+            <p className="faq-empty-text">No se encontró ninguna pregunta que coincida con <strong>"{busqueda}"</strong>.</p>
+            <button type="button" className="faq-btn-clear" onClick={() => setBusqueda('')}>
+              <i className="fas fa-times"></i>Limpiar búsqueda
             </button>
-          )}
-        </div>
-      )}
+          </div>
+        ) : (
+          <>
+            <div className="faq-pag-summary">
+              Mostrando <strong>{(pagSec - 1) * PAGE_SIZE + 1}–{Math.min(pagSec * PAGE_SIZE, seccionesFiltradas.length)}</strong> de <strong>{seccionesFiltradas.length}</strong> {seccionesFiltradas.length === 1 ? 'sección' : 'secciones'}
+            </div>
+            <div className="faq-stack">
+              {seccionesPagina.map(s => {
+                const abierta = seccionesAbiertas.has(s.idSeccion);
+                const pagP = pagsPreg[s.idSeccion] || 1;
+                const totalPagP = Math.max(1, Math.ceil(s.preguntas.length / PAGE_SIZE));
+                const preguntasPagina = s.preguntas.slice((pagP - 1) * PAGE_SIZE, pagP * PAGE_SIZE);
+                return (
+                  <section key={s.idSeccion} className={`faq-section ${abierta ? 'faq-section--open' : ''}`}>
+                    <button
+                      type="button"
+                      className="faq-section-header"
+                      onClick={() => toggleSeccion(s.idSeccion)}
+                      aria-expanded={abierta}
+                    >
+                      <div className="faq-section-text">
+                        <h2 className="faq-section-nombre">{s.nombre}</h2>
+                        {s.descripcion && <p className="faq-section-desc">{s.descripcion}</p>}
+                      </div>
+                      <span className="faq-section-count">
+                        {s.preguntas.length} {s.preguntas.length === 1 ? 'pregunta' : 'preguntas'}
+                      </span>
+                      <i className={`fas fa-chevron-down faq-section-chevron ${abierta ? 'faq-section-chevron--open' : ''}`}></i>
+                    </button>
 
-      {secciones.length === 0 ? (
-        <div className="faq-empty">
-          <i className="fas fa-circle-question faq-empty-icon"></i>
-          <h2 className="faq-empty-title">Aún no hay preguntas</h2>
-          <p className="faq-empty-text">El administrador de la plataforma todavía no ha publicado preguntas para tu rol. Vuelve más tarde.</p>
-        </div>
-      ) : seccionesFiltradas.length === 0 ? (
-        <div className="faq-empty">
-          <i className="fas fa-search faq-empty-icon"></i>
-          <h2 className="faq-empty-title">Sin resultados</h2>
-          <p className="faq-empty-text">No se encontró ninguna pregunta que coincida con <strong>"{busqueda}"</strong>.</p>
-          <button type="button" className="faq-btn-clear" onClick={() => setBusqueda('')}>
-            <i className="fas fa-times me-1"></i>Limpiar búsqueda
-          </button>
-        </div>
-      ) : (
-        <>
-        <div className="faq-pag-summary">
-          Mostrando <strong>{(pagSec - 1) * PAGE_SIZE + 1}–{Math.min(pagSec * PAGE_SIZE, seccionesFiltradas.length)}</strong> de <strong>{seccionesFiltradas.length}</strong> {seccionesFiltradas.length === 1 ? 'sección' : 'secciones'}
-        </div>
-        <div className="faq-stack">
-          {seccionesPagina.map(s => {
-            const abierta = seccionesAbiertas.has(s.idSeccion);
-            const pagP = pagsPreg[s.idSeccion] || 1;
-            const totalPagP = Math.max(1, Math.ceil(s.preguntas.length / PAGE_SIZE));
-            const preguntasPagina = s.preguntas.slice((pagP - 1) * PAGE_SIZE, pagP * PAGE_SIZE);
-            return (
-              <section key={s.idSeccion} className={`faq-section ${abierta ? 'faq-section--open' : ''}`}>
-                <button
-                  type="button"
-                  className="faq-section-header"
-                  onClick={() => toggleSeccion(s.idSeccion)}
-                  aria-expanded={abierta}
-                >
-                  <span className="faq-section-icon">
-                    <i className={`fas ${s.icono || 'fa-folder'}`}></i>
-                  </span>
-                  <div className="faq-section-text">
-                    <h2 className="faq-section-nombre">{s.nombre}</h2>
-                    {s.descripcion && <p className="faq-section-desc">{s.descripcion}</p>}
-                  </div>
-                  <span className="faq-section-count">
-                    {s.preguntas.length} {s.preguntas.length === 1 ? 'pregunta' : 'preguntas'}
-                  </span>
-                  <i className={`fas fa-chevron-down faq-section-chevron ${abierta ? 'faq-section-chevron--open' : ''}`}></i>
-                </button>
-
-                {abierta && (
-                  <div className="faq-preguntas">
-                    {preguntasPagina.map(p => (
-                      <Pregunta key={p.idPregunta} pregunta={p} />
-                    ))}
-                    {totalPagP > 1 && (
-                      <Paginacion
-                        pagina={pagP}
-                        totalPaginas={totalPagP}
-                        onCambio={(n) => setPagPregunta(s.idSeccion, n)}
-                      />
+                    {abierta && (
+                      <div className="faq-preguntas">
+                        {preguntasPagina.map(p => (
+                          <Pregunta key={p.idPregunta} pregunta={p} />
+                        ))}
+                        {totalPagP > 1 && (
+                          <Paginacion
+                            pagina={pagP}
+                            totalPaginas={totalPagP}
+                            onCambio={(n) => setPagPregunta(s.idSeccion, n)}
+                          />
+                        )}
+                      </div>
                     )}
-                  </div>
-                )}
-              </section>
-            );
-          })}
-        </div>
-        <Paginacion pagina={pagSec} totalPaginas={totalPagSec} onCambio={setPagSec} />
-        </>
-      )}
+                  </section>
+                );
+              })}
+            </div>
+            <Paginacion pagina={pagSec} totalPaginas={totalPagSec} onCambio={setPagSec} />
+          </>
+        )}
+      </div>
     </div>
   );
 }
