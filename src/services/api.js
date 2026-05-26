@@ -31,26 +31,36 @@ export const api = {
   },
 
   crearEjercicioDiccionario: async (datos) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${API_BASE_URL}/ejercicios-diccionario`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(datos)
     });
     return handleResponse(response);
   },
 
   actualizarEjercicioDiccionario: async (id, datos) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${API_BASE_URL}/ejercicios-diccionario/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(datos)
     });
     return handleResponse(response);
   },
 
   eliminarEjercicioDiccionario: async (id) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${API_BASE_URL}/ejercicios-diccionario/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
     });
     return handleResponse(response);
   },

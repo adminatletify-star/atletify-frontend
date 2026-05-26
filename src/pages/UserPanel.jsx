@@ -106,7 +106,10 @@ export default function UserPanel() {
 
   const cargarNotificaciones = async (idUsuario) => {
     try {
-      const res = await fetch(`${API_BASE}/interacciones/notificaciones/${idUsuario}`);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/interacciones/notificaciones/${idUsuario}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (res.ok) setNotificaciones(await res.json());
     } catch (error) { console.error("Error al cargar notis", error); }
   };
@@ -148,7 +151,11 @@ export default function UserPanel() {
 
   const leerNotificacion = async (idNoti) => {
     try {
-      await fetch(`${API_BASE}/interacciones/notificaciones/${idNoti}/leer`, { method: 'PUT' });
+      const token = localStorage.getItem('token');
+      await fetch(`${API_BASE}/interacciones/notificaciones/${idNoti}/leer`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       setNotificaciones(prev => prev.map(n => n.idNotificacion === idNoti ? { ...n, leida: true } : n));
     } catch (error) { console.error(error); }
   };
@@ -201,8 +208,14 @@ export default function UserPanel() {
   async function handleReaccionar(idMarca, emoji) {
     try {
       const payload = { idMarca, idUsuarioReacciona: (user.idUsuario || user.id), emoji };
+      const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE}/interacciones/reaccionar`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
       });
       if (res.ok) alert(`¡Reaccionaste con ${emoji}!`);
       else {

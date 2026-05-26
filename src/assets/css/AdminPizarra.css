@@ -1,0 +1,1310 @@
+/* ====================================================================
+   AdminPizarra — pizarra de WOD del lado AdminBox
+   Sigue el sistema visual de GestionClases.css (prefijo .ap-)
+   ==================================================================== */
+
+.ap-root {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ====================================================================
+   Controles superiores: fecha + WOD del día
+   ==================================================================== */
+.ap-controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
+  padding: 1.1rem 1.2rem;
+}
+
+.ap-control-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  flex: 0 0 auto;
+  min-width: 220px;
+}
+
+.ap-control-field--wod {
+  flex: 1 1 320px;
+  min-width: 260px;
+}
+
+.ap-label {
+  font-family: var(--font-heading-alt), var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 0;
+}
+
+.ap-wod-loading,
+.ap-wod-empty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 0.55rem 0.4rem;
+  font-style: italic;
+}
+
+.ap-wod-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.ap-wod-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.55rem 0.9rem;
+  font-family: var(--font-heading-alt), var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.ap-wod-chip:hover {
+  border-color: var(--primary);
+  background: rgba(230, 57, 70, 0.08);
+}
+
+.ap-wod-chip--active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 4px 16px var(--primary-glow);
+}
+
+.ap-wod-chip-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 0.6rem;
+}
+
+.ap-badge--ok { background: rgba(46, 204, 113, 0.18); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.35); }
+.ap-badge--warn { background: rgba(245, 166, 35, 0.18); color: var(--accent); border: 1px solid rgba(245, 166, 35, 0.35); }
+.ap-badge--info { background: rgba(79, 195, 247, 0.18); color: var(--accent-cool, #4fc3f7); border: 1px solid rgba(79, 195, 247, 0.35); }
+
+/* ====================================================================
+   Card principal de la pizarra
+   ==================================================================== */
+.ap-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.ap-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.2rem 1.4rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.ap-card-header-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-heading-alt), var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-size: 0.7rem;
+  color: var(--primary);
+  margin-bottom: 0.3rem;
+}
+
+.ap-card-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-size: 1.4rem;
+  color: var(--text-primary);
+}
+
+.ap-card-sub {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.ap-card-header-badges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.ap-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* ====================================================================
+   Acciones (publicar, exportar, kiosko)
+   ==================================================================== */
+.ap-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.9rem 1.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.ap-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0.62rem 1.1rem;
+  font-family: var(--font-heading-alt), var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.ap-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.ap-btn--primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.ap-btn--primary:hover:not(:disabled) { box-shadow: 0 4px 16px var(--primary-glow); }
+
+.ap-btn--accent { background: var(--accent); color: #1a1a1a; border-color: var(--accent); }
+.ap-btn--accent:hover:not(:disabled) { box-shadow: 0 4px 16px rgba(245, 166, 35, 0.4); }
+
+.ap-btn--outline {
+  background: transparent;
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+.ap-btn--outline:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: rgba(230, 57, 70, 0.06);
+  color: var(--primary);
+}
+
+.ap-btn--sm { padding: 0.45rem 0.85rem; font-size: 0.72rem; }
+
+/* ====================================================================
+   Filtros
+   ==================================================================== */
+.ap-filtros-grupo {
+  padding: 0.95rem 1.4rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.ap-filtros-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.ap-filtros-label {
+  font-family: var(--font-heading-alt), var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  min-width: 70px;
+}
+
+.ap-filtros-chips {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+}
+
+.ap-chip {
+  background: var(--bg-base);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.ap-chip:hover {
+  color: var(--text-primary);
+  border-color: var(--primary);
+}
+
+.ap-chip--active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.ap-chip--rx.ap-chip--active { background: var(--primary); }
+.ap-chip--scaled.ap-chip--active { background: var(--accent-cool, #4fc3f7); color: #14141a; border-color: var(--accent-cool, #4fc3f7); }
+
+/* ====================================================================
+   Tabla de ranking
+   ==================================================================== */
+.ap-tabla-wrap {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.ap-tabla-loading {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 0;
+}
+
+.ap-tabla-empty {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-muted);
+}
+
+.ap-empty-icon {
+  font-size: 2.5rem;
+  opacity: 0.35;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.ap-empty-wrap {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.ap-empty-text {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.ap-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.ap-tabla thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-elevated);
+  z-index: 1;
+  padding: 0.65rem 1rem;
+  font-family: var(--font-heading-alt), var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.ap-th-pos { width: 70px; text-align: center !important; }
+.ap-th-score { text-align: right !important; width: 160px; }
+
+.ap-tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ap-tr:hover {
+  background: rgba(230, 57, 70, 0.04);
+}
+
+.ap-tabla td {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+}
+
+.ap-td-pos {
+  text-align: center;
+  font-family: var(--font-stats);
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.ap-pos-num {
+  color: var(--text-muted);
+  font-family: var(--font-stats);
+  font-weight: 800;
+}
+
+.ap-medal-gold { color: #FFD700; font-size: 1.5rem; }
+.ap-medal-silver { color: #C0C0C0; font-size: 1.3rem; }
+.ap-medal-bronze { color: #CD7F32; font-size: 1.2rem; }
+
+.ap-atleta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ap-atleta-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.18);
+  border: 1px solid rgba(230, 57, 70, 0.4);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.ap-atleta-avatar--img {
+  object-fit: cover;
+  padding: 0;
+  background: var(--bg-base);
+}
+
+.ap-atleta-info { min-width: 0; }
+
+.ap-atleta-nombre {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-primary);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.98rem;
+  margin-bottom: 0.15rem;
+}
+
+.ap-tag-rx {
+  background: rgba(245, 166, 35, 0.2);
+  color: var(--accent);
+  border: 1px solid rgba(245, 166, 35, 0.4);
+  border-radius: 999px;
+  font-size: 0.6rem;
+  padding: 0.15rem 0.45rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.ap-atleta-sub {
+  display: flex;
+  gap: 0.6rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.ap-atleta-coment { font-style: italic; }
+
+.ap-td-score {
+  text-align: right;
+  font-family: var(--font-stats);
+  font-weight: 800;
+}
+
+.ap-score {
+  font-size: 1.4rem;
+  color: var(--accent-cool, #4fc3f7);
+}
+
+.ap-score--dnf { color: var(--primary); }
+
+/* ====================================================================
+   Modo Kiosko / Pantalla — overlay fullscreen vía portal
+   z-index 9999 para superar la navbar (1050)
+   ==================================================================== */
+.apk-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background:
+    radial-gradient(ellipse at top, rgba(230, 57, 70, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at bottom right, rgba(245, 166, 35, 0.1) 0%, transparent 50%),
+    linear-gradient(180deg, #0b0b0f 0%, #14141a 60%, #050507 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-heading);
+  overflow: hidden;
+  animation: apkFadeIn 0.35s ease-out;
+}
+
+@keyframes apkFadeIn {
+  from { opacity: 0; transform: scale(1.02); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ---- Header ---- */
+.apk-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.6rem 2.5rem 1.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 1.5rem;
+  flex-shrink: 0;
+}
+
+.apk-header-left { min-width: 0; }
+
+.apk-box-tag {
+  display: inline-block;
+  font-size: 0.85rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--primary);
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.apk-wod-title {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.8rem, 4.2vw, 3.4rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  line-height: 1;
+  background: linear-gradient(135deg, #fff 0%, #fff 50%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.apk-meta { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+
+.apk-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-family: var(--font-stats);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.apk-meta-chip--accent {
+  background: rgba(245, 166, 35, 0.14);
+  border-color: rgba(245, 166, 35, 0.4);
+  color: var(--accent);
+}
+
+.apk-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  flex-shrink: 0;
+}
+
+.apk-clock {
+  font-family: var(--font-stats);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-primary);
+}
+
+.apk-salir-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.4);
+  color: var(--primary);
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.apk-salir-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  transform: rotate(90deg);
+}
+
+/* ---- Main ---- */
+.apk-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem 2.5rem;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* ---- Podio compacto: una columna por POSICIÓN (no por atleta).
+       Los empatados se apilan dentro de su columna. ---- */
+.apk-podio {
+  display: grid;
+  gap: 0.9rem;
+  align-items: stretch;
+  padding: 0.6rem 0;
+  width: 100%;
+}
+
+.apk-podio--1 {
+  grid-template-columns: minmax(260px, 520px);
+  justify-content: center;
+}
+
+.apk-podio--2 {
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr);
+  justify-content: center;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.apk-podio--3 {
+  grid-template-columns: 1fr 1.18fr 1fr;
+}
+
+.apk-podio-col {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 0.9rem 0.85rem 1rem;
+  text-align: center;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.apk-podio-col--1 {
+  background: linear-gradient(180deg, rgba(255, 215, 0, 0.18) 0%, rgba(255, 215, 0, 0.03) 100%);
+  border-color: rgba(255, 215, 0, 0.5);
+  padding: 1.1rem 0.85rem 1rem;
+  box-shadow: 0 6px 28px rgba(255, 215, 0, 0.15);
+}
+
+.apk-podio-col--2 {
+  background: linear-gradient(180deg, rgba(192, 192, 192, 0.15) 0%, rgba(192, 192, 192, 0.03) 100%);
+  border-color: rgba(192, 192, 192, 0.45);
+}
+
+.apk-podio-col--3 {
+  background: linear-gradient(180deg, rgba(205, 127, 50, 0.15) 0%, rgba(205, 127, 50, 0.03) 100%);
+  border-color: rgba(205, 127, 50, 0.45);
+}
+
+.apk-podio-corona {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.8rem;
+  color: #FFD700;
+  filter: drop-shadow(0 3px 10px rgba(255, 215, 0, 0.55));
+}
+
+.apk-podio-rank {
+  font-family: var(--font-stats);
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.apk-podio-col--1 .apk-podio-rank { font-size: 2.4rem; color: #FFD700; }
+.apk-podio-col--2 .apk-podio-rank { color: #C0C0C0; }
+.apk-podio-col--3 .apk-podio-rank { color: #CD7F32; }
+
+/* Contenedor de atletas dentro de una columna del podio */
+.apk-podio-atletas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+  align-items: center;
+}
+
+.apk-podio-atletas--multi {
+  gap: 0.3rem;
+}
+
+.apk-podio-score {
+  font-family: var(--font-stats);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent-cool, #4fc3f7);
+  letter-spacing: 1px;
+  margin-top: 0.15rem;
+}
+
+.apk-podio-col--1 .apk-podio-score { font-size: 1.8rem; }
+
+.apk-rx {
+  background: var(--accent);
+  color: #1a1a1a;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.apk-rx--sm { font-size: 0.55rem; padding: 0.15rem 0.45rem; }
+
+/* ---- Atleta chip (componente reusable para podio y lista) ---- */
+.apk-atleta-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem 0.35rem 0.3rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+}
+
+.apk-atleta-chip-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.apk-atleta-chip-nombre {
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  line-height: 1.15;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+  color: #fff;
+  min-width: 0;
+}
+
+/* En el podio col #1, los chips son un toque más grandes */
+.apk-podio-col--1 .apk-atleta-chip-nombre { font-size: 1rem; }
+
+/* ---- Foto del atleta ---- */
+.apk-foto {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--bg-base);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.apk-foto--sm { width: 44px; height: 44px; font-size: 1.1rem; font-weight: 700; }
+.apk-foto--md { width: 56px; height: 56px; font-size: 1.4rem; font-weight: 700; }
+.apk-foto--lg { width: 86px; height: 86px; font-size: 2rem; font-weight: 700; border-width: 3px; }
+.apk-foto--xl { width: 120px; height: 120px; font-size: 2.6rem; font-weight: 700; border-width: 4px; }
+
+.apk-podio-col--1 .apk-foto--xl { border-color: #FFD700; }
+.apk-podio-col--2 .apk-foto--lg { border-color: #C0C0C0; }
+.apk-podio-col--3 .apk-foto--lg { border-color: #CD7F32; }
+
+.apk-foto--fallback {
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-heading);
+}
+
+/* ---- Lista 4-10 — agrupada por posición ---- */
+.apk-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.apk-lista-row {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: 0.85rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 0.65rem 1rem;
+  transition: background 0.2s ease;
+}
+
+.apk-lista-row:hover {
+  background: rgba(230, 57, 70, 0.05);
+}
+
+.apk-lista-pos {
+  font-family: var(--font-stats);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+}
+
+/* Contenedor de atletas dentro de una fila — empatados se muestran en grid horizontal */
+.apk-lista-atletas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.apk-lista-atletas .apk-atleta-chip {
+  width: auto;
+  flex: 1 1 220px;
+  max-width: 100%;
+}
+
+.apk-lista-atletas--multi .apk-atleta-chip-nombre {
+  font-size: 0.85rem;
+}
+
+.apk-lista-score {
+  font-family: var(--font-stats);
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--accent-cool, #4fc3f7);
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+/* ---- Empty ---- */
+.apk-empty {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.apk-empty i { font-size: 5rem; opacity: 0.4; margin-bottom: 1rem; }
+.apk-empty p { font-size: 1.2rem; }
+
+/* ---- Footer ---- */
+.apk-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 2.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
+}
+
+.apk-footer-stamp {
+  font-family: var(--font-stats);
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.apk-footer-stamp i {
+  margin-right: 0.4rem;
+  animation: apkSpin 3s linear infinite;
+  display: inline-block;
+}
+
+@keyframes apkSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.apk-footer-brand {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+/* ====================================================================
+   Tarjeta de exportación (oculta, capturada por html2canvas)
+   ==================================================================== */
+.ap-export-hidden {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  pointer-events: none;
+}
+
+.ap-export-card {
+  width: 1080px;
+  min-height: 1350px;
+  background: linear-gradient(160deg, #14141a 0%, #1c1c26 60%, #0b0b0f 100%);
+  color: #fff;
+  padding: 60px 64px 50px;
+  font-family: var(--font-heading), 'Oswald', sans-serif;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.ap-export-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 8px;
+  background: var(--primary);
+}
+
+/* Header centrado con logo prominente como protagonista */
+.ap-export-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 32px;
+  margin-bottom: 36px;
+}
+
+/* Anillo glow alrededor del logo — usa box-shadow (html2canvas-compatible) */
+.ap-export-logo-hero {
+  position: relative;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ap-export-logo-ring {
+  position: relative;
+  z-index: 1;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: #0b0b0f;
+  padding: 8px;
+  border: 5px solid var(--primary);
+  box-shadow:
+    0 0 0 10px rgba(230, 57, 70, 0.18),
+    0 0 0 18px rgba(230, 57, 70, 0.08),
+    0 12px 50px rgba(230, 57, 70, 0.55),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.ap-export-logo,
+.ap-export-logo-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.ap-export-logo-fallback {
+  background: linear-gradient(135deg, var(--primary) 0%, #8a1a23 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 92px;
+  font-weight: 800;
+  color: #fff;
+  font-family: var(--font-heading);
+  letter-spacing: -2px;
+}
+
+.ap-export-box-name {
+  font-size: 48px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  line-height: 1;
+  margin-bottom: 12px;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+
+.ap-export-box-sub {
+  font-size: 14px;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 6px;
+  font-weight: 800;
+  margin-bottom: 22px;
+}
+
+.ap-export-fecha-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.4);
+  border-radius: 12px;
+  padding: 12px 22px;
+  font-size: 18px;
+  text-transform: capitalize;
+  font-family: var(--font-stats);
+  font-weight: 600;
+}
+
+.ap-export-wod-titulo {
+  text-align: center;
+  margin-bottom: 42px;
+}
+
+.ap-export-wod-tag {
+  display: inline-block;
+  background: var(--primary);
+  color: #fff;
+  padding: 6px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  margin-bottom: 14px;
+}
+
+.ap-export-wod-h2 {
+  font-size: 56px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0 0 14px;
+  line-height: 1.05;
+}
+
+.ap-export-wod-filtro {
+  font-size: 18px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 600;
+}
+
+.ap-export-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex-grow: 1;
+}
+
+/* Fila por POSICIÓN — empatados se agrupan dentro de la fila */
+.ap-export-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 150px;
+  align-items: center;
+  gap: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 14px 22px;
+}
+
+.ap-export-row--podio-1 { background: linear-gradient(90deg, rgba(255, 215, 0, 0.18), rgba(255, 215, 0, 0.04)); border-color: rgba(255, 215, 0, 0.55); }
+.ap-export-row--podio-2 { background: linear-gradient(90deg, rgba(192, 192, 192, 0.16), rgba(192, 192, 192, 0.04)); border-color: rgba(192, 192, 192, 0.5); }
+.ap-export-row--podio-3 { background: linear-gradient(90deg, rgba(205, 127, 50, 0.16), rgba(205, 127, 50, 0.04)); border-color: rgba(205, 127, 50, 0.5); }
+
+.ap-export-pos {
+  font-family: var(--font-stats);
+  font-size: 38px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  line-height: 1;
+}
+
+.ap-export-row--podio-1 .ap-export-pos { color: #FFD700; }
+.ap-export-row--podio-2 .ap-export-pos { color: #C0C0C0; }
+.ap-export-row--podio-3 .ap-export-pos { color: #CD7F32; }
+
+/* Grid de atletas dentro de una fila (empatados side-by-side) */
+.ap-export-atletas-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ap-export-atleta-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 5px 14px 5px 4px;
+  flex: 1 1 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Empatados: 2 chips por fila para dejar espacio al nombre completo */
+.ap-export-row--multi .ap-export-atleta-chip {
+  flex: 1 1 calc(50% - 5px);
+}
+
+/* Más de 3 empatados: foto más chica para que quepan más por fila sin romper texto */
+.ap-export-row--multi .ap-export-chip-foto {
+  width: 46px;
+  height: 46px;
+  font-size: 18px;
+}
+
+.ap-export-chip-foto {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  background: var(--bg-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.ap-export-chip-foto--fallback {
+  background: var(--primary);
+}
+
+.ap-export-row--podio-1 .ap-export-chip-foto { border-color: #FFD700; }
+.ap-export-row--podio-2 .ap-export-chip-foto { border-color: #C0C0C0; }
+.ap-export-row--podio-3 .ap-export-chip-foto { border-color: #CD7F32; }
+
+.ap-export-chip-nombre {
+  font-size: 18px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  line-height: 1.2;
+  color: #fff;
+  overflow-wrap: break-word;
+  word-break: normal;
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal;
+}
+
+.ap-export-rx {
+  display: inline-block;
+  margin-left: 8px;
+  vertical-align: middle;
+  background: var(--accent);
+  color: #1a1a1a;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.ap-export-score {
+  font-family: var(--font-stats);
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--accent-cool, #4fc3f7);
+  letter-spacing: 1px;
+  text-align: right;
+}
+
+.ap-export-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 28px;
+  border-top: 2px solid rgba(255, 255, 255, 0.08);
+}
+
+.ap-export-brand {
+  font-size: 22px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--primary);
+}
+
+.ap-export-footer-tag {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-family: var(--font-stats);
+}
+
+/* ====================================================================
+   Responsive — Tablet (≤768px)
+   ==================================================================== */
+@media (max-width: 768px) {
+  .ap-card-title { font-size: 1.22rem; }
+  .ap-card-sub { font-size: 0.76rem; }
+  .ap-card-header { padding: 1rem 1.05rem 0.8rem; }
+  .ap-acciones { padding: 0.75rem 1.05rem; }
+  .ap-filtros-grupo { padding: 0.8rem 1.05rem; }
+  .ap-tabla td { padding: 0.7rem 0.85rem; }
+  .ap-score { font-size: 1.2rem; }
+  .ap-atleta-nombre { font-size: 0.88rem; }
+}
+
+/* ====================================================================
+   Responsive — Móvil (≤576px)
+   ==================================================================== */
+@media (max-width: 576px) {
+  .ap-controles {
+    padding: 0.9rem;
+    border-radius: 14px;
+  }
+  .ap-control-field {
+    min-width: 100%;
+    flex-basis: 100%;
+  }
+  .ap-card { border-radius: 14px; }
+  .ap-card-title { font-size: 1.06rem; }
+  .ap-card-sub { font-size: 0.7rem; }
+
+  .ap-acciones { gap: 0.4rem; }
+  .ap-btn { padding: 0.55rem 0.8rem; font-size: 0.72rem; }
+  .ap-btn-label { display: none; } /* Solo ícono en móvil */
+  .ap-btn i { margin-right: 0 !important; }
+
+  .ap-filtros-row { gap: 0.4rem; }
+  .ap-filtros-label { font-size: 0.6rem; min-width: 60px; }
+  .ap-chip { padding: 0.32rem 0.65rem; font-size: 0.66rem; }
+
+  .ap-th-pos { width: 50px; }
+  .ap-th-score { width: 110px; }
+  .ap-tabla thead th { padding: 0.5rem 0.65rem; font-size: 0.6rem; }
+  .ap-tabla td { padding: 0.6rem 0.65rem; }
+  .ap-atleta-avatar { width: 36px; height: 36px; font-size: 0.9rem; }
+  .ap-atleta-nombre { font-size: 0.82rem; }
+  .ap-atleta-sub { font-size: 0.64rem; gap: 0.35rem; }
+  .ap-score { font-size: 1.05rem; }
+  .ap-medal-gold { font-size: 1.25rem; }
+  .ap-medal-silver { font-size: 1.1rem; }
+  .ap-medal-bronze { font-size: 1.05rem; }
+}
+
+/* ====================================================================
+   Kiosko Responsive — Tablet (≤900px)
+   ==================================================================== */
+@media (max-width: 900px) {
+  .apk-header { padding: 1.1rem 1.5rem 0.9rem; }
+  .apk-main { padding: 1rem 1.5rem; gap: 1rem; }
+  .apk-footer { padding: 0.7rem 1.5rem; }
+  .apk-clock { font-size: 1.8rem; }
+  .apk-podio--1,
+  .apk-podio--2,
+  .apk-podio--3 {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+    justify-content: stretch;
+  }
+  .apk-podio-col,
+  .apk-podio-col--1 { padding: 0.8rem; }
+  .apk-podio-corona { font-size: 1.5rem; top: -14px; }
+  .apk-podio-rank,
+  .apk-podio-col--1 .apk-podio-rank { font-size: 1.6rem; }
+  .apk-atleta-chip-nombre,
+  .apk-podio-col--1 .apk-atleta-chip-nombre { font-size: 0.85rem; }
+  .apk-podio-score,
+  .apk-podio-col--1 .apk-podio-score { font-size: 1.2rem; }
+  .apk-foto--md { width: 40px; height: 40px; font-size: 1rem; }
+  .apk-foto--sm { width: 36px; height: 36px; font-size: 0.85rem; }
+  .apk-lista-row {
+    grid-template-columns: 40px 1fr auto;
+    gap: 0.55rem;
+    padding: 0.5rem 0.75rem;
+  }
+  .apk-lista-pos { font-size: 1.05rem; }
+  .apk-lista-score { font-size: 1.1rem; }
+}
+
+/* ====================================================================
+   Kiosko Responsive — Móvil (≤576px)
+   ==================================================================== */
+@media (max-width: 576px) {
+  .apk-header {
+    padding: 0.85rem 1rem 0.7rem;
+    gap: 0.75rem;
+  }
+  .apk-box-tag { font-size: 0.65rem; letter-spacing: 2px; }
+  .apk-meta-chip { font-size: 0.7rem; padding: 0.3rem 0.7rem; }
+  .apk-clock { font-size: 1.3rem; }
+  .apk-salir-btn { width: 42px; height: 42px; font-size: 1rem; }
+  .apk-main { padding: 0.85rem; }
+  .apk-footer { padding: 0.6rem 1rem; flex-wrap: wrap; gap: 0.4rem; }
+  .apk-footer-stamp { font-size: 0.7rem; }
+  .apk-footer-brand { font-size: 0.8rem; letter-spacing: 2px; }
+  .apk-lista-row {
+    grid-template-columns: 34px 1fr auto;
+    gap: 0.45rem;
+    padding: 0.5rem 0.65rem;
+  }
+  .apk-lista-pos { font-size: 0.95rem; }
+  .apk-atleta-chip-nombre { font-size: 0.75rem; }
+  .apk-lista-score { font-size: 1rem; }
+  .apk-foto--sm { width: 30px; height: 30px; font-size: 0.75rem; border-width: 1.5px; }
+}
+
+/* ====================================================================
+   Responsive — Móvil pequeño (≤380px)
+   ==================================================================== */
+@media (max-width: 380px) {
+  .ap-card-title { font-size: 0.95rem; }
+  .ap-card-header { padding: 0.85rem 0.85rem 0.7rem; }
+  .ap-acciones, .ap-filtros-grupo { padding: 0.65rem 0.85rem; }
+  .ap-tabla td { padding: 0.5rem 0.45rem; }
+  .ap-atleta-avatar { width: 30px; height: 30px; font-size: 0.78rem; }
+  .ap-atleta-nombre { font-size: 0.74rem; }
+  .ap-score { font-size: 0.92rem; }
+  .ap-th-pos { width: 40px; }
+  .ap-th-score { width: 90px; }
+}

@@ -65,8 +65,14 @@ export default function Comunidad() {
   async function handleReaccionar(idMarca, emoji) {
     try {
       const payload = { idMarca, idUsuarioReacciona: miId, emoji };
+      const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE}/interacciones/reaccionar`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         alert(`¡Reaccionaste con ${emoji} al PR de ${loboSeleccionado.nombre.split(' ')[0]}!`);

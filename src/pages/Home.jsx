@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import HomeLoQueOfrece from '../components/HomeLoQueOfrece';
 import HomeAliado from '../components/HomeAliado';
+import HomeRedesContacto from '../components/HomeRedesContacto';
 import '../assets/css/home.css';
 
 export default function Home() {
@@ -114,6 +115,11 @@ export default function Home() {
           SECCIÓN NUESTRO ALIADO — WOLFPACK
           ══════════════════════════════════════════════════════ */}
       <HomeAliado />
+
+      {/* ══════════════════════════════════════════════════════
+          SECCIÓN REDES Y CONTACTO
+          ══════════════════════════════════════════════════════ */}
+      <HomeRedesContacto />
 
       {/* ── FOOTER ─────────────────────────────────────────── */}
       <footer className="home-footer">

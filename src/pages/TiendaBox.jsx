@@ -52,7 +52,10 @@ export default function TiendaBox() {
   const cargarProductos = async (idBox) => {
     setLoading(true);
     try {
-      const res = await fetch(`${PRODUCTOS_ENDPOINT}/${idBox}?apartado=${encodeURIComponent(APARTADO)}&soloActivos=true`);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${PRODUCTOS_ENDPOINT}/${idBox}?apartado=${encodeURIComponent(APARTADO)}&soloActivos=true`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (res.ok) setProductosTotales(await res.json());
     } catch (e) {
       console.error('Error al cargar productos', e);

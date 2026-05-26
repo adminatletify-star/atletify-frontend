@@ -57,11 +57,24 @@ export function AuthProvider({ children }) {
     if (usuarioGuardado) {
       try {
         parsedUser = JSON.parse(usuarioGuardado);
-        setUsuario(parsedUser);
-        if (tokenGuardado) setToken(tokenGuardado);
-        const boxGuardado = localStorage.getItem('boxActivo');
-        if (boxGuardado) setBoxActivo(JSON.parse(boxGuardado));
-        else if (parsedUser.idBoxPredeterminado) setBoxActivo(parsedUser.idBoxPredeterminado);
+
+        // Validar que el token activo no haya expirado.
+        // Si expiró, limpiar SOLO la sesión activa (no toca cuentasGuardadas).
+        // Si el mismo usuario tiene otra entrada válida en cuentasGuardadas,
+        // sigue disponible para que el usuario haga clic y vuelva a entrar.
+        if (tokenGuardado && !isTokenValid(tokenGuardado)) {
+          localStorage.removeItem('usuario');
+          localStorage.removeItem('boxActivo');
+          localStorage.removeItem('token');
+          localStorage.removeItem('box');
+          parsedUser = null;
+        } else {
+          setUsuario(parsedUser);
+          if (tokenGuardado) setToken(tokenGuardado);
+          const boxGuardado = localStorage.getItem('boxActivo');
+          if (boxGuardado) setBoxActivo(JSON.parse(boxGuardado));
+          else if (parsedUser.idBoxPredeterminado) setBoxActivo(parsedUser.idBoxPredeterminado);
+        }
       } catch (error) {
         localStorage.removeItem('usuario');
         localStorage.removeItem('boxActivo');

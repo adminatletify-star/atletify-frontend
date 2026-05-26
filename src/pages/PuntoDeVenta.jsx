@@ -34,7 +34,10 @@ export default function PuntoDeVenta() {
         ? `${PRODUCTOS_ENDPOINT}/${box.idBox}?buscar=${encodeURIComponent(buscar)}&apartado=${encodeURIComponent(apartadoActual)}`
         : `${PRODUCTOS_ENDPOINT}/${box.idBox}?apartado=${encodeURIComponent(apartadoActual)}`;
 
-      const res = await fetch(url);
+      const token = localStorage.getItem('token');
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const data = await res.json();
       setProductos(Array.isArray(data) ? data : []);
     } catch {

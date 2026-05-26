@@ -1121,20 +1121,43 @@ export default function Dashboard() {
                       checked={configuracion.enMantenimiento || false}
                       onChange={async (e) => {
                         const nuevoEstado = e.target.checked;
+                        // Snapshot del estado actual por si hay que revertir
+                        const estadoPrevio = configuracion.enMantenimiento || false;
                         if (nuevoEstado) {
                           const ok = await window.wpConfirm('⚠️ ¿Activar Modo Mantenimiento?\n\nTodos los usuarios serán bloqueados excepto Developer.');
-                          if (!ok) return;
+                          if (!ok) {
+                            // Fuerza re-render para que el checkbox vuelva al estado real
+                            setConfiguracion(prev => ({ ...prev, enMantenimiento: estadoPrevio }));
+                            return;
+                          }
                         }
+                        // Update optimista para que el switch reaccione de inmediato
+                        setConfiguracion(prev => ({ ...prev, enMantenimiento: nuevoEstado }));
                         try {
                           const token = localStorage.getItem('token');
-                          const payload = { ...configuracion, enMantenimiento: nuevoEstado };
+                          // Payload limpio (mismo cleanup que guardarConfiguracion)
+                          const payloadToSave = { ...configuracion, enMantenimiento: nuevoEstado };
+                          payloadToSave.planesCompetenciaJson = JSON.stringify(configuracion.planesCompetenciaArray || []);
+                          delete payloadToSave.planesCompetenciaArray;
                           const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/configuracion`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                            body: JSON.stringify(payload)
+                            body: JSON.stringify(payloadToSave)
                           });
-                          if (res.ok) setConfiguracion(prev => ({ ...prev, enMantenimiento: nuevoEstado }));
-                        } catch (err) { console.error(err); }
+                          if (!res.ok) {
+                            const txt = await res.text().catch(() => '');
+                            setConfiguracion(prev => ({ ...prev, enMantenimiento: estadoPrevio }));
+                            alert(`No se pudo actualizar el modo mantenimiento. (${res.status}) ${txt}`);
+                            return;
+                          }
+                          alert(nuevoEstado
+                            ? 'Modo Mantenimiento ACTIVADO. Los usuarios no-Developer serán bloqueados al recargar.'
+                            : 'Modo Mantenimiento desactivado.');
+                        } catch (err) {
+                          console.error(err);
+                          setConfiguracion(prev => ({ ...prev, enMantenimiento: estadoPrevio }));
+                          alert('Error de red al actualizar el modo mantenimiento.');
+                        }
                       }}
                       style={{ width: '3rem', height: '1.5rem', cursor: 'pointer' }}
                     />

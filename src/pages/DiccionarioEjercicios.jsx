@@ -90,11 +90,15 @@ export default function DiccionarioEjercicios() {
 
     const url = editandoId ? `${API_BASE}/ejercicios/${editandoId}` : `${API_BASE}/ejercicios`;
     const method = editandoId ? 'PUT' : 'POST';
+    const token = localStorage.getItem('token');
 
     try {
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(payload)
       });
 
@@ -136,7 +140,11 @@ export default function DiccionarioEjercicios() {
   const eliminarEjercicio = async (id) => {
     if (!await window.wpConfirm("¿Seguro que deseas eliminar este ejercicio?")) return;
     try {
-      const res = await fetch(`${API_BASE}/ejercicios/${id}`, { method: 'DELETE' });
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/ejercicios/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (res.ok) cargarEjercicios(box.idBox);
     } catch (err) { console.error(err); }
   };

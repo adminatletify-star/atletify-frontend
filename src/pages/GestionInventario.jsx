@@ -40,7 +40,10 @@ export default function GestionInventario() {
         ? `${PRODUCTOS_ENDPOINT}/${box.idBox}?buscar=${encodeURIComponent(buscar)}&apartado=${encodeURIComponent(apartadoActual)}`
         : `${PRODUCTOS_ENDPOINT}/${box.idBox}?apartado=${encodeURIComponent(apartadoActual)}`;
 
-      const res = await fetch(url);
+      const token = localStorage.getItem('token');
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const data = await res.json();
       setProductos(Array.isArray(data) ? data : []);
     } catch (e) {
@@ -86,10 +89,14 @@ export default function GestionInventario() {
     setGuardando(true);
 
     try {
+      const token = localStorage.getItem('token');
       if (modoForm === 'nuevo') {
         const res = await fetch(PRODUCTOS_ENDPOINT, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({
             idBox: box.idBox,
             apartado: apartadoActual,
@@ -111,7 +118,10 @@ export default function GestionInventario() {
       } else {
         const res = await fetch(`${PRODUCTOS_ENDPOINT}/${modoForm}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({
             idBox: box.idBox,
             apartado: apartadoActual,
@@ -168,9 +178,13 @@ export default function GestionInventario() {
     if (isNaN(cantidad) || cantidad <= 0) { alert('Ingresa una cantidad válida mayor a 0.'); return; }
     setGuardando(true);
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch(`${PRODUCTOS_ENDPOINT}/${p.idProducto}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           idBox: box.idBox,
           nombre: p.nombre,

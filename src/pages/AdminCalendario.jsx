@@ -4,6 +4,7 @@ import BackButton from '../components/BackButton';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import TipoEventoPicker from '../components/TipoEventoPicker';
 import BotonSeguro from '../components/BotonSeguro';
+import AdminPizarra from '../components/AdminPizarra';
 import '../assets/css/AdminCalendario.css';
 
 const API_BASE = import.meta.env.VITE_API_URL;;
@@ -386,6 +387,12 @@ export default function AdminCalendario() {
               className={`ac-tab-btn ac-tab-btn--intel ${vistaPrincipal === 'metricas' ? 'ac-tab-btn--active' : ''}`}
             >
               <i className="fas fa-chart-line" /><span className="d-none d-sm-inline"> Inteligencia</span>
+            </button>
+            <button
+              onClick={() => { setVistaPrincipal('pizarra'); setAtletaSeleccionado(null); }}
+              className={`ac-tab-btn ac-tab-btn--pizarra ${vistaPrincipal === 'pizarra' ? 'ac-tab-btn--active' : ''}`}
+            >
+              <i className="fas fa-trophy" /><span className="d-none d-sm-inline"> Pizarra</span>
             </button>
           </div>
         </div>
@@ -949,6 +956,13 @@ export default function AdminCalendario() {
               </div>
             )}
           </div>
+        )}
+
+        {/* =====================================================
+            VISTA: PIZARRA (Ranking por WOD)
+            ===================================================== */}
+        {vistaPrincipal === 'pizarra' && box && (
+          <AdminPizarra box={box} />
         )}
 
       </div>
