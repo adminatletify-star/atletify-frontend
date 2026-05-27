@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { PwaInstallProvider } from './context/PwaInstallContext';
+import OfflineIndicator from './components/OfflineIndicator';
 import Layout from './components/Layout';
 import { jwtDecode } from "jwt-decode";
 import Mantenimiento from './pages/Mantenimiento';
@@ -363,6 +364,7 @@ function App() {
       <PwaInstallProvider>
       <Router>
         <MaintenanceGuard>
+          <OfflineIndicator />
           <CookieBanner />
           <Routes>
             {/* ========================================= */}

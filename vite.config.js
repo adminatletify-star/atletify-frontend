@@ -21,6 +21,7 @@ export default defineConfig({
       includeAssets: [
         'LogosDeAtletify/LogoBlanco.png',
         'icons/apple-touch-icon.png',
+        'offline.html',
       ],
       manifest: {
         name: 'Atletify',

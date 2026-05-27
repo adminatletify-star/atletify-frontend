@@ -1,0 +1,194 @@
+/* ============================================
+   OFFLINE INDICATOR
+   Barra fija en la parte superior que avisa cuando
+   la conexión a internet se cae o se restablece.
+   Prefijo: .oin-*
+   Sigue el Design System (GestionClases):
+   - backdrop blur, border-bottom 3px (rojo/verde)
+   - font-heading-alt uppercase
+   ============================================ */
+
+.oin-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1090;            /* Por encima del header sticky (200) y del banner PWA (1080) */
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  background: var(--bg-elevated);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 3px solid var(--primary);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.3;
+  animation: oin-slidedown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Variante restablecida (verde) */
+.oin-banner--ok {
+  border-bottom-color: #2bb673;
+}
+
+.oin-banner--ok .oin-icon {
+  background: rgba(43, 182, 115, 0.12);
+  border-color: rgba(43, 182, 115, 0.32);
+  color: #2bb673;
+}
+
+/* Variante offline (rojo) */
+.oin-banner--off .oin-icon {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: rgba(230, 57, 70, 0.32);
+  color: var(--primary);
+}
+
+@keyframes oin-slidedown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+.oin-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.oin-icon--dot {
+  position: relative;
+}
+.oin-icon--dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  box-shadow: 0 0 0 0 currentColor;
+  animation: oin-pulse 1.6s ease-out infinite;
+  opacity: 0.4;
+}
+@keyframes oin-pulse {
+  0%   { box-shadow: 0 0 0 0 currentColor; }
+  70%  { box-shadow: 0 0 0 10px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+.oin-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.oin-title {
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.oin-subtitle {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.oin-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.oin-btn {
+  font-family: var(--font-heading-alt);
+  font-weight: 600;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.42rem 0.78rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.oin-btn:hover {
+  border-color: var(--border-hover);
+}
+
+.oin-btn--primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.oin-btn--primary:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.oin-btn-close {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.oin-btn-close:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}
+
+/* =====================================================
+   RESPONSIVE — breakpoints del CLAUDE.md
+   ===================================================== */
+
+@media (max-width: 768px) {
+  .oin-banner   { padding: 0.6rem 0.8rem; gap: 0.6rem; }
+  .oin-icon     { width: 30px; height: 30px; font-size: 0.85rem; }
+  .oin-title    { font-size: 0.78rem; }
+  .oin-subtitle { font-size: 0.7rem; }
+  .oin-btn      { font-size: 0.7rem; padding: 0.38rem 0.7rem; }
+}
+
+@media (max-width: 576px) {
+  .oin-banner   { padding: 0.55rem 0.7rem; gap: 0.55rem; }
+  .oin-icon     { width: 28px; height: 28px; font-size: 0.8rem; border-radius: 7px; }
+  .oin-title    { font-size: 0.74rem; letter-spacing: 0.4px; }
+  .oin-subtitle { display: none; }      /* en móvil dejamos solo el título para no apretar */
+  .oin-btn      { font-size: 0.66rem; padding: 0.35rem 0.6rem; }
+  .oin-btn--secondary { display: none; } /* en móvil ocultamos el "Ver más" */
+}
+
+@media (max-width: 380px) {
+  .oin-banner   { padding: 0.5rem 0.6rem; gap: 0.5rem; }
+  .oin-icon     { width: 26px; height: 26px; }
+  .oin-title    { font-size: 0.7rem; }
+  .oin-btn      { font-size: 0.62rem; padding: 0.32rem 0.55rem; }
+}

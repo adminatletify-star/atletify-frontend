@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sin conexión · Atletify</title>
+<meta name="theme-color" content="#0E0F13" />
+<meta name="robots" content="noindex" />
+
+<!-- Google Fonts (degradan a system-ui si no cargan offline) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="icon" type="image/png" href="/LogosDeAtletify/LogoBlanco.png" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+
+<style>
+  /* =============================================================
+     Atletify · Sistema de diseño (variables locales — autocontenido)
+     ============================================================= */
+  :root{
+    --primary:        #E63946;
+    --primary-hover:  #d12f3c;
+    --primary-glow:   rgba(230, 57, 70, .35);
+    --accent:         #FFC845;
+    --accent-glow:    rgba(255, 200, 69, .25);
+
+    --bg-base:        #0E0F13;
+    --bg-elevated:    #17181D;
+    --bg-elevated-2:  #1d1f26;
+    --border:         rgba(255, 255, 255, .08);
+    --border-strong:  rgba(255, 255, 255, .14);
+
+    --text-primary:   #F4F4F6;
+    --text-muted:     #8A8E99;
+
+    --font-heading:     'Bebas Neue', 'Oswald', system-ui, sans-serif;
+    --font-heading-alt: 'Oswald', system-ui, sans-serif;
+    --font-body:        'Inter', system-ui, -apple-system, sans-serif;
+    --font-stats:       'Oswald', system-ui, sans-serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    color:var(--text-primary);
+    font-family: var(--font-body);
+    background:
+      radial-gradient(900px 600px at 80% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(700px 500px at -10% 110%, rgba(255,200,69,.06), transparent 60%),
+      var(--bg-base);
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Solo bloqueamos el scroll en desktop, donde el layout sí cabe en 100dvh */
+  @media (min-width: 981px){
+    body{ overflow:hidden; }
+  }
+
+  /* sutil grid de fondo */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events:none;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+  }
+
+  .shell{
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* =============================================================
+     Header sticky con blur (patrón GestionClases)
+     ============================================================= */
+  .off-header{
+    position:sticky; top:0; z-index:5;
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 14px 24px;
+    background: rgba(14,15,19,.72);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .off-brand{
+    display:flex; align-items:center; gap:12px;
+  }
+  .off-brand-mark{
+    width:42px; height:42px; border-radius:10px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--border);
+    padding: 4px;
+    object-fit: contain;
+    box-shadow: 0 4px 16px var(--primary-glow);
+    display: block;
+  }
+  .off-brand-text{
+    font-family: var(--font-heading);
+    font-size:22px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    line-height:1;
+  }
+  .off-brand-sub{
+    display:block;
+    font-family: var(--font-body);
+    font-size:10.5px;
+    letter-spacing:.18em;
+    color: var(--text-muted);
+    font-weight:500;
+    text-transform:uppercase;
+    margin-top:2px;
+  }
+  .off-status{
+    display:inline-flex; align-items:center; gap:9px;
+    padding:7px 14px;
+    border:1px solid rgba(230,57,70,.32);
+    background: rgba(230,57,70,.10);
+    color: var(--primary);
+    border-radius:999px;
+    font-family: var(--font-heading-alt);
+    font-weight:600;
+    font-size:12px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+  }
+  .off-status .dot{
+    width:8px; height:8px; border-radius:50%;
+    background: var(--primary);
+    box-shadow: 0 0 0 0 var(--primary-glow);
+    animation: pulseDot 1.6s ease-out infinite;
+  }
+  @keyframes pulseDot{
+    0%   { box-shadow: 0 0 0 0 rgba(230,57,70,.55);}
+    70%  { box-shadow: 0 0 0 10px rgba(230,57,70,0);}
+    100% { box-shadow: 0 0 0 0 rgba(230,57,70,0);}
+  }
+
+  /* =============================================================
+     MAIN
+     ============================================================= */
+  .off-main{
+    flex:1;
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 20px 48px 32px;
+    align-items:center;
+  }
+
+  /* ============ Columna copy ============ */
+  .off-copy{ max-width: 560px; }
+
+  .off-eyebrow{
+    display:inline-flex; align-items:center; gap:10px;
+    padding: 6px 14px;
+    background: rgba(255,200,69,.10);
+    border:1px solid rgba(255,200,69,.30);
+    color: var(--accent);
+    border-radius:999px;
+    font-family: var(--font-heading-alt);
+    font-weight:600;
+    font-size: 11.5px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    margin-bottom: 20px;
+  }
+  .off-eyebrow svg{ width:11px; height:11px; }
+
+  h1.off-title{
+    font-family: var(--font-heading);
+    font-weight:400;
+    font-size: clamp(46px, 6vw, 84px);
+    line-height:.95;
+    letter-spacing:.01em;
+    margin: 0 0 16px;
+    text-transform:uppercase;
+    text-wrap: balance;
+  }
+  h1.off-title .accent{
+    color: var(--primary);
+    position:relative;
+    display:inline-block;
+  }
+  h1.off-title .accent::after{
+    content:"";
+    position:absolute; left:-2%; right:-2%; bottom:.04em;
+    height:.12em;
+    background: var(--primary);
+    opacity:.18;
+    border-radius:3px;
+  }
+
+  .off-lede{
+    font-size:16px;
+    line-height:1.6;
+    color: var(--text-muted);
+    margin: 0 0 28px;
+    max-width: 50ch;
+    text-wrap:pretty;
+  }
+  .off-lede strong{ color: var(--text-primary); font-weight:600; }
+
+  /* ============ Botón primario (patrón Atletify) ============ */
+  .off-btn-primary{
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    font-family: var(--font-heading-alt);
+    font-weight:600;
+    font-size:14.5px;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+    padding: .85rem 1.4rem;
+    border-radius: 10px;
+    display:inline-flex; align-items:center; gap:10px;
+    transition: background .2s ease, box-shadow .2s ease, transform .15s ease;
+    cursor:pointer;
+    width:auto;
+  }
+  .off-btn-primary:hover{
+    background: var(--primary-hover);
+    box-shadow: 0 4px 16px var(--primary-glow);
+    transform: translateY(-1px);
+  }
+  .off-btn-primary:active{ transform: translateY(0); }
+  .off-btn-primary .ic{ width:16px; height:16px; transition: transform .4s ease; }
+  .off-btn-primary:hover .ic{ transform: rotate(180deg); }
+  .off-btn-primary.loading .ic{ animation: spinIc .8s linear infinite; }
+  @keyframes spinIc{ to{ transform: rotate(360deg);} }
+
+  .off-hint{
+    font-family: var(--font-body);
+    font-size:13px;
+    color: var(--text-muted);
+    margin-top: 16px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .off-hint .blink{
+    width:7px; height:7px; border-radius:50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+    animation: blinkLed 1.6s ease-in-out infinite;
+  }
+  @keyframes blinkLed{
+    0%,100%{ opacity:1;}
+    50%    { opacity:.3;}
+  }
+
+  /* =============================================================
+     Stage / personaje (panel patrón Atletify)
+     ============================================================= */
+  .off-stage{
+    position:relative;
+    height: min(78vh, 620px);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--primary);
+    border-radius: 16px;
+    overflow:hidden;
+    display:grid; place-items:center;
+  }
+  .off-stage::after{
+    content:"";
+    position:absolute; left:0; right:0; bottom:0; height:55%;
+    background: radial-gradient(60% 70% at 50% 100%, rgba(230,57,70,.10), transparent 70%);
+    pointer-events:none;
+  }
+  .off-stage-tag{
+    position:absolute; top:14px; left:18px;
+    font-family: var(--font-heading-alt);
+    font-weight:600;
+    font-size:11px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color: var(--text-muted);
+    z-index:2;
+  }
+  .off-stage-tag .live{
+    color: var(--accent);
+    margin-left:6px;
+  }
+
+  /* Suelo */
+  .floor{
+    position:absolute;
+    bottom: 12%;
+    left:50%; transform:translateX(-50%);
+    width: 60%;
+    height: 24px;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,.55), transparent 70%);
+    border-radius:50%;
+    animation: floorPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes floorPulse{
+    0%,100%{ transform: translateX(-50%) scale(1);    opacity:.9;}
+    50%    { transform: translateX(-50%) scale(.78);  opacity:.55;}
+  }
+
+  /* WiFi tachado */
+  .wifi-off{
+    position:absolute;
+    top: 7%;
+    left:50%;
+    transform: translateX(-50%) rotate(-6deg);
+    animation: floatWifi 3s ease-in-out infinite;
+    z-index:1;
+  }
+  @keyframes floatWifi{
+    0%,100%{ transform: translateX(-50%) translateY(0)   rotate(-6deg);}
+    50%    { transform: translateX(-50%) translateY(-8px) rotate(-3deg);}
+  }
+
+  /* Personaje wrapper · ahora hace squats (lifting) */
+  .char-wrap{
+    position:relative;
+    width: 380px; max-width: 80%;
+    transform-origin: 50% 90%;
+    animation: lift 1.6s ease-in-out infinite;
+  }
+  /* squat profundo + impulso arriba */
+  @keyframes lift{
+    0%   { transform: translateY(0)    scaleY(1);}
+    35%  { transform: translateY(20px) scaleY(.86) scaleX(1.05);} /* squat down */
+    45%  { transform: translateY(20px) scaleY(.86) scaleX(1.05);} /* hold */
+    70%  { transform: translateY(-14px) scaleY(1.06) scaleX(.97);} /* push up */
+    100% { transform: translateY(0)    scaleY(1);}
+  }
+
+  .char{ width:100%; display:block; overflow:visible; }
+
+  /* Brazos hacia arriba al levantar */
+  .arm{
+    transform-origin: center;
+    transform-box: fill-box;
+    animation: armLift 1.6s ease-in-out infinite;
+  }
+  .arm.left  { transform-origin: 0% 0%; }
+  .arm.right { transform-origin: 100% 0%; }
+  @keyframes armLift{
+    0%,35%{ transform: rotate(0deg); }
+    70%   { transform: rotate(-8deg); }
+    100%  { transform: rotate(0deg); }
+  }
+  .arm.right{ animation-name: armLiftR; }
+  @keyframes armLiftR{
+    0%,35%{ transform: rotate(0deg); }
+    70%   { transform: rotate(8deg); }
+    100%  { transform: rotate(0deg); }
+  }
+
+  /* Cejas — esfuerzo (se juntan al fondo del squat) */
+  .brows{
+    transform-origin: center;
+    transform-box: fill-box;
+    animation: browsStrain 1.6s ease-in-out infinite;
+  }
+  @keyframes browsStrain{
+    0%, 100% { transform: translateY(0); }
+    35%, 70% { transform: translateY(-3px); }
+  }
+
+  /* Boca abierta de esfuerzo en la subida */
+  .mouth-rest  { animation: mouthRest  1.6s ease-in-out infinite; }
+  .mouth-grunt { animation: mouthGrunt 1.6s ease-in-out infinite; }
+  @keyframes mouthRest{
+    0%, 35%, 90%, 100% { opacity:1; }
+    36%, 89%           { opacity:0; }
+  }
+  @keyframes mouthGrunt{
+    0%, 35%, 90%, 100% { opacity:0; }
+    36%, 89%           { opacity:1; }
+  }
+
+  /* Parpadeo */
+  .eyelid{
+    transform-origin: center;
+    transform-box: fill-box;
+    animation: eyeBlink 4.4s ease-in-out infinite;
+  }
+  @keyframes eyeBlink{
+    0%, 92%, 100%{ transform: scaleY(0); }
+    94%, 97%    { transform: scaleY(1); }
+  }
+
+  /* Sudor que vuela al hacer reps */
+  .sweat{
+    position:absolute;
+    width:9px; height:13px;
+    background:#6cc8ff;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    opacity:0;
+  }
+  .sweat.s1{ top:30%; left:22%; animation: sweatFly 1.6s ease-in 0s infinite; }
+  .sweat.s2{ top:30%; right:22%; animation: sweatFly2 1.6s ease-in .1s infinite; }
+  .sweat.s3{ top:42%; left:50%; animation: sweatFly3 1.6s ease-in .05s infinite; }
+  @keyframes sweatFly{
+    0%, 60%  { transform: translate(0,0) scale(.6); opacity:0;}
+    70%      { transform: translate(-10px,-10px) scale(1); opacity:1;}
+    100%     { transform: translate(-40px, 60px) scale(.5); opacity:0;}
+  }
+  @keyframes sweatFly2{
+    0%, 60%  { transform: translate(0,0) scale(.6); opacity:0;}
+    70%      { transform: translate(10px,-10px) scale(1); opacity:1;}
+    100%     { transform: translate(40px, 60px) scale(.5); opacity:0;}
+  }
+  @keyframes sweatFly3{
+    0%, 60%  { transform: translate(-50%,0) scale(.6); opacity:0;}
+    70%      { transform: translate(-50%,-14px) scale(1); opacity:1;}
+    100%     { transform: translate(-50%, 50px) scale(.5); opacity:0;}
+  }
+
+  /* Líneas de esfuerzo arriba de la cabeza al levantar */
+  .grunt-lines{
+    position:absolute;
+    top: 8%;
+    left: 50%; transform: translateX(-50%);
+    width: 120px; height: 36px;
+    opacity:0;
+    animation: gruntFlash 1.6s ease-out infinite;
+    pointer-events:none;
+  }
+  @keyframes gruntFlash{
+    0%, 55%, 80%, 100% { opacity:0; transform: translateX(-50%) scale(.9); }
+    65%               { opacity:1;  transform: translateX(-50%) scale(1); }
+  }
+
+  /* Burbuja de habla */
+  .speech{
+    position:absolute;
+    top: 16%;
+    left: 64%;
+    background: var(--bg-elevated-2);
+    border:1px solid var(--border-strong);
+    color: var(--text-primary);
+    border-radius:14px;
+    padding:10px 14px;
+    font-family: var(--font-heading-alt);
+    font-weight:500;
+    font-size:13.5px;
+    letter-spacing:.02em;
+    box-shadow: 0 12px 28px rgba(0,0,0,.45);
+    white-space:nowrap;
+    z-index:3;
+    transition: opacity .25s ease, transform .25s ease;
+  }
+  .speech::after{
+    content:"";
+    position:absolute;
+    bottom:-7px; left:22px;
+    width:12px; height:12px;
+    background: var(--bg-elevated-2);
+    border-right:1px solid var(--border-strong);
+    border-bottom:1px solid var(--border-strong);
+    transform: rotate(45deg);
+  }
+  .speech.swap{
+    opacity:0;
+    transform: translateY(-4px) scale(.96);
+  }
+
+  /* Chispitas confetti cuando reintenta */
+  .spark{
+    position:absolute;
+    width:8px; height:8px;
+    border-radius:2px;
+    opacity:0;
+    pointer-events:none;
+  }
+  .off-stage.tried .spark{ animation: sparkPop .9s ease-out forwards; }
+  .spark.k1{ top:20%; left:30%; background:var(--primary);                animation-delay:.0s;  --dx:-30px; --dy:-50px;}
+  .spark.k2{ top:18%; right:28%; background:var(--accent);                animation-delay:.05s; --dx:30px;  --dy:-50px;}
+  .spark.k3{ top:48%; left:14%;  background:#7be0b5;                      animation-delay:.10s; --dx:-50px; --dy:20px;}
+  .spark.k4{ top:55%; right:14%; background:var(--primary);               animation-delay:.15s; --dx:50px;  --dy:20px;}
+  .spark.k5{ top:35%; left:50%;  background:var(--accent);                animation-delay:.05s; --dx:0;     --dy:-70px;}
+  @keyframes sparkPop{
+    0%  { transform: translate(0,0) scale(0) rotate(0); opacity:0;}
+    30% { opacity:1;}
+    100%{ transform: translate(var(--dx), var(--dy)) scale(1.2) rotate(180deg); opacity:0;}
+  }
+
+  .char-wrap.shake{ animation: shakeChar .5s ease, lift 1.6s ease-in-out infinite .5s; }
+  @keyframes shakeChar{
+    0%,100%{ transform: translateX(0) rotate(0);}
+    20%{ transform: translateX(-6px) rotate(-3deg);}
+    40%{ transform: translateX(6px)  rotate(3deg);}
+    60%{ transform: translateX(-4px) rotate(-2deg);}
+    80%{ transform: translateX(4px)  rotate(2deg);}
+  }
+
+  /* Footer */
+  .off-foot{
+    border-top: 1px solid var(--border);
+    padding: 10px 24px;
+    display:flex; justify-content:space-between;
+    color: var(--text-muted);
+    font-family: var(--font-heading-alt);
+    font-size: 11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+  }
+
+  /* =============================================================
+     Responsive (breakpoints Atletify: 768 / 576 / 380)
+     ============================================================= */
+  @media (max-width: 980px){
+    .off-main{
+      grid-template-columns: 1fr;
+      padding: 16px 28px 28px;
+    }
+    .off-stage{ order:-1; height: 360px; }
+    .off-copy{ text-align:left; }
+    .speech{ left:60%; }
+  }
+
+  @media (max-width: 768px){
+    .off-header{ padding: 12px 20px; }
+    .off-brand-mark{ width:38px; height:38px; padding:3px; }
+    .off-brand-text{ font-size:19px; }
+    .off-status{ font-size:11px; padding:6px 12px; }
+
+    .off-main{ padding: 12px 20px 24px; gap:18px; }
+    .off-stage{ height: 320px; border-radius: 14px; }
+
+    h1.off-title{ font-size: clamp(40px, 8vw, 64px); }
+    .off-lede   { font-size: 14.5px; }
+    .off-eyebrow{ font-size:11px; padding:5px 12px; }
+    .off-btn-primary{ font-size:13.5px; padding:.78rem 1.25rem; }
+    .speech     { font-size:12.5px; padding:8px 12px; }
+  }
+
+  @media (max-width: 576px){
+    .off-header{ padding: 10px 16px; }
+    .off-brand-text{ font-size:17px; letter-spacing:.06em; }
+    .off-brand-sub { font-size:9.5px; }
+    .off-status    { font-size:10.5px; padding:5px 10px; letter-spacing:.10em; }
+    .off-status .dot{ width:6px; height:6px; }
+
+    .off-main{ padding: 10px 16px 20px; gap:14px; }
+    .off-stage{ height: 280px; border-radius: 12px; }
+    .off-stage-tag{ font-size:10px; top:10px; left:12px; }
+
+    h1.off-title{ font-size: clamp(34px, 9vw, 52px); }
+    .off-lede   { font-size: 13.5px; line-height:1.55; margin-bottom:20px;}
+    .off-eyebrow{ font-size:10px; margin-bottom:14px; }
+    .off-btn-primary{ font-size:12.5px; padding:.72rem 1.05rem; letter-spacing:.08em;}
+    .off-hint   { font-size:11.5px; }
+    .speech     { font-size:11.5px; padding:7px 10px; left:auto; right:6%; }
+    .off-foot   { font-size:10px; padding:8px 16px; letter-spacing:.10em;}
+
+    .char-wrap{ width: 280px; }
+    .off-btn-primary .label-extra{ display:none; }
+  }
+
+  @media (max-width: 380px){
+    .off-brand-text{ font-size:15px; }
+    .off-brand-sub { display:none; }
+    h1.off-title{ font-size: clamp(28px, 10vw, 42px); }
+    .off-lede   { font-size: 12.5px; }
+    .off-btn-primary{ font-size:12px; padding:.66rem .95rem; }
+    .off-stage{ height: 240px; }
+    .char-wrap{ width: 230px; }
+    .speech   { font-size:10.5px; right:4%; top:14%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- HEADER (sticky · backdrop blur) -->
+  <header class="off-header">
+    <div class="off-brand">
+      <img
+        src="/LogosDeAtletify/LogoBlanco.png"
+        alt="Atletify"
+        class="off-brand-mark"
+        width="42"
+        height="42"
+      />
+      <div>
+        <span class="off-brand-text">Atletify</span>
+        <span class="off-brand-sub">System</span>
+      </div>
+    </div>
+    <div class="off-status">
+      <span class="dot"></span>
+      <span>Sin conexión</span>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="off-main">
+
+    <!-- COPY -->
+    <section class="off-copy">
+      <div class="off-eyebrow">
+        <!-- bolt icon (SVG inline, sin Font Awesome) -->
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M13 2L4.5 13.5h6L9 22l8.5-11.5h-6L13 2z"/>
+        </svg>
+        Modo descanso forzado
+      </div>
+
+      <h1 class="off-title">
+        Manny está<br>
+        entrenando.<br>
+        Tu <span class="accent">Wi-Fi</span> no.
+      </h1>
+
+      <p class="off-lede">
+        Nuestra mancuerna favorita aprovecha que no hay señal para
+        meter unas <strong>repes extra</strong>. En cuanto vuelva el internet
+        sincronizamos tus entrenamientos con <strong>Atletify System</strong>.
+      </p>
+
+      <button class="off-btn-primary" id="retryBtn" type="button">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-3-6.7"/>
+          <path d="M21 4v5h-5"/>
+        </svg>
+        <span class="label">Reintentar <span class="label-extra">conexión</span></span>
+      </button>
+
+      <div class="off-hint">
+        <span class="blink"></span>
+        <span>Auto-reintento cada <strong style="color:var(--text-primary)">10 s</strong></span>
+      </div>
+    </section>
+
+    <!-- STAGE -->
+    <section class="off-stage" id="stage" aria-label="Personaje mancuerna entrenando">
+      <span class="off-stage-tag">manny.idle <span class="live">/ activo</span></span>
+
+      <!-- chispitas (confetti al reintentar) -->
+      <span class="spark k1"></span>
+      <span class="spark k2"></span>
+      <span class="spark k3"></span>
+      <span class="spark k4"></span>
+      <span class="spark k5"></span>
+
+      <!-- WiFi tachado arriba -->
+      <svg class="wifi-off" width="74" height="58" viewBox="0 0 74 58" fill="none" aria-hidden="true">
+        <path d="M8 22 C 22 10, 52 10, 66 22" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".18"/>
+        <path d="M16 30 C 26 22, 48 22, 58 30" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".18"/>
+        <path d="M24 38 C 30 34, 44 34, 50 38" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".18"/>
+        <circle cx="37" cy="46" r="3.5" fill="#fff" opacity=".22"/>
+        <line x1="10" y1="50" x2="64" y2="6" stroke="#E63946" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+
+      <!-- Burbuja de habla -->
+      <div class="speech" id="speech">¿Hay alguien ahí?</div>
+
+      <!-- líneas de esfuerzo -->
+      <svg class="grunt-lines" viewBox="0 0 120 36" aria-hidden="true">
+        <path d="M20 24 L26 12" stroke="#FFC845" stroke-width="3" stroke-linecap="round"/>
+        <path d="M40 22 L42 8"  stroke="#FFC845" stroke-width="3" stroke-linecap="round"/>
+        <path d="M60 22 L60 6"  stroke="#FFC845" stroke-width="3" stroke-linecap="round"/>
+        <path d="M80 22 L78 8"  stroke="#FFC845" stroke-width="3" stroke-linecap="round"/>
+        <path d="M100 24 L94 12" stroke="#FFC845" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+
+      <!-- Suelo -->
+      <div class="floor"></div>
+
+      <!-- Personaje -->
+      <div class="char-wrap" id="charWrap">
+
+        <!-- gotitas de sudor -->
+        <span class="sweat s1"></span>
+        <span class="sweat s2"></span>
+        <span class="sweat s3"></span>
+
+        <svg class="char" viewBox="0 0 380 300" aria-hidden="true">
+          <!-- Sombra inferior -->
+          <ellipse cx="190" cy="282" rx="118" ry="9" fill="rgba(0,0,0,.45)"/>
+
+          <!-- DISCO IZQUIERDO -->
+          <g>
+            <rect x="44" y="80" width="44" height="140" rx="12" fill="#0E0F13" stroke="#2a2c34" stroke-width="2"/>
+            <rect x="50" y="86" width="32" height="128" rx="9" fill="#E63946"/>
+            <rect x="50" y="86" width="32" height="44"  rx="9" fill="#fff" opacity=".08"/>
+            <circle cx="66" cy="150" r="6" fill="#0E0F13"/>
+          </g>
+
+          <!-- DISCO INTERIOR IZQUIERDO -->
+          <g>
+            <rect x="94" y="100" width="28" height="100" rx="9" fill="#0E0F13" stroke="#2a2c34" stroke-width="2"/>
+            <rect x="99" y="106" width="18" height="88"  rx="6" fill="#FFC845"/>
+            <rect x="99" y="106" width="18" height="30"  rx="6" fill="#fff" opacity=".18"/>
+          </g>
+
+          <!-- BARRA / CUERPO con cara -->
+          <g>
+            <!-- cuerpo -->
+            <rect x="124" y="118" width="128" height="64" rx="18" fill="#0E0F13" stroke="#2a2c34" stroke-width="2"/>
+            <rect x="128" y="122" width="120" height="56" rx="14" fill="#1d1f26"/>
+
+            <!-- highlight superior -->
+            <rect x="132" y="126" width="112" height="14" rx="9" fill="#fff" opacity=".05"/>
+
+            <!-- mejillas -->
+            <ellipse cx="148" cy="158" rx="8" ry="5" fill="#E63946" opacity=".45"/>
+            <ellipse cx="228" cy="158" rx="8" ry="5" fill="#E63946" opacity=".45"/>
+
+            <!-- cejas (esfuerzo) -->
+            <g class="brows">
+              <path d="M154 138 q8 -6 16 0" stroke="#FFC845" stroke-width="4" stroke-linecap="round" fill="none"/>
+              <path d="M206 138 q8 0 16 -6" stroke="#FFC845" stroke-width="4" stroke-linecap="round" fill="none"/>
+            </g>
+
+            <!-- ojo izquierdo -->
+            <g>
+              <circle cx="164" cy="152" r="7" fill="#F4F4F6"/>
+              <circle cx="166" cy="151" r="3.5" fill="#0E0F13"/>
+              <circle cx="167" cy="150" r="1.2" fill="#fff"/>
+              <rect class="eyelid" x="156" y="145" width="16" height="14" rx="6" fill="#1d1f26"/>
+            </g>
+
+            <!-- ojo derecho -->
+            <g>
+              <circle cx="216" cy="152" r="7" fill="#F4F4F6"/>
+              <circle cx="218" cy="151" r="3.5" fill="#0E0F13"/>
+              <circle cx="219" cy="150" r="1.2" fill="#fff"/>
+              <rect class="eyelid" x="208" y="145" width="16" height="14" rx="6" fill="#1d1f26"/>
+            </g>
+
+            <!-- boca en reposo (línea apretada) -->
+            <path class="mouth-rest" d="M180 170 q10 4 20 0" stroke="#FFC845" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+            <!-- boca de esfuerzo (O grande) -->
+            <g class="mouth-grunt">
+              <ellipse cx="190" cy="170" rx="10" ry="7" fill="#0E0F13"/>
+              <ellipse cx="190" cy="172" rx="5" ry="2" fill="#E63946"/>
+            </g>
+          </g>
+
+          <!-- DISCO INTERIOR DERECHO -->
+          <g>
+            <rect x="254" y="100" width="28" height="100" rx="9" fill="#0E0F13" stroke="#2a2c34" stroke-width="2"/>
+            <rect x="259" y="106" width="18" height="88"  rx="6" fill="#FFC845"/>
+            <rect x="259" y="106" width="18" height="30"  rx="6" fill="#fff" opacity=".18"/>
+          </g>
+
+          <!-- DISCO DERECHO -->
+          <g>
+            <rect x="288" y="80" width="44" height="140" rx="12" fill="#0E0F13" stroke="#2a2c34" stroke-width="2"/>
+            <rect x="294" y="86" width="32" height="128" rx="9" fill="#E63946"/>
+            <rect x="294" y="86" width="32" height="44"  rx="9" fill="#fff" opacity=".08"/>
+            <circle cx="310" cy="150" r="6" fill="#0E0F13"/>
+          </g>
+
+          <!-- brazos pequeños · animados -->
+          <g class="arm left">
+            <path d="M128 200 q -8 18 4 30" stroke="#FFC845" stroke-width="6" stroke-linecap="round" fill="none"/>
+            <circle cx="132" cy="232" r="5" fill="#FFC845"/>
+          </g>
+          <g class="arm right">
+            <path d="M248 200 q  8 18 -4 30" stroke="#FFC845" stroke-width="6" stroke-linecap="round" fill="none"/>
+            <circle cx="244" cy="232" r="5" fill="#FFC845"/>
+          </g>
+
+        </svg>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="off-foot">
+    <span>atletifysystem.com</span>
+    <span>Auto-retry 10s · Te esperamos</span>
+  </footer>
+
+</div>
+
+<script>
+  // ============================================================
+  // Frases — más variedad (juguetonas + gym + sistema)
+  // ============================================================
+  const phrases = [
+    '¿Hay alguien ahí?',
+    'Solo un set más…',
+    'Esperando señal',
+    '¡Necesito Wi-Fi!',
+    'No te vayas, vuelvo',
+    '¿Y si revisas el router?',
+    'Una repetición más',
+    'El descanso es parte del plan',
+    'Mientras tanto, hidrátate',
+    'Día de pierna sin internet',
+    'Cargando músculos…',
+    'Modo offline, modo bestia',
+    'Sin Wi-Fi pero con ganas',
+    '¿Saltamos el cardio?',
+    '¡Vamos por las repes!',
+    'Tu rutina te espera',
+    'Aún sin señal, sigue firme',
+    'Ya casi vuelvo, lo prometo',
+    'Respira hondo y vamos'
+  ];
+  let phraseIdx = 0;
+
+  const speech = document.getElementById('speech');
+  function swapPhrase(text){
+    speech.classList.add('swap');
+    setTimeout(() => {
+      speech.textContent = text;
+      speech.classList.remove('swap');
+    }, 220);
+  }
+  // rotación cada 3.2s
+  setInterval(() => {
+    phraseIdx = (phraseIdx + 1) % phrases.length;
+    swapPhrase(phrases[phraseIdx]);
+  }, 3200);
+
+  // ============================================================
+  // Reintento
+  // ============================================================
+  const retryBtn   = document.getElementById('retryBtn');
+  const retryLabel = retryBtn.querySelector('.label');
+  const stage      = document.getElementById('stage');
+  const charWrap   = document.getElementById('charWrap');
+
+  function tryReconnect(manual){
+    if(retryBtn.classList.contains('loading')) return;
+    retryBtn.classList.add('loading');
+    retryLabel.innerHTML = 'Buscando <span class="label-extra">señal</span>…';
+
+    stage.classList.remove('tried'); void stage.offsetWidth; stage.classList.add('tried');
+    charWrap.classList.remove('shake'); void charWrap.offsetWidth; charWrap.classList.add('shake');
+
+    swapPhrase('¡Ahí voy, ahí voy!');
+
+    setTimeout(function(){
+      const online = navigator.onLine;
+      retryBtn.classList.remove('loading');
+      if(online){
+        retryLabel.innerHTML = '¡Conectado! Recargando…';
+        swapPhrase('¡Volvimos!');
+        setTimeout(function(){ location.reload(); }, 700);
+      } else {
+        retryLabel.innerHTML = manual
+          ? 'Aún nada · <span class="label-extra">Reintentar</span>'
+          : 'Reintentar <span class="label-extra">conexión</span>';
+        swapPhrase('Aún nada…');
+      }
+    }, 1300);
+  }
+
+  retryBtn.addEventListener('click', function(){ tryReconnect(true); });
+  setInterval(function(){ tryReconnect(false); }, 10000);
+  window.addEventListener('online',  function(){ tryReconnect(true); });
+  window.addEventListener('offline', function(){ swapPhrase('¡Se cayó otra vez!'); });
+</script>
+</body>
+</html>
