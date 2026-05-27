@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { PwaInstallProvider } from './context/PwaInstallContext';
 import Layout from './components/Layout';
 import { jwtDecode } from "jwt-decode";
 import Mantenimiento from './pages/Mantenimiento';
@@ -359,6 +360,7 @@ function MaintenanceGuard({ children }) {
 function App() {
   return (
     <AuthProvider>
+      <PwaInstallProvider>
       <Router>
         <MaintenanceGuard>
           <CookieBanner />
@@ -511,6 +513,7 @@ function App() {
           </Routes>
         </MaintenanceGuard>
       </Router>
+      </PwaInstallProvider>
     </AuthProvider>
   );
 }

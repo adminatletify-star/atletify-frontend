@@ -3,11 +3,15 @@ import { motion } from 'framer-motion';
 import HomeLoQueOfrece from '../components/HomeLoQueOfrece';
 import HomeAliado from '../components/HomeAliado';
 import HomeRedesContacto from '../components/HomeRedesContacto';
+import BannerInstalarPwa from '../components/BannerInstalarPwa';
 import '../assets/css/home.css';
 
 export default function Home() {
   return (
     <div className="home-wrapper">
+
+      {/* Aviso flotante de instalación de la PWA (solo se muestra una vez) */}
+      <BannerInstalarPwa />
 
       {/* ══════════════════════════════════════════════════════
           HERO — FOTO FULLSCREEN + BRANDING SAAS
