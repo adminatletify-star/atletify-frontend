@@ -6,6 +6,7 @@ const OPCIONES = [
   { valor: 'CrossFit', label: 'Clases de CrossFit',    desc: 'Acceso a todas las clases de CrossFit', icono: 'fas fa-fire',     key: 'crossfit' },
   { valor: 'OpenGym',  label: 'Solo Open Gym',         desc: 'Acceso únicamente al área de pesas',    icono: 'fas fa-dumbbell', key: 'opengym'  },
   { valor: 'Hibrido',  label: 'Híbrido (Ambos)',       desc: 'Clases de CrossFit + Open Gym',         icono: 'fas fa-bolt',     key: 'hibrido'  },
+  { valor: 'Visitas',  label: 'Paquete de Visitas',    desc: 'Acceso por visita consumida',           icono: 'fas fa-ticket-alt', key: 'visitas'  },
 ];
 
 export default function NivelAccesoPicker({ valor, onCambiar }) {

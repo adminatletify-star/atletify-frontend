@@ -4,6 +4,7 @@ import HomeLoQueOfrece from '../components/HomeLoQueOfrece';
 import HomeAliado from '../components/HomeAliado';
 import HomeRedesContacto from '../components/HomeRedesContacto';
 import BannerInstalarPwa from '../components/BannerInstalarPwa';
+import HomePricing from '../components/HomePricing';
 import '../assets/css/home.css';
 
 export default function Home() {
@@ -114,6 +115,11 @@ export default function Home() {
           SECCIÓN LO QUE OFRECEMOS
           ══════════════════════════════════════════════════════ */}
       <HomeLoQueOfrece />
+
+      {/* ══════════════════════════════════════════════════════
+          SECCIÓN DE PRECIOS
+          ══════════════════════════════════════════════════════ */}
+      <HomePricing />
 
       {/* ══════════════════════════════════════════════════════
           SECCIÓN NUESTRO ALIADO — WOLFPACK

@@ -444,60 +444,84 @@ export default function DetallePlanUser() {
                   </div>
                 </div>
 
-                {/* Switch de Renovación Automática */}
-                <div className="col-12 col-md-6 d-flex align-items-center justify-content-md-end gap-3 mt-3 mt-md-0">
-                  <div className="text-md-end">
-                    <strong className="d-block" style={{ fontSize: '0.85rem' }}>Renovación Automática</strong>
-                    <span className="text-muted text-xs d-block">
-                      {sub.metodoPago === 'En Línea' 
-                        ? (sub.autoRenovacion ? 'Activo (Cobro automático)' : 'Desactivado') 
-                        : 'Requiere Pago en Línea'}
-                    </span>
+                {/* Switch de Renovación Automática (Oculto para miembros no líderes) */}
+                {(!data?.grupoFamiliar || data?.grupoFamiliar?.esLider) && (
+                  <div className="col-12 col-md-6 d-flex align-items-center justify-content-md-end gap-3 mt-3 mt-md-0">
+                    <div className="dpu-switch-wrapper">
+                      <strong className="d-block" style={{ fontSize: '0.85rem' }}>Renovación Automática</strong>
+                      <span className="text-muted text-xs d-block">
+                        {sub.metodoPago === 'En Línea' 
+                          ? (sub.autoRenovacion ? 'Activo (Cobro automático)' : 'Desactivado') 
+                          : 'Requiere Pago en Línea'}
+                      </span>
+                    </div>
+                    <label className="dpu-switch">
+                      <input 
+                        type="checkbox" 
+                        checked={sub.autoRenovacion || false} 
+                        disabled={sub.metodoPago !== 'En Línea'}
+                        onChange={handleToggleAutoRenovacion}
+                      />
+                      <span className="dpu-switch-slider"></span>
+                    </label>
                   </div>
-                  <label className="dpu-switch">
-                    <input 
-                      type="checkbox" 
-                      checked={sub.autoRenovacion || false} 
-                      disabled={sub.metodoPago !== 'En Línea'}
-                      onChange={handleToggleAutoRenovacion}
-                    />
-                    <span className="dpu-switch-slider"></span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Acciones del Plan */}
-              <div className="d-flex flex-wrap gap-2 mt-4 pt-3 border-top border-secondary border-opacity-10 justify-content-between align-items-center">
-                <button 
-                  type="button" 
-                  className="dpu-btn-action--change"
-                  disabled={sub.cambioPeriodoPendiente != null}
-                  onClick={() => {
-                    const currentPlan = planesBox.find(p => p.idPlan === sub.idPlan);
-                    if (currentPlan) setPlanSeleccionado(currentPlan);
-                    setMetodoPago(sub.metodoPago === 'En Línea' ? 'En Línea' : sub.metodoPago);
-                    setArchivoComprobante(null);
-                    setErrorSubida(null);
-                    setShowBillingModal(true);
-                  }}
-                >
-                  <i className="fas fa-sync-alt me-2"></i> Cambiar Facturación
-                </button>
-
-                {sub.cancelacionProgramada ? (
-                  <div className="dpu-cancel-badge-small">
-                    <i className="fas fa-exclamation-triangle text-warning me-1"></i> Cancelación Programada
-                  </div>
-                ) : (
-                  <button 
-                    type="button" 
-                    className="dpu-btn-action--cancel"
-                    onClick={() => setShowCancelModal(true)}
-                  >
-                    <i className="fas fa-ban me-2"></i> Cancelar Membresía
-                  </button>
                 )}
               </div>
+
+              {/* Mensajes del Grupo Familiar */}
+              {data?.grupoFamiliar && (
+                <div className="mt-4 p-3 rounded" style={{ backgroundColor: 'rgba(255, 193, 7, 0.1)', borderLeft: '4px solid var(--warning)' }}>
+                  <h6 className="text-warning mb-2"><i className="fas fa-users me-2"></i> Perteneces a un Escuadrón Familiar</h6>
+                  <p className="mb-0 text-muted" style={{ fontSize: '0.9rem' }}>
+                    {!data.grupoFamiliar.esLider ? (
+                      <>
+                        Actualmente estás en un grupo familiar. La facturación total del grupo recae sobre: <strong>{data.grupoFamiliar.nombreLider}</strong> por la cantidad de: <strong>${data.grupoFamiliar.facturacionTotal?.toLocaleString()}</strong>.
+                        Si deseas salir del grupo acércate a recepción, toma en cuenta que si el grupo queda con menos de 4 integrantes automáticamente el grupo se disolverá y se les cobrará su facturación mensual normal.
+                      </>
+                    ) : (
+                      <>
+                        Tú eres el <strong>Líder</strong> del escuadrón <strong>{data.grupoFamiliar.nombreGrupo}</strong>. El pago de la mensualidad total recae sobre ti por la cantidad de <strong>${data.grupoFamiliar.facturacionTotal?.toLocaleString()}</strong>.
+                        Toma en cuenta que si algún integrante se sale y el grupo queda con menos de 4 personas, automáticamente el grupo se disolverá y se les cobrará la facturación mensual normal sin beneficios.
+                      </>
+                    )}
+                  </p>
+                </div>
+              )}
+
+              {/* Acciones del Plan (Solo Líder o Usuarios Individuales) */}
+              {(!data?.grupoFamiliar || data?.grupoFamiliar?.esLider) && (
+                <div className="d-flex flex-wrap gap-2 mt-4 pt-3 border-top border-secondary border-opacity-10 justify-content-between align-items-center">
+                  <button 
+                    type="button" 
+                    className="dpu-btn-action--change"
+                    disabled={sub.cambioPeriodoPendiente != null}
+                    onClick={() => {
+                      const currentPlan = planesBox.find(p => p.idPlan === sub.idPlan);
+                      if (currentPlan) setPlanSeleccionado(currentPlan);
+                      setMetodoPago(sub.metodoPago === 'En Línea' ? 'En Línea' : sub.metodoPago);
+                      setArchivoComprobante(null);
+                      setErrorSubida(null);
+                      setShowBillingModal(true);
+                    }}
+                  >
+                    <i className="fas fa-sync-alt me-2"></i> Cambiar Facturación
+                  </button>
+
+                  {sub.cancelacionProgramada ? (
+                    <div className="dpu-cancel-badge-small">
+                      <i className="fas fa-exclamation-triangle text-warning me-1"></i> Cancelación Programada
+                    </div>
+                  ) : (
+                    <button 
+                      type="button" 
+                      className="dpu-btn-action--cancel"
+                      onClick={() => setShowCancelModal(true)}
+                    >
+                      <i className="fas fa-ban me-2"></i> Cancelar Membresía
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* === FREEZE INFO === */}
@@ -739,12 +763,81 @@ export default function DetallePlanUser() {
 
               {/* Paso 3: Detalles específicos */}
               <div className="dpu-checkout-details bg-black bg-opacity-20 rounded p-3 mb-4 border border-secondary border-opacity-10">
+                
+                {/* === DESGLOSE DINÁMICO LÍDER === */}
+                {(() => {
+                  if (!data?.grupoFamiliar?.esLider || !data.grupoFamiliar.miembros) return null;
+                  
+                  let sumaBruta = 0;
+                  const miembrosMapeados = data.grupoFamiliar.miembros.map(m => {
+                    if (m.rolEnGrupo === 'Lider') {
+                      const precioLeader = planSeleccionado ? planSeleccionado.precio : m.precioBase;
+                      sumaBruta += precioLeader;
+                      return { ...m, precioEfectivo: precioLeader, planNombreEfectivo: planSeleccionado ? planSeleccionado.nombre : m.planNombre };
+                    }
+                    sumaBruta += m.precioBase;
+                    return { ...m, precioEfectivo: m.precioBase, planNombreEfectivo: m.planNombre };
+                  });
+
+                  let descuentoMonto = 0;
+                  const descGlobal = data.grupoFamiliar.descuentoGlobal;
+                  if (descGlobal?.tipo === 'DescuentoPorcentaje') {
+                    descuentoMonto = sumaBruta * ((descGlobal.valor || 0) / 100);
+                  } else if (descGlobal?.tipo === 'DescuentoPesos') {
+                    descuentoMonto = descGlobal.valor || 0;
+                  } else if (descGlobal?.tipo === 'PrecioFijo') {
+                    descuentoMonto = sumaBruta - (descGlobal.valor || sumaBruta);
+                  }
+
+                  let facturacionTotal = sumaBruta - descuentoMonto;
+                  const precioMinimo = data.grupoFamiliar.precioMinimoMensual;
+                  if (precioMinimo != null && facturacionTotal < precioMinimo) {
+                    facturacionTotal = precioMinimo;
+                  }
+
+                  return (
+                    <div className="dpu-group-breakdown mb-3 bg-black bg-opacity-30 rounded p-3 border border-secondary border-opacity-10 text-xs">
+                      <strong className="text-info d-block mb-2"><i className="fas fa-users me-1"></i> Desglose del Escuadrón</strong>
+                      {miembrosMapeados.map((m, i) => (
+                        <div key={i} className="d-flex justify-content-between mb-1 text-muted">
+                          <span>{m.nombre} <span className="opacity-50">({m.planNombreEfectivo})</span></span>
+                          <strong className="text-white">${m.precioEfectivo.toFixed(2)}</strong>
+                        </div>
+                      ))}
+                      <div className="d-flex justify-content-between mb-1 mt-2 pt-2 border-top border-secondary border-opacity-10 text-muted">
+                        <span>Suma Bruta:</span>
+                        <strong className="text-white">${sumaBruta.toFixed(2)}</strong>
+                      </div>
+                      <div className="d-flex justify-content-between mb-1 text-muted">
+                        <span>Descuento Aplicado:</span>
+                        <strong className="text-danger">-${descuentoMonto.toFixed(2)}</strong>
+                      </div>
+                      <div className="d-flex justify-content-between mt-2 pt-2 border-top border-secondary border-opacity-10">
+                        <span className="fw-bold text-white">Total a Pagar:</span>
+                        <strong className="text-success fs-6">${facturacionTotal.toFixed(2)}</strong>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {metodoPago === 'En Línea' && (
                   <div className="text-center py-2">
                     <i className="fas fa-credit-card text-success mb-2" style={{ fontSize: '1.8rem' }}></i>
                     <strong className="d-block text-success text-sm">Pago Directo e Instantáneo</strong>
                     <p className="text-muted m-0 mt-1 text-xs">
-                      Se procesará un cobro automático por un total de <strong>${(planSeleccionado?.precio || 0).toFixed(2)}</strong>. Tu membresía se activará de forma inmediata.
+                      Se procesará un cobro automático por un total de <strong>
+                        ${(() => {
+                          if (data?.grupoFamiliar?.esLider && data.grupoFamiliar.miembros) {
+                            let suma = data.grupoFamiliar.miembros.reduce((acc, m) => acc + (m.rolEnGrupo === 'Lider' ? (planSeleccionado?.precio || 0) : m.precioBase), 0);
+                            let desc = 0; const global = data.grupoFamiliar.descuentoGlobal;
+                            if (global?.tipo === 'DescuentoPorcentaje') desc = suma * ((global.valor || 0) / 100);
+                            else if (global?.tipo === 'DescuentoPesos') desc = global.valor || 0;
+                            else if (global?.tipo === 'PrecioFijo') desc = suma - (global.valor || suma);
+                            return Math.max(suma - desc, data.grupoFamiliar.precioMinimoMensual || 0).toFixed(2);
+                          }
+                          return (planSeleccionado?.precio || 0).toFixed(2);
+                        })()}
+                      </strong>. Tu membresía se activará de forma inmediata.
                     </p>
                   </div>
                 )}
@@ -757,7 +850,19 @@ export default function DetallePlanUser() {
                         <div className="d-flex justify-content-between mb-1"><span>Banco:</span> <strong className="text-white">BBVA Bancomer</strong></div>
                         <div className="d-flex justify-content-between mb-1"><span>CLABE:</span> <strong className="text-white">0123 4567 8901 2345 67</strong></div>
                         <div className="d-flex justify-content-between mb-1"><span>Beneficiario:</span> <strong className="text-white">Atletify Box S.A. de C.V.</strong></div>
-                        <div className="d-flex justify-content-between border-top border-secondary border-opacity-10 mt-2 pt-2"><span>Monto exacto a transferir:</span> <strong className="text-success">${(planSeleccionado?.precio || 0).toFixed(2)}</strong></div>
+                        <div className="d-flex justify-content-between border-top border-secondary border-opacity-10 mt-2 pt-2"><span>Monto exacto a transferir:</span> <strong className="text-success">
+                          ${(() => {
+                            if (data?.grupoFamiliar?.esLider && data.grupoFamiliar.miembros) {
+                              let suma = data.grupoFamiliar.miembros.reduce((acc, m) => acc + (m.rolEnGrupo === 'Lider' ? (planSeleccionado?.precio || 0) : m.precioBase), 0);
+                              let desc = 0; const global = data.grupoFamiliar.descuentoGlobal;
+                              if (global?.tipo === 'DescuentoPorcentaje') desc = suma * ((global.valor || 0) / 100);
+                              else if (global?.tipo === 'DescuentoPesos') desc = global.valor || 0;
+                              else if (global?.tipo === 'PrecioFijo') desc = suma - (global.valor || suma);
+                              return Math.max(suma - desc, data.grupoFamiliar.precioMinimoMensual || 0).toFixed(2);
+                            }
+                            return (planSeleccionado?.precio || 0).toFixed(2);
+                          })()}
+                        </strong></div>
                       </div>
                     </div>
 
@@ -803,7 +908,19 @@ export default function DetallePlanUser() {
                     <i className="fas fa-exclamation-triangle text-warning mb-2" style={{ fontSize: '1.8rem' }}></i>
                     <strong className="d-block text-warning text-sm">Plazo Límite de 24 Horas</strong>
                     <p className="text-muted m-0 mt-1 text-xs" style={{ lineHeight: '1.4' }}>
-                      Al confirmar esta solicitud, tendrás un plazo de <strong>24 horas</strong> para pagar un total de <strong>${(planSeleccionado?.precio || 0).toFixed(2)}</strong> en efectivo o tarjeta en la recepción del Box. De lo contrario, la solicitud caducará.
+                      Al confirmar esta solicitud, tendrás un plazo de <strong>24 horas</strong> para pagar un total de <strong>
+                        ${(() => {
+                          if (data?.grupoFamiliar?.esLider && data.grupoFamiliar.miembros) {
+                            let suma = data.grupoFamiliar.miembros.reduce((acc, m) => acc + (m.rolEnGrupo === 'Lider' ? (planSeleccionado?.precio || 0) : m.precioBase), 0);
+                            let desc = 0; const global = data.grupoFamiliar.descuentoGlobal;
+                            if (global?.tipo === 'DescuentoPorcentaje') desc = suma * ((global.valor || 0) / 100);
+                            else if (global?.tipo === 'DescuentoPesos') desc = global.valor || 0;
+                            else if (global?.tipo === 'PrecioFijo') desc = suma - (global.valor || suma);
+                            return Math.max(suma - desc, data.grupoFamiliar.precioMinimoMensual || 0).toFixed(2);
+                          }
+                          return (planSeleccionado?.precio || 0).toFixed(2);
+                        })()}
+                      </strong> en efectivo o tarjeta en la recepción del Box. De lo contrario, la solicitud caducará.
                     </p>
                   </div>
                 )}
