@@ -23,6 +23,9 @@ export default function AtletasBox() {
   const [atletas, setAtletas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [boxNombre, setBoxNombre] = useState('');
+  
+  const storedUser = JSON.parse(localStorage.getItem('usuario')) || {};
+  const isCoach = storedUser.rol === 'Coach' || storedUser.Rol === 'Coach';
 
   // Filtros — el estatus inicial viene de la query param (?estatus=activo)
   const [busqueda, setBusqueda] = useState('');
@@ -272,13 +275,15 @@ export default function AtletasBox() {
                       </td>
                       <td className="py-3 px-4" style={{ borderColor: 'var(--border)', verticalAlign: 'middle', background: 'transparent' }}>
                         <div className="d-flex justify-content-end gap-2">
-                          <Link
-                            to={`/editar-usuario/${atleta.idUsuario}`}
-                            className="atb-action-btn btn btn-sm btn-outline-info"
-                            title="Editar perfil"
-                          >
-                            <i className="fas fa-pen"></i>
-                          </Link>
+                          {!isCoach && (
+                            <Link
+                              to={`/editar-usuario/${atleta.idUsuario}`}
+                              className="atb-action-btn btn btn-sm btn-outline-info"
+                              title="Editar perfil"
+                            >
+                              <i className="fas fa-pen"></i>
+                            </Link>
+                          )}
                           {(atleta.rol === 'Coach' || atleta.Rol === 'Coach' || atleta.rol === 'AdminBox' || atleta.Rol === 'AdminBox') ? (
                             <button
                               className="atb-action-btn btn btn-sm btn-outline-secondary"
@@ -296,15 +301,17 @@ export default function AtletasBox() {
                               <i className="fas fa-id-card"></i>
                             </Link>
                           )}
-                          <BotonSeguro
-                            onClick={() => expulsarAtleta(atleta.idUsuario)}
-                            className="atb-action-btn btn btn-sm btn-outline-danger"
-                            title="Expulsar del Box"
-                            tiempoBloqueo={2000}
-                            textoProcesando={<i className="fas fa-spinner fa-spin"></i>}
-                          >
-                            <i className="fas fa-user-minus"></i>
-                          </BotonSeguro>
+                          {!isCoach && (
+                            <BotonSeguro
+                              onClick={() => expulsarAtleta(atleta.idUsuario)}
+                              className="atb-action-btn btn btn-sm btn-outline-danger"
+                              title="Expulsar del Box"
+                              tiempoBloqueo={2000}
+                              textoProcesando={<i className="fas fa-spinner fa-spin"></i>}
+                            >
+                              <i className="fas fa-user-minus"></i>
+                            </BotonSeguro>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -350,13 +357,15 @@ export default function AtletasBox() {
                       </span>
                     )}
                     <div className="d-flex gap-2">
-                      <Link
-                        to={`/editar-usuario/${atleta.idUsuario}`}
-                        className="atb-action-btn btn btn-sm btn-outline-info"
-                        title="Editar"
-                      >
-                        <i className="fas fa-pen"></i>
-                      </Link>
+                      {!isCoach && (
+                        <Link
+                          to={`/editar-usuario/${atleta.idUsuario}`}
+                          className="atb-action-btn btn btn-sm btn-outline-info"
+                          title="Editar"
+                        >
+                          <i className="fas fa-pen"></i>
+                        </Link>
+                      )}
                       {(atleta.rol === 'Coach' || atleta.Rol === 'Coach' || atleta.rol === 'AdminBox' || atleta.Rol === 'AdminBox') ? (
                         <button
                           className="atb-action-btn btn btn-sm btn-outline-secondary"
@@ -374,15 +383,17 @@ export default function AtletasBox() {
                           <i className="fas fa-id-card"></i>
                         </Link>
                       )}
-                      <BotonSeguro
-                        onClick={() => expulsarAtleta(atleta.idUsuario)}
-                        className="atb-action-btn btn btn-sm btn-outline-danger"
-                        title="Expulsar"
-                        tiempoBloqueo={2000}
-                        textoProcesando={<i className="fas fa-spinner fa-spin"></i>}
-                      >
-                        <i className="fas fa-user-minus"></i>
-                      </BotonSeguro>
+                      {!isCoach && (
+                        <BotonSeguro
+                          onClick={() => expulsarAtleta(atleta.idUsuario)}
+                          className="atb-action-btn btn btn-sm btn-outline-danger"
+                          title="Expulsar"
+                          tiempoBloqueo={2000}
+                          textoProcesando={<i className="fas fa-spinner fa-spin"></i>}
+                        >
+                          <i className="fas fa-user-minus"></i>
+                        </BotonSeguro>
+                      )}
                     </div>
                   </div>
                 </div>

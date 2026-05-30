@@ -127,6 +127,9 @@ export default function GestionFinanzas() {
   // ── ESTADO DROP-IN ADMIN ──────────────────────────────────
   const [listaDropins, setListaDropins] = useState([]);
   const [loadingDropins, setLoadingDropins] = useState(false);
+  // ── ESTADO PAQUETES VISITAS ──────────────────────────────
+  const [listaPaquetes, setListaPaquetes] = useState([]);
+  const [loadingPaquetes, setLoadingPaquetes] = useState(false);
   // Modal de 3 pasos
   const [showModalDropIn, setShowModalDropIn] = useState(false);
   const [pasoDropIn, setPasoDropIn] = useState(1);
@@ -204,6 +207,14 @@ export default function GestionFinanzas() {
     } catch (e) { console.error(e); } finally { setLoadingDropins(false); }
   }, []);
 
+  const cargarPaquetes = useCallback(async (idBox) => {
+    setLoadingPaquetes(true);
+    try {
+      const res = await fetch(`${API_BASE}/paquetes-visitas/${idBox}`, { headers: headersGet });
+      if (res.ok) setListaPaquetes(await res.json());
+    } catch (e) { console.error(e); } finally { setLoadingPaquetes(false); }
+  }, []);
+
   const cargarClasesDropIn = useCallback(async (idBox) => {
     setLoadingClasesDropIn(true);
     try {
@@ -277,8 +288,9 @@ export default function GestionFinanzas() {
   useEffect(() => {
     if (pestaña === 'movimientos' && box) cargarMovimientos(box.idBox, filtroMes, filtroTipoMov);
     if (pestaña === 'dropin' && box) cargarDropins(box.idBox);
+    if (pestaña === 'paquetes' && box) cargarPaquetes(box.idBox);
     if (pestaña === 'solicitudes') cargarSolicitudes();
-  }, [pestaña, box, filtroMes, filtroTipoMov, cargarSolicitudes]);
+  }, [pestaña, box, filtroMes, filtroTipoMov, cargarMovimientos, cargarDropins, cargarPaquetes, cargarSolicitudes]);
 
   const crearDescuento = async (e) => {
     e.preventDefault();
@@ -319,8 +331,8 @@ export default function GestionFinanzas() {
   };
 
   const crearPlan = async (e) => {
-    e.preventDefault();
-    if (!formPlan.nombre || !formPlan.precio || !formPlan.duracionDias) return alert('Llena todos los campos');
+    if (!formPlan.nombre || !formPlan.precio || (formPlan.nivelAcceso !== 'Visitas' && !formPlan.duracionDias)) return alert('Llena todos los campos');
+    if (formPlan.nivelAcceso === 'Visitas' && !formPlan.limiteClasesMensual) return alert('Debes especificar el número de visitas incluidas para este paquete.');
     try {
       const res = await fetch(`${API_BASE}/planes`, {
         method: 'POST',
@@ -373,8 +385,8 @@ export default function GestionFinanzas() {
   };
 
   const guardarEdicionPlan = async (e) => {
-    e.preventDefault();
     if (!formEditPlan.nombre || !formEditPlan.precio) return alert('Nombre y precio obligatorios');
+    if (formEditPlan.nivelAcceso === 'Visitas' && !formEditPlan.limiteClasesMensual) return alert('Debes especificar el número de visitas incluidas para este paquete.');
 
     try {
       const res = await fetch(`${API_BASE}/planes/${editandoPlan}`, {
@@ -613,6 +625,7 @@ export default function GestionFinanzas() {
             <button ref={el => tabRefs.current['planes'] = el} className={`finanzas-tab ${pestaña === 'planes' ? 'activo' : ''}`} onClick={() => setPestaña('planes')}><i className="fas fa-tags"></i>Planes</button>
             <button ref={el => tabRefs.current['descuentos'] = el} className={`finanzas-tab ${pestaña === 'descuentos' ? 'activo' : ''}`} onClick={() => setPestaña('descuentos')}><i className="fas fa-percent"></i>Promos</button>
             <button ref={el => tabRefs.current['dropin'] = el} className={`finanzas-tab ${pestaña === 'dropin' ? 'activo' : ''}`} onClick={() => setPestaña('dropin')}><i className="fas fa-plane-arrival"></i>Drop-In</button>
+            <button ref={el => tabRefs.current['paquetes'] = el} className={`finanzas-tab ${pestaña === 'paquetes' ? 'activo' : ''}`} onClick={() => setPestaña('paquetes')}><i className="fas fa-ticket-alt"></i>Paquetes</button>
             <button ref={el => tabRefs.current['movimientos'] = el} className={`finanzas-tab ${pestaña === 'movimientos' ? 'activo' : ''}`} onClick={() => setPestaña('movimientos')}><i className="fas fa-history"></i>Movimientos</button>
             {['Admin', 'AdminBox', 'Coach', 'Staff', 'Developer'].includes(usuario?.rol) && (
               <button ref={el => tabRefs.current['solicitudes'] = el} className={`finanzas-tab ${pestaña === 'solicitudes' ? 'activo' : ''}`} onClick={() => setPestaña('solicitudes')}><i className="fas fa-file-invoice-dollar"></i>Solicitudes</button>
@@ -716,6 +729,7 @@ export default function GestionFinanzas() {
                           </div>
                           <div className="finanzas-atleta-tel"><i className="fas fa-phone me-1"></i>{s.telefono || 'Sin número'}</div>
                           <div className="small mt-1" style={{ color: 'var(--secondary)' }}>{s.plan}</div>
+                          {s.grupoFamiliar && <div className="small mt-1 text-warning"><i className="fas fa-users me-1"></i>{s.grupoFamiliar}</div>}
                         </div>
                         <span className={`finanzas-badge ${getBadgeColor(s.estado)}`} style={{ whiteSpace: 'nowrap' }}>
                           {s.estado === 'Verde' ? `Al día · ${s.diasRestantes}d`
@@ -752,7 +766,10 @@ export default function GestionFinanzas() {
                         semaforoFiltrado.map(s => (
                           <tr key={s.idUsuario}>
                             <td><div className="finanzas-atleta-nombre">{s.nombre} {s.esDeConfianza && <span className="badge bg-info text-dark ms-2" style={{ fontSize: '0.65rem' }} title="Atleta de Confianza (Fiado)"><i className="fas fa-handshake"></i> Confianza</span>}</div><div className="finanzas-atleta-tel"><i className="fas fa-phone me-1"></i>{s.telefono || 'Sin número'}</div></td>
-                            <td style={{ color: 'var(--secondary)' }}>{s.plan}</td>
+                            <td style={{ color: 'var(--secondary)' }}>
+                              {s.plan}
+                              {s.grupoFamiliar && <div className="text-warning mt-1" style={{fontSize:'0.75rem'}}><i className="fas fa-users me-1"></i>{s.grupoFamiliar}</div>}
+                            </td>
                             <td><span className={`finanzas-badge ${getBadgeColor(s.estado)}`}>{s.estado === 'Verde' ? `Al día · ${s.diasRestantes}d`
                               : s.estado === 'Amarillo' ? `Por vencer · ${s.diasRestantes}d`
                                 : s.estado === 'Azul' ? 'CONGELADO '
@@ -800,13 +817,22 @@ export default function GestionFinanzas() {
                           <input type="number" className="finanzas-input" required value={formPlan.precio} onChange={e => setFormPlan({ ...formPlan, precio: e.target.value })} placeholder="Ej. 800" />
                         </div>
 
+                        {formPlan.nivelAcceso !== 'Visitas' ? (
+                          <div className="col-md-6">
+                            <label className="etiqueta-campo">Duración (Días)</label>
+                            <DuracionPlanPicker valor={formPlan.duracionDias} onCambiar={v => setFormPlan({ ...formPlan, duracionDias: v })} />
+                          </div>
+                        ) : (
+                          <div className="col-md-6">
+                            <label className="etiqueta-campo">Caducidad</label>
+                            <div className="finanzas-input d-flex align-items-center bg-success bg-opacity-10 text-success fw-bold border-success" style={{ cursor: 'not-allowed' }}>
+                              <i className="fas fa-calendar-check me-2"></i> 1 Año (Automático)
+                            </div>
+                          </div>
+                        )}
                         <div className="col-md-6">
-                          <label className="etiqueta-campo">Duración (Días)</label>
-                          <DuracionPlanPicker valor={formPlan.duracionDias} onCambiar={v => setFormPlan({ ...formPlan, duracionDias: v })} />
-                        </div>
-                        <div className="col-md-6">
-                          <label className="etiqueta-campo">Límite de Visitas (Vacío = Ilimitado)</label>
-                          <input type="number" className="finanzas-input" value={formPlan.limiteClasesMensual} onChange={e => setFormPlan({ ...formPlan, limiteClasesMensual: e.target.value })} placeholder="Ej. 4 para Cuponeras" />
+                          <label className="etiqueta-campo">{formPlan.nivelAcceso === 'Visitas' ? 'Número de Visitas Incluidas' : 'Límite de Visitas (Vacío = Ilimitado)'}</label>
+                          <input type="number" className="finanzas-input" required={formPlan.nivelAcceso === 'Visitas'} value={formPlan.limiteClasesMensual} onChange={e => setFormPlan({ ...formPlan, limiteClasesMensual: e.target.value })} placeholder={formPlan.nivelAcceso === 'Visitas' ? "Ej. 10 (Obligatorio)" : "Ej. 4 para Cuponeras"} />
                         </div>
 
                         <div className="col-12">
@@ -820,16 +846,24 @@ export default function GestionFinanzas() {
                           <label className="etiqueta-campo">Nivel de Acceso</label>
                           <NivelAccesoPicker valor={formPlan.nivelAcceso} onCambiar={v => setFormPlan({ ...formPlan, nivelAcceso: v })} />
                         </div>
-                        <div className="col-md-6">
-                          <label className="etiqueta-campo">Precio Mensual Base (Para mostrar ahorro)</label>
-                          <input type="number" className="finanzas-input" value={formPlan.precioReferenciaMensual} onChange={e => setFormPlan({ ...formPlan, precioReferenciaMensual: e.target.value })} placeholder="Opcional. Ej: 800" />
-                        </div>
+                        {formPlan.nivelAcceso !== 'Visitas' ? (
+                          <div className="col-md-6">
+                            <label className="etiqueta-campo">Precio Mensual Base (Para mostrar ahorro)</label>
+                            <input type="number" className="finanzas-input" value={formPlan.precioReferenciaMensual} onChange={e => setFormPlan({ ...formPlan, precioReferenciaMensual: e.target.value })} placeholder="Opcional. Ej: 800" />
+                          </div>
+                        ) : (
+                          <div className="col-md-6">
+                            {/* Espaciador para mantener alineación */}
+                          </div>
+                        )}
 
                         <div className="col-12 d-flex flex-column gap-2 mt-2 p-3 rounded" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                          <div className="form-check form-switch">
-                            <input className="form-check-input bg-warning border-warning" type="checkbox" id="reqInsc" checked={formPlan.requiereInscripcion} onChange={e => setFormPlan({ ...formPlan, requiereInscripcion: e.target.checked })} />
-                            <label className="form-check-label text-warning fw-bold ms-2" htmlFor="reqInsc"><i className="fas fa-crown me-1"></i>Requiere Inscripción Anual (Suma Racha de Lealtad)</label>
-                          </div>
+                          {formPlan.nivelAcceso !== 'Visitas' && (
+                            <div className="form-check form-switch">
+                              <input className="form-check-input bg-warning border-warning" type="checkbox" id="reqInsc" checked={formPlan.requiereInscripcion} onChange={e => setFormPlan({ ...formPlan, requiereInscripcion: e.target.checked })} />
+                              <label className="form-check-label text-warning fw-bold ms-2" htmlFor="reqInsc"><i className="fas fa-crown me-1"></i>Requiere Inscripción Anual (Suma Racha de Lealtad)</label>
+                            </div>
+                          )}
                           <div className="form-check form-switch">
                             <input className="form-check-input" type="checkbox" id="permScore" checked={formPlan.permiteScore} onChange={e => setFormPlan({ ...formPlan, permiteScore: e.target.checked })} />
                             <label className="form-check-label text-light ms-2" htmlFor="permScore">Permitir subir Scores a la Pizarra</label>
@@ -1069,6 +1103,64 @@ export default function GestionFinanzas() {
                     )}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* TAB: PAQUETES VISITAS */}
+            {pestaña === 'paquetes' && (
+              <div className="finanzas-card h-auto p-4 mb-4">
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <div className="finanzas-card-titulo mb-0"><i className="fas fa-ticket-alt" style={{ color: 'var(--nap-visitas, #10B981)' }}></i> Paquetes de Visitas Comprados</div>
+                </div>
+
+                {loadingPaquetes ? (
+                  <div className="text-center py-5"><AtletifyLoader /></div>
+                ) : listaPaquetes.length === 0 ? (
+                  <div className="finanzas-empty">
+                    <i className="fas fa-ticket-alt finanzas-empty-icon" style={{ opacity: 0.2 }}></i>
+                    <p>No hay paquetes de visitas activos en este momento.</p>
+                  </div>
+                ) : (
+                  <div className="table-responsive">
+                    <table className="table finanzas-table align-middle">
+                      <thead>
+                        <tr>
+                          <th>Atleta</th>
+                          <th>Paquete</th>
+                          <th>Visitas Restantes</th>
+                          <th>Fecha Compra</th>
+                          <th>Caduca</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {listaPaquetes.map(p => {
+                          const quedanPocas = p.visitasRestantes <= 2 && p.visitasRestantes > 0;
+                          const agotado = p.visitasRestantes <= 0;
+                          return (
+                            <tr key={p.idSuscripcion}>
+                              <td>
+                                <div className="fw-bold">{p.nombreAtleta}</div>
+                                <span className={`badge ${p.estatus === 'Activa' ? 'bg-success' : 'bg-warning text-dark'} bg-opacity-25 border border-${p.estatus === 'Activa' ? 'success text-success' : 'warning text-warning'} rounded-pill`} style={{ fontSize: '0.65rem' }}>{p.estatus}</span>
+                              </td>
+                              <td className="text-white fw-medium">{p.nombrePaquete}</td>
+                              <td>
+                                <div className="d-flex align-items-center gap-2">
+                                  <div className={`px-3 py-1 rounded-pill fw-bold ${agotado ? 'bg-danger bg-opacity-25 text-danger' : quedanPocas ? 'bg-warning bg-opacity-25 text-warning' : 'bg-success bg-opacity-25 text-success'}`} style={{ border: '1px solid currentColor' }}>
+                                    {p.visitasRestantes} / {p.visitasTotales}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="text-secondary small">{new Date(p.fechaInicio).toLocaleDateString()}</td>
+                              <td className="text-secondary small">
+                                {new Date(p.fechaVencimiento).toLocaleDateString()}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1427,13 +1519,22 @@ export default function GestionFinanzas() {
                   <input type="number" className="finanzas-input" value={formEditPlan.precio} onChange={e => setFormEditPlan({ ...formEditPlan, precio: e.target.value })} required />
                 </div>
 
+                {formEditPlan.nivelAcceso !== 'Visitas' ? (
+                  <div className="col-md-6">
+                    <label className="etiqueta-campo">Duración (Días)</label>
+                    <DuracionPlanPicker valor={formEditPlan.duracionDias} onCambiar={v => setFormEditPlan({ ...formEditPlan, duracionDias: v })} />
+                  </div>
+                ) : (
+                  <div className="col-md-6">
+                    <label className="etiqueta-campo">Caducidad</label>
+                    <div className="finanzas-input d-flex align-items-center bg-success bg-opacity-10 text-success fw-bold border-success" style={{ cursor: 'not-allowed' }}>
+                      <i className="fas fa-calendar-check me-2"></i> 1 Año (Automático)
+                    </div>
+                  </div>
+                )}
                 <div className="col-md-6">
-                  <label className="etiqueta-campo">Duración (Días)</label>
-                  <DuracionPlanPicker valor={formEditPlan.duracionDias} onCambiar={v => setFormEditPlan({ ...formEditPlan, duracionDias: v })} />
-                </div>
-                <div className="col-md-6">
-                  <label className="etiqueta-campo">Límite de Visitas / Mes</label>
-                  <input type="number" className="finanzas-input" placeholder="Vacío = Ilimitado" value={formEditPlan.limiteClasesMensual} onChange={e => setFormEditPlan({ ...formEditPlan, limiteClasesMensual: e.target.value })} />
+                  <label className="etiqueta-campo">{formEditPlan.nivelAcceso === 'Visitas' ? 'Número de Visitas Incluidas' : 'Límite de Visitas (Vacío = Ilimitado)'}</label>
+                  <input type="number" className="finanzas-input" required={formEditPlan.nivelAcceso === 'Visitas'} value={formEditPlan.limiteClasesMensual} onChange={e => setFormEditPlan({ ...formEditPlan, limiteClasesMensual: e.target.value })} placeholder={formEditPlan.nivelAcceso === 'Visitas' ? "Ej. 10 (Obligatorio)" : "Ej. 4 para Cuponeras"} />
                 </div>
 
                 <div className="col-12">
@@ -1454,10 +1555,12 @@ export default function GestionFinanzas() {
                 </div>
 
                 <div className="col-12 d-flex flex-column gap-2 mt-2 p-3 rounded" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div className="form-check form-switch">
-                    <input className="form-check-input" type="checkbox" id="editReqInsc" checked={formEditPlan.requiereInscripcion} onChange={e => setFormEditPlan({ ...formEditPlan, requiereInscripcion: e.target.checked })} />
-                    <label className="form-check-label text-light ms-2" htmlFor="editReqInsc">Requiere pagar Inscripción Anual</label>
-                  </div>
+                  {formEditPlan.nivelAcceso !== 'Visitas' && (
+                    <div className="form-check form-switch">
+                      <input className="form-check-input" type="checkbox" id="editReqInsc" checked={formEditPlan.requiereInscripcion} onChange={e => setFormEditPlan({ ...formEditPlan, requiereInscripcion: e.target.checked })} />
+                      <label className="form-check-label text-light ms-2" htmlFor="editReqInsc">Requiere pagar Inscripción Anual</label>
+                    </div>
+                  )}
                   <div className="form-check form-switch">
                     <input className="form-check-input" type="checkbox" id="editPermScore" checked={formEditPlan.permiteScore} onChange={e => setFormEditPlan({ ...formEditPlan, permiteScore: e.target.checked })} />
                     <label className="form-check-label text-light ms-2" htmlFor="editPermScore">Permitir subir Scores a la Pizarra</label>

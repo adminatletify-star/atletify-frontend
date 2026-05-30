@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars, react-hooks/set-state-in-effect */
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import BackButton from '../components/BackButton';
@@ -197,12 +197,9 @@ export default function AdminGruposFamiliares() {
         )}
 
         {modalDisolver.open && (
-          <ModalConfirmar
-            titulo="¿Disolver escuadrón?"
-            mensaje={`El escuadrón "${modalDisolver.grupo?.nombreGrupo}" se disolverá y sus miembros (excepto el líder) perderán sus beneficios.`}
-            confirmTexto="Sí, disolver"
-            tipo="danger"
-            onCancel={() => setModalDisolver({ open: false, grupo: null })}
+          <ModalPasswordAdmin
+            accionMensaje={`Disolver escuadrón "${modalDisolver.grupo?.nombreGrupo}". Los miembros (excepto el líder) perderán el descuento grupal. Ingresa tu contraseña de administrador para confirmar.`}
+            onClose={() => setModalDisolver({ open: false, grupo: null })}
             onConfirm={async () => {
               try {
                 await api.disolverGrupoFamiliar(modalDisolver.grupo.idGrupo);
@@ -219,6 +216,11 @@ export default function AdminGruposFamiliares() {
           <ModalDetalleGrupo
             grupo={modalDetalle.grupo}
             onClose={() => setModalDetalle({ open: false, grupo: null })}
+            onUpdate={() => cargarTodo(box?.idBox)}
+            onDisolver={(g) => {
+              setModalDetalle({ open: false, grupo: null });
+              setModalDisolver({ open: true, grupo: g });
+            }}
           />
         )}
       </AnimatePresence>
@@ -230,28 +232,72 @@ export default function AdminGruposFamiliares() {
 //  PESTAÑA 1: PANEL DE ESCUADRONES
 // ============================================================
 function PanelEscuadrones({ grupos, onCobrar, onDisolver, onDetalle }) {
-  if (grupos.length === 0) {
-    return (
-      <div className="agf-empty">
-        <i className="fas fa-users d-block" />
-        <h3>Aún no hay escuadrones familiares</h3>
-        <p>Crea tu primer escuadrón en la pestaña "Squad Builder".</p>
-      </div>
-    );
-  }
+  const totalIntegrantes = grupos.reduce((acc, g) => acc + g.miembros.length, 0);
+  const facturacionMensual = grupos.reduce((acc, g) => {
+    const sumPrecios = g.miembros.reduce((sum, m) => sum + Number(m.precioBase), 0);
+    const desc = sumPrecios * (g.descuentoGlobal / 100);
+    return acc + (sumPrecios - desc);
+  }, 0);
 
   return (
-    <div className="row g-4">
-      {grupos.map(g => (
-        <div key={g.idGrupo} className="col-12 col-lg-6">
-          <CardEscuadron
-            grupo={g}
-            onCobrar={onCobrar}
-            onDisolver={onDisolver}
-            onDetalle={onDetalle}
-          />
+    <div className="agf-panel-escuadrones-wrapper">
+      {/* KPIs Restaurados */}
+      <div className="row g-3 mb-4">
+        <div className="col-12 col-md-4">
+          <div className="agf-kpi-card" style={{ background: '#1c1c24', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ background: 'rgba(231, 76, 60, 0.1)', color: '#e74c3c', width: '50px', height: '50px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
+              <i className="fas fa-users-cog"></i>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px' }}>Escuadrones Activos</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#fff', lineHeight: '1' }}>{grupos.length}</div>
+            </div>
+          </div>
         </div>
-      ))}
+        <div className="col-12 col-md-4">
+          <div className="agf-kpi-card" style={{ background: '#1c1c24', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ background: 'rgba(52, 152, 219, 0.1)', color: '#3498db', width: '50px', height: '50px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
+              <i className="fas fa-user-friends"></i>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px' }}>Total Integrantes</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#fff', lineHeight: '1' }}>{totalIntegrantes}</div>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-md-4">
+          <div className="agf-kpi-card" style={{ background: '#1c1c24', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ background: 'rgba(46, 204, 113, 0.1)', color: '#2ecc71', width: '50px', height: '50px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
+              <i className="fas fa-hand-holding-usd"></i>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px' }}>Facturación Mensual</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#fff', lineHeight: '1' }}>${facturacionMensual.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {grupos.length === 0 ? (
+        <div className="agf-empty">
+          <i className="fas fa-users d-block" />
+          <h3>Aún no hay escuadrones familiares</h3>
+          <p>Crea tu primer escuadrón en la pestaña "Squad Builder".</p>
+        </div>
+      ) : (
+        <div className="row g-4">
+          {grupos.map(g => (
+            <div key={g.idGrupo} className="col-12 col-lg-6">
+              <CardEscuadron
+                grupo={g}
+                onCobrar={onCobrar}
+                onDisolver={onDisolver}
+                onDetalle={onDetalle}
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -373,6 +419,7 @@ function SquadBuilder({ atletasDisponibles, planes, idBox, onCreado }) {
   const [modalSlot, setModalSlot] = useState({ open: false, slotIdx: null });
   const [enviando, setEnviando] = useState(false);
   const [descuentoManual, setDescuentoManual] = useState('');
+  const [aplicarProrrateo, setAplicarProrrateo] = useState(false);
 
   const totalSlotsLlenos = slots.filter(s => s.data).length;
   const porcentajeAuto = calcularDescuentoProgresivo(totalSlotsLlenos);
@@ -429,6 +476,7 @@ function SquadBuilder({ atletasDisponibles, planes, idBox, onCreado }) {
     }
 
     const existentes = [];
+    const existentesFull = [];
     const nuevos = [];
     let indiceLiderNuevo = null;
     let idUsuarioLider = null;
@@ -438,6 +486,10 @@ function SquadBuilder({ atletasDisponibles, planes, idBox, onCreado }) {
       if (!s.data) return;
       if (s.tipo === 'existente') {
         existentes.push(s.data.idUsuario);
+        existentesFull.push({
+          idUsuario: s.data.idUsuario,
+          idPlan: s.data.idPlan ? Number(s.data.idPlan) : null
+        });
         if (s.esLider) idUsuarioLider = s.data.idUsuario;
       } else if (s.tipo === 'nuevo') {
         nuevos.push({
@@ -447,25 +499,31 @@ function SquadBuilder({ atletasDisponibles, planes, idBox, onCreado }) {
           telefono: s.data.telefono,
           genero: s.data.genero,
           fechaNacimiento: s.data.fechaNacimiento || null,
-          idPlan: s.data.idPlan
+          idPlan: Number(s.data.idPlan),
+          contrasena: s.data.contrasena,
+          username: s.data.username
         });
         if (s.esLider) indiceLiderNuevo = contadorNuevos;
         contadorNuevos++;
       }
     });
 
+    const payload = {
+      idBox,
+      nombreGrupo: nombreGrupo.trim(),
+      miembrosExistentesIds: existentes.length > 0 ? existentes : null,
+      miembrosExistentes: existentesFull.length > 0 ? existentesFull : null,
+      miembrosNuevos: nuevos.length > 0 ? nuevos : null,
+      aplicarProrrateo,
+      idUsuarioLider,
+      indiceLiderNuevo,
+      porcentajeDescuentoManual: descuentoManual !== '' ? Number(descuentoManual) : null,
+      notas: "Escuadrón creado manualmente desde el panel"
+    };
+
     setEnviando(true);
     try {
-      await api.crearGrupoFamiliar({
-        idBox,
-        nombreGrupo: nombreGrupo.trim(),
-        miembrosExistentesIds: existentes,
-        miembrosNuevos: nuevos,
-        idUsuarioLider,
-        indiceLiderNuevo,
-        porcentajeDescuentoManual: descuentoManual !== '' ? Number(descuentoManual) : null,
-        notas: null
-      });
+      await api.crearGrupoFamiliar(payload);
       alert('¡Escuadrón creado con éxito!');
       onCreado();
     } catch (e) {
@@ -573,6 +631,17 @@ function SquadBuilder({ atletasDisponibles, planes, idBox, onCreado }) {
             Mínimo 4 integrantes para crear el escuadrón.
           </p>
         )}
+        <div className="d-flex align-items-center mb-3 justify-content-center">
+          <label className="agf-checkbox-container m-0" style={{ fontSize: '0.9rem', color: 'var(--text-color)' }}>
+            <input 
+              type="checkbox" 
+              checked={aplicarProrrateo} 
+              onChange={e => setAplicarProrrateo(e.target.checked)} 
+            />
+            <span className="agf-checkmark"></span>
+            Aplicar prorrateo (KPIs) por meses restantes de integrantes actuales
+          </label>
+        </div>
         <button
           className="agf-btn-create"
           disabled={enviando || totalSlotsLlenos < 4}
@@ -587,7 +656,7 @@ function SquadBuilder({ atletasDisponibles, planes, idBox, onCreado }) {
         {modalSlot.open && (
           <ModalSeleccionMiembro
             atletasDisponibles={atletasDisponibles}
-            atletasYaUsados={slots.filter(s => s.tipo === 'existente').map(s => s.data?.idUsuario)}
+            atletasYaUsados={slots.filter(s => s.tipo === 'existente' && s.data?.idUsuario).map(s => Number(s.data.idUsuario))}
             planes={planes}
             onClose={() => setModalSlot({ open: false, slotIdx: null })}
             onSeleccionar={(tipo, data) => asignarSlot(modalSlot.slotIdx, tipo, data)}
@@ -677,9 +746,15 @@ function ModalSeleccionMiembro({ atletasDisponibles, atletasYaUsados, planes, on
   // Form nuevo
   const [form, setForm] = useState({
     nombre: '', apellidos: '', correo: '', telefono: '',
-    genero: '', fechaNacimiento: '', idPlan: ''
+    genero: '', fechaNacimiento: '', idPlan: '',
+    username: '', contrasena: ''
   });
   const [errores, setErrores] = useState({});
+
+  // Estados para contraseña (flow de RegistroManual)
+  const [mostrarModalPassword, setMostrarModalPassword] = useState(false);
+  const [passwordAdmin, setPasswordAdmin] = useState('');
+  const [verificandoPassword, setVerificandoPassword] = useState(false);
 
   // Para el flujo "existente": al hacer click muestra paso 2 para escoger plan
   const [atletaSeleccionado, setAtletaSeleccionado] = useState(null);
@@ -692,7 +767,7 @@ function ModalSeleccionMiembro({ atletasDisponibles, atletasYaUsados, planes, on
 
   const atletasFiltradosCompleto = useMemo(() => {
     return (atletasDisponibles || [])
-      .filter(a => !atletasYaUsados.includes(a.idUsuario))
+      .filter(a => !atletasYaUsados.includes(Number(a.idUsuario)))
       .filter(a => {
         // Filtro estricto en frontend: Solo atletas
         const rol = (a.rol || a.Rol || '').toLowerCase();
@@ -755,9 +830,64 @@ function ModalSeleccionMiembro({ atletasDisponibles, atletasYaUsados, planes, on
     if (!form.genero) errs.genero = 'Selecciona el género.';
     if (!form.fechaNacimiento) errs.fechaNacimiento = 'Selecciona la fecha de nacimiento.';
     if (!form.idPlan) errs.idPlan = 'Asigna un plan inicial.';
+    if (!form.username.trim()) errs.username = 'El Username es obligatorio.';
+    if (!form.contrasena.trim()) errs.contrasena = 'La contraseña es obligatoria.';
 
     setErrores(errs);
     return Object.keys(errs).length === 0;
+  }
+
+  const verificarPasswordYGenerar = async (e) => {
+    if (e) e.preventDefault();
+    if (!passwordAdmin) {
+      alert('Ingresa tu contraseña de administrador para confirmar.');
+      return;
+    }
+    setVerificandoPassword(true);
+    try {
+      const adminUser = JSON.parse(localStorage.getItem('usuario') || 'null');
+      if (!adminUser || !adminUser.correo) {
+        alert('No se pudo identificar tu sesión. Vuelve a iniciar sesión.');
+        return;
+      }
+      const API_BASE_URL = import.meta.env.VITE_API_URL?.endsWith('/api') 
+        ? import.meta.env.VITE_API_URL 
+        : `${import.meta.env.VITE_API_URL}/api`;
+
+      // Usando el mismo endpoint que en ModalPasswordAdmin
+      const res = await fetch(`${API_BASE_URL}/usuarios/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correo: adminUser.correo, contrasena: passwordAdmin })
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.token) {
+        const prefijo = form.nombre ? form.nombre.substring(0, 3).toUpperCase() : 'WOLF';
+        const randomNum = Math.floor(1000 + Math.random() * 9000);
+        const nuevaPass = `${prefijo}-${randomNum}*`;
+        setForm(prev => ({ ...prev, contrasena: nuevaPass }));
+        setMostrarModalPassword(false);
+        setPasswordAdmin('');
+        alert('Contraseña genérica generada. ¡Anótala y dásela al familiar!');
+      } else {
+        alert('Contraseña incorrecta.');
+      }
+    } catch (err) {
+      alert('Error de conexión al verificar.');
+    } finally {
+      setVerificandoPassword(false);
+    }
+  };
+
+  function generarUsername() {
+    if (!form.nombre) {
+      alert('Escribe el nombre primero para generar un username.');
+      return;
+    }
+    const clean = form.nombre.toLowerCase().replace(/\s+/g, '');
+    const ran = Math.floor(100 + Math.random() * 900);
+    setForm(prev => ({ ...prev, username: `${clean}${ran}` }));
   }
 
   function aceptarNuevo() {
@@ -775,36 +905,39 @@ function ModalSeleccionMiembro({ atletasDisponibles, atletasYaUsados, planes, on
     >
       <motion.div
         className="agf-modal"
+        style={{ maxWidth: modo === 'nuevo' ? '900px' : '550px', padding: modo === 'nuevo' ? '0' : '2rem' }}
         onClick={e => e.stopPropagation()}
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 20 }}
       >
-        <button className="agf-modal-close" onClick={onClose}>
-          <i className="fas fa-times" />
-        </button>
+        <div style={{ padding: modo === 'nuevo' ? '2rem 2rem 0 2rem' : '0' }}>
+          <button className="agf-modal-close" onClick={onClose} style={{ top: '15px', right: '15px' }}>
+            <i className="fas fa-times" />
+          </button>
 
-        <h2 className="agf-modal-title">
-          <i className="fas fa-user-plus" /> Agregar al escuadrón
-        </h2>
+          <h2 className="agf-modal-title">
+            <i className="fas fa-user-plus" /> Agregar al escuadrón
+          </h2>
 
-        {/* Sub-tabs (se ocultan si estamos en el paso 2 del flujo existente) */}
-        {!atletaSeleccionado && (
-          <div className="agf-modal-tabs">
-            <button
-              className={`agf-modal-tab ${modo === 'existente' ? 'active' : ''}`}
-              onClick={() => setModo('existente')}
-            >
-              <i className="fas fa-user-check" /> Lobo Existente
-            </button>
-            <button
-              className={`agf-modal-tab ${modo === 'nuevo' ? 'active' : ''}`}
-              onClick={() => setModo('nuevo')}
-            >
-              <i className="fas fa-paw" /> Alta de Familiar
-            </button>
-          </div>
-        )}
+          {/* Sub-tabs (se ocultan si estamos en el paso 2 del flujo existente) */}
+          {!atletaSeleccionado && (
+            <div className="agf-modal-tabs">
+              <button
+                className={`agf-modal-tab ${modo === 'existente' ? 'active' : ''}`}
+                onClick={() => setModo('existente')}
+              >
+                <i className="fas fa-search" /> Buscar Lobo Existente
+              </button>
+              <button
+                className={`agf-modal-tab ${modo === 'nuevo' ? 'active' : ''}`}
+                onClick={() => setModo('nuevo')}
+              >
+                <i className="fas fa-user-plus" /> Alta de Familiar
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* ============ MODO EXISTENTE — PASO 2 (plan) ============ */}
         {atletaSeleccionado ? (
@@ -943,111 +1076,193 @@ function ModalSeleccionMiembro({ atletasDisponibles, atletasYaUsados, planes, on
           </div>
         ) : (
           /* ============ MODO NUEVO — FORMULARIO ============ */
-          <div className="agf-nuevo-pane">
-            <div className="agf-form-grid">
-              <div className="agf-field">
-                <label className="agf-input-label">
-                  <i className="fas fa-user" /> Nombre *
-                </label>
-                <input
-                  className={`agf-input ${errores.nombre ? 'agf-input--error' : ''}`}
-                  maxLength={50}
-                  placeholder="Ej. Juan"
-                  value={form.nombre}
-                  onChange={e => setForm({ ...form, nombre: limpiarNombre(e.target.value) })}
-                />
-                {errores.nombre && <small className="agf-error-msg">{errores.nombre}</small>}
+          <div className="agf-nuevo-pane p-0 m-0 w-100" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="row g-0 m-0 w-100">
+              {/* IZQUIERDA: FORMULARIO */}
+              <div className="col-lg-8 p-4">
+                <div className="agf-form-grid">
+                  <div className="agf-field">
+                    <label className="agf-input-label">
+                      <i className="fas fa-user" /> Nombre *
+                    </label>
+                    <input
+                      className={`agf-input ${errores.nombre ? 'agf-input--error' : ''}`}
+                      maxLength={50}
+                      placeholder="Ej. Juan"
+                      value={form.nombre}
+                      onChange={e => setForm({ ...form, nombre: limpiarNombre(e.target.value) })}
+                    />
+                    {errores.nombre && <small className="agf-error-msg">{errores.nombre}</small>}
+                  </div>
+
+                  <div className="agf-field">
+                    <label className="agf-input-label">
+                      <i className="fas fa-user" /> Apellidos *
+                    </label>
+                    <input
+                      className={`agf-input ${errores.apellidos ? 'agf-input--error' : ''}`}
+                      maxLength={50}
+                      placeholder="Ej. Pérez González"
+                      value={form.apellidos}
+                      onChange={e => setForm({ ...form, apellidos: limpiarNombre(e.target.value) })}
+                    />
+                    {errores.apellidos && <small className="agf-error-msg">{errores.apellidos}</small>}
+                  </div>
+
+                  <div className="agf-field">
+                    <label className="agf-input-label">
+                      <i className="fas fa-at" /> Username *
+                    </label>
+                    <div className="d-flex gap-2">
+                      <input
+                        className={`agf-input flex-grow-1 ${errores.username ? 'agf-input--error' : ''}`}
+                        maxLength={30}
+                        placeholder="Ej. juan123"
+                        value={form.username}
+                        onChange={e => setForm({ ...form, username: e.target.value })}
+                      />
+                      <button type="button" className="agf-btn agf-btn--ghost px-3" onClick={generarUsername} title="Autogenerar">
+                        <i className="fas fa-magic" />
+                      </button>
+                    </div>
+                    {errores.username && <small className="agf-error-msg">{errores.username}</small>}
+                  </div>
+
+                  <div className="agf-field">
+                    <label className="agf-input-label">
+                      <i className="fas fa-phone" /> Teléfono (10 dígitos) *
+                    </label>
+                    <input
+                      className={`agf-input ${errores.telefono ? 'agf-input--error' : ''}`}
+                      type="tel"
+                      placeholder="Ej. 6621234567"
+                      value={form.telefono}
+                      onChange={e => setForm({ ...form, telefono: limpiarTelefono(e.target.value) })}
+                    />
+                    {errores.telefono && <small className="agf-error-msg">{errores.telefono}</small>}
+                  </div>
+
+                  <div className="agf-field">
+                    <label className="agf-input-label">
+                      <i className="fas fa-envelope" /> Correo (Opcional)
+                    </label>
+                    <input
+                      className={`agf-input ${errores.correo ? 'agf-input--error' : ''}`}
+                      type="email"
+                      maxLength={100}
+                      placeholder="familiar@ejemplo.com"
+                      value={form.correo}
+                      onChange={e => setForm({ ...form, correo: limpiarCorreo(e.target.value) })}
+                    />
+                    {errores.correo && <small className="agf-error-msg">{errores.correo}</small>}
+                  </div>
+
+                  <div className="agf-field">
+                    <label className="agf-input-label">
+                      <i className="fas fa-venus-mars" /> Género *
+                    </label>
+                    <GeneroPicker
+                      valor={form.genero}
+                      onCambiar={v => setForm({ ...form, genero: v })}
+                    />
+                    {errores.genero && <small className="agf-error-msg">{errores.genero}</small>}
+                  </div>
+
+                  <div className="agf-field">
+                    <label className="agf-input-label">
+                      <i className="fas fa-birthday-cake" /> Fecha de Nac. *
+                    </label>
+                    <input
+                      className={`agf-input ${errores.fechaNacimiento ? 'agf-input--error' : ''}`}
+                      type="date"
+                      max={new Date().toISOString().slice(0, 10)}
+                      value={form.fechaNacimiento}
+                      onChange={e => setForm({ ...form, fechaNacimiento: e.target.value })}
+                    />
+                    {errores.fechaNacimiento && <small className="agf-error-msg">{errores.fechaNacimiento}</small>}
+                  </div>
+
+                  <div className="agf-field agf-field--full mt-2">
+                    <label className="agf-input-label">
+                      <i className="fas fa-tag" /> Plan Inicial *
+                    </label>
+                    <SelectorPlanPicker
+                      planes={planes}
+                      valor={form.idPlan}
+                      onCambiar={v => setForm({ ...form, idPlan: v })}
+                    />
+                    {errores.idPlan && <small className="agf-error-msg">{errores.idPlan}</small>}
+                  </div>
+                </div>
+
+                <div className="d-flex justify-content-end mt-4 pt-3" style={{ borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
+                  <button className="agf-btn-create px-4" onClick={aceptarNuevo} style={{ width: 'auto' }}>
+                    <i className="fas fa-check" /> Agregar al Escuadrón
+                  </button>
+                </div>
               </div>
 
-              <div className="agf-field">
-                <label className="agf-input-label">
-                  <i className="fas fa-user" /> Apellidos *
-                </label>
-                <input
-                  className={`agf-input ${errores.apellidos ? 'agf-input--error' : ''}`}
-                  maxLength={50}
-                  placeholder="Ej. Pérez González"
-                  value={form.apellidos}
-                  onChange={e => setForm({ ...form, apellidos: limpiarNombre(e.target.value) })}
-                />
-                {errores.apellidos && <small className="agf-error-msg">{errores.apellidos}</small>}
-              </div>
+              {/* DERECHA: SEGURIDAD / CREDENCIALES */}
+              <div className="col-lg-4 d-flex flex-column" style={{ background: '#1c1c24', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="p-4 flex-grow-1 d-flex flex-column justify-content-center text-center">
+                  <div className="mb-4">
+                    <div style={{ color: '#e74c3c', marginBottom: '1rem' }}>
+                      <i className="fas fa-shield-alt fa-3x"></i>
+                    </div>
+                    <h4 style={{ fontWeight: 'bold', fontSize: '1.2rem', letterSpacing: '1px', marginBottom: '0.5rem', color: '#fff' }}>CREDENCIALES</h4>
+                    <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', lineHeight: '1.4' }}>
+                      Genera una contraseña genérica para este atleta. Confirma con tu contraseña de acceso para autorizar la acción.
+                    </p>
+                  </div>
 
-              <div className="agf-field">
-                <label className="agf-input-label">
-                  <i className="fas fa-envelope" /> Correo *
-                </label>
-                <input
-                  className={`agf-input ${errores.correo ? 'agf-input--error' : ''}`}
-                  type="email"
-                  maxLength={100}
-                  placeholder="familiar@ejemplo.com"
-                  value={form.correo}
-                  onChange={e => setForm({ ...form, correo: limpiarCorreo(e.target.value) })}
-                />
-                {errores.correo && <small className="agf-error-msg">{errores.correo}</small>}
-              </div>
-
-              <div className="agf-field">
-                <label className="agf-input-label">
-                  <i className="fas fa-phone" /> Teléfono (10 dígitos) *
-                </label>
-                <input
-                  className={`agf-input ${errores.telefono ? 'agf-input--error' : ''}`}
-                  type="tel"
-                  placeholder="Ej. 6621234567"
-                  value={form.telefono}
-                  onChange={e => setForm({ ...form, telefono: limpiarTelefono(e.target.value) })}
-                />
-                {errores.telefono && <small className="agf-error-msg">{errores.telefono}</small>}
-              </div>
-
-              <div className="agf-field">
-                <label className="agf-input-label">
-                  <i className="fas fa-venus-mars" /> Género *
-                </label>
-                <GeneroPicker
-                  valor={form.genero}
-                  onCambiar={v => setForm({ ...form, genero: v })}
-                />
-                {errores.genero && <small className="agf-error-msg">{errores.genero}</small>}
-              </div>
-
-              <div className="agf-field">
-                <label className="agf-input-label">
-                  <i className="fas fa-birthday-cake" /> Fecha de Nacimiento *
-                </label>
-                <input
-                  className={`agf-input ${errores.fechaNacimiento ? 'agf-input--error' : ''}`}
-                  type="date"
-                  max={new Date().toISOString().slice(0, 10)}
-                  value={form.fechaNacimiento}
-                  onChange={e => setForm({ ...form, fechaNacimiento: e.target.value })}
-                />
-                {errores.fechaNacimiento && <small className="agf-error-msg">{errores.fechaNacimiento}</small>}
-              </div>
-
-              <div className="agf-field agf-field--full">
-                <label className="agf-input-label">
-                  <i className="fas fa-tag" /> Plan Inicial *
-                </label>
-                <SelectorPlanPicker
-                  planes={planes}
-                  valor={form.idPlan}
-                  onCambiar={v => setForm({ ...form, idPlan: v })}
-                />
-                {errores.idPlan && <small className="agf-error-msg">{errores.idPlan}</small>}
+                  {form.contrasena ? (
+                    <div className="mb-3">
+                      <span className="d-block mb-2" style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Contraseña Generada:</span>
+                      <h3 className="m-0 text-white" style={{ fontWeight: '900', fontSize: '1.8rem', letterSpacing: '2px', background: 'rgba(255,255,255,0.05)', padding: '15px 10px', borderRadius: '8px' }}>
+                        {form.contrasena}
+                      </h3>
+                    </div>
+                  ) : (
+                    <>
+                      {mostrarModalPassword ? (
+                        <div className="text-start w-100">
+                          <label className="form-label" style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>Confirma tu contraseña</label>
+                          <input
+                            type="password"
+                            className="form-control mb-3"
+                            style={{ background: '#13131a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '8px', padding: '10px' }}
+                            value={passwordAdmin}
+                            onChange={(e) => setPasswordAdmin(e.target.value)}
+                            placeholder="Tu contraseña de acceso"
+                            disabled={verificandoPassword}
+                            onKeyDown={(e) => e.key === 'Enter' && verificarPasswordYGenerar()}
+                            autoFocus
+                          />
+                          <div className="d-flex gap-2">
+                            <button type="button" className="btn btn-outline-secondary w-50" style={{ borderRadius: '8px', fontSize: '0.9rem' }} onClick={() => { setMostrarModalPassword(false); setPasswordAdmin(''); }} disabled={verificandoPassword}>Cancelar</button>
+                            <button type="button" className="btn btn-danger w-50" style={{ borderRadius: '8px', fontSize: '0.9rem' }} onClick={verificarPasswordYGenerar} disabled={verificandoPassword || !passwordAdmin}>
+                              {verificandoPassword ? <><i className="fas fa-spinner fa-spin me-1"></i></> : 'Generar'}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button 
+                          type="button" 
+                          className="btn btn-outline-danger w-100 py-3" 
+                          onClick={() => setMostrarModalPassword(true)} 
+                          disabled={!form.nombre} 
+                          title={!form.nombre ? "Escribe un nombre primero" : ""}
+                          style={{ fontWeight: '600', textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '1px', borderRadius: '8px' }}
+                        >
+                          <i className="fas fa-key me-2"></i>Generar Contraseña
+                        </button>
+                      )}
+                    </>
+                  )}
+                  {errores.contrasena && <small className="text-danger mt-3 d-block font-weight-bold">{errores.contrasena}</small>}
+                </div>
               </div>
             </div>
-
-            <p className="agf-help-text mt-3">
-              <i className="fas fa-info-circle" /> El familiar se dará de alta como Atleta con cuenta activa.
-              Su contraseña temporal se generará y podrá cambiarla más tarde.
-            </p>
-
-            <button className="agf-btn-create mt-3" onClick={aceptarNuevo}>
-              <i className="fas fa-paw" /> Agregar al escuadrón
-            </button>
           </div>
         )}
       </motion.div>
@@ -1226,22 +1441,56 @@ function ModalCobroGrupo({ grupo, onClose, onPagado }) {
 // ============================================================
 //  MODAL: DETALLE DEL GRUPO
 // ============================================================
-function ModalDetalleGrupo({ grupo, onClose }) {
+// ============================================================
+//  MODAL: DETALLE DEL GRUPO (Y RETIRO DE INTEGRANTES)
+// ============================================================
+function ModalDetalleGrupo({ grupo, onClose, onUpdate, onDisolver }) {
   const [detalle, setDetalle] = useState(null);
   const [cargando, setCargando] = useState(true);
+  
+  // Estados para retiro
+  const [miembroARemover, setMiembroARemover] = useState(null);
+  const [alertaMinimo, setAlertaMinimo] = useState(null);
+
+  const fetchDetalle = async () => {
+    setCargando(true);
+    try {
+      const d = await api.obtenerDetalleGrupoFamiliar(grupo.idGrupo);
+      setDetalle(d);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setCargando(false);
+    }
+  };
 
   useEffect(() => {
-    (async () => {
-      try {
-        const d = await api.obtenerDetalleGrupoFamiliar(grupo.idGrupo);
-        setDetalle(d);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setCargando(false);
-      }
-    })();
+    fetchDetalle();
   }, [grupo.idGrupo]);
+
+  const intentarRemover = (m) => {
+    if (detalle.miembros.length - 1 < 4) {
+      setAlertaMinimo(m);
+    } else {
+      setMiembroARemover(m);
+    }
+  };
+
+  const procesarRemover = async () => {
+    if (!miembroARemover) return;
+    try {
+      const nuevosIds = detalle.miembros
+        .filter(x => x.idUsuario !== miembroARemover.idUsuario)
+        .map(x => x.idUsuario);
+
+      await api.editarMiembrosGrupoFamiliar(grupo.idGrupo, { idsUsuarios: nuevosIds });
+      setMiembroARemover(null);
+      if (onUpdate) onUpdate();
+      fetchDetalle();
+    } catch (e) {
+      alert('Error al remover integrante: ' + e.message);
+    }
+  };
 
   return (
     <motion.div className="agf-modal-overlay" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -1282,9 +1531,41 @@ function ModalDetalleGrupo({ grupo, onClose }) {
                     <small><i className="fas fa-tag me-1" /> {m.nombrePlan} — ${Number(m.precioBase).toFixed(2)}</small>
                   </div>
                   <span className={`agf-mini-status ${m.estatusSuscripcion?.toLowerCase() || ''}`}>{m.estatusSuscripcion || '—'}</span>
+                  {m.rolEnGrupo !== 'Lider' && (
+                    <button 
+                      className="agf-slot-mini-btn agf-slot-mini-btn--remove ms-2" 
+                      onClick={() => intentarRemover(m)}
+                      title="Sacar del escuadrón"
+                    >
+                      <i className="fas fa-trash" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
+            
+            {alertaMinimo && (
+              <ModalConfirmar
+                titulo="⚠️ Escuadrón Incompleto"
+                mensaje={`Al sacar a ${alertaMinimo.nombre}, el grupo quedará con menos de 4 integrantes (el mínimo). Si continúas, el escuadrón se disolverá automáticamente.`}
+                confirmTexto="Disolver Escuadrón"
+                cancelTexto="Cancelar y Agregar Sustituto"
+                tipo="danger"
+                onCancel={() => setAlertaMinimo(null)}
+                onConfirm={() => {
+                  setAlertaMinimo(null);
+                  if (onDisolver) onDisolver(grupo);
+                }}
+              />
+            )}
+
+            {miembroARemover && (
+              <ModalPasswordAdmin
+                accionMensaje={`Estás a punto de sacar a ${miembroARemover.nombre} del escuadrón. Perderá el beneficio de la mensualidad grupal en su próximo ciclo.`}
+                onClose={() => setMiembroARemover(null)}
+                onConfirm={procesarRemover}
+              />
+            )}
           </>
         ) : null}
       </motion.div>
@@ -1295,7 +1576,7 @@ function ModalDetalleGrupo({ grupo, onClose }) {
 // ============================================================
 //  MODAL CONFIRMACIÓN GENÉRICO
 // ============================================================
-function ModalConfirmar({ titulo, mensaje, confirmTexto = 'Sí', tipo = 'danger', onCancel, onConfirm }) {
+function ModalConfirmar({ titulo, mensaje, confirmTexto = 'Sí', cancelTexto = 'Cancelar', tipo = 'danger', onCancel, onConfirm }) {
   return (
     <motion.div className="agf-modal-overlay" onClick={onCancel} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <motion.div className="agf-modal agf-modal--confirm" onClick={e => e.stopPropagation()} initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}>
@@ -1305,8 +1586,77 @@ function ModalConfirmar({ titulo, mensaje, confirmTexto = 'Sí', tipo = 'danger'
         <h3 className="agf-confirm-title">{titulo}</h3>
         <p className="agf-confirm-msg">{mensaje}</p>
         <div className="d-flex gap-2 justify-content-center mt-3">
-          <button className="agf-btn agf-btn--ghost" onClick={onCancel}>Cancelar</button>
+          <button className="agf-btn agf-btn--ghost" onClick={onCancel}>{cancelTexto}</button>
           <button className={`agf-btn agf-btn--${tipo}`} onClick={onConfirm}>{confirmTexto}</button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ============================================================
+//  MODAL: PASSWORD ADMIN
+// ============================================================
+function ModalPasswordAdmin({ onClose, onConfirm, accionMensaje }) {
+  const [pass, setPass] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState('');
+
+  async function verificar() {
+    if(!pass) return;
+    setEnviando(true);
+    setError('');
+    try {
+      const u = JSON.parse(localStorage.getItem('usuario'));
+      if (!u || !u.correo) throw new Error('No hay sesión de administrador activa.');
+      
+      const API_BASE_URL = import.meta.env.VITE_API_URL?.endsWith('/api') 
+        ? import.meta.env.VITE_API_URL 
+        : `${import.meta.env.VITE_API_URL}/api`;
+
+      const res = await fetch(`${API_BASE_URL}/usuarios/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correo: u.correo, contrasena: pass })
+      });
+      
+      if(!res.ok) throw new Error('Contraseña incorrecta');
+      const data = await res.json();
+      
+      if(data.token) {
+        onConfirm();
+      } else {
+        throw new Error('Error al verificar.');
+      }
+    } catch(e) {
+      setError(e.message);
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <motion.div className="agf-modal-overlay" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <motion.div className="agf-modal agf-modal--confirm" onClick={e => e.stopPropagation()} initial={{ scale: 0.9 }} animate={{ scale: 1 }}>
+        <h3 className="agf-confirm-title text-danger"><i className="fas fa-lock" /> Autorización Requerida</h3>
+        <p className="agf-confirm-msg text-start mt-2" style={{fontSize: '0.9rem'}}>{accionMensaje || "Por seguridad, confirma tu contraseña de administrador para continuar."}</p>
+        
+        <input 
+          type="password" 
+          className="agf-input mt-3 text-center" 
+          placeholder="Tu contraseña de Admin"
+          value={pass}
+          onChange={e => setPass(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && verificar()}
+          autoFocus
+        />
+        {error && <div className="text-danger small mt-2 fw-bold text-center">{error}</div>}
+
+        <div className="d-flex gap-2 justify-content-center mt-4">
+          <button className="agf-btn agf-btn--ghost" onClick={onClose}>Cancelar</button>
+          <button className="agf-btn agf-btn--danger" onClick={verificar} disabled={!pass || enviando}>
+            {enviando ? <><i className="fas fa-spinner fa-spin me-2"/>Verificando</> : 'Confirmar'}
+          </button>
         </div>
       </motion.div>
     </motion.div>

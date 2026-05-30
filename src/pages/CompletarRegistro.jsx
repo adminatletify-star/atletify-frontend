@@ -13,7 +13,8 @@ import '../assets/css/CompletarRegistro.css';
 const METODOS_PAGO = [
   { id: 'Efectivo',      label: 'Efectivo en recepción',  icon: 'fa-money-bill-wave', desc: 'Llegas al box y pagas en efectivo cuando la Coach te reciba.' },
   { id: 'Tarjeta',       label: 'Tarjeta en recepción',   icon: 'fa-credit-card',     desc: 'Pagarás con tarjeta presencialmente al llegar al box.' },
-  { id: 'Transferencia', label: 'Transferencia bancaria', icon: 'fa-mobile-alt',      desc: 'Adjuntas el comprobante ahora mismo. Tu Coach validará el pago.' }
+  { id: 'Transferencia', label: 'Transferencia bancaria', icon: 'fa-mobile-alt',      desc: 'Adjuntas el comprobante ahora mismo. Tu Coach validará el pago.' },
+  { id: 'PagoEnLinea',   label: 'Pago en línea (tarjeta)', icon: 'fa-globe',          desc: 'Pagas ahora mismo con tu tarjeta de débito/crédito y te activas al instante.', esOnline: true }
 ];
 
 export default function CompletarRegistro() {
@@ -65,6 +66,11 @@ export default function CompletarRegistro() {
   const [montoInscripcion, setMontoInscripcion] = useState(0);
   const [cargandoPlanes, setCargandoPlanes] = useState(false);
 
+  // ── Config de Stripe del Box ──────────────────────────────────
+  const [boxAceptaPagosEnLinea, setBoxAceptaPagosEnLinea] = useState(false);
+  const [absorberComision, setAbsorberComision] = useState(false);
+  const [compraMinimaTarjeta, setCompraMinimaTarjeta] = useState(100);
+
   // ── Pago ────────────────────────────────────────────────────────
   const [metodoPago, setMetodoPago] = useState('Efectivo');
   const [comprobanteB64, setComprobanteB64] = useState('');
@@ -79,6 +85,8 @@ export default function CompletarRegistro() {
   );
   const inscripcionAplicable = planSeleccionado?.requiereInscripcion ? Number(montoInscripcion || 0) : 0;
   const totalCobrar = (planSeleccionado?.precio || 0) + inscripcionAplicable;
+  const comisionTarjeta = metodoPago === 'PagoEnLinea' && !absorberComision ? Math.round(((totalCobrar * 0.036) + 3) * 100) / 100 : 0;
+  const totalConComision = totalCobrar + comisionTarjeta;
 
   // 1) Verificar token de preregistro y descubrir rol + box
   useEffect(() => {
@@ -137,6 +145,12 @@ export default function CompletarRegistro() {
         if (resConfig.ok) {
           const cfg = await resConfig.json();
           setMontoInscripcion(Number(cfg.montoInscripcion ?? cfg.MontoInscripcion ?? 0));
+          // Stripe config
+          const tieneStripe = !!(cfg.stripeAccountId ?? cfg.StripeAccountId);
+          const aceptaOnline = cfg.aceptarPagosEnLinea ?? cfg.AceptarPagosEnLinea ?? true;
+          setBoxAceptaPagosEnLinea(tieneStripe && aceptaOnline);
+          setAbsorberComision(cfg.absorberComisionTarjeta ?? cfg.AbsorberComisionTarjeta ?? false);
+          setCompraMinimaTarjeta(Number(cfg.compraMinimaTarjeta ?? cfg.CompraMinimaTarjeta ?? 100));
         }
       } catch (e) {
         console.error(e);
@@ -256,6 +270,11 @@ export default function CompletarRegistro() {
       });
       const data = await response.json();
       if (response.ok) {
+        // Si el backend devuelve stripeUrl, redirigir a Stripe Checkout
+        if (data.stripeUrl) {
+          window.location.href = data.stripeUrl;
+          return;
+        }
         setMetodoPagoConfirmado(requierePlan ? metodoPago : '');
         setModalExitoOpen(true);
       } else {
@@ -265,6 +284,14 @@ export default function CompletarRegistro() {
       showAlert('Error de conexión.');
     }
   };
+
+  // Detectar retorno de Stripe exitoso
+  useEffect(() => {
+    if (searchParams.get('stripe_success') === '1') {
+      setMetodoPagoConfirmado('PagoEnLinea');
+      setModalExitoOpen(true);
+    }
+  }, [searchParams]);
 
   if (tokenEstado === 'cargando') {
     return (
@@ -607,13 +634,20 @@ export default function CompletarRegistro() {
                           <span className="cr-resumen-val">${inscripcionAplicable.toFixed(2)}</span>
                         </div>
                       )}
+                      {comisionTarjeta > 0 && (
+                        <div className="cr-resumen-row" style={{ color: '#f59e0b', fontSize: '0.85rem' }}>
+                          <span className="cr-resumen-label"><i className="fas fa-info-circle me-1"></i>Comisión bancaria</span>
+                          <span className="cr-resumen-val">+${comisionTarjeta.toFixed(2)}</span>
+                        </div>
+                      )}
                       <div className="cr-resumen-divider"></div>
                       <div className="cr-resumen-row cr-resumen-row--total">
                         <span className="cr-resumen-label">Total a pagar</span>
-                        <span className="cr-resumen-val">${totalCobrar.toFixed(2)}</span>
+                        <span className="cr-resumen-val">${totalConComision.toFixed(2)}</span>
                       </div>
                     </div>
                   )}
+
                 </div>
 
                 {/* ── Método de Pago ── */}
@@ -626,7 +660,9 @@ export default function CompletarRegistro() {
                   <i className="fas fa-wallet cr-section-icon"></i>
                 </div>
                 <div className="cr-metodos-list mb-3">
-                  {METODOS_PAGO.map(m => (
+                  {METODOS_PAGO
+                    .filter(m => !m.esOnline || boxAceptaPagosEnLinea)
+                    .map(m => (
                     <label
                       key={m.id}
                       className={`cr-metodo ${metodoPago === m.id ? 'cr-metodo--active' : ''}`}
@@ -764,12 +800,13 @@ export default function CompletarRegistro() {
               {requierePlan && planSeleccionado && (
                 <div className="cr-cta-summary">
                   <div className="cr-cta-summary-label">Total a registrar</div>
-                  <div className="cr-cta-summary-amount">${totalCobrar.toFixed(2)}</div>
+                  <div className="cr-cta-summary-amount">${totalConComision.toFixed(2)}</div>
                   <div className="cr-cta-summary-sub">
-                    {planSeleccionado.nombre} · <span>{metodoPago}</span>
+                    {planSeleccionado.nombre} · <span>{METODOS_PAGO.find(m => m.id === metodoPago)?.label || metodoPago}</span>
                   </div>
                 </div>
               )}
+
               <BotonSeguro
                 type="submit"
                 className="reg-btn-submit cr-btn-submit w-100"
@@ -806,7 +843,17 @@ export default function CompletarRegistro() {
             <h2 className="cr-exito-title">¡Gracias por tu registro!</h2>
             <p className="cr-exito-sub">Tu solicitud fue recibida correctamente.</p>
 
-            {metodoPagoConfirmado === 'Transferencia' ? (
+            {metodoPagoConfirmado === 'PagoEnLinea' ? (
+              <div className="cr-exito-box cr-exito-box--success" style={{ borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.08)' }}>
+                <i className="fas fa-bolt cr-exito-box-icon" style={{ color: '#22c55e' }} />
+                <div className="cr-exito-box-text">
+                  <strong>¡Tu pago fue procesado con éxito!</strong>
+                  <span>
+                    Tu cuenta ya está <b>activa</b>. Ya puedes iniciar sesión y comenzar a entrenar.
+                  </span>
+                </div>
+              </div>
+            ) : metodoPagoConfirmado === 'Transferencia' ? (
               <div className="cr-exito-box cr-exito-box--info">
                 <i className="fas fa-hourglass-half cr-exito-box-icon" />
                 <div className="cr-exito-box-text">

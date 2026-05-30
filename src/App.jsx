@@ -102,7 +102,7 @@ import PublicDropIn from './pages/PublicDropIn';
 import BuzonSugerencias from './pages/BuzonSugerencias';
 import GestionReglamento from './pages/GestionReglamento';
 import GestionAnuncios from './pages/GestionAnuncios';
-
+import ValidacionTransferencias from './pages/ValidacionTransferencias';
 
 // === INTERCEPTOR GLOBAL DE FETCH ===
 // Esto permite atrapar los errores del backend y, además, inyectar el token JWT.
@@ -471,11 +471,14 @@ function App() {
               <Route path="/calendario-wods" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><CalendarioWods /></ProtectedRoute>} />
               <Route path="/creador-wods" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><CreadorWods /></ProtectedRoute>} />
               <Route path="/editar-wod/:id" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><EditarWod /></ProtectedRoute>} />
+              <Route path="/admin-box/validaciones" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><ValidacionTransferencias /></ProtectedRoute>} />
               <Route path="/directorio" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><Directorio /></ProtectedRoute>} />
               <Route path="/gestion-solicitudes" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><GestionSolicitudesAtletas /></ProtectedRoute>} />
               <Route path="/gestion-clases" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><GestionClases /></ProtectedRoute>} />
               <Route path="/diccionario-ejercicios" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><DiccionarioEjercicios /></ProtectedRoute>} />
               <Route path="/admin-ejercicios" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><AdminEjercicios /></ProtectedRoute>} />
+              {/* DEV PANEL */}
+              <Route path="/admin-saas" element={<ProtectedRoute allowedRoles={['Developer']}><AdminSaaS /></ProtectedRoute>} />
               <Route path="/admin-archivadas" element={<ProtectedRoute allowedRoles={['Developer']}><AdminArchivadasDev /></ProtectedRoute>} />
               <Route path="/admin-archivadas/:idBox" element={<ProtectedRoute allowedRoles={['Developer']}><AdminArchivadasDevDetalle /></ProtectedRoute>} />
               <Route path="/editar-box" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><EditarBox /></ProtectedRoute>} />

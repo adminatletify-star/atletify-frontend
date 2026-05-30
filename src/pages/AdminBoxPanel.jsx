@@ -1253,6 +1253,25 @@ export default function AdminBoxPanel() {
           {/* COLUMNA SIDEBAR (DERECHA) */}
           <div className="abp-sidebar-col">
 
+            {/* WIDGET 0: BANDEJA DE VALIDACIONES */}
+            {isAdmin && (
+              <Link to="/admin-box/validaciones" className="text-decoration-none d-block mb-4 abp-clickable-card-link">
+                <div className="abp-glass-card abp-clickable-card" style={{ borderLeft: '3px solid var(--primary)' }}>
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h4 className="abp-card-title mb-0">Bandeja de Validaciones</h4>
+                    <div className="abp-widget-icon text-primary">
+                      <i className="fas fa-university"></i>
+                    </div>
+                  </div>
+                  <p className="text-muted small mb-3">Ver y aprobar transferencias bancarias pendientes (Membresías, Tienda, etc.)</p>
+                  
+                  <div className="text-primary text-center mt-3 fw-bold" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>
+                    <i className="fas fa-check-double me-1"></i>Ir a Bandeja <i className="fas fa-chevron-right ms-1"></i>
+                  </div>
+                </div>
+              </Link>
+            )}
+
             {/* WIDGET 1: TERMÓMETRO DE INGRESOS (Solo Admin) */}
             {isAdmin && (
               <Link to="/finanzas-globales" className="text-decoration-none d-block mb-4 abp-clickable-card-link">

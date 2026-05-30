@@ -5,6 +5,7 @@ import { BOXES_ENDPOINT, USUARIOS_ENDPOINT } from '../services/api';
 import AtletifyLoader from '../components/AtletifyLoader';
 import { useAuth } from '../context/AuthContext';
 import '../assets/css/dashboard.css';
+import DeveloperSaaSFinanzas from '../components/DeveloperSaaSFinanzas';
 import '../components/BoxPickerModal.css';
 
 export default function Dashboard() {
@@ -455,17 +456,17 @@ export default function Dashboard() {
             {/* Botones de acción — siempre visibles */}
             <div className="dash-nav-divider"></div>
 
-            {/* ── SaaS Control de Boxes: botón de sección ── */}
+            {/* ── SaaS Control de Boxes: Enlace a Finanzas ── */}
             <button
               className={`dash-nav-section-btn ${activeSection === 'saas' ? 'dash-nav-section-btn--active' : ''}`}
               onClick={() => goTo('saas')}
             >
               <div className="dash-nav-section-icon" style={{ '--si': 'var(--accent-cool)' }}>
-                <i className="fas fa-boxes"></i>
+                <i className="fas fa-chart-pie"></i>
               </div>
               <div className="dash-nav-section-text">
-                <span className="dash-nav-section-name">SaaS Control de Boxes</span>
-                <span className="dash-nav-section-desc">Métricas y estados SaaS</span>
+                <span className="dash-nav-section-name">Control de SaaS & Finanzas</span>
+                <span className="dash-nav-section-desc">Métricas y permisos B2B</span>
               </div>
               <i className={`fas fa-chevron-right dash-nav-section-arrow ${activeSection === 'saas' ? 'dash-nav-section-arrow--active' : ''}`}></i>
             </button>
@@ -713,186 +714,7 @@ export default function Dashboard() {
             }
 
             {/* ══ SECCIÓN 2: SaaS Control de Boxes ══ */}
-            {activeSection === 'saas' && <section className="dash-section">
-              <div className="dash-section-head">
-                <h2 className="dash-section-title">
-                  <i className="fas fa-boxes"></i> SaaS Control de Boxes
-                </h2>
-              </div>
-
-              {/* Buscador */}
-              <div className="dash-search-wrapper mb-4">
-                <i className="fas fa-search dash-search-icon"></i>
-                <input
-                  type="text"
-                  className="entrada-oscura dash-search-input w-100"
-                  placeholder="Buscar por nombre o ubicación..."
-                  value={filtroSaas}
-                  onChange={e => { setFiltroSaas(e.target.value); setPaginaBoxes(1); }}
-                />
-              </div>
-
-              <div className="scb-grid">
-                {metricasBoxesPagina.map(b => {
-                  const estatus = b.estatusSaaS || 'Pendiente';
-                  const estatusClass = `scb-saas-select--${estatus.toLowerCase()}`;
-                  return (
-                    <div key={b.idBox} className="scb-card">
-
-                      {/* Header: ID + Nombre */}
-                      <div className="scb-card-header">
-                        <span className="scb-card-id">#{b.idBox}</span>
-                        <span className="scb-card-name">{b.nombre}</span>
-                      </div>
-
-                      {/* Ubicación */}
-                      {b.ubicacion && (
-                        <div className="scb-ubicacion">
-                          <i className="fas fa-map-marker-alt"></i>
-                          {b.ubicacion}
-                        </div>
-                      )}
-
-                      {/* Stats: Atletas / AdminBox */}
-                      <div className="scb-stats-row">
-                        <div className="scb-stat-block scb-stat-block--atletas">
-                          <span className="scb-stat-num">{b.totalAtletas}</span>
-                          <span className="scb-stat-label"><i className="fas fa-users"></i> Atletas</span>
-                        </div>
-                        <div className="scb-stat-block scb-stat-block--admins">
-                          <span className="scb-stat-num">{b.totalAdmins}</span>
-                          <span className="scb-stat-label"><i className="fas fa-user-shield"></i> AdminBox</span>
-                        </div>
-                      </div>
-
-                      {/* Botón Agregar AdminBox */}
-                      <button
-                        className="scb-add-admin-btn"
-                        onClick={() => setModalAdminBox({ open: true, idBox: b.idBox, nombreBox: b.nombre })}
-                      >
-                        <i className="fas fa-user-plus"></i>
-                        Agregar Admin Box
-                      </button>
-
-                      <div className="scb-divider"></div>
-
-                      {/* SaaS / Connect */}
-                      <div className="scb-saas-block">
-                        <div className="scb-saas-label">
-                          <i className="fas fa-cloud"></i> SaaS / Connect
-                        </div>
-                        <select
-                          className={`scb-saas-select ${estatusClass}`}
-                          value={estatus}
-                          onChange={async (e) => {
-                            const newStatus = e.target.value;
-                            let fechaGracia = null;
-                            if (newStatus === 'Gracia') {
-                              fechaGracia = prompt("Fecha de vencimiento (YYYY-MM-DD):", new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]);
-                              if (!fechaGracia) return;
-                            }
-                            try {
-                              await updateSaaS(b.idBox, { estatusSaaS: newStatus, idPlanSaaS: b.idPlanSaaS, moduloCompetenciasActivo: b.moduloCompetenciasActivo, fechaVencimientoSaaS: fechaGracia || b.fechaVencimientoSaaS });
-                              alert("Estatus SaaS actualizado");
-                            } catch { alert("Error al actualizar estatus SaaS"); }
-                          }}
-                        >
-                          <option value="Pendiente">Pendiente</option>
-                          <option value="Activo">Activo</option>
-                          <option value="Gracia">Gracia</option>
-                          <option value="Vencido">Vencido</option>
-                        </select>
-                        <div className="scb-meta-row">
-                          {b.fechaVencimientoSaaS
-                            ? <span className="scb-expiry"><i className="fas fa-calendar-alt"></i>Vence: {new Date(b.fechaVencimientoSaaS).toLocaleDateString()}</span>
-                            : <span></span>}
-                          {b.stripeConnectActivo
-                            ? <span className="scb-connect-ok"><i className="fab fa-stripe-s"></i>Connect OK</span>
-                            : <span className="scb-connect-no"><i className="fab fa-stripe-s"></i>Sin Connect</span>}
-                        </div>
-                      </div>
-
-                      <div className="scb-divider"></div>
-
-                      {/* Competencias toggle */}
-                      <div className="scb-compe-row">
-                        <div className="scb-compe-label">
-                          <i className="fas fa-trophy"></i> Competencias
-                        </div>
-                        <button
-                          className={`scb-compe-btn ${b.moduloCompetenciasActivo ? 'scb-compe-btn--on' : 'scb-compe-btn--off'}`}
-                          onClick={async () => {
-                            if (!b.moduloCompetenciasActivo) {
-                              setModalActivarCompe({ open: true, idBox: b.idBox, planSaaS: b.idPlanSaaS, planCompetenciaId: '', estatusSaaS: b.estatusSaaS, fechaVencimientoSaaS: b.fechaVencimientoSaaS, nombre: '' });
-                            } else {
-                              const conf = await window.wpConfirm('¿Desactivar el módulo de competencias para este Box?');
-                              if (conf) {
-                                try {
-                                  await updateSaaS(b.idBox, { estatusSaaS: b.estatusSaaS || 'Pendiente', idPlanSaaS: b.idPlanSaaS, moduloCompetenciasActivo: false, fechaVencimientoSaaS: b.fechaVencimientoSaaS });
-                                } catch { alert("No se pudo actualizar el módulo."); }
-                              }
-                            }
-                          }}
-                        >
-                          <i className="fas fa-trophy"></i>
-                          {b.moduloCompetenciasActivo ? 'ON' : 'OFF'}
-                        </button>
-                      </div>
-
-                      <div className="scb-divider"></div>
-
-                      {/* Eliminar Box en cascada */}
-                      <button
-                        className="scb-delete-box-btn"
-                        onClick={() => setModalEliminarBox({ open: true, idBox: b.idBox, nombre: b.nombre })}
-                        title="Eliminar Box permanentemente"
-                      >
-                        <i className="fas fa-trash-alt"></i> Eliminar Box
-                      </button>
-
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Paginador */}
-              {totalPaginasBoxes > 1 && (
-                <div className="dash-pagination">
-                  <button
-                    className="dash-page-btn"
-                    disabled={paginaBoxes === 1}
-                    onClick={() => setPaginaBoxes(p => p - 1)}
-                  >
-                    <i className="fas fa-chevron-left" />
-                  </button>
-
-                  {Array.from({ length: totalPaginasBoxes }, (_, i) => i + 1).map(n => (
-                    <button
-                      key={n}
-                      className={`dash-page-btn${n === paginaBoxes ? ' dash-page-btn--active' : ''}`}
-                      onClick={() => setPaginaBoxes(n)}
-                    >
-                      {n}
-                    </button>
-                  ))}
-
-                  <button
-                    className="dash-page-btn"
-                    disabled={paginaBoxes === totalPaginasBoxes}
-                    onClick={() => setPaginaBoxes(p => p + 1)}
-                  >
-                    <i className="fas fa-chevron-right" />
-                  </button>
-
-                  <span className="dash-pag-info">
-                    {(paginaBoxes - 1) * BOXES_POR_PAGINA + 1}–{Math.min(paginaBoxes * BOXES_POR_PAGINA, metricasBoxesFiltradas.length)} de {metricasBoxesFiltradas.length}
-                  </span>
-                </div>
-              )}
-
-            </section>
-
-            }
+            {activeSection === 'saas' && <DeveloperSaaSFinanzas />}
 
             {/* ══ SECCIÓN 3: Planes de Competencias SaaS y Redes ══ */}
             {activeSection === 'config' && configuracion && (
