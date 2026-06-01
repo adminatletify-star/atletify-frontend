@@ -249,23 +249,7 @@ export default function HomeMegaMenu({ user, mobileMenuOpen, setMobileMenuOpen }
               <div className={`hmm-dropdown ${activeMenu === 'nosotros' ? 'open' : ''}`}>
                 <div className="hmm-dropdown-grid" style={{ gridTemplateColumns: '1fr' }}>
                   <div className="hmm-col" style={{ padding: '1rem 1.5rem' }}>
-                    {/* Sobre Nosotros: bloqueada — no navega */}
-                    <span
-                      className="hmm-link-simple"
-                      style={{ opacity: 0.4, cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                      title="Próximamente"
-                    >
-                      Sobre Nosotros
-                      <span style={{
-                        fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase',
-                        letterSpacing: '0.08em', padding: '0.15rem 0.55rem',
-                        borderRadius: '50px', background: 'rgba(230,57,70,0.15)',
-                        color: '#E63946', border: '1px solid rgba(230,57,70,0.3)',
-                        flexShrink: 0,
-                      }}>
-                        Próximamente
-                      </span>
-                    </span>
+                    <Link to="/sobre-nosotros" className="hmm-link-simple" onClick={handleLinkClick}>Sobre Nosotros</Link>
                     <a href="/wolfpack" className="hmm-link-simple" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>Wolfpack</a>
                   </div>
                 </div>
@@ -329,23 +313,63 @@ export default function HomeMegaMenu({ user, mobileMenuOpen, setMobileMenuOpen }
       {/* OVERLAY MÓVIL */}
       <div className={`hmm-mobile-overlay ${mobileMenuOpen ? 'open' : ''}`}>
         <div className="hmm-mobile-content">
-          <ul className="hmm-mobile-links">
-            <li><Link to="/" onClick={handleLinkClick}>Inicio</Link></li>
-            <li><Link to="/directorio-boxes" onClick={handleLinkClick}>Boxes</Link></li>
-            <li><Link to="/competencias" onClick={handleLinkClick}>Competencias</Link></li>
-            <li><Link to="/historial-competencias" onClick={handleLinkClick}>Historial de Compes</Link></li>
-            <li><Link to="/ejercicios" onClick={handleLinkClick}>Ejercicios</Link></li>
-            <li><Link to="/simulador-barra-publico" onClick={handleLinkClick}>Simulador de Barra</Link></li>
-            {haySessionActiva && (
-              <li><Link to="/preguntas-frecuentes" onClick={handleLinkClick}>Preguntas frecuentes</Link></li>
-            )}
-            <li style={{ opacity: 0.4, pointerEvents: 'none' }}>
-              <span>Nosotros <small style={{ fontSize: '0.65rem', color: '#E63946' }}>Próximamente</small></span>
-            </li>
-            <li><a href="/wolfpack" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>Wolfpack</a></li>
-          </ul>
 
-          <div className="hmm-mobile-footer mt-5">
+          <div className="hmm-mobile-group">
+            <Link to="/" className="hmm-mobile-item" onClick={handleLinkClick}>
+              <span className="hmm-mobile-item-icon"><i className="fas fa-home"></i></span>
+              <span className="hmm-mobile-item-label">Inicio</span>
+              <i className="fas fa-chevron-right hmm-mobile-item-arrow"></i>
+            </Link>
+          </div>
+
+          <p className="hmm-mobile-section-label">Explora</p>
+          <div className="hmm-mobile-group">
+            <Link to="/directorio-boxes" className="hmm-mobile-item" onClick={handleLinkClick}>
+              <span className="hmm-mobile-item-icon"><i className="fas fa-map-marker-alt"></i></span>
+              <span className="hmm-mobile-item-label">Boxes</span>
+              <i className="fas fa-chevron-right hmm-mobile-item-arrow"></i>
+            </Link>
+            <Link to="/competencias" className="hmm-mobile-item" onClick={handleLinkClick}>
+              <span className="hmm-mobile-item-icon"><i className="fas fa-trophy"></i></span>
+              <span className="hmm-mobile-item-label">Competencias</span>
+              <i className="fas fa-chevron-right hmm-mobile-item-arrow"></i>
+            </Link>
+            <Link to="/historial-competencias" className="hmm-mobile-item" onClick={handleLinkClick}>
+              <span className="hmm-mobile-item-icon"><i className="fas fa-medal"></i></span>
+              <span className="hmm-mobile-item-label">Historial de Compes</span>
+              <i className="fas fa-chevron-right hmm-mobile-item-arrow"></i>
+            </Link>
+          </div>
+
+          <p className="hmm-mobile-section-label">Herramientas</p>
+          <div className="hmm-mobile-group">
+            <Link to="/ejercicios" className="hmm-mobile-item" onClick={handleLinkClick}>
+              <span className="hmm-mobile-item-icon"><i className="fas fa-dumbbell"></i></span>
+              <span className="hmm-mobile-item-label">Ejercicios</span>
+              <i className="fas fa-chevron-right hmm-mobile-item-arrow"></i>
+            </Link>
+            <Link to="/simulador-barra-publico" className="hmm-mobile-item" onClick={handleLinkClick}>
+              <span className="hmm-mobile-item-icon"><i className="fas fa-weight-hanging"></i></span>
+              <span className="hmm-mobile-item-label">Simulador de Barra</span>
+              <i className="fas fa-chevron-right hmm-mobile-item-arrow"></i>
+            </Link>
+          </div>
+
+          <p className="hmm-mobile-section-label">Comunidad</p>
+          <div className="hmm-mobile-group">
+            <Link to="/sobre-nosotros" className="hmm-mobile-item" onClick={handleLinkClick}>
+              <span className="hmm-mobile-item-icon"><i className="fas fa-users"></i></span>
+              <span className="hmm-mobile-item-label">Nosotros</span>
+              <i className="fas fa-chevron-right hmm-mobile-item-arrow"></i>
+            </Link>
+            <a href="/wolfpack" target="_blank" rel="noopener noreferrer" className="hmm-mobile-item" onClick={handleLinkClick}>
+              <span className="hmm-mobile-item-icon hmm-item-icon--wolf"><i className="fas fa-paw"></i></span>
+              <span className="hmm-mobile-item-label">Wolfpack</span>
+              <i className="fas fa-chevron-right hmm-mobile-item-arrow"></i>
+            </a>
+          </div>
+
+          <div className="hmm-mobile-footer">
             {haySessionActiva && (
               <button
                 className="hmm-mobile-panel-btn"

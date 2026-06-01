@@ -406,10 +406,14 @@ export default function SimuladorBarraPublico() {
       evaluarSugerencia([...nuevosDiscos].sort((a, b) => b - a));
     };
 
+    const discosAncho = plateSpecs.reduce((acc, p) => acc + p.width + 2, 0);
+    const vizMinWidth = Math.max(380, discosAncho + 200);
+
     return (
       <div className="rounded-4 p-3 p-md-4" style={{ background: 'var(--bg-elevated)', minHeight: `${alturaArea}px`, border: '1px solid var(--border)' }}>
         <div className="small fw-semibold mb-3" style={{ color: 'var(--text-muted)' }}>Coloca los discos en su lugar</div>
-        <div style={{ position: 'relative', height: '240px', overflow: 'hidden', borderRadius: '14px', background: 'var(--bg-base)' }}>
+        <div style={{ overflowX: 'auto', overflowY: 'hidden', borderRadius: '14px' }}>
+        <div style={{ position: 'relative', height: '240px', borderRadius: '14px', background: 'var(--bg-base)', minWidth: `${vizMinWidth}px` }}>
           <div
             style={{
               position: 'absolute', left: '6%', top: '12px', width: '96px', height: '30px',
@@ -455,6 +459,7 @@ export default function SimuladorBarraPublico() {
             <div style={{ width: '20px', height: '140px', borderRadius: '5px', background: 'linear-gradient(180deg, #5f6872 0%, #3c434b 100%)', position: 'relative', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.12), 0 8px 16px rgba(0,0,0,0.35)' }}></div>
           </div>
         </div>
+        </div>{/* end overflow scroll wrapper */}
       </div>
     );
   };
@@ -480,10 +485,10 @@ export default function SimuladorBarraPublico() {
         <div className="sb-controls mb-4">
           <div className="sb-seg">
             <button type="button" className={`sb-seg-btn ${modoSimulador === 'casual' ? 'active' : ''}`} onClick={() => setModoSimulador('casual')}>
-              <i className="fas fa-dumbbell"></i> Casual
+              <i className="fas fa-dumbbell"></i><span className="sb-btn-label"> Casual</span>
             </button>
             <button type="button" className={`sb-seg-btn ${modoSimulador === 'pro' ? 'active-gold' : ''}`} onClick={() => setModoSimulador('pro')}>
-              <i className="fas fa-crown"></i> Pro
+              <i className="fas fa-crown"></i><span className="sb-btn-label"> Pro</span>
             </button>
           </div>
           <div className="sb-seg">
@@ -666,8 +671,8 @@ export default function SimuladorBarraPublico() {
                   </div>
                 </div>
                 <div className="sb-actions">
-                  <button type="button" className="sb-btn-danger" onClick={quitarUltimoDisco}><i className="fas fa-minus-circle"></i>Quitar</button>
-                  <button type="button" className="sb-btn-ghost" onClick={limpiarDiscos}><i className="fas fa-trash-alt"></i>Limpiar</button>
+                  <button type="button" className="sb-btn-danger" onClick={quitarUltimoDisco}><i className="fas fa-minus-circle"></i><span className="sb-btn-label">Quitar</span></button>
+                  <button type="button" className="sb-btn-ghost" onClick={limpiarDiscos}><i className="fas fa-trash-alt"></i><span className="sb-btn-label">Limpiar</span></button>
                 </div>
               </div>
             </div>
@@ -705,7 +710,7 @@ export default function SimuladorBarraPublico() {
                   </p>
                 )}
                 <button type="button" className="sb-btn-calc" onClick={calcularCombinacionEficiente}>
-                  <i className="fas fa-bolt"></i>Calcular combinación
+                  <i className="fas fa-bolt"></i><span className="sb-btn-label">Calcular combinación</span>
                 </button>
                 {alternativas.visible && (
                   <div className="sb-alt-panel">
