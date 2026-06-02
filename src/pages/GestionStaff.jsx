@@ -190,12 +190,27 @@ export default function GestionStaff() {
   };
 
   // --- LÓGICA DE CONTRATOS Y NÓMINA ---
+  const getWeekBoundaries = (dateObj) => {
+    const day = dateObj.getDay();
+    const diffToMonday = dateObj.getDate() - day + (day === 0 ? -6 : 1);
+    const start = new Date(dateObj.getFullYear(), dateObj.getMonth(), diffToMonday);
+    const end = new Date(dateObj.getFullYear(), dateObj.getMonth(), diffToMonday + 6);
+    
+    const offsetStart = start.getTimezoneOffset() * 60000;
+    const offsetEnd = end.getTimezoneOffset() * 60000;
+    
+    return {
+      fInicioStr: new Date(start.getTime() - offsetStart).toISOString().split('T')[0],
+      fFinStr: new Date(end.getTime() - offsetEnd).toISOString().split('T')[0]
+    };
+  };
+
   const cargarAsistencias = async (idCoach) => {
     setCargandoAsistencias(true);
     try {
-      const hoy = new Date();
+      const { fInicioStr, fFinStr } = getWeekBoundaries(new Date());
       const token = localStorage.getItem('token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/asistencias-coach/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/asistencias-coach-semanal/${idCoach}/${fInicioStr}/${fFinStr}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -229,8 +244,8 @@ export default function GestionStaff() {
       });
       if (res.ok) {
         await cargarAsistencias(idCoach);
-        const hoy = new Date();
-        const resNomina = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`, {
+        const { fInicioStr, fFinStr } = getWeekBoundaries(new Date());
+        const resNomina = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular-semanal/${idCoach}/${fInicioStr}/${fFinStr}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (resNomina.ok) {
@@ -243,10 +258,11 @@ export default function GestionStaff() {
   };
 
   const pagarNominaMes = async () => {
-    if (!window.confirm(`¿Seguro que deseas proceder con el pago definitivo de la nómina de ${coachSeleccionado.nombre} por $${nominaActual.granTotal.toFixed(2)}? Se registrará un Egreso Financiero y se cerrará el mes.`)) return;
+    if (!window.confirm(`¿Seguro que deseas proceder con el pago definitivo de la nómina semanal de ${coachSeleccionado.nombre} por $${nominaActual.granTotal.toFixed(2)}? Se registrará un Egreso Financiero.`)) return;
     try {
       const idCoach = coachSeleccionado.idUsuario || coachSeleccionado.id;
       const hoy = new Date();
+      // En vez de mes/año podríamos mandar la semana, pero para retrocompatibilidad usaremos el mes actual. Idealmente backend también debería tener pagar-semanal.
       const token = localStorage.getItem('token');
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/pagar/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`, {
         method: 'POST',
@@ -283,9 +299,9 @@ export default function GestionStaff() {
         const data = await resContrato.json();
         setFormContrato({ tipoPago: data.tipoPago, monto: data.monto, diaCorte: data.diaCorte });
       }
-      // 2. Traer el cálculo de Nómina de este mes
-      const hoy = new Date();
-      const resNomina = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`, {
+      // 2. Traer el cálculo de Nómina de esta SEMANA
+      const { fInicioStr, fFinStr } = getWeekBoundaries(new Date());
+      const resNomina = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular-semanal/${idCoach}/${fInicioStr}/${fFinStr}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (resNomina.ok) {
@@ -737,15 +753,20 @@ export default function GestionStaff() {
                   />
                 </div>
                 <div className="col-md-3">
-                  <label className="staff-form-label">Día de Pago</label>
-                  <input
-                    type="number"
-                    max="31"
-                    min="1"
+                  <label className="staff-form-label">Día de Pago (Semanal)</label>
+                  <select
                     className="staff-modal-input"
                     value={formContrato.diaCorte}
                     onChange={e => setFormContrato({ ...formContrato, diaCorte: e.target.value })}
-                  />
+                  >
+                    <option value="1">Lunes</option>
+                    <option value="2">Martes</option>
+                    <option value="3">Miércoles</option>
+                    <option value="4">Jueves</option>
+                    <option value="5">Viernes</option>
+                    <option value="6">Sábado</option>
+                    <option value="7">Domingo</option>
+                  </select>
                 </div>
                 <div className="col-12">
                   <BotonSeguro onClick={guardarContrato} className="staff-btn-guardar-contrato" textoProcesando="Guardando...">
@@ -757,14 +778,14 @@ export default function GestionStaff() {
               {formContrato.tipoPago === 'PorClase' && (
                 <div className="mt-4">
                   <div className="staff-modal-section-title">
-                    <i className="fas fa-calendar-check me-2"></i>Validación de Clases (Este Mes)
+                    <i className="fas fa-calendar-check me-2"></i>Validación de Clases (Esta Semana)
                   </div>
                   {cargandoAsistencias ? (
                     <div className="text-center py-3">
                       <div className="spinner-border text-danger spinner-border-sm" role="status"></div>
                     </div>
                   ) : asistenciasCoach.length === 0 ? (
-                    <p className="text-muted small py-2">No hay clases programadas o registradas este mes.</p>
+                    <p className="text-muted small py-2">No hay clases programadas o registradas esta semana.</p>
                   ) : (
                     <div className="table-responsive" style={{ maxHeight: '220px', overflowY: 'auto' }}>
                       <table className="table table-dark table-striped table-hover align-middle mb-0" style={{ fontSize: '11px', background: 'rgba(0,0,0,0.2)' }}>
@@ -780,11 +801,12 @@ export default function GestionStaff() {
                         <tbody>
                           {asistenciasCoach.map((ast, idx) => {
                             const dateObj = new Date(ast.fecha);
-                            const fechaFormateada = dateObj.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' });
+                            const offsetDate = new Date(dateObj.getTime() + dateObj.getTimezoneOffset() * 60000); // Evitar desfase de zona horaria
+                            const fechaFormateada = offsetDate.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', weekday: 'short' });
                             return (
                               <tr key={idx}>
-                                <td className="text-white-50">
-                                  {fechaFormateada} <span className="small text-muted">{ast.horario}</span>
+                                <td className="text-white-50 text-capitalize">
+                                  {fechaFormateada} <span className="small text-muted d-block">{ast.horario}</span>
                                   {ast.esSustituto && <span className="badge bg-info ms-1" style={{ fontSize: '8px' }}>Sustituto</span>}
                                 </td>
                                 <td className="fw-bold">{ast.nombreClase}</td>
@@ -838,15 +860,15 @@ export default function GestionStaff() {
               {nominaActual && (
                 <div className="staff-nomina-card mt-4">
                   <div className="staff-modal-section-title">
-                    <i className="fas fa-calculator me-2"></i>Nómina Proyectada (Este Mes)
+                    <i className="fas fa-calculator me-2"></i>Nómina Proyectada (Esta Semana)
                   </div>
                   <div className="staff-nomina-row">
-                    <span>Sueldo Base ({nominaActual.tipoPago})</span>
-                    <span className="staff-nomina-valor">${nominaActual.sueldoBaseMensual.toFixed(2)}</span>
+                    <span>Sueldo Base Semanal ({nominaActual.tipoPago})</span>
+                    <span className="staff-nomina-valor">${nominaActual.sueldoBaseSemanal?.toFixed(2) || (nominaActual.sueldoBaseMensual || 0).toFixed(2)}</span>
                   </div>
                   {nominaActual.tipoPago === 'PorClase' && (
                     <div className="staff-nomina-note">
-                      Calculado sobre {nominaActual.clasesValidadas} clases validadas este mes
+                      Calculado sobre {nominaActual.clasesValidadas} clases validadas esta semana
                     </div>
                   )}
                   <div className="staff-nomina-row">
@@ -871,7 +893,7 @@ export default function GestionStaff() {
                     className="btn btn-success w-100 mt-3 py-2 fw-bold text-uppercase"
                     style={{ borderRadius: '12px', fontSize: '12px', letterSpacing: '0.5px' }}
                   >
-                    <i className="fas fa-hand-holding-usd me-1"></i> Pagar Nómina del Mes
+                    <i className="fas fa-hand-holding-usd me-1"></i> Pagar Nómina de la Semana
                   </button>
                 </div>
               )}

@@ -138,20 +138,30 @@ export default function AdminBoxPanel() {
     setCargandoCoachDashboard(true);
     try {
       const token = localStorage.getItem('token');
-      const hoy = new Date();
-      const year = hoy.getFullYear();
-      const month = hoy.getMonth() + 1;
+      
+      const hoyObj = new Date();
+      const day = hoyObj.getDay(); 
+      const diffToMonday = hoyObj.getDate() - day + (day === 0 ? -6 : 1);
+      
+      // Aseguramos fechas limpias para la semana
+      const startOfWeek = new Date(hoyObj.getFullYear(), hoyObj.getMonth(), diffToMonday);
+      const endOfWeek = new Date(hoyObj.getFullYear(), hoyObj.getMonth(), diffToMonday + 6);
+      
+      // YYYY-MM-DD local format
+      const offset = startOfWeek.getTimezoneOffset() * 60000;
+      const fInicioStr = new Date(startOfWeek.getTime() - offset).toISOString().split('T')[0];
+      const fFinStr = new Date(endOfWeek.getTime() - offset).toISOString().split('T')[0];
 
-      // 1. Clases programadas y asistencias de este mes
-      const resClases = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/asistencias-coach/${idCoach}/${year}/${month}`, {
+      // 1. Clases programadas y asistencias de esta SEMANA
+      const resClases = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/asistencias-coach-semanal/${idCoach}/${fInicioStr}/${fFinStr}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (resClases.ok) {
         setClasesCoach(await resClases.json());
       }
 
-      // 2. Nómina estimada y desglose del mes
-      const resNomina = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular/${idCoach}/${year}/${month}`, {
+      // 2. Nómina estimada y desglose de la SEMANA
+      const resNomina = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular-semanal/${idCoach}/${fInicioStr}/${fFinStr}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (resNomina.ok) {
@@ -457,12 +467,12 @@ export default function AdminBoxPanel() {
 
             {/* QUICK STATS CARD ROW */}
             <div className="row g-3 abp-stats-row">
-              <div className="col-6 col-md-3">
+              <div className="col-12 col-sm-6 col-md-3">
                 <div className="abp-stat-card" style={{ '--accent-line': 'var(--accent-cool)' }}>
                   <div className="d-flex justify-content-between align-items-start">
-                    <div>
+                    <div className="abp-stat-card-content">
                       <div className="abp-stat-number" style={{ color: 'var(--accent-cool)' }}>{totalCount}</div>
-                      <div className="abp-stat-label">Clases del Mes</div>
+                      <div className="abp-stat-label">Clases de la Semana</div>
                     </div>
                     <div className="abp-stat-icon" style={{ background: 'rgba(79,195,247,0.1)', color: 'var(--accent-cool)' }}>
                       <i className="fas fa-calendar-alt"></i>
@@ -471,10 +481,10 @@ export default function AdminBoxPanel() {
                 </div>
               </div>
 
-              <div className="col-6 col-md-3">
+              <div className="col-12 col-sm-6 col-md-3">
                 <div className="abp-stat-card" style={{ '--accent-line': 'var(--success)' }}>
                   <div className="d-flex justify-content-between align-items-start">
-                    <div>
+                    <div className="abp-stat-card-content">
                       <div className="abp-stat-number" style={{ color: 'var(--success)' }}>{validatedCount}</div>
                       <div className="abp-stat-label">Clases Validadas</div>
                     </div>
@@ -485,12 +495,24 @@ export default function AdminBoxPanel() {
                 </div>
               </div>
 
-              <div className="col-6 col-md-3">
+              <div className="col-12 col-sm-6 col-md-3">
                 <div className="abp-stat-card" style={{ '--accent-line': 'var(--warning)' }}>
                   <div className="d-flex justify-content-between align-items-start">
-                    <div>
+                    <div className="abp-stat-card-content">
                       <div className="abp-stat-number" style={{ color: 'var(--warning)' }}>
-                        {formatearDinero(nominaCoach?.granTotal || 0)}
+                        {(() => {
+                          let pagoEst = 0;
+                          const tipoPago = nominaCoach?.tipoPago || nominaCoach?.TipoPago;
+                          if (tipoPago === 'PorClase') {
+                            pagoEst = clasesCoach.reduce((s, c) => s + (c.montoPago || c.MontoPago || 0), 0);
+                          } else {
+                            pagoEst = nominaCoach?.sueldoBaseSemanal || nominaCoach?.SueldoBaseSemanal || 0;
+                          }
+                          const bonos = nominaCoach?.totalBonos || nominaCoach?.TotalBonos || 0;
+                          const pens = nominaCoach?.totalPenalizaciones || nominaCoach?.TotalPenalizaciones || 0;
+                          const estimado = pagoEst + bonos - pens;
+                          return formatearDinero(estimado || 0);
+                        })()}
                       </div>
                       <div className="abp-stat-label">Mi Nómina Estimada</div>
                     </div>
@@ -501,10 +523,10 @@ export default function AdminBoxPanel() {
                 </div>
               </div>
 
-              <div className="col-6 col-md-3">
+              <div className="col-12 col-sm-6 col-md-3">
                 <div className="abp-stat-card" style={{ '--accent-line': 'var(--danger)' }}>
                   <div className="d-flex justify-content-between align-items-start">
-                    <div>
+                    <div className="abp-stat-card-content">
                       <div className="abp-stat-number" style={{ color: 'var(--danger)' }}>
                         {evaluacionesCoach?.total > 0 || evaluacionesCoach?.Total > 0
                           ? `${(evaluacionesCoach?.promedio || evaluacionesCoach?.Promedio || 0).toFixed(1)} ★`
@@ -589,9 +611,9 @@ export default function AdminBoxPanel() {
                 <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary">
                   <div>
                     <h4 className="abp-card-title mb-0">
-                      <i className="fas fa-wallet me-2 text-warning"></i>Desglose de Nómina Estimada (Este Mes)
+                      <i className="fas fa-wallet me-2 text-warning"></i>Desglose de Nómina Estimada (Esta Semana)
                     </h4>
-                    <span className="text-muted small">Cálculos automáticos en base a tus asistencias validadas</span>
+                    <span className="text-muted small">Cálculos automáticos en base a tus asistencias validadas de Lunes a Domingo</span>
                   </div>
                   <span className="badge bg-warning-glow text-warning font-weight-bold px-2 py-1">
                     Corte: Día {nominaCoach?.diaCorte || 15}
@@ -840,11 +862,11 @@ export default function AdminBoxPanel() {
 
           {/* ESTADÍSTICAS RÁPIDAS */}
           <div className="row g-3 abp-stats-row">
-            <div className="col-6 col-md-3">
+            <div className="col-12 col-sm-6 col-md-3">
               <Link to="/atletas-box" className="text-decoration-none d-block">
                 <div className="abp-stat-card" style={{ '--accent-line': 'var(--accent-cool)', cursor: 'pointer' }}>
                   <div className="d-flex justify-content-between align-items-start">
-                    <div>
+                    <div className="abp-stat-card-content">
                       <div className="abp-stat-number" style={{ color: 'var(--accent-cool)' }}>{atletas.length}</div>
                       <div className="abp-stat-label">Total Atletas</div>
                     </div>
@@ -856,11 +878,11 @@ export default function AdminBoxPanel() {
               </Link>
             </div>
 
-            <div className="col-6 col-md-3">
+            <div className="col-12 col-sm-6 col-md-3">
               <Link to="/atletas-box?estatus=activo" className="text-decoration-none d-block">
                 <div className="abp-stat-card" style={{ '--accent-line': 'var(--success)', cursor: 'pointer' }}>
                   <div className="d-flex justify-content-between align-items-start">
-                    <div>
+                    <div className="abp-stat-card-content">
                       <div className="abp-stat-number" style={{ color: 'var(--success)' }}>{atletasActivos.length}</div>
                       <div className="abp-stat-label">Activos</div>
                     </div>
@@ -872,11 +894,11 @@ export default function AdminBoxPanel() {
               </Link>
             </div>
 
-            <div className="col-6 col-md-3">
+            <div className="col-12 col-sm-6 col-md-3">
               <Link to="/atletas-box?estatus=inactivo" className="text-decoration-none d-block">
                 <div className="abp-stat-card" style={{ '--accent-line': 'var(--danger)', cursor: 'pointer' }}>
                   <div className="d-flex justify-content-between align-items-start">
-                    <div>
+                    <div className="abp-stat-card-content">
                       <div className="abp-stat-number" style={{ color: 'var(--danger)' }}>{atletasInactivos.length}</div>
                       <div className="abp-stat-label">Inactivos</div>
                     </div>
@@ -889,11 +911,11 @@ export default function AdminBoxPanel() {
             </div>
 
             {isAdmin && (
-              <div className="col-6 col-md-3">
+              <div className="col-12 col-sm-6 col-md-3">
                 <Link to="/gestion-solicitudes" className="text-decoration-none d-block">
                   <div className="abp-stat-card" style={{ '--accent-line': 'var(--warning)', cursor: 'pointer' }}>
                     <div className="d-flex justify-content-between align-items-start">
-                      <div>
+                      <div className="abp-stat-card-content">
                         <div className="abp-stat-number" style={{ color: solicitudes.length > 0 ? 'var(--warning)' : 'var(--text-muted)' }}>
                           {solicitudes.length}
                         </div>
@@ -925,7 +947,7 @@ export default function AdminBoxPanel() {
               </p>
 
               <div className="abp-category-container">
-                <div className="d-flex justify-content-between align-items-center mb-3">
+                <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                   <h3 className="abp-category-title mb-0">
                     <i className="fas fa-running me-2 text-success"></i>Operaciones Diarias
                   </h3>
@@ -1002,7 +1024,7 @@ export default function AdminBoxPanel() {
               </div>
 
               <div className="abp-category-container mt-4">
-                <div className="d-flex justify-content-between align-items-center mb-3">
+                <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                   <h3 className="abp-category-title mb-0">
                     <i className="fas fa-dumbbell me-2 text-info"></i>Administración de Clases
                   </h3>
@@ -1060,7 +1082,7 @@ export default function AdminBoxPanel() {
 
               {isAdmin && (
                 <div className="abp-category-container mt-4">
-                  <div className="d-flex justify-content-between align-items-center mb-3">
+                  <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                     <h3 className="abp-category-title mb-0">
                       <i className="fas fa-hand-holding-usd me-2 text-warning"></i>Finanzas & Escuadrones
                     </h3>

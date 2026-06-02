@@ -799,14 +799,6 @@ export default function PaseDeLista() {
             LISTA DE CLASES
         ══════════════════════════════════ */}
         <div className="mb-4">
-          <p className="pdl-section-label">
-            <i className="fas fa-calendar-day"></i>
-            Clases de este WOD
-            {clasesFiltradas.length > 0 && (
-              <span className="pdl-section-count">{clasesFiltradas.length}</span>
-            )}
-          </p>
-
           {loading ? (
             <div className="pdl-loading">
               <AtletifyLoader />
@@ -817,14 +809,81 @@ export default function PaseDeLista() {
               <p>Este WOD no aplica a las clases de hoy o nadie se ha inscrito.</p>
             </div>
           ) : (
-            <AnimatedList
-              items={clasesFiltradas}
-              renderItem={renderClaseItem}
-              keyExtractor={(clase) => clase.idClase}
-              className="d-flex flex-column gap-3"
-              staggerDelay={0.1}
-              animateOnChange={false}
-            />
+            <>
+              {(() => {
+                const isCoach = JSON.parse(localStorage.getItem('usuario'))?.rol === 'Coach';
+                const misClases = isCoach ? clasesFiltradas.filter(c => c.esMiClase) : clasesFiltradas;
+                const otrasClases = isCoach ? clasesFiltradas.filter(c => !c.esMiClase) : [];
+
+                return (
+                  <>
+                    {misClases.length > 0 && (
+                      <div className="mb-4">
+                        <p className="pdl-section-label">
+                          <i className="fas fa-calendar-day"></i>
+                          {isCoach ? 'Mis Clases (Titular)' : 'Clases de este WOD'}
+                          <span className="pdl-section-count">{misClases.length}</span>
+                        </p>
+                        <AnimatedList
+                          items={misClases}
+                          renderItem={renderClaseItem}
+                          keyExtractor={(clase) => clase.idClase}
+                          className="d-flex flex-column gap-3"
+                          staggerDelay={0.1}
+                          animateOnChange={false}
+                        />
+                      </div>
+                    )}
+
+                    {otrasClases.length > 0 && (
+                      <div className="mb-4">
+                        <p className="pdl-section-label text-muted">
+                          <i className="fas fa-calendar-times"></i>
+                          Otras Clases (Bloqueadas)
+                          <span className="pdl-section-count bg-secondary">{otrasClases.length}</span>
+                        </p>
+                        <AnimatedList
+                          items={otrasClases}
+                          renderItem={(clase, index) => (
+                            <div
+                              key={clase.idClase}
+                              className="pdl-clase-card"
+                              style={{ opacity: 0.6, cursor: 'not-allowed' }}
+                              onClick={() => alert('No puedes pasar lista en clases donde no eres el Coach titular. Pide al Admin que te asigne a esta clase si estás cubriendo una suplencia.')}
+                            >
+                              <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+                                <div className="d-flex align-items-center gap-3">
+                                  <div className="pdl-clase-icon bg-secondary">
+                                    <i className="fas fa-lock text-white"></i>
+                                  </div>
+                                  <div>
+                                    <p className="pdl-clase-nombre text-white-50">
+                                      {clase.horaInicio.substring(0, 5)} — {clase.nombre}
+                                    </p>
+                                    <p className="pdl-clase-coach">
+                                      <i className="fas fa-user-tie opacity-50"></i> {clase.coach}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="d-flex align-items-center gap-2">
+                                  <span className={`pdl-cap-badge bg-dark text-muted border-secondary ${clase.inscritos >= clase.maximoAtletas ? 'pdl-cap-badge--full' : ''}`}>
+                                    <i className="fas fa-users"></i>{clase.inscritos}/{clase.maximoAtletas}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          keyExtractor={(clase) => clase.idClase}
+                          className="d-flex flex-column gap-3"
+                          staggerDelay={0.1}
+                          animateOnChange={false}
+                        />
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </>
           )}
         </div>
 
