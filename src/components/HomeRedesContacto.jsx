@@ -100,7 +100,7 @@ export default function HomeRedesContacto() {
           </h2>
           <p className="hrc-subtitle">
             ¿Quieres digitalizar tu CrossFit box con Atletify? Escríbenos por cualquiera
-            de estos canales y agenda una demo con nuestro equipo.
+            de estos canales.
           </p>
         </motion.div>
 

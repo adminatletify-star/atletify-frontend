@@ -6,6 +6,7 @@ const TABS = [
   {
     id: 'wods',
     label: 'Programa tus WODs',
+    labelCorto: 'WODs',
     icon: 'fas fa-dumbbell',
     tag: 'Entrenamiento',
     titulo: 'Programa tus WODs con total control',
@@ -19,6 +20,7 @@ const TABS = [
   {
     id: 'clases',
     label: 'Declara tus clases',
+    labelCorto: 'Clases',
     icon: 'fas fa-calendar-alt',
     tag: 'Gestión',
     titulo: 'Declara tus clases a tu medida',
@@ -32,6 +34,7 @@ const TABS = [
   {
     id: 'atletas',
     label: 'Gestiona atletas',
+    labelCorto: 'Atletas',
     icon: 'fas fa-users',
     tag: 'Atletas',
     titulo: 'Gestiona a tus atletas en un solo lugar',
@@ -45,6 +48,7 @@ const TABS = [
   {
     id: 'finanzas',
     label: 'Controla finanzas',
+    labelCorto: 'Finanzas',
     icon: 'fas fa-chart-line',
     tag: 'Finanzas',
     titulo: 'Controla las finanzas de tu box',
@@ -102,21 +106,24 @@ export default function HomeLoQueOfrece() {
 
       {/* ── Tabs ── */}
       <motion.div
-        className="ofrece-tabs"
+        className="ofrece-tabs-scroll"
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.4 }}
         transition={{ duration: 0.6, delay: 0.15 }}
       >
-        {TABS.map((t, i) => (
-          <button
-            key={t.id}
-            className={`ofrece-tab${activo === i ? ' ofrece-tab--activo' : ''}`}
-            onClick={() => irA(i)}
-          >
-            {t.label}
-          </button>
-        ))}
+        <div className="ofrece-tabs">
+          {TABS.map((t, i) => (
+            <button
+              key={t.id}
+              className={`ofrece-tab${activo === i ? ' ofrece-tab--activo' : ''}`}
+              onClick={() => irA(i)}
+            >
+              <span className="ofrece-tab-label-full">{t.label}</span>
+              <span className="ofrece-tab-label-short">{t.labelCorto}</span>
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       {/* ── Card con swipe ── */}

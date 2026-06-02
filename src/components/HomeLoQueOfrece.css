@@ -35,12 +35,27 @@
 }
 
 /* ── Tabs ── */
+/* Wrapper: contenedor con scroll horizontal sin barras visibles */
+.ofrece-tabs-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  margin-bottom: 2.5rem;
+  padding: 0.25rem 0;
+}
+.ofrece-tabs-scroll::-webkit-scrollbar { display: none; }
+
+/* Labels: full visible por defecto, corto oculto */
+.ofrece-tab-label-short { display: none; }
+.ofrece-tab-label-full  { display: inline; }
+
+/* Fila interna: ancho exacto al contenido, centrada cuando cabe */
 .ofrece-tabs {
   display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.75rem;
-  margin-bottom: 2.5rem;
+  width: max-content;   /* ancho = suma de botones */
+  margin: 0 auto;       /* centro si cabe; izquierda si no → scroll hacia derecha */
 }
 
 .ofrece-tab {
@@ -181,12 +196,19 @@
   .ofrece-seccion { padding: 5rem 1.25rem 6rem; }
   .ofrece-card { min-height: 320px; }
   .ofrece-subtitulo { font-size: clamp(1.25rem, 4vw, 1.6rem); }
+  /* Labels cortos en tablet y móvil — caben los 4 sin scroll */
+  .ofrece-tab-label-full  { display: none; }
+  .ofrece-tab-label-short { display: inline; }
+  .ofrece-tabs { gap: 0.6rem; }
+  .ofrece-tab { font-size: 0.88rem; padding: 0.52rem 1.2rem; }
 }
 
 @media (max-width: 576px) {
   .ofrece-seccion { padding: 4rem 1rem 5rem; }
   .ofrece-titulo-principal { font-size: clamp(1.5rem, 6vw, 1.9rem); }
-  .ofrece-tab { font-size: 0.82rem; padding: 0.5rem 1rem; }
+  .ofrece-tabs-scroll { padding: 0.25rem 0.5rem; }
+  .ofrece-tabs { gap: 0.5rem; }
+  .ofrece-tab { font-size: 0.82rem; padding: 0.48rem 1rem; }
   .ofrece-card { padding: 1.75rem 1.5rem; border-radius: 18px; min-height: unset; }
   .ofrece-card-icon { width: 44px; height: 44px; margin-bottom: 1.1rem; }
   .ofrece-subtitulo { font-size: clamp(1.15rem, 5vw, 1.4rem); margin-bottom: 1.25rem; }
@@ -195,8 +217,8 @@
 }
 
 @media (max-width: 380px) {
-  .ofrece-tabs { gap: 0.4rem; }
-  .ofrece-tab { font-size: 0.76rem; padding: 0.42rem 0.85rem; }
+  .ofrece-tabs { gap: 0.3rem; }
+  .ofrece-tab { font-size: 0.62rem; padding: 0.38rem 0.55rem; }
   .ofrece-subtitulo { font-size: 1rem; }
   .ofrece-bullets li { font-size: 0.8rem; }
 }

@@ -169,6 +169,94 @@
   cursor: not-allowed;
 }
 
+/* ── BOTÓN FECHA DE NACIMIENTO (abre DateWheelPicker) ── */
+.mab-fecha-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mab-fecha-icon {
+  color: var(--primary);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.mab-fecha-valor {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.mab-fecha-placeholder {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-muted);
+}
+
+.mab-fecha-arrow {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.mab-fecha-btn--open .mab-fecha-arrow {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+
+.mab-fecha-btn:hover {
+  border-color: var(--primary);
+}
+
+/* ── OVERLAY DEL DATE WHEEL PICKER (por encima del modal) ── */
+.dwp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10010;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: mab-fade-in 0.2s ease;
+  padding: 12px;
+}
+
+.dwp-modal {
+  width: 100%;
+  max-width: 420px;
+  max-height: calc(100dvh - 80px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: linear-gradient(160deg, rgba(22, 22, 32, 0.99) 0%, rgba(12, 12, 18, 1) 100%);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+.dwp-modal .date-wheel-picker {
+  max-width: 100%;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 16px 20px 20px;
+}
+
+@media (max-width: 480px), (max-height: 720px) {
+  .dwp-modal .date-wheel-picker { padding: 12px 14px 16px; }
+}
+
 /* ── ESTADO USERNAME ── */
 .mab-status {
   font-family: var(--font-heading-alt);

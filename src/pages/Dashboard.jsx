@@ -714,7 +714,11 @@ export default function Dashboard() {
             }
 
             {/* ══ SECCIÓN 2: SaaS Control de Boxes ══ */}
-            {activeSection === 'saas' && <DeveloperSaaSFinanzas />}
+            {activeSection === 'saas' && (
+              <DeveloperSaaSFinanzas
+                onDataChanged={async () => { await cargarDataGlobal(); await refetchBoxes?.(); }}
+              />
+            )}
 
             {/* ══ SECCIÓN 3: Planes de Competencias SaaS y Redes ══ */}
             {activeSection === 'config' && configuracion && (

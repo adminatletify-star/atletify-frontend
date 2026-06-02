@@ -310,19 +310,21 @@ export default function CompletarRegistro() {
   }
 
   if (tokenEstado !== 'valido') {
+    // Presentación según el motivo por el que el enlace no es válido
+    const estadoVista = {
+      usado:       { icono: 'fa-check-circle',        color: 'text-success', titulo: '¡Cuenta ya activada!',            ctaLabel: 'Ir a Iniciar Sesión' },
+      reemplazado: { icono: 'fa-envelope-open-text',  color: 'text-info',    titulo: 'Hay una invitación más reciente', ctaLabel: 'Volver al Inicio' },
+      expirado:    { icono: 'fa-clock',               color: 'text-warning', titulo: 'El enlace expiró',                ctaLabel: 'Volver al Inicio' },
+    }[tokenEstado] ?? { icono: 'fa-exclamation-triangle', color: 'text-warning', titulo: 'Enlace no disponible', ctaLabel: 'Volver al Inicio' };
+
     return (
       <div className="reg-root d-flex justify-content-center align-items-center min-vh-100">
         <div className="reg-card text-center p-5 slide-in" style={{ maxWidth: '500px' }}>
-          {tokenEstado === 'usado'
-            ? <i className="fas fa-check-circle fa-4x text-success mb-3"></i>
-            : <i className="fas fa-exclamation-triangle fa-4x text-warning mb-3"></i>
-          }
-          <h3 className="text-white fw-bold mb-3">
-            {tokenEstado === 'usado' ? '¡Cuenta ya activada!' : 'Enlace no disponible'}
-          </h3>
+          <i className={`fas ${estadoVista.icono} fa-4x ${estadoVista.color} mb-3`}></i>
+          <h3 className="text-white fw-bold mb-3">{estadoVista.titulo}</h3>
           <p className="text-white-50 fs-5 mb-4">{tokenMensaje || 'Este enlace no es válido.'}</p>
           <Link to="/login" className="btn btn-outline-light rounded-pill px-5 py-2 fw-bold w-100">
-            {tokenEstado === 'usado' ? 'Ir a Iniciar Sesión' : 'Volver al Inicio'}
+            {estadoVista.ctaLabel}
           </Link>
         </div>
       </div>

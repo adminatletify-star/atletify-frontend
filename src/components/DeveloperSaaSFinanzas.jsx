@@ -1,12 +1,75 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import AtletifyLoader from '../components/AtletifyLoader';
+import ModalAdminBox from './ModalAdminBox';
 import '../assets/css/AdminFinanzasGlobales.css'; // Reutilizamos los estilos premium
 
-const DeveloperSaaSFinanzas = () => {
+const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
   const [boxes, setBoxes] = useState([]);
   const [planes, setPlanes] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // ── Agregar admin a un box (chooser + manual + link por correo) ──
+  const [chooser, setChooser]       = useState(null); // { idBox, nombre }
+  const [modalManual, setModalManual] = useState(null); // { idBox, nombre }
+  const [modalLink, setModalLink]   = useState(null); // { idBox, nombre }
+  const [correoInvite, setCorreoInvite] = useState('');
+  const [enviandoInvite, setEnviandoInvite] = useState(false);
+
+  // ── Eliminar box (confirmación + texto de seguridad) ──
+  const [confirmDelete, setConfirmDelete] = useState(null); // { idBox, nombre }
+  const [textoConfirm, setTextoConfirm] = useState('');
+  const [eliminando, setEliminando] = useState(false);
+
+  const eliminarBox = async () => {
+    if (!confirmDelete) return;
+    setEliminando(true);
+    try {
+      const base = import.meta.env.VITE_API_URL;
+      const res = await fetch(`${base}/api/box/${confirmDelete.idBox}/cascade`, {
+        method: 'DELETE',
+        headers: authHeader()
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.mensaje || data.detalle || 'No se pudo eliminar el box');
+      window.alert(data.mensaje || 'Box eliminado.');
+      setConfirmDelete(null);
+      setTextoConfirm('');
+      cargarData();
+      onDataChanged?.(); // refresca Control Global de Roles + selector de boxes del dev
+    } catch (e) {
+      window.alert(`Error: ${e.message}`);
+    } finally {
+      setEliminando(false);
+    }
+  };
+
+  const enviarInvitacionLink = async () => {
+    const correo = correoInvite.trim();
+    if (!correo || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+      window.alert('Ingresa un correo válido.');
+      return;
+    }
+    setEnviandoInvite(true);
+    try {
+      const base = import.meta.env.VITE_API_URL;
+      const res = await fetch(`${base}/api/developer/invitar-admin-box-link`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
+        body: JSON.stringify({ correo, idBox: modalLink.idBox })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.mensaje || 'No se pudo enviar la invitación');
+      window.alert(data.mensaje || 'Invitación enviada.');
+      setModalLink(null);
+      setCorreoInvite('');
+    } catch (e) {
+      window.alert(`Error: ${e.message}`);
+    } finally {
+      setEnviandoInvite(false);
+    }
+  };
 
   useEffect(() => { cargarData(); }, []);
 
@@ -194,7 +257,8 @@ const DeveloperSaaSFinanzas = () => {
         <div className="p-4 border-bottom" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
           <h5 className="mb-0 text-white" style={{ fontFamily: 'var(--font-heading)' }}><i className="fas fa-lock text-warning me-2"></i>Control de Permisos de Cajas (SaaS)</h5>
         </div>
-        <div className="table-responsive">
+        {/* ── Desktop ancho (≥1200px): tabla ── */}
+        <div className="table-responsive d-none d-xl-block">
           <table className="finanzas-globales-table m-0">
             <thead>
               <tr>
@@ -203,6 +267,7 @@ const DeveloperSaaSFinanzas = () => {
                 <th>Plan de Suscripción</th>
                 <th>Módulo Competencias</th>
                 <th style={{ textAlign: 'right' }}>Estado del Servicio</th>
+                <th style={{ textAlign: 'center' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -253,12 +318,251 @@ const DeveloperSaaSFinanzas = () => {
                       <option value="Suspendido">Suspendido</option>
                     </select>
                   </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <div className="d-inline-flex align-items-center gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-light d-inline-flex align-items-center gap-1"
+                        style={{ borderRadius: '8px', fontSize: '0.78rem', whiteSpace: 'nowrap' }}
+                        onClick={() => setChooser({ idBox: box.idBox, nombre: box.nombre })}
+                      >
+                        <i className="fas fa-user-plus"></i>
+                        <span className="d-none d-xl-inline">Agregar admin</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
+                        style={{ borderRadius: '8px', fontSize: '0.78rem', width: '34px', height: '32px' }}
+                        title="Eliminar box"
+                        onClick={() => { setConfirmDelete({ idBox: box.idBox, nombre: box.nombre }); setTextoConfirm(''); }}
+                      >
+                        <i className="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        {/* ── Móvil / tablet (<1200px): tarjetas ── */}
+        <div className="d-xl-none p-3">
+          {boxes.length === 0 ? (
+            <div className="text-secondary text-center py-4 small">Sin boxes registrados.</div>
+          ) : boxes.map(box => (
+            <div key={box.idBox} className="dsf-box-card mb-3">
+              <div className="d-flex justify-content-between align-items-start gap-2 mb-3">
+                <div className="min-w-0">
+                  <div className="fw-bold text-white text-truncate">{box.nombre}</div>
+                  <div className="text-secondary small text-truncate"><i className="fas fa-map-marker-alt me-1"></i>{box.ubicacion || 'Sin ubicación'}</div>
+                </div>
+                <span className="badge bg-dark border border-secondary text-light flex-shrink-0">
+                  <i className="fas fa-users me-1 text-primary"></i> {box.totalAtletas}
+                </span>
+              </div>
+
+              <div className="dsf-field">
+                <label className="dsf-field-label">Plan de Suscripción</label>
+                <select
+                  className="form-select form-select-sm bg-dark text-white border-secondary"
+                  value={box.idPlanSaaS || ''}
+                  onChange={(e) => handleActualizarBoxSaaS(box.idBox, 'idPlanSaaS', parseInt(e.target.value) || null)}
+                >
+                  <option value="">Ninguno</option>
+                  {planes.map(p => (
+                    <option key={p.idPlan} value={p.idPlan}>{p.nombre} ({formatearDinero(p.precio)})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="dsf-field d-flex align-items-center justify-content-between">
+                <label className="dsf-field-label mb-0">Módulo Competencias</label>
+                <div className="form-check form-switch m-0">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={box.moduloCompetenciasActivo}
+                    onChange={(e) => handleActualizarBoxSaaS(box.idBox, 'moduloCompetenciasActivo', e.target.checked)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </div>
+              </div>
+
+              <div className="dsf-field">
+                <label className="dsf-field-label">Estado del Servicio</label>
+                <select
+                  className={`form-select form-select-sm ${box.estatusSaaS === 'Activo' ? 'bg-success text-white border-success' : box.estatusSaaS === 'Suspendido' ? 'bg-danger text-white border-danger' : 'bg-warning text-dark border-warning'}`}
+                  style={{ fontWeight: 'bold' }}
+                  value={box.estatusSaaS || 'Pendiente'}
+                  onChange={(e) => handleActualizarBoxSaaS(box.idBox, 'estatusSaaS', e.target.value)}
+                >
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Activo">Activo</option>
+                  <option value="Gracia">En Gracia</option>
+                  <option value="Suspendido">Suspendido</option>
+                </select>
+              </div>
+
+              <div className="d-flex gap-2 mt-2">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-light flex-grow-1 d-flex align-items-center justify-content-center gap-2"
+                  style={{ borderRadius: '8px', fontSize: '0.82rem' }}
+                  onClick={() => setChooser({ idBox: box.idBox, nombre: box.nombre })}
+                >
+                  <i className="fas fa-user-plus"></i>
+                  Agregar admin
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center"
+                  style={{ borderRadius: '8px', width: '44px', flexShrink: 0 }}
+                  title="Eliminar box"
+                  onClick={() => { setConfirmDelete({ idBox: box.idBox, nombre: box.nombre }); setTextoConfirm(''); }}
+                >
+                  <i className="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* ── Confirmar eliminación de box ── */}
+      {confirmDelete && createPortal(
+        <div className="dsf-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget && !eliminando) { setConfirmDelete(null); setTextoConfirm(''); } }}>
+          <div className="dsf-modal" style={{ borderTopColor: '#ef4444' }}>
+            <div className="dsf-modal-header">
+              <div>
+                <p className="dsf-modal-supertitle" style={{ color: '#ef4444' }}>ELIMINAR BOX</p>
+                <h3 className="dsf-modal-title">{confirmDelete.nombre}</h3>
+              </div>
+              <button type="button" className="dsf-modal-close" onClick={() => { if (!eliminando) { setConfirmDelete(null); setTextoConfirm(''); } }}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="dsf-modal-body">
+              <div className="dsf-danger-note">
+                <i className="fas fa-exclamation-triangle"></i>
+                <span>
+                  Esta acción es <strong>permanente</strong>. Se eliminarán el box y <strong>todos sus datos</strong>:
+                  usuarios (admins, coaches y atletas), clases, finanzas, ventas, competencias y configuración. No se puede deshacer.
+                </span>
+              </div>
+              <label className="dsf-label">Para confirmar, escribe el nombre del box:</label>
+              <input
+                type="text"
+                className="dsf-input"
+                placeholder={confirmDelete.nombre}
+                value={textoConfirm}
+                onChange={(e) => setTextoConfirm(e.target.value)}
+                autoFocus
+                disabled={eliminando}
+              />
+              <button
+                type="button"
+                className="dsf-send-btn"
+                style={{ background: '#ef4444' }}
+                disabled={eliminando || textoConfirm.trim() !== confirmDelete.nombre.trim()}
+                onClick={eliminarBox}
+              >
+                {eliminando
+                  ? <><span className="spinner-border spinner-border-sm me-2"></span>Eliminando...</>
+                  : <><i className="fas fa-trash-alt me-2"></i>Eliminar definitivamente</>}
+              </button>
+            </div>
+          </div>
+        </div>, document.body
+      )}
+
+      {/* ── Chooser: cómo agregar el admin ── */}
+      {chooser && createPortal(
+        <div className="dsf-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setChooser(null); }}>
+          <div className="dsf-modal">
+            <div className="dsf-modal-header">
+              <div>
+                <p className="dsf-modal-supertitle">AGREGAR ADMIN</p>
+                <h3 className="dsf-modal-title">{chooser.nombre}</h3>
+              </div>
+              <button type="button" className="dsf-modal-close" onClick={() => setChooser(null)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="dsf-modal-body">
+              <button
+                type="button"
+                className="dsf-option"
+                onClick={() => { setModalManual({ idBox: chooser.idBox, nombre: chooser.nombre }); setChooser(null); }}
+              >
+                <i className="fas fa-keyboard dsf-option-icon"></i>
+                <div className="dsf-option-text">
+                  <span className="dsf-option-title">Registrar manual</span>
+                  <span className="dsf-option-desc">Capturas los datos del admin y se crea al instante con su contraseña.</span>
+                </div>
+                <i className="fas fa-chevron-right dsf-option-arrow"></i>
+              </button>
+              <button
+                type="button"
+                className="dsf-option"
+                onClick={() => { setModalLink({ idBox: chooser.idBox, nombre: chooser.nombre }); setCorreoInvite(''); setChooser(null); }}
+              >
+                <i className="fas fa-paper-plane dsf-option-icon"></i>
+                <div className="dsf-option-text">
+                  <span className="dsf-option-title">Enviar link por correo</span>
+                  <span className="dsf-option-desc">Envías un enlace de un solo uso (24 h) para que el admin complete su registro.</span>
+                </div>
+                <i className="fas fa-chevron-right dsf-option-arrow"></i>
+              </button>
+            </div>
+          </div>
+        </div>, document.body
+      )}
+
+      {/* ── Modal: invitar por correo ── */}
+      {modalLink && createPortal(
+        <div className="dsf-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget && !enviandoInvite) setModalLink(null); }}>
+          <div className="dsf-modal">
+            <div className="dsf-modal-header">
+              <div>
+                <p className="dsf-modal-supertitle">INVITACIÓN POR CORREO</p>
+                <h3 className="dsf-modal-title">{modalLink.nombre}</h3>
+              </div>
+              <button type="button" className="dsf-modal-close" onClick={() => !enviandoInvite && setModalLink(null)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="dsf-modal-body">
+              <label className="dsf-label">Correo del nuevo administrador</label>
+              <input
+                type="email"
+                className="dsf-input"
+                placeholder="correo@ejemplo.com"
+                value={correoInvite}
+                onChange={(e) => setCorreoInvite(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => { if (e.key === 'Enter') enviarInvitacionLink(); }}
+              />
+              <p className="dsf-hint">Se enviará un enlace de un solo uso que expira en 24 horas.</p>
+              <button type="button" className="dsf-send-btn" onClick={enviarInvitacionLink} disabled={enviandoInvite}>
+                {enviandoInvite
+                  ? <><span className="spinner-border spinner-border-sm me-2"></span>Enviando...</>
+                  : <><i className="fas fa-paper-plane me-2"></i>Enviar invitación</>}
+              </button>
+            </div>
+          </div>
+        </div>, document.body
+      )}
+
+      {/* ── Modal: registrar manual (box existente) ── */}
+      {modalManual && (
+        <ModalAdminBox
+          abierto={true}
+          boxExistente={{ idBox: modalManual.idBox, nombre: modalManual.nombre }}
+          onClose={() => setModalManual(null)}
+          onSuccess={() => { setModalManual(null); cargarData(); onDataChanged?.(); }}
+        />
+      )}
 
     </section>
   );
