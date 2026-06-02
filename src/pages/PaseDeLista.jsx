@@ -72,8 +72,11 @@ export default function PaseDeLista() {
   async function cargarDatosDelDia(idBox, fechaStr) {
     setLoading(true);
     try {
+      const u = JSON.parse(localStorage.getItem('usuario')) || {};
+      const idUsuario = u.idUsuario || u.IdUsuario || u.id || 0;
+
       const [resClases, resWods] = await Promise.all([
-        fetch(`${API_BASE}/asistencias/box/${idBox}/fecha/${fechaStr}?idUsuario=0`),
+        fetch(`${API_BASE}/asistencias/box/${idBox}/fecha/${fechaStr}?idUsuario=${idUsuario}`),
         fetch(`${API_BASE}/entrenamientos/box/${idBox}`)
       ]);
 
@@ -811,9 +814,10 @@ export default function PaseDeLista() {
           ) : (
             <>
               {(() => {
-                const isCoach = JSON.parse(localStorage.getItem('usuario'))?.rol === 'Coach';
-                const misClases = isCoach ? clasesFiltradas.filter(c => c.esMiClase) : clasesFiltradas;
-                const otrasClases = isCoach ? clasesFiltradas.filter(c => !c.esMiClase) : [];
+                const usuarioLS = JSON.parse(localStorage.getItem('usuario')) || {};
+                const isCoach = usuarioLS.rol === 'Coach' || usuarioLS.Rol === 'Coach';
+                const misClases = isCoach ? clasesFiltradas.filter(c => c.esMiClase || c.EsMiClase) : clasesFiltradas;
+                const otrasClases = isCoach ? clasesFiltradas.filter(c => !(c.esMiClase || c.EsMiClase)) : [];
 
                 return (
                   <>
