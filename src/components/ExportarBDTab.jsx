@@ -498,7 +498,7 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
   const colsArray = ordenarColumnas(columnasSeleccionadas);
 
   return (
-    <div className="tarjeta-panel p-4 slide-in" style={{ backgroundColor: fixedBox ? 'transparent' : ''}}>
+    <div className="tarjeta-panel p-3 p-md-4 slide-in" style={{ backgroundColor: fixedBox ? 'transparent' : ''}}>
       {!fixedBox && (
         <h4 className="text-white mb-4">
           <i className="fas fa-database me-2 text-danger"></i> Exportar Base de Datos de Usuarios
@@ -536,7 +536,7 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
 
           {/* Filtros */}
           <div className="row g-3 mb-4">
-            <div className="col-6">
+            <div className="col-12 col-sm-6">
               <label className="form-label text-white-50 small fw-bold">Filtro por Rol</label>
               <select className="entrada-oscura" value={filtroRolExport} onChange={e => { setFiltroRolExport(e.target.value); setExportPreview(false); }}>
                 <option value="Todos">Todos</option>
@@ -546,7 +546,7 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
                 <option value="AdminBox">AdminBox</option>
               </select>
             </div>
-            <div className="col-6">
+            <div className="col-12 col-sm-6">
               <label className="form-label text-white-50 small fw-bold">Estatus Membresía</label>
               <select className="entrada-oscura" value={filtroEstatusExport} onChange={e => { setFiltroEstatusExport(e.target.value); setExportPreview(false); }}>
                 <option value="Todas">Todas</option>
@@ -561,7 +561,7 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
 
           {/* Selector de Columnas */}
           <div className="mb-3">
-            <div className="d-flex justify-content-between align-items-center mb-2">
+            <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
               <label className="form-label text-white-50 fw-bold mb-0"><i className="fas fa-columns me-1"></i> Columnas a exportar</label>
               <div className="d-flex gap-2">
                 <button className="btn btn-sm btn-outline-success rounded-pill px-3" onClick={seleccionarTodas} style={{ fontSize: '0.7rem' }}>
@@ -596,22 +596,25 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
                     <div className="px-3 py-2" style={{ background: 'rgba(0,0,0,0.2)' }}>
                       <div className="row g-1">
                         {columnas.map(col => (
-                          <div key={col.key} className="col-6">
-                            <label 
-                              className="d-flex align-items-center gap-2 py-1 px-2 rounded-2" 
-                              style={{ 
-                                cursor: 'pointer', fontSize: '0.78rem', 
+                          <div key={col.key} className="col-12 col-sm-6">
+                            <label
+                              className="d-flex align-items-center gap-2 py-1 px-2 rounded-2"
+                              style={{
+                                cursor: 'pointer', fontSize: '0.78rem',
                                 background: columnasSeleccionadas.has(col.key) ? `${color}20` : 'transparent',
                                 transition: 'background 0.2s'
                               }}
                             >
-                              <input 
-                                type="checkbox" 
-                                checked={columnasSeleccionadas.has(col.key)} 
+                              <input
+                                type="checkbox"
+                                checked={columnasSeleccionadas.has(col.key)}
                                 onChange={() => toggleColumna(col.key)}
-                                style={{ accentColor: color }}
+                                style={{ accentColor: color, flexShrink: 0 }}
                               />
-                              <span className={columnasSeleccionadas.has(col.key) ? 'text-white' : 'text-white-50'}>
+                              <span
+                                className={columnasSeleccionadas.has(col.key) ? 'text-white' : 'text-white-50'}
+                                style={{ minWidth: 0, overflowWrap: 'anywhere', lineHeight: 1.2 }}
+                              >
                                 {col.label}
                               </span>
                             </label>
@@ -865,22 +868,22 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
             </div>
 
             {/* Botones */}
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={() => setMostrarModalPDF(false)}
-                style={{ padding: '10px 20px', borderRadius: '10px', border: '1px solid #444', background: 'transparent', color: '#999', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, transition: 'all 0.2s' }}
+                style={{ flex: '1 1 auto', minWidth: '110px', justifyContent: 'center', padding: '10px 16px', borderRadius: '10px', border: '1px solid #444', background: 'transparent', color: '#999', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
                 Cancelar
               </button>
               <button
                 onClick={() => { setMostrarModalPDF(false); descargarXLSX(); }}
-                style={{ padding: '10px 20px', borderRadius: '10px', border: 'none', background: '#2e7d32', color: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s' }}
+                style={{ flex: '1 1 auto', minWidth: '140px', padding: '10px 16px', borderRadius: '10px', border: 'none', background: '#2e7d32', color: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }}
               >
                 <i className="fas fa-file-excel"></i> Exportar Excel
               </button>
               <button
                 onClick={() => { setMostrarModalPDF(false); generarPDFReal(); }}
-                style={{ padding: '10px 20px', borderRadius: '10px', border: 'none', background: '#c62828', color: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s' }}
+                style={{ flex: '1 1 auto', minWidth: '140px', padding: '10px 16px', borderRadius: '10px', border: 'none', background: '#c62828', color: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }}
               >
                 <i className="fas fa-file-pdf"></i> Continuar PDF
               </button>

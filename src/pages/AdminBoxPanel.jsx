@@ -467,7 +467,7 @@ export default function AdminBoxPanel() {
 
             {/* QUICK STATS CARD ROW */}
             <div className="row g-3 abp-stats-row">
-              <div className="col-12 col-sm-6 col-md-3">
+              <div className="col-6 col-md-3">
                 <div className="abp-stat-card" style={{ '--accent-line': 'var(--accent-cool)' }}>
                   <div className="d-flex justify-content-between align-items-start">
                     <div className="abp-stat-card-content">
@@ -481,7 +481,7 @@ export default function AdminBoxPanel() {
                 </div>
               </div>
 
-              <div className="col-12 col-sm-6 col-md-3">
+              <div className="col-6 col-md-3">
                 <div className="abp-stat-card" style={{ '--accent-line': 'var(--success)' }}>
                   <div className="d-flex justify-content-between align-items-start">
                     <div className="abp-stat-card-content">
@@ -495,7 +495,7 @@ export default function AdminBoxPanel() {
                 </div>
               </div>
 
-              <div className="col-12 col-sm-6 col-md-3">
+              <div className="col-6 col-md-3">
                 <div className="abp-stat-card" style={{ '--accent-line': 'var(--warning)' }}>
                   <div className="d-flex justify-content-between align-items-start">
                     <div className="abp-stat-card-content">
@@ -523,7 +523,7 @@ export default function AdminBoxPanel() {
                 </div>
               </div>
 
-              <div className="col-12 col-sm-6 col-md-3">
+              <div className="col-6 col-md-3">
                 <div className="abp-stat-card" style={{ '--accent-line': 'var(--danger)' }}>
                   <div className="d-flex justify-content-between align-items-start">
                     <div className="abp-stat-card-content">
@@ -622,19 +622,19 @@ export default function AdminBoxPanel() {
 
                 <div className="row g-3 mb-4">
                   {/* Cards de desglose */}
-                  <div className="col-4">
+                  <div className="col-12 col-sm-4">
                     <div className="bg-dark-glow p-3 rounded-12 text-center">
                       <div className="text-muted small mb-1">Sueldo Base</div>
                       <h5 className="text-white mb-0 fw-bold">{formatearDinero(nominaCoach?.sueldoBase || 0)}</h5>
                     </div>
                   </div>
-                  <div className="col-4">
+                  <div className="col-12 col-sm-4">
                     <div className="bg-dark-glow p-3 rounded-12 text-center" style={{ borderLeft: '2px solid var(--success)' }}>
                       <div className="text-muted small mb-1">Bonos</div>
                       <h5 className="text-success mb-0 fw-bold">+{formatearDinero(nominaCoach?.totalBonos || 0)}</h5>
                     </div>
                   </div>
-                  <div className="col-4">
+                  <div className="col-12 col-sm-4">
                     <div className="bg-dark-glow p-3 rounded-12 text-center" style={{ borderLeft: '2px solid var(--danger)' }}>
                       <div className="text-muted small mb-1">Penalizaciones</div>
                       <h5 className="text-danger mb-0 fw-bold">-{formatearDinero(nominaCoach?.totalPenalizaciones || 0)}</h5>
@@ -862,7 +862,7 @@ export default function AdminBoxPanel() {
 
           {/* ESTADÍSTICAS RÁPIDAS */}
           <div className="row g-3 abp-stats-row">
-            <div className="col-12 col-sm-6 col-md-3">
+            <div className="col-6 col-md-3">
               <Link to="/atletas-box" className="text-decoration-none d-block">
                 <div className="abp-stat-card" style={{ '--accent-line': 'var(--accent-cool)', cursor: 'pointer' }}>
                   <div className="d-flex justify-content-between align-items-start">
@@ -878,7 +878,7 @@ export default function AdminBoxPanel() {
               </Link>
             </div>
 
-            <div className="col-12 col-sm-6 col-md-3">
+            <div className="col-6 col-md-3">
               <Link to="/atletas-box?estatus=activo" className="text-decoration-none d-block">
                 <div className="abp-stat-card" style={{ '--accent-line': 'var(--success)', cursor: 'pointer' }}>
                   <div className="d-flex justify-content-between align-items-start">
@@ -894,7 +894,7 @@ export default function AdminBoxPanel() {
               </Link>
             </div>
 
-            <div className="col-12 col-sm-6 col-md-3">
+            <div className="col-6 col-md-3">
               <Link to="/atletas-box?estatus=inactivo" className="text-decoration-none d-block">
                 <div className="abp-stat-card" style={{ '--accent-line': 'var(--danger)', cursor: 'pointer' }}>
                   <div className="d-flex justify-content-between align-items-start">
@@ -911,7 +911,7 @@ export default function AdminBoxPanel() {
             </div>
 
             {isAdmin && (
-              <div className="col-12 col-sm-6 col-md-3">
+              <div className="col-6 col-md-3">
                 <Link to="/gestion-solicitudes" className="text-decoration-none d-block">
                   <div className="abp-stat-card" style={{ '--accent-line': 'var(--warning)', cursor: 'pointer' }}>
                     <div className="d-flex justify-content-between align-items-start">
@@ -1363,10 +1363,10 @@ export default function AdminBoxPanel() {
                         const name = coach.nombre || coach.Nombre;
                         const pendCount = coach.pendientesCount;
                         return (
-                          <div key={idx} className="abp-debt-item d-flex align-items-center justify-content-between p-2 mb-2 rounded bg-dark-glow">
-                            <div>
-                              <div className="fw-bold text-white small truncate" style={{ maxWidth: '130px' }}>{name}</div>
-                              <span className="text-warning" style={{ fontSize: '10px' }}>
+                          <div key={idx} className="abp-debt-item">
+                            <div className="abp-debt-info">
+                              <div className="abp-debt-name">{name}</div>
+                              <span className="abp-debt-sub abp-debt-sub--warning">
                                 {pendCount} {pendCount === 1 ? 'clase pendiente' : 'clases pendientes'}
                               </span>
                             </div>
@@ -1376,8 +1376,7 @@ export default function AdminBoxPanel() {
                                 e.stopPropagation();
                                 abrirQuickVal(coach);
                               }}
-                              className="btn btn-outline-warning btn-xs py-1 px-2 d-flex align-items-center gap-1 border-0"
-                              style={{ fontSize: '10px' }}
+                              className="abp-debt-action abp-debt-action--warning"
                             >
                               <i className="fas fa-check"></i>
                               <span>Validar</span>
@@ -1435,10 +1434,10 @@ export default function AdminBoxPanel() {
                         {dashboardData.topMorosos.map((m, idx) => {
                           const diasVencidos = calcularDiasVencidos(m.fechaVencimiento);
                           return (
-                            <div key={idx} className="abp-debt-item d-flex align-items-center justify-content-between p-2 mb-2 rounded bg-dark-glow">
-                              <div>
-                                <div className="fw-bold text-white small truncate" style={{ maxWidth: '140px' }}>{m.nombre}</div>
-                                <span className="text-danger" style={{ fontSize: '9px' }}>
+                            <div key={idx} className="abp-debt-item">
+                              <div className="abp-debt-info">
+                                <div className="abp-debt-name">{m.nombre}</div>
+                                <span className="abp-debt-sub abp-debt-sub--danger">
                                   Vencido hace {diasVencidos} días
                                 </span>
                               </div>
@@ -1448,11 +1447,10 @@ export default function AdminBoxPanel() {
                                   e.stopPropagation();
                                   enviarRecordatorioWhatsApp(m.nombre);
                                 }}
-                                className="btn btn-outline-success btn-xs py-1 px-2 d-flex align-items-center gap-1 border-0"
-                                style={{ fontSize: '10px' }}
+                                className="abp-debt-action abp-debt-action--success"
                                 title="Enviar recordatorio de WhatsApp"
                               >
-                                <i className="fab fa-whatsapp fs-6"></i>
+                                <i className="fab fa-whatsapp"></i>
                                 <span>Cobrar</span>
                               </button>
                             </div>
@@ -1581,76 +1579,59 @@ export default function AdminBoxPanel() {
               {quickClases.length === 0 ? (
                 <div className="text-center text-muted py-3">No hay clases programadas para este coach en el mes actual.</div>
               ) : (
-                <div className="table-responsive quick-val-table-wrapper" style={{ maxHeight: '250px', overflowY: 'auto' }}>
-                  <table className="table table-dark table-hover table-borderless align-middle mb-0" style={{ fontSize: '11px' }}>
-                    <thead>
-                      <tr className="text-muted border-bottom border-secondary">
-                        <th className="py-2">Clase</th>
-                        <th className="py-2">Fecha</th>
-                        <th className="py-2">Hora</th>
-                        <th className="py-2 text-end">Monto</th>
-                        <th className="py-2 text-center">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {quickClases.map((c, idx) => {
-                        const est = c.estado || c.Estado;
-                        const nom = c.nombreClase || c.NombreClase || c.nombre || c.Nombre;
-                        const f = c.fecha || c.Fecha;
-                        const hor = c.horario || c.Horario || c.hora || c.Hora;
-                        const mon = c.montoPago || c.MontoPago;
-                        const fStr = f ? new Date(f).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '-';
-                        return (
-                          <tr key={idx} className="border-bottom border-secondary-glow">
-                            <td className="py-2 fw-bold text-white">{nom}</td>
-                            <td className="py-2 text-white-50">{fStr}</td>
-                            <td className="py-2 text-white-50">{hor}</td>
-                            <td className="py-2 text-end text-success fw-bold">{formatearDinero(mon)}</td>
-                            <td className="py-2">
-                              <div className="d-flex justify-content-center gap-1">
-                                {est === 'Validada' ? (
-                                  <span className="badge bg-success-glow text-success px-2 py-1"><i className="fas fa-check me-1"></i>Aprobada</span>
-                                ) : est === 'Falta' ? (
-                                  <span className="badge bg-danger-glow text-danger px-2 py-1"><i className="fas fa-times me-1"></i>Falta</span>
-                                ) : (
-                                  <span className="badge bg-warning-glow text-warning px-2 py-1"><i className="fas fa-clock me-1"></i>Pendiente</span>
-                                )}
-                                
-                                <div className="d-flex gap-1 ms-2">
-                                  <button
-                                    onClick={() => ejecutarQuickValidar(c.idClase || c.IdClase, c.fecha || c.Fecha, 'Validada', mon)}
-                                    className="btn btn-success btn-xs p-1 rounded d-flex align-items-center justify-content-center"
-                                    style={{ width: '20px', height: '20px' }}
-                                    title="Aprobar clase"
-                                  >
-                                    <i className="fas fa-check" style={{ fontSize: '9px' }}></i>
-                                  </button>
-                                  <button
-                                    onClick={() => ejecutarQuickValidar(c.idClase || c.IdClase, c.fecha || c.Fecha, 'Falta', mon)}
-                                    className="btn btn-danger btn-xs p-1 rounded d-flex align-items-center justify-content-center"
-                                    style={{ width: '20px', height: '20px' }}
-                                    title="Marcar Falta"
-                                  >
-                                    <i className="fas fa-times" style={{ fontSize: '9px' }}></i>
-                                  </button>
-                                  {(est === 'Validada' || est === 'Falta') && (
-                                    <button
-                                      onClick={() => ejecutarQuickValidar(c.idClase || c.IdClase, c.fecha || c.Fecha, 'Pendiente', mon)}
-                                      className="btn btn-secondary btn-xs p-1 rounded d-flex align-items-center justify-content-center"
-                                      style={{ width: '20px', height: '20px' }}
-                                      title="Restablecer"
-                                    >
-                                      <i className="fas fa-undo" style={{ fontSize: '9px' }}></i>
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                <div className="qv-class-list">
+                  {quickClases.map((c, idx) => {
+                    const est = c.estado || c.Estado;
+                    const nom = c.nombreClase || c.NombreClase || c.nombre || c.Nombre;
+                    const f = c.fecha || c.Fecha;
+                    const hor = c.horario || c.Horario || c.hora || c.Hora;
+                    const mon = c.montoPago || c.MontoPago;
+                    const fStr = f ? new Date(f).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '-';
+                    return (
+                      <div key={idx} className="qv-class-card">
+                        <div className="qv-class-card-top">
+                          <span className="qv-class-name">{nom}</span>
+                          {est === 'Validada' ? (
+                            <span className="qv-badge qv-badge--ok"><i className="fas fa-check"></i>Aprobada</span>
+                          ) : est === 'Falta' ? (
+                            <span className="qv-badge qv-badge--no"><i className="fas fa-times"></i>Falta</span>
+                          ) : (
+                            <span className="qv-badge qv-badge--pend"><i className="fas fa-clock"></i>Pendiente</span>
+                          )}
+                        </div>
+                        <div className="qv-class-meta">
+                          <span><i className="far fa-calendar"></i>{fStr}</span>
+                          <span><i className="far fa-clock"></i>{hor}</span>
+                          <span className="qv-class-monto"><i className="fas fa-hand-holding-usd"></i>{formatearDinero(mon)}</span>
+                        </div>
+                        <div className="qv-class-actions">
+                          <button
+                            onClick={() => ejecutarQuickValidar(c.idClase || c.IdClase, c.fecha || c.Fecha, 'Validada', mon)}
+                            className="qv-act qv-act--ok"
+                            title="Aprobar clase"
+                          >
+                            <i className="fas fa-check"></i><span>Aprobar</span>
+                          </button>
+                          <button
+                            onClick={() => ejecutarQuickValidar(c.idClase || c.IdClase, c.fecha || c.Fecha, 'Falta', mon)}
+                            className="qv-act qv-act--no"
+                            title="Marcar Falta"
+                          >
+                            <i className="fas fa-times"></i><span>Falta</span>
+                          </button>
+                          {(est === 'Validada' || est === 'Falta') && (
+                            <button
+                              onClick={() => ejecutarQuickValidar(c.idClase || c.IdClase, c.fecha || c.Fecha, 'Pendiente', mon)}
+                              className="qv-act qv-act--reset"
+                              title="Restablecer a pendiente"
+                            >
+                              <i className="fas fa-undo"></i>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

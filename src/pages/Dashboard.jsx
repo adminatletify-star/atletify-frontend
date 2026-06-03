@@ -644,22 +644,24 @@ export default function Dashboard() {
               {/* Cards Móvil */}
               <div className="d-md-none d-flex flex-column gap-3">
                 {usuariosPaginados.map(u => (
-                  <div key={u.idUsuario} className="dash-user-card p-3">
-                    <div className="d-flex align-items-center gap-3 mb-3">
+                  <div key={u.idUsuario} className="dash-user-card">
+                    <div className="dash-uc-top">
                       <div className="avatar-inicial">{u.nombre?.charAt(0).toUpperCase()}</div>
-                      <div className="flex-grow-1 overflow-hidden">
-                        <div className="fw-bold text-truncate">{u.nombre}</div>
-                        <small className="dash-text-muted text-truncate d-block">{u.correo}</small>
+                      <div className="dash-uc-id">
+                        <div className="dash-uc-name">{u.nombre || 'Sin nombre'}</div>
+                        <div className="dash-uc-email">{u.correo}</div>
                       </div>
-                      <span className={`badge-estado ${rolBadgeClass(u.rol)}`}>{u.rol}</span>
                     </div>
-                    <div className="d-flex justify-content-between align-items-center">
-                      <small className="dash-text-muted">
-                        <i className="fas fa-dumbbell me-1"></i>
-                        {boxes.find(b => b.idBox === u.idBoxPredeterminado)?.nombre || 'Sin Box'}
-                      </small>
+                    <div className="dash-uc-bottom">
+                      <div className="dash-uc-meta">
+                        <span className={`badge-estado ${rolBadgeClass(u.rol)}`}>{u.rol}</span>
+                        <span className="dash-uc-box">
+                          <i className="fas fa-dumbbell"></i>
+                          {boxes.find(b => b.idBox === u.idBoxPredeterminado)?.nombre || 'Sin Box'}
+                        </span>
+                      </div>
                       {u.idUsuario !== user.idUsuario && u.rol !== 'Developer' ? (
-                        <div className="d-flex gap-2">
+                        <div className="dash-uc-actions">
                           <Link to={`/editar-usuario/${u.idUsuario}`} className="dash-action-btn dash-action-edit" title="Editar">
                             <i className="fas fa-pen"></i>
                           </Link>
@@ -742,7 +744,7 @@ export default function Dashboard() {
                               const newPlan = { id: Date.now(), nombre: '', precio: 0, dias: 1, atletasIncluidos: 50, precioAtletaExtra: 0 };
                               setConfiguracion(prev => ({ ...prev, planesCompetenciaArray: [...(prev.planesCompetenciaArray || []), newPlan] }));
                             }}>
-                            <i className="fas fa-plus"></i> Añadir Plan
+                            <i className="fas fa-plus"></i> <span className="cfg-add-btn-label">Añadir Plan</span>
                           </button>
                         </div>
 
@@ -756,13 +758,16 @@ export default function Dashboard() {
                         <div className="cfg-planes-list">
                           {(configuracion.planesCompetenciaArray || []).map((plan, index) => (
                             <div key={plan.id || index} className="cfg-plan-item">
-                              <button type="button" className="cfg-plan-delete"
-                                onClick={() => setModalEliminarPlan({ open: true, index, nombre: plan.nombre || `Plan #${index + 1}` })}>
-                                <i className="fas fa-times"></i>
-                              </button>
+                              <div className="cfg-plan-head">
+                                <span className="cfg-plan-num">Plan #{index + 1}</span>
+                                <button type="button" className="cfg-plan-delete" title="Eliminar plan"
+                                  onClick={() => setModalEliminarPlan({ open: true, index, nombre: plan.nombre || `Plan #${index + 1}` })}>
+                                  <i className="fas fa-trash-alt"></i>
+                                </button>
+                              </div>
 
                               {/* Nombre */}
-                              <div className="mb-3 pe-4">
+                              <div className="mb-3">
                                 <label className="etiqueta-campo">Nombre del Plan *</label>
                                 <input type="text" className="entrada-oscura" placeholder="Ej. Básico, Pro"
                                   value={plan.nombre} required
@@ -940,10 +945,11 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
-                  <div className="form-check form-switch m-0">
+                  <div className="cfg-mant-toggle-wrap">
                     <input
-                      className="form-check-input bg-danger border-danger"
+                      className="cfg-mant-toggle"
                       type="checkbox" role="switch" id="switchMantenimiento"
+                      aria-label="Modo mantenimiento"
                       checked={configuracion.enMantenimiento || false}
                       onChange={async (e) => {
                         const nuevoEstado = e.target.checked;
@@ -985,7 +991,6 @@ export default function Dashboard() {
                           alert('Error de red al actualizar el modo mantenimiento.');
                         }
                       }}
-                      style={{ width: '3rem', height: '1.5rem', cursor: 'pointer' }}
                     />
                   </div>
                 </div>

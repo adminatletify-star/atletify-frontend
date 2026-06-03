@@ -382,6 +382,137 @@
   font-size: 0.85rem;
 }
 
+/* === LOADER (AtletifyLoader centrado) === */
+.ap-loader-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+}
+
+/* === RESUMEN DE PAGINACIÓN === */
+.ap-hist-summary {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 0.7rem;
+}
+.ap-hist-summary strong { color: var(--text-primary); }
+
+/* === TARJETAS DE HISTORIAL (móvil) === */
+.ap-hist-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.ap-hist-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid rgba(79, 195, 247, 0.45);
+  border-radius: 12px;
+  padding: 0.85rem 0.95rem;
+  max-width: 100%;
+  overflow: hidden;
+}
+.ap-hist-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.ap-hist-card-id {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.ap-hist-card-name {
+  font-family: var(--font-heading-alt);
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ap-hist-card-email {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ap-hist-card-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.ap-hist-card-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ap-hist-card-box i { color: #4FC3F7; flex-shrink: 0; }
+.ap-hist-card-exp {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+.ap-hist-card-exp i { flex-shrink: 0; }
+
+/* === PAGINACIÓN === */
+.ap-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 1rem;
+}
+.ap-page-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 0.6rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+.ap-page-btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+  background: rgba(255, 255, 255, 0.08);
+}
+.ap-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.ap-page-btn--active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
 /* === RESPONSIVE — CLAUDE.md === */
 @media (max-width: 768px) {
   .ap-header       { padding: 0.75rem 1rem 0.75rem 0.5rem; margin-bottom: 1.25rem; }

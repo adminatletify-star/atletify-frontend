@@ -1,14 +1,38 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import AtletifyLoader from '../components/AtletifyLoader';
 import ModalAdminBox from './ModalAdminBox';
-import '../assets/css/AdminFinanzasGlobales.css'; // Reutilizamos los estilos premium
+import '../assets/css/DeveloperSaaSFinanzas.css';
+
+const PAGE_SIZE = 10;
+
+// Quita tildes y pasa a minúsculas para búsquedas tolerantes
+const normalizar = (txt = '') =>
+  txt.toString().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+
+// Metadatos visuales de cada estado del servicio SaaS
+const ESTATUS = [
+  { value: 'Pendiente',  label: 'Pendiente',  color: 'var(--accent)',      icon: 'fa-hourglass-half', desc: 'Aún sin activar la suscripción' },
+  { value: 'Activo',     label: 'Activo',      color: 'var(--success)',     icon: 'fa-circle-check',   desc: 'Servicio operativo y al día' },
+  { value: 'Gracia',     label: 'En Gracia',   color: 'var(--accent-cool)', icon: 'fa-clock',          desc: 'Periodo de cortesía antes de suspender' },
+  { value: 'Suspendido', label: 'Suspendido',  color: 'var(--primary)',     icon: 'fa-ban',            desc: 'Acceso bloqueado por falta de pago' },
+];
+const getEstatusMeta = (value) => ESTATUS.find(e => e.value === value) || ESTATUS[0];
 
 const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
   const [boxes, setBoxes] = useState([]);
   const [planes, setPlanes] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // ── Buscador + paginación de cajas ──
+  const [busqueda, setBusqueda] = useState('');
+  const [pagina, setPagina] = useState(1);
+
+  // ── Selectores modales (reemplazan a los <select> nativos) ──
+  const [planPicker, setPlanPicker] = useState(null);       // { idBox, nombre, actualId }
+  const [planBuscar, setPlanBuscar] = useState('');
+  const [estatusPicker, setEstatusPicker] = useState(null); // { idBox, nombre, actual }
 
   // ── Agregar admin a un box (chooser + manual + link por correo) ──
   const [chooser, setChooser]       = useState(null); // { idBox, nombre }
@@ -21,6 +45,34 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
   const [confirmDelete, setConfirmDelete] = useState(null); // { idBox, nombre }
   const [textoConfirm, setTextoConfirm] = useState('');
   const [eliminando, setEliminando] = useState(false);
+
+  const authHeader = () => ({
+    Authorization: `Bearer ${localStorage.getItem('token')}`
+  });
+
+  const cargarData = async () => {
+    try {
+      const base = import.meta.env.VITE_API_URL;
+      const [resBoxes, resPlanes] = await Promise.all([
+        fetch(`${base}/api/developer/metricas-boxes`, { headers: authHeader() }),
+        fetch(`${base}/api/developer/planes`, { headers: authHeader() })
+      ]);
+
+      if (!resBoxes.ok || !resPlanes.ok) throw new Error("Error loading data");
+
+      const dataBoxes = await resBoxes.json();
+      const dataPlanes = await resPlanes.json();
+
+      setBoxes(dataBoxes);
+      setPlanes(dataPlanes);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { cargarData(); }, []);
 
   const eliminarBox = async () => {
     if (!confirmDelete) return;
@@ -71,34 +123,6 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
     }
   };
 
-  useEffect(() => { cargarData(); }, []);
-
-  const authHeader = () => ({
-    Authorization: `Bearer ${localStorage.getItem('token')}`
-  });
-
-  const cargarData = async () => {
-    try {
-      const base = import.meta.env.VITE_API_URL;
-      const [resBoxes, resPlanes] = await Promise.all([
-        fetch(`${base}/api/developer/metricas-boxes`, { headers: authHeader() }),
-        fetch(`${base}/api/developer/planes`, { headers: authHeader() })
-      ]);
-
-      if (!resBoxes.ok || !resPlanes.ok) throw new Error("Error loading data");
-
-      const dataBoxes = await resBoxes.json();
-      const dataPlanes = await resPlanes.json();
-      
-      setBoxes(dataBoxes);
-      setPlanes(dataPlanes);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleActualizarBoxSaaS = async (boxId, field, value) => {
     const box = boxes.find(b => b.idBox === boxId);
     if (!box) return;
@@ -119,26 +143,55 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
         headers: { 'Content-Type': 'application/json', ...authHeader() },
         body: JSON.stringify(reqBody)
       });
-      
+
       if (!res.ok) throw new Error('Error al actualizar');
-      
+
       setBoxes(prev => prev.map(b => b.idBox === boxId ? { ...b, [field]: value } : b));
-    } catch (e) {
+    } catch {
       window.alert('Error al actualizar permisos de SaaS para el Box.');
     }
   };
 
+  const formatearDinero = (monto) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(monto || 0);
+  const nombrePlan = (idPlan) => planes.find(p => p.idPlan === idPlan)?.nombre || null;
+
+  // ── Cajas filtradas por buscador (nombre, ubicación, plan, estado) ──
+  const boxesFiltrados = useMemo(() => {
+    const q = normalizar(busqueda);
+    if (!q) return boxes;
+    return boxes.filter(b => {
+      const hay = [
+        b.nombre,
+        b.ubicacion,
+        nombrePlan(b.idPlanSaaS),
+        getEstatusMeta(b.estatusSaaS).label,
+        b.moduloCompetenciasActivo ? 'competencias' : ''
+      ].map(normalizar).join(' ');
+      return hay.includes(q);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boxes, busqueda, planes]);
+
+  // ── Paginación de 10 en 10 ──
+  const totalPaginas = Math.max(1, Math.ceil(boxesFiltrados.length / PAGE_SIZE));
+  const paginaSegura = Math.min(pagina, totalPaginas);
+  const itemsPagina = boxesFiltrados.slice((paginaSegura - 1) * PAGE_SIZE, paginaSegura * PAGE_SIZE);
+  const desde = boxesFiltrados.length === 0 ? 0 : (paginaSegura - 1) * PAGE_SIZE + 1;
+  const hasta = Math.min(paginaSegura * PAGE_SIZE, boxesFiltrados.length);
+
+  // Reset a página 1 al cambiar el buscador (sin efecto: evita renders en cascada)
+  const handleBuscar = (valor) => { setBusqueda(valor); setPagina(1); };
+
   if (loading) return (
-    <div className="d-flex justify-content-center align-items-center" style={{ height: '400px' }}>
+    <div className="dsf-root dsf-loading-wrap">
       <AtletifyLoader />
     </div>
   );
 
-  // Calcular métricas
+  // ── Métricas ──
   const boxesActivos = boxes.filter(b => b.estatusSaaS === 'Activo' || b.activo);
   let mrr = 0;
-  
-  // Data para gráficos
+
   const ingresosPorPlanMap = {};
   planes.forEach(p => ingresosPorPlanMap[p.nombre] = 0);
 
@@ -163,279 +216,433 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
     boxes: boxes.filter(b => b.idPlanSaaS === p.idPlan).length
   })).filter(p => p.ingresos > 0 || p.boxes > 0);
 
-  const COLORS = ['#4fc3f7', '#f1c40f', '#e74c3c', '#9b59b6', '#2ecc71'];
+  const COLORS = ['#4FC3F7', '#F5A623', '#E63946', '#9b59b6', '#2ECC71'];
+  const tooltipStyle = { backgroundColor: '#1C1C26', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#F0F0F5' };
 
-  const formatearDinero = (monto) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(monto || 0);
+  const KPIS = [
+    { label: 'MRR (Mensual)', value: formatearDinero(mrr), color: 'var(--success)', icon: 'fa-money-bill-wave' },
+    { label: 'ARR (Anual)', value: formatearDinero(arr), color: 'var(--accent-cool)', icon: 'fa-calendar-alt' },
+    { label: 'Boxes Activos', value: boxesActivos.length, color: '#9b59b6', icon: 'fa-boxes' },
+    { label: 'Usuarios (Red)', value: totalUsuarios, color: 'var(--primary)', icon: 'fa-users' },
+  ];
 
-  const getEstatusBadge = (estatus) => {
-    switch(estatus) {
-      case 'Activo': return 'badge-activo finanzas-globales-badge';
-      case 'Suspendido': return 'badge-inactivo finanzas-globales-badge';
-      case 'Gracia': return 'badge-pendiente finanzas-globales-badge';
-      default: return 'badge-pendiente finanzas-globales-badge';
-    }
+  // ── Filtrado de planes dentro del modal selector ──
+  const planesFiltrados = (() => {
+    const q = normalizar(planBuscar);
+    if (!q) return planes;
+    return planes.filter(p => normalizar(`${p.nombre} ${p.precio}`).includes(q));
+  })();
+
+  // Construye los números de página visibles (con elipsis)
+  const numerosPagina = () => {
+    const nums = [];
+    const max = totalPaginas;
+    const cur = paginaSegura;
+    const push = (n) => nums.push(n);
+    if (max <= 7) { for (let i = 1; i <= max; i++) push(i); return nums; }
+    push(1);
+    if (cur > 3) push('…');
+    for (let i = Math.max(2, cur - 1); i <= Math.min(max - 1, cur + 1); i++) push(i);
+    if (cur < max - 2) push('…');
+    push(max);
+    return nums;
   };
 
   return (
-    <section className="dash-section pt-0">
-      <div className="dash-section-head mb-4">
-        <h2 className="dash-section-title">
-          <i className="fas fa-chart-pie"></i> Finanzas B2B SaaS
+    <section className="dash-section pt-0 dsf-root">
+      {/* ── Encabezado ── */}
+      <div className="dsf-head">
+        <p className="dsf-supertitle">Control B2B</p>
+        <h2 className="dsf-title">
+          <i className="fas fa-chart-pie"></i> Control de SaaS &amp; Finanzas
         </h2>
       </div>
 
-      {/* KPIs */}
+      {/* ── KPIs ── */}
       <div className="row g-3 mb-4">
-        <div className="col-12 col-md-3">
-          <div className="finanzas-globales-kpi-card" style={{ borderColor: 'rgba(46, 204, 113, 0.3)' }}>
-            <div className="finanzas-globales-kpi-title"><i className="fas fa-money-bill-wave text-success"></i> MRR (Mensual)</div>
-            <div className="finanzas-globales-kpi-value text-white">{formatearDinero(mrr)}</div>
+        {KPIS.map((k, i) => (
+          <div className="col-6 col-lg-3" key={i}>
+            <div className="dsf-kpi" style={{ '--k': k.color }}>
+              <div className="dsf-kpi-head">
+                <span className="dsf-kpi-icon"><i className={`fas ${k.icon}`}></i></span>
+                <span className="dsf-kpi-label">{k.label}</span>
+              </div>
+              <div className="dsf-kpi-value">{k.value}</div>
+            </div>
           </div>
-        </div>
-        <div className="col-12 col-md-3">
-          <div className="finanzas-globales-kpi-card" style={{ borderColor: 'rgba(52, 152, 219, 0.3)' }}>
-            <div className="finanzas-globales-kpi-title"><i className="fas fa-calendar-alt text-info"></i> ARR (Anual)</div>
-            <div className="finanzas-globales-kpi-value text-white">{formatearDinero(arr)}</div>
-          </div>
-        </div>
-        <div className="col-12 col-md-3">
-          <div className="finanzas-globales-kpi-card" style={{ borderColor: 'rgba(155, 89, 182, 0.3)' }}>
-            <div className="finanzas-globales-kpi-title"><i className="fas fa-boxes text-purple"></i> Boxes Activos</div>
-            <div className="finanzas-globales-kpi-value fs-2 text-white">{boxesActivos.length}</div>
-          </div>
-        </div>
-        <div className="col-12 col-md-3">
-          <div className="finanzas-globales-kpi-card" style={{ borderColor: 'rgba(231, 76, 60, 0.3)' }}>
-            <div className="finanzas-globales-kpi-title"><i className="fas fa-users text-danger"></i> Usuarios (Red)</div>
-            <div className="finanzas-globales-kpi-value fs-2 text-white">{totalUsuarios}</div>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Gráficos */}
-      <div className="row g-4 mb-4">
-        <div className="col-md-6">
-          <div className="finanzas-globales-card">
-            <div className="finanzas-globales-card-title"><i className="fas fa-chart-pie text-success"></i> MRR por Plan</div>
-            <div className="finanzas-globales-chart-container" style={{ height: '250px' }}>
+      {/* ── Gráficos ── */}
+      <div className="row g-3 g-md-4 mb-4">
+        <div className="col-12 col-lg-6">
+          <div className="dsf-panel dsf-panel--chart">
+            <div className="dsf-panel-head">
+              <h3 className="dsf-panel-title"><i className="fas fa-chart-pie"></i> MRR por Plan</h3>
+            </div>
+            <div className="dsf-chart-wrap">
               {chartDataPlanes.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={chartDataPlanes} dataKey="ingresos" nameKey="nombre" cx="50%" cy="50%" innerRadius={50} outerRadius={80}>
-                      {chartDataPlanes.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                    <Pie data={chartDataPlanes} dataKey="ingresos" nameKey="nombre" cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={2}>
+                      {chartDataPlanes.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="#14141A" strokeWidth={2} />)}
                     </Pie>
-                    <Tooltip formatter={(value) => formatearDinero(value)} contentStyle={{ backgroundColor: '#1e1e26', border: '1px solid #333' }} />
-                    <Legend />
+                    <Tooltip formatter={(value) => formatearDinero(value)} contentStyle={tooltipStyle} />
                   </PieChart>
                 </ResponsiveContainer>
-              ) : <div className="finanzas-globales-empty"><p>Sin datos</p></div>}
+              ) : (
+                <div className="dsf-chart-empty">
+                  <i className="fas fa-chart-pie"></i>
+                  <p>Sin datos de ingresos</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
-        <div className="col-md-6">
-          <div className="finanzas-globales-card">
-            <div className="finanzas-globales-card-title"><i className="fas fa-chart-bar text-info"></i> Boxes por Plan</div>
-            <div className="finanzas-globales-chart-container" style={{ height: '250px' }}>
+        <div className="col-12 col-lg-6">
+          <div className="dsf-panel dsf-panel--chart">
+            <div className="dsf-panel-head">
+              <h3 className="dsf-panel-title"><i className="fas fa-chart-bar"></i> Boxes por Plan</h3>
+            </div>
+            <div className="dsf-chart-wrap">
               {chartDataPlanes.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartDataPlanes} margin={{ top: 15, right: 30, left: 0, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                    <XAxis dataKey="nombre" stroke="#ccc" />
-                    <YAxis stroke="#ccc" allowDecimals={false} />
-                    <Tooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} contentStyle={{ backgroundColor: '#1e1e26', border: '1px solid #333' }} />
-                    <Bar dataKey="boxes" fill="#3498db" radius={[4, 4, 0, 0]} barSize={40} />
+                  <BarChart data={chartDataPlanes} margin={{ top: 15, right: 20, left: -10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                    <XAxis dataKey="nombre" stroke="#6B7280" fontSize={12} tickLine={false} />
+                    <YAxis stroke="#6B7280" fontSize={12} allowDecimals={false} tickLine={false} axisLine={false} />
+                    <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} contentStyle={tooltipStyle} />
+                    <Bar dataKey="boxes" fill="#4FC3F7" radius={[6, 6, 0, 0]} barSize={42} />
                   </BarChart>
                 </ResponsiveContainer>
-              ) : <div className="finanzas-globales-empty"><p>Sin datos</p></div>}
+              ) : (
+                <div className="dsf-chart-empty">
+                  <i className="fas fa-chart-bar"></i>
+                  <p>Sin datos de planes</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Tabla de Control de Permisos */}
-      <div className="finanzas-globales-card p-0 overflow-hidden">
-        <div className="p-4 border-bottom" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
-          <h5 className="mb-0 text-white" style={{ fontFamily: 'var(--font-heading)' }}><i className="fas fa-lock text-warning me-2"></i>Control de Permisos de Cajas (SaaS)</h5>
+      {/* ── Panel: Control de Permisos ── */}
+      <div className="dsf-panel">
+        <div className="dsf-panel-head">
+          <h3 className="dsf-panel-title dsf-panel-title--lock"><i className="fas fa-lock"></i> Control de Permisos de Cajas (SaaS)</h3>
         </div>
-        {/* ── Desktop ancho (≥1200px): tabla ── */}
-        <div className="table-responsive d-none d-xl-block">
-          <table className="finanzas-globales-table m-0">
-            <thead>
-              <tr>
-                <th>Box</th>
-                <th>Red de Atletas</th>
-                <th>Plan de Suscripción</th>
-                <th>Módulo Competencias</th>
-                <th style={{ textAlign: 'right' }}>Estado del Servicio</th>
-                <th style={{ textAlign: 'center' }}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {boxes.map(box => (
-                <tr key={box.idBox}>
-                  <td>
-                    <div className="fw-bold text-white">{box.nombre}</div>
-                    <div className="text-secondary small"><i className="fas fa-map-marker-alt me-1"></i>{box.ubicacion || 'Sin ubicación'}</div>
-                  </td>
-                  <td>
-                    <div className="badge bg-dark border border-secondary text-light">
-                      <i className="fas fa-users me-1 text-primary"></i> {box.totalAtletas}
+
+        {/* Buscador */}
+        <div className="dsf-toolbar">
+          <div className="dsf-search">
+            <i className="fas fa-search dsf-search-icon"></i>
+            <input
+              type="text"
+              className="dsf-search-input"
+              placeholder="Buscar box, ubicación, plan o estado…"
+              value={busqueda}
+              onChange={(e) => handleBuscar(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {boxesFiltrados.length > 0 && (
+          <div className="dsf-summary">
+            Mostrando <strong>{desde}–{hasta}</strong> de <strong>{boxesFiltrados.length}</strong> {boxesFiltrados.length === 1 ? 'box' : 'boxes'}
+          </div>
+        )}
+
+        {boxesFiltrados.length === 0 ? (
+          <div className="dsf-empty">
+            <i className="fas fa-box-open"></i>
+            <p>{busqueda ? 'Ningún box coincide con tu búsqueda.' : 'Sin boxes registrados.'}</p>
+          </div>
+        ) : (
+          <>
+            {/* ── Desktop (≥1200px): tabla ── */}
+            <div className="dsf-table-wrap d-none d-xl-block">
+              <table className="dsf-table">
+                <thead>
+                  <tr>
+                    <th>Box</th>
+                    <th>Red de Atletas</th>
+                    <th>Plan de Suscripción</th>
+                    <th style={{ textAlign: 'center' }}>Módulo Competencias</th>
+                    <th>Estado del Servicio</th>
+                    <th style={{ textAlign: 'center' }}>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {itemsPagina.map(box => {
+                    const est = getEstatusMeta(box.estatusSaaS);
+                    const plan = nombrePlan(box.idPlanSaaS);
+                    return (
+                      <tr key={box.idBox}>
+                        <td>
+                          <div className="dsf-box-name">{box.nombre}</div>
+                          <div className="dsf-box-loc"><i className="fas fa-map-marker-alt"></i>{box.ubicacion || 'Sin ubicación'}</div>
+                        </td>
+                        <td>
+                          <span className="dsf-pill"><i className="fas fa-users"></i> {box.totalAtletas}</span>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="dsf-picker-btn"
+                            onClick={() => { setPlanBuscar(''); setPlanPicker({ idBox: box.idBox, nombre: box.nombre, actualId: box.idPlanSaaS || null }); }}
+                          >
+                            <span className={`dsf-picker-label ${plan ? '' : 'dsf-picker-label--vacio'}`}>{plan || 'Sin plan'}</span>
+                            <i className="fas fa-chevron-down dsf-picker-arrow"></i>
+                          </button>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <input
+                            type="checkbox"
+                            className="dsf-toggle"
+                            checked={!!box.moduloCompetenciasActivo}
+                            onChange={(e) => handleActualizarBoxSaaS(box.idBox, 'moduloCompetenciasActivo', e.target.checked)}
+                          />
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="dsf-status-btn"
+                            style={{ '--st': est.color }}
+                            onClick={() => setEstatusPicker({ idBox: box.idBox, nombre: box.nombre, actual: box.estatusSaaS || 'Pendiente' })}
+                          >
+                            <span className="dsf-status-btn__txt"><i className={`fas ${est.icon}`}></i>{est.label}</span>
+                            <i className="fas fa-chevron-down dsf-status-btn__arrow"></i>
+                          </button>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <div className="dsf-actions">
+                            <button type="button" className="dsf-add-btn" onClick={() => setChooser({ idBox: box.idBox, nombre: box.nombre })}>
+                              <i className="fas fa-user-plus"></i>
+                              <span className="dsf-add-btn-label">Admin</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="dsf-icon-btn dsf-icon-btn--delete"
+                              title="Eliminar box"
+                              onClick={() => { setConfirmDelete({ idBox: box.idBox, nombre: box.nombre }); setTextoConfirm(''); }}
+                            >
+                              <i className="fas fa-trash-alt"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ── Móvil / tablet (<1200px): tarjetas ── */}
+            <div className="dsf-cards d-xl-none">
+              {itemsPagina.map(box => {
+                const est = getEstatusMeta(box.estatusSaaS);
+                const plan = nombrePlan(box.idPlanSaaS);
+                return (
+                  <div key={box.idBox} className="dsf-box-card">
+                    <div className="dsf-card-top">
+                      <div className="dsf-card-top-info">
+                        <div className="dsf-box-name">{box.nombre}</div>
+                        <div className="dsf-box-loc"><i className="fas fa-map-marker-alt"></i>{box.ubicacion || 'Sin ubicación'}</div>
+                      </div>
+                      <span className="dsf-pill"><i className="fas fa-users"></i> {box.totalAtletas}</span>
                     </div>
-                  </td>
-                  <td>
-                    <select 
-                      className="form-select form-select-sm bg-dark text-white border-secondary"
-                      value={box.idPlanSaaS || ''}
-                      onChange={(e) => handleActualizarBoxSaaS(box.idBox, 'idPlanSaaS', parseInt(e.target.value) || null)}
-                    >
-                      <option value="">Ninguno</option>
-                      {planes.map(p => (
-                        <option key={p.idPlan} value={p.idPlan}>{p.nombre} ({formatearDinero(p.precio)})</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    <div className="form-check form-switch" style={{ margin: 0, paddingLeft: '2.5em' }}>
-                      <input 
-                        className="form-check-input" 
-                        type="checkbox" 
-                        checked={box.moduloCompetenciasActivo}
-                        onChange={(e) => handleActualizarBoxSaaS(box.idBox, 'moduloCompetenciasActivo', e.target.checked)}
-                        style={{ cursor: 'pointer' }}
-                      />
-                    </div>
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <select 
-                      className={`form-select form-select-sm d-inline-block text-center ${box.estatusSaaS === 'Activo' ? 'bg-success text-white border-success' : box.estatusSaaS === 'Suspendido' ? 'bg-danger text-white border-danger' : 'bg-warning text-dark border-warning'}`}
-                      style={{ width: 'auto', minWidth: '120px', fontWeight: 'bold' }}
-                      value={box.estatusSaaS || 'Pendiente'}
-                      onChange={(e) => handleActualizarBoxSaaS(box.idBox, 'estatusSaaS', e.target.value)}
-                    >
-                      <option value="Pendiente">Pendiente</option>
-                      <option value="Activo">Activo</option>
-                      <option value="Gracia">En Gracia</option>
-                      <option value="Suspendido">Suspendido</option>
-                    </select>
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <div className="d-inline-flex align-items-center gap-2">
+
+                    <div className="dsf-field">
+                      <label className="dsf-field-label">Plan de Suscripción</label>
                       <button
                         type="button"
-                        className="btn btn-sm btn-outline-light d-inline-flex align-items-center gap-1"
-                        style={{ borderRadius: '8px', fontSize: '0.78rem', whiteSpace: 'nowrap' }}
-                        onClick={() => setChooser({ idBox: box.idBox, nombre: box.nombre })}
+                        className="dsf-picker-btn"
+                        onClick={() => { setPlanBuscar(''); setPlanPicker({ idBox: box.idBox, nombre: box.nombre, actualId: box.idPlanSaaS || null }); }}
                       >
+                        <span className={`dsf-picker-label ${plan ? '' : 'dsf-picker-label--vacio'}`}>{plan || 'Sin plan'}</span>
+                        <i className="fas fa-chevron-down dsf-picker-arrow"></i>
+                      </button>
+                    </div>
+
+                    <div className="dsf-field dsf-field--row">
+                      <label className="dsf-field-label">Módulo Competencias</label>
+                      <input
+                        type="checkbox"
+                        className="dsf-toggle"
+                        checked={!!box.moduloCompetenciasActivo}
+                        onChange={(e) => handleActualizarBoxSaaS(box.idBox, 'moduloCompetenciasActivo', e.target.checked)}
+                      />
+                    </div>
+
+                    <div className="dsf-field">
+                      <label className="dsf-field-label">Estado del Servicio</label>
+                      <button
+                        type="button"
+                        className="dsf-status-btn"
+                        style={{ '--st': est.color }}
+                        onClick={() => setEstatusPicker({ idBox: box.idBox, nombre: box.nombre, actual: box.estatusSaaS || 'Pendiente' })}
+                      >
+                        <span className="dsf-status-btn__txt"><i className={`fas ${est.icon}`}></i>{est.label}</span>
+                        <i className="fas fa-chevron-down dsf-status-btn__arrow"></i>
+                      </button>
+                    </div>
+
+                    <div className="dsf-card-actions">
+                      <button type="button" className="dsf-add-btn" onClick={() => setChooser({ idBox: box.idBox, nombre: box.nombre })}>
                         <i className="fas fa-user-plus"></i>
-                        <span className="d-none d-xl-inline">Agregar admin</span>
+                        <span className="dsf-add-btn-label">Agregar admin</span>
                       </button>
                       <button
                         type="button"
-                        className="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
-                        style={{ borderRadius: '8px', fontSize: '0.78rem', width: '34px', height: '32px' }}
+                        className="dsf-icon-btn dsf-icon-btn--delete"
                         title="Eliminar box"
                         onClick={() => { setConfirmDelete({ idBox: box.idBox, nombre: box.nombre }); setTextoConfirm(''); }}
                       >
                         <i className="fas fa-trash-alt"></i>
                       </button>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* ── Móvil / tablet (<1200px): tarjetas ── */}
-        <div className="d-xl-none p-3">
-          {boxes.length === 0 ? (
-            <div className="text-secondary text-center py-4 small">Sin boxes registrados.</div>
-          ) : boxes.map(box => (
-            <div key={box.idBox} className="dsf-box-card mb-3">
-              <div className="d-flex justify-content-between align-items-start gap-2 mb-3">
-                <div className="min-w-0">
-                  <div className="fw-bold text-white text-truncate">{box.nombre}</div>
-                  <div className="text-secondary small text-truncate"><i className="fas fa-map-marker-alt me-1"></i>{box.ubicacion || 'Sin ubicación'}</div>
-                </div>
-                <span className="badge bg-dark border border-secondary text-light flex-shrink-0">
-                  <i className="fas fa-users me-1 text-primary"></i> {box.totalAtletas}
-                </span>
-              </div>
-
-              <div className="dsf-field">
-                <label className="dsf-field-label">Plan de Suscripción</label>
-                <select
-                  className="form-select form-select-sm bg-dark text-white border-secondary"
-                  value={box.idPlanSaaS || ''}
-                  onChange={(e) => handleActualizarBoxSaaS(box.idBox, 'idPlanSaaS', parseInt(e.target.value) || null)}
-                >
-                  <option value="">Ninguno</option>
-                  {planes.map(p => (
-                    <option key={p.idPlan} value={p.idPlan}>{p.nombre} ({formatearDinero(p.precio)})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="dsf-field d-flex align-items-center justify-content-between">
-                <label className="dsf-field-label mb-0">Módulo Competencias</label>
-                <div className="form-check form-switch m-0">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    checked={box.moduloCompetenciasActivo}
-                    onChange={(e) => handleActualizarBoxSaaS(box.idBox, 'moduloCompetenciasActivo', e.target.checked)}
-                    style={{ cursor: 'pointer' }}
-                  />
-                </div>
-              </div>
-
-              <div className="dsf-field">
-                <label className="dsf-field-label">Estado del Servicio</label>
-                <select
-                  className={`form-select form-select-sm ${box.estatusSaaS === 'Activo' ? 'bg-success text-white border-success' : box.estatusSaaS === 'Suspendido' ? 'bg-danger text-white border-danger' : 'bg-warning text-dark border-warning'}`}
-                  style={{ fontWeight: 'bold' }}
-                  value={box.estatusSaaS || 'Pendiente'}
-                  onChange={(e) => handleActualizarBoxSaaS(box.idBox, 'estatusSaaS', e.target.value)}
-                >
-                  <option value="Pendiente">Pendiente</option>
-                  <option value="Activo">Activo</option>
-                  <option value="Gracia">En Gracia</option>
-                  <option value="Suspendido">Suspendido</option>
-                </select>
-              </div>
-
-              <div className="d-flex gap-2 mt-2">
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-light flex-grow-1 d-flex align-items-center justify-content-center gap-2"
-                  style={{ borderRadius: '8px', fontSize: '0.82rem' }}
-                  onClick={() => setChooser({ idBox: box.idBox, nombre: box.nombre })}
-                >
-                  <i className="fas fa-user-plus"></i>
-                  Agregar admin
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center"
-                  style={{ borderRadius: '8px', width: '44px', flexShrink: 0 }}
-                  title="Eliminar box"
-                  onClick={() => { setConfirmDelete({ idBox: box.idBox, nombre: box.nombre }); setTextoConfirm(''); }}
-                >
-                  <i className="fas fa-trash-alt"></i>
-                </button>
-              </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
+
+            {/* ── Paginación ── */}
+            {totalPaginas > 1 && (
+              <div className="dsf-pag">
+                <button className="dsf-pag-btn" disabled={paginaSegura === 1} onClick={() => setPagina(p => Math.max(1, p - 1))}>
+                  <i className="fas fa-chevron-left"></i>
+                </button>
+                {numerosPagina().map((n, i) => n === '…' ? (
+                  <span key={`e-${i}`} className="dsf-pag-ellipsis">…</span>
+                ) : (
+                  <button
+                    key={n}
+                    className={`dsf-pag-btn ${n === paginaSegura ? 'dsf-pag-btn--active' : ''}`}
+                    onClick={() => setPagina(n)}
+                  >
+                    {n}
+                  </button>
+                ))}
+                <button className="dsf-pag-btn" disabled={paginaSegura === totalPaginas} onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))}>
+                  <i className="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </div>
+
+      {/* ════ MODAL: SELECCIONAR PLAN ════ */}
+      {planPicker && createPortal(
+        <div className="dsf-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setPlanPicker(null); }}>
+          <div className="dsf-modal">
+            <div className="dsf-modal-header">
+              <div>
+                <p className="dsf-modal-supertitle">Plan de Suscripción</p>
+                <h3 className="dsf-modal-title">{planPicker.nombre}</h3>
+              </div>
+              <button type="button" className="dsf-modal-close" onClick={() => setPlanPicker(null)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="dsf-modal-search">
+              <i className="fas fa-search dsf-modal-search-icon"></i>
+              <input
+                type="text"
+                className="dsf-modal-search-input"
+                placeholder="Buscar plan…"
+                value={planBuscar}
+                onChange={(e) => setPlanBuscar(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="dsf-pick-list">
+              {!planBuscar && (
+                <button
+                  type="button"
+                  className={`dsf-pick-opt ${planPicker.actualId == null ? 'dsf-pick-opt--active' : ''}`}
+                  onClick={() => { handleActualizarBoxSaaS(planPicker.idBox, 'idPlanSaaS', null); setPlanPicker(null); }}
+                >
+                  <span className="dsf-pick-dot"><i className="fas fa-ban"></i></span>
+                  <div className="dsf-pick-info">
+                    <span className="dsf-pick-name">Sin plan</span>
+                    <span className="dsf-pick-desc">El box no tiene suscripción asignada</span>
+                  </div>
+                  {planPicker.actualId == null && <i className="fas fa-check dsf-pick-check"></i>}
+                </button>
+              )}
+              {planesFiltrados.length === 0 ? (
+                <div className="dsf-pick-empty">No hay planes que coincidan.</div>
+              ) : planesFiltrados.map((p, idx) => {
+                const activo = planPicker.actualId === p.idPlan;
+                const color = COLORS[idx % COLORS.length];
+                return (
+                  <button
+                    key={p.idPlan}
+                    type="button"
+                    className={`dsf-pick-opt ${activo ? 'dsf-pick-opt--active' : ''}`}
+                    style={{ '--oc': color }}
+                    onClick={() => { handleActualizarBoxSaaS(planPicker.idBox, 'idPlanSaaS', p.idPlan); setPlanPicker(null); }}
+                  >
+                    <span className="dsf-pick-dot"><i className="fas fa-tag"></i></span>
+                    <div className="dsf-pick-info">
+                      <span className="dsf-pick-name">{p.nombre}</span>
+                      <span className="dsf-pick-desc">{formatearDinero(p.precio)} / mes</span>
+                    </div>
+                    {activo && <i className="fas fa-check dsf-pick-check"></i>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>, document.body
+      )}
+
+      {/* ════ MODAL: SELECCIONAR ESTADO DEL SERVICIO ════ */}
+      {estatusPicker && createPortal(
+        <div className="dsf-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setEstatusPicker(null); }}>
+          <div className="dsf-modal">
+            <div className="dsf-modal-header">
+              <div>
+                <p className="dsf-modal-supertitle">Estado del Servicio</p>
+                <h3 className="dsf-modal-title">{estatusPicker.nombre}</h3>
+              </div>
+              <button type="button" className="dsf-modal-close" onClick={() => setEstatusPicker(null)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="dsf-pick-list">
+              {ESTATUS.map(e => {
+                const activo = estatusPicker.actual === e.value;
+                return (
+                  <button
+                    key={e.value}
+                    type="button"
+                    className={`dsf-pick-opt ${activo ? 'dsf-pick-opt--active' : ''}`}
+                    style={{ '--oc': e.color }}
+                    onClick={() => { handleActualizarBoxSaaS(estatusPicker.idBox, 'estatusSaaS', e.value); setEstatusPicker(null); }}
+                  >
+                    <span className="dsf-pick-dot"><i className={`fas ${e.icon}`}></i></span>
+                    <div className="dsf-pick-info">
+                      <span className="dsf-pick-name">{e.label}</span>
+                      <span className="dsf-pick-desc">{e.desc}</span>
+                    </div>
+                    {activo && <i className="fas fa-check dsf-pick-check"></i>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>, document.body
+      )}
 
       {/* ── Confirmar eliminación de box ── */}
       {confirmDelete && createPortal(
         <div className="dsf-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget && !eliminando) { setConfirmDelete(null); setTextoConfirm(''); } }}>
-          <div className="dsf-modal" style={{ borderTopColor: '#ef4444' }}>
+          <div className="dsf-modal" style={{ borderTopColor: 'var(--danger)' }}>
             <div className="dsf-modal-header">
               <div>
-                <p className="dsf-modal-supertitle" style={{ color: '#ef4444' }}>ELIMINAR BOX</p>
+                <p className="dsf-modal-supertitle" style={{ color: 'var(--danger)' }}>ELIMINAR BOX</p>
                 <h3 className="dsf-modal-title">{confirmDelete.nombre}</h3>
               </div>
               <button type="button" className="dsf-modal-close" onClick={() => { if (!eliminando) { setConfirmDelete(null); setTextoConfirm(''); } }}>
@@ -463,7 +670,7 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
               <button
                 type="button"
                 className="dsf-send-btn"
-                style={{ background: '#ef4444' }}
+                style={{ background: 'var(--danger)' }}
                 disabled={eliminando || textoConfirm.trim() !== confirmDelete.nombre.trim()}
                 onClick={eliminarBox}
               >

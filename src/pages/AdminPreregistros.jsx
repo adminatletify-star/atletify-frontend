@@ -1,9 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
+import BoxPicker from '../components/BoxPicker';
+import AtletifyLoader from '../components/AtletifyLoader';
 import ExportarBDTab from '../components/ExportarBDTab';
 import ExportAuditoriaTab from '../components/ExportAuditoriaTab';
 import '../assets/css/AdminPreregistros.css';
+
+const HIST_POR_PAGINA = 10;
 
 const TABS = [
   { id: 'admin',    label: 'AdminBox',        icon: 'fa-user-shield' },
@@ -23,20 +27,21 @@ export default function AdminPreregistros() {
   const adminNombreRef   = useRef();
   const adminApellidosRef = useRef();
   const adminCorreoRef   = useRef();
-  const adminBoxRef      = useRef();
+  const [adminBoxId, setAdminBoxId] = useState('');
 
   const atletaNombreRef    = useRef();
   const atletaApellidosRef = useRef();
   const atletaCorreoRef    = useRef();
-  const atletaBoxRef       = useRef();
   const atletaTelefonoRef  = useRef();
+  const [atletaBoxId, setAtletaBoxId] = useState('');
 
-  const masivoBoxRef = useRef();
+  const [masivoBoxId, setMasivoBoxId] = useState('');
   const [archivoMasivo, setArchivoMasivo] = useState(null);
   const [previewData, setPreviewData]     = useState([]);
 
   const [historial, setHistorial]             = useState([]);
   const [cargandoHistorial, setCargandoHistorial] = useState(false);
+  const [paginaHist, setPaginaHist] = useState(1);
 
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('usuario'));
@@ -65,20 +70,21 @@ export default function AdminPreregistros() {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/preregistros/estatus`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
-      if (res.ok) setHistorial(await res.json());
+      if (res.ok) { setHistorial(await res.json()); setPaginaHist(1); }
     } catch (e) { console.error(e); }
     finally { setCargandoHistorial(false); }
   }
 
   const handlePreregistroAdmin = async (e) => {
     e.preventDefault();
+    if (!adminBoxId) { alert('Selecciona un Box.'); return; }
     setLoading(true);
     try {
       const body = {
         nombre:    adminNombreRef.current.value,
         apellidos: adminApellidosRef.current.value,
         correo:    adminCorreoRef.current.value,
-        idBox:     parseInt(adminBoxRef.current.value),
+        idBox:     parseInt(adminBoxId),
       };
       const res    = await fetch(`${import.meta.env.VITE_API_URL}/api/preregistros/admin`, {
         method: 'POST',
@@ -87,13 +93,14 @@ export default function AdminPreregistros() {
       });
       const result = await res.json();
       alert(result.mensaje || (res.ok ? 'Pre-registro exitoso.' : 'Error al pre-registrar.'));
-      if (res.ok) e.target.reset();
+      if (res.ok) { e.target.reset(); setAdminBoxId(''); }
     } catch { alert('Error de conexión'); }
     finally { setLoading(false); }
   };
 
   const handlePreregistroAtleta = async (e) => {
     e.preventDefault();
+    if (!atletaBoxId) { alert('Selecciona un Box.'); return; }
     setLoading(true);
     try {
       const body = {
@@ -101,7 +108,7 @@ export default function AdminPreregistros() {
         apellidos: atletaApellidosRef.current.value,
         correo:    atletaCorreoRef.current.value,
         telefono:  atletaTelefonoRef.current.value,
-        idBox:     parseInt(atletaBoxRef.current.value),
+        idBox:     parseInt(atletaBoxId),
       };
       const res    = await fetch(`${import.meta.env.VITE_API_URL}/api/preregistros/atleta`, {
         method: 'POST',
@@ -110,7 +117,7 @@ export default function AdminPreregistros() {
       });
       const result = await res.json();
       alert(result.mensaje || (res.ok ? 'Pre-registro exitoso.' : 'Error al pre-registrar.'));
-      if (res.ok) e.target.reset();
+      if (res.ok) { e.target.reset(); setAtletaBoxId(''); }
     } catch { alert('Error de conexión'); }
     finally { setLoading(false); }
   };
@@ -132,7 +139,7 @@ export default function AdminPreregistros() {
     (!v || isNaN(v)) ? null : new Date(Math.round((v - 25569) * 86400 * 1000)).toISOString();
 
   const procesarMasivo = async () => {
-    if (!masivoBoxRef.current.value) return alert('Selecciona un Box');
+    if (!masivoBoxId) return alert('Selecciona un Box');
     if (!previewData.length) return alert('No hay datos para procesar');
     setLoading(true);
     try {
@@ -154,11 +161,11 @@ export default function AdminPreregistros() {
       const res    = await fetch(`${import.meta.env.VITE_API_URL}/api/preregistros/atletas-masivo`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-        body: JSON.stringify({ idBox: parseInt(masivoBoxRef.current.value), atletas }),
+        body: JSON.stringify({ idBox: parseInt(masivoBoxId), atletas }),
       });
       const result = await res.json();
       alert(result.mensaje || (res.ok ? 'Carga exitosa.' : 'Error en carga masiva'));
-      if (res.ok) { setPreviewData([]); setArchivoMasivo(null); }
+      if (res.ok) { setPreviewData([]); setArchivoMasivo(null); setMasivoBoxId(''); }
     } catch { alert('Error de conexión'); }
     finally { setLoading(false); }
   };
@@ -227,10 +234,13 @@ export default function AdminPreregistros() {
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="etiqueta-campo">Box asignado</label>
-                  <select className="entrada-oscura" ref={adminBoxRef} required>
-                    <option value="">Selecciona un Box...</option>
-                    {boxes.map(b => <option key={b.idBox} value={b.idBox}>{b.nombre}</option>)}
-                  </select>
+                  <BoxPicker
+                    opciones={boxes}
+                    valor={adminBoxId}
+                    onCambiar={setAdminBoxId}
+                    titulo="Box asignado"
+                    placeholder="Selecciona un Box..."
+                  />
                 </div>
                 <div className="col-12 d-flex justify-content-end mt-2">
                   <button type="submit" className="ap-submit-btn ap-submit-btn--accent" disabled={loading}>
@@ -272,10 +282,13 @@ export default function AdminPreregistros() {
                 </div>
                 <div className="col-12 col-sm-6 col-md-4">
                   <label className="etiqueta-campo">Box destino</label>
-                  <select className="entrada-oscura" ref={atletaBoxRef} required>
-                    <option value="">Selecciona un Box...</option>
-                    {boxes.map(b => <option key={b.idBox} value={b.idBox}>{b.nombre}</option>)}
-                  </select>
+                  <BoxPicker
+                    opciones={boxes}
+                    valor={atletaBoxId}
+                    onCambiar={setAtletaBoxId}
+                    titulo="Box destino"
+                    placeholder="Selecciona un Box..."
+                  />
                 </div>
                 <div className="col-12 d-flex justify-content-end mt-2">
                   <button type="submit" className="ap-submit-btn" disabled={loading}>
@@ -303,10 +316,13 @@ export default function AdminPreregistros() {
               <div className="col-12 col-md-4 d-flex flex-column gap-3">
                 <div>
                   <label className="etiqueta-campo">Box destino</label>
-                  <select className="entrada-oscura" ref={masivoBoxRef}>
-                    <option value="">Selecciona un Box...</option>
-                    {boxes.map(b => <option key={b.idBox} value={b.idBox}>{b.nombre}</option>)}
-                  </select>
+                  <BoxPicker
+                    opciones={boxes}
+                    valor={masivoBoxId}
+                    onCambiar={setMasivoBoxId}
+                    titulo="Box destino"
+                    placeholder="Selecciona un Box..."
+                  />
                 </div>
 
                 <div className="ap-upload-zone">
@@ -390,49 +406,101 @@ export default function AdminPreregistros() {
             </div>
 
             {cargandoHistorial ? (
-              <div className="ap-loader">
-                <div className="ap-spinner" />
-                <p className="ap-loader-text">Cargando historial...</p>
+              <div className="ap-loader-wrap">
+                <AtletifyLoader />
               </div>
             ) : historial.length === 0 ? (
               <div className="ap-empty">
                 <span><i className="fas fa-inbox me-2" />No hay invitaciones registradas.</span>
               </div>
-            ) : (
-              <div className="ap-table-wrap">
-                <table className="ap-table">
-                  <thead>
-                    <tr>
-                      <th>Nombre</th>
-                      <th>Correo</th>
-                      <th>Rol</th>
-                      <th>Box</th>
-                      <th>Estado</th>
-                      <th>Expiración</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {historial.map(h => (
-                      <tr key={h.idPreregistro}>
-                        <td>{h.nombre}</td>
-                        <td style={{ color: 'var(--text-muted)', fontSize: '0.8em' }}>{h.correo}</td>
-                        <td>
-                          {h.rolEsperado === 'AdminBox'
-                            ? <span className="ap-badge ap-badge--admin">{h.rolEsperado}</span>
-                            : <span className="ap-badge ap-badge--atleta">{h.rolEsperado}</span>
-                          }
-                        </td>
-                        <td>{h.nombreBox || '—'}</td>
-                        <td>{estadoBadge(h.estado)}</td>
-                        <td style={{ color: 'var(--text-muted)', fontSize: '0.78em', whiteSpace: 'nowrap' }}>
-                          {new Date(h.expiracionToken).toLocaleString()}
-                        </td>
-                      </tr>
+            ) : (() => {
+              const totalPag = Math.max(1, Math.ceil(historial.length / HIST_POR_PAGINA));
+              const pag = Math.min(paginaHist, totalPag);
+              const items = historial.slice((pag - 1) * HIST_POR_PAGINA, pag * HIST_POR_PAGINA);
+              const desde = (pag - 1) * HIST_POR_PAGINA + 1;
+              const hasta = Math.min(pag * HIST_POR_PAGINA, historial.length);
+              const rolBadge = (rol) => rol === 'AdminBox'
+                ? <span className="ap-badge ap-badge--admin">{rol}</span>
+                : <span className="ap-badge ap-badge--atleta">{rol}</span>;
+              return (
+                <>
+                  <div className="ap-hist-summary">
+                    Mostrando <strong>{desde}–{hasta}</strong> de <strong>{historial.length}</strong>
+                  </div>
+
+                  {/* Tabla — desktop ≥768px */}
+                  <div className="ap-table-wrap d-none d-md-block">
+                    <table className="ap-table">
+                      <thead>
+                        <tr>
+                          <th>Nombre</th>
+                          <th>Correo</th>
+                          <th>Rol</th>
+                          <th>Box</th>
+                          <th>Estado</th>
+                          <th>Expiración</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {items.map(h => (
+                          <tr key={h.idPreregistro}>
+                            <td>{h.nombre}</td>
+                            <td style={{ color: 'var(--text-muted)', fontSize: '0.8em' }}>{h.correo}</td>
+                            <td>{rolBadge(h.rolEsperado)}</td>
+                            <td>{h.nombreBox || '—'}</td>
+                            <td>{estadoBadge(h.estado)}</td>
+                            <td style={{ color: 'var(--text-muted)', fontSize: '0.78em', whiteSpace: 'nowrap' }}>
+                              {new Date(h.expiracionToken).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Tarjetas — móvil <768px */}
+                  <div className="ap-hist-cards d-md-none">
+                    {items.map(h => (
+                      <div key={h.idPreregistro} className="ap-hist-card">
+                        <div className="ap-hist-card-top">
+                          <div className="ap-hist-card-id">
+                            <span className="ap-hist-card-name">{h.nombre}</span>
+                            <span className="ap-hist-card-email">{h.correo}</span>
+                          </div>
+                          {estadoBadge(h.estado)}
+                        </div>
+                        <div className="ap-hist-card-meta">
+                          {rolBadge(h.rolEsperado)}
+                          <span className="ap-hist-card-box">
+                            <i className="fas fa-warehouse" />{h.nombreBox || 'Sin Box'}
+                          </span>
+                        </div>
+                        <div className="ap-hist-card-exp">
+                          <i className="fas fa-clock" />Expira: {new Date(h.expiracionToken).toLocaleString()}
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                  </div>
+
+                  {/* Paginación */}
+                  {totalPag > 1 && (
+                    <div className="ap-pagination">
+                      <button className="ap-page-btn" disabled={pag === 1} onClick={() => setPaginaHist(p => Math.max(1, p - 1))}>
+                        <i className="fas fa-chevron-left" />
+                      </button>
+                      {Array.from({ length: totalPag }, (_, i) => i + 1).map(n => (
+                        <button key={n} className={`ap-page-btn${n === pag ? ' ap-page-btn--active' : ''}`} onClick={() => setPaginaHist(n)}>
+                          {n}
+                        </button>
+                      ))}
+                      <button className="ap-page-btn" disabled={pag === totalPag} onClick={() => setPaginaHist(p => Math.min(totalPag, p + 1))}>
+                        <i className="fas fa-chevron-right" />
+                      </button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         )}
 

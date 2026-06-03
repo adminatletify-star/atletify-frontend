@@ -478,7 +478,7 @@ export default function AdminEjercicios() {
                     <i className="fas fa-list" />
                     Ejercicios publicados
                   </p>
-                  <div className="d-flex gap-2 flex-wrap">
+                  <div className="ae-list-controls">
                     <div className="ae-search-wrap">
                       <i className="fas fa-search ae-search-icon" />
                       <input

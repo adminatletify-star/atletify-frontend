@@ -297,10 +297,17 @@
   gap: 1rem;
   flex-wrap: wrap;
 }
+.ae-list-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
 .ae-search-wrap {
   position: relative;
-  flex: 1;
-  min-width: 200px;
+  flex: 1 1 200px;
+  min-width: 0;
   max-width: 320px;
 }
 .ae-search-icon {
@@ -410,6 +417,9 @@
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--text-primary);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
 }
 .ae-table-instruccion {
   font-family: var(--font-body);
@@ -823,8 +833,9 @@ video::-webkit-media-controls-overflow-button {
   .ae-btn-ghost       { font-size: 0.75rem; padding: 0.45rem 0.75rem; }
   .ae-form-actions    { flex-wrap: wrap; overflow: visible; }
   .ae-form-actions .ae-btn-ghost { flex-shrink: 0; }
-  .ae-list-header     { padding: 0.85rem 1rem; flex-direction: column; align-items: flex-start; }
-  .ae-search-wrap     { min-width: 0; max-width: 100%; width: 100%; }
+  .ae-list-header     { padding: 0.85rem 1rem; flex-direction: column; align-items: stretch; }
+  .ae-list-controls   { width: 100%; }
+  .ae-search-wrap     { min-width: 0; max-width: 100%; flex-basis: 100%; }
   .ae-ej-card         { min-height: 190px; padding: 0.9rem 4.5rem 0.75rem 0.85rem; border-radius: 12px; }
   .ae-ej-instruccion  { font-size: 0.74rem; -webkit-line-clamp: 4; }
   .ae-detail-modal    { padding: 1.25rem; border-radius: 12px; }
