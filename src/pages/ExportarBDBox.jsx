@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import ExportarBDTab from '../components/ExportarBDTab';
-import '../assets/css/dashboard.css';
-import '../assets/css/AtletasBox.css';
+import '../assets/css/GestionClases.css';
 
 export default function ExportarBDBox() {
   const navigate = useNavigate();
@@ -27,21 +26,19 @@ export default function ExportarBDBox() {
   if (!box) return null;
 
   return (
-    <div className="atb-container fadeIn">
-      <header className="atb-header">
-        <div className="atb-header-inner">
+    <div className="gc-page fadeIn">
+
+      {/* ── HEADER (mismo patrón que GestionClases) ── */}
+      <header className="gc-header">
+        <div className="d-flex align-items-center gap-3">
           <BackButton />
-          <div>
-            <h1 className="atb-header-title">
-              <i className="fas fa-database me-2" style={{ color: 'var(--primary)' }}></i>
-              Exportar BD
-            </h1>
-            <p className="atb-header-sub">{box.nombre}</p>
-          </div>
+          <h1 className="gc-header-title">
+            Exportar <span>BD</span>
+          </h1>
         </div>
       </header>
 
-      <div className="p-4">
+      <div className="container-xl px-3 px-md-4">
         <ExportarBDTab fixedBox={box} />
       </div>
     </div>

@@ -1,7 +1,8 @@
 /* ============================================
    ATLETAS BOX — WolfPack Design System
-   Reutiliza: componentes.css (global) y Directorio.css
-   Solo define estilos exclusivos de esta vista.
+   Referencia visual: GestionClases.css (.gc-*)
+   Reutiliza de componentes.css: .tarjeta-panel,
+   .estado-vacio, .badge-estado, .avatar-inicial
    ============================================ */
 
 /* === PÁGINA BASE === */
@@ -11,55 +12,64 @@
   padding-bottom: 4rem;
 }
 
-/* === HEADER === */
+.atb-container {
+  width: 100%;
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 768px) {
+  .atb-container {
+    padding: 0 1.5rem;
+  }
+}
+
+/* === HEADER STICKY === */
 .atb-header {
   background: var(--glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
-  padding: 0.9rem 1.5rem 0.9rem 0.6rem;
+  padding: 0.75rem 1rem 0.75rem 0.5rem;
   position: sticky;
   top: 0;
   z-index: 100;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .atb-header {
+    padding: 0.9rem 1.5rem 0.9rem 0.6rem;
+    margin-bottom: 1.5rem;
+  }
 }
 
 .atb-header-inner {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
+  max-width: 1140px;
+  margin: 0 auto;
 }
 
-.atb-back-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  transition: var(--transition);
-  flex-shrink: 0;
-  font-size: 0.85rem;
-}
-
-.atb-back-btn:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--border-hover);
-  color: var(--text-primary);
+.atb-header-titles {
+  min-width: 0;
+  flex: 1;
 }
 
 .atb-header-title {
   font-family: var(--font-heading);
-  font-size: clamp(1.1rem, 4vw, 1.5rem);
+  font-size: clamp(1.05rem, 4vw, 1.5rem);
   font-weight: 700;
   color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 1px;
   margin: 0;
   line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .atb-header-title span {
@@ -71,6 +81,38 @@
   font-size: 0.78rem;
   color: var(--text-muted);
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* === BOTÓN PRIMARIO EXPORTAR === */
+.atb-export-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 0.6rem 1.1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+
+.atb-export-btn:hover {
+  background: var(--primary-dark);
+  color: #fff;
+  box-shadow: 0 4px 16px var(--primary-glow);
 }
 
 /* === CHIPS DE ESTADÍSTICAS === */
@@ -78,14 +120,14 @@
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
-  padding: 1rem 0 0.25rem;
+  padding: 0.5rem 0 0.25rem;
 }
 
 .atb-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.4rem 0.9rem;
+  padding: 0.45rem 0.9rem;
   border-radius: 20px;
   font-family: var(--font-heading-alt);
   font-size: 0.72rem;
@@ -98,6 +140,10 @@
   cursor: pointer;
   transition: var(--transition);
   user-select: none;
+  flex: 1 1 auto;
+  justify-content: center;
+  min-height: 40px;
+  touch-action: manipulation;
 }
 
 .atb-chip:hover {
@@ -145,14 +191,14 @@
   line-height: 1;
 }
 
-/* === BARRA DE FILTROS === */
+/* === BARRA DE FILTROS / TOOLBAR === */
 .atb-filtros {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-top: 3px solid var(--primary);
   border-radius: 16px;
   padding: 1rem;
-  margin: 1.25rem 0;
+  margin: 1rem 0 1.25rem;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
 }
 
@@ -160,6 +206,40 @@
   .atb-filtros {
     padding: 1.25rem 1.5rem;
   }
+}
+
+/* Toolbar mobile-first: buscador ocupa la 1ª fila (100%),
+   rol + categoría comparten la 2ª fila; todo en una fila en desktop. */
+.atb-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: stretch;
+}
+
+.atb-toolbar-search {
+  flex: 1 1 100%;
+}
+
+.atb-toolbar-ctrl {
+  flex: 1 1 calc(50% - 0.3rem);
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .atb-toolbar-search {
+    flex: 1 1 280px;
+  }
+  .atb-toolbar-ctrl {
+    flex: 1 1 200px;
+  }
+}
+
+/* Iguala la altura del picker de categoría (componente externo) con el
+   botón de rol y el buscador, para que el toolbar quede alineado. */
+.atb-toolbar-ctrl > .fcp-trigger {
+  height: 100%;
+  min-height: 48px;
 }
 
 .atb-search-wrapper {
@@ -181,12 +261,13 @@
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 0.6rem 0.9rem 0.6rem 2.3rem;
+  padding: 0.65rem 2.3rem;
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 0.88rem;
   transition: var(--transition);
   outline: none;
+  min-height: 48px;
 }
 
 .atb-search-input::placeholder {
@@ -198,33 +279,29 @@
   box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
-.atb-select {
-  width: 100%;
-  background: var(--bg-input);
+.atb-search-clear {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0.6rem 2rem 0.6rem 0.9rem;
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: 0.88rem;
-  transition: var(--transition);
-  outline: none;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.85rem center;
-  background-color: var(--bg-input);
+  font-size: 0.7rem;
+  transition: var(--transition);
 }
 
-.atb-select:focus {
-  border-color: rgba(230, 57, 70, 0.4);
-  box-shadow: 0 0 0 3px var(--primary-glow);
-}
-
-.atb-select option {
-  background: var(--bg-card);
-  color: var(--text-primary);
+.atb-search-clear:hover {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 /* === CONTADOR === */
@@ -236,19 +313,192 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
 .atb-contador strong {
   font-family: var(--font-stats);
   color: var(--text-primary);
-  font-size: 0.95rem;
   font-weight: 700;
 }
 
-/* === CARDS DE ATLETA (extiende .atleta-card de Directorio.css) === */
+/* ============================================
+   TABLA — desktop (md+)
+   ============================================ */
+.atb-table-wrap {
+  background: rgba(28, 28, 38, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.atb-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--text-primary);
+  margin: 0;
+  table-layout: auto;
+}
+
+.atb-table thead tr {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.atb-table th {
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 0.85rem 1rem;
+  text-align: left;
+  border: 0;
+  white-space: nowrap;
+}
+
+.atb-table td {
+  padding: 0.8rem 1rem;
+  border-top: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.atb-table tbody tr {
+  transition: background 0.18s ease;
+}
+
+.atb-table tbody tr:hover {
+  background: var(--bg-card-hover);
+}
+
+.atb-th-end {
+  text-align: right !important;
+}
+
+.atb-cell-atleta {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.atb-cell-id {
+  min-width: 0;
+}
+
+.atb-cell-nombre {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.atb-cell-correo {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 26ch;
+}
+
+.atb-cell-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.atb-dash {
+  color: var(--text-muted);
+}
+
+/* === AVATAR (override de tamaño del global .avatar-inicial) === */
+.atb-avatar {
+  width: 44px;
+  height: 44px;
+  font-size: 1.05rem;
+  overflow: hidden;
+}
+
+.atb-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+/* === CHIPS DE ROL (Coach / Admin) === */
+.atb-rolchip {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-heading-alt);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.atb-rolchip--coach {
+  background: rgba(79, 195, 247, 0.15);
+  border: 1px solid rgba(79, 195, 247, 0.4);
+  color: var(--accent-cool);
+}
+
+.atb-rolchip--admin {
+  background: rgba(245, 166, 35, 0.15);
+  border: 1px solid rgba(245, 166, 35, 0.4);
+  color: var(--accent);
+}
+
+/* === BADGE DE CATEGORÍA === */
+.atb-cat-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(168, 178, 209, 0.08);
+  border: 1px solid rgba(168, 178, 209, 0.2);
+  color: var(--secondary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.3rem 0.7rem;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.atb-cat-badge--staff {
+  background: rgba(245, 166, 35, 0.1);
+  border-color: rgba(245, 166, 35, 0.28);
+  color: var(--accent);
+}
+
+/* ============================================
+   CARDS — mobile (< md)
+   ============================================ */
+.atb-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .atb-atleta-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
   border-radius: 16px;
   padding: 1rem 1.1rem;
   transition: var(--transition);
@@ -257,8 +507,50 @@
 .atb-atleta-card:hover {
   background: var(--bg-card-hover);
   border-color: rgba(255, 255, 255, 0.1);
-  transform: translateY(-1px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.atb-card-top {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.atb-card-id {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.atb-card-nombre {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+.atb-nombre-txt {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.atb-card-correo {
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 0.1rem;
+}
+
+.atb-card-estado {
+  flex-shrink: 0;
 }
 
 .atb-atleta-footer {
@@ -266,23 +558,151 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding-top: 0.75rem;
-  margin-top: 0.75rem;
+  padding-top: 0.85rem;
+  margin-top: 0.85rem;
   border-top: 1px solid var(--border);
   flex-wrap: wrap;
 }
 
-.atb-action-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
+.atb-card-actions {
   display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   BOTONES DE ACCIÓN (tabla + cards)
+   34-36px cuadrados, según CLAUDE.md
+   ============================================ */
+.atb-action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 0.8rem;
   padding: 0;
   flex-shrink: 0;
+  cursor: pointer;
+  background: none;
+  text-decoration: none;
   transition: var(--transition);
+  touch-action: manipulation;
+}
+
+.atb-action-btn--edit {
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  color: var(--accent);
+}
+
+.atb-action-btn--edit:hover {
+  background: rgba(245, 166, 35, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 10px rgba(245, 166, 35, 0.2);
+  color: var(--accent);
+}
+
+.atb-action-btn--info {
+  border: 1px solid var(--border);
+  color: var(--secondary);
+}
+
+.atb-action-btn--info:hover {
+  background: rgba(168, 178, 209, 0.08);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.atb-action-btn--danger {
+  border: 1px solid rgba(230, 57, 70, 0.35);
+  color: var(--primary);
+}
+
+.atb-action-btn--danger:hover {
+  background: rgba(230, 57, 70, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 10px var(--primary-glow);
+  color: var(--primary);
+}
+
+/* ============================================
+   PAGINACIÓN
+   ============================================ */
+.atb-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  flex-wrap: nowrap;
+  margin-top: 1.5rem;
+}
+
+.atb-pag-numbers {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Indicador compacto "X / Y" — solo visible en móvil */
+.atb-pag-compact {
+  display: none;
+  font-family: var(--font-stats);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding: 0 0.5rem;
+  min-width: 64px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.atb-pag-btn {
+  min-width: 38px;
+  height: 38px;
+  padding: 0 0.6rem;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-family: var(--font-stats);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+.atb-pag-btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.atb-pag-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.atb-pag-btn--active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 4px 14px var(--primary-glow);
+}
+
+.atb-pag-btn--active:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+.atb-pag-ellipsis {
+  padding: 0 0.35rem;
+  color: var(--text-muted);
+  font-weight: 700;
 }
 
 /* === LOADING === */
@@ -299,6 +719,7 @@
    ============================================ */
 .atb-rol-btn {
   width: 100%;
+  height: 100%;
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -347,7 +768,7 @@
 
 .atb-rol-btn__label {
   font-family: var(--font-heading-alt);
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.3px;
   color: var(--rol-color, var(--text-muted));
@@ -369,12 +790,10 @@
 
 .atb-rol-btn:hover .atb-rol-btn__arrow {
   color: var(--rol-color, var(--primary));
-  transform: translateX(2px);
 }
 
 /* ============================================
-   MODAL DE ROLES — bottom sheet en móvil,
-   centrado en escritorio
+   MODALES — SIEMPRE CENTRADOS (CLAUDE.md)
    ============================================ */
 .atb-modal-overlay {
   position: fixed;
@@ -384,17 +803,10 @@
   -webkit-backdrop-filter: blur(6px);
   z-index: 1050;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  padding: 0;
+  padding: 1rem;
   animation: atb-fade-in 0.2s ease;
-}
-
-@media (min-width: 576px) {
-  .atb-modal-overlay {
-    align-items: center;
-    padding: 1rem;
-  }
 }
 
 @keyframes atb-fade-in {
@@ -408,25 +820,23 @@
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-top: 3px solid var(--primary);
-  border-radius: 20px 20px 0 0;
-  padding: 1.5rem 1.25rem 2rem;
-  animation: atb-slide-up 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
-  max-height: 92dvh;
+  border-radius: 20px;
+  padding: 1.5rem 1.25rem;
+  animation: atb-pop-up 0.26s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-height: 90dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
 @media (min-width: 576px) {
   .atb-modal {
-    border-radius: 20px;
     padding: 1.75rem;
-    max-height: 80dvh;
   }
 }
 
-@keyframes atb-slide-up {
-  from { transform: translateY(30px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
+@keyframes atb-pop-up {
+  from { transform: translateY(16px) scale(0.97); opacity: 0; }
+  to   { transform: translateY(0) scale(1);       opacity: 1; }
 }
 
 .atb-modal__header {
@@ -515,7 +925,6 @@
 .atb-rol-opcion:hover {
   background: rgba(255, 255, 255, 0.04);
   border-color: var(--rol-color, var(--border));
-  transform: translateX(3px);
 }
 
 .atb-rol-opcion--activo {
@@ -573,4 +982,255 @@
 @keyframes atb-pop-in {
   from { transform: scale(0); opacity: 0; }
   to   { transform: scale(1); opacity: 1; }
+}
+
+/* ============================================
+   MODAL STAFF (datos de Coach / AdminBox)
+   ============================================ */
+.atb-staff-modal {
+  position: relative;
+  max-width: 420px;
+}
+
+.atb-staff-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+}
+
+.atb-staff-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  padding-top: 0.5rem;
+}
+
+.atb-staff-avatar {
+  width: 78px;
+  height: 78px;
+  font-size: 2rem;
+  overflow: hidden;
+}
+
+.atb-staff-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.atb-staff-nombre {
+  font-family: var(--font-heading);
+  font-size: clamp(1.05rem, 4vw, 1.25rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0.25rem 0 0;
+  line-height: 1.2;
+}
+
+.atb-staff-rolchip {
+  font-size: 0.72rem;
+  padding: 0.3rem 0.8rem;
+}
+
+.atb-staff-info {
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.4rem 0.9rem;
+  margin-bottom: 1.25rem;
+}
+
+.atb-staff-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.atb-staff-row:last-child {
+  border-bottom: none;
+}
+
+.atb-staff-row--col {
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.atb-staff-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  flex-shrink: 0;
+}
+
+.atb-staff-label i {
+  width: 1rem;
+  text-align: center;
+}
+
+.atb-staff-val {
+  color: var(--text-primary);
+  text-align: right;
+  font-family: var(--font-body);
+  min-width: 0;
+}
+
+.atb-staff-row--col .atb-staff-val {
+  text-align: left;
+}
+
+.atb-staff-val--break {
+  word-break: break-all;
+}
+
+.atb-staff-cerrar {
+  width: 100%;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+}
+
+.atb-staff-cerrar:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.06);
+}
+
+/* ============================================
+   RESPONSIVE — reducción por breakpoint
+   (768 tablet · 576 móvil · 380 móvil pequeño)
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .atb-table th { font-size: 0.62rem; padding: 0.75rem 0.85rem; }
+  .atb-table td { padding: 0.7rem 0.85rem; }
+  .atb-cell-correo { max-width: 20ch; }
+}
+
+/* Móvil */
+@media (max-width: 576px) {
+  .atb-export-btn {
+    padding: 0.6rem 0.8rem;
+  }
+  /* Solo ícono en móvil — el botón queda compacto y tocable */
+  .atb-btn-label {
+    display: none;
+  }
+
+  .atb-chip {
+    font-size: 0.68rem;
+    padding: 0.45rem 0.7rem;
+  }
+  .atb-chip-num {
+    font-size: 0.85rem;
+  }
+
+  .atb-atleta-card {
+    padding: 0.85rem 0.9rem;
+  }
+
+  .atb-card-nombre {
+    font-size: 0.9rem;
+  }
+
+  .atb-card-correo {
+    font-size: 0.72rem;
+  }
+
+  .atb-modal {
+    padding: 1.25rem 1rem;
+    border-radius: 18px;
+  }
+
+  .atb-staff-row {
+    font-size: 0.82rem;
+  }
+
+  .atb-pag-btn {
+    min-width: 34px;
+    height: 34px;
+    font-size: 0.8rem;
+  }
+
+  /* Pager compacto: ocultamos la lista de números y mostramos "X / Y" */
+  .atb-pag-numbers {
+    display: none;
+  }
+  .atb-pag-compact {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Móvil pequeño (iPhone SE) */
+@media (max-width: 380px) {
+  .atb-header-inner { gap: 0.4rem; }
+
+  .atb-chips {
+    gap: 0.4rem;
+  }
+  .atb-chip {
+    font-size: 0.64rem;
+    padding: 0.4rem 0.55rem;
+    gap: 0.3rem;
+  }
+
+  .atb-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 0.95rem;
+  }
+
+  .atb-card-top {
+    gap: 0.65rem;
+  }
+
+  .atb-card-nombre {
+    font-size: 0.86rem;
+  }
+
+  /* El texto del estado se oculta, queda solo el ícono (compacto) */
+  .atb-card-estado .atb-estado-txt {
+    display: none;
+  }
+  .atb-card-estado {
+    padding: 0.3rem 0.45rem;
+  }
+
+  .atb-action-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .atb-card-actions {
+    gap: 0.4rem;
+  }
+
+  .atb-staff-avatar {
+    width: 68px;
+    height: 68px;
+    font-size: 1.7rem;
+  }
 }

@@ -874,6 +874,43 @@
   margin-left: 8px;
 }
 
+.dash-page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dash-page-ellipsis {
+  padding: 0 2px;
+  color: var(--text-muted, #666);
+  font-weight: 700;
+}
+
+/* Indicador compacto "X / Y" — solo visible en móvil */
+.dash-page-compact {
+  display: none;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding: 0 6px;
+  min-width: 56px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Móvil: ocultamos la lista de números y mostramos el pager compacto,
+   que no crece con el número de páginas. */
+@media (max-width: 575px) {
+  .dash-page-numbers {
+    display: none;
+  }
+  .dash-page-compact {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 /* ── Responsive ───────────────────────────────────────────── */
 
 /* Móvil (< 992px): sidebar como panel fijo deslizante */

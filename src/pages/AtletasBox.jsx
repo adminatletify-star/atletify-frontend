@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { USUARIOS_ENDPOINT } from '../services/api';
 import '../assets/css/AtletasBox.css';
 import '../assets/css/Directorio.css';
+import '../assets/css/GestionClases.css';
 import AtletifyLoader from '../components/AtletifyLoader';
 import BackButton from '../components/BackButton';
 import FiltroCategoriaPicker from '../components/FiltroCategoriaPicker';
@@ -16,6 +17,79 @@ const ROLES = [
   { value: 'AdminBox', icon: 'fa-shield-alt',           label: 'Admin Box',       desc: 'Administradores del box',                    color: '#F5A623' },
 ];
 
+const PAGE_SIZE = 10;
+
+// Normaliza (quita tildes + lowercase) para búsqueda tolerante a acentos.
+const normalizar = (s) =>
+  String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+
+const esStaff = (a) => {
+  const rol = a.rol || a.Rol;
+  return rol === 'Coach' || rol === 'AdminBox';
+};
+
+/* ── Paginación (mismo patrón que PreguntasRespuestasDev) ── */
+function buildPaginas(pagina, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const out = [1];
+  if (pagina > 3) out.push('...');
+  const start = Math.max(2, pagina - 1);
+  const end = Math.min(total - 1, pagina + 1);
+  for (let i = start; i <= end; i++) out.push(i);
+  if (pagina < total - 2) out.push('...');
+  out.push(total);
+  return out;
+}
+
+function Paginacion({ pagina, totalPaginas, onCambio }) {
+  if (totalPaginas <= 1) return null;
+  const paginas = buildPaginas(pagina, totalPaginas);
+  return (
+    <div className="atb-paginacion" role="navigation" aria-label="Paginación">
+      <button
+        type="button"
+        className="atb-pag-btn"
+        disabled={pagina === 1}
+        onClick={() => onCambio(pagina - 1)}
+        aria-label="Página anterior"
+      >
+        <i className="fas fa-chevron-left"></i>
+      </button>
+
+      {/* Números — solo en pantallas ≥576px */}
+      <div className="atb-pag-numbers">
+        {paginas.map((p, i) =>
+          p === '...' ? (
+            <span key={`e${i}`} className="atb-pag-ellipsis">…</span>
+          ) : (
+            <button
+              key={p}
+              type="button"
+              className={`atb-pag-btn ${pagina === p ? 'atb-pag-btn--active' : ''}`}
+              onClick={() => onCambio(p)}
+            >
+              {p}
+            </button>
+          )
+        )}
+      </div>
+
+      {/* Indicador compacto — solo en móvil (no crece con el nº de páginas) */}
+      <span className="atb-pag-compact">{pagina} / {totalPaginas}</span>
+
+      <button
+        type="button"
+        className="atb-pag-btn"
+        disabled={pagina === totalPaginas}
+        onClick={() => onCambio(pagina + 1)}
+        aria-label="Página siguiente"
+      >
+        <i className="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  );
+}
+
 export default function AtletasBox() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -23,7 +97,7 @@ export default function AtletasBox() {
   const [atletas, setAtletas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [boxNombre, setBoxNombre] = useState('');
-  
+
   const storedUser = JSON.parse(localStorage.getItem('usuario')) || {};
   const isCoach = storedUser.rol === 'Coach' || storedUser.Rol === 'Coach';
 
@@ -34,6 +108,7 @@ export default function AtletasBox() {
   const [filtroRol, setFiltroRol] = useState('');
   const [mostrarModalRol, setMostrarModalRol] = useState(false);
   const [staffSeleccionado, setStaffSeleccionado] = useState(null);
+  const [pagina, setPagina] = useState(1);
 
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('usuario'));
@@ -80,20 +155,36 @@ export default function AtletasBox() {
   const inactivos = atletas.filter(a => !a.activo);
   const categorias = [...new Set(atletas.map(a => a.categoriaBase).filter(Boolean))].sort();
 
+  // Filtro + búsqueda sobre TODO lo visible (nombre, correo, teléfono,
+  // categoría, rol y estado) — así el usuario encuentra lo que ve en pantalla.
   const atletasMostrados = atletas.filter(a => {
-    const termino = busqueda.toLowerCase();
-    const matchNombre = !busqueda ||
-      a.nombre?.toLowerCase().includes(termino) ||
-      a.correo?.toLowerCase().includes(termino);
-    const matchCat = !filtroCat || a.categoriaBase === filtroCat;
-    const matchEstatus = !filtroEstatus ||
-      (filtroEstatus === 'activo' ? a.activo : !a.activo);
     const rolActual = a.rol || a.Rol;
+    const matchCat = !filtroCat || a.categoriaBase === filtroCat;
+    const matchEstatus = !filtroEstatus || (filtroEstatus === 'activo' ? a.activo : !a.activo);
     const matchRol = !filtroRol || rolActual === filtroRol;
-    return matchNombre && matchCat && matchEstatus && matchRol;
+    if (!matchCat || !matchEstatus || !matchRol) return false;
+    if (!busqueda) return true;
+    const termino = normalizar(busqueda);
+    const haystack = normalizar([
+      a.nombre, a.apellidos, a.correo, a.telefono, a.categoriaBase, rolActual,
+      ROLES.find(r => r.value === rolActual)?.label,
+      a.activo ? 'activo' : 'inactivo',
+    ].filter(Boolean).join(' '));
+    return haystack.includes(termino);
   }).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
 
   const rolSeleccionado = ROLES.find(r => r.value === filtroRol) || ROLES[0];
+
+  // Paginación de 10 en 10 (compartida entre tabla desktop y cards móvil)
+  const totalPaginas = Math.max(1, Math.ceil(atletasMostrados.length / PAGE_SIZE));
+  const atletasPagina = atletasMostrados.slice((pagina - 1) * PAGE_SIZE, pagina * PAGE_SIZE);
+  const desde = atletasMostrados.length === 0 ? 0 : (pagina - 1) * PAGE_SIZE + 1;
+  const hasta = Math.min(pagina * PAGE_SIZE, atletasMostrados.length);
+
+  // Resetea a la página 1 al cambiar cualquier filtro o el buscador
+  useEffect(() => { setPagina(1); }, [busqueda, filtroEstatus, filtroCat, filtroRol]);
+  // Clampa la página si la lista se acorta
+  useEffect(() => { if (pagina > totalPaginas) setPagina(totalPaginas); }, [pagina, totalPaginas]);
 
   if (loading) {
     return (
@@ -103,30 +194,73 @@ export default function AtletasBox() {
     );
   }
 
+  /* Botones de acción reutilizados en tabla y cards */
+  const renderAcciones = (atleta) => (
+    <>
+      {!isCoach && (
+        <Link
+          to={`/editar-usuario/${atleta.idUsuario}`}
+          className="atb-action-btn atb-action-btn--edit"
+          title="Editar perfil"
+          aria-label="Editar perfil"
+        >
+          <i className="fas fa-pen"></i>
+        </Link>
+      )}
+      {esStaff(atleta) ? (
+        <button
+          type="button"
+          className="atb-action-btn atb-action-btn--info"
+          title="Ver datos"
+          aria-label="Ver datos"
+          onClick={() => setStaffSeleccionado(atleta)}
+        >
+          <i className="fas fa-id-card"></i>
+        </button>
+      ) : (
+        <Link
+          to={`/perfil-atleta-admin/${atleta.idUsuario}`}
+          className="atb-action-btn atb-action-btn--info"
+          title="Ver expediente"
+          aria-label="Ver expediente"
+        >
+          <i className="fas fa-id-card"></i>
+        </Link>
+      )}
+      {!isCoach && (
+        <BotonSeguro
+          onClick={() => expulsarAtleta(atleta.idUsuario)}
+          className="atb-action-btn atb-action-btn--danger"
+          title="Expulsar del Box"
+          tiempoBloqueo={2000}
+          textoProcesando={<i className="fas fa-spinner fa-spin"></i>}
+        >
+          <i className="fas fa-user-minus"></i>
+        </BotonSeguro>
+      )}
+    </>
+  );
+
   return (
     <div className="atb-page">
 
       {/* ══════════════════════════════════
-          HEADER FIJO
+          HEADER STICKY
       ══════════════════════════════════ */}
-      <header className="atb-header">
-        <div className="atb-header-inner">
+      <header className="gc-header">
+        <div className="d-flex align-items-center gap-3">
           <BackButton />
-          <div>
-            <h1 className="atb-header-title">
-              Atletas del <span>Box</span>
-            </h1>
-            <p className="atb-header-sub">{boxNombre}</p>
-          </div>
-          <div className="ms-auto">
-            <Link to="/exportar-bd-box" className="btn btn-danger btn-sm rounded-pill fw-bold px-3">
-              <i className="fas fa-database me-2"></i>Exportar BD
-            </Link>
-          </div>
+          <h1 className="gc-header-title">
+            Atletas del <span>Box</span>
+          </h1>
+          <Link to="/exportar-bd-box" className="atb-export-btn ms-auto">
+            <i className="fas fa-database"></i>
+            <span className="atb-btn-label">Exportar BD</span>
+          </Link>
         </div>
       </header>
 
-      <div className="container-xl px-3 px-md-4">
+      <div className="atb-container">
 
         {/* ══════════════════════════════════
             CHIPS DE ESTADÍSTICAS / FILTRO RÁPIDO
@@ -161,23 +295,34 @@ export default function AtletasBox() {
         </div>
 
         {/* ══════════════════════════════════
-            BARRA DE FILTROS
+            BARRA DE FILTROS (toolbar mobile-first)
         ══════════════════════════════════ */}
         <div className="atb-filtros">
-          <div className="row g-2">
-            <div className="col-12 col-md-4">
+          <div className="atb-toolbar">
+            <div className="atb-toolbar-search">
               <div className="atb-search-wrapper">
                 <i className="fas fa-search atb-search-icon"></i>
                 <input
                   type="text"
                   className="atb-search-input"
-                  placeholder="Buscar por nombre o correo..."
+                  placeholder="Buscar por nombre, correo, categoría…"
                   value={busqueda}
                   onChange={e => setBusqueda(e.target.value)}
                 />
+                {busqueda && (
+                  <button
+                    type="button"
+                    className="atb-search-clear"
+                    onClick={() => setBusqueda('')}
+                    aria-label="Limpiar búsqueda"
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                )}
               </div>
             </div>
-            <div className="col-12 col-md-4">
+
+            <div className="atb-toolbar-ctrl">
               <button
                 type="button"
                 className={`atb-rol-btn${filtroRol ? ' atb-rol-btn--active' : ''}`}
@@ -190,10 +335,11 @@ export default function AtletasBox() {
                   </span>
                   <span className="atb-rol-btn__label">{rolSeleccionado.label}</span>
                 </span>
-                <i className="fas fa-chevron-right atb-rol-btn__arrow" />
+                <i className="fas fa-chevron-down atb-rol-btn__arrow" />
               </button>
             </div>
-            <div className="col-12 col-md-4">
+
+            <div className="atb-toolbar-ctrl">
               <FiltroCategoriaPicker
                 categorias={categorias}
                 valor={filtroCat}
@@ -204,114 +350,72 @@ export default function AtletasBox() {
         </div>
 
         {/* ══════════════════════════════════
-            CONTADOR Y LISTA
+            CONTADOR + LISTA
         ══════════════════════════════════ */}
-        <p className="atb-contador">
-          Mostrando <strong>{atletasMostrados.length}</strong> de {atletas.length} atletas
-        </p>
-
         {atletasMostrados.length === 0 ? (
           <div className="tarjeta-panel">
             <div className="estado-vacio">
-              <i className="fas fa-search"></i>
+              <i className="fas fa-user-slash"></i>
               <p>No se encontraron atletas con ese criterio.</p>
             </div>
           </div>
         ) : (
           <>
+            <p className="atb-contador">
+              Mostrando <strong>{desde}–{hasta}</strong> de <strong>{atletasMostrados.length}</strong>{' '}
+              {atletasMostrados.length === 1 ? 'atleta' : 'atletas'}
+            </p>
+
             {/* ── TABLA — desktop (md+) ── */}
-            <div className="d-none d-md-block tarjeta-panel overflow-hidden">
-              <table className="table mb-0" style={{
-                '--bs-table-bg': 'transparent',
-                '--bs-table-color': 'var(--text-primary)',
-                '--bs-table-border-color': 'var(--border)',
-                '--bs-table-hover-bg': 'var(--bg-card-hover)',
-                '--bs-table-hover-color': 'var(--text-primary)',
-                color: 'var(--text-primary)'
-              }}>
+            <div className="d-none d-md-block atb-table-wrap">
+              <table className="atb-table">
                 <thead>
-                  <tr style={{ background: 'rgba(0,0,0,0.3)' }}>
-                    <th className="border-0 py-3 px-4" style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Atleta</th>
-                    <th className="border-0 py-3" style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Categoría</th>
-                    <th className="border-0 py-3" style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Estatus</th>
-                    <th className="border-0 py-3 text-end px-4" style={{ fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Acciones</th>
+                  <tr>
+                    <th>Atleta</th>
+                    <th>Categoría</th>
+                    <th>Estatus</th>
+                    <th className="atb-th-end">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {atletasMostrados.map(atleta => (
-                    <tr key={atleta.idUsuario} style={{ borderColor: 'var(--border)' }}>
-                      <td className="py-3 px-4" style={{ borderColor: 'var(--border)', verticalAlign: 'middle', background: 'transparent', color: 'var(--text-primary)' }}>
-                        <div className="d-flex align-items-center gap-3">
-                          <div className="avatar-inicial">
+                  {atletasPagina.map(atleta => (
+                    <tr key={atleta.idUsuario}>
+                      <td>
+                        <div className="atb-cell-atleta">
+                          <div className="avatar-inicial atb-avatar">
                             {atleta.foto
-                              ? <img src={atleta.foto} alt={atleta.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                              ? <img src={atleta.foto} alt={atleta.nombre} />
                               : atleta.nombre?.charAt(0).toUpperCase()
                             }
                           </div>
-                          <div>
-                            <div style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '0.92rem', color: 'var(--text-primary)' }}>
-                              {atleta.nombre}
-                              {(atleta.rol === 'Coach' || atleta.Rol === 'Coach') && <span className="badge bg-info text-dark ms-2" style={{fontSize: '0.65rem'}}>Coach</span>}
-                              {(atleta.rol === 'AdminBox' || atleta.Rol === 'AdminBox') && <span className="badge bg-warning text-dark ms-2" style={{fontSize: '0.65rem'}}>Admin</span>}
+                          <div className="atb-cell-id">
+                            <div className="atb-cell-nombre">
+                              <span className="atb-nombre-txt">{atleta.nombre}</span>
+                              {(atleta.rol === 'Coach' || atleta.Rol === 'Coach') && <span className="atb-rolchip atb-rolchip--coach">Coach</span>}
+                              {(atleta.rol === 'AdminBox' || atleta.Rol === 'AdminBox') && <span className="atb-rolchip atb-rolchip--admin">Admin</span>}
                             </div>
-                            <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{atleta.correo}</div>
+                            <div className="atb-cell-correo">{atleta.correo}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="py-3" style={{ borderColor: 'var(--border)', verticalAlign: 'middle', background: 'transparent' }}>
-                        {(atleta.rol === 'Coach' || atleta.Rol === 'Coach' || atleta.rol === 'AdminBox' || atleta.Rol === 'AdminBox') ? (
-                          <span style={{ color: 'var(--text-muted)' }}>—</span>
+                      <td>
+                        {esStaff(atleta) ? (
+                          <span className="atb-dash">—</span>
                         ) : (
-                          <span className="badge-estado" style={{ background: 'rgba(168,178,209,0.08)', border: '1px solid rgba(168,178,209,0.2)', color: 'var(--secondary)', fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem', letterSpacing: '1px' }}>
+                          <span className="atb-cat-badge">
                             {atleta.categoriaBase || 'Sin categoría'}
                           </span>
                         )}
                       </td>
-                      <td className="py-3" style={{ borderColor: 'var(--border)', verticalAlign: 'middle', background: 'transparent' }}>
+                      <td>
                         <span className={`badge-estado ${atleta.activo ? 'badge-estado-activo' : 'badge-estado-inactivo'}`}>
                           <i className={`fas ${atleta.activo ? 'fa-check-circle' : 'fa-times-circle'}`}></i>
                           {atleta.activo ? 'Activo' : 'Inactivo'}
                         </span>
                       </td>
-                      <td className="py-3 px-4" style={{ borderColor: 'var(--border)', verticalAlign: 'middle', background: 'transparent' }}>
-                        <div className="d-flex justify-content-end gap-2">
-                          {!isCoach && (
-                            <Link
-                              to={`/editar-usuario/${atleta.idUsuario}`}
-                              className="atb-action-btn btn btn-sm btn-outline-info"
-                              title="Editar perfil"
-                            >
-                              <i className="fas fa-pen"></i>
-                            </Link>
-                          )}
-                          {(atleta.rol === 'Coach' || atleta.Rol === 'Coach' || atleta.rol === 'AdminBox' || atleta.Rol === 'AdminBox') ? (
-                            <button
-                              className="atb-action-btn btn btn-sm btn-outline-secondary"
-                              title="Ver datos"
-                              onClick={() => setStaffSeleccionado(atleta)}
-                            >
-                              <i className="fas fa-id-card"></i>
-                            </button>
-                          ) : (
-                            <Link
-                              to={`/perfil-atleta-admin/${atleta.idUsuario}`}
-                              className="atb-action-btn btn btn-sm btn-outline-secondary"
-                              title="Ver expediente"
-                            >
-                              <i className="fas fa-id-card"></i>
-                            </Link>
-                          )}
-                          {!isCoach && (
-                            <BotonSeguro
-                              onClick={() => expulsarAtleta(atleta.idUsuario)}
-                              className="atb-action-btn btn btn-sm btn-outline-danger"
-                              title="Expulsar del Box"
-                              tiempoBloqueo={2000}
-                              textoProcesando={<i className="fas fa-spinner fa-spin"></i>}
-                            >
-                              <i className="fas fa-user-minus"></i>
-                            </BotonSeguro>
-                          )}
+                      <td className="atb-th-end">
+                        <div className="atb-cell-actions">
+                          {renderAcciones(atleta)}
                         </div>
                       </td>
                     </tr>
@@ -321,90 +425,58 @@ export default function AtletasBox() {
             </div>
 
             {/* ── CARDS — mobile (< md) ── */}
-            <div className="d-md-none atleta-lista">
-              {atletasMostrados.map(atleta => (
+            <div className="d-md-none atb-lista">
+              {atletasPagina.map(atleta => (
                 <div key={atleta.idUsuario} className="atb-atleta-card">
-                  {/* Fila superior: avatar + nombre + estado */}
-                  <div className="d-flex align-items-center gap-3">
-                    <div className="avatar-inicial">
+                  <div className="atb-card-top">
+                    <div className="avatar-inicial atb-avatar">
                       {atleta.foto
-                        ? <img src={atleta.foto} alt={atleta.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                        ? <img src={atleta.foto} alt={atleta.nombre} />
                         : atleta.nombre?.charAt(0).toUpperCase()
                       }
                     </div>
-                    <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                      <div className="atleta-nombre d-flex align-items-center flex-wrap gap-1">
-                        {atleta.nombre}
-                        {(atleta.rol === 'Coach' || atleta.Rol === 'Coach') && <span className="badge bg-info text-dark" style={{fontSize: '0.6rem'}}>Coach</span>}
-                        {(atleta.rol === 'AdminBox' || atleta.Rol === 'AdminBox') && <span className="badge bg-warning text-dark" style={{fontSize: '0.6rem'}}>Admin</span>}
+                    <div className="atb-card-id">
+                      <div className="atb-card-nombre">
+                        <span className="atb-nombre-txt">{atleta.nombre}</span>
+                        {(atleta.rol === 'Coach' || atleta.Rol === 'Coach') && <span className="atb-rolchip atb-rolchip--coach">Coach</span>}
+                        {(atleta.rol === 'AdminBox' || atleta.Rol === 'AdminBox') && <span className="atb-rolchip atb-rolchip--admin">Admin</span>}
                       </div>
-                      <div className="atleta-correo">{atleta.correo}</div>
+                      <div className="atb-card-correo">{atleta.correo}</div>
                     </div>
-                    <span className={`badge-estado flex-shrink-0 ${atleta.activo ? 'badge-estado-activo' : 'badge-estado-inactivo'}`}>
+                    <span className={`badge-estado atb-card-estado ${atleta.activo ? 'badge-estado-activo' : 'badge-estado-inactivo'}`}>
                       <i className={`fas ${atleta.activo ? 'fa-check-circle' : 'fa-times-circle'}`}></i>
-                      {atleta.activo ? 'Activo' : 'Inactivo'}
+                      <span className="atb-estado-txt">{atleta.activo ? 'Activo' : 'Inactivo'}</span>
                     </span>
                   </div>
 
-                  {/* Fila inferior: categoría + acciones */}
                   <div className="atb-atleta-footer">
-                    {(atleta.rol === 'Coach' || atleta.Rol === 'Coach' || atleta.rol === 'AdminBox' || atleta.Rol === 'AdminBox') ? (
-                      <span></span>
+                    {esStaff(atleta) ? (
+                      <span className="atb-cat-badge atb-cat-badge--staff">
+                        <i className="fas fa-shield-alt me-1"></i>Staff
+                      </span>
                     ) : (
-                      <span className="badge-estado" style={{ background: 'rgba(168,178,209,0.08)', border: '1px solid rgba(168,178,209,0.2)', color: 'var(--secondary)', fontFamily: 'var(--font-heading-alt)', fontSize: '0.65rem', letterSpacing: '1px' }}>
+                      <span className="atb-cat-badge">
                         <i className="fas fa-tag me-1"></i>
                         {atleta.categoriaBase || 'Sin categoría'}
                       </span>
                     )}
-                    <div className="d-flex gap-2">
-                      {!isCoach && (
-                        <Link
-                          to={`/editar-usuario/${atleta.idUsuario}`}
-                          className="atb-action-btn btn btn-sm btn-outline-info"
-                          title="Editar"
-                        >
-                          <i className="fas fa-pen"></i>
-                        </Link>
-                      )}
-                      {(atleta.rol === 'Coach' || atleta.Rol === 'Coach' || atleta.rol === 'AdminBox' || atleta.Rol === 'AdminBox') ? (
-                        <button
-                          className="atb-action-btn btn btn-sm btn-outline-secondary"
-                          title="Ver datos"
-                          onClick={() => setStaffSeleccionado(atleta)}
-                        >
-                          <i className="fas fa-id-card"></i>
-                        </button>
-                      ) : (
-                        <Link
-                          to={`/perfil-atleta-admin/${atleta.idUsuario}`}
-                          className="atb-action-btn btn btn-sm btn-outline-secondary"
-                          title="Expediente"
-                        >
-                          <i className="fas fa-id-card"></i>
-                        </Link>
-                      )}
-                      {!isCoach && (
-                        <BotonSeguro
-                          onClick={() => expulsarAtleta(atleta.idUsuario)}
-                          className="atb-action-btn btn btn-sm btn-outline-danger"
-                          title="Expulsar"
-                          tiempoBloqueo={2000}
-                          textoProcesando={<i className="fas fa-spinner fa-spin"></i>}
-                        >
-                          <i className="fas fa-user-minus"></i>
-                        </BotonSeguro>
-                      )}
+                    <div className="atb-card-actions">
+                      {renderAcciones(atleta)}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
+
+            <Paginacion pagina={pagina} totalPaginas={totalPaginas} onCambio={setPagina} />
           </>
         )}
 
       </div>
 
-      {/* MODAL FILTRO ROL */}
+      {/* ══════════════════════════════════
+          MODAL FILTRO ROL (centrado)
+      ══════════════════════════════════ */}
       {mostrarModalRol && createPortal(
         <div
           className="atb-modal-overlay"
@@ -456,81 +528,95 @@ export default function AtletasBox() {
         document.body
       )}
 
-      {/* MODAL STAFF */}
-      {staffSeleccionado && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1050, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ maxWidth: '400px', width: '100%', margin: 'auto' }}>
-            <div className="modal-content text-start border-secondary shadow-lg rounded-4 p-4 w-100" style={{ backgroundColor: '#141414', border: '1px solid #333' }}>
-              
-              <div className="text-center mb-3 mt-2">
-                <div style={{ width: '80px', height: '80px', margin: '0 auto', borderRadius: '50%', backgroundColor: 'var(--bg-card-hover)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 'bold', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                  {staffSeleccionado.foto ? (
-                    <img src={staffSeleccionado.foto} alt={staffSeleccionado.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    staffSeleccionado.nombre?.charAt(0).toUpperCase()
-                  )}
-                </div>
-                <h4 style={{ color: 'var(--text-primary)', marginTop: '1rem', marginBottom: '0.25rem', fontFamily: 'var(--font-heading)' }}>
-                  {staffSeleccionado.nombre} {staffSeleccionado.apellidos || ''}
-                </h4>
-                <div className="mb-3 mt-2">
-                  <span className={`badge ${staffSeleccionado.rol === 'Coach' || staffSeleccionado.Rol === 'Coach' ? 'bg-info text-dark' : 'bg-warning text-dark'}`} style={{ fontSize: '0.8rem', padding: '0.5em 1em', letterSpacing: '0.5px' }}>
-                    <i className="fas fa-shield-alt me-1"></i> {staffSeleccionado.rol || staffSeleccionado.Rol}
-                  </span>
-                </div>
-              </div>
+      {/* ══════════════════════════════════
+          MODAL STAFF (centrado, sistema de diseño)
+      ══════════════════════════════════ */}
+      {staffSeleccionado && createPortal(
+        <div
+          className="atb-modal-overlay"
+          onClick={e => { if (e.target === e.currentTarget) setStaffSeleccionado(null); }}
+        >
+          <div className="atb-modal atb-staff-modal">
+            <button
+              type="button"
+              className="atb-modal__close atb-staff-close"
+              onClick={() => setStaffSeleccionado(null)}
+              aria-label="Cerrar"
+            >
+              <i className="fas fa-times" />
+            </button>
 
-              <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '15px', borderRadius: '10px', marginBottom: '1.5rem', fontSize: '0.9rem', border: '1px solid var(--border)' }}>
-                <div className="d-flex justify-content-between mb-2 pb-2 border-bottom border-secondary">
-                  <span style={{ color: 'var(--text-muted)' }}><i className="fas fa-envelope me-2 text-primary"></i>Correo:</span>
-                  <span style={{ color: 'var(--text-primary)', textAlign: 'right', wordBreak: 'break-all', maxWidth: '60%' }}>{staffSeleccionado.correo}</span>
-                </div>
-                <div className="d-flex justify-content-between mb-2 pb-2 border-bottom border-secondary">
-                  <span style={{ color: 'var(--text-muted)' }}><i className="fas fa-phone me-2 text-success"></i>Teléfono:</span>
-                  <span style={{ color: 'var(--text-primary)' }}>{staffSeleccionado.telefono || 'No registrado'}</span>
-                </div>
-                <div className="d-flex justify-content-between mb-2 pb-2 border-bottom border-secondary">
-                  <span style={{ color: 'var(--text-muted)' }}><i className="fas fa-tint me-2 text-danger"></i>Tipo de Sangre:</span>
-                  <span style={{ color: 'var(--text-primary)' }}>{staffSeleccionado.tipoDeSangre || staffSeleccionado.TipoDeSangre || 'No registrado'}</span>
-                </div>
-                <div className="d-flex justify-content-between mb-2 pb-2 border-bottom border-secondary">
-                  <span style={{ color: 'var(--text-muted)' }}><i className="fas fa-tshirt me-2 text-warning"></i>Talla:</span>
-                  <span style={{ color: 'var(--text-primary)' }}>{staffSeleccionado.tallaPlayera || staffSeleccionado.TallaPlayera || 'No registrada'}</span>
-                </div>
-                <div className="d-flex justify-content-between mb-2 pb-2 border-bottom border-secondary">
-                  <span style={{ color: 'var(--text-muted)' }}><i className="fas fa-layer-group me-2 text-info"></i>Nivel:</span>
-                  <span style={{ color: 'var(--text-primary)' }}>{staffSeleccionado.categoriaBase || staffSeleccionado.CategoriaBase || 'Sin definir'}</span>
-                </div>
-                <div className="d-flex flex-column mb-2 pb-2 border-bottom border-secondary">
-                  <span style={{ color: 'var(--text-muted)', marginBottom: '4px' }}><i className="fas fa-running me-2 text-success"></i>Deportes Previos:</span>
-                  <span style={{ color: 'var(--text-primary)' }}>
-                    {staffSeleccionado.tieneExperiencia || staffSeleccionado.TieneExperiencia
-                      ? (staffSeleccionado.deporteExperiencia || staffSeleccionado.DeporteExperiencia || 'Sí (No especificó)')
-                      : 'Ninguno / Sin experiencia'
-                    }
-                  </span>
-                </div>
-                <div className="d-flex flex-column mb-2 pb-2 border-bottom border-secondary">
-                  <span style={{ color: 'var(--text-muted)', marginBottom: '4px' }}><i className="fas fa-notes-medical me-2 text-warning"></i>Lesiones / Enfermedades:</span>
-                  <span style={{ color: 'var(--text-primary)' }}>{staffSeleccionado.tieneDiscapacidad || staffSeleccionado.TieneDiscapacidad || 'Ninguna registrada'}</span>
-                </div>
-                <div className="d-flex flex-column mt-3">
-                  <span style={{ color: 'var(--text-muted)', marginBottom: '4px' }}><i className="fas fa-truck-medical me-2 text-danger"></i>Contacto de Emergencia:</span>
-                  <span style={{ color: 'var(--text-primary)' }}>
-                    {staffSeleccionado.contactoEmergenciaNombre || staffSeleccionado.ContactoEmergenciaNombre
-                      ? `${staffSeleccionado.contactoEmergenciaNombre || staffSeleccionado.ContactoEmergenciaNombre} - ${staffSeleccionado.contactoEmergenciaTelefono || staffSeleccionado.ContactoEmergenciaTelefono || 'Sin tel'}`
-                      : 'No registrado'
-                    }
-                  </span>
-                </div>
+            <div className="atb-staff-head">
+              <div className="avatar-inicial atb-staff-avatar">
+                {staffSeleccionado.foto
+                  ? <img src={staffSeleccionado.foto} alt={staffSeleccionado.nombre} />
+                  : staffSeleccionado.nombre?.charAt(0).toUpperCase()
+                }
               </div>
-
-              <button className="btn btn-outline-secondary w-100 py-2 fw-bold" style={{ borderRadius: '8px' }} onClick={() => setStaffSeleccionado(null)}>
-                Cerrar
-              </button>
+              <h4 className="atb-staff-nombre">
+                {staffSeleccionado.nombre} {staffSeleccionado.apellidos || ''}
+              </h4>
+              <span className={`atb-rolchip ${(staffSeleccionado.rol === 'Coach' || staffSeleccionado.Rol === 'Coach') ? 'atb-rolchip--coach' : 'atb-rolchip--admin'} atb-staff-rolchip`}>
+                <i className="fas fa-shield-alt me-1"></i>
+                {staffSeleccionado.rol || staffSeleccionado.Rol}
+              </span>
             </div>
+
+            <div className="atb-staff-info">
+              <div className="atb-staff-row">
+                <span className="atb-staff-label"><i className="fas fa-envelope" style={{ color: 'var(--primary)' }}></i>Correo</span>
+                <span className="atb-staff-val atb-staff-val--break">{staffSeleccionado.correo}</span>
+              </div>
+              <div className="atb-staff-row">
+                <span className="atb-staff-label"><i className="fas fa-phone" style={{ color: 'var(--success)' }}></i>Teléfono</span>
+                <span className="atb-staff-val">{staffSeleccionado.telefono || 'No registrado'}</span>
+              </div>
+              <div className="atb-staff-row">
+                <span className="atb-staff-label"><i className="fas fa-tint" style={{ color: 'var(--danger)' }}></i>Tipo de Sangre</span>
+                <span className="atb-staff-val">{staffSeleccionado.tipoDeSangre || staffSeleccionado.TipoDeSangre || 'No registrado'}</span>
+              </div>
+              <div className="atb-staff-row">
+                <span className="atb-staff-label"><i className="fas fa-tshirt" style={{ color: 'var(--accent)' }}></i>Talla</span>
+                <span className="atb-staff-val">{staffSeleccionado.tallaPlayera || staffSeleccionado.TallaPlayera || 'No registrada'}</span>
+              </div>
+              <div className="atb-staff-row">
+                <span className="atb-staff-label"><i className="fas fa-layer-group" style={{ color: 'var(--accent-cool)' }}></i>Nivel</span>
+                <span className="atb-staff-val">{staffSeleccionado.categoriaBase || staffSeleccionado.CategoriaBase || 'Sin definir'}</span>
+              </div>
+              <div className="atb-staff-row atb-staff-row--col">
+                <span className="atb-staff-label"><i className="fas fa-running" style={{ color: 'var(--success)' }}></i>Deportes Previos</span>
+                <span className="atb-staff-val">
+                  {staffSeleccionado.tieneExperiencia || staffSeleccionado.TieneExperiencia
+                    ? (staffSeleccionado.deporteExperiencia || staffSeleccionado.DeporteExperiencia || 'Sí (No especificó)')
+                    : 'Ninguno / Sin experiencia'
+                  }
+                </span>
+              </div>
+              <div className="atb-staff-row atb-staff-row--col">
+                <span className="atb-staff-label"><i className="fas fa-notes-medical" style={{ color: 'var(--accent)' }}></i>Lesiones / Enfermedades</span>
+                <span className="atb-staff-val">{staffSeleccionado.tieneDiscapacidad || staffSeleccionado.TieneDiscapacidad || 'Ninguna registrada'}</span>
+              </div>
+              <div className="atb-staff-row atb-staff-row--col">
+                <span className="atb-staff-label"><i className="fas fa-truck-medical" style={{ color: 'var(--danger)' }}></i>Contacto de Emergencia</span>
+                <span className="atb-staff-val">
+                  {staffSeleccionado.contactoEmergenciaNombre || staffSeleccionado.ContactoEmergenciaNombre
+                    ? `${staffSeleccionado.contactoEmergenciaNombre || staffSeleccionado.ContactoEmergenciaNombre} - ${staffSeleccionado.contactoEmergenciaTelefono || staffSeleccionado.ContactoEmergenciaTelefono || 'Sin tel'}`
+                    : 'No registrado'
+                  }
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="atb-staff-cerrar"
+              onClick={() => setStaffSeleccionado(null)}
+            >
+              Cerrar
+            </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

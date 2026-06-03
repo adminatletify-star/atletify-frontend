@@ -1,13 +1,94 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, Link } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import AtletifyLoader from '../components/AtletifyLoader';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import '../assets/css/GestionClases.css';
 import '../assets/css/AdminFinanzasGlobales.css';
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api/finanzas-globales`;
+
+const PAGE_SIZE = 10;
+
+// Categorías de egreso (reemplazan el <select> nativo por un picker modal)
+const CATEGORIAS_EGRESO = [
+  { value: 'Pago Coach',    label: 'Pago Coach',                   desc: 'Sueldos de entrenadores',  icon: 'fa-user-tie',           color: '#4fc3f7' },
+  { value: 'Mantenimiento', label: 'Mantenimiento',               desc: 'Reparaciones del box',     icon: 'fa-screwdriver-wrench', color: '#f1c40f' },
+  { value: 'Servicios',     label: 'Servicios',                   desc: 'Luz, agua, internet',      icon: 'fa-bolt',               color: '#9b59b6' },
+  { value: 'Equipo',        label: 'Compra de Equipo',            desc: 'Material y equipamiento',  icon: 'fa-dumbbell',           color: '#e67e22' },
+  { value: 'Otros',         label: 'Otros Gastos',                desc: 'Gastos varios',            icon: 'fa-ellipsis',           color: '#95a5a6' },
+];
+
+/* ── Paginación (números en desktop, compacto "X / Y" en móvil) ── */
+function buildPaginas(pagina, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const out = [1];
+  if (pagina > 3) out.push('...');
+  const start = Math.max(2, pagina - 1);
+  const end = Math.min(total - 1, pagina + 1);
+  for (let i = start; i <= end; i++) out.push(i);
+  if (pagina < total - 2) out.push('...');
+  out.push(total);
+  return out;
+}
+
+function Paginacion({ pagina, totalPaginas, onCambio }) {
+  if (totalPaginas <= 1) return null;
+  const paginas = buildPaginas(pagina, totalPaginas);
+  return (
+    <div className="fg-paginacion" role="navigation" aria-label="Paginación">
+      <button type="button" className="fg-pag-btn" disabled={pagina === 1} onClick={() => onCambio(pagina - 1)} aria-label="Página anterior">
+        <i className="fas fa-chevron-left"></i>
+      </button>
+      <div className="fg-pag-numbers">
+        {paginas.map((p, i) => p === '...'
+          ? <span key={`e${i}`} className="fg-pag-ellipsis">…</span>
+          : <button key={p} type="button" className={`fg-pag-btn ${pagina === p ? 'fg-pag-btn--active' : ''}`} onClick={() => onCambio(p)}>{p}</button>
+        )}
+      </div>
+      <span className="fg-pag-compact">{pagina} / {totalPaginas}</span>
+      <button type="button" className="fg-pag-btn" disabled={pagina === totalPaginas} onClick={() => onCambio(pagina + 1)} aria-label="Página siguiente">
+        <i className="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  );
+}
+
+/* ── Picker modal de categoría de egreso (centrado) ── */
+function CategoriaPickerModal({ valor, onSelect, onCerrar }) {
+  return createPortal(
+    <div className="fg-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onCerrar(); }}>
+      <div className="fg-modal">
+        <div className="fg-modal__header">
+          <div>
+            <p className="fg-modal__supertitle">EGRESO</p>
+            <h2 className="fg-modal__title">Categoría del Gasto</h2>
+          </div>
+          <button type="button" className="fg-modal__close" onClick={onCerrar} aria-label="Cerrar"><i className="fas fa-times" /></button>
+        </div>
+        <div className="fg-modal__list">
+          {CATEGORIAS_EGRESO.map(cat => {
+            const activo = cat.value === valor;
+            return (
+              <button key={cat.value} type="button" className={`fg-opcion${activo ? ' fg-opcion--activo' : ''}`} style={{ '--opt-color': cat.color }} onClick={() => onSelect(cat.value)}>
+                <span className="fg-opcion__icon"><i className={`fas ${cat.icon}`} /></span>
+                <span className="fg-opcion__info">
+                  <span className="fg-opcion__nombre">{cat.label}</span>
+                  <span className="fg-opcion__desc">{cat.desc}</span>
+                </span>
+                {activo && <i className="fas fa-check-circle fg-opcion__check" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 export default function AdminFinanzasGlobales() {
   const navigate = useNavigate();
@@ -21,6 +102,12 @@ export default function AdminFinanzasGlobales() {
   const [pestaña, setPestaña] = useState('dashboard');
   const tabRefs = useRef({});
   const [sliderStyle, setSliderStyle] = useState(null);
+
+  // Paginación de tablas (ingresos / egresos)
+  const [pagIngresos, setPagIngresos] = useState(1);
+  const [pagEgresos, setPagEgresos] = useState(1);
+  // Picker de categoría del formulario de egreso
+  const [modalCategoria, setModalCategoria] = useState(false);
 
   useLayoutEffect(() => {
     const el = tabRefs.current[pestaña];
@@ -103,6 +190,10 @@ export default function AdminFinanzasGlobales() {
     cargarDatos(b.idBox, fechaInicio, fechaFin);
   }, [navigate, periodo, fechaReferencia]);
 
+  // Resetea la página al cambiar los datos del periodo
+  useEffect(() => { setPagIngresos(1); }, [ingresos]);
+  useEffect(() => { setPagEgresos(1); }, [egresos]);
+
   const cargarDatos = async (idBox, fInicio, fFin) => {
     setLoading(true);
     try {
@@ -181,8 +272,8 @@ export default function AdminFinanzasGlobales() {
   const COLORS = ['#4fc3f7', '#2ecc71', '#f1c40f', '#e74c3c', '#9b59b6', '#e67e22', '#1abc9c'];
   
   const getBadgeClass = (categoria) => {
-    const normalize = categoria.toLowerCase().replace(" ", "-");
-    return `finanzas-globales-badge badge-${normalize}`;
+    const normalize = (categoria || '').toLowerCase().replace(" ", "-");
+    return `fg-badge badge-${normalize}`;
   };
 
   const formatearDinero = (monto) => {
@@ -359,280 +450,313 @@ export default function AdminFinanzasGlobales() {
     doc.save(`Reporte_Finanzas_${nombreArchivoSeguro}.pdf`);
   };
 
-  return (
-    <div className="finanzas-globales-container">
-      <nav className="finanzas-globales-nav">
-        <BackButton to="/admin-box-panel" />
-        <div className="finanzas-globales-nav-icono"><i className="fas fa-globe-americas"></i></div>
-        <h1 className="finanzas-globales-nav-titulo">Finanzas Globales</h1>
-      </nav>
+  // Paginación derivada (10 por página)
+  const totalPagIng = Math.max(1, Math.ceil(ingresos.length / PAGE_SIZE));
+  const ingresosPagina = ingresos.slice((pagIngresos - 1) * PAGE_SIZE, pagIngresos * PAGE_SIZE);
+  const totalPagEgr = Math.max(1, Math.ceil(egresos.length / PAGE_SIZE));
+  const egresosPagina = egresos.slice((pagEgresos - 1) * PAGE_SIZE, pagEgresos * PAGE_SIZE);
+  const categoriaSel = CATEGORIAS_EGRESO.find(c => c.value === formEgreso.categoria) || CATEGORIAS_EGRESO[0];
 
-      <div className="container-xl py-4 px-3 px-md-4">
-        
-        {/* Filtros de Fecha */}
-        <div className="d-flex align-items-center gap-4 mb-4 flex-wrap" style={{ backgroundColor: 'rgba(25,25,30,0.8)', padding: '12px 20px', borderRadius: '12px', border: '1px solid #333' }}>
-          
-          <div className="btn-group" role="group">
+  return (
+    <div className="fg-page">
+
+      {/* ── HEADER (patrón GestionClases) ── */}
+      <header className="gc-header">
+        <div className="d-flex align-items-center gap-3">
+          <BackButton to="/admin-box-panel" />
+          <h1 className="gc-header-title">Finanzas <span>Globales</span></h1>
+        </div>
+      </header>
+
+      <div className="container-xl py-4 px-3 px-md-4 fg-content">
+
+        {/* ── TOOLBAR: periodo + navegación de fecha + export ── */}
+        <div className="fg-toolbar">
+          <div className="fg-periodos">
             {['Diario', 'Semanal', 'Mensual', 'Anual'].map(p => (
-              <button 
-                key={p} 
-                className={`btn btn-sm fw-bold ${periodo === p ? 'btn-primary' : 'btn-outline-secondary'}`}
+              <button
+                key={p}
+                className={`fg-periodo-btn ${periodo === p ? 'fg-periodo-btn--active' : ''}`}
                 onClick={() => setPeriodo(p)}
-                style={{ borderRadius: '6px', margin: '0 4px', border: periodo === p ? 'none' : '1px solid #444', backgroundColor: periodo === p ? '#3498db' : 'transparent', color: periodo === p ? 'white' : '#aaa' }}
               >
                 {p}
               </button>
             ))}
           </div>
 
-          <div className="d-flex align-items-center gap-3 ms-md-auto">
-            <button className="btn btn-sm text-secondary" onClick={() => moverFecha('prev')} style={{ fontSize: '1.2rem', padding: '0 10px', background: 'transparent', border: 'none' }}>
+          <div className="fg-fecha-nav">
+            <button className="fg-fecha-arrow" onClick={() => moverFecha('prev')} aria-label="Periodo anterior">
               <i className="fas fa-chevron-left"></i>
             </button>
-            <div className="fw-bold text-white text-center" style={{ minWidth: '220px', fontSize: '1rem', letterSpacing: '0.5px' }}>
-              {formatearRangoFechas()}
-            </div>
-            <button className="btn btn-sm text-secondary" onClick={() => moverFecha('next')} style={{ fontSize: '1.2rem', padding: '0 10px', background: 'transparent', border: 'none' }}>
+            <span className="fg-fecha-label">{formatearRangoFechas()}</span>
+            <button className="fg-fecha-arrow" onClick={() => moverFecha('next')} aria-label="Periodo siguiente">
               <i className="fas fa-chevron-right"></i>
             </button>
           </div>
 
-          <div className="ms-auto">
-            <button 
-              className="btn btn-sm fw-bold text-white px-3 py-2 d-flex align-items-center gap-2" 
-              style={{ backgroundColor: '#2ecc71', border: 'none', borderRadius: '8px' }}
-              onClick={generarReportePDF}
-              disabled={loading || !resumen}
-            >
-              <i className="fas fa-file-pdf"></i> Exportar PDF
-            </button>
-          </div>
-          
+          <button className="fg-export-btn" onClick={generarReportePDF} disabled={loading || !resumen}>
+            <i className="fas fa-file-pdf"></i>
+            <span className="fg-btn-label">Exportar PDF</span>
+          </button>
         </div>
 
-        <div className="finanzas-globales-tabs-wrapper mb-4">
-          <div className="finanzas-globales-tabs">
-            {sliderStyle && <div className="finanzas-globales-tab-slider" style={sliderStyle} />}
-            <button ref={el => tabRefs.current['dashboard'] = el} className={`finanzas-globales-tab ${pestaña === 'dashboard' ? 'activo' : ''}`} onClick={() => setPestaña('dashboard')}><i className="fas fa-chart-line"></i> Dashboard</button>
-            <button ref={el => tabRefs.current['ingresos'] = el} className={`finanzas-globales-tab ${pestaña === 'ingresos' ? 'activo' : ''}`} onClick={() => setPestaña('ingresos')}><i className="fas fa-hand-holding-usd"></i> Historial Ingresos</button>
-            <button ref={el => tabRefs.current['egresos'] = el} className={`finanzas-globales-tab ${pestaña === 'egresos' ? 'activo' : ''}`} onClick={() => setPestaña('egresos')}><i className="fas fa-file-invoice-dollar"></i> Historial Egresos</button>
-            <button ref={el => tabRefs.current['nuevo_egreso'] = el} className={`finanzas-globales-tab ${pestaña === 'nuevo_egreso' ? 'activo' : ''}`} onClick={() => setPestaña('nuevo_egreso')}><i className="fas fa-plus-circle"></i> Registrar Egreso</button>
+        {/* ── TABS ── */}
+        <div className="fg-tabs-wrapper">
+          <div className="fg-tabs">
+            {sliderStyle && <div className="fg-tab-slider" style={sliderStyle} />}
+            <button ref={el => tabRefs.current['dashboard'] = el} className={`fg-tab ${pestaña === 'dashboard' ? 'activo' : ''}`} onClick={() => setPestaña('dashboard')}><i className="fas fa-chart-line"></i> Dashboard</button>
+            <button ref={el => tabRefs.current['ingresos'] = el} className={`fg-tab ${pestaña === 'ingresos' ? 'activo' : ''}`} onClick={() => setPestaña('ingresos')}><i className="fas fa-hand-holding-usd"></i> Ingresos</button>
+            <button ref={el => tabRefs.current['egresos'] = el} className={`fg-tab ${pestaña === 'egresos' ? 'activo' : ''}`} onClick={() => setPestaña('egresos')}><i className="fas fa-file-invoice-dollar"></i> Egresos</button>
+            <button ref={el => tabRefs.current['nuevo_egreso'] = el} className={`fg-tab ${pestaña === 'nuevo_egreso' ? 'activo' : ''}`} onClick={() => setPestaña('nuevo_egreso')}><i className="fas fa-plus-circle"></i> Registrar Egreso</button>
           </div>
         </div>
 
         {loading ? (
-          <div className="text-center py-5"><AtletifyLoader /></div>
+          <div className="fg-loading"><AtletifyLoader /></div>
         ) : (
           <>
-            {/* TAB DASHBOARD */}
+            {/* ══ TAB DASHBOARD ══ */}
             {pestaña === 'dashboard' && resumen && (
               <>
-                <div className="row g-3 mb-4">
-                  <div className="col-12 col-md-4">
-                    <div className="finanzas-globales-kpi-card" style={{ borderColor: 'rgba(46, 204, 113, 0.3)' }}>
-                      <div className="finanzas-globales-kpi-title"><i className="fas fa-arrow-up text-success"></i> Ingresos Totales</div>
-                      <div className="finanzas-globales-kpi-value ingresos">{formatearDinero(resumen.totalIngresos)}</div>
-                    </div>
+                <div className="fg-kpi-grid">
+                  <div className="fg-kpi fg-kpi--ingresos">
+                    <div className="fg-kpi-title"><i className="fas fa-arrow-up"></i> Ingresos Totales</div>
+                    <div className="fg-kpi-value fg-kpi-value--ingresos">{formatearDinero(resumen.totalIngresos)}</div>
                   </div>
-                  <div className="col-12 col-md-4">
-                    <div className="finanzas-globales-kpi-card" style={{ borderColor: 'rgba(231, 76, 60, 0.3)' }}>
-                      <div className="finanzas-globales-kpi-title"><i className="fas fa-arrow-down text-danger"></i> Egresos Totales</div>
-                      <div className="finanzas-globales-kpi-value egresos">{formatearDinero(resumen.totalEgresos)}</div>
-                    </div>
+                  <div className="fg-kpi fg-kpi--egresos">
+                    <div className="fg-kpi-title"><i className="fas fa-arrow-down"></i> Egresos Totales</div>
+                    <div className="fg-kpi-value fg-kpi-value--egresos">{formatearDinero(resumen.totalEgresos)}</div>
                   </div>
-                  <div className="col-12 col-md-4">
-                    <div className="finanzas-globales-kpi-card" style={{ borderColor: 'rgba(79, 195, 247, 0.3)' }}>
-                      <div className="finanzas-globales-kpi-title"><i className="fas fa-balance-scale text-info"></i> Balance (Utilidad)</div>
-                      <div className="finanzas-globales-kpi-value balance">{formatearDinero(resumen.balanceGeneral)}</div>
-                    </div>
+                  <div className="fg-kpi fg-kpi--balance">
+                    <div className="fg-kpi-title"><i className="fas fa-scale-balanced"></i> Balance (Utilidad)</div>
+                    <div className="fg-kpi-value fg-kpi-value--balance">{formatearDinero(resumen.balanceGeneral)}</div>
                   </div>
-                  
+
                   {resumen.estadisticas && (
                     <>
-                      <div className="col-12 col-md-4">
-                        <Link to="/gestion-finanzas" state={{ fromTab: 'semaforo' }} style={{ textDecoration: 'none' }}>
-                          <div className="finanzas-globales-kpi-card finanzas-globales-clickable-card" style={{ borderColor: 'rgba(46, 204, 113, 0.25)' }}>
-                            <div className="finanzas-globales-kpi-title text-secondary"><i className="fas fa-users text-primary"></i> Mensualidades Activas</div>
-                            <div className="finanzas-globales-kpi-value fs-4 text-white">
-                              {dashboardData?.estadoAtletas?.alDia ?? 0} <span className="fs-6 text-secondary">atletas al día</span>
-                            </div>
-                          </div>
-                        </Link>
-                      </div>
-                      <div className="col-12 col-md-4">
-                        <div className="finanzas-globales-kpi-card" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
-                          <div className="finanzas-globales-kpi-title text-secondary"><i className="fas fa-shopping-bag text-warning"></i> Operaciones en Tienda</div>
-                          <div className="finanzas-globales-kpi-value fs-4 text-white">{resumen.estadisticas.ventasTienda} <span className="fs-6 text-secondary">ventas/abonos</span></div>
+                      <Link to="/gestion-finanzas" state={{ fromTab: 'semaforo' }} className="fg-kpi fg-kpi--clickable">
+                        <div className="fg-kpi-title"><i className="fas fa-users" style={{ color: 'var(--primary)' }}></i> Mensualidades Activas</div>
+                        <div className="fg-kpi-value fg-kpi-value--sm">
+                          {dashboardData?.estadoAtletas?.alDia ?? 0} <span className="fg-kpi-unit">atletas al día</span>
                         </div>
+                      </Link>
+                      <div className="fg-kpi">
+                        <div className="fg-kpi-title"><i className="fas fa-shopping-bag" style={{ color: 'var(--accent)' }}></i> Operaciones en Tienda</div>
+                        <div className="fg-kpi-value fg-kpi-value--sm">{resumen.estadisticas.ventasTienda} <span className="fg-kpi-unit">ventas/abonos</span></div>
                       </div>
-                      <div className="col-12 col-md-4">
-                        <div className="finanzas-globales-kpi-card" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
-                          <div className="finanzas-globales-kpi-title text-secondary"><i className="fas fa-plane-arrival text-purple"></i> Turistas / Drop-Ins</div>
-                          <div className="finanzas-globales-kpi-value fs-4 text-white">{resumen.estadisticas.dropIns} <span className="fs-6 text-secondary">visitas</span></div>
-                        </div>
+                      <div className="fg-kpi">
+                        <div className="fg-kpi-title"><i className="fas fa-plane-arrival" style={{ color: '#9b59b6' }}></i> Turistas / Drop-Ins</div>
+                        <div className="fg-kpi-value fg-kpi-value--sm">{resumen.estadisticas.dropIns} <span className="fg-kpi-unit">visitas</span></div>
                       </div>
                     </>
                   )}
                 </div>
 
-                <div className="row g-4 mb-4">
-                  <div className="col-md-6">
-                    <div className="finanzas-globales-card">
-                      <div className="finanzas-globales-card-title"><i className="fas fa-chart-pie text-success"></i> Desglose de Ingresos</div>
-                      <div className="finanzas-globales-chart-container">
-                        {resumen.ingresosPorCategoria.length > 0 ? (
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie data={resumen.ingresosPorCategoria} dataKey="total" nameKey="categoria" cx="50%" cy="50%" innerRadius={60} outerRadius={100}>
-                                {resumen.ingresosPorCategoria.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                              </Pie>
-                              <Tooltip formatter={(value) => formatearDinero(value)} contentStyle={{ backgroundColor: '#1e1e26', border: '1px solid #333' }} />
-                              <Legend wrapperStyle={{ paddingTop: '10px' }} />
-                            </PieChart>
-                          </ResponsiveContainer>
-                        ) : <div className="finanzas-globales-empty"><i className="fas fa-folder-open"></i><p>Sin ingresos este mes</p></div>}
-                      </div>
+                <div className="fg-charts-grid">
+                  <div className="fg-card">
+                    <div className="fg-card-title"><i className="fas fa-chart-pie" style={{ color: 'var(--success)' }}></i> Desglose de Ingresos</div>
+                    <div className="fg-chart">
+                      {resumen.ingresosPorCategoria.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={resumen.ingresosPorCategoria} dataKey="total" nameKey="categoria" cx="50%" cy="50%" innerRadius={55} outerRadius={90}>
+                              {resumen.ingresosPorCategoria.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                            </Pie>
+                            <Tooltip formatter={(value) => formatearDinero(value)} contentStyle={{ backgroundColor: '#1e1e26', border: '1px solid #333', borderRadius: '8px' }} />
+                            <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '0.8rem' }} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : <div className="fg-empty"><i className="fas fa-folder-open"></i><p>Sin ingresos en este periodo</p></div>}
                     </div>
                   </div>
 
-                  <div className="col-md-6">
-                    <div className="finanzas-globales-card">
-                      <div className="finanzas-globales-card-title"><i className="fas fa-balance-scale text-info"></i> Balance del Periodo</div>
-                      <div className="finanzas-globales-chart-container">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={[{ name: 'Periodo Actual', Ingresos: resumen.totalIngresos, Egresos: resumen.totalEgresos }]} margin={{ top: 15, right: 30, left: 20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                            <XAxis dataKey="name" stroke="#ccc" />
-                            <YAxis type="number" stroke="#ccc" tickFormatter={(value) => `$${value}`} />
-                            <Tooltip formatter={(value) => formatearDinero(value)} cursor={{fill: 'rgba(255,255,255,0.05)'}} contentStyle={{ backgroundColor: '#1e1e26', border: '1px solid #333', borderRadius: '8px' }} />
-                            <Legend wrapperStyle={{ paddingTop: '10px' }} />
-                            <Bar dataKey="Ingresos" fill="#2ecc71" radius={[4, 4, 0, 0]} barSize={60} />
-                            <Bar dataKey="Egresos" fill="#e74c3c" radius={[4, 4, 0, 0]} barSize={60} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
+                  <div className="fg-card">
+                    <div className="fg-card-title"><i className="fas fa-scale-balanced" style={{ color: 'var(--accent-cool)' }}></i> Balance del Periodo</div>
+                    <div className="fg-chart">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={[{ name: 'Periodo Actual', Ingresos: resumen.totalIngresos, Egresos: resumen.totalEgresos }]} margin={{ top: 15, right: 20, left: 10, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                          <XAxis dataKey="name" stroke="#ccc" fontSize={12} />
+                          <YAxis type="number" stroke="#ccc" tickFormatter={(value) => `$${value}`} fontSize={12} />
+                          <Tooltip formatter={(value) => formatearDinero(value)} cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: '#1e1e26', border: '1px solid #333', borderRadius: '8px' }} />
+                          <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '0.8rem' }} />
+                          <Bar dataKey="Ingresos" fill="#2ecc71" radius={[4, 4, 0, 0]} barSize={55} />
+                          <Bar dataKey="Egresos" fill="#e74c3c" radius={[4, 4, 0, 0]} barSize={55} />
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
                 </div>
               </>
             )}
 
-            {/* TAB EGRESOS HISTORIAL */}
+            {/* ══ TAB EGRESOS ══ */}
             {pestaña === 'egresos' && (
-              <div className="finanzas-globales-card">
-                <div className="finanzas-globales-card-title"><i className="fas fa-list text-warning"></i> Egresos del {formatearRangoFechas()}</div>
+              <div className="fg-card">
+                <div className="fg-card-title"><i className="fas fa-list" style={{ color: 'var(--accent)' }}></i> Egresos del {formatearRangoFechas()}</div>
                 {egresos.length === 0 ? (
-                  <div className="finanzas-globales-empty"><i className="fas fa-receipt"></i><p>No se han registrado egresos en este periodo.</p></div>
+                  <div className="fg-empty"><i className="fas fa-receipt"></i><p>No se han registrado egresos en este periodo.</p></div>
                 ) : (
-                  <div className="table-responsive">
-                    <table className="finanzas-globales-table">
-                      <thead>
-                        <tr>
-                          <th>Fecha</th>
-                          <th>Categoría</th>
-                          <th>Descripción</th>
-                          <th>Monto</th>
-                          <th style={{ textAlign: 'right' }}>Acción</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {egresos.map(e => (
-                          <tr key={e.idEgreso}>
-                            <td>{new Date(e.fechaEgreso).toLocaleDateString()}</td>
-                            <td><span className={getBadgeClass(e.categoria)}>{e.categoria}</span></td>
-                            <td className="text-secondary">{e.notas || 'Sin notas'}</td>
-                            <td className="text-danger fw-bold">{formatearDinero(e.monto)}</td>
-                            <td style={{ textAlign: 'right' }}>
-                              <button className="finanzas-globales-btn-danger" onClick={() => eliminarEgreso(e.idEgreso)}>
-                                <i className="fas fa-trash"></i>
-                              </button>
-                            </td>
+                  <>
+                    {/* Tabla desktop */}
+                    <div className="d-none d-md-block">
+                      <table className="fg-table">
+                        <thead>
+                          <tr>
+                            <th>Fecha</th>
+                            <th>Categoría</th>
+                            <th>Descripción</th>
+                            <th>Monto</th>
+                            <th className="fg-th-end">Acción</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {egresosPagina.map(e => (
+                            <tr key={e.idEgreso}>
+                              <td>{new Date(e.fechaEgreso).toLocaleDateString()}</td>
+                              <td><span className={getBadgeClass(e.categoria)}>{e.categoria}</span></td>
+                              <td className="fg-td-muted">{e.notas || 'Sin notas'}</td>
+                              <td className="fg-monto fg-monto--egreso">{formatearDinero(e.monto)}</td>
+                              <td className="fg-th-end">
+                                <button className="fg-action-btn fg-action-btn--danger" onClick={() => eliminarEgreso(e.idEgreso)} aria-label="Eliminar">
+                                  <i className="fas fa-trash"></i>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Cards móvil */}
+                    <div className="d-md-none fg-cards">
+                      {egresosPagina.map(e => (
+                        <div key={e.idEgreso} className="fg-mov-card">
+                          <div className="fg-mov-top">
+                            <span className={getBadgeClass(e.categoria)}>{e.categoria}</span>
+                            <span className="fg-monto fg-monto--egreso">{formatearDinero(e.monto)}</span>
+                          </div>
+                          <div className="fg-mov-desc">{e.notas || 'Sin notas'}</div>
+                          <div className="fg-mov-foot">
+                            <span className="fg-mov-fecha"><i className="fas fa-calendar-day"></i>{new Date(e.fechaEgreso).toLocaleDateString()}</span>
+                            <button className="fg-action-btn fg-action-btn--danger" onClick={() => eliminarEgreso(e.idEgreso)} aria-label="Eliminar">
+                              <i className="fas fa-trash"></i>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <Paginacion pagina={pagEgresos} totalPaginas={totalPagEgr} onCambio={setPagEgresos} />
+                  </>
                 )}
               </div>
             )}
 
-            {/* TAB INGRESOS HISTORIAL */}
+            {/* ══ TAB INGRESOS ══ */}
             {pestaña === 'ingresos' && (
-              <div className="finanzas-globales-card">
-                <div className="finanzas-globales-card-title"><i className="fas fa-hand-holding-usd text-success"></i> Ingresos del {formatearRangoFechas()}</div>
+              <div className="fg-card">
+                <div className="fg-card-title"><i className="fas fa-hand-holding-usd" style={{ color: 'var(--success)' }}></i> Ingresos del {formatearRangoFechas()}</div>
                 {ingresos.length === 0 ? (
-                  <div className="finanzas-globales-empty"><i className="fas fa-wallet"></i><p>No hay ingresos registrados en este periodo.</p></div>
+                  <div className="fg-empty"><i className="fas fa-wallet"></i><p>No hay ingresos registrados en este periodo.</p></div>
                 ) : (
-                  <div className="table-responsive">
-                    <table className="finanzas-globales-table">
-                      <thead>
-                        <tr>
-                          <th>Fecha</th>
-                          <th>Categoría</th>
-                          <th>Detalle / Origen</th>
-                          <th style={{ textAlign: 'right' }}>Monto</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ingresos.map((i, index) => (
-                          <tr key={`${i.id}-${index}`}>
-                            <td>{new Date(i.fecha).toLocaleDateString()}</td>
-                            <td><span className={getBadgeClass(i.categoria)}>{i.categoria}</span></td>
-                            <td className="text-secondary">{i.notas || 'Ingreso del sistema'}</td>
-                            <td className="text-success fw-bold" style={{ textAlign: 'right' }}>+{formatearDinero(i.monto)}</td>
+                  <>
+                    {/* Tabla desktop */}
+                    <div className="d-none d-md-block">
+                      <table className="fg-table">
+                        <thead>
+                          <tr>
+                            <th>Fecha</th>
+                            <th>Categoría</th>
+                            <th>Detalle / Origen</th>
+                            <th className="fg-th-end">Monto</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {ingresosPagina.map((i, index) => (
+                            <tr key={`${i.id}-${index}`}>
+                              <td>{new Date(i.fecha).toLocaleDateString()}</td>
+                              <td><span className={getBadgeClass(i.categoria)}>{i.categoria}</span></td>
+                              <td className="fg-td-muted">{i.notas || 'Ingreso del sistema'}</td>
+                              <td className="fg-monto fg-monto--ingreso fg-th-end">+{formatearDinero(i.monto)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Cards móvil */}
+                    <div className="d-md-none fg-cards">
+                      {ingresosPagina.map((i, index) => (
+                        <div key={`${i.id}-${index}`} className="fg-mov-card">
+                          <div className="fg-mov-top">
+                            <span className={getBadgeClass(i.categoria)}>{i.categoria}</span>
+                            <span className="fg-monto fg-monto--ingreso">+{formatearDinero(i.monto)}</span>
+                          </div>
+                          <div className="fg-mov-desc">{i.notas || 'Ingreso del sistema'}</div>
+                          <div className="fg-mov-foot">
+                            <span className="fg-mov-fecha"><i className="fas fa-calendar-day"></i>{new Date(i.fecha).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <Paginacion pagina={pagIngresos} totalPaginas={totalPagIng} onCambio={setPagIngresos} />
+                  </>
                 )}
               </div>
             )}
 
-            {/* TAB NUEVO EGRESO */}
+            {/* ══ TAB NUEVO EGRESO ══ */}
             {pestaña === 'nuevo_egreso' && (
-              <div className="row justify-content-center">
-                <div className="col-md-8 col-lg-6">
-                  <div className="finanzas-globales-card">
-                    <div className="finanzas-globales-card-title"><i className="fas fa-hand-holding-usd text-danger"></i> Registrar Salida de Dinero</div>
-                    <form onSubmit={registrarEgreso}>
-                      <div className="mb-3">
-                        <label className="text-secondary small fw-bold mb-1">Monto ($)</label>
-                        <input type="number" step="0.01" className="finanzas-globales-input" placeholder="Ej. 1500.00" value={formEgreso.monto} onChange={e => setFormEgreso({...formEgreso, monto: e.target.value})} required />
-                      </div>
-                      
-                      <div className="mb-3">
-                        <label className="text-secondary small fw-bold mb-1">Categoría</label>
-                        <select className="finanzas-globales-input" value={formEgreso.categoria} onChange={e => setFormEgreso({...formEgreso, categoria: e.target.value})}>
-                          <option value="Pago Coach">Pago Coach</option>
-                          <option value="Mantenimiento">Mantenimiento</option>
-                          <option value="Servicios">Servicios (Luz, Agua, Internet)</option>
-                          <option value="Equipo">Compra de Equipo</option>
-                          <option value="Otros">Otros Gastos</option>
-                        </select>
-                      </div>
+              <div className="fg-form-wrap">
+                <div className="fg-card fg-form-card">
+                  <div className="fg-card-title"><i className="fas fa-hand-holding-usd" style={{ color: 'var(--primary)' }}></i> Registrar Salida de Dinero</div>
+                  <form onSubmit={registrarEgreso}>
+                    <div className="fg-field">
+                      <label className="fg-label">Monto ($)</label>
+                      <input type="number" step="0.01" className="fg-input" placeholder="Ej. 1500.00" value={formEgreso.monto} onChange={e => setFormEgreso({ ...formEgreso, monto: e.target.value })} required />
+                    </div>
 
-                      <div className="mb-3">
-                        <label className="text-secondary small fw-bold mb-1">Descripción / Notas</label>
-                        <textarea className="finanzas-globales-input" rows="3" placeholder="Ej. Pago quincenal Coach Juan" value={formEgreso.notas} onChange={e => setFormEgreso({...formEgreso, notas: e.target.value})}></textarea>
-                      </div>
-
-                      <div className="mb-4">
-                        <label className="text-secondary small fw-bold mb-1">URL Comprobante (Opcional)</label>
-                        <input type="url" className="finanzas-globales-input" placeholder="https://..." value={formEgreso.comprobanteUrl} onChange={e => setFormEgreso({...formEgreso, comprobanteUrl: e.target.value})} />
-                      </div>
-
-                      <button type="submit" className="finanzas-globales-btn w-100">
-                        <i className="fas fa-save"></i> Guardar Egreso
+                    <div className="fg-field">
+                      <label className="fg-label">Categoría</label>
+                      <button type="button" className="fg-picker-btn" style={{ '--pick-color': categoriaSel.color }} onClick={() => setModalCategoria(true)}>
+                        <span className="fg-picker-btn__left">
+                          <span className="fg-picker-btn__icon"><i className={`fas ${categoriaSel.icon}`} /></span>
+                          <span className="fg-picker-btn__label">{categoriaSel.label}</span>
+                        </span>
+                        <i className="fas fa-chevron-down fg-picker-btn__arrow" />
                       </button>
-                    </form>
-                  </div>
+                    </div>
+
+                    <div className="fg-field">
+                      <label className="fg-label">Descripción / Notas</label>
+                      <textarea className="fg-input" rows="3" placeholder="Ej. Pago quincenal Coach Juan" value={formEgreso.notas} onChange={e => setFormEgreso({ ...formEgreso, notas: e.target.value })}></textarea>
+                    </div>
+
+                    <div className="fg-field">
+                      <label className="fg-label">URL Comprobante (Opcional)</label>
+                      <input type="url" className="fg-input" placeholder="https://..." value={formEgreso.comprobanteUrl} onChange={e => setFormEgreso({ ...formEgreso, comprobanteUrl: e.target.value })} />
+                    </div>
+
+                    <button type="submit" className="fg-submit-btn">
+                      <i className="fas fa-save"></i> Guardar Egreso
+                    </button>
+                  </form>
                 </div>
               </div>
             )}
           </>
         )}
       </div>
+
+      {modalCategoria && (
+        <CategoriaPickerModal
+          valor={formEgreso.categoria}
+          onSelect={(v) => { setFormEgreso({ ...formEgreso, categoria: v }); setModalCategoria(false); }}
+          onCerrar={() => setModalCategoria(false)}
+        />
+      )}
     </div>
   );
 }

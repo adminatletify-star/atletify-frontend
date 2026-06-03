@@ -8,6 +8,20 @@ import '../assets/css/dashboard.css';
 import DeveloperSaaSFinanzas from '../components/DeveloperSaaSFinanzas';
 import '../components/BoxPickerModal.css';
 
+// Colapsa la lista de páginas a un máximo de ~7 con elipsis (1 … 4 5 6 … 20),
+// para que la paginación no crezca sin límite al aumentar el nº de páginas.
+function buildPaginas(pagina, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const out = [1];
+  if (pagina > 3) out.push('...');
+  const start = Math.max(2, pagina - 1);
+  const end = Math.min(total - 1, pagina + 1);
+  for (let i = start; i <= end; i++) out.push(i);
+  if (pagina < total - 2) out.push('...');
+  out.push(total);
+  return out;
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { refetchBoxes } = useAuth();
@@ -688,15 +702,25 @@ export default function Dashboard() {
                     <i className="fas fa-chevron-left"></i>
                   </button>
 
-                  {Array.from({ length: totalPaginasUsuarios }, (_, i) => i + 1).map(num => (
-                    <button
-                      key={num}
-                      className={`dash-page-btn${paginaUsuarios === num ? ' dash-page-btn--active' : ''}`}
-                      onClick={() => setPaginaUsuarios(num)}
-                    >
-                      {num}
-                    </button>
-                  ))}
+                  {/* Números — solo en desktop, colapsados con elipsis */}
+                  <div className="dash-page-numbers">
+                    {buildPaginas(paginaUsuarios, totalPaginasUsuarios).map((num, i) =>
+                      num === '...' ? (
+                        <span key={`e${i}`} className="dash-page-ellipsis">…</span>
+                      ) : (
+                        <button
+                          key={num}
+                          className={`dash-page-btn${paginaUsuarios === num ? ' dash-page-btn--active' : ''}`}
+                          onClick={() => setPaginaUsuarios(num)}
+                        >
+                          {num}
+                        </button>
+                      )
+                    )}
+                  </div>
+
+                  {/* Indicador compacto — solo en móvil (no crece con el nº de páginas) */}
+                  <span className="dash-page-compact">{paginaUsuarios} / {totalPaginasUsuarios}</span>
 
                   <button
                     className="dash-page-btn"
