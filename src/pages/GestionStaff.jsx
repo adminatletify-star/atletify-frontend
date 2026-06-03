@@ -37,6 +37,13 @@ export default function GestionStaff() {
   const [formPermiso, setFormPermiso] = useState({ fechaInicio: '', fechaFin: '', motivo: '', conGoceDeSueldo: false });
   const [historialPermisos, setHistorialPermisos] = useState([]);
 
+  // 🛡️ Estados para Auditoría de Clases Global
+  const [vistaActiva, setVistaActiva] = useState('directorio'); // 'directorio' | 'auditoria' | 'nomina'
+  const [auditoriaClases, setAuditoriaClases] = useState([]);
+  const [cargandoAuditoria, setCargandoAuditoria] = useState(false);
+  const [filtroAuditoria, setFiltroAuditoria] = useState('hoy'); // 'hoy' | 'ayer' | 'semana'
+  const [filtroCoachAuditoria, setFiltroCoachAuditoria] = useState('');
+
   const abrirModalPermiso = async (coach) => {
     setCoachSeleccionado(coach);
     setFormPermiso({ fechaInicio: '', fechaFin: '', motivo: '', conGoceDeSueldo: false });
@@ -80,6 +87,12 @@ export default function GestionStaff() {
     const idAUsar = b ? b.idBox : 1;
     cargarTodo(idAUsar);
   }, [navigate]);
+
+  useEffect(() => {
+    if ((vistaActiva === 'auditoria' || vistaActiva === 'nomina') && box) {
+      cargarAuditoria();
+    }
+  }, [vistaActiva, filtroAuditoria, box]);
 
   async function cargarTodo(idBox) {
     if (!idBox) return; // Si no hay ID, no disparamos flechas al aire
@@ -203,6 +216,104 @@ export default function GestionStaff() {
       fInicioStr: new Date(start.getTime() - offsetStart).toISOString().split('T')[0],
       fFinStr: new Date(end.getTime() - offsetEnd).toISOString().split('T')[0]
     };
+  };
+
+  const getDatesForFilter = (filter) => {
+    const hoyObj = new Date();
+    let start, end;
+    if (filter === 'hoy') {
+      start = new Date(hoyObj);
+      end = new Date(hoyObj);
+    } else if (filter === 'ayer') {
+      start = new Date(hoyObj);
+      start.setDate(hoyObj.getDate() - 1);
+      end = new Date(start);
+    } else if (filter === 'semana') {
+      return getWeekBoundaries(hoyObj);
+    }
+    const offsetStart = start.getTimezoneOffset() * 60000;
+    const offsetEnd = end.getTimezoneOffset() * 60000;
+    return {
+      fInicioStr: new Date(start.getTime() - offsetStart).toISOString().split('T')[0],
+      fFinStr: new Date(end.getTime() - offsetEnd).toISOString().split('T')[0]
+    };
+  };
+
+  const cargarAuditoria = async () => {
+    if (!box) return;
+    setCargandoAuditoria(true);
+    try {
+      const { fInicioStr, fFinStr } = getDatesForFilter(filtroAuditoria);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/nomina/auditoria-clases/${box.idBox}/${fInicioStr}/${fFinStr}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setAuditoriaClases(await res.json());
+      }
+    } catch (e) {
+      console.error("Error al cargar auditoría:", e);
+    } finally {
+      setCargandoAuditoria(false);
+    }
+  };
+
+  const validarClaseAuditoria = async (idCoach, idClase, fecha, estado, montoPago) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/nomina/validar-clase`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          IdCoach: idCoach,
+          IdClase: idClase,
+          Fecha: fecha,
+          Estado: estado,
+          MontoPago: parseFloat(montoPago)
+        })
+      });
+      if (res.ok) {
+        cargarAuditoria(); // recargar la tabla de auditoría
+      }
+    } catch (e) {
+      alert("Error al validar asistencia de la clase");
+    }
+  };
+
+  const validarMasivo = async () => {
+    const pendientes = auditoriaClases.filter(c => c.estado === 'Pendiente' || c.Estado === 'Pendiente');
+    if (pendientes.length === 0) return alert("No hay clases pendientes por validar en esta vista.");
+    
+    if (!window.confirm(`¿Aprobar ${pendientes.length} clases pendientes mostradas en pantalla?`)) return;
+
+    try {
+      const peticiones = pendientes.map(c => ({
+        IdCoach: c.idCoach || c.IdCoach,
+        IdClase: c.idClase || c.IdClase,
+        Fecha: c.fecha || c.Fecha,
+        Estado: 'Validada',
+        MontoPago: c.montoPago || c.MontoPago
+      }));
+
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/nomina/validar-masivo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(peticiones)
+      });
+      if (res.ok) {
+        alert("Validación masiva completada con éxito. ✅");
+        cargarAuditoria();
+      }
+    } catch (e) {
+      alert("Error en validación masiva.");
+    }
   };
 
   const cargarAsistencias = async (idCoach) => {
@@ -362,101 +473,338 @@ export default function GestionStaff() {
         <div className="staff-nav-icono">
           <i className="fas fa-users-cog"></i>
         </div>
-        <div>
+        <div className="flex-grow-1">
           <h1 className="staff-nav-titulo">
             Control de <span>Staff</span>
           </h1>
           {box && <p className="staff-nav-subtitle">{box.nombre}</p>}
         </div>
+
+        {/* ── TOGGLE TABS ── */}
+        <div className="btn-group shadow-sm rounded-pill p-1 border border-secondary" style={{ background: 'rgba(255,255,255,0.05)' }} role="group">
+          <button 
+            type="button" 
+            className={`btn btn-sm rounded-pill px-3 border-0 fw-bold ${vistaActiva === 'directorio' ? 'btn-danger text-white' : 'btn-outline-secondary text-white-50'}`}
+            onClick={() => setVistaActiva('directorio')}
+          >
+            <i className="fas fa-address-card me-2 d-none d-sm-inline"></i>Directorio
+          </button>
+          <button 
+            type="button" 
+            className={`btn btn-sm rounded-pill px-3 border-0 fw-bold ${vistaActiva === 'auditoria' ? 'btn-danger text-white' : 'btn-outline-secondary text-white-50'}`}
+            onClick={() => { setVistaActiva('auditoria'); setFiltroAuditoria('hoy'); }}
+          >
+            <i className="fas fa-check-double me-2 d-none d-sm-inline"></i>Auditoría Diaria
+          </button>
+          <button 
+            type="button" 
+            className={`btn btn-sm rounded-pill px-3 border-0 fw-bold ${vistaActiva === 'nomina' ? 'btn-danger text-white' : 'btn-outline-secondary text-white-50'}`}
+            onClick={() => { setVistaActiva('nomina'); setFiltroAuditoria('semana'); }}
+          >
+            <i className="fas fa-money-check-alt me-2 d-none d-sm-inline"></i>Nómina / Pagos
+          </button>
+        </div>
       </nav>
 
       <div className="container-xl px-3 px-md-4 py-4">
 
-        {/* ── LOADING ── */}
-        {loading ? (
-          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
-            <AtletifyLoader />
-          </div>
+        {vistaActiva === 'directorio' ? (
+          <>
+            {/* ── LOADING ── */}
+            {loading ? (
+              <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+                <AtletifyLoader />
+              </div>
 
-          /* ── EMPTY STATE ── */
-        ) : coaches.length === 0 ? (
-          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
-            <div className="staff-empty-card">
-              <i className="fas fa-users-slash staff-empty-icono"></i>
-              <h2 className="staff-empty-titulo">Sin Coaches registrados</h2>
-              <p className="staff-empty-desc">
-                Primero registra usuarios con rol "Coach" en tu Box.
-              </p>
-            </div>
-          </div>
-
-          /* ── GRID DE COACHES ── */
-        ) : (
-          <div className="row g-3 g-md-4 justify-content-start">
-            {coaches.map(coach => (
-              <div key={coach.idUsuario || coach.id} className="col-12 col-sm-6 col-lg-4 col-xl-3">
-                <div className="staff-card">
-
-                  {/* Cabecera: avatar + nombre + rating + correo */}
-                  <div className="staff-card-header">
-                    <div className="staff-avatar">
-                      <span className="staff-avatar-initial">
-                        {coach.nombre.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <span className="staff-badge-rol">Coach</span>
-                    <h3 className="staff-nombre">{coach.nombre}</h3>
-                    <div className="staff-rating">
-                      <i className="fas fa-star staff-rating-star"></i>
-                      <span className="staff-rating-score">{coach.evaluaciones?.promedio || 0}</span>
-                      <span className="staff-rating-count">({coach.evaluaciones?.total || 0})</span>
-                    </div>
-                    <p className="staff-correo">{coach.correo}</p>
-                  </div>
-
-                  {/* Cuerpo: especialidades + acciones */}
-                  <div className="staff-card-body">
-                    <div className="staff-esp-section">
-                      <p className="staff-esp-label">Especialidades</p>
-                      {coach.especialidades && coach.especialidades.length > 0 ? (
-                        <div className="staff-esp-pills">
-                          {coach.especialidades.map(esp => (
-                            <span key={esp.idEspecialidad} className="staff-esp-pill">
-                              {esp.nombre}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="staff-esp-vacio">
-                          <i className="fas fa-plus-circle"></i>
-                          <p>Sin especialidades</p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="staff-actions-grid">
-                      <button className="staff-action-btn staff-action-btn--esp" onClick={() => abrirModal(coach)}>
-                        <i className="fas fa-sliders-h"></i>
-                        <span>Esp.</span>
-                      </button>
-                      <button className="staff-action-btn staff-action-btn--contrato" onClick={() => abrirModalContrato(coach)}>
-                        <i className="fas fa-wallet"></i>
-                        <span>Contrato</span>
-                      </button>
-                      <button className="staff-action-btn staff-action-btn--ausencia" onClick={() => abrirModalPermiso(coach)}>
-                        <i className="fas fa-umbrella-beach"></i>
-                        <span>Ausencia</span>
-                      </button>
-                      <button className="staff-action-btn staff-action-btn--resenas" onClick={() => { setCoachSeleccionado(coach); setModalResenasVisible(true); }}>
-                        <i className="fas fa-star"></i>
-                        <span>Reseñas</span>
-                      </button>
-                    </div>
-                  </div>
-
+              /* ── EMPTY STATE ── */
+            ) : coaches.length === 0 ? (
+              <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+                <div className="staff-empty-card">
+                  <i className="fas fa-users-slash staff-empty-icono"></i>
+                  <h2 className="staff-empty-titulo">Sin Coaches registrados</h2>
+                  <p className="staff-empty-desc">
+                    Primero registra usuarios con rol "Coach" en tu Box.
+                  </p>
                 </div>
               </div>
-            ))}
+
+              /* ── GRID DE COACHES ── */
+            ) : (
+              <div className="row g-3 g-md-4 justify-content-start">
+                {coaches.map(coach => (
+                  <div key={coach.idUsuario || coach.id} className="col-12 col-sm-6 col-lg-4 col-xl-3">
+                    <div className="staff-card">
+
+                      {/* Cabecera: avatar + nombre + rating + correo */}
+                      <div className="staff-card-header">
+                        <div className="staff-avatar">
+                          <span className="staff-avatar-initial">
+                            {coach.nombre.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <span className="staff-badge-rol">Coach</span>
+                        <h3 className="staff-nombre">{coach.nombre}</h3>
+                        <div className="staff-rating">
+                          <i className="fas fa-star staff-rating-star"></i>
+                          <span className="staff-rating-score">{coach.evaluaciones?.promedio || 0}</span>
+                          <span className="staff-rating-count">({coach.evaluaciones?.total || 0})</span>
+                        </div>
+                        <p className="staff-correo">{coach.correo}</p>
+                      </div>
+
+                      {/* Cuerpo: especialidades + acciones */}
+                      <div className="staff-card-body">
+                        <div className="staff-esp-section">
+                          <p className="staff-esp-label">Especialidades</p>
+                          {coach.especialidades && coach.especialidades.length > 0 ? (
+                            <div className="staff-esp-pills">
+                              {coach.especialidades.map(esp => (
+                                <span key={esp.idEspecialidad} className="staff-esp-pill">
+                                  {esp.nombre}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="staff-esp-vacio">
+                              <i className="fas fa-plus-circle"></i>
+                              <p>Sin especialidades</p>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="staff-actions-grid">
+                          <button className="staff-action-btn staff-action-btn--esp" onClick={() => abrirModal(coach)}>
+                            <i className="fas fa-sliders-h"></i>
+                            <span>Esp.</span>
+                          </button>
+                          <button className="staff-action-btn staff-action-btn--contrato" onClick={() => abrirModalContrato(coach)}>
+                            <i className="fas fa-wallet"></i>
+                            <span>Contrato</span>
+                          </button>
+                          <button className="staff-action-btn staff-action-btn--ausencia" onClick={() => abrirModalPermiso(coach)}>
+                            <i className="fas fa-umbrella-beach"></i>
+                            <span>Ausencia</span>
+                          </button>
+                          <button className="staff-action-btn staff-action-btn--resenas" onClick={() => { setCoachSeleccionado(coach); setModalResenasVisible(true); }}>
+                            <i className="fas fa-star"></i>
+                            <span>Reseñas</span>
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : vistaActiva === 'auditoria' ? (
+          /* ── AUDITORIA DE CLASES ── */
+          <div className="auditoria-container fade-in">
+            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+              <div>
+                <h3 className="text-white mb-1"><i className="fas fa-clipboard-check text-danger me-2"></i> Auditoría Global</h3>
+                <p className="text-white-50 mb-0 small">Verifica que todos los coaches impartieron sus clases correctamente y aprueba la nómina con 1 clic.</p>
+              </div>
+              
+              <div className="d-flex gap-2 align-items-center flex-wrap">
+                <select 
+                  className="form-select bg-dark text-white border-secondary form-select-sm" 
+                  style={{ minWidth: '150px' }}
+                  value={filtroCoachAuditoria}
+                  onChange={(e) => setFiltroCoachAuditoria(e.target.value)}
+                >
+                  <option value="">Todos los Coaches</option>
+                  {Array.from(new Set(auditoriaClases.map(c => c.idCoach || c.IdCoach))).map(id => {
+                    const coachName = auditoriaClases.find(c => (c.idCoach || c.IdCoach) === id)?.nombreCoach || auditoriaClases.find(c => (c.idCoach || c.IdCoach) === id)?.NombreCoach;
+                    return <option key={id} value={id}>{coachName}</option>
+                  })}
+                </select>
+                <select 
+                  className="form-select bg-dark text-white border-secondary form-select-sm" 
+                  style={{ minWidth: '130px' }}
+                  value={filtroAuditoria}
+                  onChange={(e) => setFiltroAuditoria(e.target.value)}
+                >
+                  <option value="hoy">Hoy</option>
+                  <option value="ayer">Ayer</option>
+                  <option value="semana">Esta Semana</option>
+                </select>
+                <button className="btn btn-sm btn-success fw-bold px-3 d-flex align-items-center shadow-sm" onClick={validarMasivo}>
+                  <i className="fas fa-check-double me-2"></i>Validar Pendientes
+                </button>
+              </div>
+            </div>
+
+            {cargandoAuditoria ? (
+              <div className="text-center py-5">
+                <div className="spinner-border text-danger" role="status"></div>
+                <p className="mt-3 text-white-50">Cargando clases...</p>
+              </div>
+            ) : auditoriaClases.length === 0 ? (
+              <div className="staff-empty-card py-5 text-center">
+                <i className="fas fa-box-open fs-1 text-white-50 mb-3"></i>
+                <h5 className="text-white">Sin clases registradas</h5>
+                <p className="text-white-50 small mb-0">No hay clases configuradas para el periodo seleccionado.</p>
+              </div>
+            ) : (
+              <div className="table-responsive shadow-sm rounded-3 border border-secondary" style={{ overflow: 'hidden' }}>
+                <table className="table table-dark table-hover mb-0 align-middle" style={{ background: '#1c1c1e' }}>
+                  <thead style={{ background: 'rgba(0,0,0,0.4)' }}>
+                    <tr>
+                      <th className="py-3 text-white-50 fw-normal small px-3">Fecha y Hora</th>
+                      <th className="py-3 text-white-50 fw-normal small">Clase</th>
+                      <th className="py-3 text-white-50 fw-normal small">Coach Asignado</th>
+                      <th className="py-3 text-white-50 fw-normal small text-center">Atletas (Asist / Cupo)</th>
+                      <th className="py-3 text-white-50 fw-normal small text-end">Pago Coach</th>
+                      <th className="py-3 text-white-50 fw-normal small text-center">Estado</th>
+                      <th className="py-3 text-white-50 fw-normal small text-end px-3">Acción Rápida</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(filtroCoachAuditoria ? auditoriaClases.filter(c => (c.idCoach || c.IdCoach).toString() === filtroCoachAuditoria) : auditoriaClases).map((c, i) => {
+                      const idClase = c.idClase ?? c.IdClase;
+                      const idCoach = c.idCoach ?? c.IdCoach;
+                      const fecha = c.fecha ?? c.Fecha;
+                      const estado = c.estado ?? c.Estado;
+                      const monto = c.montoPago ?? c.MontoPago ?? 0;
+                      const totalAsistieron = c.totalAsistieron ?? c.TotalAsistieron ?? 0;
+                      const maximoAtletas = c.maximoAtletas ?? c.MaximoAtletas ?? c.totalReservas ?? c.TotalReservas ?? 0;
+                      const nombreCoach = c.nombreCoach ?? c.NombreCoach ?? 'C';
+                      const nombreClase = c.nombreClase ?? c.NombreClase ?? '';
+                      const horario = c.horario ?? c.Horario ?? '';
+                      
+                      return (
+                        <tr key={`${idClase}-${i}`} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td className="px-3">
+                            <span className="d-block text-white fw-bold">{new Date(fecha).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()}</span>
+                            <span className="text-danger small"><i className="far fa-clock me-1"></i>{horario}</span>
+                          </td>
+                          <td className="text-white fw-medium">{nombreClase}</td>
+                          <td>
+                            <div className="d-flex align-items-center gap-2">
+                              <div className="staff-avatar" style={{ width: '30px', height: '30px', minWidth: '30px' }}>
+                                <span className="staff-avatar-initial fs-6">{nombreCoach.charAt(0)}</span>
+                              </div>
+                              <span className="text-white small text-truncate" style={{ maxWidth: '120px' }}>{nombreCoach}</span>
+                            </div>
+                          </td>
+                          <td className="text-center">
+                            <div className="badge rounded-pill bg-dark border border-secondary px-3 py-2">
+                              <span className="text-success fw-bold">{totalAsistieron}</span>
+                              <span className="text-white-50 mx-1">/</span>
+                              <span className="text-white">{maximoAtletas}</span>
+                            </div>
+                          </td>
+                          <td className="text-end">
+                            <span className="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1 font-monospace">
+                              ${monto.toFixed(2)}
+                            </span>
+                          </td>
+                          <td className="text-center">
+                            {estado === 'Validada' && <span className="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 px-2 py-1"><i className="fas fa-check me-1"></i>Validada</span>}
+                            {estado === 'Falta' && <span className="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-50 px-2 py-1"><i className="fas fa-times me-1"></i>Falta</span>}
+                            {estado === 'Pendiente' && <span className="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-50 px-2 py-1"><i className="fas fa-hourglass-half me-1"></i>Pendiente</span>}
+                          </td>
+                          <td className="text-end px-3">
+                            {estado === 'Pendiente' ? (
+                              <div className="btn-group btn-group-sm">
+                                <button className="btn btn-outline-success border-success text-success bg-success bg-opacity-10 shadow-sm" title="Validar Asistencia" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Validada', monto)}>
+                                  <i className="fas fa-check"></i>
+                                </button>
+                                <button className="btn btn-outline-danger border-danger text-danger bg-danger bg-opacity-10 shadow-sm" title="Marcar Falta" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Falta', 0)}>
+                                  <i className="fas fa-times"></i>
+                                </button>
+                              </div>
+                            ) : (
+                              <button className="btn btn-sm btn-dark text-white-50" title="Revertir a Pendiente" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Pendiente', monto)}>
+                                <i className="fas fa-undo"></i>
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* ── NOMINA / PAGOS ── */
+          <div className="nomina-container fade-in">
+            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+              <div>
+                <h3 className="text-white mb-1"><i className="fas fa-money-check-alt text-danger me-2"></i> Gestión de Nómina</h3>
+                <p className="text-white-50 mb-0 small">Visualiza el subtotal a pagar por coach basado en las clases que ya han sido validadas.</p>
+              </div>
+              
+              <div className="d-flex gap-2 align-items-center flex-wrap">
+                <select 
+                  className="form-select bg-dark text-white border-secondary form-select-sm" 
+                  style={{ minWidth: '130px' }}
+                  value={filtroAuditoria}
+                  onChange={(e) => setFiltroAuditoria(e.target.value)}
+                >
+                  <option value="semana">Esta Semana</option>
+                  <option value="hoy">Hoy</option>
+                  <option value="ayer">Ayer</option>
+                </select>
+              </div>
+            </div>
+
+            {cargandoAuditoria ? (
+              <div className="text-center py-5">
+                <div className="spinner-border text-danger" role="status"></div>
+                <p className="mt-3 text-white-50">Calculando nómina...</p>
+              </div>
+            ) : Object.values(auditoriaClases.filter(c => (c.estado ?? c.Estado) === 'Validada').reduce((acc, c) => {
+              const id = c.idCoach ?? c.IdCoach;
+              if (!acc[id]) { acc[id] = { idCoach: id, nombreCoach: c.nombreCoach ?? c.NombreCoach ?? 'Coach', clases: [], totalPagar: 0 }; }
+              acc[id].clases.push(c);
+              acc[id].totalPagar += (c.montoPago ?? c.MontoPago ?? 0);
+              return acc;
+            }, {})).length === 0 ? (
+              <div className="staff-empty-card py-5 text-center">
+                <i className="fas fa-wallet fs-1 text-white-50 mb-3"></i>
+                <h5 className="text-white">Sin clases validadas</h5>
+                <p className="text-white-50 small mb-0">Primero valida las clases en la pestaña de Auditoría para ver los montos a pagar.</p>
+              </div>
+            ) : (
+              <div className="row g-3">
+                {Object.values(auditoriaClases.filter(c => (c.estado ?? c.Estado) === 'Validada').reduce((acc, c) => {
+                  const id = c.idCoach ?? c.IdCoach;
+                  if (!acc[id]) { acc[id] = { idCoach: id, nombreCoach: c.nombreCoach ?? c.NombreCoach ?? 'Coach', clases: [], totalPagar: 0 }; }
+                  acc[id].clases.push(c);
+                  acc[id].totalPagar += (c.montoPago ?? c.MontoPago ?? 0);
+                  return acc;
+                }, {})).map(coachNomina => (
+                  <div key={coachNomina.idCoach} className="col-12 col-md-6 col-lg-4">
+                    <div className="card bg-dark border-secondary h-100 shadow-sm" style={{ background: 'linear-gradient(145deg, #1c1c1e 0%, #151515 100%)' }}>
+                      <div className="card-body p-4 text-center">
+                        <div className="staff-avatar mx-auto mb-3" style={{ width: '60px', height: '60px' }}>
+                          <span className="staff-avatar-initial fs-4">{coachNomina.nombreCoach.charAt(0)}</span>
+                        </div>
+                        <h5 className="text-white mb-1">{coachNomina.nombreCoach}</h5>
+                        <p className="text-white-50 small mb-3">
+                          <i className="fas fa-check-circle text-success me-1"></i>
+                          {coachNomina.clases.length} clase(s) validadas
+                        </p>
+                        
+                        <div className="p-3 bg-black rounded-3 border border-secondary mb-3">
+                          <p className="text-white-50 mb-1 small text-uppercase fw-bold">Total a Pagar</p>
+                          <h3 className="text-success mb-0 fw-bold font-monospace">${coachNomina.totalPagar.toFixed(2)}</h3>
+                        </div>
+                        
+                        <button className="btn btn-outline-danger w-100 btn-sm rounded-pill border-opacity-50" onClick={() => alert('Función de registro de pago de nómina en desarrollo. Por ahora, el monto se muestra de manera informativa.')}>
+                          <i className="fas fa-hand-holding-usd me-2"></i>Registrar Pago
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

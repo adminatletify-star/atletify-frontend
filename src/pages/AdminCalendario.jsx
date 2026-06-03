@@ -300,7 +300,11 @@ export default function AdminCalendario() {
         const diaLetra = mapDias[fechaIteracion.getDay()];
         const usuarioLS = JSON.parse(localStorage.getItem('usuario')) || {};
         const isCoach = usuarioLS.rol === 'Coach' || usuarioLS.Rol === 'Coach';
-        const clasesDiaCoach = isCoach ? clasesBase.filter(c => (c.diasRecurrentes || c.DiasRecurrentes || '').includes(diaLetra)) : [];
+        const clasesDiaCoach = isCoach ? clasesBase.filter(c => {
+          const fechaClase = c.fechaCreacion || c.FechaCreacion;
+          if (fechaClase && new Date(fechaClase).setHours(0, 0, 0, 0) > fechaIteracion.setHours(0, 0, 0, 0)) return false;
+          return (c.diasRecurrentes || c.DiasRecurrentes || '').includes(diaLetra);
+        }) : [];
 
         contenidoDia = (
           <div className="ac-day-events">
@@ -530,7 +534,11 @@ export default function AdminCalendario() {
                           {(() => {
                             const mapDias = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
                             const diaSelLetra = mapDias[new Date(diaSeleccionado).getDay()];
-                            const clasesAgenda = clasesBase.filter(c => (c.diasRecurrentes || c.DiasRecurrentes || '').includes(diaSelLetra));
+                            const clasesAgenda = clasesBase.filter(c => {
+                              const fechaClase = c.fechaCreacion || c.FechaCreacion;
+                              if (fechaClase && new Date(fechaClase).setHours(0, 0, 0, 0) > new Date(diaSeleccionado).setHours(0, 0, 0, 0)) return false;
+                              return (c.diasRecurrentes || c.DiasRecurrentes || '').includes(diaSelLetra);
+                            });
                             
                             return clasesAgenda.length === 0 ? (
                               <p className="ac-empty-text fst-italic ms-3 mb-4">No hay clases este día.</p>
