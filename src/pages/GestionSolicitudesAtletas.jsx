@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import AtletifyLoader from '../components/AtletifyLoader';
+import '../assets/css/GestionClases.css';
 import '../assets/css/GestionSolicitudes.css';
 
 const METODOS_PAGO = [
@@ -16,6 +17,13 @@ export default function GestionSolicitudesAtletas() {
   const [loading, setLoading] = useState(true);
   const [box, setBox] = useState(null);
   const [busqueda, setBusqueda] = useState('');
+  const [ahora, setAhora] = useState(Date.now());
+
+  // Tic cada minuto para refrescar los contadores de vencimiento
+  useEffect(() => {
+    const t = setInterval(() => setAhora(Date.now()), 60000);
+    return () => clearInterval(t);
+  }, []);
 
   // Modales
   const [modalRechazo, setModalRechazo] = useState({ visible: false, idUsuario: null, motivo: '' });
@@ -106,14 +114,45 @@ export default function GestionSolicitudesAtletas() {
     } catch { alert("Error de conexión"); }
   }
 
+  async function enviarRecordatorio(idUsuario) {
+    if (!await window.wpConfirm('¿Enviar un recordatorio al atleta? Esto le suma 1 día más al plazo antes de eliminar su cuenta.')) return;
+    try {
+      const res = await fetch(`${API_URL}/usuarios/${idUsuario}/recordar-rechazo`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        alert(`Recordatorio enviado. Recordatorios totales: ${data.vecesRecordado}. Se sumó 1 día al plazo.`);
+        cargarPendientes(box.idBox);
+      } else {
+        const e = await res.json().catch(() => null);
+        alert(e?.mensaje || 'No se pudo enviar el recordatorio.');
+      }
+    } catch { alert('Error de conexión'); }
+  }
+
+  // Plazo = FechaRechazo + 2 días + 1 día por cada recordatorio.
+  const calcRestante = (fechaRechazo, vecesRecordado) => {
+    if (!fechaRechazo) return null;
+    const iso = String(fechaRechazo).endsWith('Z') ? fechaRechazo : `${fechaRechazo}Z`;
+    const limite = new Date(iso).getTime() + (2 + Number(vecesRecordado || 0)) * 86400000;
+    const ms = limite - ahora;
+    if (ms <= 0) return { vencido: true, texto: 'Vencido — se eliminará pronto' };
+    const dias = Math.floor(ms / 86400000);
+    const horas = Math.floor((ms % 86400000) / 3600000);
+    const mins = Math.floor((ms % 3600000) / 60000);
+    const texto = dias > 0 ? `${dias}d ${horas}h` : horas > 0 ? `${horas}h ${mins}m` : `${mins}m`;
+    return { vencido: false, texto };
+  };
+
   const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 
   return (
     <div className="gs-root">
-      <nav className="gs-navbar">
-        <BackButton to="/admin-box-panel" />
-        <h4 className="gs-navbar-title">Solicitudes de <span>Ingreso</span></h4>
-      </nav>
+      <header className="gc-header">
+        <div className="d-flex align-items-center gap-3">
+          <BackButton to="/admin-box-panel" />
+          <h1 className="gc-header-title">Solicitudes de <span>Ingreso</span></h1>
+        </div>
+      </header>
 
       <div className="container" style={{ maxWidth: '1000px' }}>
         <div className="gs-page-header">
@@ -303,11 +342,31 @@ export default function GestionSolicitudesAtletas() {
                         </div>
                       </div>
 
-                      {p.estatus === "Rechazado" && (
-                        <div className="gs-rejection-note mt-3">
-                          <i className="fas fa-info-circle"></i> Esperando que el atleta corrija: "{p.motivoRechazo}"
-                        </div>
-                      )}
+                      {p.estatus === "Rechazado" && (() => {
+                        const r = calcRestante(p.fechaRechazo, p.vecesRecordado);
+                        const recordado = Number(p.vecesRecordado || 0);
+                        return (
+                          <div className={`gs-rejection-note mt-3${r?.vencido ? ' gs-rejection-note--expired' : ''}`}>
+                            <div className="gs-rejection-motivo">
+                              <i className="fas fa-info-circle"></i> Esperando que el atleta corrija: "{p.motivoRechazo}"
+                            </div>
+                            <div className="gs-rejection-meta">
+                              <span className={`gs-rejection-timer${r?.vencido ? ' gs-rejection-timer--expired' : ''}`}>
+                                <i className="fas fa-hourglass-half"></i>
+                                {r ? (r.vencido ? r.texto : `Vence en ${r.texto}`) : 'Sin plazo registrado'}
+                              </span>
+                              {recordado > 0 && (
+                                <span className="gs-rejection-recordado">
+                                  <i className="fas fa-bell"></i> Recordado {recordado}x
+                                </span>
+                              )}
+                            </div>
+                            <button type="button" className="gs-btn-recordar" onClick={() => enviarRecordatorio(p.idUsuario)}>
+                              <i className="fas fa-paper-plane"></i> Enviar recordatorio (+1 día)
+                            </button>
+                          </div>
+                        );
+                      })()}
 
                       <div className="gs-actions mt-3">
                         <button onClick={() => abrirAprobacion(p)} className="gs-btn-approve">
@@ -416,12 +475,14 @@ export default function GestionSolicitudesAtletas() {
       {/* ── MODAL VISOR DE COMPROBANTE ── */}
       {comprobanteViendo && (
         <div className="gs-modal-overlay" onClick={() => setComprobanteViendo(null)}>
-          <div className="gs-modal bg-dark p-2 text-center" style={{ maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
-            <div className="d-flex justify-content-between align-items-center p-2 mb-2 border-bottom border-secondary">
-              <h5 className="text-success m-0"><i className="fas fa-receipt me-2"></i>Comprobante</h5>
-              <button className="btn-close btn-close-white" onClick={() => setComprobanteViendo(null)}></button>
+          <div className="gs-modal" style={{ maxWidth: '520px' }} onClick={e => e.stopPropagation()}>
+            <div className="gs-modal-header">
+              <h5 className="gs-modal-title"><i className="fas fa-receipt"></i> Comprobante</h5>
+              <button className="gs-modal-close" onClick={() => setComprobanteViendo(null)}><i className="fas fa-times"></i></button>
             </div>
-            <img src={comprobanteViendo} alt="Comprobante" style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: '10px' }} />
+            <div className="gs-modal-body gs-comprobante-body">
+              <img src={comprobanteViendo} alt="Comprobante" className="gs-comprobante-img" />
+            </div>
           </div>
         </div>
       )}

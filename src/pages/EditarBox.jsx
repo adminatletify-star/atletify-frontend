@@ -41,6 +41,7 @@ const initialConfig = {
   aceptarPagosEnLinea: true,
   aceptarTransferencias: true,
   aceptarEfectivo: true,
+  aceptarTarjetaRecepcion: true,
   recargoMontoFijo: 0,
   aplicarGraciaSoloConCobroAutomatico: true
 };
@@ -155,6 +156,7 @@ export default function EditarBox() {
           aceptarPagosEnLinea: data.aceptarPagosEnLinea ?? true,
           aceptarTransferencias: data.aceptarTransferencias ?? true,
           aceptarEfectivo: data.aceptarEfectivo ?? true,
+          aceptarTarjetaRecepcion: data.aceptarTarjetaRecepcion ?? true,
           recargoMontoFijo: data.recargoMontoFijo ?? 0,
           aplicarGraciaSoloConCobroAutomatico: data.aplicarGraciaSoloConCobroAutomatico ?? true
         });
@@ -252,6 +254,7 @@ export default function EditarBox() {
           aceptarPagosEnLinea: config.aceptarPagosEnLinea,
           aceptarTransferencias: config.aceptarTransferencias,
           aceptarEfectivo: config.aceptarEfectivo,
+          aceptarTarjetaRecepcion: config.aceptarTarjetaRecepcion,
           recargoMontoFijo: parseFloat(config.recargoMontoFijo) || 0,
           aplicarGraciaSoloConCobroAutomatico: config.aplicarGraciaSoloConCobroAutomatico
         })
@@ -595,6 +598,15 @@ export default function EditarBox() {
                           <label className="form-check-label ms-2 text-white" htmlFor="switchEfectivo" style={{ fontSize: '0.85rem' }}>
                             <i className="fas fa-coins me-1" style={{ color: 'var(--success)' }}></i>
                             Aceptar Efectivo en Recepción
+                          </label>
+                        </div>
+                      </div>
+                      <div className="col-12 col-md-4 d-flex align-items-center">
+                        <div className="form-check form-switch custom-switch">
+                          <input className="form-check-input" type="checkbox" id="switchTarjetaRecepcion" name="aceptarTarjetaRecepcion" checked={config.aceptarTarjetaRecepcion} onChange={handleConfigChange} style={{ width: '2.5rem', height: '1.3rem' }} />
+                          <label className="form-check-label ms-2 text-white" htmlFor="switchTarjetaRecepcion" style={{ fontSize: '0.85rem' }}>
+                            <i className="fas fa-credit-card me-1" style={{ color: 'var(--accent-cool, #4fc3f7)' }}></i>
+                            Aceptar Tarjeta en Recepción
                           </label>
                         </div>
                       </div>

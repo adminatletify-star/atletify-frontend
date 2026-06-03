@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import GeneroPicker from '../components/GeneroPicker';
 import CategoriaBasePicker from '../components/CategoriaBasePicker';
 import TallaPlayeraPicker from '../components/TallaPlayeraPicker';
+import DateWheelPicker from '../components/DateWheelPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import PasswordRulesHint from '../components/PasswordRulesHint';
 import { usePasswordStrength } from '../hooks/usePasswordStrength';
@@ -43,6 +44,7 @@ export default function CompletarRegistro() {
   const [metodoPagoConfirmado, setMetodoPagoConfirmado] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [showPassConfirm, setShowPassConfirm] = useState(false);
+  const [mostrarDatePicker, setMostrarDatePicker] = useState(false);
 
   // Indicador de fortaleza de contraseña (mismo que MiPerfil)
   const reglasPassword = usePasswordStrength(formData.contrasena);
@@ -70,6 +72,10 @@ export default function CompletarRegistro() {
   const [boxAceptaPagosEnLinea, setBoxAceptaPagosEnLinea] = useState(false);
   const [absorberComision, setAbsorberComision] = useState(false);
   const [compraMinimaTarjeta, setCompraMinimaTarjeta] = useState(100);
+  // Métodos de pago habilitados por el Box (Editar Box)
+  const [aceptaEfectivo, setAceptaEfectivo] = useState(true);
+  const [aceptaTransferencias, setAceptaTransferencias] = useState(true);
+  const [aceptaTarjetaRecepcion, setAceptaTarjetaRecepcion] = useState(true);
 
   // ── Pago ────────────────────────────────────────────────────────
   const [metodoPago, setMetodoPago] = useState('Efectivo');
@@ -87,6 +93,24 @@ export default function CompletarRegistro() {
   const totalCobrar = (planSeleccionado?.precio || 0) + inscripcionAplicable;
   const comisionTarjeta = metodoPago === 'PagoEnLinea' && !absorberComision ? Math.round(((totalCobrar * 0.036) + 3) * 100) / 100 : 0;
   const totalConComision = totalCobrar + comisionTarjeta;
+
+  // Solo se ofrecen los métodos de pago que el Box habilitó en Editar Box
+  const metodoHabilitado = (m) => {
+    if (m.id === 'PagoEnLinea')   return boxAceptaPagosEnLinea;
+    if (m.id === 'Transferencia') return aceptaTransferencias;
+    if (m.id === 'Tarjeta')       return aceptaTarjetaRecepcion;
+    if (m.id === 'Efectivo')      return aceptaEfectivo;
+    return true;
+  };
+  const metodosDisponibles = METODOS_PAGO.filter(metodoHabilitado);
+
+  // Si el método seleccionado deja de estar habilitado, salta al primero válido
+  useEffect(() => {
+    if (metodosDisponibles.length && !metodosDisponibles.some(m => m.id === metodoPago)) {
+      setMetodoPago(metodosDisponibles[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aceptaEfectivo, aceptaTransferencias, aceptaTarjetaRecepcion, boxAceptaPagosEnLinea, metodoPago]);
 
   // 1) Verificar token de preregistro y descubrir rol + box
   useEffect(() => {
@@ -151,6 +175,9 @@ export default function CompletarRegistro() {
           setBoxAceptaPagosEnLinea(tieneStripe && aceptaOnline);
           setAbsorberComision(cfg.absorberComisionTarjeta ?? cfg.AbsorberComisionTarjeta ?? false);
           setCompraMinimaTarjeta(Number(cfg.compraMinimaTarjeta ?? cfg.CompraMinimaTarjeta ?? 100));
+          setAceptaEfectivo(cfg.aceptarEfectivo ?? cfg.AceptarEfectivo ?? true);
+          setAceptaTransferencias(cfg.aceptarTransferencias ?? cfg.AceptarTransferencias ?? true);
+          setAceptaTarjetaRecepcion(cfg.aceptarTarjetaRecepcion ?? cfg.AceptarTarjetaRecepcion ?? true);
         }
       } catch (e) {
         console.error(e);
@@ -457,18 +484,18 @@ export default function CompletarRegistro() {
 
               <div className="col-12 col-md-6">
                 <label className="reg-label">Fecha de Nacimiento</label>
-                <input
-                  type="date"
-                  name="fechaNacimiento"
-                  className="reg-input bg-dark text-white"
-                  value={formData.fechaNacimiento}
-                  onChange={(e) => {
-                    const year = e.target.value.split('-')[0] || '';
-                    if (year.length <= 4) handleChange(e);
-                  }}
-                  max="9999-12-31"
-                  required
-                />
+                <button
+                  type="button"
+                  className="reg-input cr-fecha-trigger"
+                  onClick={() => setMostrarDatePicker(true)}
+                >
+                  <span className={formData.fechaNacimiento ? '' : 'cr-fecha-placeholder'}>
+                    {formData.fechaNacimiento
+                      ? new Date(formData.fechaNacimiento + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })
+                      : 'Selecciona tu fecha'}
+                  </span>
+                  <i className="fas fa-birthday-cake"></i>
+                </button>
               </div>
             </div>
 
@@ -662,9 +689,13 @@ export default function CompletarRegistro() {
                   <i className="fas fa-wallet cr-section-icon"></i>
                 </div>
                 <div className="cr-metodos-list mb-3">
-                  {METODOS_PAGO
-                    .filter(m => !m.esOnline || boxAceptaPagosEnLinea)
-                    .map(m => (
+                  {metodosDisponibles.length === 0 && (
+                    <div className="cr-planes-empty">
+                      <i className="fas fa-exclamation-circle me-2"></i>
+                      Este Box no tiene métodos de pago habilitados. Contacta a la administración del box.
+                    </div>
+                  )}
+                  {metodosDisponibles.map(m => (
                     <label
                       key={m.id}
                       className={`cr-metodo ${metodoPago === m.id ? 'cr-metodo--active' : ''}`}
@@ -834,6 +865,29 @@ export default function CompletarRegistro() {
           </form>
         </div>
       </div>
+
+      {/* ══ MODAL: Ruedita de Fecha de Nacimiento ══ */}
+      {mostrarDatePicker && createPortal(
+        <div
+          className="cr-date-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) setMostrarDatePicker(false); }}
+        >
+          <div className="cr-date-modal">
+            <DateWheelPicker
+              initialDate={formData.fechaNacimiento ? new Date(formData.fechaNacimiento + 'T12:00:00') : new Date(2000, 0, 1)}
+              onAccept={(date) => {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                setFormData(prev => ({ ...prev, fechaNacimiento: `${y}-${m}-${d}` }));
+                setMostrarDatePicker(false);
+              }}
+              onCancel={() => setMostrarDatePicker(false)}
+            />
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* ══ MODAL: Registro completado ══ */}
       {modalExitoOpen && createPortal(
