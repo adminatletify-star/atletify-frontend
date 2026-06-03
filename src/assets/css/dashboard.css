@@ -827,33 +827,47 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 0.5rem;
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px solid var(--border);
 }
 
+.dash-page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .dash-page-btn {
   min-width: 36px;
   height: 36px;
-  padding: 0 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border);
+  padding: 0 0.5rem;
   border-radius: 8px;
-  color: var(--text-secondary);
-  font-size: 0.85rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--secondary, #A8B2D1);
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.82rem;
   font-weight: 500;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
 .dash-page-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--border-hover);
+  background: rgba(230, 57, 70, 0.1);
+  border-color: rgba(230, 57, 70, 0.3);
   color: var(--text-primary);
+}
+
+.dash-page-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .dash-page-btn--active {
@@ -863,53 +877,29 @@
   font-weight: 700;
 }
 
-.dash-page-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.dash-page-info {
-  font-size: 0.78rem;
-  color: var(--text-muted, #666);
-  margin-left: 8px;
-}
-
-.dash-page-numbers {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+/* Flechas prev/next: rellenas (igual que .ej-pag-btn de Ejercicios) */
+.dash-pagination > .dash-page-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .dash-page-ellipsis {
-  padding: 0 2px;
-  color: var(--text-muted, #666);
-  font-weight: 700;
+  color: var(--text-muted, #6B7280);
+  font-size: 0.85rem;
+  padding: 0 0.2rem;
+  user-select: none;
 }
 
-/* Indicador compacto "X / Y" — solo visible en móvil */
-.dash-page-compact {
+/* Ocultamos el conteo inline para que la paginación quede igual a la de Ejercicios */
+.dash-page-info {
   display: none;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  padding: 0 6px;
-  min-width: 56px;
-  text-align: center;
-  white-space: nowrap;
 }
 
-/* Móvil: ocultamos la lista de números y mostramos el pager compacto,
-   que no crece con el número de páginas. */
-@media (max-width: 575px) {
-  .dash-page-numbers {
-    display: none;
-  }
-  .dash-page-compact {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-}
+/* La paginación ahora hace wrap como en Ejercicios (sin modo compacto) */
+.dash-page-compact { display: none; }
 
 /* ── Responsive ───────────────────────────────────────────── */
 

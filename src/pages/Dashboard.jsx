@@ -8,18 +8,16 @@ import '../assets/css/dashboard.css';
 import DeveloperSaaSFinanzas from '../components/DeveloperSaaSFinanzas';
 import '../components/BoxPickerModal.css';
 
-// Colapsa la lista de páginas a un máximo de ~7 con elipsis (1 … 4 5 6 … 20),
-// para que la paginación no crezca sin límite al aumentar el nº de páginas.
+// Misma lógica que Ejercicios: muestra la primera, la última y las cercanas a
+// la actual (±1), insertando … en los huecos. Colapsa siempre (ej. 1 … 6).
 function buildPaginas(pagina, total) {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-  const out = [1];
-  if (pagina > 3) out.push('...');
-  const start = Math.max(2, pagina - 1);
-  const end = Math.min(total - 1, pagina + 1);
-  for (let i = start; i <= end; i++) out.push(i);
-  if (pagina < total - 2) out.push('...');
-  out.push(total);
-  return out;
+  return Array.from({ length: total }, (_, idx) => idx + 1)
+    .filter(n => n === 1 || n === total || Math.abs(n - pagina) <= 1)
+    .reduce((acc, n, i, arr) => {
+      if (i > 0 && n - arr[i - 1] > 1) acc.push('...');
+      acc.push(n);
+      return acc;
+    }, []);
 }
 
 export default function Dashboard() {

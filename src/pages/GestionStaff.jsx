@@ -1,11 +1,121 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import TipoPagoPicker from '../components/TipoPagoPicker';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import BotonSeguro from '../components/BotonSeguro';
 import AtletifyLoader from '../components/AtletifyLoader';
+import '../assets/css/GestionClases.css';
 import '../assets/css/GestionStaff.css';
+
+const PAGE_SIZE = 10;
+
+const FILTRO_FECHA_OPCIONES = [
+  { value: 'hoy',    label: 'Hoy',          icon: 'fa-calendar-day' },
+  { value: 'ayer',   label: 'Ayer',         icon: 'fa-calendar-minus' },
+  { value: 'semana', label: 'Esta Semana',  icon: 'fa-calendar-week' },
+];
+
+const DIA_CORTE_OPCIONES = [
+  { value: '1', label: 'Lunes' },     { value: '2', label: 'Martes' },
+  { value: '3', label: 'Miércoles' }, { value: '4', label: 'Jueves' },
+  { value: '5', label: 'Viernes' },   { value: '6', label: 'Sábado' },
+  { value: '7', label: 'Domingo' },
+];
+
+// GET con reintentos: los 500 transitorios del pooler de Supabase se reintentan
+// con un pequeño backoff. Devuelve el JSON o null si nunca respondió OK.
+async function fetchJsonRetry(url, intentos = 3) {
+  for (let i = 0; i < intentos; i++) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) return await res.json();
+      if (res.status < 500) return null; // 4xx → no tiene sentido reintentar
+    } catch (_) { /* error de red → reintentar */ }
+    await new Promise(r => setTimeout(r, 250 * (i + 1)));
+  }
+  return null;
+}
+
+// Procesa una lista en lotes (limita la concurrencia) para no saturar la BD
+async function enLotes(items, tamanoLote, fn) {
+  const out = [];
+  for (let i = 0; i < items.length; i += tamanoLote) {
+    const lote = items.slice(i, i + tamanoLote);
+    out.push(...await Promise.all(lote.map(fn)));
+  }
+  return out;
+}
+
+/* ── Paginación (números desktop · compacto móvil) ── */
+function buildPaginas(pagina, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const out = [1];
+  if (pagina > 3) out.push('...');
+  const start = Math.max(2, pagina - 1);
+  const end = Math.min(total - 1, pagina + 1);
+  for (let i = start; i <= end; i++) out.push(i);
+  if (pagina < total - 2) out.push('...');
+  out.push(total);
+  return out;
+}
+
+function Paginacion({ pagina, totalPaginas, onCambio }) {
+  if (totalPaginas <= 1) return null;
+  return (
+    <div className="staff-pag" role="navigation" aria-label="Paginación">
+      <button type="button" className="staff-pag-btn" disabled={pagina === 1} onClick={() => onCambio(pagina - 1)} aria-label="Anterior">
+        <i className="fas fa-chevron-left"></i>
+      </button>
+      <div className="staff-pag-numbers">
+        {buildPaginas(pagina, totalPaginas).map((p, i) => p === '...'
+          ? <span key={`e${i}`} className="staff-pag-ellipsis">…</span>
+          : <button key={p} type="button" className={`staff-pag-btn ${pagina === p ? 'staff-pag-btn--active' : ''}`} onClick={() => onCambio(p)}>{p}</button>
+        )}
+      </div>
+      <span className="staff-pag-compact">{pagina} / {totalPaginas}</span>
+      <button type="button" className="staff-pag-btn" disabled={pagina === totalPaginas} onClick={() => onCambio(pagina + 1)} aria-label="Siguiente">
+        <i className="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  );
+}
+
+/* ── Picker modal genérico (reemplaza a los <select> nativos) ── */
+function OptionPickerModal({ supertitulo, titulo, opciones, valor, onSelect, onCerrar }) {
+  return createPortal(
+    <div className="staff-picker-overlay" onClick={e => { if (e.target === e.currentTarget) onCerrar(); }}>
+      <div className="staff-picker-modal">
+        <div className="staff-picker-header">
+          <div>
+            {supertitulo && <p className="staff-picker-supertitle">{supertitulo}</p>}
+            <h2 className="staff-picker-title">{titulo}</h2>
+          </div>
+          <button type="button" className="staff-picker-close" onClick={onCerrar} aria-label="Cerrar"><i className="fas fa-times"></i></button>
+        </div>
+        <div className="staff-picker-list">
+          {opciones.map(op => {
+            const activo = String(op.value) === String(valor);
+            return (
+              <button
+                key={op.value}
+                type="button"
+                className={`staff-picker-option${activo ? ' staff-picker-option--active' : ''}`}
+                onClick={() => onSelect(op.value)}
+              >
+                {op.icon && <span className="staff-picker-option-icon"><i className={`fas ${op.icon}`}></i></span>}
+                <span className="staff-picker-option-label">{op.label}</span>
+                {activo && <i className="fas fa-check-circle staff-picker-check"></i>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 export default function GestionStaff() {
   const navigate = useNavigate();
@@ -43,6 +153,11 @@ export default function GestionStaff() {
   const [cargandoAuditoria, setCargandoAuditoria] = useState(false);
   const [filtroAuditoria, setFiltroAuditoria] = useState('hoy'); // 'hoy' | 'ayer' | 'semana'
   const [filtroCoachAuditoria, setFiltroCoachAuditoria] = useState('');
+
+  // Paginación y pickers modales
+  const [pagDirectorio, setPagDirectorio] = useState(1);
+  const [pagAuditoria, setPagAuditoria] = useState(1);
+  const [pickerActivo, setPickerActivo] = useState(null); // 'fecha' | 'coach' | 'dia-corte'
 
   const abrirModalPermiso = async (coach) => {
     setCoachSeleccionado(coach);
@@ -118,20 +233,20 @@ export default function GestionStaff() {
 
       // 4. A cada Coach le buscamos sus especialidades
       // 4. A cada Coach le buscamos sus especialidades y sus calificaciones
-      const coachesArmados = await Promise.all(soloCoaches.map(async (coach) => {
+      // En lotes de 3 coaches (máx. 6 peticiones simultáneas) para no saturar
+      // el pooler de Supabase, con reintentos ante 500 transitorios.
+      const coachesArmados = await enLotes(soloCoaches, 3, async (coach) => {
         const id = coach.idUsuario || coach.id || coach.IdUsuario;
-        try {
-          const [resEsp, resEval] = await Promise.all([
-            fetch(`${API_URL}/especialidades/coach/${id}`),
-            fetch(`${API_URL}/evaluaciones/coach/${id}`)
-          ]);
-          const dataEsp = await resEsp.json();
-          const dataEval = resEval.ok ? await resEval.json() : { promedio: 0, total: 0, resenas: [] };
-          return { ...coach, especialidades: Array.isArray(dataEsp) ? dataEsp : [], evaluaciones: dataEval };
-        } catch {
-          return { ...coach, especialidades: [], evaluaciones: { Promedio: 0, Total: 0, Resenas: [] } };
-        }
-      }));
+        const [dataEsp, dataEval] = await Promise.all([
+          fetchJsonRetry(`${API_URL}/especialidades/coach/${id}`),
+          fetchJsonRetry(`${API_URL}/evaluaciones/coach/${id}`)
+        ]);
+        return {
+          ...coach,
+          especialidades: Array.isArray(dataEsp) ? dataEsp : [],
+          evaluaciones: dataEval || { promedio: 0, total: 0, resenas: [] }
+        };
+      });
 
       setCoaches(coachesArmados);
     } catch (err) {
@@ -287,7 +402,7 @@ export default function GestionStaff() {
     const pendientes = auditoriaClases.filter(c => c.estado === 'Pendiente' || c.Estado === 'Pendiente');
     if (pendientes.length === 0) return alert("No hay clases pendientes por validar en esta vista.");
     
-    if (!window.confirm(`¿Aprobar ${pendientes.length} clases pendientes mostradas en pantalla?`)) return;
+    if (!await window.wpConfirm(`¿Aprobar ${pendientes.length} clases pendientes mostradas en pantalla?`)) return;
 
     try {
       const peticiones = pendientes.map(c => ({
@@ -369,7 +484,7 @@ export default function GestionStaff() {
   };
 
   const pagarNominaMes = async () => {
-    if (!window.confirm(`¿Seguro que deseas proceder con el pago definitivo de la nómina semanal de ${coachSeleccionado.nombre} por $${nominaActual.granTotal.toFixed(2)}? Se registrará un Egreso Financiero.`)) return;
+    if (!await window.wpConfirm(`¿Seguro que deseas proceder con el pago definitivo de la nómina semanal de ${coachSeleccionado.nombre} por $${nominaActual.granTotal.toFixed(2)}? Se registrará un Egreso Financiero.`)) return;
     try {
       const idCoach = coachSeleccionado.idUsuario || coachSeleccionado.id;
       const hoy = new Date();
@@ -445,7 +560,7 @@ export default function GestionStaff() {
   };
 
   const eliminarResena = async (idResena) => {
-    if (!window.confirm("¿Seguro que deseas eliminar esta reseña (por lenguaje inapropiado o spam)?")) return;
+    if (!await window.wpConfirm("¿Seguro que deseas eliminar esta reseña (por lenguaje inapropiado o spam)?")) return;
     try {
       const res = await fetch(`${API_URL}/evaluaciones/${idResena}`, { method: 'DELETE' });
       if (res.ok) {
@@ -464,49 +579,70 @@ export default function GestionStaff() {
     } catch (e) { alert("Error de conexión"); }
   };
 
+  // Reset de páginas al cambiar datos/filtros
+  useEffect(() => { setPagDirectorio(1); }, [coaches.length]);
+  useEffect(() => { setPagAuditoria(1); }, [auditoriaClases, filtroCoachAuditoria, filtroAuditoria]);
+
+  // Derivados de paginación
+  const totalPagDir = Math.max(1, Math.ceil(coaches.length / PAGE_SIZE));
+  const coachesPagina = coaches.slice((pagDirectorio - 1) * PAGE_SIZE, pagDirectorio * PAGE_SIZE);
+
+  const auditoriaFiltrada = filtroCoachAuditoria
+    ? auditoriaClases.filter(c => (c.idCoach || c.IdCoach)?.toString() === filtroCoachAuditoria)
+    : auditoriaClases;
+  const totalPagAud = Math.max(1, Math.ceil(auditoriaFiltrada.length / PAGE_SIZE));
+  const auditoriaPagina = auditoriaFiltrada.slice((pagAuditoria - 1) * PAGE_SIZE, pagAuditoria * PAGE_SIZE);
+
+  // Opciones de coaches para el filtro de auditoría (lista dinámica)
+  const coachOpciones = [
+    { value: '', label: 'Todos los Coaches', icon: 'fa-users' },
+    ...Array.from(new Set(auditoriaClases.map(c => c.idCoach || c.IdCoach))).map(id => {
+      const nombre = auditoriaClases.find(c => (c.idCoach || c.IdCoach) === id)?.nombreCoach
+        || auditoriaClases.find(c => (c.idCoach || c.IdCoach) === id)?.NombreCoach || `Coach ${id}`;
+      return { value: String(id), label: nombre, icon: 'fa-user' };
+    }),
+  ];
+  const fechaSel = FILTRO_FECHA_OPCIONES.find(o => o.value === filtroAuditoria) || FILTRO_FECHA_OPCIONES[0];
+  const coachSel = coachOpciones.find(o => o.value === filtroCoachAuditoria) || coachOpciones[0];
+
   return (
     <div className="staff-container">
 
-      {/* ── NAVBAR ── */}
-      <nav className="staff-nav">
-        <BackButton to="/admin-box-panel" />
-        <div className="staff-nav-icono">
-          <i className="fas fa-users-cog"></i>
+      {/* ── HEADER (patrón GestionClases) ── */}
+      <header className="gc-header">
+        <div className="d-flex align-items-center gap-3">
+          <BackButton to="/admin-box-panel" />
+          <h1 className="gc-header-title">Control de <span>Staff</span></h1>
         </div>
-        <div className="flex-grow-1">
-          <h1 className="staff-nav-titulo">
-            Control de <span>Staff</span>
-          </h1>
-          {box && <p className="staff-nav-subtitle">{box.nombre}</p>}
-        </div>
-
-        {/* ── TOGGLE TABS ── */}
-        <div className="btn-group shadow-sm rounded-pill p-1 border border-secondary" style={{ background: 'rgba(255,255,255,0.05)' }} role="group">
-          <button 
-            type="button" 
-            className={`btn btn-sm rounded-pill px-3 border-0 fw-bold ${vistaActiva === 'directorio' ? 'btn-danger text-white' : 'btn-outline-secondary text-white-50'}`}
-            onClick={() => setVistaActiva('directorio')}
-          >
-            <i className="fas fa-address-card me-2 d-none d-sm-inline"></i>Directorio
-          </button>
-          <button 
-            type="button" 
-            className={`btn btn-sm rounded-pill px-3 border-0 fw-bold ${vistaActiva === 'auditoria' ? 'btn-danger text-white' : 'btn-outline-secondary text-white-50'}`}
-            onClick={() => { setVistaActiva('auditoria'); setFiltroAuditoria('hoy'); }}
-          >
-            <i className="fas fa-check-double me-2 d-none d-sm-inline"></i>Auditoría Diaria
-          </button>
-          <button 
-            type="button" 
-            className={`btn btn-sm rounded-pill px-3 border-0 fw-bold ${vistaActiva === 'nomina' ? 'btn-danger text-white' : 'btn-outline-secondary text-white-50'}`}
-            onClick={() => { setVistaActiva('nomina'); setFiltroAuditoria('semana'); }}
-          >
-            <i className="fas fa-money-check-alt me-2 d-none d-sm-inline"></i>Nómina / Pagos
-          </button>
-        </div>
-      </nav>
+      </header>
 
       <div className="container-xl px-3 px-md-4 py-4">
+
+        {/* ── TABS DE VISTA ── */}
+        <div className="staff-tabs">
+          <button
+            type="button"
+            className={`staff-tab ${vistaActiva === 'directorio' ? 'staff-tab--active' : ''}`}
+            onClick={() => setVistaActiva('directorio')}
+          >
+            <i className="fas fa-address-card"></i><span>Directorio</span>
+          </button>
+          <button
+            type="button"
+            className={`staff-tab ${vistaActiva === 'auditoria' ? 'staff-tab--active' : ''}`}
+            onClick={() => { setVistaActiva('auditoria'); setFiltroAuditoria('hoy'); }}
+          >
+            <i className="fas fa-check-double"></i><span>Auditoría</span>
+          </button>
+          <button
+            type="button"
+            className={`staff-tab ${vistaActiva === 'nomina' ? 'staff-tab--active' : ''}`}
+            onClick={() => { setVistaActiva('nomina'); setFiltroAuditoria('semana'); }}
+          >
+            <i className="fas fa-money-check-alt"></i><span>Nómina</span>
+          </button>
+        </div>
+
 
         {vistaActiva === 'directorio' ? (
           <>
@@ -530,10 +666,9 @@ export default function GestionStaff() {
 
               /* ── GRID DE COACHES ── */
             ) : (
-              <div className="row g-3 g-md-4 justify-content-start">
-                {coaches.map(coach => (
-                  <div key={coach.idUsuario || coach.id} className="col-12 col-sm-6 col-lg-4 col-xl-3">
-                    <div className="staff-card">
+              <div className="staff-coach-grid">
+                {coachesPagina.map(coach => (
+                  <div key={coach.idUsuario || coach.id} className="staff-card">
 
                       {/* Cabecera: avatar + nombre + rating + correo */}
                       <div className="staff-card-header">
@@ -593,9 +728,11 @@ export default function GestionStaff() {
                       </div>
 
                     </div>
-                  </div>
                 ))}
               </div>
+            )}
+            {!loading && coaches.length > 0 && (
+              <Paginacion pagina={pagDirectorio} totalPaginas={totalPagDir} onCambio={setPagDirectorio} />
             )}
           </>
         ) : vistaActiva === 'auditoria' ? (
@@ -607,30 +744,18 @@ export default function GestionStaff() {
                 <p className="text-white-50 mb-0 small">Verifica que todos los coaches impartieron sus clases correctamente y aprueba la nómina con 1 clic.</p>
               </div>
               
-              <div className="d-flex gap-2 align-items-center flex-wrap">
-                <select 
-                  className="form-select bg-dark text-white border-secondary form-select-sm" 
-                  style={{ minWidth: '150px' }}
-                  value={filtroCoachAuditoria}
-                  onChange={(e) => setFiltroCoachAuditoria(e.target.value)}
-                >
-                  <option value="">Todos los Coaches</option>
-                  {Array.from(new Set(auditoriaClases.map(c => c.idCoach || c.IdCoach))).map(id => {
-                    const coachName = auditoriaClases.find(c => (c.idCoach || c.IdCoach) === id)?.nombreCoach || auditoriaClases.find(c => (c.idCoach || c.IdCoach) === id)?.NombreCoach;
-                    return <option key={id} value={id}>{coachName}</option>
-                  })}
-                </select>
-                <select 
-                  className="form-select bg-dark text-white border-secondary form-select-sm" 
-                  style={{ minWidth: '130px' }}
-                  value={filtroAuditoria}
-                  onChange={(e) => setFiltroAuditoria(e.target.value)}
-                >
-                  <option value="hoy">Hoy</option>
-                  <option value="ayer">Ayer</option>
-                  <option value="semana">Esta Semana</option>
-                </select>
-                <button className="btn btn-sm btn-success fw-bold px-3 d-flex align-items-center shadow-sm" onClick={validarMasivo}>
+              <div className="staff-toolbar">
+                <button type="button" className="staff-picker-btn" onClick={() => setPickerActivo('coach')}>
+                  <i className="fas fa-user staff-picker-btn-icon"></i>
+                  <span className="staff-picker-btn-label">{coachSel.label}</span>
+                  <i className="fas fa-chevron-down staff-picker-btn-arrow"></i>
+                </button>
+                <button type="button" className="staff-picker-btn" onClick={() => setPickerActivo('fecha')}>
+                  <i className={`fas ${fechaSel.icon} staff-picker-btn-icon`}></i>
+                  <span className="staff-picker-btn-label">{fechaSel.label}</span>
+                  <i className="fas fa-chevron-down staff-picker-btn-arrow"></i>
+                </button>
+                <button className="staff-toolbar-btn-ok" onClick={validarMasivo}>
                   <i className="fas fa-check-double me-2"></i>Validar Pendientes
                 </button>
               </div>
@@ -648,9 +773,17 @@ export default function GestionStaff() {
                 <p className="text-white-50 small mb-0">No hay clases configuradas para el periodo seleccionado.</p>
               </div>
             ) : (
-              <div className="table-responsive shadow-sm rounded-3 border border-secondary" style={{ overflow: 'hidden' }}>
-                <table className="table table-dark table-hover mb-0 align-middle" style={{ background: '#1c1c1e' }}>
-                  <thead style={{ background: 'rgba(0,0,0,0.4)' }}>
+              <>
+              <div className="table-responsive d-none d-md-block staff-audit-table-wrap">
+                <table className="table table-hover mb-0 align-middle staff-audit-table" style={{
+                  '--bs-table-bg': 'transparent',
+                  '--bs-table-color': 'var(--text-primary)',
+                  '--bs-table-border-color': 'var(--border)',
+                  '--bs-table-hover-bg': 'var(--bg-card-hover)',
+                  '--bs-table-hover-color': 'var(--text-primary)',
+                  color: 'var(--text-primary)'
+                }}>
+                  <thead>
                     <tr>
                       <th className="py-3 text-white-50 fw-normal small px-3">Fecha y Hora</th>
                       <th className="py-3 text-white-50 fw-normal small">Clase</th>
@@ -662,7 +795,7 @@ export default function GestionStaff() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(filtroCoachAuditoria ? auditoriaClases.filter(c => (c.idCoach || c.IdCoach).toString() === filtroCoachAuditoria) : auditoriaClases).map((c, i) => {
+                    {auditoriaPagina.map((c, i) => {
                       const idClase = c.idClase ?? c.IdClase;
                       const idCoach = c.idCoach ?? c.IdCoach;
                       const fecha = c.fecha ?? c.Fecha;
@@ -728,6 +861,56 @@ export default function GestionStaff() {
                   </tbody>
                 </table>
               </div>
+
+              {/* ── Tarjetas auditoría (móvil) ── */}
+              <div className="d-md-none staff-audit-cards">
+                {auditoriaPagina.map((c, i) => {
+                  const idClase = c.idClase ?? c.IdClase;
+                  const idCoach = c.idCoach ?? c.IdCoach;
+                  const fecha = c.fecha ?? c.Fecha;
+                  const estado = c.estado ?? c.Estado;
+                  const monto = c.montoPago ?? c.MontoPago ?? 0;
+                  const totalAsistieron = c.totalAsistieron ?? c.TotalAsistieron ?? 0;
+                  const maximoAtletas = c.maximoAtletas ?? c.MaximoAtletas ?? c.totalReservas ?? c.TotalReservas ?? 0;
+                  const nombreCoach = c.nombreCoach ?? c.NombreCoach ?? 'C';
+                  const nombreClase = c.nombreClase ?? c.NombreClase ?? '';
+                  const horario = c.horario ?? c.Horario ?? '';
+                  return (
+                    <div key={`m-${idClase}-${i}`} className="staff-audit-card">
+                      <div className="staff-audit-card-top">
+                        <div className="staff-audit-card-id">
+                          <div className="staff-audit-card-clase">{nombreClase}</div>
+                          <div className="staff-audit-card-fecha">
+                            <i className="far fa-clock me-1"></i>
+                            {new Date(fecha).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })} · {horario}
+                          </div>
+                        </div>
+                        {estado === 'Validada' && <span className="badge bg-success bg-opacity-25 text-success">Validada</span>}
+                        {estado === 'Falta' && <span className="badge bg-danger bg-opacity-25 text-danger">Falta</span>}
+                        {estado === 'Pendiente' && <span className="badge bg-warning bg-opacity-25 text-warning">Pendiente</span>}
+                      </div>
+                      <div className="staff-audit-card-meta">
+                        <span><i className="fas fa-user me-1"></i>{nombreCoach}</span>
+                        <span><i className="fas fa-users me-1"></i>{totalAsistieron}/{maximoAtletas}</span>
+                        <span className="text-success fw-bold">${monto.toFixed(2)}</span>
+                      </div>
+                      <div className="staff-audit-card-actions">
+                        {estado === 'Pendiente' ? (
+                          <>
+                            <button className="btn btn-sm btn-success flex-grow-1" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Validada', monto)}><i className="fas fa-check me-1"></i>Validar</button>
+                            <button className="btn btn-sm btn-outline-danger flex-grow-1" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Falta', 0)}><i className="fas fa-times me-1"></i>Falta</button>
+                          </>
+                        ) : (
+                          <button className="btn btn-sm btn-dark w-100" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Pendiente', monto)}><i className="fas fa-undo me-1"></i>Revertir a pendiente</button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <Paginacion pagina={pagAuditoria} totalPaginas={totalPagAud} onCambio={setPagAuditoria} />
+              </>
             )}
           </div>
         ) : (
@@ -739,17 +922,12 @@ export default function GestionStaff() {
                 <p className="text-white-50 mb-0 small">Visualiza el subtotal a pagar por coach basado en las clases que ya han sido validadas.</p>
               </div>
               
-              <div className="d-flex gap-2 align-items-center flex-wrap">
-                <select 
-                  className="form-select bg-dark text-white border-secondary form-select-sm" 
-                  style={{ minWidth: '130px' }}
-                  value={filtroAuditoria}
-                  onChange={(e) => setFiltroAuditoria(e.target.value)}
-                >
-                  <option value="semana">Esta Semana</option>
-                  <option value="hoy">Hoy</option>
-                  <option value="ayer">Ayer</option>
-                </select>
+              <div className="staff-toolbar">
+                <button type="button" className="staff-picker-btn" onClick={() => setPickerActivo('fecha')}>
+                  <i className={`fas ${fechaSel.icon} staff-picker-btn-icon`}></i>
+                  <span className="staff-picker-btn-label">{fechaSel.label}</span>
+                  <i className="fas fa-chevron-down staff-picker-btn-arrow"></i>
+                </button>
               </div>
             </div>
 
@@ -779,27 +957,24 @@ export default function GestionStaff() {
                   acc[id].totalPagar += (c.montoPago ?? c.MontoPago ?? 0);
                   return acc;
                 }, {})).map(coachNomina => (
-                  <div key={coachNomina.idCoach} className="col-12 col-md-6 col-lg-4">
-                    <div className="card bg-dark border-secondary h-100 shadow-sm" style={{ background: 'linear-gradient(145deg, #1c1c1e 0%, #151515 100%)' }}>
-                      <div className="card-body p-4 text-center">
-                        <div className="staff-avatar mx-auto mb-3" style={{ width: '60px', height: '60px' }}>
-                          <span className="staff-avatar-initial fs-4">{coachNomina.nombreCoach.charAt(0)}</span>
-                        </div>
-                        <h5 className="text-white mb-1">{coachNomina.nombreCoach}</h5>
-                        <p className="text-white-50 small mb-3">
-                          <i className="fas fa-check-circle text-success me-1"></i>
-                          {coachNomina.clases.length} clase(s) validadas
-                        </p>
-                        
-                        <div className="p-3 bg-black rounded-3 border border-secondary mb-3">
-                          <p className="text-white-50 mb-1 small text-uppercase fw-bold">Total a Pagar</p>
-                          <h3 className="text-success mb-0 fw-bold font-monospace">${coachNomina.totalPagar.toFixed(2)}</h3>
-                        </div>
-                        
-                        <button className="btn btn-outline-danger w-100 btn-sm rounded-pill border-opacity-50" onClick={() => alert('Función de registro de pago de nómina en desarrollo. Por ahora, el monto se muestra de manera informativa.')}>
-                          <i className="fas fa-hand-holding-usd me-2"></i>Registrar Pago
-                        </button>
+                  <div key={coachNomina.idCoach} className="col-12 col-sm-6 col-lg-4">
+                    <div className="staff-nomina-coach-card">
+                      <div className="staff-avatar staff-nomina-coach-avatar">
+                        <span className="staff-avatar-initial">{coachNomina.nombreCoach.charAt(0)}</span>
                       </div>
+                      <h3 className="staff-nomina-coach-nombre">{coachNomina.nombreCoach}</h3>
+                      <p className="staff-nomina-coach-sub">
+                        <i className="fas fa-check-circle"></i> {coachNomina.clases.length} clase(s) validadas
+                      </p>
+
+                      <div className="staff-nomina-coach-total">
+                        <span className="staff-nomina-coach-total-label">Total a Pagar</span>
+                        <span className="staff-nomina-coach-total-valor">${coachNomina.totalPagar.toFixed(2)}</span>
+                      </div>
+
+                      <button className="staff-nomina-coach-btn" onClick={() => alert('Función de registro de pago de nómina en desarrollo. Por ahora, el monto se muestra de manera informativa.')}>
+                        <i className="fas fa-hand-holding-usd"></i> Registrar Pago
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -1102,19 +1277,11 @@ export default function GestionStaff() {
                 </div>
                 <div className="col-md-3">
                   <label className="staff-form-label">Día de Pago (Semanal)</label>
-                  <select
-                    className="staff-modal-input"
-                    value={formContrato.diaCorte}
-                    onChange={e => setFormContrato({ ...formContrato, diaCorte: e.target.value })}
-                  >
-                    <option value="1">Lunes</option>
-                    <option value="2">Martes</option>
-                    <option value="3">Miércoles</option>
-                    <option value="4">Jueves</option>
-                    <option value="5">Viernes</option>
-                    <option value="6">Sábado</option>
-                    <option value="7">Domingo</option>
-                  </select>
+                  <button type="button" className="staff-picker-btn staff-picker-btn--full" onClick={() => setPickerActivo('dia-corte')}>
+                    <i className="fas fa-calendar-day staff-picker-btn-icon"></i>
+                    <span className="staff-picker-btn-label">{DIA_CORTE_OPCIONES.find(o => String(o.value) === String(formContrato.diaCorte))?.label || 'Día'}</span>
+                    <i className="fas fa-chevron-down staff-picker-btn-arrow"></i>
+                  </button>
                 </div>
                 <div className="col-12">
                   <BotonSeguro onClick={guardarContrato} className="staff-btn-guardar-contrato" textoProcesando="Guardando...">
@@ -1249,6 +1416,38 @@ export default function GestionStaff() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── PICKERS MODALES (reemplazan a los <select> nativos) ── */}
+      {pickerActivo === 'fecha' && (
+        <OptionPickerModal
+          supertitulo="FILTRO"
+          titulo="Periodo"
+          opciones={FILTRO_FECHA_OPCIONES}
+          valor={filtroAuditoria}
+          onSelect={(v) => { setFiltroAuditoria(v); setPickerActivo(null); }}
+          onCerrar={() => setPickerActivo(null)}
+        />
+      )}
+      {pickerActivo === 'coach' && (
+        <OptionPickerModal
+          supertitulo="FILTRO"
+          titulo="Filtrar por Coach"
+          opciones={coachOpciones}
+          valor={filtroCoachAuditoria}
+          onSelect={(v) => { setFiltroCoachAuditoria(v); setPickerActivo(null); }}
+          onCerrar={() => setPickerActivo(null)}
+        />
+      )}
+      {pickerActivo === 'dia-corte' && (
+        <OptionPickerModal
+          supertitulo="CONTRATO"
+          titulo="Día de Pago"
+          opciones={DIA_CORTE_OPCIONES}
+          valor={formContrato.diaCorte}
+          onSelect={(v) => { setFormContrato({ ...formContrato, diaCorte: v }); setPickerActivo(null); }}
+          onCerrar={() => setPickerActivo(null)}
+        />
       )}
 
     </div>

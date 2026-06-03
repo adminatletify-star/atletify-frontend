@@ -13,6 +13,17 @@ import '../assets/css/AdminEjercicios.css';
 
 const CATEGORIAS = ['Piernas', 'Full Body', 'Fuerza', 'Olímpico', 'Gimnástico', 'Cardio', 'Core'];
 
+// Paginación estilo Ejercicios: colapsa con … (primera, última y ±1 de la actual)
+function buildPaginas(pagina, total) {
+  return Array.from({ length: total }, (_, idx) => idx + 1)
+    .filter(n => n === 1 || n === total || Math.abs(n - pagina) <= 1)
+    .reduce((acc, n, i, arr) => {
+      if (i > 0 && n - arr[i - 1] > 1) acc.push('...');
+      acc.push(n);
+      return acc;
+    }, []);
+}
+
 const handleVideoClick = (e) => {
   if (!document.fullscreenElement) {
     e.preventDefault();
@@ -606,34 +617,36 @@ export default function AdminEjercicios() {
                 {totalPaginasEj > 1 && (
                   <div className="ae-pagination">
                     <button
-                      className="ae-page-btn"
+                      className="ae-pag-btn"
                       onClick={() => setPaginaEjercicios(p => Math.max(1, p - 1))}
                       disabled={paginaEjercicios === 1}
                     >
                       <i className="fas fa-chevron-left" />
                     </button>
 
-                    {Array.from({ length: totalPaginasEj }, (_, i) => i + 1).map(num => (
-                      <button
-                        key={num}
-                        className={`ae-page-btn${paginaEjercicios === num ? ' ae-page-btn--active' : ''}`}
-                        onClick={() => setPaginaEjercicios(num)}
-                      >
-                        {num}
-                      </button>
-                    ))}
+                    <div className="ae-pag-numeros">
+                      {buildPaginas(paginaEjercicios, totalPaginasEj).map((num, idx) =>
+                        num === '...' ? (
+                          <span key={`dots-${idx}`} className="ae-pag-dots">…</span>
+                        ) : (
+                          <button
+                            key={num}
+                            className={`ae-pag-num${paginaEjercicios === num ? ' activo' : ''}`}
+                            onClick={() => setPaginaEjercicios(num)}
+                          >
+                            {num}
+                          </button>
+                        )
+                      )}
+                    </div>
 
                     <button
-                      className="ae-page-btn"
+                      className="ae-pag-btn"
                       onClick={() => setPaginaEjercicios(p => Math.min(totalPaginasEj, p + 1))}
                       disabled={paginaEjercicios === totalPaginasEj}
                     >
                       <i className="fas fa-chevron-right" />
                     </button>
-
-                    <span className="ae-page-info">
-                      {(paginaEjercicios - 1) * EJERCICIOS_POR_PAGINA + 1}–{Math.min(paginaEjercicios * EJERCICIOS_POR_PAGINA, filtrados.length)} de {filtrados.length}
-                    </span>
                   </div>
                 )}
               </div>
