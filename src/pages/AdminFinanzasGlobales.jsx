@@ -555,15 +555,37 @@ export default function AdminFinanzasGlobales() {
                 <div className="fg-charts-grid">
                   <div className="fg-card">
                     <div className="fg-card-title"><i className="fas fa-chart-pie" style={{ color: 'var(--success)' }}></i> Desglose de Ingresos</div>
-                    <div className="fg-chart">
+                    <div className="fg-chart fg-chart--pie">
                       {resumen.ingresosPorCategoria.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
-                            <Pie data={resumen.ingresosPorCategoria} dataKey="total" nameKey="categoria" cx="50%" cy="50%" innerRadius={55} outerRadius={90}>
+                            <Pie
+                              data={resumen.ingresosPorCategoria}
+                              dataKey="total"
+                              nameKey="categoria"
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={58}
+                              outerRadius={92}
+                              paddingAngle={3}
+                              cornerRadius={5}
+                              stroke="#1c1c26"
+                              strokeWidth={2}
+                            >
                               {resumen.ingresosPorCategoria.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                             </Pie>
-                            <Tooltip formatter={(value) => formatearDinero(value)} contentStyle={{ backgroundColor: '#1e1e26', border: '1px solid #333', borderRadius: '8px' }} />
-                            <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '0.8rem' }} />
+                            <Tooltip
+                              formatter={(value, name) => [formatearDinero(value), name]}
+                              contentStyle={{ backgroundColor: '#1e1e26', border: '1px solid #333', borderRadius: '8px', fontSize: '0.8rem' }}
+                              itemStyle={{ color: '#fff' }}
+                              labelStyle={{ color: '#fff' }}
+                            />
+                            <Legend
+                              iconType="circle"
+                              iconSize={9}
+                              wrapperStyle={{ paddingTop: '14px', fontSize: '0.74rem', lineHeight: '1.6' }}
+                              formatter={(value) => <span style={{ color: 'var(--text-muted, #9aa)' }}>{value}</span>}
+                            />
                           </PieChart>
                         </ResponsiveContainer>
                       ) : <div className="fg-empty"><i className="fas fa-folder-open"></i><p>Sin ingresos en este periodo</p></div>}

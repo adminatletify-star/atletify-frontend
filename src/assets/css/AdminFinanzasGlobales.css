@@ -347,8 +347,31 @@
 
 .fg-chart {
   width: 100%;
+  min-width: 0;
   height: 280px;
+  min-height: 280px;
   position: relative;
+}
+
+/* El donut "Desglose de Ingresos" tiene leyenda con muchas categorías;
+   necesita más alto para que la leyenda no se encime sobre la gráfica. */
+.fg-chart--pie {
+  height: 340px;
+  min-height: 340px;
+}
+
+@media (max-width: 576px) {
+  .fg-chart--pie {
+    height: 420px;
+    min-height: 420px;
+  }
+}
+
+/* Los items del grid de gráficas necesitan min-width:0 para que el
+   ResponsiveContainer de Recharts pueda medir un ancho válido desde el
+   primer render (evita el warning "width(-1) / height(-1)"). */
+.fg-charts-grid .fg-card {
+  min-width: 0;
 }
 
 .fg-empty {
