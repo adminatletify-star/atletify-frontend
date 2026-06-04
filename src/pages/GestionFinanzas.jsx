@@ -437,10 +437,10 @@ export default function GestionFinanzas() {
 
   useEffect(() => {
     if (pestaña === 'movimientos' && box) cargarMovimientos(box.idBox, filtroMes, filtroTipoMov);
-    if (pestaña === 'dropin' && box) cargarDropins(box.idBox);
+    if (pestaña === 'dropin' && box) { cargarDropins(box.idBox); cargarAtletasConVisitas(box.idBox); }
     if (pestaña === 'paquetes' && box) cargarPaquetes(box.idBox);
     if (pestaña === 'solicitudes') cargarSolicitudes();
-  }, [pestaña, box, filtroMes, filtroTipoMov, cargarMovimientos, cargarDropins, cargarPaquetes, cargarSolicitudes]);
+  }, [pestaña, box, filtroMes, filtroTipoMov, cargarMovimientos, cargarDropins, cargarPaquetes, cargarSolicitudes, cargarAtletasConVisitas]);
 
   const crearDescuento = async (e) => {
     e.preventDefault();
@@ -1135,7 +1135,7 @@ export default function GestionFinanzas() {
                     <p className="finanzas-dropin-panel__desc">
                       Registra a un turista en una clase del día y cobra el pago en mostrador.
                     </p>
-                    <button type="button" className="finanzas-btn-submit finanzas-btn-submit--warning w-100" onClick={() => { if (box?.regalarVisitasAmigo) setShowChooserRegistro(true); else abrirModalDropIn(); }}>
+                    <button type="button" className="finanzas-btn-submit finanzas-btn-submit--warning w-100" onClick={() => { if (atletasConVisitas.length > 0) setShowChooserRegistro(true); else abrirModalDropIn(); }}>
                       <i className="fas fa-plus me-2"></i>Registrar Drop-In
                     </button>
                   </div>

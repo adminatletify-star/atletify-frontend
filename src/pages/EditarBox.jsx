@@ -86,6 +86,7 @@ export default function EditarBox() {
   const [modalVisitas, setModalVisitas] = useState(null); // null | 'activar' | 'desactivar'
   const [passwordVisitas, setPasswordVisitas] = useState('');
   const [accionPaquetes, setAccionPaquetes] = useState('mantener'); // 'mantener' | 'borrar'
+  const [opcionDesactivar, setOpcionDesactivar] = useState('pausar'); // 'pausar' | 'solo-nuevos'
   const [cortesiasVigentes, setCortesiasVigentes] = useState(0);
   const [procesandoVisitas, setProcesandoVisitas] = useState(false);
 
@@ -341,17 +342,15 @@ export default function EditarBox() {
   async function abrirModalToggleVisitas(activar) {
     setPasswordVisitas('');
     setAccionPaquetes('mantener');
-    if (activar) {
-      const idBox = boxLocal?.idBox || boxLocal?.IdBox;
-      try {
-        const res = await fetch(`${API_BASE}/configuracionbox/${idBox}/cortesias-vigentes`, { headers: headersGet });
-        const data = res.ok ? await res.json() : { count: 0 };
-        setCortesiasVigentes(data.count || 0);
-      } catch { setCortesiasVigentes(0); }
-      setModalVisitas('activar');
-    } else {
-      setModalVisitas('desactivar');
-    }
+    setOpcionDesactivar('pausar');
+    // Contamos las cortesías vigentes para informar en ambos flujos (activar y desactivar).
+    const idBox = boxLocal?.idBox || boxLocal?.IdBox;
+    try {
+      const res = await fetch(`${API_BASE}/configuracionbox/${idBox}/cortesias-vigentes`, { headers: headersGet });
+      const data = res.ok ? await res.json() : { count: 0 };
+      setCortesiasVigentes(data.count || 0);
+    } catch { setCortesiasVigentes(0); }
+    setModalVisitas(activar ? 'activar' : 'desactivar');
   }
 
   // Verifica la contraseña y aplica el cambio (con auditoría en el backend).
@@ -364,7 +363,7 @@ export default function EditarBox() {
       const res = await fetch(`${API_BASE}/configuracionbox/${idBox}/toggle-visitas-regalo`, {
         method: 'POST',
         headers: headersPost,
-        body: JSON.stringify({ contrasena: passwordVisitas, activar, accionPaquetes: activar ? accionPaquetes : null })
+        body: JSON.stringify({ contrasena: passwordVisitas, activar, accionPaquetes: activar ? accionPaquetes : null, opcionDesactivar: activar ? null : opcionDesactivar })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { alert(data.mensaje || 'No se pudo aplicar el cambio.'); return; }
@@ -1056,14 +1055,25 @@ export default function EditarBox() {
               <i className={`fas ${modalVisitas === 'desactivar' ? 'fa-pause-circle' : 'fa-gift'}`}></i>
             </div>
             <h5 className="eb-visitas-modal-title">
-              {modalVisitas === 'desactivar' ? 'Pausar visitas de regalo' : 'Activar visitas de regalo'}
+              {modalVisitas === 'desactivar' ? 'Desactivar visitas de regalo' : 'Activar visitas de regalo'}
             </h5>
 
             {modalVisitas === 'desactivar' ? (
-              <p className="eb-visitas-modal-text">
-                Se <strong>pausarán</strong> las visitas de regalo de tus atletas: dejarán de verlas y no se podrán canjear.
-                No se borran — la caducidad sigue corriendo, así que si reactivas, quienes no se les hayan vencido las recuperan.
-              </p>
+              <>
+                <p className="eb-visitas-modal-text">
+                  Vas a desactivar las visitas de regalo. ¿Cómo quieres hacerlo?
+                </p>
+                <div className="eb-visitas-choice">
+                  <button type="button" className={`eb-visitas-choice-opt ${opcionDesactivar === 'pausar' ? 'is-active' : ''}`} onClick={() => setOpcionDesactivar('pausar')}>
+                    <i className={`fas ${opcionDesactivar === 'pausar' ? 'fa-check-circle' : 'fa-circle'}`}></i>
+                    <div><strong>Pausar para todos</strong><span>Nadie verá ni podrá canjear sus visitas. La caducidad sigue corriendo; si reactivas, las recuperan.</span></div>
+                  </button>
+                  <button type="button" className={`eb-visitas-choice-opt ${opcionDesactivar === 'solo-nuevos' ? 'is-active' : ''}`} onClick={() => setOpcionDesactivar('solo-nuevos')}>
+                    <i className={`fas ${opcionDesactivar === 'solo-nuevos' ? 'fa-check-circle' : 'fa-circle'}`}></i>
+                    <div><strong>Solo dejar de dar a nuevos</strong><span>Las cuentas nuevas ya no reciben visitas, pero las {cortesiasVigentes} vigente(s) siguen activas y canjeables hasta vencer.</span></div>
+                  </button>
+                </div>
+              </>
             ) : (
               <>
                 <p className="eb-visitas-modal-text">
@@ -1105,7 +1115,7 @@ export default function EditarBox() {
                 textoProcesando="Verificando..."
                 disabled={procesandoVisitas || !passwordVisitas.trim()}
               >
-                {modalVisitas === 'desactivar' ? 'Pausar' : 'Activar'}
+                {modalVisitas === 'desactivar' ? 'Desactivar' : 'Activar'}
               </BotonSeguro>
             </div>
           </div>
