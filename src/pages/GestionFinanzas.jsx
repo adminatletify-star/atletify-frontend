@@ -13,8 +13,89 @@ import MetodoPagoPicker from '../components/MetodoPagoPicker';
 import CategoriaBasePicker from '../components/CategoriaBasePicker';
 import NivelAccesoPicker from '../components/NivelAccesoPicker';
 import '../assets/css/GestionFinanzas.css';
+import '../assets/css/visitas-regalo.css';
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api/finanzas`;
+
+// ── Disponibilidad de clases (lógica COMPARTIDA por drop-in normal y cajear) ──
+const JERARQUIA_NIVEL = { novato: 1, principiante: 2, intermedio: 3, rx: 4, avanzado: 4 };
+const MAP_DIAS_SEMANA = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+
+const parseMinHora = (hhmm) => {
+  if (!hhmm) return null;
+  const [h, m] = hhmm.split(':');
+  return parseInt(h, 10) * 60 + parseInt(m || '0', 10);
+};
+
+// Calcula el estado de una clase para HOY usando el reloj local del navegador.
+// Reglas (idénticas en ambos flujos):
+//  - Solo HOY (por DiasRecurrentes), solo con cupo, finaliza por su hora de FIN.
+//  - finalizada (ahora >= fin) o llena  => NO visible.
+//  - en curso (inicio <= ahora < fin)   => visible y seleccionable, etiqueta "Transcurriendo".
+//  - nivel insuficiente                 => visible pero deshabilitada ("Nivel superior").
+const calcularEstadoClase = (c, nivelAtleta) => {
+  const ahora = new Date();
+  const dayCodeHoy = MAP_DIAS_SEMANA[ahora.getDay()];
+  const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
+
+  const esHoy = !c.dias || c.dias.toUpperCase().includes(dayCodeHoy);
+  const ini = parseMinHora(c.horarioInicio);
+  const fin = parseMinHora(c.horarioFin);
+  const finalizada = fin != null && minutosAhora >= fin;
+  const enCurso = ini != null && fin != null && minutosAhora >= ini && minutosAhora < fin;
+  const cupoLleno = c.maximoAtletas <= 0 || c.inscritos >= c.maximoAtletas;
+
+  const niveles = c.nivelesPermitidos || 'Todos';
+  let nivelNoPermitido = false;
+  if (niveles !== 'Todos') {
+    const nivelAtletaVal = JERARQUIA_NIVEL[(nivelAtleta || '').toLowerCase()] || 1;
+    let nivelClaseVal = 0;
+    Object.keys(JERARQUIA_NIVEL).forEach(n => { if (niveles.toLowerCase().includes(n)) nivelClaseVal = Math.max(nivelClaseVal, JERARQUIA_NIVEL[n]); });
+    if (nivelClaseVal === 0) nivelClaseVal = 1;
+    if (nivelAtletaVal < nivelClaseVal) nivelNoPermitido = true;
+  }
+
+  const visible = esHoy && !finalizada && !cupoLleno;
+  return { visible, enCurso, finalizada, cupoLleno, nivelNoPermitido, niveles, bloqueada: nivelNoPermitido };
+};
+
+// Clases visibles para hoy, ordenadas por hora de inicio.
+const clasesDisponiblesParaHoy = (clases, nivelAtleta) =>
+  (clases || [])
+    .filter(c => calcularEstadoClase(c, nivelAtleta).visible)
+    .sort((a, b) => (parseMinHora(a.horarioInicio) || 0) - (parseMinHora(b.horarioInicio) || 0));
+
+// Render de una tarjeta de clase (idéntico en ambos flujos).
+const renderClaseDisponible = (c, nivelAtleta, selId, onSelect) => {
+  const est = calcularEstadoClase(c, nivelAtleta);
+  const sel = selId === c.idClase;
+  const hi = (c.horarioInicio || '').substring(0, 5);
+  const hf = (c.horarioFin || '').substring(0, 5);
+  return (
+    <button
+      key={c.idClase}
+      type="button"
+      disabled={est.bloqueada}
+      onClick={() => onSelect(c)}
+      className={`vr-clase ${sel ? 'vr-clase--sel' : ''}`}
+    >
+      <div className="vr-clase-nombre">
+        {sel && <i className="fas fa-check-circle text-info"></i>}
+        {c.nombre}
+        {est.niveles !== 'Todos' && <span className="vr-clase-nivel">{est.niveles}</span>}
+        {est.enCurso && <span className="vr-clase-encurso"><i className="fas fa-hourglass-half"></i> En curso</span>}
+      </div>
+      <div className="vr-clase-meta">
+        {est.nivelNoPermitido
+          ? <><i className="fas fa-lock me-1"></i>Nivel superior (solo {est.niveles})</>
+          : est.enCurso
+            ? <><i className="fas fa-hourglass-half me-1"></i>Transcurriendo · termina {hf} · {c.inscritos}/{c.maximoAtletas}</>
+            : <><i className="far fa-clock me-1"></i>{hi}–{hf} · {c.inscritos}/{c.maximoAtletas} atletas</>
+        }
+      </div>
+    </button>
+  );
+};
 
 export default function GestionFinanzas() {
   const navigate = useNavigate();
@@ -138,6 +219,20 @@ export default function GestionFinanzas() {
   const [claseSeleccionada, setClaseSeleccionada] = useState(null); // {idClase, tipoVisita:'Clase'|'SoloGym', nombre, costo}
   const [procesandoPago, setProcesandoPago] = useState(false);
   const [loadingClasesDropIn, setLoadingClasesDropIn] = useState(false);
+
+  // ── ESTADO CAJEAR VISITAS DE REGALO ──────────────────────────
+  const [showChooserRegistro, setShowChooserRegistro] = useState(false); // selector Drop-In normal vs Cajear
+  const [showModalCajear, setShowModalCajear] = useState(false);
+  const [pasoCajear, setPasoCajear] = useState(1); // 1 = elegir atleta, 2 = datos amigo + clase
+  const [atletasConVisitas, setAtletasConVisitas] = useState([]);
+  const [loadingAtletasVisitas, setLoadingAtletasVisitas] = useState(false);
+  const [busquedaAtletaVisita, setBusquedaAtletaVisita] = useState('');
+  const [atletaCajear, setAtletaCajear] = useState(null); // atleta dueño del cupón
+  const [formCajear, setFormCajear] = useState({ nombre: '', email: '', nivelAtleta: 'Principiante' }); // datos del amigo
+  const [clasesCajear, setClasesCajear] = useState([]);
+  const [loadingClasesCajear, setLoadingClasesCajear] = useState(false);
+  const [claseCajearSel, setClaseCajearSel] = useState(null);
+  const [procesandoCajear, setProcesandoCajear] = useState(false);
 
   const [editandoPlan, setEditandoPlan] = useState(null);
   const [showModalEditPlan, setShowModalEditPlan] = useState(false); // 👈 Nuevo Modal
@@ -283,6 +378,61 @@ export default function GestionFinanzas() {
     } finally {
       setProcesandoPago(false);
     }
+  };
+
+  // ── CAJEAR VISITAS DE REGALO ──────────────────────────────────
+  const cargarAtletasConVisitas = useCallback(async (idBox) => {
+    setLoadingAtletasVisitas(true);
+    try {
+      const res = await fetch(`${API_BASE}/cajear/atletas-con-visitas/${idBox}`, { headers: headersGet });
+      if (res.ok) setAtletasConVisitas(await res.json());
+    } catch (e) { console.error(e); } finally { setLoadingAtletasVisitas(false); }
+  }, [headersGet]);
+
+  const cargarClasesCajear = useCallback(async (idBox) => {
+    setLoadingClasesCajear(true);
+    try {
+      const res = await fetch(`${API_BASE}/cajear/clases-disponibles/${idBox}`, { headers: headersGet });
+      if (res.ok) setClasesCajear(await res.json());
+    } catch (e) { console.error(e); } finally { setLoadingClasesCajear(false); }
+  }, [headersGet]);
+
+  const abrirModalCajear = () => {
+    setShowChooserRegistro(false);
+    setAtletaCajear(null);
+    setFormCajear({ nombre: '', email: '', nivelAtleta: 'Principiante' });
+    setClaseCajearSel(null);
+    setBusquedaAtletaVisita('');
+    setPasoCajear(1);
+    setShowModalCajear(true);
+    if (box) { cargarAtletasConVisitas(box.idBox); cargarClasesCajear(box.idBox); }
+  };
+
+  const confirmarCajear = async () => {
+    if (!atletaCajear || !claseCajearSel || procesandoCajear) return;
+    if (!formCajear.nombre.trim() || !formCajear.email.trim()) { alert('El nombre y correo del amigo son obligatorios.'); return; }
+    setProcesandoCajear(true);
+    try {
+      const res = await fetch(`${API_BASE}/cajear/registrar`, {
+        method: 'POST',
+        headers: headersPost,
+        body: JSON.stringify({
+          idBox: box.idBox,
+          idUsuarioAtleta: atletaCajear.idUsuario,
+          nombreAmigo: formCajear.nombre,
+          correoAmigo: formCajear.email,
+          nivelAmigo: formCajear.nivelAtleta,
+          idClase: claseCajearSel.idClase
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.mensaje || 'No se pudo canjear la visita.'); return; }
+      alert(`✅ Visita de regalo canjeada. Al atleta le quedan ${data.visitasRestantes} visita(s).`);
+      setShowModalCajear(false);
+      cargarDropins(box.idBox);
+      cargarDatos(box.idBox);
+    } catch (e) { console.error(e); alert('Error al canjear: ' + e.message); }
+    finally { setProcesandoCajear(false); }
   };
 
   useEffect(() => {
@@ -585,6 +735,9 @@ export default function GestionFinanzas() {
     if (ordenSemaforo === 'dias_desc') return diasB - diasA;
     return 0;
   });
+
+  // Normaliza texto para búsquedas: sin acentos, sin espacios, minúsculas
+  const normalizar = (s) => (s || '').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '');
 
   const getBadgeMov = (tipo) => {
     if (tipo?.startsWith('Alta Permanente')) return 'mov-badge--vip';
@@ -982,7 +1135,7 @@ export default function GestionFinanzas() {
                     <p className="finanzas-dropin-panel__desc">
                       Registra a un turista en una clase del día y cobra el pago en mostrador.
                     </p>
-                    <button type="button" className="finanzas-btn-submit finanzas-btn-submit--warning w-100" onClick={abrirModalDropIn}>
+                    <button type="button" className="finanzas-btn-submit finanzas-btn-submit--warning w-100" onClick={() => { if (box?.regalarVisitasAmigo) setShowChooserRegistro(true); else abrirModalDropIn(); }}>
                       <i className="fas fa-plus me-2"></i>Registrar Drop-In
                     </button>
                   </div>
@@ -1194,7 +1347,7 @@ export default function GestionFinanzas() {
                           <div className="fw-bold text-white">{m.nombreAtleta}</div>
                           <div className="d-flex justify-content-between align-items-center mt-1">
                             <span className="small text-secondary">{m.metodoPago}</span>
-                            <span className="text-success fw-bold">${m.monto?.toFixed(2)}</span>
+                            <span className="text-success fw-bold">{m.esCupon ? 'Cupón de visita' : `$${m.monto?.toFixed(2)}`}</span>
                           </div>
                         </div>
                       ))}
@@ -1214,7 +1367,7 @@ export default function GestionFinanzas() {
                                 <td>{m.nombreAtleta}</td>
                                 <td><span className={`mov-badge ${getBadgeMov(m.tipo)}`}>{m.tipo}</span></td>
                                 <td>{m.metodoPago}</td>
-                                <td className="text-end text-success fw-bold">${m.monto?.toFixed(2)}</td>
+                                <td className="text-end text-success fw-bold">{m.esCupon ? 'Cupón de visita' : `$${m.monto?.toFixed(2)}`}</td>
                               </tr>
                             ))
                           )}
@@ -1491,8 +1644,9 @@ export default function GestionFinanzas() {
 
               <div className="finanzas-modal-btns d-flex gap-2">
                 <button type="button" onClick={() => setShowModalCobro(false)} className="finanzas-modal-btn-cancel w-50">Cancelar</button>
-                <button type="submit" className="btn btn-success w-50" >
-                  <i className="fas fa-check me-1"></i>Activar Plan</button>
+                <BotonSeguro type="button" onClick={procesarRenovacionConPago} className="btn btn-success w-50" textoProcesando="Activando...">
+                  <i className="fas fa-check me-1"></i>Activar Plan
+                </BotonSeguro>
               </div>
             </form>
           </div>
@@ -1656,103 +1810,14 @@ export default function GestionFinanzas() {
 
             {/* ── PASO 2: SELECCIÓN DE CLASE ── */}
             {pasoDropIn === 2 && (() => {
-              const jerarquia = { novato: 1, principiante: 2, intermedio: 3, rx: 4, avanzado: 4 };
-              const nivelAtletaVal = jerarquia[formDropInAdmin.nivelAtleta.toLowerCase()] || 1;
-
-              const mapDiasArray = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
-              const dayCodeHoy = mapDiasArray[new Date().getDay()];
-
-              const ahora = new Date();
-              const tiempoActualMinutos = ahora.getHours() * 60 + ahora.getMinutes();
-
-              const clasesDeHoy = clasesDropIn.filter(c => {
-                 if (!c.dias) return true;
-                 return c.dias.toUpperCase().includes(dayCodeHoy);
-              });
-
-              const clasesManana = clasesDeHoy.filter(c => {
-                const hrs = c.horarioInicio ? parseInt(c.horarioInicio.split(':')[0], 10) : 0;
-                return hrs < 13;
-              });
-              const clasesTarde = clasesDeHoy.filter(c => {
-                const hrs = c.horarioInicio ? parseInt(c.horarioInicio.split(':')[0], 10) : 12;
-                return hrs >= 13;
-              });
-
-              const renderClase = (c) => {
-                const nivelesClase = c.nivelesPermitidos || 'Todos';
-                let nivelNoPermitido = false;
-                if (nivelesClase !== 'Todos') {
-                  let nivelClaseVal = 0;
-                  Object.keys(jerarquia).forEach(n => {
-                    if (nivelesClase.toLowerCase().includes(n))
-                      nivelClaseVal = Math.max(nivelClaseVal, jerarquia[n]);
-                  });
-                  if (nivelClaseVal === 0) nivelClaseVal = 1;
-                  if (nivelAtletaVal < nivelClaseVal) nivelNoPermitido = true;
-                }
-
-                let yaPaso = false;
-                if (c.horarioInicio) {
-                    const [h, m] = c.horarioInicio.split(':');
-                    const minClase = parseInt(h, 10) * 60 + parseInt(m || '0', 10);
-                    if (tiempoActualMinutos >= minClase) {
-                        yaPaso = true;
-                    }
-                }
-
-                const cupoLleno = c.maximoAtletas <= 0 || c.inscritos >= c.maximoAtletas;
-                const bloqueada = nivelNoPermitido || cupoLleno || yaPaso;
-                const seleccionada = claseSeleccionada?.tipoVisita === 'Clase' && claseSeleccionada?.idClase === c.idClase;
-
-                return (
-                  <button
-                    key={c.idClase}
-                    type="button"
-                    disabled={bloqueada}
-                    onClick={() => setClaseSeleccionada({ idClase: c.idClase, tipoVisita: 'Clase', nombre: c.nombre, costo: 0 })}
-                    className="btn text-start p-2 rounded-3 w-100 mb-2"
-                    style={{
-                      background: seleccionada ? 'rgba(245,166,35,0.18)' : bloqueada ? 'rgba(255,255,255,0.02)' : 'rgba(230,57,70,0.07)',
-                      color: 'white',
-                      border: `1px solid ${seleccionada ? 'rgba(245,166,35,0.6)' : bloqueada ? 'rgba(255,255,255,0.05)' : 'rgba(230,57,70,0.2)'}`,
-                      transition: 'all 0.2s',
-                      opacity: bloqueada ? 0.5 : 1,
-                    }}
-                  >
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        <div className="fw-bold" style={{ fontSize: '0.9rem' }}>
-                          {seleccionada && <i className="fas fa-check-circle text-warning me-2"></i>}
-                          {c.nombre}
-                          <span className="text-success ms-2">(${box?.costoDropIn || 0})</span>
-                          {nivelesClase !== 'Todos' && <span className="badge bg-danger bg-opacity-25 text-danger ms-2" style={{ fontSize: '0.6rem' }}>{nivelesClase}</span>}
-                        </div>
-                        <div className="text-secondary" style={{ fontSize: '0.78rem' }}>
-                          {yaPaso
-                            ? <><i className="fas fa-clock me-1 text-secondary"></i>Clase finalizada</>
-                            : cupoLleno
-                              ? <><i className="fas fa-ban me-1 text-danger"></i>Cupo lleno</>
-                              : nivelNoPermitido
-                                ? <><i className="fas fa-lock me-1"></i>Solo {nivelesClase}</>
-                                : <><i className="far fa-clock me-1"></i>{c.horarioInicio} &bull; {c.inscritos}/{c.maximoAtletas} atletas</>
-                          }
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              };
+              const clasesHoy = clasesDisponiblesParaHoy(clasesDropIn, formDropInAdmin.nivelAtleta);
+              const selId = claseSeleccionada?.tipoVisita === 'Clase' ? claseSeleccionada?.idClase : null;
+              const seleccionarClase = (c) => setClaseSeleccionada({ idClase: c.idClase, tipoVisita: 'Clase', nombre: c.nombre, costo: 0 });
 
               return (
                 <div>
                   {loadingClasesDropIn ? (
                     <div className="text-center py-4"><AtletifyLoader /></div>
-                  ) : clasesDropIn.length === 0 ? (
-                    <div className="text-center py-4 text-secondary">
-                      <i className="fas fa-calendar-times fa-2x mb-2 d-block"></i>
-                      No hay clases disponibles con cupo hoy.
-                    </div>
                   ) : (
                     <>
                       {/* Open Gym */}
@@ -1762,29 +1827,23 @@ export default function GestionFinanzas() {
                           <button
                             type="button"
                             onClick={() => setClaseSeleccionada({ idClase: 0, tipoVisita: 'SoloGym', nombre: 'Open Gym', costo: box?.costoVisitaGym || 0 })}
-                            className="btn text-start p-2 rounded-3 w-100 mb-2"
-                            style={{
-                              background: claseSeleccionada?.tipoVisita === 'SoloGym' ? 'rgba(245,166,35,0.18)' : 'rgba(245,166,35,0.06)',
-                              color: 'white',
-                              border: `1px solid ${claseSeleccionada?.tipoVisita === 'SoloGym' ? 'rgba(245,166,35,0.6)' : 'rgba(245,166,35,0.2)'}`,
-                            }}
+                            className={`vr-clase ${claseSeleccionada?.tipoVisita === 'SoloGym' ? 'vr-clase--sel' : ''}`}
                           >
-                            {claseSeleccionada?.tipoVisita === 'SoloGym' && <i className="fas fa-check-circle text-warning me-2"></i>}
-                            <span className="fw-bold">Open Gym (Solo pesas) <span className="text-success ms-2">(${box?.costoVisitaGym || 0})</span></span>
+                            <div className="vr-clase-nombre">
+                              {claseSeleccionada?.tipoVisita === 'SoloGym' && <i className="fas fa-check-circle text-info"></i>}
+                              Open Gym (Solo pesas)
+                            </div>
+                            <div className="vr-clase-meta"><i className="fas fa-dumbbell me-1"></i>Acceso libre al gimnasio</div>
                           </button>
                         </div>
                       )}
 
-                      {clasesManana.length > 0 && (
-                        <div className="mb-3">
-                          <div className="text-warning small fw-bold mb-2"><i className="fas fa-sun me-1"></i> MAÑANA</div>
-                          {clasesManana.map(renderClase)}
-                        </div>
-                      )}
-                      {clasesTarde.length > 0 && (
-                        <div className="mb-3">
-                          <div className="text-info small fw-bold mb-2"><i className="fas fa-moon me-1"></i> TARDE</div>
-                          {clasesTarde.map(renderClase)}
+                      <div className="text-secondary small fw-bold mb-2"><i className="far fa-clock me-1"></i> CLASES DE HOY</div>
+                      {clasesHoy.length === 0 ? (
+                        <div className="vr-empty"><i className="fas fa-calendar-times fa-2x"></i>No hay clases disponibles para hoy.</div>
+                      ) : (
+                        <div style={{ maxHeight: '40vh', overflowY: 'auto' }} className="mb-2">
+                          {clasesHoy.map(c => renderClaseDisponible(c, formDropInAdmin.nivelAtleta, selId, seleccionarClase))}
                         </div>
                       )}
                     </>
@@ -1866,9 +1925,161 @@ export default function GestionFinanzas() {
         </div>
       )}
 
+      {/* ══════════════════════════════════════════════════════
+          SELECTOR: Drop-In normal vs Cajear visita de regalo
+          ══════════════════════════════════════════════════════ */}
+      {showChooserRegistro && (
+        <div className="finanzas-modal-overlay" onClick={() => setShowChooserRegistro(false)}>
+          <div className="finanzas-modal" style={{ maxWidth: '440px', width: '95%', borderTop: '3px solid var(--primary)' }} onClick={e => e.stopPropagation()}>
+            <div className="finanzas-modal-header">
+              <h5 className="finanzas-modal-titulo"><i className="fas fa-plus me-2 text-warning"></i>Registrar Drop-In</h5>
+              <button className="finanzas-modal-close" onClick={() => setShowChooserRegistro(false)}><i className="fas fa-times"></i></button>
+            </div>
+            <p className="text-secondary small text-center mb-3">¿Qué quieres registrar?</p>
+            <div className="d-flex flex-column gap-2">
+              <button type="button" className="vr-choice vr-choice--dropin" onClick={() => { setShowChooserRegistro(false); abrirModalDropIn(); }}>
+                <i className="fas fa-plane-arrival"></i> Drop-In normal (turista que paga)
+              </button>
+              <button type="button" className="vr-choice vr-choice--cajear" onClick={abrirModalCajear}>
+                <i className="fas fa-gift"></i> Cajear visita de regalo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════
+          MODAL CAJEAR VISITA DE REGALO (2 pasos)
+          ══════════════════════════════════════════════════════ */}
+      {showModalCajear && (
+        <div className="finanzas-modal-overlay" onClick={() => setShowModalCajear(false)}>
+          <div className="finanzas-modal-card" style={{ maxWidth: '560px', width: '95%', borderTop: '3px solid var(--primary)' }} onClick={e => e.stopPropagation()}>
+
+            <div className="finanzas-modal-header">
+              <h5 className="finanzas-modal-titulo">
+                <i className="fas fa-gift me-2 text-info"></i>
+                Cajear visita de regalo
+                <span className="badge bg-secondary ms-2" style={{ fontSize: '0.7rem', fontWeight: 400 }}>Paso {pasoCajear} de 2</span>
+              </h5>
+              <button className="finanzas-modal-close" onClick={() => setShowModalCajear(false)}><i className="fas fa-times"></i></button>
+            </div>
+
+            {/* ── PASO 1: ELEGIR ATLETA CON VISITAS ── */}
+            {pasoCajear === 1 && (() => {
+              const atletasFiltrados = atletasConVisitas.filter(a => {
+                if (!busquedaAtletaVisita.trim()) return true;
+                return normalizar(`${a.nombre} ${a.apellidos} ${a.correo}`).includes(normalizar(busquedaAtletaVisita));
+              });
+              return (
+                <div className="p-1">
+                  <div style={{ position: 'relative' }} className="mb-3">
+                    <i className="fas fa-search" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}></i>
+                    <input
+                      type="text"
+                      className="finanzas-input"
+                      style={{ paddingLeft: '36px' }}
+                      placeholder="Buscar por nombre, apellido o correo..."
+                      value={busquedaAtletaVisita}
+                      onChange={e => setBusquedaAtletaVisita(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+
+                  {loadingAtletasVisitas ? (
+                    <div className="text-center py-4"><AtletifyLoader /></div>
+                  ) : atletasFiltrados.length === 0 ? (
+                    <div className="vr-empty">
+                      <i className="fas fa-user-slash fa-2x"></i>
+                      {atletasConVisitas.length === 0 ? 'Ningún atleta tiene visitas de regalo vigentes.' : 'Sin resultados para tu búsqueda.'}
+                    </div>
+                  ) : (
+                    <div className="d-flex flex-column gap-2" style={{ maxHeight: '52vh', overflowY: 'auto' }}>
+                      {atletasFiltrados.map(a => (
+                        <button
+                          key={a.idUsuario}
+                          type="button"
+                          onClick={() => { setAtletaCajear(a); setClaseCajearSel(null); setPasoCajear(2); }}
+                          className="vr-atleta"
+                        >
+                          <div className="vr-atleta-avatar">{String(a.nombre || '?').charAt(0).toUpperCase()}</div>
+                          <div className="vr-atleta-info">
+                            <div className="vr-atleta-nombre">{a.nombre} {a.apellidos}</div>
+                            <div className="vr-atleta-correo">{a.correo}</div>
+                          </div>
+                          <span className="vr-atleta-badge"><i className="fas fa-gift"></i>{a.visitasRestantes}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="mt-3">
+                    <button type="button" className="finanzas-modal-btn-cancel w-100" onClick={() => setShowModalCajear(false)}>Cancelar</button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── PASO 2: DATOS DEL AMIGO + CLASE ── */}
+            {pasoCajear === 2 && (() => {
+              const clasesHoy = clasesDisponiblesParaHoy(clasesCajear, formCajear.nivelAtleta);
+              const puedeConfirmar = atletaCajear && claseCajearSel && formCajear.nombre.trim() && formCajear.email.trim();
+
+              return (
+                <div className="p-1">
+                  {/* Cupón del atleta */}
+                  <div className="vr-cupon">
+                    <div><span className="text-secondary">Cupón de:</span> <span className="fw-bold text-white">{atletaCajear?.nombre} {atletaCajear?.apellidos}</span></div>
+                    <span className="vr-atleta-badge"><i className="fas fa-gift"></i>{atletaCajear?.visitasRestantes} disp.</span>
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="etiqueta-campo">Nombre Completo del amigo *</label>
+                    <input type="text" className="finanzas-input" placeholder="Ej. Juan García" value={formCajear.nombre} onChange={e => setFormCajear({ ...formCajear, nombre: e.target.value })} />
+                  </div>
+                  <div className="mb-3">
+                    <label className="etiqueta-campo">Correo Electrónico del amigo *</label>
+                    <input type="email" className="finanzas-input" placeholder="amigo@correo.com" value={formCajear.email} onChange={e => setFormCajear({ ...formCajear, email: e.target.value })} />
+                  </div>
+                  <div className="mb-3">
+                    <label className="etiqueta-campo">Nivel del Atleta</label>
+                    <CategoriaBasePicker valor={formCajear.nivelAtleta} onCambiar={v => { setFormCajear({ ...formCajear, nivelAtleta: v }); setClaseCajearSel(null); }} />
+                  </div>
+
+                  <label className="etiqueta-campo">Clase a la que se registra (hoy)</label>
+                  {loadingClasesCajear ? (
+                    <div className="text-center py-4"><AtletifyLoader /></div>
+                  ) : clasesHoy.length === 0 ? (
+                    <div className="vr-empty"><i className="fas fa-calendar-times fa-2x"></i>No hay clases disponibles para hoy.</div>
+                  ) : (
+                    <div style={{ maxHeight: '34vh', overflowY: 'auto' }} className="mb-2">
+                      {clasesHoy.map(c => renderClaseDisponible(c, formCajear.nivelAtleta, claseCajearSel?.idClase, setClaseCajearSel))}
+                    </div>
+                  )}
+
+                  <div className="d-flex gap-2 mt-3">
+                    <button type="button" className="finanzas-modal-btn-cancel w-50" onClick={() => setPasoCajear(1)}>
+                      <i className="fas fa-arrow-left me-1"></i> Atrás
+                    </button>
+                    <BotonSeguro
+                      onClick={confirmarCajear}
+                      className="finanzas-btn-submit finanzas-btn-submit--warning w-50"
+                      textoProcesando="Canjeando..."
+                      disabled={!puedeConfirmar || procesandoCajear}
+                    >
+                      <i className="fas fa-gift me-2"></i> Canjear visita
+                    </BotonSeguro>
+                  </div>
+                </div>
+              );
+            })()}
+
+          </div>
+        </div>
+      )}
+
       {fotoModalUrl && (
-        <div 
-          className="modal fade show" 
+        <div
+          className="modal fade show"
           style={{ display: 'block', background: 'rgba(0,0,0,0.85)', zIndex: 1050 }}
           onClick={() => setFotoModalUrl(null)}
         >

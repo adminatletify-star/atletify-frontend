@@ -13,7 +13,11 @@ const AccionBadge = ({ accion }) => {
   let color = 'var(--text-muted)';
   let icon = 'fa-info-circle';
 
-  if (accion.includes('ALTA')) { color = '#2ECC71'; icon = 'fa-user-plus'; }
+  if (accion.includes('DESACTIVAR_VISITAS')) { color = '#e67e22'; icon = 'fa-pause-circle'; }
+  else if (accion.includes('ACTIVAR_VISITAS')) { color = '#f5a623'; icon = 'fa-gift'; }
+  else if (accion.includes('DESACTIVAR_METODO')) { color = '#e67e22'; icon = 'fa-toggle-off'; }
+  else if (accion.includes('ACTIVAR_METODO')) { color = '#22c55e'; icon = 'fa-toggle-on'; }
+  else if (accion.includes('ALTA')) { color = '#2ECC71'; icon = 'fa-user-plus'; }
   else if (accion.includes('BAJA') || accion.includes('ELIMINAR')) { color = 'var(--primary)'; icon = 'fa-user-minus'; }
   else if (accion.includes('VENTA') || accion.includes('COBRO')) { color = '#3498db'; icon = 'fa-money-bill-wave'; }
   else if (accion.includes('CREAR_TIENDITA')) { color = '#f39c12'; icon = 'fa-store'; }
@@ -28,7 +32,7 @@ const AccionBadge = ({ accion }) => {
       borderRadius: '4px',
       whiteSpace: 'nowrap'
     }}>
-      <i className={`fas ${icon} me-1`} /> {accion.replace('_', ' ')}
+      <i className={`fas ${icon} me-1`} /> {accion.replaceAll('_', ' ')}
     </span>
   );
 };
@@ -106,6 +110,10 @@ export default function AuditoriaUserTab({ boxes }) {
             <option value="COBRO_MENSUALIDAD">Cobro Mensualidad</option>
             <option value="VENTA_PRODUCTO">Venta de Producto</option>
             <option value="CREAR_TIENDITA">Creación Tiendita</option>
+            <option value="ACTIVAR_VISITAS_REGALO">Activar Visitas de Regalo</option>
+            <option value="DESACTIVAR_VISITAS_REGALO">Pausar Visitas de Regalo</option>
+            <option value="ACTIVAR_METODO_PAGO">Activar Método de Pago</option>
+            <option value="DESACTIVAR_METODO_PAGO">Desactivar Método de Pago</option>
           </select>
         </div>
       </div>

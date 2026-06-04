@@ -18,12 +18,27 @@ export default function PuntoDeVenta() {
   const [modalFiarOpen, setModalFiarOpen] = useState(false);
   const [modalCobrarOpen, setModalCobrarOpen] = useState(false);
   const [metodoCobro, setMetodoCobro] = useState('Efectivo');
+  const [config, setConfig] = useState(null); // config del box: métodos de pago + compra mínima tarjeta
 
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));
     if (!b) { navigate('/admin-box-panel'); return; }
     setBox(b);
   }, [navigate]);
+
+  // Carga la config del box para habilitar/deshabilitar los métodos de pago igual que en editar-box
+  useEffect(() => {
+    if (!box) return;
+    (async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/configuracionbox/${box.idBox}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) setConfig(await res.json());
+      } catch { /* graceful: sin config, todos los métodos quedan habilitados */ }
+    })();
+  }, [box]);
 
   const cargarProductos = useCallback(async () => {
     if (!box) return;
@@ -81,6 +96,22 @@ export default function PuntoDeVenta() {
   }
 
   const totalVenta = carrito.reduce((acc, i) => acc + i.producto.precioVenta * i.cantidad, 0);
+
+  // Métodos de pago según la config del box (editar-box).
+  //  - visible: el método está ACTIVO en la config → si no, NO se muestra.
+  //  - habilitado: visible y además cumple la regla (Tarjeta requiere compra mínima).
+  // Mientras la config no carga (o falla), se muestran todos para no romper el flujo.
+  const minTarjeta = config?.compraMinimaTarjeta ?? 0;
+  const metodosPago = [
+    { value: 'Efectivo', icon: 'fa-money-bill-wave', label: 'Efectivo',
+      visible: !config || config.aceptarEfectivo, habilitado: true, motivo: '' },
+    { value: 'Tarjeta en Recepción', icon: 'fa-credit-card', label: 'Tarjeta',
+      visible: !config || config.aceptarTarjetaRecepcion, habilitado: totalVenta >= minTarjeta,
+      motivo: `Mínimo $${minTarjeta}` },
+    { value: 'Transferencia', icon: 'fa-university', label: 'Transferencia',
+      visible: !config || config.aceptarTransferencias, habilitado: true, motivo: '' },
+  ].filter(m => m.visible);
+  const metodoCobroHabilitado = metodosPago.some(m => m.value === metodoCobro && m.habilitado);
 
   const realizarVenta = async (esFiado = false, idUsuario = null, metodo = 'Efectivo') => {
     if (carrito.length === 0) return;
@@ -255,7 +286,7 @@ export default function PuntoDeVenta() {
                     <div className="d-flex gap-2">
                       <button
                         className="pdv-cobrar-btn w-100"
-                        onClick={() => setModalCobrarOpen(true)}
+                        onClick={() => { const habilitado = metodosPago.find(m => m.habilitado); if (habilitado) setMetodoCobro(habilitado.value); setModalCobrarOpen(true); }}
                         disabled={procesando || !tienePermiso}
                         title={!tienePermiso ? "No tienes permisos para vender en esta tienda." : ""}
                       >
@@ -442,26 +473,32 @@ export default function PuntoDeVenta() {
                   <i className="fas fa-wallet" style={{ marginRight: '0.4rem' }}></i>
                   Método de pago
                 </p>
-                <div className="pdv-metodo-grid">
-                  {[
-                    { value: 'Efectivo',             icon: 'fa-money-bill-wave', label: 'Efectivo' },
-                    { value: 'Tarjeta en Recepción', icon: 'fa-credit-card',     label: 'Tarjeta' },
-                    { value: 'Transferencia',         icon: 'fa-university',      label: 'Transferencia' },
-                  ].map(m => (
-                    <button
-                      key={m.value}
-                      type="button"
-                      className={`pdv-metodo-btn ${metodoCobro === m.value ? 'pdv-metodo-btn--activo' : ''}`}
-                      onClick={() => setMetodoCobro(m.value)}
-                    >
-                      <i className={`fas ${m.icon}`}></i>
-                      <span>{m.label}</span>
-                      {metodoCobro === m.value && (
-                        <i className="fas fa-check-circle pdv-metodo-check"></i>
-                      )}
-                    </button>
-                  ))}
-                </div>
+                {metodosPago.length === 0 ? (
+                  <div className="pdv-metodo-vacio">
+                    <i className="fas fa-triangle-exclamation"></i>
+                    No hay métodos de pago habilitados. Actívalos en Editar Box → Configuración Financiera.
+                  </div>
+                ) : (
+                  <div className="pdv-metodo-grid" style={{ gridTemplateColumns: `repeat(${metodosPago.length}, minmax(0, 1fr))` }}>
+                    {metodosPago.map(m => (
+                      <button
+                        key={m.value}
+                        type="button"
+                        disabled={!m.habilitado}
+                        title={!m.habilitado ? m.motivo : ''}
+                        className={`pdv-metodo-btn ${metodoCobro === m.value && m.habilitado ? 'pdv-metodo-btn--activo' : ''} ${!m.habilitado ? 'pdv-metodo-btn--off' : ''}`}
+                        onClick={() => setMetodoCobro(m.value)}
+                      >
+                        <i className={`fas ${m.icon}`}></i>
+                        <span>{m.label}</span>
+                        {!m.habilitado && <small className="pdv-metodo-motivo">{m.motivo}</small>}
+                        {m.habilitado && metodoCobro === m.value && (
+                          <i className="fas fa-check-circle pdv-metodo-check"></i>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
             </div>
@@ -478,7 +515,8 @@ export default function PuntoDeVenta() {
               <button
                 className="pdv-cobro-btn pdv-cobro-btn--confirm"
                 onClick={() => { setModalCobrarOpen(false); realizarVenta(false, null, metodoCobro); }}
-                disabled={procesando}
+                disabled={procesando || !metodoCobroHabilitado}
+                title={!metodoCobroHabilitado ? 'Selecciona un método de pago habilitado' : ''}
               >
                 {procesando
                   ? <><span className="pdv-cobro-spinner"></span> Registrando...</>
