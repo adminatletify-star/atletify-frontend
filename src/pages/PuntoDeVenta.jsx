@@ -125,6 +125,28 @@ export default function PuntoDeVenta() {
     realizarVenta(true, atleta.idUsuario);
   };
 
+    const apartadoActual = localStorage.getItem('apartadoVentas') || 'General (Box)';
+    const apartadosDataStr = localStorage.getItem('apartadosData');
+    let tienePermiso = true;
+    if (apartadosDataStr) {
+      try {
+        const apartadosData = JSON.parse(apartadosDataStr);
+        const currentData = apartadosData.find(a => a.nombre === apartadoActual);
+        if (currentData && currentData.esPrivado) {
+          const rol = usuario?.rol;
+          if (currentData.permisoVenta === "SoloAdmin" && rol !== "AdminBox" && rol !== "Developer") {
+            tienePermiso = false;
+          } else if (currentData.permisoVenta === "AdminYCoach" && rol !== "AdminBox" && rol !== "Developer" && rol !== "Coach") {
+            tienePermiso = false;
+          }
+        }
+      } catch (e) {
+        console.error("Error parsing apartados data", e);
+      }
+    }
+
+    const puedeFiar = tienePermiso && (!localStorage.getItem('apartadoVentas') || localStorage.getItem('apartadoVentas') === 'General (Box)');
+
   return (
     <div className="pdv-page">
 
@@ -169,6 +191,9 @@ export default function PuntoDeVenta() {
                   <i className="fas fa-shopping-cart"></i>
                   Cuenta actual
                 </p>
+                {!tienePermiso && (
+                  <span className="badge bg-danger rounded-pill px-2">Solo Lectura</span>
+                )}
               </div>
 
               {carrito.length === 0 ? (
@@ -231,15 +256,17 @@ export default function PuntoDeVenta() {
                       <button
                         className="pdv-cobrar-btn w-100"
                         onClick={() => setModalCobrarOpen(true)}
-                        disabled={procesando}
+                        disabled={procesando || !tienePermiso}
+                        title={!tienePermiso ? "No tienes permisos para vender en esta tienda." : ""}
                       >
                         <i className="fas fa-check-circle"></i>Cobrar
                       </button>
-                      {(!localStorage.getItem('apartadoVentas') || localStorage.getItem('apartadoVentas') === 'General (Box)') && (
+                      {puedeFiar && (
                         <button
                           className="pdv-cobrar-btn btn-warning w-100"
                           style={{backgroundColor: '#ffc107', borderColor: '#ffc107', color: '#000'}}
                           onClick={() => setModalFiarOpen(true)}
+                          disabled={!tienePermiso}
                         >
                           <i className="fas fa-hand-holding-usd"></i>Fiar
                         </button>

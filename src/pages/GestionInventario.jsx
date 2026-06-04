@@ -6,7 +6,7 @@ import BotonSeguro from '../components/BotonSeguro';
 import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/GestionInventario.css';
 
-const FORM_VACIO = { nombre: '', precioVenta: '', stockActual: '', stockMinimo: '', fotoUrl: '', categoria: '', subCategoria: '', talla: '', descripcion: '', esSobrePedido: false, esBorrador: false };
+const FORM_VACIO = { nombre: '', costo: '', precioVenta: '', stockActual: '', stockMinimo: '', fotoUrl: '', categoria: '', subCategoria: '', talla: '', descripcion: '', esSobrePedido: false, esBorrador: false };
 
 export default function GestionInventario() {
   const navigate = useNavigate();
@@ -64,6 +64,7 @@ export default function GestionInventario() {
   function abrirEditar(p) {
     setForm({
       nombre: p.nombre,
+      costo: p.costo || 0,
       precioVenta: p.precioVenta,
       stockActual: p.stockActual,
       stockMinimo: p.stockMinimo,
@@ -101,6 +102,7 @@ export default function GestionInventario() {
             idBox: box.idBox,
             apartado: apartadoActual,
             nombre: form.nombre.trim(),
+            costo: parseFloat(form.costo) || 0,
             precioVenta: parseFloat(form.precioVenta) || 0,
             stockActual: parseInt(form.stockActual) || 0,
             stockMinimo: parseInt(form.stockMinimo) || 0,
@@ -126,6 +128,7 @@ export default function GestionInventario() {
             idBox: box.idBox,
             apartado: apartadoActual,
             nombre: form.nombre.trim(),
+            costo: parseFloat(form.costo) || 0,
             precioVenta: parseFloat(form.precioVenta) || 0,
             stockActual: parseInt(form.stockActual) || 0,
             stockMinimo: parseInt(form.stockMinimo) || 0,
@@ -256,17 +259,38 @@ export default function GestionInventario() {
                 </div>
 
                 <div className="col-6 col-md-4">
-                  <label className="etiqueta-campo">Precio ($)</label>
+                  <label className="etiqueta-campo">Costo de Compra ($)</label>
                   <input
                     type="number" min="0" step="0.01"
                     className="entrada-oscura"
-                    value={form.precioVenta}
+                    value={form.costo}
                     onChange={e => {
-                      if (e.target.value.length <= 5) setForm({ ...form, precioVenta: e.target.value });
+                      if (e.target.value.length <= 5) setForm({ ...form, costo: e.target.value });
                     }}
                     placeholder="0.00"
-                    style={{ color: 'var(--success)', fontFamily: 'var(--font-stats)', fontWeight: 700 }}
+                    style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-stats)' }}
                   />
+                </div>
+
+                <div className="col-6 col-md-4">
+                  <label className="etiqueta-campo">Precio Venta ($)</label>
+                  <div className="d-flex align-items-center gap-2">
+                    <input
+                      type="number" min="0" step="0.01"
+                      className="entrada-oscura"
+                      value={form.precioVenta}
+                      onChange={e => {
+                        if (e.target.value.length <= 5) setForm({ ...form, precioVenta: e.target.value });
+                      }}
+                      placeholder="0.00"
+                      style={{ color: 'var(--success)', fontFamily: 'var(--font-stats)', fontWeight: 700 }}
+                    />
+                    {form.costo > 0 && form.precioVenta > 0 && (
+                      <span className="badge bg-success" style={{ fontSize: '0.75rem' }}>
+                        {(((form.precioVenta - form.costo) / form.costo) * 100).toFixed(0)}% <i className="fas fa-arrow-up"></i>
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="col-6 col-md-4">
@@ -552,9 +576,15 @@ export default function GestionInventario() {
                   <div key={p.idProducto} className="col-12 col-sm-6 col-lg-4 col-xl-3">
                     <div className={`gi-card ${stockBajo ? 'gi-card--low-stock' : ''} ${p.esBorrador ? 'opacity-75' : ''}`}>
 
-                      {stockBajo && !p.esBorrador && (
-                        <span className="gi-badge-low">
+                      {stockBajo && !p.esBorrador && p.stockActual > 0 && (
+                        <span className="gi-badge-low text-warning">
                           <i className="fas fa-exclamation-triangle"></i>Stock bajo
+                        </span>
+                      )}
+
+                      {p.stockActual <= 0 && !p.esSobrePedido && !p.esBorrador && (
+                        <span className="gi-badge-low bg-danger text-white border-danger" style={{ zIndex: 10 }}>
+                          <i className="fas fa-times-circle"></i>Agotado
                         </span>
                       )}
                       
@@ -578,9 +608,12 @@ export default function GestionInventario() {
                         </div>
                       )}
 
-                      {/* Franja de precio */}
-                      <div className="gi-card-precio-strip">
-                        <p className="gi-card-precio">${parseFloat(p.precioVenta).toFixed(2)}</p>
+                      {/* Franja de precio y costo */}
+                      <div className="gi-card-precio-strip d-flex flex-column align-items-end">
+                        <p className="gi-card-precio mb-0">${parseFloat(p.precioVenta).toFixed(2)}</p>
+                        {p.costo > 0 && (
+                          <small className="text-white-50" style={{ fontSize: '0.7rem' }}>Costo: ${parseFloat(p.costo).toFixed(2)}</small>
+                        )}
                       </div>
 
                       <div className="gi-card-body">
@@ -650,10 +683,14 @@ export default function GestionInventario() {
                             {(!p.esSobrePedido && !p.esBorrador) && (
                               <button
                                 onClick={() => { setAgregarStockId(p.idProducto); setCantidadAStock(''); }}
-                                className="gi-action-btn gi-action-btn--stock"
-                                title="Agregar stock"
+                                className={`gi-action-btn ${p.stockActual <= 0 ? 'btn btn-danger text-white w-100 rounded-pill' : 'gi-action-btn--stock'}`}
+                                style={p.stockActual <= 0 ? { padding: '5px 15px', fontWeight: 'bold' } : {}}
+                                title={p.stockActual <= 0 ? "Reabastecer (Agregar stock)" : "Agregar stock"}
                               >
-                                <i className="fas fa-plus"></i>
+                                <i className="fas fa-plus-circle"></i> 
+                                <span className="ms-1" style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.5px' }}>
+                                  {p.stockActual <= 0 ? 'REABASTECER' : 'STOCK'}
+                                </span>
                               </button>
                             )}
                             <button

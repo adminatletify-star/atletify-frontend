@@ -31,7 +31,9 @@ export default function GestionVentasProductos() {
       const res = await fetch(`${VENTAS_ENDPOINT}/apartados/${idBox}`);
       if(res.ok) {
         const data = await res.json();
-        setListaApartados(data);
+        // data is now an array of objects: { nombre, esPrivado, permisoVenta }
+        localStorage.setItem('apartadosData', JSON.stringify(data));
+        setListaApartados(data.map(d => d.nombre));
       }
     } catch(e) {
       console.error("Error al cargar lista de apartados:", e);

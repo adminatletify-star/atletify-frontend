@@ -32,8 +32,67 @@ export default function HistorialVentas() {
   const [buscar, setBuscar] = useState('');
   const [loading, setLoading] = useState(true);
   const [expandido, setExpandido] = useState(null);
-  const [fechaFiltro, setFechaFiltro] = useState('');
+  const [periodo, setPeriodo] = useState('Todo'); // Diario, Semanal, Mensual, Anual, Todo
+  const [fechaReferencia, setFechaReferencia] = useState(new Date());
   const [imgAbierta, setImgAbierta] = useState(null);
+
+  const getFechasRango = useCallback(() => {
+    let inicio = new Date(fechaReferencia);
+    let fin = new Date(fechaReferencia);
+    
+    if (periodo === 'Todo') {
+      return { fechaInicio: null, fechaFin: null };
+    } else if (periodo === 'Diario') {
+      inicio.setHours(0, 0, 0, 0);
+      fin.setHours(23, 59, 59, 999);
+    } else if (periodo === 'Semanal') {
+      const dia = inicio.getDay() || 7;
+      inicio.setDate(inicio.getDate() - dia + 1);
+      inicio.setHours(0, 0, 0, 0);
+      fin = new Date(inicio);
+      fin.setDate(inicio.getDate() + 6);
+      fin.setHours(23, 59, 59, 999);
+    } else if (periodo === 'Mensual') {
+      inicio.setDate(1);
+      inicio.setHours(0, 0, 0, 0);
+      fin = new Date(inicio.getFullYear(), inicio.getMonth() + 1, 0, 23, 59, 59, 999);
+    } else if (periodo === 'Anual') {
+      inicio = new Date(inicio.getFullYear(), 0, 1, 0, 0, 0, 0);
+      fin = new Date(inicio.getFullYear(), 11, 31, 23, 59, 59, 999);
+    }
+    return { fechaInicio: inicio.toISOString(), fechaFin: fin.toISOString() };
+  }, [periodo, fechaReferencia]);
+
+  const moverFecha = (direccion) => {
+    if (periodo === 'Todo') return;
+    const nuevaFecha = new Date(fechaReferencia);
+    if (periodo === 'Diario') {
+      nuevaFecha.setDate(nuevaFecha.getDate() + (direccion === 'prev' ? -1 : 1));
+    } else if (periodo === 'Semanal') {
+      nuevaFecha.setDate(nuevaFecha.getDate() + (direccion === 'prev' ? -7 : 7));
+    } else if (periodo === 'Mensual') {
+      nuevaFecha.setDate(1); // Set to 1st of current month first to avoid overflow
+      nuevaFecha.setMonth(nuevaFecha.getMonth() + (direccion === 'prev' ? -1 : 1));
+    } else if (periodo === 'Anual') {
+      nuevaFecha.setFullYear(nuevaFecha.getFullYear() + (direccion === 'prev' ? -1 : 1));
+    }
+    setFechaReferencia(nuevaFecha);
+  };
+
+  const formatearRangoFechas = () => {
+    if (periodo === 'Todo') return 'TODO EL HISTORIAL';
+    if (periodo === 'Diario') {
+      return fechaReferencia.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
+    } else if (periodo === 'Semanal') {
+      const { fechaInicio, fechaFin } = getFechasRango();
+      const options = { day: 'numeric', month: 'short' };
+      return `${new Date(fechaInicio).toLocaleDateString('es-ES', options)} - ${new Date(fechaFin).toLocaleDateString('es-ES', options)} ${fechaReferencia.getFullYear()}`.toUpperCase();
+    } else if (periodo === 'Mensual') {
+      return fechaReferencia.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }).toUpperCase();
+    } else if (periodo === 'Anual') {
+      return fechaReferencia.getFullYear().toString();
+    }
+  };
 
   const [tabActual, setTabActual] = useState('todas');
   const [escalaTiempo, setEscalaTiempo] = useState('diario');
@@ -57,6 +116,7 @@ export default function HistorialVentas() {
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));
     if (!b) { navigate('/admin-box-panel'); return; }
+    // eslint-disable-next-line
     setBox(b);
   }, [navigate]);
 
@@ -64,9 +124,13 @@ export default function HistorialVentas() {
     if (!box) return;
     setLoading(true);
     try {
-      const url = buscar
-        ? `${VENTAS_ENDPOINT}/${box.idBox}?buscar=${encodeURIComponent(buscar)}&apartado=${encodeURIComponent(apartadoActual)}`
-        : `${VENTAS_ENDPOINT}/${box.idBox}?apartado=${encodeURIComponent(apartadoActual)}`;
+      const { fechaInicio, fechaFin } = getFechasRango();
+      let queryParams = `?apartado=${encodeURIComponent(apartadoActual)}`;
+      if (buscar) queryParams += `&buscar=${encodeURIComponent(buscar)}`;
+      if (fechaInicio) queryParams += `&fechaInicio=${encodeURIComponent(fechaInicio)}`;
+      if (fechaFin) queryParams += `&fechaFin=${encodeURIComponent(fechaFin)}`;
+      
+      const url = `${VENTAS_ENDPOINT}/${box.idBox}${queryParams}`;
 
       const res = await fetch(url);
       const data = await res.json();
@@ -76,8 +140,9 @@ export default function HistorialVentas() {
     } finally {
       setLoading(false);
     }
-  }, [box, buscar, apartadoActual]);
+  }, [box, buscar, apartadoActual, getFechasRango]);
 
+  // eslint-disable-next-line
   useEffect(() => { cargarVentas(); }, [cargarVentas]);
 
   const actualizarEstatus = async (idVenta, nuevoEstatus, metodo = null) => {
@@ -106,7 +171,8 @@ export default function HistorialVentas() {
         const data = await res.json();
         alert(data.mensaje || 'Error al actualizar estatus');
       }
-    } catch (e) {
+    } catch (err) {
+      void err;
       alert('Error de conexión');
     } finally {
       setProcesandoEstatus(false);
@@ -118,46 +184,50 @@ export default function HistorialVentas() {
     return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 
+  const { fechaInicio: filtroInicioStr, fechaFin: filtroFinStr } = getFechasRango();
+  const filtroInicio = filtroInicioStr ? new Date(filtroInicioStr) : null;
+  const filtroFin = filtroFinStr ? new Date(filtroFinStr) : null;
+  const enRango = (isoFecha) => {
+    if (!filtroInicio || !filtroFin) return true;
+    const d = new Date(isoFecha);
+    return d >= filtroInicio && d <= filtroFin;
+  };
+
   let transacciones = [];
 
   ventas.forEach(v => {
     if (v.metodoPago !== 'Fiado' && v.metodoPago !== 'Fiar (Anotar en mi cuenta)') {
-      transacciones.push({
-        tipo: 'Venta',
-        idUnico: `Venta-${v.idVenta}`,
-        fecha: v.fechaVenta,
-        datos: v
-      });
+      if (enRango(v.fechaVenta)) {
+        transacciones.push({
+          tipo: 'Venta',
+          idUnico: `Venta-${v.idVenta}`,
+          fecha: v.fechaVenta,
+          datos: v
+        });
+      }
     }
 
     if (v.abonos && v.abonos.length > 0) {
       v.abonos.forEach(a => {
-        transacciones.push({
-          tipo: 'Abono',
-          idUnico: `Abono-${a.idAbono}`,
-          fecha: a.fechaAbono,
-          datos: {
-            ...a,
-            ventaRelacionada: v
-          }
-        });
+        if (enRango(a.fechaAbono)) {
+          transacciones.push({
+            tipo: 'Abono',
+            idUnico: `Abono-${a.idAbono}`,
+            fecha: a.fechaAbono,
+            datos: {
+              ...a,
+              ventaRelacionada: v
+            }
+          });
+        }
       });
     }
   });
 
   transacciones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
-  const getLocalIsoDate = (dateStr) => {
-    const d = new Date(dateStr);
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
-  if (fechaFiltro) {
-    transacciones = transacciones.filter(t => getLocalIsoDate(t.fecha) === fechaFiltro);
-  }
+  // Filtro local restaurado para corregir Abonos cruzados
+  const ventasAAnalizar = ventas.filter(v => enRango(v.fechaVenta));
 
   // ----------------------------------------------------------------------
   // LOGICA PARA ANALÍTICAS
@@ -173,8 +243,6 @@ export default function HistorialVentas() {
   let countPendiente = 0;
   let countPorEntregar = 0;
   let countListos = 0;
-
-  const ventasAAnalizar = fechaFiltro ? ventas.filter(v => getLocalIsoDate(v.fechaVenta) === fechaFiltro) : ventas;
 
   // Calculamos deudaFiado y contadores sobre ventasAAnalizar
   ventasAAnalizar.forEach(v => {
@@ -282,7 +350,7 @@ export default function HistorialVentas() {
 
   const chartVentasDiarias = Object.entries(ventasDiariasMap)
     .sort((a,b) => a[0].localeCompare(b[0]))
-    .map(([key, data]) => ({
+    .map(([, data]) => ({
         name: data.label,
         Total: data.total
     }));
@@ -538,6 +606,67 @@ export default function HistorialVentas() {
     transacciones = transacciones.filter(t => t.tipo === 'Venta' && t.datos.estatus === 'Cancelada');
   }
 
+  // --- LOGICA DE MÉTRICAS Y FINANZAS ---
+  let totalVendidoM = 0;
+  let costoTotalM = 0;
+  let gananciaNetaM = 0;
+  let productosVendidosM = {};
+
+  ventasAAnalizar.forEach(v => {
+    // Solo ventas confirmadas o fiadas, ignoramos canceladas y pendientes
+    if (v.estatus === 'Cancelada' || v.estatus === 'Pendiente') return; 
+    
+    if (v.detalles) {
+      v.detalles.forEach(d => {
+        const ventaSub = parseFloat(d.subtotal) || 0;
+        const costoSub = (parseFloat(d.costoUnitario) || 0) * d.cantidad;
+        const ganancia = ventaSub - costoSub;
+
+        totalVendidoM += ventaSub;
+        costoTotalM += costoSub;
+        gananciaNetaM += ganancia;
+
+        const key = d.producto?.nombre || `Desc-${Math.random()}`;
+        if (!productosVendidosM[key]) {
+          productosVendidosM[key] = { 
+            nombre: d.producto?.nombre || 'Desconocido', 
+            cantidad: 0, 
+            ganancia: 0, 
+            ingresos: 0,
+            costoTotal: 0
+          };
+        }
+        productosVendidosM[key].cantidad += d.cantidad;
+        productosVendidosM[key].ganancia += ganancia;
+        productosVendidosM[key].ingresos += ventaSub;
+        productosVendidosM[key].costoTotal += costoSub;
+      });
+    }
+  });
+
+  const todosLosProductos = Object.values(productosVendidosM).map(p => {
+    const margenPorcentaje = p.ingresos > 0 ? (p.ganancia / p.ingresos) * 100 : 0;
+    const precioPromedio = p.cantidad > 0 ? p.ingresos / p.cantidad : 0;
+    const costoPromedio = p.cantidad > 0 ? p.costoTotal / p.cantidad : 0;
+    return { ...p, margenPorcentaje, precioPromedio, costoPromedio };
+  });
+
+  const rankingVendidos = [...todosLosProductos].sort((a,b) => b.cantidad - a.cantidad).slice(0, 5);
+  const rankingGanancias = [...todosLosProductos].sort((a,b) => b.ganancia - a.ganancia).slice(0, 5);
+  const tablaInventarioCompleta = [...todosLosProductos].sort((a,b) => b.ganancia - a.ganancia);
+
+  const getColorMargen = (margen) => {
+    if (margen >= 50) return 'success';
+    if (margen >= 25) return 'warning';
+    return 'danger';
+  };
+
+  const chartDistribucionGanancias = rankingGanancias.map(p => ({
+    name: p.nombre,
+    value: p.ganancia
+  })).filter(p => p.value > 0);
+  // ------------------------------------
+
   const transaccionesPorDia = transacciones.reduce((acc, t) => {
     // Usar zona horaria local para agrupar transacciones también
     const d = new Date(t.fecha);
@@ -572,10 +701,53 @@ export default function HistorialVentas() {
 
       <div className="container-xl px-3 px-md-4 pb-5">
 
+        {/* ── CONTROLES DE FECHA GLOBALES ── */}
+        <div className="hv-filtros-panel d-print-none mb-4" style={{ background: 'var(--bg-elevated)' }}>
+          <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div className="d-flex align-items-center gap-2 flex-wrap">
+              <span className="small fw-bold" style={{ color: 'var(--text-muted)' }}>MOSTRAR:</span>
+              <div className="hv-escala-wrap">
+                {['Diario', 'Semanal', 'Mensual', 'Anual', 'Todo'].map(p => (
+                  <button
+                    key={p}
+                    className={`hv-escala-btn ${periodo === p ? 'hv-escala-btn--active' : ''}`}
+                    onClick={() => { setPeriodo(p); setFechaReferencia(new Date()); }}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="d-flex align-items-center gap-3">
+              <button 
+                className="hv-action-btn" 
+                onClick={() => moverFecha('prev')}
+                disabled={periodo === 'Todo'}
+              >
+                <i className="fas fa-chevron-left"></i>
+              </button>
+              <div className="text-center" style={{ minWidth: '200px' }}>
+                <span className="fs-5 fw-bold tracking-wide" style={{ color: 'var(--text-primary)' }}>
+                  {formatearRangoFechas()}
+                </span>
+              </div>
+              <button 
+                className="hv-action-btn" 
+                onClick={() => moverFecha('next')}
+                disabled={periodo === 'Todo'}
+              >
+                <i className="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* ── TABS ── */}
         <div className="hv-tabs-bar d-print-none">
           {[
             { id: 'todas',        icon: 'fa-list',          label: 'Historial General'  },
+            { id: 'metricas',     icon: 'fa-chart-line',    label: 'Finanzas y Métricas'},
             { id: 'pendientes',   icon: 'fa-clock',         label: 'Por Cobrar'         },
             { id: 'por-entregar', icon: 'fa-truck-loading', label: 'Por Entregar'       },
             { id: 'listos',       icon: 'fa-box-open',      label: 'Listos'             },
@@ -605,7 +777,7 @@ export default function HistorialVentas() {
                   <div className="col-6 col-xl-3">
                     <div className="hv-stat-card hv-stat-card--green">
                       <i className="fas fa-info-circle hv-stat-info-icon" title="Suma de ventas ya cobradas o entregadas." />
-                      <p className="hv-stat-label">Ingreso {fechaFiltro ? 'del Día' : 'Histórico'}</p>
+                      <p className="hv-stat-label">Ingreso de Ventas</p>
                       <p className="hv-stat-value">${totalIngreso.toFixed(2)}</p>
                       <span className="hv-stat-hint">Ventas cobradas</span>
                     </div>
@@ -751,8 +923,184 @@ export default function HistorialVentas() {
               </div>
             )}
 
-            {/* ── FILTROS ── */}
-            <div className="hv-filtros-panel d-print-none">
+            {/* ── FINANZAS Y MÉTRICAS ── */}
+            {tabActual === 'metricas' && (
+              <div className="mb-4">
+                {/* Stats de Finanzas */}
+                <div className="row g-3 mb-4">
+                  <div className="col-12 col-md-4">
+                    <div className="hv-stat-card border border-success border-opacity-25" style={{ background: 'rgba(16, 185, 129, 0.05)' }}>
+                      <i className="fas fa-money-bill-wave hv-stat-info-icon text-success" />
+                      <p className="hv-stat-label text-success">Total Ingresos</p>
+                      <p className="hv-stat-value text-success">${totalVendidoM.toFixed(2)}</p>
+                      <span className="hv-stat-hint text-success text-opacity-75">Ventas del periodo</span>
+                    </div>
+                  </div>
+                  <div className="col-12 col-md-4">
+                    <div className="hv-stat-card border border-warning border-opacity-25" style={{ background: 'rgba(245, 158, 11, 0.05)' }}>
+                      <i className="fas fa-box-open hv-stat-info-icon text-warning" />
+                      <p className="hv-stat-label text-warning">Costo de Inversión</p>
+                      <p className="hv-stat-value text-warning">${costoTotalM.toFixed(2)}</p>
+                      <span className="hv-stat-hint text-warning text-opacity-75">Lo que costó el producto</span>
+                    </div>
+                  </div>
+                  <div className="col-12 col-md-4">
+                    <div className="hv-stat-card border border-info border-opacity-25" style={{ background: 'rgba(56, 189, 248, 0.05)' }}>
+                      <i className="fas fa-chart-line hv-stat-info-icon text-info" />
+                      <p className="hv-stat-label text-info">Ganancia Neta</p>
+                      <p className="hv-stat-value text-info">${gananciaNetaM.toFixed(2)}</p>
+                      <span className="hv-stat-hint text-info text-opacity-75">
+                        {costoTotalM > 0 ? `${((gananciaNetaM / costoTotalM) * 100).toFixed(0)}% de margen global` : 'Sin costos'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="row g-4 mb-3">
+                  {/* Rankings Tables */}
+                  <div className="col-12 col-lg-7">
+                    <div className="d-flex flex-column gap-4">
+                      
+                      {/* Top Productos Vendidos */}
+                      <div className="hv-chart-card p-4">
+                        <h5 className="mb-3" style={{ color: 'var(--text-primary)' }}><i className="fas fa-fire text-warning me-2"></i>Top 5: Más Vendidos</h5>
+                        <div className="table-responsive">
+                          <table className="table table-dark table-hover mb-0">
+                            <thead>
+                              <tr>
+                                <th className="font-monospace" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderBottomColor: 'var(--border)' }}>PRODUCTO</th>
+                                <th className="font-monospace text-center" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderBottomColor: 'var(--border)' }}>CANTIDAD</th>
+                                <th className="font-monospace text-end" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderBottomColor: 'var(--border)' }}>INGRESOS</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rankingVendidos.length > 0 ? rankingVendidos.map((p, i) => (
+                                <tr key={i}>
+                                  <td className="align-middle" style={{ borderColor: 'var(--border)' }}>{p.nombre}</td>
+                                  <td className="text-center align-middle" style={{ borderColor: 'var(--border)' }}>
+                                    <span className="badge bg-secondary">{p.cantidad} pzs</span>
+                                  </td>
+                                  <td className="text-end align-middle text-success fw-bold" style={{ borderColor: 'var(--border)' }}>${p.ingresos.toFixed(2)}</td>
+                                </tr>
+                              )) : <tr><td colSpan="3" className="text-center text-muted py-3" style={{ borderColor: 'var(--border)' }}>No hay datos en este periodo</td></tr>}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Top Productos Rentables */}
+                      <div className="hv-chart-card p-4">
+                        <h5 className="mb-3" style={{ color: 'var(--text-primary)' }}><i className="fas fa-gem text-info me-2"></i>Top 5: Mayor Ganancia</h5>
+                        <div className="table-responsive">
+                          <table className="table table-dark table-hover mb-0">
+                            <thead>
+                              <tr>
+                                <th className="font-monospace" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderBottomColor: 'var(--border)' }}>PRODUCTO</th>
+                                <th className="font-monospace text-center" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderBottomColor: 'var(--border)' }}>MARGEN</th>
+                                <th className="font-monospace text-end" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderBottomColor: 'var(--border)' }}>GANANCIA</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rankingGanancias.length > 0 ? rankingGanancias.map((p, i) => (
+                                <tr key={i}>
+                                  <td className="align-middle" style={{ borderColor: 'var(--border)' }}>{p.nombre}</td>
+                                  <td className="text-center align-middle" style={{ borderColor: 'var(--border)' }}>
+                                    <span className={`badge bg-${getColorMargen(p.margenPorcentaje)}`}>
+                                      {p.margenPorcentaje.toFixed(0)}%
+                                    </span>
+                                  </td>
+                                  <td className="text-end align-middle text-info fw-bold" style={{ borderColor: 'var(--border)' }}>${p.ganancia.toFixed(2)}</td>
+                                </tr>
+                              )) : <tr><td colSpan="3" className="text-center text-muted py-3" style={{ borderColor: 'var(--border)' }}>No hay datos en este periodo</td></tr>}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      
+                    </div>
+                  </div>
+
+                  {/* Grafica de Distribucion de Ganancias */}
+                  <div className="col-12 col-lg-5">
+                    <div className="hv-chart-card p-4 h-100 d-flex flex-column">
+                      <h5 className="mb-4" style={{ color: 'var(--text-primary)' }}><i className="fas fa-chart-pie text-primary me-2"></i>Distribución de Ganancias</h5>
+                      <div className="flex-grow-1 d-flex align-items-center justify-content-center">
+                        {chartDistribucionGanancias.length > 0 ? (
+                          <div style={{ width: '100%', height: '300px' }}>
+                            <ResponsiveContainer>
+                              <PieChart>
+                                <Pie data={chartDistribucionGanancias} cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={5} dataKey="value">
+                                  {chartDistribucionGanancias.map((_, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS_PAGO[index % COLORS_PAGO.length]} />
+                                  ))}
+                                </Pie>
+                                <Tooltip
+                                  contentStyle={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px' }}
+                                  itemStyle={{ color: '#fff' }}
+                                  formatter={(v, name) => [`$${v.toFixed(2)}`, name]}
+                                />
+                                <Legend wrapperStyle={{ fontSize: '0.8rem', paddingTop: '10px' }} />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                        ) : (
+                          <div className="text-muted text-center">
+                            <i className="fas fa-chart-pie fa-3x mb-3 opacity-25"></i>
+                            <p>Sin datos de ganancia.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Nueva tabla completa de productos */}
+                  <div className="col-12 mt-2">
+                    <div className="hv-chart-card p-4">
+                      <h5 className="mb-4" style={{ color: 'var(--text-primary)' }}><i className="fas fa-boxes text-success me-2"></i>Rendimiento Detallado del Inventario Vendido</h5>
+                      <div className="table-responsive">
+                        <table className="table table-dark table-hover mb-0 align-middle">
+                          <thead>
+                            <tr>
+                              <th className="font-monospace" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderBottomColor: 'var(--border)' }}>PRODUCTO</th>
+                              <th className="font-monospace text-center" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderBottomColor: 'var(--border)' }}>UNIDADES</th>
+                              <th className="font-monospace text-center" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderBottomColor: 'var(--border)' }}>COSTO U.</th>
+                              <th className="font-monospace text-center" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderBottomColor: 'var(--border)' }}>PRECIO U.</th>
+                              <th className="font-monospace text-end" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderBottomColor: 'var(--border)' }}>COSTO TOT.</th>
+                              <th className="font-monospace text-end" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderBottomColor: 'var(--border)' }}>INGRESOS</th>
+                              <th className="font-monospace text-end" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderBottomColor: 'var(--border)' }}>GANANCIA</th>
+                              <th className="font-monospace text-center" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderBottomColor: 'var(--border)' }}>MARGEN</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {tablaInventarioCompleta.length > 0 ? tablaInventarioCompleta.map((p, i) => (
+                              <tr key={i}>
+                                <td style={{ borderColor: 'var(--border)' }}>{p.nombre}</td>
+                                <td className="text-center" style={{ borderColor: 'var(--border)' }}><span className="badge bg-secondary">{p.cantidad}</span></td>
+                                <td className="text-center" style={{ color: 'var(--text-muted)', borderColor: 'var(--border)' }}>${p.costoPromedio.toFixed(2)}</td>
+                                <td className="text-center" style={{ color: 'var(--text-muted)', borderColor: 'var(--border)' }}>${p.precioPromedio.toFixed(2)}</td>
+                                <td className="text-end text-warning" style={{ borderColor: 'var(--border)' }}>${p.costoTotal.toFixed(2)}</td>
+                                <td className="text-end text-success" style={{ borderColor: 'var(--border)' }}>${p.ingresos.toFixed(2)}</td>
+                                <td className="text-end text-info fw-bold" style={{ borderColor: 'var(--border)' }}>${p.ganancia.toFixed(2)}</td>
+                                <td className="text-center" style={{ borderColor: 'var(--border)' }}>
+                                  <span className={`badge bg-${getColorMargen(p.margenPorcentaje)}`}>
+                                    {p.margenPorcentaje.toFixed(0)}%
+                                  </span>
+                                </td>
+                              </tr>
+                            )) : <tr><td colSpan="8" className="text-center text-muted py-4" style={{ borderColor: 'var(--border)' }}>No hay ventas registradas en este periodo</td></tr>}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {tabActual !== 'metricas' && (
+              <>
+                {/* ── ACCIONES Y BUSCADOR ── */}
+                <div className="hv-filtros-panel d-print-none">
               <div className="row g-2 align-items-center">
                 <div className="col-auto">
                   <button className="hv-action-btn hv-action-btn--refresh" onClick={cargarVentas} title="Refrescar">
@@ -764,20 +1112,10 @@ export default function HistorialVentas() {
                     <span className="hv-search-icon"><i className="fas fa-search"></i></span>
                     <input
                       className="hv-search-input w-100"
-                      placeholder="Buscar por producto o fecha..."
+                      placeholder="Buscar por producto o ID..."
                       value={buscar}
                       onChange={e => setBuscar(e.target.value)}
                     />
-                  </div>
-                </div>
-                <div className="col-auto">
-                  <div className="d-flex align-items-center gap-2">
-                    <RedGrayDatePicker value={fechaFiltro} onChange={setFechaFiltro} placeholder="Filtrar día" />
-                    {fechaFiltro && (
-                      <button className="hv-clear-date-btn" onClick={() => setFechaFiltro('')} title="Quitar filtro">
-                        <i className="fas fa-times"></i>
-                      </button>
-                    )}
                   </div>
                 </div>
                 <div className="col-12 col-sm-auto d-flex gap-2 flex-wrap">
@@ -988,6 +1326,8 @@ export default function HistorialVentas() {
                   </div>
                 ))}
               </div>
+            )}
+              </>
             )}
           </>
         )}

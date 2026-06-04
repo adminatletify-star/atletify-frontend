@@ -5,6 +5,7 @@ import BoxPicker from '../components/BoxPicker';
 import AtletifyLoader from '../components/AtletifyLoader';
 import ExportarBDTab from '../components/ExportarBDTab';
 import ExportAuditoriaTab from '../components/ExportAuditoriaTab';
+import AuditoriaUserTab from '../components/AuditoriaUserTab';
 import '../assets/css/AdminPreregistros.css';
 
 const HIST_POR_PAGINA = 10;
@@ -511,7 +512,10 @@ export default function AdminPreregistros() {
 
         {/* ── TAB AUDITORÍA ── */}
         {activeTab === 'auditoria' && (
-          <ExportAuditoriaTab />
+          <div className="d-flex flex-column gap-4">
+            <ExportAuditoriaTab />
+            <AuditoriaUserTab boxes={boxes} />
+          </div>
         )}
 
       </div>
