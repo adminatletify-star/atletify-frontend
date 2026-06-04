@@ -892,32 +892,34 @@ export default function WolfPackPage() {
                 viewport={{ once: true }}
               >
                 <p className="wp-historia-p">
-                  No nació como un proyecto; no planeamos iniciar un centro de entrenamiento.
-                  Fue una decisión tomada a partir de que el box donde la fundadora entrenaba tuvo
-                  la necesidad de cerrar, y los pocos alumnos que asistían no querían entrenar con
-                  alguien más ni en algún otro lugar. Así fue como en par de días nació{' '}
-                  <strong>The WolfPack</strong>.
+                  No surgió como un proyecto planeado; nunca tuvimos la intención de fundar un
+                  centro de entrenamiento. Todo comenzó cuando el box en el que entrenaba nuestra
+                  fundadora se vio en la necesidad de cerrar, y el reducido grupo de alumnos que
+                  asistía no estaba dispuesto a entrenar con alguien más ni en otro lugar. Fue así
+                  como, en cuestión de días, nació <strong>The WolfPack</strong>.
                 </p>
 
                 <div className="wp-historia-porque">
                   <p className="wp-historia-porque-q">¿Por qué el nombre?</p>
                   <p className="wp-historia-p">
-                    Éramos y seguimos siendo una familia — una manada que se apoyó, se quedó y que
-                    algunos aún forman parte de ella.
+                    Porque desde el inicio fuimos, y seguimos siendo, una familia: una manada que se
+                    apoyó mutuamente, que permaneció unida y de la cual muchos aún forman parte.
                   </p>
                 </div>
 
                 <p className="wp-historia-p">
-                  Y luego vino lo demás: las competencias internas, la organización para repartir
-                  comida en hospitales, celebraciones para el Día del Niño en comunidades alejadas.
-                  Pero sobre todo, el enfoque más grande ha sido apoyar a la población perruna de
-                  nuestra ciudad. En estos 10 años se han organizado muchas competencias, de las
-                  cuales <strong>3 han sido a nivel peninsular</strong>, recibiendo varios atletas.
+                  Con el tiempo llegó todo lo demás: las competencias internas, la organización de
+                  jornadas para repartir alimentos en hospitales y las celebraciones del Día del
+                  Niño en comunidades alejadas. Pero, por encima de todo, nuestro mayor enfoque ha
+                  sido apoyar a la población perruna de la ciudad. A lo largo de estos 10 años hemos
+                  organizado numerosas competencias, de las cuales{' '}
+                  <strong>3 han sido a nivel peninsular</strong>, reuniendo a atletas de distintas
+                  procedencias.
                 </p>
 
                 <p className="wp-historia-p">
-                  Estos 10 años hemos cambiado la vida de muchísimas personas. Hemos celebrado
-                  bodas, nacimientos y festejado cada logro de la manada.
+                  En estos 10 años hemos transformado la vida de muchísimas personas. Hemos
+                  celebrado bodas, nacimientos y acompañado cada logro de la manada.
                 </p>
               </motion.div>
             </div>
