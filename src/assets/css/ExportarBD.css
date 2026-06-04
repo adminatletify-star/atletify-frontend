@@ -218,10 +218,9 @@
 }
 
 .ebx-cols-scroll {
-  max-height: 420px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-right: 4px;
+  /* Sin scroll interno: las categorías y TODAS sus columnas se muestran en flujo
+     natural (la página hace scroll). Antes un max-height:420px las encerraba en
+     una cajita con scroll propio y parecía que faltaban opciones. */
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
