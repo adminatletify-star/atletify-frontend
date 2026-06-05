@@ -139,6 +139,24 @@ export default function GestionStaff() {
   // ⭐ Estados para Evaluaciones
   const [modalResenasVisible, setModalResenasVisible] = useState(false);
 
+  // Funciones de validación de fechas (Clases futuras)
+  const esPasadaOHoy = (fechaStr) => {
+    if (!fechaStr) return false;
+    const d = new Date(fechaStr);
+    const hoy = new Date();
+    d.setHours(0,0,0,0);
+    hoy.setHours(0,0,0,0);
+    return d <= hoy;
+  };
+  const esFuturaManana = (fechaStr) => {
+    if (!fechaStr) return false;
+    const d = new Date(fechaStr);
+    const hoy = new Date();
+    d.setHours(0,0,0,0);
+    hoy.setHours(0,0,0,0);
+    return d > hoy;
+  };
+
   const API_URL = import.meta.env.VITE_API_URL;
 
 
@@ -399,8 +417,8 @@ export default function GestionStaff() {
   };
 
   const validarMasivo = async () => {
-    const pendientes = auditoriaClases.filter(c => c.estado === 'Pendiente' || c.Estado === 'Pendiente');
-    if (pendientes.length === 0) return alert("No hay clases pendientes por validar en esta vista.");
+    const pendientes = auditoriaClases.filter(c => (c.estado === 'Pendiente' || c.Estado === 'Pendiente') && esPasadaOHoy(c.fecha || c.Fecha));
+    if (pendientes.length === 0) return alert("No hay clases pendientes pasadas o de hoy por validar en esta vista.");
     
     if (!await window.wpConfirm(`¿Aprobar ${pendientes.length} clases pendientes mostradas en pantalla?`)) return;
 
@@ -841,16 +859,20 @@ export default function GestionStaff() {
                           </td>
                           <td className="text-end px-3">
                             {estado === 'Pendiente' ? (
-                              <div className="btn-group btn-group-sm">
-                                <button className="btn btn-outline-success border-success text-success bg-success bg-opacity-10 shadow-sm" title="Validar Asistencia" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Validada', monto)}>
-                                  <i className="fas fa-check"></i>
-                                </button>
-                                <button className="btn btn-outline-danger border-danger text-danger bg-danger bg-opacity-10 shadow-sm" title="Marcar Falta" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Falta', 0)}>
-                                  <i className="fas fa-times"></i>
-                                </button>
-                              </div>
+                              !esFuturaManana(fecha) ? (
+                                <div className="btn-group btn-group-sm">
+                                  <button className="btn btn-outline-success border-success text-success bg-success bg-opacity-10 shadow-sm" title="Validar Asistencia" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Validada', monto)}>
+                                    <i className="fas fa-check"></i>
+                                  </button>
+                                  <button className="btn btn-outline-danger border-danger text-danger bg-danger bg-opacity-10 shadow-sm" title="Marcar Falta" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Falta', 0)}>
+                                    <i className="fas fa-times"></i>
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-muted small" style={{ fontSize: '10px' }}><i className="fas fa-lock me-1"></i>Mañana</span>
+                              )
                             ) : (
-                              <button className="btn btn-sm btn-dark text-white-50" title="Revertir a Pendiente" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Pendiente', monto)}>
+                              <button className="btn btn-sm btn-outline-secondary border-secondary text-secondary bg-secondary bg-opacity-10 shadow-sm" title="Deshacer a Pendiente" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Pendiente', monto)}>
                                 <i className="fas fa-undo"></i>
                               </button>
                             )}

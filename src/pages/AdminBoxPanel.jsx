@@ -53,6 +53,33 @@ export default function AdminBoxPanel() {
   const [quickNomina, setQuickNomina] = useState(null);
   const [modalQuickValVisible, setModalQuickValVisible] = useState(false);
 
+  // Funciones de validación de fechas para Staff (Clases futuras)
+  const esPasadaOHoy = (fechaStr) => {
+    if (!fechaStr) return false;
+    const d = new Date(fechaStr);
+    const hoy = new Date();
+    d.setHours(0,0,0,0);
+    hoy.setHours(0,0,0,0);
+    return d <= hoy;
+  };
+  const esFuturaManana = (fechaStr) => {
+    if (!fechaStr) return false;
+    const d = new Date(fechaStr);
+    const hoy = new Date();
+    d.setHours(0,0,0,0);
+    hoy.setHours(0,0,0,0);
+    return d > hoy;
+  };
+  const esPasadoMananaEnAdelante = (fechaStr) => {
+    if (!fechaStr) return false;
+    const d = new Date(fechaStr);
+    const manana = new Date();
+    manana.setDate(manana.getDate() + 1);
+    d.setHours(0,0,0,0);
+    manana.setHours(0,0,0,0);
+    return d > manana;
+  };
+
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('usuario'));
     const b = JSON.parse(localStorage.getItem('box'));
@@ -202,7 +229,7 @@ export default function AdminBoxPanel() {
           });
           if (res.ok) {
             const clases = await res.json();
-            const pendientes = clases.filter(c => c.estado === 'Pendiente' || c.Estado === 'Pendiente');
+            const pendientes = clases.filter(c => (c.estado === 'Pendiente' || c.Estado === 'Pendiente') && esPasadaOHoy(c.fecha || c.Fecha));
             
             const resNom = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular/${id}/${year}/${month}`, {
               headers: { 'Authorization': `Bearer ${token}` }
@@ -238,15 +265,22 @@ export default function AdminBoxPanel() {
     const year = hoy.getFullYear();
     const month = hoy.getMonth() + 1;
     try {
-      const resClases = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/asistencias-coach/${coachId}/${year}/${month}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const ts = new Date().getTime();
+      const resClases = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/asistencias-coach/${coachId}/${year}/${month}?t=${ts}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache'
+        }
       });
       if (resClases.ok) {
         const clases = await resClases.json();
-        const pendientes = clases.filter(c => c.estado === 'Pendiente' || c.Estado === 'Pendiente');
+        const pendientes = clases.filter(c => (c.estado === 'Pendiente' || c.Estado === 'Pendiente') && esPasadaOHoy(c.fecha || c.Fecha));
         
-        const resNomina = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular/${coachId}/${year}/${month}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+        const resNomina = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular/${coachId}/${year}/${month}?t=${ts}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Cache-Control': 'no-cache'
+          }
         });
         const nomina = resNomina.ok ? await resNomina.json() : null;
 
@@ -275,10 +309,10 @@ export default function AdminBoxPanel() {
     }
   }
 
-  // 🔍 Acciones del Modal de Aprobación Rápida
   const abrirQuickVal = (coach) => {
     setQuickCoach(coach);
-    setQuickClases(coach.clases || []);
+    const clasesFiltradas = (coach.clases || []).filter(c => !esPasadoMananaEnAdelante(c.fecha || c.Fecha));
+    setQuickClases(clasesFiltradas);
     setQuickNomina(coach.nomina);
     setModalQuickValVisible(true);
   };
@@ -295,6 +329,17 @@ export default function AdminBoxPanel() {
   const ejecutarQuickValidar = async (idClase, fecha, estado, montoPago) => {
     const coachId = quickCoach.idUsuario || quickCoach.id || quickCoach.IdUsuario;
     const token = localStorage.getItem('token');
+
+    // ⚡ Actualización Optimista: La UI responde de inmediato (elimina el "lag")
+    setQuickClases(prev => prev.map(c => {
+      const cId = c.idClase || c.IdClase;
+      const cFecha = c.fecha || c.Fecha;
+      if (cId === idClase && cFecha === fecha) {
+        return { ...c, estado: estado, Estado: estado };
+      }
+      return c;
+    }));
+
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/validar-clase`, {
         method: 'POST',
@@ -311,38 +356,22 @@ export default function AdminBoxPanel() {
         })
       });
       if (res.ok) {
-        await recargarCoachWidget(coachId);
+        // En background recargamos los totales
+        recargarCoachWidget(coachId);
+      } else {
+        // Revertir en caso de error
+        const errorMsg = await res.text();
+        recargarCoachWidget(coachId);
+        alert(`Ocurrió un error al validar la asistencia: ${errorMsg}`);
       }
     } catch (e) {
-      alert("Error al validar la asistencia de la clase.");
+      recargarCoachWidget(coachId);
+      alert("Error de red al validar la clase.");
     }
   };
 
   const ejecutarQuickPagar = async () => {
-    const coachId = quickCoach.idUsuario || quickCoach.id || quickCoach.IdUsuario;
-    if (!window.confirm(`¿Seguro que deseas proceder con el pago definitivo de la nómina de ${quickCoach.nombre || quickCoach.Nombre} por $${quickNomina.granTotal.toFixed(2)}? Se registrará un Egreso Financiero en contabilidad y se cerrará el mes.`)) return;
-    
-    const token = localStorage.getItem('token');
-    const hoy = new Date();
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/pagar/${coachId}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        alert("Pago de nómina registrado y cerrado con éxito. ¡Egreso emitido! ✅");
-        cerrarQuickVal();
-        if (box?.idBox) {
-          cargarDashboard(box.idBox);
-          cargarAtletas(box.idBox);
-        }
-  } else {
-        const error = await res.json();
-        alert(error.mensaje || "Error al procesar el pago.");
-      }
-    } catch (e) {
-      alert("Error de red al procesar el pago.");
-    }
+    // Ya no se usa para pago directo, ahora redirige. Se mantiene por seguridad si hiciera falta.
   };
 
   const isAdmin = user?.rol === 'AdminBox' || user?.rol === 'Developer';
@@ -1560,16 +1589,18 @@ export default function AdminBoxPanel() {
                 <h5 className="text-white small fw-bold mb-2">Nómina Acumulada del Mes</h5>
                 <div className="row g-2 text-center">
                   <div className="col-4">
-                    <div className="small text-muted mb-1">Sueldo Base</div>
-                    <span className="text-white fw-bold">{formatearDinero(quickNomina?.sueldoBase || 0)}</span>
+                    <div className="small text-muted mb-1">Sueldo por Clases</div>
+                    <span className="text-white fw-bold">{formatearDinero(quickNomina?.sueldoBaseMensual || quickNomina?.SueldoBaseMensual || 0)}</span>
                   </div>
                   <div className="col-4">
-                    <div className="small text-muted mb-1">Bonos</div>
-                    <span className="text-success fw-bold">+{formatearDinero(quickNomina?.totalBonos || 0)}</span>
+                    <div className="small text-muted mb-1">Día de Pago</div>
+                    <span className="text-info fw-bold">
+                      {{ 1: 'Lunes', 2: 'Martes', 3: 'Miércoles', 4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 7: 'Domingo' }[quickNomina?.diaCorte ?? quickNomina?.DiaCorte] || 'Domingo'}
+                    </span>
                   </div>
                   <div className="col-4">
                     <div className="small text-muted mb-1">Total Estimado</div>
-                    <span className="text-warning fw-bold">{formatearDinero(quickNomina?.granTotal || 0)}</span>
+                    <span className="text-warning fw-bold">{formatearDinero(quickNomina?.granTotal || quickNomina?.GranTotal || 0)}</span>
                   </div>
                 </div>
               </div>
@@ -1580,58 +1611,139 @@ export default function AdminBoxPanel() {
                 <div className="text-center text-muted py-3">No hay clases programadas para este coach en el mes actual.</div>
               ) : (
                 <div className="qv-class-list">
-                  {quickClases.map((c, idx) => {
-                    const est = c.estado || c.Estado;
-                    const nom = c.nombreClase || c.NombreClase || c.nombre || c.Nombre;
-                    const f = c.fecha || c.Fecha;
-                    const hor = c.horario || c.Horario || c.hora || c.Hora;
-                    const mon = c.montoPago || c.MontoPago;
-                    const fStr = f ? new Date(f).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '-';
-                    return (
-                      <div key={idx} className="qv-class-card">
-                        <div className="qv-class-card-top">
-                          <span className="qv-class-name">{nom}</span>
-                          {est === 'Validada' ? (
-                            <span className="qv-badge qv-badge--ok"><i className="fas fa-check"></i>Aprobada</span>
-                          ) : est === 'Falta' ? (
-                            <span className="qv-badge qv-badge--no"><i className="fas fa-times"></i>Falta</span>
-                          ) : (
-                            <span className="qv-badge qv-badge--pend"><i className="fas fa-clock"></i>Pendiente</span>
-                          )}
-                        </div>
-                        <div className="qv-class-meta">
-                          <span><i className="far fa-calendar"></i>{fStr}</span>
-                          <span><i className="far fa-clock"></i>{hor}</span>
-                          <span className="qv-class-monto"><i className="fas fa-hand-holding-usd"></i>{formatearDinero(mon)}</span>
-                        </div>
-                        <div className="qv-class-actions">
-                          <button
-                            onClick={() => ejecutarQuickValidar(c.idClase || c.IdClase, c.fecha || c.Fecha, 'Validada', mon)}
-                            className="qv-act qv-act--ok"
-                            title="Aprobar clase"
-                          >
-                            <i className="fas fa-check"></i><span>Aprobar</span>
-                          </button>
-                          <button
-                            onClick={() => ejecutarQuickValidar(c.idClase || c.IdClase, c.fecha || c.Fecha, 'Falta', mon)}
-                            className="qv-act qv-act--no"
-                            title="Marcar Falta"
-                          >
-                            <i className="fas fa-times"></i><span>Falta</span>
-                          </button>
-                          {(est === 'Validada' || est === 'Falta') && (
-                            <button
-                              onClick={() => ejecutarQuickValidar(c.idClase || c.IdClase, c.fecha || c.Fecha, 'Pendiente', mon)}
-                              className="qv-act qv-act--reset"
-                              title="Restablecer a pendiente"
-                            >
-                              <i className="fas fa-undo"></i>
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {(() => {
+                    const rawDiaCorte = quickNomina?.diaCorte ?? quickNomina?.DiaCorte ?? 7;
+                    const diaCorteJS = rawDiaCorte === 7 ? 0 : rawDiaCorte;
+                    const startDay = (diaCorteJS + 1) % 7;
+                    
+                    const getStartOfWeek = (date, sDay) => {
+                      const d = new Date(date);
+                      const day = d.getDay();
+                      const diff = d.getDate() - day + (day < sDay ? -7 : 0) + sDay;
+                      return new Date(d.setDate(diff));
+                    };
+
+                    const sorted = [...quickClases].sort((a,b) => new Date(a.fecha || a.Fecha) - new Date(b.fecha || b.Fecha));
+                    const weeks = [];
+                    sorted.forEach(c => {
+                      const d = new Date(c.fecha || c.Fecha);
+                      const weekStart = getStartOfWeek(d, startDay);
+                      weekStart.setHours(0,0,0,0);
+                      
+                      let weekObj = weeks.find(w => w.start.getTime() === weekStart.getTime());
+                      if (!weekObj) {
+                        const weekEnd = new Date(weekStart);
+                        weekEnd.setDate(weekEnd.getDate() + 6);
+                        weekObj = { start: weekStart, end: weekEnd, clases: [], hasPendientes: false };
+                        weeks.push(weekObj);
+                      }
+                      weekObj.clases.push(c);
+                      if ((c.estado || c.Estado) === 'Pendiente') weekObj.hasPendientes = true;
+                    });
+
+                    return weeks.map((semana, wIdx) => {
+                      const fStart = semana.start.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+                      const fEnd = semana.end.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+                      const totalPendientes = semana.clases.filter(c => (c.estado || c.Estado) === 'Pendiente').length;
+                      
+                      return (
+                        <details key={wIdx} className="qv-week-group" open={semana.hasPendientes}>
+                          <summary className="qv-week-summary">
+                            <div className="qv-week-title">
+                              <i className="fas fa-calendar-week text-warning"></i>
+                              Semana del {fStart} al {fEnd}
+                            </div>
+                            <div className="qv-week-stats">
+                              {totalPendientes > 0 ? (
+                                <span className="badge-pendientes">{totalPendientes} pendientes</span>
+                              ) : (
+                                <span className="text-success"><i className="fas fa-check-double"></i> Todo revisado</span>
+                              )}
+                              <i className="fas fa-chevron-down ms-2"></i>
+                            </div>
+                          </summary>
+                          <div className="qv-week-content">
+                            {semana.clases.map((c, idx) => {
+                              const est = c.estado || c.Estado;
+                              const nom = c.nombreClase || c.NombreClase || c.nombre || c.Nombre;
+                              const f = c.fecha || c.Fecha;
+                              const hor = c.horario || c.Horario || c.hora || c.Hora;
+                              const mon = c.montoPago || c.MontoPago;
+                              const fStr = f ? new Date(f).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '-';
+                              const esProcesada = est === 'Validada' || est === 'Falta';
+
+                              if (esProcesada) {
+                                return (
+                                  <div key={idx} className="qv-class-card-thin">
+                                    <div className="qv-class-card-thin-info">
+                                      <span className="qv-class-card-thin-name">{nom}</span>
+                                      <div className="qv-class-card-thin-meta">
+                                        <span><i className="far fa-calendar"></i> {fStr}</span>
+                                        {hor && hor.trim() !== '-' && hor.trim() !== '' && (
+                                          <span><i className="far fa-clock ms-2"></i> {hor}</span>
+                                        )}
+                                        <span className={est === 'Validada' ? 'text-success ms-2' : 'text-danger ms-2'}>
+                                          {est === 'Validada' ? <><i className="fas fa-check"></i> Aprobada</> : <><i className="fas fa-times"></i> Falta</>}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="qv-class-card-thin-actions">
+                                      <span className="text-success fw-bold me-2">${mon}</span>
+                                      <button
+                                        onClick={() => ejecutarQuickValidar(c.idClase || c.IdClase, c.fecha || c.Fecha, 'Pendiente', mon)}
+                                        className="qv-act qv-act--reset"
+                                        title="Restablecer a pendiente"
+                                      >
+                                        <i className="fas fa-undo"></i>
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              }
+
+                              return (
+                                <div key={idx} className="qv-class-card">
+                                  <div className="qv-class-card-top">
+                                    <span className="qv-class-name">{nom}</span>
+                                    <span className="qv-badge qv-badge--pend"><i className="fas fa-clock"></i>Pendiente</span>
+                                  </div>
+                                  <div className="qv-class-meta">
+                                    <span><i className="far fa-calendar"></i>{fStr}</span>
+                                    <span><i className="far fa-clock"></i>{hor}</span>
+                                    <span className="qv-class-monto"><i className="fas fa-hand-holding-usd"></i>{formatearDinero(mon)}</span>
+                                  </div>
+                                  <div className="qv-class-actions">
+                                    {esFuturaManana(c.fecha || c.Fecha) ? (
+                                      <span className="qv-badge text-muted" style={{ fontSize: '10px' }}>
+                                        <i className="fas fa-lock me-1"></i>Disponible mañana
+                                      </span>
+                                    ) : (
+                                      <>
+                                        <button
+                                          onClick={() => ejecutarQuickValidar(c.idClase || c.IdClase, c.fecha || c.Fecha, 'Validada', mon)}
+                                          className="qv-act qv-act--ok"
+                                          title="Aprobar clase"
+                                        >
+                                          <i className="fas fa-check"></i><span>Aprobar</span>
+                                        </button>
+                                        <button
+                                          onClick={() => ejecutarQuickValidar(c.idClase || c.IdClase, c.fecha || c.Fecha, 'Falta', mon)}
+                                          className="qv-act qv-act--no"
+                                          title="Marcar Falta"
+                                        >
+                                          <i className="fas fa-times"></i><span>Falta</span>
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </details>
+                      );
+                    });
+                  })()}
                 </div>
               )}
             </div>
@@ -1646,14 +1758,13 @@ export default function AdminBoxPanel() {
                 Cerrar
               </button>
               {quickNomina && !quickNomina.estaPagada && (
-                <button
-                  type="button"
-                  onClick={ejecutarQuickPagar}
-                  className="btn btn-warning btn-sm rounded-10 fw-bold d-flex align-items-center gap-1 text-dark"
+                <Link
+                  to="/gestion-staff"
+                  className="btn btn-warning btn-sm rounded-10 fw-bold d-flex align-items-center gap-1 text-dark text-decoration-none"
                 >
-                  <i className="fas fa-coins"></i>
-                  <span>Pagar Nómina del Mes</span>
-                </button>
+                  <i className="fas fa-money-check-alt"></i>
+                  <span>Ir a Nómina en Staff</span>
+                </Link>
               )}
               {quickNomina && quickNomina.estaPagada && (
                 <span className="badge bg-success-glow text-success px-3 py-2 rounded-10 fw-bold">

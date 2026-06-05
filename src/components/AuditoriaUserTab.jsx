@@ -37,9 +37,22 @@ const AccionBadge = ({ accion }) => {
   );
 };
 
+const ITEMS_POR_PAGINA = 10;
+
+function buildPaginas(pagina, total) {
+  return Array.from({ length: total }, (_, idx) => idx + 1)
+    .filter(n => n === 1 || n === total || Math.abs(n - pagina) <= 1)
+    .reduce((acc, n, i, arr) => {
+      if (i > 0 && n - arr[i - 1] > 1) acc.push('...');
+      acc.push(n);
+      return acc;
+    }, []);
+}
+
 export default function AuditoriaUserTab({ boxes }) {
   const [logs, setLogs]       = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pagina, setPagina]   = useState(1);
 
   // Filters
   const [filtroBox, setFiltroBox] = useState('');
@@ -90,7 +103,7 @@ export default function AuditoriaUserTab({ boxes }) {
           <select 
             className="form-select bg-dark text-white border-secondary" 
             value={filtroBox} 
-            onChange={e => setFiltroBox(e.target.value)}
+            onChange={e => { setFiltroBox(e.target.value); setPagina(1); }}
           >
             <option value="">Todos los Boxes</option>
             {boxes?.map(b => (
@@ -102,7 +115,7 @@ export default function AuditoriaUserTab({ boxes }) {
           <select 
             className="form-select bg-dark text-white border-secondary" 
             value={filtroAccion} 
-            onChange={e => setFiltroAccion(e.target.value)}
+            onChange={e => { setFiltroAccion(e.target.value); setPagina(1); }}
           >
             <option value="">Todas las Acciones</option>
             <option value="ALTA_USUARIO">Alta de Usuario</option>
@@ -126,8 +139,13 @@ export default function AuditoriaUserTab({ boxes }) {
           <span>No hay movimientos registrados.</span>
         </div>
       ) : (
-        <>
-          {/* ── TABLA — visible en md+ ── */}
+        (() => {
+          const totalPaginas = Math.ceil(logs.length / ITEMS_POR_PAGINA);
+          const logsPaginados = logs.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
+
+          return (
+            <>
+              {/* ── TABLA — visible en md+ ── */}
           <div className="ap-table-wrap d-none d-md-block">
             <table className="ap-table">
               <thead>
@@ -140,7 +158,7 @@ export default function AuditoriaUserTab({ boxes }) {
                 </tr>
               </thead>
               <tbody>
-                {logs.map(log => (
+                {logsPaginados.map(log => (
                   <tr key={log.idAuditoria}>
                     <td style={{ whiteSpace: 'nowrap', color: 'var(--text-muted)', fontSize: '0.78em' }}>
                       {formatearFecha(log.fechaHora)}
@@ -163,7 +181,7 @@ export default function AuditoriaUserTab({ boxes }) {
 
           {/* ── CARDS — visible en <md ── */}
           <div className="d-flex flex-column gap-2 d-md-none">
-            {logs.map(log => (
+            {logsPaginados.map(log => (
               <div
                 key={log.idAuditoria}
                 style={{
@@ -200,8 +218,45 @@ export default function AuditoriaUserTab({ boxes }) {
               </div>
             ))}
           </div>
+
+          {/* ── PAGINACIÓN ── */}
+          {totalPaginas > 1 && (
+            <div className="ap-pagination mt-4">
+              <button 
+                className="ap-page-btn" 
+                onClick={() => setPagina(p => Math.max(1, p - 1))}
+                disabled={pagina === 1}
+              >
+                <i className="fas fa-chevron-left" />
+              </button>
+              
+              {buildPaginas(pagina, totalPaginas).map((num, i) => 
+                num === '...' ? (
+                  <span key={`e${i}`} className="ap-page-btn" style={{ pointerEvents: 'none', background: 'transparent' }}>…</span>
+                ) : (
+                  <button
+                    key={num}
+                    className={`ap-page-btn${pagina === num ? ' ap-page-btn--active' : ''}`}
+                    onClick={() => setPagina(num)}
+                  >
+                    {num}
+                  </button>
+                )
+              )}
+
+              <button 
+                className="ap-page-btn" 
+                onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))}
+                disabled={pagina === totalPaginas}
+              >
+                <i className="fas fa-chevron-right" />
+              </button>
+            </div>
+          )}
         </>
-      )}
+      );
+    })()
+  )}
     </div>
   );
 }

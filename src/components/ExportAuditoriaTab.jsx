@@ -19,9 +19,22 @@ const RolBadge = ({ rol }) =>
     ? <span className="ap-badge ap-badge--atleta">{rol}</span>
     : <span className="ap-badge ap-badge--pendiente">{rol}</span>;
 
+const ITEMS_POR_PAGINA = 10;
+
+function buildPaginas(pagina, total) {
+  return Array.from({ length: total }, (_, idx) => idx + 1)
+    .filter(n => n === 1 || n === total || Math.abs(n - pagina) <= 1)
+    .reduce((acc, n, i, arr) => {
+      if (i > 0 && n - arr[i - 1] > 1) acc.push('...');
+      acc.push(n);
+      return acc;
+    }, []);
+}
+
 export default function ExportAuditoriaTab() {
   const [logs, setLogs]       = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pagina, setPagina]   = useState(1);
 
   async function cargarLogs() {
     setLoading(true);
@@ -40,6 +53,9 @@ export default function ExportAuditoriaTab() {
   useEffect(() => { cargarLogs(); }, []);
 
   if (loading) return <div className="p-5 text-center"><AtletifyLoader /></div>;
+
+  const totalPaginas = Math.ceil(logs.length / ITEMS_POR_PAGINA);
+  const logsPaginados = logs.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
 
   return (
     <div className="ap-card ap-card--info">
@@ -83,7 +99,7 @@ export default function ExportAuditoriaTab() {
                 </tr>
               </thead>
               <tbody>
-                {logs.map(log => (
+                {logsPaginados.map(log => (
                   <tr key={log.idLog}>
                     <td style={{ whiteSpace: 'nowrap', color: 'var(--text-muted)', fontSize: '0.78em' }}>
                       {formatearFecha(log.fechaHora)}
@@ -107,7 +123,7 @@ export default function ExportAuditoriaTab() {
 
           {/* ── CARDS — visible en <md ── */}
           <div className="d-flex flex-column gap-2 d-md-none">
-            {logs.map(log => (
+            {logsPaginados.map(log => (
               <div
                 key={log.idLog}
                 style={{
@@ -163,6 +179,41 @@ export default function ExportAuditoriaTab() {
               </div>
             ))}
           </div>
+
+          {/* ── PAGINACIÓN ── */}
+          {totalPaginas > 1 && (
+            <div className="ap-pagination mt-4">
+              <button 
+                className="ap-page-btn" 
+                onClick={() => setPagina(p => Math.max(1, p - 1))}
+                disabled={pagina === 1}
+              >
+                <i className="fas fa-chevron-left" />
+              </button>
+              
+              {buildPaginas(pagina, totalPaginas).map((num, i) => 
+                num === '...' ? (
+                  <span key={`e${i}`} className="ap-page-btn" style={{ pointerEvents: 'none', background: 'transparent' }}>…</span>
+                ) : (
+                  <button
+                    key={num}
+                    className={`ap-page-btn${pagina === num ? ' ap-page-btn--active' : ''}`}
+                    onClick={() => setPagina(num)}
+                  >
+                    {num}
+                  </button>
+                )
+              )}
+
+              <button 
+                className="ap-page-btn" 
+                onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))}
+                disabled={pagina === totalPaginas}
+              >
+                <i className="fas fa-chevron-right" />
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

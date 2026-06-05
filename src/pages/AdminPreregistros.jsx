@@ -24,6 +24,7 @@ export default function AdminPreregistros() {
   const [boxes, setBoxes]       = useState([]);
   const [loading, setLoading]   = useState(false);
   const [activeTab, setActiveTab] = useState('admin');
+  const [auditoriaSubTab, setAuditoriaSubTab] = useState('seguridad');
 
   const adminNombreRef   = useRef();
   const adminApellidosRef = useRef();
@@ -512,10 +513,28 @@ export default function AdminPreregistros() {
 
         {/* ── TAB AUDITORÍA ── */}
         {activeTab === 'auditoria' && (
-          <div className="d-flex flex-column gap-4">
-            <ExportAuditoriaTab />
-            <AuditoriaUserTab boxes={boxes} />
-          </div>
+          <>
+            <div className="ap-tabs-wrap mb-4">
+              <nav className="ap-tabs">
+                <button
+                  className={`ap-tab ${auditoriaSubTab === 'seguridad' ? 'ap-tab--active' : ''}`}
+                  onClick={() => setAuditoriaSubTab('seguridad')}
+                >
+                  <i className="fas fa-shield-alt" />
+                  Seguridad
+                </button>
+                <button
+                  className={`ap-tab ${auditoriaSubTab === 'usuarios' ? 'ap-tab--active' : ''}`}
+                  onClick={() => setAuditoriaSubTab('usuarios')}
+                >
+                  <i className="fas fa-users-cog" />
+                  Usuarios
+                </button>
+              </nav>
+            </div>
+            {auditoriaSubTab === 'seguridad' && <ExportAuditoriaTab />}
+            {auditoriaSubTab === 'usuarios' && <AuditoriaUserTab boxes={boxes} />}
+          </>
         )}
 
       </div>
