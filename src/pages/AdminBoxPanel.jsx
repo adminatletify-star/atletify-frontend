@@ -16,6 +16,36 @@ import {
 } from 'recharts';
 import '../assets/css/AdminBoxPanel.css';
 
+function getPayCycles(diaCorte) {
+  const dCorte = parseInt(diaCorte) || 7;
+  const today = new Date();
+  
+  let currentDay = today.getDay();
+  if (currentDay === 0) currentDay = 7;
+  
+  let daysUntilNextCutoff = dCorte - currentDay;
+  if (daysUntilNextCutoff < 0) daysUntilNextCutoff += 7;
+  
+  let endOfCurrent = new Date(today);
+  endOfCurrent.setDate(today.getDate() + daysUntilNextCutoff);
+  
+  let startOfCurrent = new Date(endOfCurrent);
+  startOfCurrent.setDate(endOfCurrent.getDate() - 6);
+  
+  let endOfPast = new Date(startOfCurrent);
+  endOfPast.setDate(startOfCurrent.getDate() - 1);
+  
+  let startOfPast = new Date(endOfPast);
+  startOfPast.setDate(endOfPast.getDate() - 6);
+
+  return {
+    currentStart: startOfCurrent,
+    currentEnd: endOfCurrent,
+    pastStart: startOfPast,
+    pastEnd: endOfPast
+  };
+}
+
 export default function AdminBoxPanel() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -38,20 +68,18 @@ export default function AdminBoxPanel() {
   const [filtroPeriodo, setFiltroPeriodo] = useState('6m'); // '6m' = 6 meses, '1m' = 1 mes, '1s' = 1 semana
 
   // 🐺 Estados para Entorno Coach
-  const [clasesCoach, setClasesCoach] = useState([]);
-  const [nominaCoach, setNominaCoach] = useState(null);
+  const [clasesCoachCurrent, setClasesCoachCurrent] = useState([]);
+  const [nominaCoachCurrent, setNominaCoachCurrent] = useState(null);
+  const [clasesCoachPast, setClasesCoachPast] = useState([]);
+  const [nominaCoachPast, setNominaCoachPast] = useState(null);
+  const [diaCorteCoach, setDiaCorteCoach] = useState(7);
   const [evaluacionesCoach, setEvaluacionesCoach] = useState(null);
   const [cargandoCoachDashboard, setCargandoCoachDashboard] = useState(false);
+  const [activeCycleAccordion, setActiveCycleAccordion] = useState('current');
 
   // 💰 Estados para Widget de Aprobación de Clases (Admin)
   const [coachesPendientes, setCoachesPendientes] = useState([]);
   const [cargandoCoachesWidget, setCargandoCoachesWidget] = useState(false);
-  
-  // 🔍 Estados para Modal de Aprobación Rápida (Admin Dashboard)
-  const [quickCoach, setQuickCoach] = useState(null);
-  const [quickClases, setQuickClases] = useState([]);
-  const [quickNomina, setQuickNomina] = useState(null);
-  const [modalQuickValVisible, setModalQuickValVisible] = useState(false);
 
   // Funciones de validación de fechas para Staff (Clases futuras)
   const esPasadaOHoy = (fechaStr) => {
@@ -166,34 +194,48 @@ export default function AdminBoxPanel() {
     try {
       const token = localStorage.getItem('token');
       
-      const hoyObj = new Date();
-      const day = hoyObj.getDay(); 
-      const diffToMonday = hoyObj.getDate() - day + (day === 0 ? -6 : 1);
-      
-      // Aseguramos fechas limpias para la semana
-      const startOfWeek = new Date(hoyObj.getFullYear(), hoyObj.getMonth(), diffToMonday);
-      const endOfWeek = new Date(hoyObj.getFullYear(), hoyObj.getMonth(), diffToMonday + 6);
-      
-      // YYYY-MM-DD local format
-      const offset = startOfWeek.getTimezoneOffset() * 60000;
-      const fInicioStr = new Date(startOfWeek.getTime() - offset).toISOString().split('T')[0];
-      const fFinStr = new Date(endOfWeek.getTime() - offset).toISOString().split('T')[0];
-
-      // 1. Clases programadas y asistencias de esta SEMANA
-      const resClases = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/asistencias-coach-semanal/${idCoach}/${fInicioStr}/${fFinStr}`, {
+      // 1. Obtener contrato para saber el dia de corte
+      const resContrato = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/contrato/${idCoach}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (resClases.ok) {
-        setClasesCoach(await resClases.json());
-      }
+      const contrato = resContrato.ok ? await resContrato.json() : { diaCorte: 7 };
+      const dCorte = contrato.diaCorte || contrato.DiaCorte || 7;
+      setDiaCorteCoach(dCorte);
 
-      // 2. Nómina estimada y desglose de la SEMANA
-      const resNomina = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular-semanal/${idCoach}/${fInicioStr}/${fFinStr}`, {
+      const { currentStart, currentEnd, pastStart, pastEnd } = getPayCycles(dCorte);
+
+      // Helper para convertir fechas locales a ISO para la API
+      const toISO = (d) => {
+        const offset = d.getTimezoneOffset() * 60000;
+        return new Date(d.getTime() - offset).toISOString().split('T')[0];
+      };
+
+      const fInicioCurrentStr = toISO(currentStart);
+      const fFinCurrentStr = toISO(currentEnd);
+      const fInicioPastStr = toISO(pastStart);
+      const fFinPastStr = toISO(pastEnd);
+
+      // 2. Fetch Ciclo Actual
+      const resClasesCurr = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/asistencias-coach-semanal/${idCoach}/${fInicioCurrentStr}/${fFinCurrentStr}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (resNomina.ok) {
-        setNominaCoach(await resNomina.json());
-      }
+      if (resClasesCurr.ok) setClasesCoachCurrent(await resClasesCurr.json());
+
+      const resNominaCurr = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular-semanal/${idCoach}/${fInicioCurrentStr}/${fFinCurrentStr}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (resNominaCurr.ok) setNominaCoachCurrent(await resNominaCurr.json());
+
+      // 3. Fetch Ciclo Anterior
+      const resClasesPast = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/asistencias-coach-semanal/${idCoach}/${fInicioPastStr}/${fFinPastStr}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (resClasesPast.ok) setClasesCoachPast(await resClasesPast.json());
+
+      const resNominaPast = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular-semanal/${idCoach}/${fInicioPastStr}/${fFinPastStr}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (resNominaPast.ok) setNominaCoachPast(await resNominaPast.json());
 
       // 3. Calificaciones y feedback del coach
       const resEval = await fetch(`${import.meta.env.VITE_API_URL}/api/evaluaciones/coach/${idCoach}`, {
@@ -298,77 +340,12 @@ export default function AdminBoxPanel() {
           return c;
         }));
 
-        // Actualizar el estado local si es el coach del modal actual
-        if (quickCoach && (quickCoach.idUsuario === coachId || quickCoach.id === coachId)) {
-          setQuickClases(clases);
-          setQuickNomina(nomina);
-        }
+        // Eliminamos las actualizaciones del modal ya que se eliminó
       }
     } catch (err) {
       console.error("Error al recargar coach:", err);
     }
   }
-
-  const abrirQuickVal = (coach) => {
-    setQuickCoach(coach);
-    const clasesFiltradas = (coach.clases || []).filter(c => !esPasadoMananaEnAdelante(c.fecha || c.Fecha));
-    setQuickClases(clasesFiltradas);
-    setQuickNomina(coach.nomina);
-    setModalQuickValVisible(true);
-  };
-
-  const cerrarQuickVal = () => {
-    setModalQuickValVisible(false);
-    setTimeout(() => {
-      setQuickCoach(null);
-      setQuickClases([]);
-      setQuickNomina(null);
-    }, 200);
-  };
-
-  const ejecutarQuickValidar = async (idClase, fecha, estado, montoPago) => {
-    const coachId = quickCoach.idUsuario || quickCoach.id || quickCoach.IdUsuario;
-    const token = localStorage.getItem('token');
-
-    // ⚡ Actualización Optimista: La UI responde de inmediato (elimina el "lag")
-    setQuickClases(prev => prev.map(c => {
-      const cId = c.idClase || c.IdClase;
-      const cFecha = c.fecha || c.Fecha;
-      if (cId === idClase && cFecha === fecha) {
-        return { ...c, estado: estado, Estado: estado };
-      }
-      return c;
-    }));
-
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/validar-clase`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          IdCoach: coachId,
-          IdClase: idClase,
-          Fecha: fecha,
-          Estado: estado,
-          MontoPago: parseFloat(montoPago)
-        })
-      });
-      if (res.ok) {
-        // En background recargamos los totales
-        recargarCoachWidget(coachId);
-      } else {
-        // Revertir en caso de error
-        const errorMsg = await res.text();
-        recargarCoachWidget(coachId);
-        alert(`Ocurrió un error al validar la asistencia: ${errorMsg}`);
-      }
-    } catch (e) {
-      recargarCoachWidget(coachId);
-      alert("Error de red al validar la clase.");
-    }
-  };
 
   const ejecutarQuickPagar = async () => {
     // Ya no se usa para pago directo, ahora redirige. Se mantiene por seguridad si hiciera falta.
@@ -442,7 +419,7 @@ export default function AdminBoxPanel() {
     const hoyStr = hoy.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
     
     // Filtrar clases de hoy
-    const clasesHoy = clasesCoach.filter(c => {
+    const clasesHoy = clasesCoachCurrent.filter(c => {
       const f = c.fecha || c.Fecha;
       if (!f) return false;
       const claseFecha = new Date(f);
@@ -451,8 +428,8 @@ export default function AdminBoxPanel() {
              claseFecha.getUTCFullYear() === hoy.getFullYear();
     });
 
-    const validatedCount = clasesCoach.filter(c => (c.estado || c.Estado) === 'Validada').length;
-    const totalCount = clasesCoach.length;
+    const validatedCount = clasesCoachCurrent.filter(c => (c.estado || c.Estado) === 'Validada').length;
+    const totalCount = clasesCoachCurrent.length;
 
     return (
       <div className="abp-page coach-dashboard">
@@ -501,7 +478,7 @@ export default function AdminBoxPanel() {
                   <div className="d-flex justify-content-between align-items-start">
                     <div className="abp-stat-card-content">
                       <div className="abp-stat-number" style={{ color: 'var(--accent-cool)' }}>{totalCount}</div>
-                      <div className="abp-stat-label">Clases de la Semana</div>
+                      <div className="abp-stat-label">Clases (Esta Sem.)</div>
                     </div>
                     <div className="abp-stat-icon" style={{ background: 'rgba(79,195,247,0.1)', color: 'var(--accent-cool)' }}>
                       <i className="fas fa-calendar-alt"></i>
@@ -515,7 +492,7 @@ export default function AdminBoxPanel() {
                   <div className="d-flex justify-content-between align-items-start">
                     <div className="abp-stat-card-content">
                       <div className="abp-stat-number" style={{ color: 'var(--success)' }}>{validatedCount}</div>
-                      <div className="abp-stat-label">Clases Validadas</div>
+                      <div className="abp-stat-label">Validadas (Esta Sem.)</div>
                     </div>
                     <div className="abp-stat-icon" style={{ background: 'rgba(46,204,113,0.1)', color: 'var(--success)' }}>
                       <i className="fas fa-check-circle"></i>
@@ -531,14 +508,14 @@ export default function AdminBoxPanel() {
                       <div className="abp-stat-number" style={{ color: 'var(--warning)' }}>
                         {(() => {
                           let pagoEst = 0;
-                          const tipoPago = nominaCoach?.tipoPago || nominaCoach?.TipoPago;
+                          const tipoPago = nominaCoachCurrent?.tipoPago || nominaCoachCurrent?.TipoPago;
                           if (tipoPago === 'PorClase') {
-                            pagoEst = clasesCoach.reduce((s, c) => s + (c.montoPago || c.MontoPago || 0), 0);
+                            pagoEst = clasesCoachCurrent.reduce((s, c) => s + (c.montoPago || c.MontoPago || 0), 0);
                           } else {
-                            pagoEst = nominaCoach?.sueldoBaseSemanal || nominaCoach?.SueldoBaseSemanal || 0;
+                            pagoEst = nominaCoachCurrent?.sueldoBaseSemanal || nominaCoachCurrent?.SueldoBaseSemanal || 0;
                           }
-                          const bonos = nominaCoach?.totalBonos || nominaCoach?.TotalBonos || 0;
-                          const pens = nominaCoach?.totalPenalizaciones || nominaCoach?.TotalPenalizaciones || 0;
+                          const bonos = nominaCoachCurrent?.totalBonos || nominaCoachCurrent?.TotalBonos || 0;
+                          const pens = nominaCoachCurrent?.totalPenalizaciones || nominaCoachCurrent?.TotalPenalizaciones || 0;
                           const estimado = pagoEst + bonos - pens;
                           return formatearDinero(estimado || 0);
                         })()}
@@ -635,83 +612,188 @@ export default function AdminBoxPanel() {
                 )}
               </section>
 
-              {/* DETALLE DE NOMINA Y LISTADO COMPLETO DEL MES */}
+              {/* DETALLE DE NOMINA Y LISTADO POR CICLOS (ACORDEON) */}
               <section className="abp-glass-card">
                 <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary">
                   <div>
                     <h4 className="abp-card-title mb-0">
-                      <i className="fas fa-wallet me-2 text-warning"></i>Desglose de Nómina Estimada (Esta Semana)
+                      <i className="fas fa-wallet me-2 text-warning"></i>Desglose de Nómina Estimada
                     </h4>
-                    <span className="text-muted small">Cálculos automáticos en base a tus asistencias validadas de Lunes a Domingo</span>
-                  </div>
-                  <span className="badge bg-warning-glow text-warning font-weight-bold px-2 py-1">
-                    Corte: Día {nominaCoach?.diaCorte || 15}
-                  </span>
-                </div>
-
-                <div className="row g-3 mb-4">
-                  {/* Cards de desglose */}
-                  <div className="col-12 col-sm-4">
-                    <div className="bg-dark-glow p-3 rounded-12 text-center">
-                      <div className="text-muted small mb-1">Sueldo Base</div>
-                      <h5 className="text-white mb-0 fw-bold">{formatearDinero(nominaCoach?.sueldoBase || 0)}</h5>
-                    </div>
-                  </div>
-                  <div className="col-12 col-sm-4">
-                    <div className="bg-dark-glow p-3 rounded-12 text-center" style={{ borderLeft: '2px solid var(--success)' }}>
-                      <div className="text-muted small mb-1">Bonos</div>
-                      <h5 className="text-success mb-0 fw-bold">+{formatearDinero(nominaCoach?.totalBonos || 0)}</h5>
-                    </div>
-                  </div>
-                  <div className="col-12 col-sm-4">
-                    <div className="bg-dark-glow p-3 rounded-12 text-center" style={{ borderLeft: '2px solid var(--danger)' }}>
-                      <div className="text-muted small mb-1">Penalizaciones</div>
-                      <h5 className="text-danger mb-0 fw-bold">-{formatearDinero(nominaCoach?.totalPenalizaciones || 0)}</h5>
-                    </div>
+                    <span className="text-muted small">
+                      Organizado por tu ciclo semanal (Corte: {
+                        { 1: 'Lunes', 2: 'Martes', 3: 'Miércoles', 4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 7: 'Domingo' }[diaCorteCoach] || 'Domingo'
+                      })
+                    </span>
                   </div>
                 </div>
 
-                {/* Listado de todas las clases del mes */}
-                <h5 className="abp-card-title mb-3" style={{ fontSize: '0.85rem', opacity: '0.9' }}>
-                  Historial Completo de Clases del Mes ({totalCount})
-                </h5>
-                
-                {clasesCoach.length === 0 ? (
-                  <div className="text-center text-muted py-3">No hay registros de clases este mes.</div>
-                ) : (
-                  <div className="table-responsive" style={{ maxHeight: '350px', overflowY: 'auto' }}>
-                    <table className="table table-dark table-hover table-borderless align-middle mb-0" style={{ fontSize: '12px', background: 'transparent' }}>
-                      <thead>
-                        <tr className="text-muted border-bottom border-secondary">
-                          <th className="py-2">Clase</th>
-                          <th className="py-2">Fecha</th>
-                          <th className="py-2">Hora</th>
-                          <th className="py-2 text-end">Tarifa</th>
-                          <th className="py-2 text-center">Estado</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {clasesCoach.map((c, idx) => {
-                          const est = c.estado || c.Estado;
-                          const nom = c.nombreClase || c.NombreClase || c.nombre || c.Nombre;
-                          const f = c.fecha || c.Fecha;
-                          const hor = c.horario || c.Horario || c.hora || c.Hora;
-                          const mon = c.montoPago || c.MontoPago;
-                          const fStr = f ? new Date(f).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '-';
+                <div className="accordion abp-accordion" id="nominaAccordion">
+                  
+                  {/* ACORDEON CICLO ACTUAL */}
+                  <div className="accordion-item bg-transparent border-secondary mb-3">
+                    <h2 className="accordion-header" id="headingCurrent">
+                      <button 
+                        className={`accordion-button ${activeCycleAccordion === 'current' ? '' : 'collapsed'} text-white border-0`} 
+                        style={{ backgroundColor: activeCycleAccordion === 'current' ? 'rgba(46, 204, 113, 0.1)' : 'rgba(0,0,0,0.2)', boxShadow: 'none' }}
+                        type="button" 
+                        onClick={() => setActiveCycleAccordion(activeCycleAccordion === 'current' ? '' : 'current')}
+                        aria-expanded={activeCycleAccordion === 'current'} 
+                        aria-controls="collapseCurrent"
+                      >
+                        <div className="d-flex w-100 justify-content-between align-items-center me-3">
+                          <span className="fw-bold"><i className="fas fa-calendar-check me-2 text-success"></i>Esta Semana (Ciclo Actual)</span>
+                          <span className="badge bg-success bg-opacity-25 text-success border border-success px-2 py-1">
+                            {formatearDinero(clasesCoachCurrent.filter(c => (c.estado || c.Estado) === 'Validada').reduce((s, c) => s + (c.montoPago || c.MontoPago || 0), 0))}
+                          </span>
+                        </div>
+                      </button>
+                    </h2>
+                    <div id="collapseCurrent" className={`accordion-collapse collapse ${activeCycleAccordion === 'current' ? 'show' : ''}`} aria-labelledby="headingCurrent" data-bs-parent="#nominaAccordion">
+                      <div className="accordion-body p-3">
+                        {(() => {
+                          const manana = new Date();
+                          manana.setDate(manana.getDate() + 1);
+                          manana.setHours(23,59,59,999);
+                          const validadasCurr = clasesCoachCurrent.filter(c => (c.estado || c.Estado) === 'Validada');
+                          const totalValidadas = validadasCurr.reduce((s, c) => s + (c.montoPago || c.MontoPago || 0), 0);
                           return (
-                            <tr key={idx} className="border-bottom border-secondary-glow">
-                              <td className="py-2 fw-bold text-white">{nom}</td>
-                              <td className="py-2 text-white-50">{fStr}</td>
-                              <td className="py-2 text-white-50">{hor}</td>
-                              <td className="py-2 text-end fw-bold text-success">{formatearDinero(mon)}</td>
-                              <td className="py-2 text-center">{getBadgeEstado(est)}</td>
-                            </tr>
+                            <>
+                              <div className="row g-2 mb-3">
+                                <div className="col-12 col-sm-6">
+                                  <div className="bg-black bg-opacity-25 p-2 rounded text-center border border-secondary border-opacity-25">
+                                    <div className="text-muted small">Nómina Estimada (solo validadas)</div>
+                                    <div className="text-success fw-bold">{formatearDinero(totalValidadas)}</div>
+                                  </div>
+                                </div>
+                                <div className="col-12 col-sm-6">
+                                  <div className="bg-black bg-opacity-25 p-2 rounded text-center border border-secondary border-opacity-25">
+                                    <div className="text-muted small">Clases Validadas</div>
+                                    <div className="text-info fw-bold">{validadasCurr.length} de {clasesCoachCurrent.length} clase(s)</div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {clasesCoachCurrent.length === 0 ? (
+                                <div className="text-center text-muted py-2 small">No hay registros de clases para este ciclo.</div>
+                              ) : (
+                                <div className="table-responsive" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                                  <table className="table table-dark table-hover table-borderless align-middle mb-0" style={{ fontSize: '12px', background: 'transparent' }}>
+                                    <thead>
+                                      <tr className="text-muted border-bottom border-secondary">
+                                        <th className="py-2">Clase</th>
+                                        <th className="py-2">Fecha</th>
+                                        <th className="py-2 text-center">Estado</th>
+                                        <th className="py-2 text-end">Tarifa</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {clasesCoachCurrent.map((c, idx) => {
+                                        const est = c.estado || c.Estado;
+                                        const nom = c.nombreClase || c.NombreClase || c.nombre || c.Nombre;
+                                        const f = c.fecha || c.Fecha;
+                                        const mon = c.montoPago || c.MontoPago;
+                                        const claseFecha = f ? new Date(f) : null;
+                                        const esFutura = claseFecha && claseFecha > manana;
+                                        const fStr = f ? new Date(f).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '-';
+                                        return (
+                                          <tr key={idx} className="border-bottom border-secondary-glow" style={esFutura ? { opacity: 0.35 } : {}}>
+                                            <td className={`py-2 fw-bold ${esFutura ? 'text-secondary' : 'text-white'}`}>{nom}</td>
+                                            <td className="py-2 text-white-50">{fStr}</td>
+                                            <td className="py-2 text-center">
+                                              {esFutura 
+                                                ? <span className="badge bg-secondary bg-opacity-25 text-secondary px-2 py-1"><i className="fas fa-lock me-1"></i>No disponible</span>
+                                                : getBadgeEstado(est)
+                                              }
+                                            </td>
+                                            <td className={`py-2 text-end fw-bold ${esFutura ? 'text-secondary' : 'text-success'}`}>{formatearDinero(mon)}</td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              )}
+                            </>
                           );
-                        })}
-                      </tbody>
-                    </table>
+                        })()}
+                      </div>
+                    </div>
                   </div>
-                )}
+
+                  {/* ACORDEON CICLO ANTERIOR */}
+                  <div className="accordion-item bg-transparent border-secondary">
+                    <h2 className="accordion-header" id="headingPast">
+                      <button 
+                        className={`accordion-button ${activeCycleAccordion === 'past' ? '' : 'collapsed'} text-white border-0`} 
+                        style={{ backgroundColor: activeCycleAccordion === 'past' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.2)', boxShadow: 'none' }}
+                        type="button" 
+                        onClick={() => setActiveCycleAccordion(activeCycleAccordion === 'past' ? '' : 'past')}
+                        aria-expanded={activeCycleAccordion === 'past'} 
+                        aria-controls="collapsePast"
+                      >
+                        <div className="d-flex w-100 justify-content-between align-items-center me-3">
+                          <span className="fw-bold"><i className="fas fa-history me-2 text-secondary"></i>Semana Pasada (Ciclo Anterior)</span>
+                          <span className="badge bg-secondary bg-opacity-25 text-light border border-secondary px-2 py-1">
+                            {formatearDinero(nominaCoachPast?.granTotal || 0)}
+                          </span>
+                        </div>
+                      </button>
+                    </h2>
+                    <div id="collapsePast" className={`accordion-collapse collapse ${activeCycleAccordion === 'past' ? 'show' : ''}`} aria-labelledby="headingPast" data-bs-parent="#nominaAccordion">
+                      <div className="accordion-body p-3">
+                        <div className="row g-2 mb-3">
+                          <div className="col-12 col-sm-6">
+                            <div className="bg-black bg-opacity-25 p-2 rounded text-center border border-secondary border-opacity-25">
+                              <div className="text-muted small">Total por Clases</div>
+                              <div className="text-secondary fw-bold">{formatearDinero(nominaCoachPast?.granTotal || 0)}</div>
+                            </div>
+                          </div>
+                          <div className="col-12 col-sm-6">
+                            <div className="bg-black bg-opacity-25 p-2 rounded text-center border border-secondary border-opacity-25">
+                              <div className="text-muted small">Clases Validadas</div>
+                              <div className="text-secondary fw-bold">{nominaCoachPast?.clasesValidadas || 0} clase(s)</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {clasesCoachPast.length === 0 ? (
+                          <div className="text-center text-muted py-2 small">No hay registros de clases para el ciclo pasado.</div>
+                        ) : (
+                          <div className="table-responsive" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                            <table className="table table-dark table-hover table-borderless align-middle mb-0" style={{ fontSize: '12px', background: 'transparent' }}>
+                              <thead>
+                                <tr className="text-muted border-bottom border-secondary">
+                                  <th className="py-2">Clase</th>
+                                  <th className="py-2">Fecha</th>
+                                  <th className="py-2 text-center">Estado</th>
+                                  <th className="py-2 text-end">Tarifa</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {clasesCoachPast.map((c, idx) => {
+                                  const est = c.estado || c.Estado;
+                                  const nom = c.nombreClase || c.NombreClase || c.nombre || c.Nombre;
+                                  const f = c.fecha || c.Fecha;
+                                  const mon = c.montoPago || c.MontoPago;
+                                  const fStr = f ? new Date(f).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '-';
+                                  return (
+                                    <tr key={idx} className="border-bottom border-secondary-glow">
+                                      <td className="py-2 fw-bold text-white">{nom}</td>
+                                      <td className="py-2 text-white-50">{fStr}</td>
+                                      <td className="py-2 text-center">{getBadgeEstado(est)}</td>
+                                      <td className="py-2 text-end fw-bold text-success">{formatearDinero(mon)}</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                </div>
               </section>
             </div>
 
@@ -1403,7 +1485,12 @@ export default function AdminBoxPanel() {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                abrirQuickVal(coach);
+                                navigate('/gestion-staff', { 
+                                  state: { 
+                                    vistaActiva: 'auditoria', 
+                                    filtroCoachAuditoria: coach.idUsuario || coach.id || coach.IdUsuario 
+                                  } 
+                                });
                               }}
                               className="abp-debt-action abp-debt-action--warning"
                             >
@@ -1558,224 +1645,6 @@ export default function AdminBoxPanel() {
 
       </div>
 
-      {/* ==========================================
-          QUICK APPROVAL MODAL (GLASSMORPHISM)
-          ========================================== */}
-      {modalQuickValVisible && quickCoach && (
-        <div className="quick-val-modal-overlay">
-          <div className="quick-val-modal-container shadow-lg animate-fade-in">
-            {/* Header */}
-            <div className="quick-val-modal-header d-flex justify-content-between align-items-center mb-3">
-              <div className="d-flex align-items-center gap-2">
-                <i className="fas fa-user-check text-warning fs-5"></i>
-                <div>
-                  <h4 className="modal-title text-white fw-bold mb-0">Aprobación de Clases</h4>
-                  <span className="text-muted small">Coach: {quickCoach.nombre || quickCoach.Nombre}</span>
-                </div>
-              </div>
-              <button 
-                type="button" 
-                onClick={cerrarQuickVal} 
-                className="btn-close-custom"
-              >
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="quick-val-modal-body">
-              {/* Payroll estimation widget */}
-              <div className="bg-dark-glow p-3 rounded-12 mb-3 border border-secondary-glow">
-                <h5 className="text-white small fw-bold mb-2">Nómina Acumulada del Mes</h5>
-                <div className="row g-2 text-center">
-                  <div className="col-4">
-                    <div className="small text-muted mb-1">Sueldo por Clases</div>
-                    <span className="text-white fw-bold">{formatearDinero(quickNomina?.sueldoBaseMensual || quickNomina?.SueldoBaseMensual || 0)}</span>
-                  </div>
-                  <div className="col-4">
-                    <div className="small text-muted mb-1">Día de Pago</div>
-                    <span className="text-info fw-bold">
-                      {{ 1: 'Lunes', 2: 'Martes', 3: 'Miércoles', 4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 7: 'Domingo' }[quickNomina?.diaCorte ?? quickNomina?.DiaCorte] || 'Domingo'}
-                    </span>
-                  </div>
-                  <div className="col-4">
-                    <div className="small text-muted mb-1">Total Estimado</div>
-                    <span className="text-warning fw-bold">{formatearDinero(quickNomina?.granTotal || quickNomina?.GranTotal || 0)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Attendance Table */}
-              <h5 className="text-white small fw-bold mb-2">Historial de Clases de este Mes</h5>
-              {quickClases.length === 0 ? (
-                <div className="text-center text-muted py-3">No hay clases programadas para este coach en el mes actual.</div>
-              ) : (
-                <div className="qv-class-list">
-                  {(() => {
-                    const rawDiaCorte = quickNomina?.diaCorte ?? quickNomina?.DiaCorte ?? 7;
-                    const diaCorteJS = rawDiaCorte === 7 ? 0 : rawDiaCorte;
-                    const startDay = (diaCorteJS + 1) % 7;
-                    
-                    const getStartOfWeek = (date, sDay) => {
-                      const d = new Date(date);
-                      const day = d.getDay();
-                      const diff = d.getDate() - day + (day < sDay ? -7 : 0) + sDay;
-                      return new Date(d.setDate(diff));
-                    };
-
-                    const sorted = [...quickClases].sort((a,b) => new Date(a.fecha || a.Fecha) - new Date(b.fecha || b.Fecha));
-                    const weeks = [];
-                    sorted.forEach(c => {
-                      const d = new Date(c.fecha || c.Fecha);
-                      const weekStart = getStartOfWeek(d, startDay);
-                      weekStart.setHours(0,0,0,0);
-                      
-                      let weekObj = weeks.find(w => w.start.getTime() === weekStart.getTime());
-                      if (!weekObj) {
-                        const weekEnd = new Date(weekStart);
-                        weekEnd.setDate(weekEnd.getDate() + 6);
-                        weekObj = { start: weekStart, end: weekEnd, clases: [], hasPendientes: false };
-                        weeks.push(weekObj);
-                      }
-                      weekObj.clases.push(c);
-                      if ((c.estado || c.Estado) === 'Pendiente') weekObj.hasPendientes = true;
-                    });
-
-                    return weeks.map((semana, wIdx) => {
-                      const fStart = semana.start.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
-                      const fEnd = semana.end.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
-                      const totalPendientes = semana.clases.filter(c => (c.estado || c.Estado) === 'Pendiente').length;
-                      
-                      return (
-                        <details key={wIdx} className="qv-week-group" open={semana.hasPendientes}>
-                          <summary className="qv-week-summary">
-                            <div className="qv-week-title">
-                              <i className="fas fa-calendar-week text-warning"></i>
-                              Semana del {fStart} al {fEnd}
-                            </div>
-                            <div className="qv-week-stats">
-                              {totalPendientes > 0 ? (
-                                <span className="badge-pendientes">{totalPendientes} pendientes</span>
-                              ) : (
-                                <span className="text-success"><i className="fas fa-check-double"></i> Todo revisado</span>
-                              )}
-                              <i className="fas fa-chevron-down ms-2"></i>
-                            </div>
-                          </summary>
-                          <div className="qv-week-content">
-                            {semana.clases.map((c, idx) => {
-                              const est = c.estado || c.Estado;
-                              const nom = c.nombreClase || c.NombreClase || c.nombre || c.Nombre;
-                              const f = c.fecha || c.Fecha;
-                              const hor = c.horario || c.Horario || c.hora || c.Hora;
-                              const mon = c.montoPago || c.MontoPago;
-                              const fStr = f ? new Date(f).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '-';
-                              const esProcesada = est === 'Validada' || est === 'Falta';
-
-                              if (esProcesada) {
-                                return (
-                                  <div key={idx} className="qv-class-card-thin">
-                                    <div className="qv-class-card-thin-info">
-                                      <span className="qv-class-card-thin-name">{nom}</span>
-                                      <div className="qv-class-card-thin-meta">
-                                        <span><i className="far fa-calendar"></i> {fStr}</span>
-                                        {hor && hor.trim() !== '-' && hor.trim() !== '' && (
-                                          <span><i className="far fa-clock ms-2"></i> {hor}</span>
-                                        )}
-                                        <span className={est === 'Validada' ? 'text-success ms-2' : 'text-danger ms-2'}>
-                                          {est === 'Validada' ? <><i className="fas fa-check"></i> Aprobada</> : <><i className="fas fa-times"></i> Falta</>}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className="qv-class-card-thin-actions">
-                                      <span className="text-success fw-bold me-2">${mon}</span>
-                                      <button
-                                        onClick={() => ejecutarQuickValidar(c.idClase || c.IdClase, c.fecha || c.Fecha, 'Pendiente', mon)}
-                                        className="qv-act qv-act--reset"
-                                        title="Restablecer a pendiente"
-                                      >
-                                        <i className="fas fa-undo"></i>
-                                      </button>
-                                    </div>
-                                  </div>
-                                );
-                              }
-
-                              return (
-                                <div key={idx} className="qv-class-card">
-                                  <div className="qv-class-card-top">
-                                    <span className="qv-class-name">{nom}</span>
-                                    <span className="qv-badge qv-badge--pend"><i className="fas fa-clock"></i>Pendiente</span>
-                                  </div>
-                                  <div className="qv-class-meta">
-                                    <span><i className="far fa-calendar"></i>{fStr}</span>
-                                    <span><i className="far fa-clock"></i>{hor}</span>
-                                    <span className="qv-class-monto"><i className="fas fa-hand-holding-usd"></i>{formatearDinero(mon)}</span>
-                                  </div>
-                                  <div className="qv-class-actions">
-                                    {esFuturaManana(c.fecha || c.Fecha) ? (
-                                      <span className="qv-badge text-muted" style={{ fontSize: '10px' }}>
-                                        <i className="fas fa-lock me-1"></i>Disponible mañana
-                                      </span>
-                                    ) : (
-                                      <>
-                                        <button
-                                          onClick={() => ejecutarQuickValidar(c.idClase || c.IdClase, c.fecha || c.Fecha, 'Validada', mon)}
-                                          className="qv-act qv-act--ok"
-                                          title="Aprobar clase"
-                                        >
-                                          <i className="fas fa-check"></i><span>Aprobar</span>
-                                        </button>
-                                        <button
-                                          onClick={() => ejecutarQuickValidar(c.idClase || c.IdClase, c.fecha || c.Fecha, 'Falta', mon)}
-                                          className="qv-act qv-act--no"
-                                          title="Marcar Falta"
-                                        >
-                                          <i className="fas fa-times"></i><span>Falta</span>
-                                        </button>
-                                      </>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </details>
-                      );
-                    });
-                  })()}
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="quick-val-modal-footer d-flex justify-content-between align-items-center mt-3 pt-3 border-top border-secondary">
-              <button 
-                type="button" 
-                onClick={cerrarQuickVal} 
-                className="btn btn-outline-light btn-sm rounded-10"
-              >
-                Cerrar
-              </button>
-              {quickNomina && !quickNomina.estaPagada && (
-                <Link
-                  to="/gestion-staff"
-                  className="btn btn-warning btn-sm rounded-10 fw-bold d-flex align-items-center gap-1 text-dark text-decoration-none"
-                >
-                  <i className="fas fa-money-check-alt"></i>
-                  <span>Ir a Nómina en Staff</span>
-                </Link>
-              )}
-              {quickNomina && quickNomina.estaPagada && (
-                <span className="badge bg-success-glow text-success px-3 py-2 rounded-10 fw-bold">
-                  <i className="fas fa-check-double me-1"></i>Nómina Pagada
-                </span>
-              )}
-            </div>
-
-          </div>
-        </div>
-      )}
 
     </div>
   );

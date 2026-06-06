@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import TipoPagoPicker from '../components/TipoPagoPicker';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
@@ -119,6 +119,7 @@ function OptionPickerModal({ supertitulo, titulo, opciones, valor, onSelect, onC
 
 export default function GestionStaff() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [coaches, setCoaches] = useState([]);
   const [catalogo, setCatalogo] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -127,6 +128,9 @@ export default function GestionStaff() {
   // Estados para el Modal Flotante (Glassmorphism)
   const [coachSeleccionado, setCoachSeleccionado] = useState(null);
   const [modalEspVisible, setModalEspVisible] = useState(false);
+  const [modalPagoVisible, setModalPagoVisible] = useState(false);
+  const [coachPagoInfo, setCoachPagoInfo] = useState(null);
+  const [procesandoPago, setProcesandoPago] = useState(false);
   const [espSeleccionadas, setEspSeleccionadas] = useState([]); // IDs de las especialidades activas
   const [nuevaEspecialidad, setNuevaEspecialidad] = useState('');
 
@@ -138,6 +142,9 @@ export default function GestionStaff() {
   const [cargandoAsistencias, setCargandoAsistencias] = useState(false);
   // ⭐ Estados para Evaluaciones
   const [modalResenasVisible, setModalResenasVisible] = useState(false);
+
+  // 💼 Estado para la Nómina en la vista individual de Auditoría
+  const [nominaCoachAuditoria, setNominaCoachAuditoria] = useState(null);
 
   // Funciones de validación de fechas (Clases futuras)
   const esPasadaOHoy = (fechaStr) => {
@@ -226,6 +233,43 @@ export default function GestionStaff() {
       cargarAuditoria();
     }
   }, [vistaActiva, filtroAuditoria, box]);
+
+  useEffect(() => {
+    if (vistaActiva === 'auditoria' && filtroCoachAuditoria && box) {
+      cargarNominaParaAuditoria(filtroCoachAuditoria);
+    } else {
+      setNominaCoachAuditoria(null);
+    }
+  }, [filtroCoachAuditoria, vistaActiva, box]);
+
+  // Procesar location.state si venimos desde el Dashboard
+  useEffect(() => {
+    if (location.state && location.state.vistaActiva) {
+      setVistaActiva(location.state.vistaActiva);
+      if (location.state.filtroCoachAuditoria) {
+        setFiltroCoachAuditoria(String(location.state.filtroCoachAuditoria));
+        setFiltroAuditoria('semana'); // Cambiamos a semana por defecto para ver bien las clases pendientes
+      }
+      // Limpiar el state para no atorarnos en un loop si recarga la página
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  const cargarNominaParaAuditoria = async (idCoach) => {
+    try {
+      const hoy = new Date();
+      const token = localStorage.getItem('token');
+      // Usar calcular-mensual para la vista general, similar al widget
+      const res = await fetch(`${API_URL}/nomina/calcular-mensual/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setNominaCoachAuditoria(await res.json());
+      }
+    } catch (e) {
+      console.error("Error al cargar nomina para auditoria", e);
+    }
+  };
 
   async function cargarTodo(idBox) {
     if (!idBox) return; // Si no hay ID, no disparamos flechas al aire
@@ -388,6 +432,67 @@ export default function GestionStaff() {
       console.error("Error al cargar auditoría:", e);
     } finally {
       setCargandoAuditoria(false);
+    }
+  };
+
+  const abrirModalPago = (coachNomina) => {
+    // Tomar DiaCorte de la primera clase de este coach
+    const rawDiaCorte = coachNomina.clases[0]?.diaCorte ?? coachNomina.clases[0]?.DiaCorte ?? 7;
+    const diaCorte = parseInt(rawDiaCorte);
+
+    const jsDiaCorte = diaCorte === 7 ? 0 : diaCorte;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const day = today.getDay();
+    let diasFaltantes = jsDiaCorte - day;
+    if (diasFaltantes <= 0) diasFaltantes += 7; 
+
+    const proximoPago = new Date(today);
+    proximoPago.setDate(today.getDate() + diasFaltantes);
+
+    const { fInicioStr, fFinStr } = getDatesForFilter(filtroAuditoria);
+
+    setCoachPagoInfo({
+      ...coachNomina,
+      diaCorte,
+      diasFaltantes,
+      proximoPago,
+      fInicioStr,
+      fFinStr
+    });
+    setModalPagoVisible(true);
+  };
+
+  const registrarPagoNomina = async () => {
+    if (!coachPagoInfo) return;
+    setProcesandoPago(true);
+    try {
+      const token = localStorage.getItem('token');
+      const payload = {
+        FechaInicio: coachPagoInfo.fInicioStr,
+        FechaFin: coachPagoInfo.fFinStr
+      };
+      const res = await fetch(`${API_URL}/nomina/pagar-rango/${coachPagoInfo.idCoach}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        Swal.fire('Pago Registrado', data.mensaje || 'Se ha registrado el egreso financiero.', 'success');
+        setModalPagoVisible(false);
+        cargarAuditoria(); 
+      } else {
+        Swal.fire('Error', data.mensaje || 'Error al procesar el pago', 'error');
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire('Error', 'No se pudo conectar al servidor.', 'error');
+    } finally {
+      setProcesandoPago(false);
     }
   };
 
@@ -994,7 +1099,7 @@ export default function GestionStaff() {
                         <span className="staff-nomina-coach-total-valor">${coachNomina.totalPagar.toFixed(2)}</span>
                       </div>
 
-                      <button className="staff-nomina-coach-btn" onClick={() => alert('Función de registro de pago de nómina en desarrollo. Por ahora, el monto se muestra de manera informativa.')}>
+                      <button className="staff-nomina-coach-btn" onClick={() => abrirModalPago(coachNomina)}>
                         <i className="fas fa-hand-holding-usd"></i> Registrar Pago
                       </button>
                     </div>
@@ -1470,6 +1575,124 @@ export default function GestionStaff() {
           onSelect={(v) => { setFormContrato({ ...formContrato, diaCorte: v }); setPickerActivo(null); }}
           onCerrar={() => setPickerActivo(null)}
         />
+      )}
+
+      {/* ── MODAL: CONFIRMAR PAGO DE NÓMINA ── */}
+      {modalPagoVisible && coachPagoInfo && (
+        <div className="staff-modal-overlay" onClick={() => setModalPagoVisible(false)}>
+          <div className="staff-modal staff-modal--md" onClick={e => e.stopPropagation()}>
+            <div className="staff-modal-header">
+              <div className="d-flex align-items-center gap-2">
+                <div className="staff-modal-icon-box staff-modal-icon-box--accent">
+                  <i className="fas fa-money-check-alt"></i>
+                </div>
+                <div>
+                  <h2 className="staff-modal-titulo">Confirmar Pago</h2>
+                  <p className="staff-modal-subtitle">{coachPagoInfo.nombreCoach}</p>
+                </div>
+              </div>
+              <button className="staff-modal-cerrar" onClick={() => setModalPagoVisible(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div className="staff-modal-body">
+              {/* Contador de próximo pago */}
+              <div className="bg-dark-glow p-3 rounded-12 mb-4 border border-info-glow d-flex align-items-center gap-3">
+                <div className="fs-1 text-info"><i className="fas fa-calendar-alt"></i></div>
+                <div>
+                  <h5 className="text-white mb-1 fw-bold">Siguiente Día de Pago</h5>
+                  <p className="text-white-50 small mb-0">
+                    El siguiente pago del coach será el <strong className="text-info">{coachPagoInfo.proximoPago.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</strong>.
+                    <br />Faltan <strong className="text-white">{coachPagoInfo.diasFaltantes} días</strong> para el corte.
+                  </p>
+                </div>
+              </div>
+
+              {/* Resumen de clases agrupadas por semana de pago */}
+              <h5 className="text-white small fw-bold mb-3">Clases Validadas a Pagar ({coachPagoInfo.clases.length})</h5>
+              <div className="quick-val-table-wrapper mb-4" style={{ maxHeight: '200px', overflowY: 'auto', paddingRight: '5px' }}>
+                {(() => {
+                  const rawDiaCorte = coachPagoInfo.diaCorte;
+                  const diaCorteJS = rawDiaCorte === 7 ? 0 : rawDiaCorte;
+                  const startDay = (diaCorteJS + 1) % 7; 
+                  
+                  const getStartOfWeek = (date, sDay) => {
+                    const d = new Date(date);
+                    const day = d.getDay();
+                    const diff = d.getDate() - day + (day < sDay ? -7 : 0) + sDay;
+                    return new Date(d.setDate(diff));
+                  };
+
+                  const sorted = [...coachPagoInfo.clases].sort((a,b) => new Date(a.fecha || a.Fecha) - new Date(b.fecha || b.Fecha));
+                  const weeks = [];
+                  sorted.forEach(c => {
+                    const d = new Date(c.fecha || c.Fecha);
+                    const weekStart = getStartOfWeek(d, startDay);
+                    weekStart.setHours(0,0,0,0);
+                    
+                    let weekObj = weeks.find(w => w.start.getTime() === weekStart.getTime());
+                    if (!weekObj) {
+                      const weekEnd = new Date(weekStart);
+                      weekEnd.setDate(weekEnd.getDate() + 6);
+                      weekObj = { start: weekStart, end: weekEnd, clases: [] };
+                      weeks.push(weekObj);
+                    }
+                    weekObj.clases.push(c);
+                  });
+
+                  return weeks.map((semana, wIdx) => {
+                    const fStart = semana.start.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                    const fEnd = semana.end.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                    
+                    return (
+                      <div key={wIdx} className="mb-3">
+                        <div className="bg-dark rounded px-2 py-1 mb-1 d-flex justify-content-between align-items-center">
+                          <span className="text-warning fw-bold" style={{fontSize: '11px'}}>
+                            <i className="fas fa-calendar-week me-1"></i> Semana del {fStart} al {fEnd}
+                          </span>
+                          <span className="badge bg-secondary">{semana.clases.length} clases</span>
+                        </div>
+                        {semana.clases.map((c, idx) => {
+                          const nombreClase = c.nombreClase || c.NombreClase || c.nombre || c.Nombre;
+                          const fechaStr = new Date(c.fecha || c.Fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', weekday: 'short' });
+                          const monto = c.montoPago || c.MontoPago || 0;
+                          return (
+                            <div key={idx} className="d-flex justify-content-between align-items-center p-2 border-bottom border-secondary-glow ms-2">
+                              <div>
+                                <div className="text-white fw-medium small">{nombreClase}</div>
+                                <div className="text-white-50 text-capitalize" style={{ fontSize: '11px' }}>
+                                  <i className="far fa-calendar me-1"></i>{fechaStr}
+                                </div>
+                              </div>
+                              <div className="text-success fw-bold small">${monto} MXN</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+
+              {/* Total y Botón */}
+              <div className="d-flex justify-content-between align-items-end mt-4">
+                <div>
+                  <div className="text-white-50 small">Total a Transferir</div>
+                  <div className="text-warning fw-bold fs-3">${coachPagoInfo.totalPagar.toFixed(2)}</div>
+                </div>
+                <BotonSeguro 
+                  className="btn btn-success fw-bold px-4 py-2 rounded-10" 
+                  onClick={registrarPagoNomina} 
+                  procesando={procesandoPago}
+                  textoProcesando="Procesando..."
+                >
+                  <i className="fas fa-check-circle me-2"></i>Aprobar y Registrar Egreso
+                </BotonSeguro>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>
