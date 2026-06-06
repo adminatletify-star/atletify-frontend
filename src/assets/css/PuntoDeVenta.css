@@ -855,6 +855,29 @@
 
 @keyframes pdvPop { from { transform: scale(0); } to { transform: scale(1); } }
 
+/* Método de pago deshabilitado (según config del box) */
+.pdv-metodo-btn--off { opacity: 0.45; cursor: not-allowed; }
+.pdv-metodo-btn--off:hover { transform: none; }
+.pdv-metodo-motivo {
+  display: block;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+  line-height: 1;
+}
+.pdv-metodo-vacio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  background: rgba(245, 166, 35, 0.08);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.pdv-metodo-vacio i { color: var(--accent); }
+
 /* Footer botones */
 .pdv-cobro-footer {
   display: grid;

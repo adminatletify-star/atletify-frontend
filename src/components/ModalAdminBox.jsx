@@ -1,9 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import DateWheelPicker from './DateWheelPicker';
 import './ModalAdminBox.css';
 
-export default function ModalAdminBox({ abierto, datosBox, onClose, onSuccess }) {
+export default function ModalAdminBox({ abierto, datosBox, boxExistente = null, onClose, onSuccess }) {
   const API_URL = import.meta.env.VITE_API_URL;
+
+  // Si viene boxExistente, no se crea un box nuevo: el admin se agrega a ese box.
+  const esBoxExistente = !!boxExistente;
+  const boxData = boxExistente
+    ? { nombre: boxExistente.nombre, ubicacion: '' }
+    : (datosBox || { nombre: '', ubicacion: '' });
 
   const [form, setForm] = useState({
     nombre: '',
@@ -19,6 +26,7 @@ export default function ModalAdminBox({ abierto, datosBox, onClose, onSuccess })
   const [passwordGenerada, setPasswordGenerada] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [mostrarDatePicker, setMostrarDatePicker] = useState(false);
   const enviandoRef = useRef(false);
 
   useEffect(() => {
@@ -29,6 +37,7 @@ export default function ModalAdminBox({ abierto, datosBox, onClose, onSuccess })
       setPasswordGenerada('');
       setLoading(false);
       setSuccess(false);
+      setMostrarDatePicker(false);
       enviandoRef.current = false;
     }
   }, [abierto]);
@@ -84,34 +93,39 @@ export default function ModalAdminBox({ abierto, datosBox, onClose, onSuccess })
     if (!usernameDisponible)         return window.alert('Error: el username no está disponible o es muy corto');
     if (!form.correo.trim())         return window.alert('Error: el correo es requerido');
     if (!form.fechaNacimiento)       return window.alert('Error: la fecha de nacimiento es requerida');
-    if (!datosBox.nombre.trim())     return window.alert('Error: los datos del Box son requeridos');
-    if (!datosBox.ubicacion.trim())  return window.alert('Error: la ubicación del Box es requerida');
+    if (!esBoxExistente && !boxData.nombre.trim())     return window.alert('Error: los datos del Box son requeridos');
+    if (!esBoxExistente && !boxData.ubicacion.trim())  return window.alert('Error: la ubicación del Box es requerida');
 
     enviandoRef.current = true;
     setLoading(true);
-    let idBoxCreado = null;
+    // Si el box ya existe, lo usamos directo; si no, se crea en el PASO 1.
+    let idBoxCreado = esBoxExistente ? boxExistente.idBox : null;
+    let boxFueCreadoAqui = false;
 
     try {
-      // PASO 1: Crear el Box
-      const resBox = await fetch(`${API_URL}/box`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre: datosBox.nombre.trim(),
-          ubicacion: datosBox.ubicacion.trim(),
-          activo: true,
-          costoMensualidad: 0,
-          costoMensualidadKids: 0
-        })
-      });
+      // PASO 1: Crear el Box (solo si no es un box existente)
+      if (!esBoxExistente) {
+        const resBox = await fetch(`${API_URL}/box`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: boxData.nombre.trim(),
+            ubicacion: boxData.ubicacion.trim(),
+            activo: true,
+            costoMensualidad: 0,
+            costoMensualidadKids: 0
+          })
+        });
 
-      if (!resBox.ok) {
-        const errorBox = await resBox.json();
-        throw new Error(errorBox.mensaje || 'Error al crear el Box');
+        if (!resBox.ok) {
+          const errorBox = await resBox.json();
+          throw new Error(errorBox.mensaje || 'Error al crear el Box');
+        }
+
+        const dataBox = await resBox.json();
+        idBoxCreado = dataBox.idBox;
+        boxFueCreadoAqui = true;
       }
-
-      const dataBox = await resBox.json();
-      idBoxCreado = dataBox.idBox;
 
       // PASO 2: Crear el AdminBox
       const response = await fetch(`${API_URL}/usuarios/crear-admin-box`, {
@@ -134,14 +148,15 @@ export default function ModalAdminBox({ abierto, datosBox, onClose, onSuccess })
       if (response.ok) {
         setSuccess(true);
       } else {
-        // Rollback: eliminar el box recién creado si el admin falló
-        await fetch(`${API_URL}/box/${idBoxCreado}`, { method: 'DELETE' }).catch(() => {});
-        idBoxCreado = null;
+        // Rollback: eliminar el box solo si lo creamos aquí
+        if (boxFueCreadoAqui) {
+          await fetch(`${API_URL}/box/${idBoxCreado}`, { method: 'DELETE' }).catch(() => {});
+        }
         window.alert(`Error: ${data.mensaje || 'no se pudo crear el AdminBox'}`);
       }
     } catch (err) {
-      // Rollback si el error ocurrió después de crear el box
-      if (idBoxCreado) {
+      // Rollback solo si el box fue creado aquí antes del error
+      if (boxFueCreadoAqui && idBoxCreado) {
         await fetch(`${API_URL}/box/${idBoxCreado}`, { method: 'DELETE' }).catch(() => {});
       }
       window.alert(`Error: ${err.message || 'no se pudo conectar con el servidor'}`);
@@ -163,10 +178,10 @@ export default function ModalAdminBox({ abierto, datosBox, onClose, onSuccess })
         {/* Header */}
         <div className="mab-header">
           <div className="mab-header-content">
-            <p className="mab-header-supertitle">NUEVO BOX — PASO 2</p>
+            <p className="mab-header-supertitle">{esBoxExistente ? `AGREGAR ADMIN · ${boxExistente.nombre}` : 'NUEVO BOX — PASO 2'}</p>
             <h2 className="mab-header-title">
               <i className="fas fa-user-shield me-2" style={{ color: 'var(--primary)', fontSize: '0.85em' }}></i>
-              Configurar AdminBox
+              {esBoxExistente ? 'Agregar AdminBox' : 'Configurar AdminBox'}
             </h2>
           </div>
           <button className="mab-header-close" onClick={success ? onSuccess : onClose} type="button">
@@ -292,18 +307,30 @@ export default function ModalAdminBox({ abierto, datosBox, onClose, onSuccess })
 
               <div className="mb-3">
                 <label className="etiqueta-campo">Fecha de Nacimiento *</label>
-                <input
-                  type="date"
-                  className="entrada-oscura"
-                  name="fechaNacimiento"
-                  value={form.fechaNacimiento}
-                  onChange={(e) => {
-                    const year = e.target.value.split('-')[0];
-                    if (year.length <= 4) handleInputChange(e);
-                  }}
-                  required
-                />
+                <button
+                  type="button"
+                  className={`entrada-oscura mab-fecha-btn${mostrarDatePicker ? ' mab-fecha-btn--open' : ''}`}
+                  onClick={() => setMostrarDatePicker(true)}
+                >
+                  <i className="fas fa-birthday-cake mab-fecha-icon"></i>
+                  {form.fechaNacimiento
+                    ? <span className="mab-fecha-valor">{new Date(form.fechaNacimiento).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                    : <span className="mab-fecha-placeholder">Seleccionar fecha...</span>}
+                  <i className="fas fa-chevron-down mab-fecha-arrow"></i>
+                </button>
               </div>
+
+              {mostrarDatePicker && createPortal(
+                <div className="dwp-overlay" onClick={(e) => { if (e.target === e.currentTarget) setMostrarDatePicker(false); }}>
+                  <div className="dwp-modal">
+                    <DateWheelPicker
+                      initialDate={form.fechaNacimiento ? new Date(form.fechaNacimiento) : new Date(2000, 0, 1)}
+                      onAccept={(date) => { setForm(prev => ({ ...prev, fechaNacimiento: date.toISOString() })); setMostrarDatePicker(false); }}
+                      onCancel={() => setMostrarDatePicker(false)}
+                    />
+                  </div>
+                </div>, document.body
+              )}
 
 
             </div>

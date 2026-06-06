@@ -6,7 +6,11 @@ import BotonSeguro from '../components/BotonSeguro';
 import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/EditarBox.css';
 
-const API_BASE = import.meta.env.VITE_API_URL;;
+// El backend expone todo bajo /api. VITE_API_URL viene SIN /api, así que lo
+// agregamos (y toleramos que ya lo traiga, por si en prod se configura distinto).
+const API_BASE = import.meta.env.VITE_API_URL?.endsWith('/api')
+  ? import.meta.env.VITE_API_URL
+  : `${import.meta.env.VITE_API_URL}/api`;
 
 const initialForm = {
   idBox: '', nombre: '', ubicacion: '', logo: '',
@@ -41,8 +45,13 @@ const initialConfig = {
   aceptarPagosEnLinea: true,
   aceptarTransferencias: true,
   aceptarEfectivo: true,
+  aceptarTarjetaRecepcion: true,
   recargoMontoFijo: 0,
-  aplicarGraciaSoloConCobroAutomatico: true
+  aplicarGraciaSoloConCobroAutomatico: true,
+  regalarVisitasAmigo: false,
+  visitasRegaloCantidad: 1,
+  caducidadRegaloValor: 30,
+  caducidadRegaloUnidad: 'Dias'
 };
 
 const DIAS_SEMANA = [
@@ -72,6 +81,20 @@ export default function EditarBox() {
   const [saving, setSaving] = useState(false);
   const [savingConfig, setSavingConfig] = useState(false);
   const [activeTab, setActiveTab] = useState('identidad');
+
+  // ── Toggle seguro de visitas de regalo (contraseña + auditoría) ──
+  const [modalVisitas, setModalVisitas] = useState(null); // null | 'activar' | 'desactivar'
+  const [passwordVisitas, setPasswordVisitas] = useState('');
+  const [accionPaquetes, setAccionPaquetes] = useState('mantener'); // 'mantener' | 'borrar'
+  const [opcionDesactivar, setOpcionDesactivar] = useState('pausar'); // 'pausar' | 'solo-nuevos'
+  const [cortesiasVigentes, setCortesiasVigentes] = useState(0);
+  const [procesandoVisitas, setProcesandoVisitas] = useState(false);
+
+  // ── Toggle seguro de métodos de pago (contraseña + auditoría) ──
+  const [modalMetodoPago, setModalMetodoPago] = useState(false);
+  const [metodoPagoPendiente, setMetodoPagoPendiente] = useState(null); // { field, activar, label }
+  const [passwordMetodo, setPasswordMetodo] = useState('');
+  const [procesandoMetodo, setProcesandoMetodo] = useState(false);
 
   const [horarios, setHorarios] = useState(
     DIAS_SEMANA.reduce((acc, dia) => ({ ...acc, [dia]: { abierto: true, apertura: '06:00', cierre: '22:00' } }), {})
@@ -155,8 +178,13 @@ export default function EditarBox() {
           aceptarPagosEnLinea: data.aceptarPagosEnLinea ?? true,
           aceptarTransferencias: data.aceptarTransferencias ?? true,
           aceptarEfectivo: data.aceptarEfectivo ?? true,
+          aceptarTarjetaRecepcion: data.aceptarTarjetaRecepcion ?? true,
           recargoMontoFijo: data.recargoMontoFijo ?? 0,
-          aplicarGraciaSoloConCobroAutomatico: data.aplicarGraciaSoloConCobroAutomatico ?? true
+          aplicarGraciaSoloConCobroAutomatico: data.aplicarGraciaSoloConCobroAutomatico ?? true,
+          regalarVisitasAmigo: data.regalarVisitasAmigo ?? false,
+          visitasRegaloCantidad: data.visitasRegaloCantidad ?? 1,
+          caducidadRegaloValor: data.caducidadRegaloValor ?? 30,
+          caducidadRegaloUnidad: data.caducidadRegaloUnidad ?? 'Dias'
         });
 
         if (data.horariosApertura) {
@@ -176,6 +204,44 @@ export default function EditarBox() {
   function handleConfigChange(e) {
     const { name, value, type, checked } = e.target;
     setConfig(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  }
+
+  // Abre el modal de confirmación (contraseña) para activar/desactivar un método de pago.
+  function abrirModalMetodoPago(field, activar, label) {
+    // Regla: siempre debe quedar ≥1 método de recepción activo (solo los 3 de recepción).
+    const recepcion = ['aceptarTransferencias', 'aceptarEfectivo', 'aceptarTarjetaRecepcion'];
+    if (!activar && recepcion.includes(field)) {
+      const quedaOtroActivo = recepcion.some(m => m !== field && config[m]);
+      if (!quedaOtroActivo) {
+        alert('Debe quedar activo al menos un método de pago en recepción (Transferencia, Efectivo o Tarjeta).');
+        return;
+      }
+    }
+    setMetodoPagoPendiente({ field, activar, label });
+    setPasswordMetodo('');
+    setModalMetodoPago(true);
+  }
+
+  // Verifica la contraseña y aplica el cambio del método de pago (con auditoría en el backend).
+  async function confirmarToggleMetodoPago() {
+    if (!passwordMetodo.trim() || !metodoPagoPendiente) { alert('Ingresa tu contraseña.'); return; }
+    const idBox = boxLocal?.idBox || boxLocal?.IdBox;
+    const { field, activar } = metodoPagoPendiente;
+    setProcesandoMetodo(true);
+    try {
+      const res = await fetch(`${API_BASE}/configuracionbox/${idBox}/toggle-metodo-pago`, {
+        method: 'POST',
+        headers: headersPost,
+        body: JSON.stringify({ contrasena: passwordMetodo, metodo: field, activar })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { alert(data.mensaje || 'No se pudo aplicar el cambio.'); return; }
+      if (data.valido === false) { alert(data.mensaje || 'Contraseña incorrecta.'); return; }
+      setConfig(prev => ({ ...prev, [field]: activar }));
+      setModalMetodoPago(false);
+      setPasswordMetodo('');
+    } catch (e) { alert('Error de conexión.'); }
+    finally { setProcesandoMetodo(false); }
   }
 
   function handleHorarioChange(dia, campo, valor) {
@@ -252,8 +318,13 @@ export default function EditarBox() {
           aceptarPagosEnLinea: config.aceptarPagosEnLinea,
           aceptarTransferencias: config.aceptarTransferencias,
           aceptarEfectivo: config.aceptarEfectivo,
+          aceptarTarjetaRecepcion: config.aceptarTarjetaRecepcion,
           recargoMontoFijo: parseFloat(config.recargoMontoFijo) || 0,
-          aplicarGraciaSoloConCobroAutomatico: config.aplicarGraciaSoloConCobroAutomatico
+          aplicarGraciaSoloConCobroAutomatico: config.aplicarGraciaSoloConCobroAutomatico,
+          regalarVisitasAmigo: config.regalarVisitasAmigo,
+          visitasRegaloCantidad: parseInt(config.visitasRegaloCantidad) || 1,
+          caducidadRegaloValor: parseInt(config.caducidadRegaloValor) || 0,
+          caducidadRegaloUnidad: config.caducidadRegaloUnidad || 'Dias'
         })
       });
 
@@ -265,6 +336,43 @@ export default function EditarBox() {
       }
     } catch (e) { alert('Error de conexión al guardar configuración.'); }
     finally { setSavingConfig(false); }
+  }
+
+  // Abre el modal de confirmación para activar/pausar visitas de regalo.
+  async function abrirModalToggleVisitas(activar) {
+    setPasswordVisitas('');
+    setAccionPaquetes('mantener');
+    setOpcionDesactivar('pausar');
+    // Contamos las cortesías vigentes para informar en ambos flujos (activar y desactivar).
+    const idBox = boxLocal?.idBox || boxLocal?.IdBox;
+    try {
+      const res = await fetch(`${API_BASE}/configuracionbox/${idBox}/cortesias-vigentes`, { headers: headersGet });
+      const data = res.ok ? await res.json() : { count: 0 };
+      setCortesiasVigentes(data.count || 0);
+    } catch { setCortesiasVigentes(0); }
+    setModalVisitas(activar ? 'activar' : 'desactivar');
+  }
+
+  // Verifica la contraseña y aplica el cambio (con auditoría en el backend).
+  async function confirmarToggleVisitas() {
+    if (!passwordVisitas.trim()) { alert('Ingresa tu contraseña.'); return; }
+    const idBox = boxLocal?.idBox || boxLocal?.IdBox;
+    const activar = modalVisitas === 'activar';
+    setProcesandoVisitas(true);
+    try {
+      const res = await fetch(`${API_BASE}/configuracionbox/${idBox}/toggle-visitas-regalo`, {
+        method: 'POST',
+        headers: headersPost,
+        body: JSON.stringify({ contrasena: passwordVisitas, activar, accionPaquetes: activar ? accionPaquetes : null, opcionDesactivar: activar ? null : opcionDesactivar })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { alert(data.mensaje || 'No se pudo aplicar el cambio.'); return; }
+      if (data.valido === false) { alert(data.mensaje || 'Contraseña incorrecta.'); return; }
+      setConfig(prev => ({ ...prev, regalarVisitasAmigo: activar }));
+      setModalVisitas(null);
+      setPasswordVisitas('');
+    } catch (e) { alert('Error de conexión.'); }
+    finally { setProcesandoVisitas(false); }
   }
 
   async function conectarStripe() {
@@ -573,7 +681,7 @@ export default function EditarBox() {
                     <div className="row g-3">
                       <div className="col-12 col-md-4 d-flex align-items-center">
                         <div className="form-check form-switch custom-switch">
-                          <input className="form-check-input" type="checkbox" id="switchPagosEnLinea" name="aceptarPagosEnLinea" checked={config.aceptarPagosEnLinea} onChange={handleConfigChange} style={{ width: '2.5rem', height: '1.3rem' }} />
+                          <input className="form-check-input" type="checkbox" id="switchPagosEnLinea" name="aceptarPagosEnLinea" checked={config.aceptarPagosEnLinea} onChange={() => abrirModalMetodoPago('aceptarPagosEnLinea', !config.aceptarPagosEnLinea, 'Pagos con Tarjeta (App)')} style={{ width: '2.5rem', height: '1.3rem' }} />
                           <label className="form-check-label ms-2 text-white" htmlFor="switchPagosEnLinea" style={{ fontSize: '0.85rem' }}>
                             <i className="fas fa-credit-card me-1" style={{ color: '#6772E5' }}></i>
                             Habilitar Pagos con Tarjeta (App)
@@ -582,7 +690,7 @@ export default function EditarBox() {
                       </div>
                       <div className="col-12 col-md-4 d-flex align-items-center">
                         <div className="form-check form-switch custom-switch">
-                          <input className="form-check-input" type="checkbox" id="switchTransferencias" name="aceptarTransferencias" checked={config.aceptarTransferencias} onChange={handleConfigChange} style={{ width: '2.5rem', height: '1.3rem' }} />
+                          <input className="form-check-input" type="checkbox" id="switchTransferencias" name="aceptarTransferencias" checked={config.aceptarTransferencias} onChange={() => abrirModalMetodoPago('aceptarTransferencias', !config.aceptarTransferencias, 'Aceptar Transferencias')} style={{ width: '2.5rem', height: '1.3rem' }} />
                           <label className="form-check-label ms-2 text-white" htmlFor="switchTransferencias" style={{ fontSize: '0.85rem' }}>
                             <i className="fas fa-money-bill-transfer me-1" style={{ color: 'var(--info)' }}></i>
                             Aceptar Transferencias
@@ -591,10 +699,19 @@ export default function EditarBox() {
                       </div>
                       <div className="col-12 col-md-4 d-flex align-items-center">
                         <div className="form-check form-switch custom-switch">
-                          <input className="form-check-input" type="checkbox" id="switchEfectivo" name="aceptarEfectivo" checked={config.aceptarEfectivo} onChange={handleConfigChange} style={{ width: '2.5rem', height: '1.3rem' }} />
+                          <input className="form-check-input" type="checkbox" id="switchEfectivo" name="aceptarEfectivo" checked={config.aceptarEfectivo} onChange={() => abrirModalMetodoPago('aceptarEfectivo', !config.aceptarEfectivo, 'Aceptar Efectivo en Recepción')} style={{ width: '2.5rem', height: '1.3rem' }} />
                           <label className="form-check-label ms-2 text-white" htmlFor="switchEfectivo" style={{ fontSize: '0.85rem' }}>
                             <i className="fas fa-coins me-1" style={{ color: 'var(--success)' }}></i>
                             Aceptar Efectivo en Recepción
+                          </label>
+                        </div>
+                      </div>
+                      <div className="col-12 col-md-4 d-flex align-items-center">
+                        <div className="form-check form-switch custom-switch">
+                          <input className="form-check-input" type="checkbox" id="switchTarjetaRecepcion" name="aceptarTarjetaRecepcion" checked={config.aceptarTarjetaRecepcion} onChange={() => abrirModalMetodoPago('aceptarTarjetaRecepcion', !config.aceptarTarjetaRecepcion, 'Aceptar Tarjeta en Recepción')} style={{ width: '2.5rem', height: '1.3rem' }} />
+                          <label className="form-check-label ms-2 text-white" htmlFor="switchTarjetaRecepcion" style={{ fontSize: '0.85rem' }}>
+                            <i className="fas fa-credit-card me-1" style={{ color: 'var(--accent-cool, #4fc3f7)' }}></i>
+                            Aceptar Tarjeta en Recepción
                           </label>
                         </div>
                       </div>
@@ -686,6 +803,92 @@ export default function EditarBox() {
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  {/* ── VISITAS DE REGALO PARA UN AMIGO ── */}
+                  <div className="mb-4 p-3 rounded" style={{ background: 'rgba(245, 166, 35, 0.06)', border: '1px solid rgba(245, 166, 35, 0.25)' }}>
+                    <p className="fw-bold mb-3" style={{ color: 'var(--accent)', fontFamily: 'var(--font-heading)', fontSize: '0.9rem' }}>
+                      <i className="fas fa-gift me-2"></i>Visitas de regalo para un amigo
+                    </p>
+
+                    <div className="form-check form-switch mb-1">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id="switchRegalarVisitas"
+                        name="regalarVisitasAmigo"
+                        checked={config.regalarVisitasAmigo}
+                        onChange={() => abrirModalToggleVisitas(!config.regalarVisitasAmigo)}
+                        style={{ width: '2.5rem', height: '1.3rem' }}
+                      />
+                      <label className="form-check-label ms-2 text-white" htmlFor="switchRegalarVisitas" style={{ fontSize: '0.85rem' }}>
+                        Regalar visitas a cada cuenta nueva de atleta
+                      </label>
+                    </div>
+                    <small className="text-secondary d-block mb-3" style={{ fontSize: '0.7rem' }}>
+                      Al aprobar una cuenta nueva se le otorgan visitas de cortesía para que traiga a un amigo. Se canjean en Gestión de Finanzas → Drop-In.
+                    </small>
+
+                    {config.regalarVisitasAmigo && (
+                      <div className="row g-3">
+                        <div className="col-12 col-md-4">
+                          <label className="eb-label">Visitas de regalo</label>
+                          <input
+                            type="number"
+                            name="visitasRegaloCantidad"
+                            className="eb-input"
+                            value={config.visitasRegaloCantidad}
+                            onChange={handleConfigChange}
+                            min="1"
+                            placeholder="Ej. 1"
+                          />
+                          <small className="text-secondary" style={{ fontSize: '0.7rem' }}>Cantidad por cuenta nueva.</small>
+                        </div>
+
+                        <div className="col-6 col-md-3">
+                          <label className="eb-label">Caduca en</label>
+                          <input
+                            type="number"
+                            name="caducidadRegaloValor"
+                            className="eb-input"
+                            value={config.caducidadRegaloValor}
+                            onChange={handleConfigChange}
+                            min="0"
+                            placeholder="Ej. 30"
+                          />
+                          <small className="text-secondary" style={{ fontSize: '0.7rem' }}>0 = sin caducidad.</small>
+                        </div>
+
+                        <div className="col-6 col-md-5">
+                          <label className="eb-label">Unidad</label>
+                          <div className="d-flex gap-2 flex-wrap">
+                            {[
+                              { val: 'Dias', label: 'Días' },
+                              { val: 'Semanas', label: 'Semanas' },
+                              { val: 'Meses', label: 'Meses' },
+                              { val: 'Anios', label: 'Años' },
+                            ].map(u => (
+                              <button
+                                key={u.val}
+                                type="button"
+                                onClick={() => setConfig(prev => ({ ...prev, caducidadRegaloUnidad: u.val }))}
+                                className="btn btn-sm px-3 py-2"
+                                style={{
+                                  background: config.caducidadRegaloUnidad === u.val ? 'var(--accent)' : 'rgba(245,166,35,0.1)',
+                                  color: config.caducidadRegaloUnidad === u.val ? '#1a1a1a' : 'var(--accent)',
+                                  border: '1px solid rgba(245,166,35,0.4)',
+                                  borderRadius: '8px',
+                                  fontWeight: 600,
+                                  fontSize: '0.8rem',
+                                }}
+                              >
+                                {u.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* ── GIMNASIO ── */}
@@ -843,6 +1046,120 @@ export default function EditarBox() {
 
         </div>
       </div>
+
+      {/* ── MODAL SEGURO: activar / pausar visitas de regalo ── */}
+      {modalVisitas && (
+        <div className="eb-visitas-modal-overlay" onClick={() => !procesandoVisitas && setModalVisitas(null)}>
+          <div className="eb-visitas-modal" onClick={e => e.stopPropagation()}>
+            <div className="eb-visitas-modal-icon">
+              <i className={`fas ${modalVisitas === 'desactivar' ? 'fa-pause-circle' : 'fa-gift'}`}></i>
+            </div>
+            <h5 className="eb-visitas-modal-title">
+              {modalVisitas === 'desactivar' ? 'Desactivar visitas de regalo' : 'Activar visitas de regalo'}
+            </h5>
+
+            {modalVisitas === 'desactivar' ? (
+              <>
+                <p className="eb-visitas-modal-text">
+                  Vas a desactivar las visitas de regalo. ¿Cómo quieres hacerlo?
+                </p>
+                <div className="eb-visitas-choice">
+                  <button type="button" className={`eb-visitas-choice-opt ${opcionDesactivar === 'pausar' ? 'is-active' : ''}`} onClick={() => setOpcionDesactivar('pausar')}>
+                    <i className={`fas ${opcionDesactivar === 'pausar' ? 'fa-check-circle' : 'fa-circle'}`}></i>
+                    <div><strong>Pausar para todos</strong><span>Nadie verá ni podrá canjear sus visitas. La caducidad sigue corriendo; si reactivas, las recuperan.</span></div>
+                  </button>
+                  <button type="button" className={`eb-visitas-choice-opt ${opcionDesactivar === 'solo-nuevos' ? 'is-active' : ''}`} onClick={() => setOpcionDesactivar('solo-nuevos')}>
+                    <i className={`fas ${opcionDesactivar === 'solo-nuevos' ? 'fa-check-circle' : 'fa-circle'}`}></i>
+                    <div><strong>Solo dejar de dar a nuevos</strong><span>Las cuentas nuevas ya no reciben visitas, pero las {cortesiasVigentes} vigente(s) siguen activas y canjeables hasta vencer.</span></div>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="eb-visitas-modal-text">
+                  Se reactivarán las visitas de regalo. Los atletas nuevos recibirán las suyas al ser aprobados.
+                </p>
+                {cortesiasVigentes > 0 && (
+                  <div className="eb-visitas-choice">
+                    <p className="eb-visitas-choice-q">Hay <strong>{cortesiasVigentes}</strong> visita(s) de cortesía vigentes. ¿Qué hago con ellas?</p>
+                    <button type="button" className={`eb-visitas-choice-opt ${accionPaquetes === 'mantener' ? 'is-active' : ''}`} onClick={() => setAccionPaquetes('mantener')}>
+                      <i className={`fas ${accionPaquetes === 'mantener' ? 'fa-check-circle' : 'fa-circle'}`}></i>
+                      <div><strong>Mantener las existentes</strong><span>Los atletas a quienes no se les vencieron las vuelven a ver.</span></div>
+                    </button>
+                    <button type="button" className={`eb-visitas-choice-opt ${accionPaquetes === 'borrar' ? 'is-active' : ''}`} onClick={() => setAccionPaquetes('borrar')}>
+                      <i className={`fas ${accionPaquetes === 'borrar' ? 'fa-check-circle' : 'fa-circle'}`}></i>
+                      <div><strong>Borrarlas (cancelar)</strong><span>Se cancelan; solo los atletas nuevos recibirán visitas.</span></div>
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+
+            <label className="eb-visitas-modal-label">Confirma tu contraseña</label>
+            <input
+              type="password"
+              className="eb-input"
+              value={passwordVisitas}
+              onChange={e => setPasswordVisitas(e.target.value)}
+              placeholder="Tu contraseña de acceso"
+              autoFocus
+              autoComplete="current-password"
+              disabled={procesandoVisitas}
+            />
+
+            <div className="eb-visitas-modal-actions">
+              <button type="button" className="eb-visitas-btn-cancel" onClick={() => setModalVisitas(null)} disabled={procesandoVisitas}>Cancelar</button>
+              <BotonSeguro
+                onClick={confirmarToggleVisitas}
+                className={`eb-visitas-btn-confirm ${modalVisitas === 'desactivar' ? 'is-pause' : ''}`}
+                textoProcesando="Verificando..."
+                disabled={procesandoVisitas || !passwordVisitas.trim()}
+              >
+                {modalVisitas === 'desactivar' ? 'Desactivar' : 'Activar'}
+              </BotonSeguro>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL SEGURO: activar / desactivar método de pago ── */}
+      {modalMetodoPago && metodoPagoPendiente && (
+        <div className="eb-visitas-modal-overlay" onClick={() => !procesandoMetodo && setModalMetodoPago(false)}>
+          <div className="eb-visitas-modal" onClick={e => e.stopPropagation()}>
+            <div className="eb-visitas-modal-icon">
+              <i className={`fas ${metodoPagoPendiente.activar ? 'fa-toggle-on' : 'fa-toggle-off'}`}></i>
+            </div>
+            <h5 className="eb-visitas-modal-title">
+              {metodoPagoPendiente.activar ? 'Activar' : 'Desactivar'} método de pago
+            </h5>
+            <p className="eb-visitas-modal-text">
+              Vas a <strong>{metodoPagoPendiente.activar ? 'activar' : 'desactivar'}</strong> "{metodoPagoPendiente.label}". Confirma con tu contraseña; la acción quedará registrada en la auditoría.
+            </p>
+            <label className="eb-visitas-modal-label">Confirma tu contraseña</label>
+            <input
+              type="password"
+              className="eb-input"
+              value={passwordMetodo}
+              onChange={e => setPasswordMetodo(e.target.value)}
+              placeholder="Tu contraseña de acceso"
+              autoFocus
+              autoComplete="current-password"
+              disabled={procesandoMetodo}
+            />
+            <div className="eb-visitas-modal-actions">
+              <button type="button" className="eb-visitas-btn-cancel" onClick={() => setModalMetodoPago(false)} disabled={procesandoMetodo}>Cancelar</button>
+              <BotonSeguro
+                onClick={confirmarToggleMetodoPago}
+                className={`eb-visitas-btn-confirm ${!metodoPagoPendiente.activar ? 'is-pause' : ''}`}
+                textoProcesando="Verificando..."
+                disabled={procesandoMetodo || !passwordMetodo.trim()}
+              >
+                {metodoPagoPendiente.activar ? 'Activar' : 'Desactivar'}
+              </BotonSeguro>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

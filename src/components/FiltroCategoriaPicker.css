@@ -44,7 +44,10 @@
   transform: translateY(-1px);
 }
 
-.fcp-trigger-left { display: flex; align-items: center; gap: 0.6rem; }
+.fcp-trigger-left { display: flex; align-items: center; gap: 0.6rem; min-width: 0; flex: 1; }
+.fcp-trigger-left .fcp-dot { flex-shrink: 0; }
+.fcp-trigger-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.fcp-chevron { flex-shrink: 0; }
 
 .fcp-dot {
   width: 8px; height: 8px;

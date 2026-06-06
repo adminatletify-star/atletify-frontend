@@ -40,7 +40,10 @@
 .cbp-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  /* OJO: esta clase .cbp-overlay colisiona con CategoriaBasePicker.css (mismo
+     nombre, bundle global). Ambas deben quedar > 10000 para que el selector se
+     abra por encima de los modales (finanzas-modal-overlay = 10000). */
+  z-index: 10050;
   background: rgba(0,0,0,0.72);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);

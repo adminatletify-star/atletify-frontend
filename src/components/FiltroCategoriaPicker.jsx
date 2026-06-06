@@ -32,7 +32,7 @@ export default function FiltroCategoriaPicker({ categorias = [], valor, onCambia
       >
         <span className="fcp-trigger-left">
           <span className={`fcp-dot fcp-dot--${isTodas ? 'todas' : getKey(valor)}`}></span>
-          {isTodas ? 'Todas las categorías' : valor}
+          <span className="fcp-trigger-label">{isTodas ? 'Todas las categorías' : valor}</span>
         </span>
         <i className="fas fa-chevron-down fcp-chevron"></i>
       </button>

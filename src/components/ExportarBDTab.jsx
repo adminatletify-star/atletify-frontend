@@ -4,8 +4,68 @@ import * as XLSX from 'xlsx';
 import XLSX_STYLE from 'xlsx-js-style';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import '../assets/css/ExportarBD.css';
 
 const API_BASE = import.meta.env.VITE_API_URL;
+
+// Opciones de filtro (reemplazan los <select> nativos por pickers modales)
+const ROLES_EXPORT = [
+  { value: 'Todos',    label: 'Todos',    icon: 'fa-users',                desc: 'Todos los roles',     color: '#A8B2D1' },
+  { value: 'Atleta',   label: 'Atleta',   icon: 'fa-running',              desc: 'Miembros del box',    color: '#2ECC71' },
+  { value: 'Coach',    label: 'Coach',    icon: 'fa-chalkboard-teacher',   desc: 'Entrenadores',        color: '#4FC3F7' },
+  { value: 'Staff',    label: 'Staff',    icon: 'fa-user-shield',          desc: 'Personal del box',    color: '#00B8C4' },
+  { value: 'AdminBox', label: 'AdminBox', icon: 'fa-shield-alt',           desc: 'Administradores',     color: '#F5A623' },
+];
+
+const ESTATUS_EXPORT = [
+  { value: 'Todas',         label: 'Todas',          icon: 'fa-layer-group',  desc: 'Cualquier membresía', color: '#A8B2D1' },
+  { value: 'Activa',        label: 'Activa',         icon: 'fa-check-circle', desc: 'Membresía vigente',   color: '#2ECC71' },
+  { value: 'Vencida',       label: 'Vencida',        icon: 'fa-times-circle', desc: 'Pago pendiente',      color: '#E74C3C' },
+  { value: 'Congelada',     label: 'Congelada',      icon: 'fa-snowflake',    desc: 'Membresía en pausa',  color: '#4FC3F7' },
+  { value: 'VIP',           label: 'VIP (Exentos)',  icon: 'fa-crown',        desc: 'Exentos de pago',     color: '#F5A623' },
+  { value: 'Sin Membresía', label: 'Sin Membresía',  icon: 'fa-ban',          desc: 'Sin plan asignado',   color: '#888' },
+];
+
+// Picker modal genérico (centrado) para los filtros de rol / estatus
+function OpcionPickerModal({ supertitulo, titulo, opciones, valor, onSelect, onCerrar }) {
+  return createPortal(
+    <div className="ebx-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onCerrar(); }}>
+      <div className="ebx-modal">
+        <div className="ebx-modal__header">
+          <div>
+            <p className="ebx-modal__supertitle">{supertitulo}</p>
+            <h2 className="ebx-modal__title">{titulo}</h2>
+          </div>
+          <button type="button" className="ebx-modal__close" onClick={onCerrar} aria-label="Cerrar">
+            <i className="fas fa-times" />
+          </button>
+        </div>
+        <div className="ebx-modal__list">
+          {opciones.map(op => {
+            const activo = op.value === valor;
+            return (
+              <button
+                key={op.value}
+                type="button"
+                className={`ebx-opcion${activo ? ' ebx-opcion--activo' : ''}`}
+                style={{ '--opt-color': op.color }}
+                onClick={() => onSelect(op.value)}
+              >
+                <span className="ebx-opcion__icon"><i className={`fas ${op.icon}`} /></span>
+                <span className="ebx-opcion__info">
+                  <span className="ebx-opcion__nombre">{op.label}</span>
+                  {op.desc && <span className="ebx-opcion__desc">{op.desc}</span>}
+                </span>
+                {activo && <i className="fas fa-check-circle ebx-opcion__check" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 // Definición de columnas exportables agrupadas por categoría
 export const COLUMNAS_EXPORTABLES = {
@@ -89,6 +149,11 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
   const [mostrarModalPDF, setMostrarModalPDF] = useState(false);
   const [modalBoxOpen, setModalBoxOpen] = useState(false);
   const [busquedaBox, setBusquedaBox] = useState('');
+  const [modalRolOpen, setModalRolOpen] = useState(false);
+  const [modalEstatusOpen, setModalEstatusOpen] = useState(false);
+
+  const rolSel = ROLES_EXPORT.find(r => r.value === filtroRolExport) || ROLES_EXPORT[0];
+  const estatusSel = ESTATUS_EXPORT.find(e => e.value === filtroEstatusExport) || ESTATUS_EXPORT[0];
 
   useEffect(() => {
     const id = fixedBox?.idBox || fixedBox?.IdBox;
@@ -498,126 +563,111 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
   const colsArray = ordenarColumnas(columnasSeleccionadas);
 
   return (
-    <div className="tarjeta-panel p-4 slide-in" style={{ backgroundColor: fixedBox ? 'transparent' : ''}}>
+    <div className={`ebx-root ${fixedBox ? 'ebx-root--embedded' : ''}`}>
       {!fixedBox && (
-        <h4 className="text-white mb-4">
-          <i className="fas fa-database me-2 text-danger"></i> Exportar Base de Datos de Usuarios
-        </h4>
+        <h2 className="ebx-title">
+          <i className="fas fa-database"></i> Exportar Base de Datos
+        </h2>
       )}
 
-      <div className="row g-4">
-        {/* COLUMNA IZQUIERDA: Configuración */}
-        <div className="col-lg-5">
+      <div className="ebx-grid">
+        {/* ── IZQUIERDA: CONFIGURACIÓN ── */}
+        <div className="ebx-config">
           {/* Selector de Box (solo si no es fixedBox) */}
           {!fixedBox && (
-            <div className="mb-4">
-              <label className="form-label text-white-50 fw-bold"><i className="fas fa-building me-1"></i> Box a exportar</label>
+            <div className="ebx-block">
+              <label className="ebx-field-label"><i className="fas fa-warehouse"></i> Box a exportar</label>
               <button
                 type="button"
+                className={`ebx-picker-btn${exportBoxNombre ? ' ebx-picker-btn--active' : ''}`}
                 onClick={() => { setBusquedaBox(''); setModalBoxOpen(true); }}
-                style={{
-                  width: '100%', background: 'var(--bg-input, #1a1a2e)', border: '1px solid var(--border, rgba(255,255,255,0.1))',
-                  borderRadius: '8px', color: exportBoxNombre ? '#fff' : 'rgba(255,255,255,0.4)',
-                  fontFamily: 'inherit', fontSize: '0.9rem', padding: '0.6rem 1rem',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  gap: '0.5rem', transition: 'border-color 0.2s', textAlign: 'left',
-                }}
               >
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
-                  <i className="fas fa-warehouse" style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0 }} />
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {exportBoxNombre || 'Selecciona un Box...'}
+                <span className="ebx-picker-btn__left">
+                  <span className="ebx-picker-btn__icon"><i className="fas fa-warehouse" /></span>
+                  <span className={`ebx-picker-btn__label${exportBoxNombre ? '' : ' ebx-picker-btn__label--placeholder'}`}>
+                    {exportBoxNombre || 'Selecciona un Box…'}
                   </span>
                 </span>
-                <i className="fas fa-search" style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0, fontSize: '0.8rem' }} />
+                <i className="fas fa-chevron-down ebx-picker-btn__arrow" />
               </button>
             </div>
           )}
 
-          {/* Filtros */}
-          <div className="row g-3 mb-4">
-            <div className="col-6">
-              <label className="form-label text-white-50 small fw-bold">Filtro por Rol</label>
-              <select className="entrada-oscura" value={filtroRolExport} onChange={e => { setFiltroRolExport(e.target.value); setExportPreview(false); }}>
-                <option value="Todos">Todos</option>
-                <option value="Atleta">Atleta</option>
-                <option value="Coach">Coach</option>
-                <option value="Staff">Staff</option>
-                <option value="AdminBox">AdminBox</option>
-              </select>
-            </div>
-            <div className="col-6">
-              <label className="form-label text-white-50 small fw-bold">Estatus Membresía</label>
-              <select className="entrada-oscura" value={filtroEstatusExport} onChange={e => { setFiltroEstatusExport(e.target.value); setExportPreview(false); }}>
-                <option value="Todas">Todas</option>
-                <option value="Activa">Activa</option>
-                <option value="Vencida">Vencida</option>
-                <option value="Congelada">Congelada</option>
-                <option value="VIP">VIP (Exentos)</option>
-                <option value="Sin Membresía">Sin Membresía</option>
-              </select>
+          {/* Filtros (pickers modales en vez de <select> nativo) */}
+          <div className="ebx-block">
+            <div className="ebx-filtros">
+              <div>
+                <label className="ebx-field-label"><i className="fas fa-user-tag"></i> Rol</label>
+                <button
+                  type="button"
+                  className={`ebx-picker-btn${filtroRolExport !== 'Todos' ? ' ebx-picker-btn--active' : ''}`}
+                  style={{ '--pick-color': rolSel.color }}
+                  onClick={() => setModalRolOpen(true)}
+                >
+                  <span className="ebx-picker-btn__left">
+                    <span className="ebx-picker-btn__icon"><i className={`fas ${rolSel.icon}`} /></span>
+                    <span className="ebx-picker-btn__label">{rolSel.label}</span>
+                  </span>
+                  <i className="fas fa-chevron-down ebx-picker-btn__arrow" />
+                </button>
+              </div>
+              <div>
+                <label className="ebx-field-label"><i className="fas fa-id-card"></i> Membresía</label>
+                <button
+                  type="button"
+                  className={`ebx-picker-btn${filtroEstatusExport !== 'Todas' ? ' ebx-picker-btn--active' : ''}`}
+                  style={{ '--pick-color': estatusSel.color }}
+                  onClick={() => setModalEstatusOpen(true)}
+                >
+                  <span className="ebx-picker-btn__left">
+                    <span className="ebx-picker-btn__icon"><i className={`fas ${estatusSel.icon}`} /></span>
+                    <span className="ebx-picker-btn__label">{estatusSel.label}</span>
+                  </span>
+                  <i className="fas fa-chevron-down ebx-picker-btn__arrow" />
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Selector de Columnas */}
-          <div className="mb-3">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <label className="form-label text-white-50 fw-bold mb-0"><i className="fas fa-columns me-1"></i> Columnas a exportar</label>
-              <div className="d-flex gap-2">
-                <button className="btn btn-sm btn-outline-success rounded-pill px-3" onClick={seleccionarTodas} style={{ fontSize: '0.7rem' }}>
-                  <i className="fas fa-check-double me-1"></i>Todas
+          <div className="ebx-block">
+            <div className="ebx-cols-head">
+              <label className="ebx-field-label" style={{ marginBottom: 0 }}><i className="fas fa-table-columns"></i> Columnas a exportar</label>
+              <div className="ebx-mini-actions">
+                <button type="button" className="ebx-mini-btn ebx-mini-btn--ok" onClick={seleccionarTodas}>
+                  <i className="fas fa-check-double" />Todas
                 </button>
-                <button className="btn btn-sm btn-outline-secondary rounded-pill px-3" onClick={limpiarSeleccion} style={{ fontSize: '0.7rem' }}>
-                  <i className="fas fa-eraser me-1"></i>Limpiar
+                <button type="button" className="ebx-mini-btn ebx-mini-btn--clear" onClick={limpiarSeleccion}>
+                  <i className="fas fa-eraser" />Limpiar
                 </button>
               </div>
             </div>
 
-            <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '4px' }}>
+            <div className="ebx-cols-scroll">
               {Object.entries(COLUMNAS_EXPORTABLES).map(([categoria, columnas]) => {
                 const todasActivas = columnas.every(c => columnasSeleccionadas.has(c.key));
                 const algunaActiva = columnas.some(c => columnasSeleccionadas.has(c.key));
                 const color = COLORES_CATEGORIA[categoria];
                 return (
-                  <div key={categoria} className="mb-3 rounded-3 overflow-hidden" style={{ border: `1px solid ${algunaActiva ? color : 'rgba(255,255,255,0.08)'}`, transition: 'border-color 0.3s' }}>
-                    {/* Header de categoría */}
-                    <div 
-                      className="d-flex align-items-center gap-2 px-3 py-2" 
-                      style={{ background: `linear-gradient(135deg, ${color}15, transparent)`, cursor: 'pointer' }}
-                      onClick={() => toggleCategoria(categoria)}
-                    >
-                      <i className={ICONOS_CATEGORIA[categoria]} style={{ color, fontSize: '0.85rem' }}></i>
-                      <span className="fw-bold text-white" style={{ fontSize: '0.8rem' }}>{categoria}</span>
-                      <span className="ms-auto">
-                        <i className={`fas ${todasActivas ? 'fa-check-square' : algunaActiva ? 'fa-minus-square' : 'fa-square'}`} style={{ color: todasActivas ? color : '#666', fontSize: '0.85rem' }}></i>
-                      </span>
+                  <div key={categoria} className={`ebx-cat${algunaActiva ? ' ebx-cat--active' : ''}`} style={{ '--cat-color': color }}>
+                    <div className="ebx-cat-head" onClick={() => toggleCategoria(categoria)}>
+                      <i className={`${ICONOS_CATEGORIA[categoria]} ebx-cat-icon`}></i>
+                      <span className="ebx-cat-name">{categoria}</span>
+                      <i
+                        className={`fas ${todasActivas ? 'fa-check-square' : algunaActiva ? 'fa-minus-square' : 'fa-square'} ebx-cat-toggle`}
+                        style={{ color: (todasActivas || algunaActiva) ? color : 'var(--text-muted)' }}
+                      ></i>
                     </div>
-                    {/* Checkboxes */}
-                    <div className="px-3 py-2" style={{ background: 'rgba(0,0,0,0.2)' }}>
-                      <div className="row g-1">
-                        {columnas.map(col => (
-                          <div key={col.key} className="col-6">
-                            <label 
-                              className="d-flex align-items-center gap-2 py-1 px-2 rounded-2" 
-                              style={{ 
-                                cursor: 'pointer', fontSize: '0.78rem', 
-                                background: columnasSeleccionadas.has(col.key) ? `${color}20` : 'transparent',
-                                transition: 'background 0.2s'
-                              }}
-                            >
-                              <input 
-                                type="checkbox" 
-                                checked={columnasSeleccionadas.has(col.key)} 
-                                onChange={() => toggleColumna(col.key)}
-                                style={{ accentColor: color }}
-                              />
-                              <span className={columnasSeleccionadas.has(col.key) ? 'text-white' : 'text-white-50'}>
-                                {col.label}
-                              </span>
-                            </label>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="ebx-cat-body">
+                      {columnas.map(col => {
+                        const on = columnasSeleccionadas.has(col.key);
+                        return (
+                          <label key={col.key} className={`ebx-check${on ? ' ebx-check--on' : ''}`}>
+                            <input type="checkbox" checked={on} onChange={() => toggleColumna(col.key)} />
+                            <span>{col.label}</span>
+                          </label>
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -625,103 +675,99 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
             </div>
           </div>
 
-          {/* Contador + Botón de previsualizar */}
-          <div className="d-flex align-items-center justify-content-between mb-3 py-2 px-3 rounded-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
-            <span className="text-white-50" style={{ fontSize: '0.85rem' }}>
-              <i className="fas fa-list-ol me-1"></i> <strong className="text-white">{columnasSeleccionadas.size}</strong> columnas seleccionadas
-            </span>
+          {/* Contador */}
+          <div className="ebx-counter">
+            <i className="fas fa-list-ol"></i>
+            <span><strong>{columnasSeleccionadas.size}</strong> columnas seleccionadas</span>
           </div>
 
-          <button 
-            className="btn btn-danger w-100 rounded-pill fw-bold py-2 mb-3 shadow"
+          <button
+            className="ebx-primary-btn"
             onClick={cargarDatos}
             disabled={cargandoExport || (!fixedBox && !exportBoxId) || columnasSeleccionadas.size === 0}
           >
-            {cargandoExport 
-              ? <><i className="fas fa-spinner fa-spin me-2"></i>Cargando datos...</>
-              : <><i className="fas fa-search me-2"></i>Previsualizar Datos</>
+            {cargandoExport
+              ? <><i className="fas fa-spinner fa-spin" />Cargando datos…</>
+              : <><i className="fas fa-eye" />Previsualizar Datos</>
             }
           </button>
         </div>
 
-        {/* COLUMNA DERECHA: Previsualización + Descarga */}
-        <div className="col-lg-7">
+        {/* ── DERECHA: PREVISUALIZACIÓN ── */}
+        <div className="ebx-preview">
           {!exportPreview ? (
-            <div className="d-flex flex-column align-items-center justify-content-center h-100 text-white-50 bg-dark rounded-4 py-5" style={{ minHeight: '400px', border: '2px dashed rgba(255,255,255,0.08)' }}>
-              <i className="fas fa-file-export fa-3x mb-3 opacity-50"></i>
-              <p className="mb-1 fw-bold">Vista previa de datos</p>
-              <p className="small mb-0">
-                {fixedBox ? 'Selecciona columnas y filtros, luego haz clic en "Previsualizar"' : 'Selecciona un Box y columnas, luego haz clic en "Previsualizar"'}
+            <div className="ebx-empty">
+              <i className="fas fa-file-export"></i>
+              <p className="ebx-empty-title">Vista previa de datos</p>
+              <p className="ebx-empty-sub">
+                {fixedBox ? 'Selecciona columnas y filtros, luego pulsa “Previsualizar”.' : 'Selecciona un Box y columnas, luego pulsa “Previsualizar”.'}
               </p>
             </div>
           ) : (
             <>
-              {/* Barra de resumen */}
-              <div className="d-flex flex-wrap align-items-center gap-3 mb-3 p-3 rounded-3" style={{ background: 'linear-gradient(135deg, rgba(200,30,30,0.15), rgba(0,0,0,0.3))', border: '1px solid rgba(200,30,30,0.3)' }}>
-                <div className="d-flex align-items-center gap-2">
-                  <i className="fas fa-users text-danger"></i>
-                  <span className="text-white fw-bold">{datosExportados.length}</span>
-                  <span className="text-white-50 small">registros encontrados</span>
+              {/* Barra de resumen + descargas */}
+              <div className="ebx-summary">
+                <div className="ebx-summary-info">
+                  <i className="fas fa-users"></i>
+                  <strong>{datosExportados.length}</strong>
+                  <span>registros encontrados</span>
                 </div>
-                <div className="ms-auto d-flex gap-2">
-                  <button className="btn btn-sm btn-success rounded-pill fw-bold px-3 shadow-sm" onClick={descargarXLSX}>
-                    <i className="fas fa-file-excel me-1"></i> Excel
+                <div className="ebx-dl-actions">
+                  <button className="ebx-dl-btn ebx-dl-btn--excel" onClick={descargarXLSX}>
+                    <i className="fas fa-file-excel" />Excel
                   </button>
-                  <button className="btn btn-sm btn-danger rounded-pill fw-bold px-3 shadow-sm" onClick={descargarPDF}>
-                    <i className="fas fa-file-pdf me-1"></i> PDF
+                  <button className="ebx-dl-btn ebx-dl-btn--pdf" onClick={descargarPDF}>
+                    <i className="fas fa-file-pdf" />PDF
                   </button>
                 </div>
               </div>
 
               {/* Tabla de previsualización */}
               {datosExportados.length === 0 ? (
-                <div className="text-center py-5 text-white-50">
-                  <i className="fas fa-inbox fa-3x mb-3 opacity-25"></i>
+                <div className="ebx-table-empty">
+                  <i className="fas fa-inbox"></i>
                   <p>No se encontraron usuarios con los filtros seleccionados.</p>
                 </div>
               ) : (
-                <div className="rounded-4 shadow-lg" style={{ maxHeight: '500px', overflowX: 'auto', overflowY: 'auto', border: '1px solid #333' }}>
-                  <table style={{ width: '100%', fontSize: '0.8rem', borderCollapse: 'collapse', background: '#000' }}>
-                    <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
+                <div className="ebx-table-wrap">
+                  <table className="ebx-table">
+                    <thead>
                       <tr>
-                        <th style={{ background: '#b71c1c', color: '#fff', fontSize: '0.75rem', padding: '10px 14px', fontWeight: 700, letterSpacing: '0.5px', borderBottom: '2px solid #ff5252', textAlign: 'center' }}>#</th>
-                        {colsArray.map(k => (
-                          <th key={k} style={{ background: '#b71c1c', color: '#fff', whiteSpace: 'nowrap', fontSize: '0.75rem', padding: '10px 14px', fontWeight: 700, letterSpacing: '0.5px', borderBottom: '2px solid #ff5252' }}>
-                            {getLabel(k)}
-                          </th>
-                        ))}
+                        <th className="ebx-th-num">#</th>
+                        {colsArray.map(k => <th key={k}>{getLabel(k)}</th>)}
                       </tr>
                     </thead>
                     <tbody>
                       {datosExportados.map((u, idx) => (
-                        <tr key={u.idUsuario || idx} style={{ background: idx % 2 === 0 ? '#0d0d0d' : '#161616' }}>
-                          <td style={{ padding: '8px 14px', color: '#666', fontWeight: 600, borderBottom: '1px solid #222', textAlign: 'center' }}>{idx + 1}</td>
+                        <tr key={u.idUsuario || idx}>
+                          <td className="ebx-td-num">{idx + 1}</td>
                           {colsArray.map(k => {
                             const val = u[k];
-                            let rendered = formatVal(val, k);
-                            let cellStyle = { padding: '8px 14px', whiteSpace: 'nowrap', borderBottom: '1px solid #222', color: '#fff' };
-                            let content = rendered;
+                            const rendered = formatVal(val, k);
 
                             if (typeof val === 'boolean') {
-                              content = <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 600, background: val ? '#2e7d32' : '#555', color: '#fff' }}>{val ? '✓ Sí' : '✗ No'}</span>;
-                            } else if (k === 'estatusMem') {
-                              const bgMap = { 'Activa': '#2e7d32', 'Vencida': '#c62828', 'Congelada': '#0277bd', 'VIP': '#f9a825', 'Sin Membresía': '#555' };
-                              const txtMap = { 'VIP': '#000' };
-                              content = <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 600, background: bgMap[val] || '#555', color: txtMap[val] || '#fff' }}>{rendered}</span>;
-                            } else if (k === 'rol') {
-                              const bgMap = { 'Atleta': '#1565c0', 'Coach': '#f9a825', 'Staff': '#00838f', 'AdminBox': '#c62828' };
-                              const txtMap = { 'Coach': '#000' };
-                              content = <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 600, background: bgMap[val] || '#555', color: txtMap[val] || '#fff' }}>{rendered}</span>;
-                            } else if ((k.includes('deuda') || k === 'precioCobrado') && typeof val === 'number') {
-                              cellStyle.color = val > 0 ? '#ef5350' : '#66bb6a';
-                              cellStyle.fontWeight = 700;
-                            } else if (k === 'correo') {
-                              cellStyle.color = '#64b5f6';
-                            } else if (k === 'rachaActual' && typeof val === 'number' && val > 0) {
-                              content = <span style={{ color: '#ff9800', fontWeight: 700 }}>🔥 {val}</span>;
+                              return <td key={k}><span className="ebx-pill" style={{ background: val ? 'rgba(46,204,113,0.18)' : 'rgba(136,136,136,0.18)', color: val ? '#6ee09b' : '#aaa' }}>{val ? '✓ Sí' : '✗ No'}</span></td>;
                             }
-
-                            return <td key={k} style={cellStyle}>{content}</td>;
+                            if (k === 'estatusMem') {
+                              const map = { 'Activa': '#2ECC71', 'Vencida': '#E74C3C', 'Congelada': '#4FC3F7', 'VIP': '#F5A623', 'Sin Membresía': '#888' };
+                              const c = map[val] || '#888';
+                              return <td key={k}><span className="ebx-pill" style={{ background: `${c}22`, color: c }}>{rendered}</span></td>;
+                            }
+                            if (k === 'rol') {
+                              const map = { 'Atleta': '#4FC3F7', 'Coach': '#F5A623', 'Staff': '#00B8C4', 'AdminBox': '#E63946' };
+                              const c = map[val] || '#888';
+                              return <td key={k}><span className="ebx-pill" style={{ background: `${c}22`, color: c }}>{rendered}</span></td>;
+                            }
+                            if ((k.includes('deuda') || k === 'precioCobrado') && typeof val === 'number') {
+                              return <td key={k} style={{ color: val > 0 ? '#ef5350' : '#66bb6a', fontWeight: 700 }}>{rendered}</td>;
+                            }
+                            if (k === 'correo') {
+                              return <td key={k} style={{ color: '#64b5f6' }}>{rendered}</td>;
+                            }
+                            if (k === 'rachaActual' && typeof val === 'number' && val > 0) {
+                              return <td key={k} style={{ color: '#ff9800', fontWeight: 700 }}>🔥 {val}</td>;
+                            }
+                            return <td key={k}>{rendered}</td>;
                           })}
                         </tr>
                       ))}
@@ -734,48 +780,56 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
         </div>
       </div>
 
+      {/* MODAL: Filtro de Rol */}
+      {modalRolOpen && (
+        <OpcionPickerModal
+          supertitulo="FILTRO"
+          titulo="Filtrar por Rol"
+          opciones={ROLES_EXPORT}
+          valor={filtroRolExport}
+          onSelect={(v) => { setFiltroRolExport(v); setExportPreview(false); setModalRolOpen(false); }}
+          onCerrar={() => setModalRolOpen(false)}
+        />
+      )}
+
+      {/* MODAL: Estatus de Membresía */}
+      {modalEstatusOpen && (
+        <OpcionPickerModal
+          supertitulo="FILTRO"
+          titulo="Estatus de Membresía"
+          opciones={ESTATUS_EXPORT}
+          valor={filtroEstatusExport}
+          onSelect={(v) => { setFiltroEstatusExport(v); setExportPreview(false); setModalEstatusOpen(false); }}
+          onCerrar={() => setModalEstatusOpen(false)}
+        />
+      )}
+
       {/* MODAL: Selector de Box con buscador */}
       {modalBoxOpen && createPortal(
-        <div
-          onClick={() => setModalBoxOpen(false)}
-          style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{ background: '#141420', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '1.5rem', width: '90%', maxWidth: '480px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 60px rgba(0,0,0,0.6)' }}
-          >
-            {/* Header modal */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <i className="fas fa-warehouse" style={{ color: 'var(--primary, #e63946)' }} />
-                Seleccionar Box
-              </span>
-              <button
-                onClick={() => setModalBoxOpen(false)}
-                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '1rem', cursor: 'pointer', padding: '0.25rem' }}
-              >
+        <div className="ebx-modal-overlay" onClick={e => { if (e.target === e.currentTarget) setModalBoxOpen(false); }}>
+          <div className="ebx-modal">
+            <div className="ebx-modal__header">
+              <div>
+                <p className="ebx-modal__supertitle">EXPORTAR</p>
+                <h2 className="ebx-modal__title">Seleccionar Box</h2>
+              </div>
+              <button type="button" className="ebx-modal__close" onClick={() => setModalBoxOpen(false)} aria-label="Cerrar">
                 <i className="fas fa-times" />
               </button>
             </div>
 
-            {/* Buscador */}
-            <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
-              <i className="fas fa-search" style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.35)', fontSize: '0.82rem', pointerEvents: 'none' }} />
+            <div className="ebx-modal__search">
+              <i className="fas fa-search" />
               <input
                 type="text"
                 autoFocus
-                placeholder="Buscar por nombre o ubicación..."
+                placeholder="Buscar por nombre o ubicación…"
                 value={busquedaBox}
                 onChange={e => setBusquedaBox(e.target.value)}
-                style={{
-                  width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '8px', color: '#fff', fontSize: '0.88rem', padding: '0.6rem 1rem 0.6rem 2.3rem', outline: 'none',
-                }}
               />
             </div>
 
-            {/* Lista de boxes */}
-            <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+            <div className="ebx-modal__list">
               {(() => {
                 const filtrados = (boxes || []).filter(b => {
                   const q = busquedaBox.toLowerCase();
@@ -783,8 +837,8 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
                          (b.ubicacion || b.Ubicacion || '').toLowerCase().includes(q);
                 });
                 if (!filtrados.length) return (
-                  <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.35)', padding: '2rem', fontSize: '0.85rem' }}>
-                    <i className="fas fa-search" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '1.5rem' }} />
+                  <div className="ebx-modal__empty">
+                    <i className="fas fa-search" />
                     Sin resultados
                   </div>
                 );
@@ -797,6 +851,7 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
                     <button
                       key={id}
                       type="button"
+                      className={`ebx-opcion${activo ? ' ebx-opcion--activo' : ''}`}
                       onClick={() => {
                         setExportBoxId(id);
                         setExportBoxNombre(nom);
@@ -804,24 +859,18 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
                         setDatosExportados([]);
                         setModalBoxOpen(false);
                       }}
-                      style={{
-                        background: activo ? 'rgba(230,57,70,0.12)' : 'rgba(255,255,255,0.03)',
-                        border: activo ? '1px solid rgba(230,57,70,0.4)' : '1px solid rgba(255,255,255,0.07)',
-                        borderRadius: '10px', padding: '0.65rem 0.9rem', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', transition: 'all 0.15s',
-                      }}
                     >
-                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span className="ebx-opcion__icon">
                         {b.logo && b.logo.trim() !== ''
-                          ? <img src={b.logo} alt={nom} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-                          : <i className="fas fa-warehouse" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }} />
+                          ? <img src={b.logo} alt={nom} />
+                          : <i className="fas fa-warehouse" />
                         }
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ color: activo ? '#fff' : 'rgba(255,255,255,0.85)', fontWeight: 700, fontSize: '0.88rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nom}</div>
-                        {ubi && <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.74rem', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.15rem' }}><i className="fas fa-map-marker-alt" />{ubi}</div>}
-                      </div>
-                      {activo && <i className="fas fa-check-circle" style={{ color: 'var(--primary, #e63946)', fontSize: '0.9rem', flexShrink: 0 }} />}
+                      </span>
+                      <span className="ebx-opcion__info">
+                        <span className="ebx-opcion__nombre">{nom}</span>
+                        {ubi && <span className="ebx-opcion__desc"><i className="fas fa-map-marker-alt" />{ubi}</span>}
+                      </span>
+                      {activo && <i className="fas fa-check-circle ebx-opcion__check" />}
                     </button>
                   );
                 });
@@ -833,60 +882,41 @@ export default function ExportarBDTab({ boxes, fixedBox }) {
       )}
 
       {/* MODAL: Advertencia PDF muchas columnas */}
-      {mostrarModalPDF && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)', animation: 'fadeIn 0.2s ease' }}>
-          <div style={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: '16px', padding: '32px', maxWidth: '460px', width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
-            {/* Icono */}
-            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(255,160,0,0.15)', border: '2px solid rgba(255,160,0,0.3)' }}>
-                <i className="fas fa-exclamation-triangle" style={{ fontSize: '24px', color: '#ffa000' }}></i>
-              </div>
+      {mostrarModalPDF && createPortal(
+        <div className="ebx-modal-overlay" onClick={e => { if (e.target === e.currentTarget) setMostrarModalPDF(false); }}>
+          <div className="ebx-modal ebx-confirm">
+            <div className="ebx-confirm-icon">
+              <i className="fas fa-exclamation-triangle"></i>
             </div>
 
-            {/* Título */}
-            <h5 style={{ color: '#fff', textAlign: 'center', marginBottom: '12px', fontWeight: 700, fontSize: '1.1rem' }}>
-              Documento extenso
-            </h5>
+            <h3 className="ebx-confirm-title">Documento extenso</h3>
 
-            {/* Descripción */}
-            <p style={{ color: '#aaa', textAlign: 'center', fontSize: '0.88rem', lineHeight: 1.6, marginBottom: '8px' }}>
-              Estás exportando <strong style={{ color: '#fff' }}>{columnasSeleccionadas.size} columnas</strong> con <strong style={{ color: '#fff' }}>{datosExportados.length} usuarios</strong>.
+            <p className="ebx-confirm-text">
+              Estás exportando <strong>{columnasSeleccionadas.size} columnas</strong> con <strong>{datosExportados.length} usuarios</strong>.
             </p>
-            <p style={{ color: '#999', textAlign: 'center', fontSize: '0.82rem', lineHeight: 1.5, marginBottom: '20px' }}>
-              El PDF se generará en <strong style={{ color: '#ccc' }}>formato de fichas individuales</strong> por usuario y podría ser un archivo extenso.
+            <p className="ebx-confirm-text">
+              El PDF se generará en <strong>formato de fichas individuales</strong> por usuario y podría ser un archivo extenso.
             </p>
 
-            {/* Sugerencia Excel */}
-            <div style={{ background: 'rgba(76,175,80,0.1)', border: '1px solid rgba(76,175,80,0.25)', borderRadius: '10px', padding: '12px 16px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <i className="fas fa-lightbulb" style={{ color: '#66bb6a', fontSize: '16px' }}></i>
-              <span style={{ color: '#a5d6a7', fontSize: '0.8rem' }}>
-                Para muchas columnas, <strong style={{ color: '#66bb6a' }}>Excel</strong> es ideal ya que soporta todas sin limitaciones.
-              </span>
+            <div className="ebx-confirm-tip">
+              <i className="fas fa-lightbulb"></i>
+              <span>Para muchas columnas, <strong>Excel</strong> es ideal ya que soporta todas sin limitaciones.</span>
             </div>
 
-            {/* Botones */}
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-              <button
-                onClick={() => setMostrarModalPDF(false)}
-                style={{ padding: '10px 20px', borderRadius: '10px', border: '1px solid #444', background: 'transparent', color: '#999', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, transition: 'all 0.2s' }}
-              >
+            <div className="ebx-confirm-actions">
+              <button type="button" className="ebx-confirm-btn ebx-confirm-btn--cancel" onClick={() => setMostrarModalPDF(false)}>
                 Cancelar
               </button>
-              <button
-                onClick={() => { setMostrarModalPDF(false); descargarXLSX(); }}
-                style={{ padding: '10px 20px', borderRadius: '10px', border: 'none', background: '#2e7d32', color: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s' }}
-              >
-                <i className="fas fa-file-excel"></i> Exportar Excel
+              <button type="button" className="ebx-confirm-btn ebx-confirm-btn--excel" onClick={() => { setMostrarModalPDF(false); descargarXLSX(); }}>
+                <i className="fas fa-file-excel"></i> Excel
               </button>
-              <button
-                onClick={() => { setMostrarModalPDF(false); generarPDFReal(); }}
-                style={{ padding: '10px 20px', borderRadius: '10px', border: 'none', background: '#c62828', color: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s' }}
-              >
-                <i className="fas fa-file-pdf"></i> Continuar PDF
+              <button type="button" className="ebx-confirm-btn ebx-confirm-btn--pdf" onClick={() => { setMostrarModalPDF(false); generarPDFReal(); }}>
+                <i className="fas fa-file-pdf"></i> Continuar
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

@@ -28,6 +28,7 @@ export default function AdminCalendario() {
   const [excepciones, setExcepciones] = useState([]);
   const [cumpleanos, setCumpleanos] = useState([]); // 🎂 NUEVO
   const [clasesDelDia, setClasesDelDia] = useState([]);
+  const [clasesBase, setClasesBase] = useState([]); // Clases recurrentes para el calendario
 
   const [listaAtletas, setListaAtletas] = useState([]);
   const [atletaSeleccionado, setAtletaSeleccionado] = useState(null);
@@ -79,6 +80,20 @@ export default function AdminCalendario() {
     fetch(`${API_BASE}/usuarios/box/${b.idBox}/miembros`)
       .then(res => res.json())
       .then(data => setListaAtletas((data.miembros || []).filter(m => m.rol === 'Atleta' && m.activo)))
+      .catch(e => console.error(e));
+
+    const usuarioStorage = JSON.parse(localStorage.getItem('usuario'));
+    fetch(`${API_BASE}/clases/box/${b.idBox}`)
+      .then(res => res.json())
+      .then(data => {
+        const isCoachUser = usuarioStorage && (usuarioStorage.rol === 'Coach' || usuarioStorage.Rol === 'Coach');
+        if (isCoachUser) {
+          const userId = usuarioStorage.idUsuario || usuarioStorage.IdUsuario || usuarioStorage.id;
+          setClasesBase(data.filter(c => c.idCoach === userId || c.IdCoach === userId));
+        } else {
+          setClasesBase(data); // Para Admin, tal vez mostrar todas o no mostrar ninguna
+        }
+      })
       .catch(e => console.error(e));
   }, [navigate, fechaActual]);
 
@@ -280,6 +295,16 @@ export default function AdminCalendario() {
         });
         const excepcionesDelDia = excepciones.filter(ex => esMismoDia(ex.fechaExacta, fechaIteracion));
         const cumplesHoy = cumpleanos.filter(c => esMismoDia(c.fechaVisual, fechaIteracion));
+        
+        const mapDias = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+        const diaLetra = mapDias[fechaIteracion.getDay()];
+        const usuarioLS = JSON.parse(localStorage.getItem('usuario')) || {};
+        const isCoach = usuarioLS.rol === 'Coach' || usuarioLS.Rol === 'Coach';
+        const clasesDiaCoach = isCoach ? clasesBase.filter(c => {
+          const fechaClase = c.fechaCreacion || c.FechaCreacion;
+          if (fechaClase && new Date(fechaClase).setHours(0, 0, 0, 0) > fechaIteracion.setHours(0, 0, 0, 0)) return false;
+          return (c.diasRecurrentes || c.DiasRecurrentes || '').includes(diaLetra);
+        }) : [];
 
         contenidoDia = (
           <div className="ac-day-events">
@@ -296,7 +321,13 @@ export default function AdminCalendario() {
                 {ev.titulo}
               </div>
             )}
-            {excepcionesDelDia.length > 0 && (
+            {clasesDiaCoach.length > 0 && (
+              <div className="ac-day-event bg-dark text-light border border-secondary text-center" style={{ fontSize: '0.65rem' }}>
+                <i className="fas fa-dumbbell me-1" />
+                {clasesDiaCoach.length} clase{clasesDiaCoach.length !== 1 ? 's' : ''}
+              </div>
+            )}
+            {excepcionesDelDia.length > 0 && !isCoach && (
               <div className="ac-day-event ac-day-event--exception">
                 <i className="fas fa-exclamation-triangle me-1" />{excepcionesDelDia.length} Mod.
               </div>
@@ -497,6 +528,42 @@ export default function AdminCalendario() {
                               </div>
                             </div>
                           ))}
+
+                          {/* Clases Programadas */}
+                          <p className="ac-section-label"><i className="fas fa-dumbbell" /> Clases Programadas</p>
+                          {(() => {
+                            const mapDias = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+                            const diaSelLetra = mapDias[new Date(diaSeleccionado).getDay()];
+                            const clasesAgenda = clasesBase.filter(c => {
+                              const fechaClase = c.fechaCreacion || c.FechaCreacion;
+                              if (fechaClase && new Date(fechaClase).setHours(0, 0, 0, 0) > new Date(diaSeleccionado).setHours(0, 0, 0, 0)) return false;
+                              return (c.diasRecurrentes || c.DiasRecurrentes || '').includes(diaSelLetra);
+                            });
+                            
+                            return clasesAgenda.length === 0 ? (
+                              <p className="ac-empty-text fst-italic ms-3 mb-4">No hay clases este día.</p>
+                            ) : (
+                              <div className="mb-4">
+                                {clasesAgenda.map(clase => {
+                                  const cancelada = excepciones.some(ex => esMismoDia(ex.fechaExacta, diaSeleccionado) && (ex.idClase === clase.idClase || ex.idClase === clase.IdClase) && ex.estaCancelada);
+                                  return (
+                                    <div key={`agenda-clase-${clase.idClase || clase.IdClase}`} className={`ac-event-card mb-2 ${cancelada ? 'ac-event-card--danger text-decoration-line-through opacity-75' : 'bg-dark text-light border border-secondary'}`}>
+                                      <div className="d-flex justify-content-between align-items-center">
+                                        <div className="fw-bold">
+                                          <i className="fas fa-dumbbell me-2" style={{ color: 'var(--accent)' }} />
+                                          {clase.nombre || clase.Nombre}
+                                          {cancelada && ' (Cancelada)'}
+                                        </div>
+                                        <span className="badge bg-secondary">
+                                          {clase.horarioInicio?.substring(0, 5)} - {clase.horarioFin?.substring(0, 5)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })()}
 
                           {/* Eventos del día */}
                           <p className="ac-section-label"><i className="fas fa-flag" /> Eventos y Recordatorios</p>

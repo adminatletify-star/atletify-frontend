@@ -256,6 +256,32 @@ const EVENTOS = [
       '/Eventos/29-de-abril/682411529_1555992579870674_996834107073499918_n.jpg',
       '/Eventos/29-de-abril/495869797_18309320461238137_2476432414112300628_n.jpg',
     ],
+    galeria: [
+      '/Eventos/29-de-abril/686304845_1555992643204001_8638160989467348741_n.jpg',
+      '/Eventos/29-de-abril/686474893_1555992603204005_2468381129148784722_n.jpg',
+      '/Eventos/29-de-abril/684320858_1555992616537337_6643287625283010842_n.jpg',
+      '/Eventos/29-de-abril/682411529_1555992579870674_996834107073499918_n.jpg',
+      '/Eventos/29-de-abril/495869797_18309320461238137_2476432414112300628_n.jpg',
+      '/Eventos/29-de-abril/496680522_18309320548238137_895368241584980004_n.jpg',
+      '/Eventos/29-de-abril/496825243_18309320515238137_2338426688138128902_n.jpg',
+      '/Eventos/29-de-abril/497010895_18309641929238137_6922514873426832585_n.jpg',
+      '/Eventos/29-de-abril/497078408_18309320608238137_1991387578491644070_n.jpg',
+      '/Eventos/29-de-abril/497138075_18309641920238137_5881446080178361281_n.jpg',
+      '/Eventos/29-de-abril/497168013_1236354501834485_3606054328130506712_n.jpg',
+      '/Eventos/29-de-abril/497290588_18309320413238137_1353438374140103060_n.jpg',
+      '/Eventos/29-de-abril/497321839_18309320506238137_1037847646286935221_n.jpg',
+      '/Eventos/29-de-abril/497330860_18309641911238137_7436355735724709144_n.jpg',
+      '/Eventos/29-de-abril/497336017_18309320557238137_3722309523623561621_n.jpg',
+      '/Eventos/29-de-abril/497353977_18309320440238137_7954936310509985867_n.jpg',
+      '/Eventos/29-de-abril/497504631_18309641959238137_660320608793725250_n.jpg',
+      '/Eventos/29-de-abril/497512538_18309641767238137_819708438323524827_n.jpg',
+      '/Eventos/29-de-abril/497624090_18309641800238137_2088090335822675628_n.jpg',
+      '/Eventos/29-de-abril/497739559_18309641758238137_1644429019445446392_n.jpg',
+      '/Eventos/29-de-abril/497768543_1236354475167821_116542050087731834_n.jpg',
+      '/Eventos/29-de-abril/497820249_18309641941238137_183218999946793322_n.jpg',
+      '/Eventos/29-de-abril/497824039_1236354345167834_294928902005213487_n.jpg',
+      '/Eventos/29-de-abril/497890537_1236354888501113_4112977873169714319_n.jpg',
+    ],
   },
   {
     titulo: 'Hyrox Fest! The Roof 2025',
@@ -267,6 +293,17 @@ const EVENTOS = [
     fotos: [
       '/Eventos/hyrox-fest-2025/605443231_1443044944498772_8693496682232748958_n.jpg',
       '/Eventos/hyrox-fest-2025/605528475_1443044984498768_2595940694506258966_n.jpg',
+      '/Eventos/hyrox-fest-2025/606542734_1443045351165398_5332929914696278678_n.jpg',
+    ],
+    galeria: [
+      '/Eventos/hyrox-fest-2025/605443231_1443044944498772_8693496682232748958_n.jpg',
+      '/Eventos/hyrox-fest-2025/605528475_1443044984498768_2595940694506258966_n.jpg',
+      '/Eventos/hyrox-fest-2025/605545105_1443045127832087_4308981186091866698_n.jpg',
+      '/Eventos/hyrox-fest-2025/605577109_1443045307832069_8687106715101195274_n.jpg',
+      '/Eventos/hyrox-fest-2025/605635012_1443045027832097_6959276997550147469_n.jpg',
+      '/Eventos/hyrox-fest-2025/605635012_1443045211165412_3336637483111121961_n.jpg',
+      '/Eventos/hyrox-fest-2025/605667762_1443045087832091_1789191136695181087_n.jpg',
+      '/Eventos/hyrox-fest-2025/605772603_1443045171165416_5838523770480024900_n.jpg',
       '/Eventos/hyrox-fest-2025/606542734_1443045351165398_5332929914696278678_n.jpg',
     ],
   },
@@ -293,6 +330,20 @@ const EVENTOS = [
       '/Eventos/novena-competencia-interna/577345935_1400056475464286_3096976716188597781_n.jpg',
       '/Eventos/novena-competencia-interna/575189361_1397931189010148_8792946858020903590_n.jpg',
     ],
+    galeria: [
+      '/Eventos/novena-competencia-interna/576855213_1397931252343475_4169574231907000286_n.jpg',
+      '/Eventos/novena-competencia-interna/574402948_1397931285676805_9077157944728747266_n.jpg',
+      '/Eventos/novena-competencia-interna/575182358_1397931319010135_2105564363880403777_n.jpg',
+      '/Eventos/novena-competencia-interna/577333795_1397978215672112_1638834214726883492_n.jpg',
+      '/Eventos/novena-competencia-interna/577151686_1398098352326765_1901655594816371998_n.jpg',
+      '/Eventos/novena-competencia-interna/576108137_1398155795654354_4153971218129543732_n.jpg',
+      '/Eventos/novena-competencia-interna/577345935_1400056475464286_3096976716188597781_n.jpg',
+      '/Eventos/novena-competencia-interna/575189361_1397931189010148_8792946858020903590_n.jpg',
+      '/Eventos/novena-competencia-interna/575833796_1398155862321014_685609986545915846_n.jpg',
+      '/Eventos/novena-competencia-interna/577166001_1398098242326776_1456047621265787208_n.jpg',
+      '/Eventos/novena-competencia-interna/577177822_1399200175549916_3161634715362481734_n.jpg',
+      '/Eventos/novena-competencia-interna/577448908_1400125002124100_4847549101512126477_n.jpg',
+    ],
   },
   {
     titulo: 'Wolf Pack Games III',
@@ -316,6 +367,31 @@ const EVENTOS = [
       '/Eventos/wolf-pack-games-III/571404138_1390058156464118_1629385149541753709_n.jpg',
       '/Eventos/wolf-pack-games-III/571435327_1390057949797472_1552109273156183918_n.jpg',
     ],
+    galeria: [
+      '/Eventos/wolf-pack-games-III/573885789_1390049499798317_8847793833390620321_n.jpg',
+      '/Eventos/wolf-pack-games-III/572987966_1390049546464979_2402129627015401119_n.jpg',
+      '/Eventos/wolf-pack-games-III/571333216_1390049709798296_4867535419806264402_n.jpg',
+      '/Eventos/wolf-pack-games-III/572274471_1390049803131620_4351670454397691061_n.jpg',
+      '/Eventos/wolf-pack-games-III/571614256_1390052473131353_8543219263727372996_n.jpg',
+      '/Eventos/wolf-pack-games-III/571441076_1390052609798006_6194332672720857619_n.jpg',
+      '/Eventos/wolf-pack-games-III/572794569_1390065693130031_4309291572208170636_n.jpg',
+      '/Eventos/wolf-pack-games-III/571404138_1390058156464118_1629385149541753709_n.jpg',
+      '/Eventos/wolf-pack-games-III/571435327_1390057949797472_1552109273156183918_n.jpg',
+      '/Eventos/wolf-pack-games-III/571350987_1390054996464434_9135475072532465722_n.jpg',
+      '/Eventos/wolf-pack-games-III/571467267_1390049756464958_4002039046890689200_n.jpg',
+      '/Eventos/wolf-pack-games-III/571657373_1390052266464707_5480970292770242038_n.jpg',
+      '/Eventos/wolf-pack-games-III/571800955_1390048893131711_6369516875117219735_n.jpg',
+      '/Eventos/wolf-pack-games-III/572001243_1390048536465080_2179401542615063647_n.jpg',
+      '/Eventos/wolf-pack-games-III/572309340_1390052303131370_7017508310609731186_n.jpg',
+      '/Eventos/wolf-pack-games-III/572389009_1390054176464516_5619920261754743552_n.jpg',
+      '/Eventos/wolf-pack-games-III/572866799_1390052403131360_599324058342223066_n.jpg',
+      '/Eventos/wolf-pack-games-III/572899390_1390049449798322_2883851946931529597_n.jpg',
+      '/Eventos/wolf-pack-games-III/572972143_1390055079797759_2485255897560283857_n.jpg',
+      '/Eventos/wolf-pack-games-III/573101616_1390052223131378_2183295033316100047_n.jpg',
+      '/Eventos/wolf-pack-games-III/573593589_1390049273131673_6039460246466386123_n.jpg',
+      '/Eventos/wolf-pack-games-III/573620310_1390048579798409_6794167649626524601_n.jpg',
+      '/Eventos/wolf-pack-games-III/574071693_1390052179798049_1033276419539323901_n.jpg',
+    ],
   },
   {
     titulo: '1ra Carrera Outlet',
@@ -332,6 +408,14 @@ const EVENTOS = [
       '/Eventos/1ra-carrera-outlet/505414453_1256868536449748_60124540040351113_n.jpg',
       '/Eventos/1ra-carrera-outlet/505084445_1256868553116413_1583536914066184694_n.jpg',
     ],
+    galeria: [
+      '/Eventos/1ra-carrera-outlet/505134590_1256868076449794_5479770105001373415_n.jpg',
+      '/Eventos/1ra-carrera-outlet/505397229_1256868389783096_3864903565154085906_n.jpg',
+      '/Eventos/1ra-carrera-outlet/504911875_1256868466449755_7990917209812749335_n.jpg',
+      '/Eventos/1ra-carrera-outlet/505414453_1256868536449748_60124540040351113_n.jpg',
+      '/Eventos/1ra-carrera-outlet/505084445_1256868553116413_1583536914066184694_n.jpg',
+      '/Eventos/1ra-carrera-outlet/504838233_1256868493116419_1825671160462559876_n.jpg',
+    ],
   },
   {
     titulo: 'Competencia Interna',
@@ -347,6 +431,65 @@ const EVENTOS = [
       '/Eventos/compe-interna-feb-2024/490083036_1204156215054314_6486943340083218424_n.jpg',
       '/Eventos/compe-interna-feb-2024/490367855_1204155941721008_6601053864956903398_n.jpg',
       '/Eventos/compe-interna-feb-2024/490482398_1204156148387654_7440988178774378729_n.jpg',
+      '/Eventos/compe-interna-feb-2024/490021766_1204156021721000_4342418444219630195_n.jpg',
+      '/Eventos/compe-interna-feb-2024/490105977_1204156085054327_8534896467085777275_n.jpg',
+    ],
+    galeria: [
+      '/Eventos/compe-interna-feb-2024/489615927_1204155818387687_1170041116622622614_n.jpg',
+      '/Eventos/compe-interna-feb-2024/489692139_1204155751721027_2517337354380662248_n.jpg',
+      '/Eventos/compe-interna-feb-2024/489844460_1204155765054359_7560416814955327649_n.jpg',
+      '/Eventos/compe-interna-feb-2024/490083036_1204156215054314_6486943340083218424_n.jpg',
+      '/Eventos/compe-interna-feb-2024/490367855_1204155941721008_6601053864956903398_n.jpg',
+      '/Eventos/compe-interna-feb-2024/490482398_1204156148387654_7440988178774378729_n.jpg',
+      '/Eventos/compe-interna-feb-2024/490021766_1204156021721000_4342418444219630195_n.jpg',
+      '/Eventos/compe-interna-feb-2024/490105977_1204156085054327_8534896467085777275_n.jpg',
+      '/Eventos/compe-interna-feb-2024/489526555_1204156141720988_5039985245718298964_n.jpg',
+      '/Eventos/compe-interna-feb-2024/489630390_1204156008387668_9089902830080841241_n.jpg',
+      '/Eventos/compe-interna-feb-2024/489675362_1204155978387671_1502997933235333912_n.jpg',
+      '/Eventos/compe-interna-feb-2024/489844460_1204155888387680_2614616993358269547_n.jpg',
+      '/Eventos/compe-interna-feb-2024/490031263_1204155931721009_2289858644521048254_n.jpg',
+      '/Eventos/compe-interna-feb-2024/490126062_1204156131720989_5068993559580310300_n.jpg',
+    ],
+  },
+  {
+    titulo: 'Garage Games 2023',
+    subtitulo: null,
+    fecha: 'Noviembre 2023',
+    desc: null,
+    tag: 'Competencia',
+    tagColor: '#E63946',
+    fotos: [
+      '/Eventos/Garage Games 2023/489222320_1199329322203670_5092779425607352377_n.jpg',
+      '/Eventos/Garage Games 2023/488545184_1199329325537003_2433771031818864081_n.jpg',
+      '/Eventos/Garage Games 2023/488709280_1199329338870335_6090768522527912313_n.jpg',
+      '/Eventos/Garage Games 2023/489413694_1199329342203668_4156107121405328373_n.jpg',
+      '/Eventos/Garage Games 2023/488567600_1199330528870216_2469805701303137556_n.jpg',
+      '/Eventos/Garage Games 2023/488684317_1199330502203552_8372516959505018203_n.jpg',
+      '/Eventos/Garage Games 2023/488870457_1199330498870219_5013903460073835109_n.jpg',
+      '/Eventos/Garage Games 2023/488889220_1199330398870229_7339318640632323957_n.jpg',
+    ],
+    galeria: [
+      '/Eventos/Garage Games 2023/489222320_1199329322203670_5092779425607352377_n.jpg',
+      '/Eventos/Garage Games 2023/488545184_1199329325537003_2433771031818864081_n.jpg',
+      '/Eventos/Garage Games 2023/488709280_1199329338870335_6090768522527912313_n.jpg',
+      '/Eventos/Garage Games 2023/489413694_1199329342203668_4156107121405328373_n.jpg',
+      '/Eventos/Garage Games 2023/488567600_1199330528870216_2469805701303137556_n.jpg',
+      '/Eventos/Garage Games 2023/488684317_1199330502203552_8372516959505018203_n.jpg',
+      '/Eventos/Garage Games 2023/488870457_1199330498870219_5013903460073835109_n.jpg',
+      '/Eventos/Garage Games 2023/488889220_1199330398870229_7339318640632323957_n.jpg',
+      '/Eventos/Garage Games 2023/488547344_1199328952203707_2924395866245634751_n.jpg',
+      '/Eventos/Garage Games 2023/488548837_1199330538870215_833972636808407851_n.jpg',
+      '/Eventos/Garage Games 2023/488570467_1199330392203563_3948057898201610707_n.jpg',
+      '/Eventos/Garage Games 2023/488655181_1199330382203564_1660308569696075349_n.jpg',
+      '/Eventos/Garage Games 2023/488661502_1199330478870221_8157209894629121538_n.jpg',
+      '/Eventos/Garage Games 2023/488862602_1199330108870258_3480767939741934682_n.jpg',
+      '/Eventos/Garage Games 2023/488961070_1199330198870249_7636625688798334499_n.jpg',
+      '/Eventos/Garage Games 2023/488976474_1199330112203591_3217238207111905755_n.jpg',
+      '/Eventos/Garage Games 2023/489137795_1199329052203697_2962059448123073327_n.jpg',
+      '/Eventos/Garage Games 2023/489144650_1199330492203553_6896774326718181545_n.jpg',
+      '/Eventos/Garage Games 2023/489395372_1199330425536893_7490085490455027731_n.jpg',
+      '/Eventos/Garage Games 2023/489449382_1199329062203696_1559837987378585169_n.jpg',
+      '/Eventos/Garage Games 2023/489704879_1199330482203554_2770071215733621815_n.jpg',
     ],
   },
   {
@@ -364,10 +507,19 @@ const EVENTOS = [
     },
     fotos: [
       '/Eventos/warrior-games-1ra-edicion/488370842_1195062505963685_7516181618197352746_n.jpg',
-      '/Eventos/warrior-games-1ra-edicion/487406079_1195062719296997_8756033205946325705_n.jpg',
-      '/Eventos/warrior-games-1ra-edicion/487418653_1195062809296988_6437910579127228742_n.jpg',
-      '/Eventos/warrior-games-1ra-edicion/487507051_1195062715963664_2683282246519753232_n.jpg',
+      '/Eventos/warrior-games-1ra-edicion/487454755_1195062659297003_5713372152275256824_n.jpg',
+      '/Eventos/warrior-games-1ra-edicion/487740475_1195062802630322_7212394034343153445_n.jpg',
+      '/Eventos/warrior-games-1ra-edicion/487984637_1195062722630330_6766786698926698258_n.jpg',
       '/Eventos/warrior-games-1ra-edicion/488186443_1195062805963655_7129128870015200060_n.jpg',
+    ],
+    galeria: [
+      '/Eventos/warrior-games-1ra-edicion/488370842_1195062505963685_7516181618197352746_n.jpg',
+      '/Eventos/warrior-games-1ra-edicion/487454755_1195062659297003_5713372152275256824_n.jpg',
+      '/Eventos/warrior-games-1ra-edicion/487740475_1195062802630322_7212394034343153445_n.jpg',
+      '/Eventos/warrior-games-1ra-edicion/487984637_1195062722630330_6766786698926698258_n.jpg',
+      '/Eventos/warrior-games-1ra-edicion/488186443_1195062805963655_7129128870015200060_n.jpg',
+      '/Eventos/warrior-games-1ra-edicion/487511873_1195062609297008_860129918411184196_n.jpg',
+      '/Eventos/warrior-games-1ra-edicion/487836521_1195062519297017_339486695901052584_n.jpg',
     ],
   },
   {
@@ -389,6 +541,26 @@ const EVENTOS = [
       '/Eventos/reto-delfines-2023/487557303_1192505699552699_3105330588364120517_n.jpg',
       '/Eventos/reto-delfines-2023/487740996_1192505586219377_7083699175777230955_n.jpg',
       '/Eventos/reto-delfines-2023/487811472_1192505602886042_6514256955789516255_n.jpg',
+    ],
+    galeria: [
+      '/Eventos/reto-delfines-2023/487529673_1192505496219386_2810556489706388214_n.jpg',
+      '/Eventos/reto-delfines-2023/487482349_1192505306219405_4969990268029083355_n.jpg',
+      '/Eventos/reto-delfines-2023/487557303_1192505699552699_3105330588364120517_n.jpg',
+      '/Eventos/reto-delfines-2023/487740996_1192505586219377_7083699175777230955_n.jpg',
+      '/Eventos/reto-delfines-2023/487811472_1192505602886042_6514256955789516255_n.jpg',
+      '/Eventos/reto-delfines-2023/487413396_1192505249552744_8142125479387968843_n.jpg',
+      '/Eventos/reto-delfines-2023/487432484_1192505676219368_4332715679978843388_n.jpg',
+      '/Eventos/reto-delfines-2023/487442898_1192505619552707_787896459280876320_n.jpg',
+      '/Eventos/reto-delfines-2023/487448446_1192505236219412_7998522388015633311_n.jpg',
+      '/Eventos/reto-delfines-2023/487497526_1192506789552590_884966864074332428_n.jpg',
+      '/Eventos/reto-delfines-2023/487712570_1192505402886062_890391192058837459_n.jpg',
+      '/Eventos/reto-delfines-2023/487716272_1192505539552715_5879864980630781447_n.jpg',
+      '/Eventos/reto-delfines-2023/487758519_1192505432886059_6544011671055794902_n.jpg',
+      '/Eventos/reto-delfines-2023/487759131_1192505232886079_1736739327084402870_n.jpg',
+      '/Eventos/reto-delfines-2023/487763817_1192505332886069_7124537323588468016_n.jpg',
+      '/Eventos/reto-delfines-2023/487772985_1192505279552741_8076287473372307491_n.jpg',
+      '/Eventos/reto-delfines-2023/487793751_1192505529552716_88130522339085476_n.jpg',
+      '/Eventos/reto-delfines-2023/487806126_1192505612886041_6101227725593310509_n.jpg',
     ],
   },
 ];
@@ -465,10 +637,11 @@ function BoxCarousel({ slides }) {
 }
 
 // ─── LIGHTBOX ─────────────────────────────────────────────────────────────────
-function Lightbox({ evento, startIndex, onClose }) {
+function Lightbox({ evento, startIndex, fotosOverride, onClose }) {
+  const fotos = fotosOverride || evento.fotos;
   const [idx, setIdx] = useState(startIndex);
   const [scale, setScale] = useState(1);
-  const total = evento.fotos.length;
+  const total = fotos.length;
 
   useEffect(() => {
     const onKey = (e) => {
@@ -509,7 +682,7 @@ function Lightbox({ evento, startIndex, onClose }) {
         onClick={e => { e.stopPropagation(); toggleZoom(); }}
       >
         <img
-          src={evento.fotos[idx]}
+          src={fotos[idx]}
           alt={`${evento.titulo} ${idx + 1}`}
           style={{ transform: `scale(${scale})` }}
           draggable={false}
@@ -532,11 +705,52 @@ function Lightbox({ evento, startIndex, onClose }) {
   );
 }
 
+// ─── GALERÍA MODAL ────────────────────────────────────────────────────────────
+function GaleriaModal({ evento, onClose, onOpenPhoto }) {
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = '';
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [onClose]);
+
+  return createPortal(
+    <div className="wp-gal-overlay" onClick={onClose}>
+      <div className="wp-gal-modal" onClick={e => e.stopPropagation()}>
+        <div className="wp-gal-header">
+          <div className="wp-gal-header-info">
+            <span className="wp-gal-tag" style={{ color: evento.tagColor }}>{evento.tag}</span>
+            <h3 className="wp-gal-titulo">{evento.titulo}</h3>
+          </div>
+          <div className="wp-gal-header-right">
+            <span className="wp-gal-count">{evento.galeria.length} fotos</span>
+            <button className="wp-gal-close" onClick={onClose} aria-label="Cerrar">
+              <i className="fas fa-times" />
+            </button>
+          </div>
+        </div>
+        <div className="wp-gal-grid">
+          {evento.galeria.map((src, i) => (
+            <div key={i} className="wp-gal-thumb" onClick={() => onOpenPhoto(i)}>
+              <img src={src} alt={`${evento.titulo} ${i + 1}`} loading="lazy" decoding="async" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 export default function WolfPackPage() {
   const heroRef = useRef(null);
   const heroInView = useInView(heroRef, { once: true });
   const [activeCoach, setActiveCoach] = useState(null); // eslint-disable-line no-unused-vars
   const [lightbox, setLightbox] = useState(null);
+  const [galeriaOpen, setGaleriaOpen] = useState(null);
 
   return (
     <>
@@ -678,32 +892,34 @@ export default function WolfPackPage() {
                 viewport={{ once: true }}
               >
                 <p className="wp-historia-p">
-                  No nació como un proyecto; no planeamos iniciar un centro de entrenamiento.
-                  Fue una decisión tomada a partir de que el box donde la fundadora entrenaba tuvo
-                  la necesidad de cerrar, y los pocos alumnos que asistían no querían entrenar con
-                  alguien más ni en algún otro lugar. Así fue como en par de días nació{' '}
-                  <strong>The WolfPack</strong>.
+                  No surgió como un proyecto planeado; nunca tuvimos la intención de fundar un
+                  centro de entrenamiento. Todo comenzó cuando el box en el que entrenaba nuestra
+                  fundadora se vio en la necesidad de cerrar, y el reducido grupo de alumnos que
+                  asistía no estaba dispuesto a entrenar con alguien más ni en otro lugar. Fue así
+                  como, en cuestión de días, nació <strong>The WolfPack</strong>.
                 </p>
 
                 <div className="wp-historia-porque">
                   <p className="wp-historia-porque-q">¿Por qué el nombre?</p>
                   <p className="wp-historia-p">
-                    Éramos y seguimos siendo una familia — una manada que se apoyó, se quedó y que
-                    algunos aún forman parte de ella.
+                    Porque desde el inicio fuimos, y seguimos siendo, una familia: una manada que se
+                    apoyó mutuamente, que permaneció unida y de la cual muchos aún forman parte.
                   </p>
                 </div>
 
                 <p className="wp-historia-p">
-                  Y luego vino lo demás: las competencias internas, la organización para repartir
-                  comida en hospitales, celebraciones para el Día del Niño en comunidades alejadas.
-                  Pero sobre todo, el enfoque más grande ha sido apoyar a la población perruna de
-                  nuestra ciudad. En estos 10 años se han organizado muchas competencias, de las
-                  cuales <strong>3 han sido a nivel peninsular</strong>, recibiendo varios atletas.
+                  Con el tiempo llegó todo lo demás: las competencias internas, la organización de
+                  jornadas para repartir alimentos en hospitales y las celebraciones del Día del
+                  Niño en comunidades alejadas. Pero, por encima de todo, nuestro mayor enfoque ha
+                  sido apoyar a la población perruna de la ciudad. A lo largo de estos 10 años hemos
+                  organizado numerosas competencias, de las cuales{' '}
+                  <strong>3 han sido a nivel peninsular</strong>, reuniendo a atletas de distintas
+                  procedencias.
                 </p>
 
                 <p className="wp-historia-p">
-                  Estos 10 años hemos cambiado la vida de muchísimas personas. Hemos celebrado
-                  bodas, nacimientos y festejado cada logro de la manada.
+                  En estos 10 años hemos transformado la vida de muchísimas personas. Hemos
+                  celebrado bodas, nacimientos y acompañado cada logro de la manada.
                 </p>
               </motion.div>
             </div>
@@ -1066,6 +1282,15 @@ export default function WolfPackPage() {
                     </div>
                   ))}
                 </div>
+
+                {/* Botón ver galería completa */}
+                {evento.galeria && (
+                  <button className="wp-evs-ver-fotos" onClick={() => setGaleriaOpen(evento)}>
+                    <span className="wp-evs-vf-label">Ver galería</span>
+                    <span className="wp-evs-vf-line" />
+                    <span className="wp-evs-vf-badge">{evento.galeria.length}</span>
+                  </button>
+                )}
               </motion.div>
             ))}
           </div>
@@ -1222,10 +1447,22 @@ export default function WolfPackPage() {
 
     </div>
 
+      {galeriaOpen && (
+        <GaleriaModal
+          evento={galeriaOpen}
+          onClose={() => setGaleriaOpen(null)}
+          onOpenPhoto={(i) => {
+            setLightbox({ evento: galeriaOpen, index: i, fotosOverride: galeriaOpen.galeria });
+            setGaleriaOpen(null);
+          }}
+        />
+      )}
+
       {lightbox && (
         <Lightbox
           evento={lightbox.evento}
           startIndex={lightbox.index}
+          fotosOverride={lightbox.fotosOverride}
           onClose={() => setLightbox(null)}
         />
       )}

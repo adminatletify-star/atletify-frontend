@@ -523,18 +523,102 @@
 
 /* ---- REJECTION NOTE ---- */
 .gs-rejection-note {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+}
+
+.gs-rejection-note--expired {
+  background: rgba(231, 76, 60, 0.08);
+  border-color: rgba(231, 76, 60, 0.35);
+}
+
+.gs-rejection-motivo {
   font-size: 0.78rem;
   color: var(--secondary);
   font-style: italic;
   display: flex;
   align-items: flex-start;
   gap: 0.4rem;
+  line-height: 1.4;
 }
 
-.gs-rejection-note i {
+.gs-rejection-motivo i {
   color: var(--accent-cool);
   flex-shrink: 0;
-  margin-top: 1px;
+  margin-top: 2px;
+}
+
+.gs-rejection-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.gs-rejection-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-heading-alt, inherit);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: #f0b429;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 20px;
+  padding: 0.25rem 0.6rem;
+}
+
+.gs-rejection-timer--expired {
+  color: #ff6b6b;
+  background: rgba(231, 76, 60, 0.14);
+  border-color: rgba(231, 76, 60, 0.4);
+}
+
+.gs-rejection-recordado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.25rem 0.55rem;
+}
+
+.gs-btn-recordar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #f0b429;
+  border-radius: 8px;
+  font-family: var(--font-heading-alt, inherit);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 0.5rem 0.7rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  touch-action: manipulation;
+}
+
+.gs-btn-recordar:hover {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.55);
 }
 
 /* ---- ACTION BUTTONS ---- */
@@ -605,7 +689,7 @@
   background: rgba(0, 0, 0, 0.88);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  z-index: 1050;
+  z-index: 3000; /* por encima del navbar (1050) para que no se sobreponga */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -615,11 +699,31 @@
 .gs-modal {
   width: 100%;
   max-width: 460px;
+  max-height: 92dvh;            /* nunca más alto que la pantalla */
   background: var(--bg-elevated);
   border-radius: 18px;
-  border: 1px solid rgba(230, 57, 70, 0.35);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary); /* acento del sistema de diseño */
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
-  overflow: hidden;
+  overflow-y: auto;            /* scroll si el contenido es alto (móvil) */
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+/* ---- Visor de comprobante ---- */
+.gs-comprobante-body {
+  align-items: center;
+  padding: 1rem;
+}
+
+.gs-comprobante-img {
+  width: 100%;
+  max-width: 100%;
+  max-height: 72vh;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .gs-modal-header {
@@ -628,6 +732,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: sticky;      /* se queda arriba al hacer scroll del modal */
+  top: 0;
+  background: var(--bg-elevated);
+  z-index: 2;
 }
 
 .gs-modal-title {
@@ -822,5 +930,13 @@
 
   .gs-modal-body {
     padding: 1.25rem;
+  }
+
+  .gs-modal-overlay {
+    padding: 0.6rem;
+  }
+
+  .gs-modal {
+    max-height: 94dvh;
   }
 }

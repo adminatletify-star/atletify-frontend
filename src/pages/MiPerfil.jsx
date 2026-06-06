@@ -37,6 +37,7 @@ export default function MiPerfil() {
     tieneDiscapacidad: '', genero: '', apodo: '', estadoDelDia: '',
     nivelGamer: 'Cachorro', coachFavorito: '', movimientoFavorito: '',
     movimientoOdiado: '', objetivo: '', esDeConfianza: false, deudaTienda: 0,
+    ocultarDelLeaderboard: false, ocultarGamerCard: false, deshabilitarSolicitudes: false,
     estatus: 'Activo'
   });
 
@@ -151,6 +152,9 @@ export default function MiPerfil() {
           objetivo: data.Objetivo || data.objetivo || '',
           esDeConfianza: data.EsDeConfianza || data.esDeConfianza || false,
           deudaTienda: data.DeudaTienda || data.deudaTienda || 0,
+          ocultarDelLeaderboard: data.OcultarDelLeaderboard || data.ocultarDelLeaderboard || false,
+          ocultarGamerCard: data.OcultarGamerCard || data.ocultarGamerCard || false,
+          deshabilitarSolicitudes: data.DeshabilitarSolicitudes || data.deshabilitarSolicitudes || false,
           estatus: data.Estatus || data.estatus || 'Activo'
         };
         setRachaVisible(data.RachaActual || data.rachaActual || 0);
@@ -893,6 +897,43 @@ export default function MiPerfil() {
                     <div className="col-md-8">
                       <label className="mp-label">Lesiones, cirugías o enfermedades crónicas</label>
                       <input type="text" className="mp-input mp-input--medical" placeholder="Ej. Asma, hernia discal... (Déjalo en blanco si no aplica)" value={form.tieneDiscapacidad} onChange={e => setForm({ ...form, tieneDiscapacidad: e.target.value })} />
+                    </div>
+                  </div>
+
+                  {/* Privacidad y Comunidad */}
+                  <h5 className="mp-section-title mt-4">
+                    <i className="fas fa-shield-alt" /> Privacidad y Comunidad
+                  </h5>
+                  <p className="mp-medical-note">
+                    <i className="fas fa-eye-slash" /> Configura quién puede ver tu perfil y estadísticas.
+                  </p>
+                  <div className="row g-3 mb-4">
+                    <div className="col-12">
+                      <div className="form-check form-switch d-flex align-items-center gap-2">
+                        <input className="form-check-input" type="checkbox" role="switch" style={{ width: '40px', height: '20px' }} checked={form.ocultarDelLeaderboard} onChange={e => setForm({ ...form, ocultarDelLeaderboard: e.target.checked })} />
+                        <div>
+                          <label className="mp-switch-label ms-2 d-block mb-0">Ocultar del Leaderboard</label>
+                          <small className="text-secondary ms-2">Tus scores no aparecerán en el Top del día, pero tu coach sí podrá verlos.</small>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-12">
+                      <div className="form-check form-switch d-flex align-items-center gap-2">
+                        <input className="form-check-input" type="checkbox" role="switch" style={{ width: '40px', height: '20px' }} checked={form.ocultarGamerCard} onChange={e => setForm({ ...form, ocultarGamerCard: e.target.checked })} />
+                        <div>
+                          <label className="mp-switch-label ms-2 d-block mb-0">Ocultar Gamer Card (Modo Fantasma)</label>
+                          <small className="text-secondary ms-2">Ocultar tu perfil del directorio de la comunidad. Nadie podrá ver tus PRs ni Nivel Gamer.</small>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-12">
+                      <div className="form-check form-switch d-flex align-items-center gap-2">
+                        <input className="form-check-input" type="checkbox" role="switch" style={{ width: '40px', height: '20px' }} checked={form.deshabilitarSolicitudes} onChange={e => setForm({ ...form, deshabilitarSolicitudes: e.target.checked })} />
+                        <div>
+                          <label className="mp-switch-label ms-2 d-block mb-0">No recibir solicitudes de amistad</label>
+                          <small className="text-secondary ms-2">Otros atletas no podrán enviarte solicitudes para añadirte a su manada.</small>
+                        </div>
+                      </div>
                     </div>
                   </div>
 

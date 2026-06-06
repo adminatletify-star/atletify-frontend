@@ -47,11 +47,23 @@ const CardNav = ({
     return () => window.removeEventListener('atletify:dashsidebar-open', handler);
   }, []);
 
-  // Detecta cambios de breakpoint
+  // Detecta cambios de breakpoint. El resize se throttlea con requestAnimationFrame
+  // porque en móvil dispara muchísimo (barra de URL al hacer scroll, teclado,
+  // rotación) y cada disparo sincrónico contra el reflow del nav causaba lag.
   useEffect(() => {
-    const handleResize = () => setIsMobileNav(window.innerWidth <= 1200);
+    let rafId = null;
+    const handleResize = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        setIsMobileNav(window.innerWidth <= 1200);
+      });
+    };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   // Reacciona al cambio de modo mobile ↔ desktop
@@ -152,6 +164,12 @@ const CardNav = ({
 
     setIsHamburgerOpen(true);
     setIsExpanded(true);
+    // GSAP cachea la altura destino (función calculateHeight) la primera vez que
+    // reproduce el timeline. Si el usuario abrió una sección del acordeón y luego
+    // cerró el menú, openSections sigue activo pero la altura cacheada es la del
+    // estado colapsado → al reabrir el contenido queda más alto que el nav y se
+    // corta. invalidate() fuerza a recalcular calculateHeight con el estado real.
+    tl.invalidate();
     tl.play(0);
     window.dispatchEvent(new CustomEvent('atletify:cardnav-open'));
   };

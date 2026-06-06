@@ -30,6 +30,13 @@
   position: relative;
   overflow: hidden;
   will-change: height;
+  /* Aísla el nav en su propia capa de composición: el repintado del blur
+     durante la animación de height no recompone toda la página detrás. */
+  transform: translateZ(0);
+  isolation: isolate;
+  /* Limita el área de repintado al propio nav (ya tiene overflow:hidden +
+     position:relative, así que no altera el posicionamiento de los hijos). */
+  contain: paint;
 }
 
 .card-nav-top {
@@ -227,6 +234,14 @@
 }
 
 @media (max-width: 1200px) {
+  /* En móvil el blur de 20px sobre un área que cambia frame a frame mientras
+     el menú se despliega es el principal causante de los micro-lags. Lo bajamos
+     a 10px: la GPU móvil lo resuelve sin tirones y el look glass se conserva. */
+  .card-nav {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
   /* Acordeón: las secciones dejan de ser cards separadas */
   .nav-card {
     border-radius: 0 !important;

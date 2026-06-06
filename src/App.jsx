@@ -19,6 +19,7 @@ import CookieBanner from './components/CookieBanner';
 import CrearBox from './pages/CrearBox';
 import Dashboard from './pages/Dashboard';
 import CompletarRegistro from './pages/CompletarRegistro';
+import RegistrarAdminBox from './pages/RegistrarAdminBox';
 import CorregirSolicitud from './pages/CorregirSolicitud';
 import RegistroManual from './pages/RegistroManual';
 import UserPanel from './pages/UserPanel';
@@ -393,6 +394,7 @@ function App() {
             <Route path="/politica-cookies" element={<PoliticaCookies />} />
             <Route path="/registro/:idBox" element={<Register />} />
             <Route path="/completar-registro" element={<CompletarRegistro />} />
+            <Route path="/registrar-admin-box" element={<RegistrarAdminBox />} />
             <Route path="/portal-competencias/:id" element={<PortalCompetencias />} />
             <Route path="/leaderboard/:id" element={<PortalLeaderboard />} />
             <Route path="/juez/:id" element={<PortalJuez />} />

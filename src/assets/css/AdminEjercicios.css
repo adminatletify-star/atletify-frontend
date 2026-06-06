@@ -297,10 +297,17 @@
   gap: 1rem;
   flex-wrap: wrap;
 }
+.ae-list-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
 .ae-search-wrap {
   position: relative;
-  flex: 1;
-  min-width: 200px;
+  flex: 1 1 200px;
+  min-width: 0;
   max-width: 320px;
 }
 .ae-search-icon {
@@ -410,6 +417,9 @@
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--text-primary);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
 }
 .ae-table-instruccion {
   font-family: var(--font-body);
@@ -473,27 +483,63 @@
 .ae-empty i { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4; }
 .ae-empty p { font-family: var(--font-body); font-size: 0.9rem; margin: 0; }
 
-/* ---- PAGINACIÓN ---- */
+/* ---- PAGINACIÓN (estilo Ejercicios) ---- */
 .ae-pagination {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
   flex-wrap: wrap;
-  gap: 6px;
   padding: 16px 12px 20px;
   border-top: 1px solid var(--border);
   margin-top: 4px;
 }
 
-.ae-page-btn {
-  min-width: 34px;
-  height: 34px;
-  padding: 0 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border);
+/* Flechas ‹ › — fondo relleno, radio 10 */
+.ae-pag-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--secondary, #A8B2D1);
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.ae-pag-btn:hover:not(:disabled) {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: rgba(230, 57, 70, 0.35);
+  color: var(--primary, #E63946);
+}
+
+.ae-pag-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.ae-pag-numeros {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Números — fondo transparente, radio 8 */
+.ae-pag-num {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.5rem;
   border-radius: 8px;
-  color: var(--text-secondary);
-  font-size: 0.83rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--secondary, #A8B2D1);
+  font-size: 0.82rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
@@ -502,28 +548,31 @@
   justify-content: center;
 }
 
-.ae-page-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: #fff;
+.ae-pag-num:hover {
+  background: rgba(230, 57, 70, 0.1);
+  border-color: rgba(230, 57, 70, 0.3);
+  color: var(--text-primary, #F0F0F5);
 }
 
-.ae-page-btn--active {
-  background: var(--primary) !important;
-  border-color: var(--primary) !important;
-  color: #fff !important;
+.ae-pag-num.activo {
+  background: var(--primary, #E63946);
+  border-color: var(--primary, #E63946);
+  color: #fff;
   font-weight: 700;
 }
 
-.ae-page-btn:disabled {
-  opacity: 0.28;
-  cursor: not-allowed;
+.ae-pag-dots {
+  color: var(--text-muted, #6B7280);
+  font-size: 0.85rem;
+  padding: 0 0.2rem;
+  user-select: none;
 }
 
-.ae-page-info {
-  font-size: 0.76rem;
-  color: var(--text-muted);
-  margin-left: 6px;
+/* Responsive */
+@media (max-width: 576px) {
+  .ae-pag-btn { width: 34px; height: 34px; font-size: 0.75rem; }
+  .ae-pag-num { min-width: 32px; height: 32px; font-size: 0.76rem; }
+  .ae-pagination { gap: 0.35rem; }
 }
 
 /* ---- SPINNER ---- */
@@ -823,8 +872,9 @@ video::-webkit-media-controls-overflow-button {
   .ae-btn-ghost       { font-size: 0.75rem; padding: 0.45rem 0.75rem; }
   .ae-form-actions    { flex-wrap: wrap; overflow: visible; }
   .ae-form-actions .ae-btn-ghost { flex-shrink: 0; }
-  .ae-list-header     { padding: 0.85rem 1rem; flex-direction: column; align-items: flex-start; }
-  .ae-search-wrap     { min-width: 0; max-width: 100%; width: 100%; }
+  .ae-list-header     { padding: 0.85rem 1rem; flex-direction: column; align-items: stretch; }
+  .ae-list-controls   { width: 100%; }
+  .ae-search-wrap     { min-width: 0; max-width: 100%; flex-basis: 100%; }
   .ae-ej-card         { min-height: 190px; padding: 0.9rem 4.5rem 0.75rem 0.85rem; border-radius: 12px; }
   .ae-ej-instruccion  { font-size: 0.74rem; -webkit-line-clamp: 4; }
   .ae-detail-modal    { padding: 1.25rem; border-radius: 12px; }

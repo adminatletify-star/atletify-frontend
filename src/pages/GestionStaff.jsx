@@ -1,14 +1,125 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import TipoPagoPicker from '../components/TipoPagoPicker';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import BotonSeguro from '../components/BotonSeguro';
 import AtletifyLoader from '../components/AtletifyLoader';
+import '../assets/css/GestionClases.css';
 import '../assets/css/GestionStaff.css';
+
+const PAGE_SIZE = 10;
+
+const FILTRO_FECHA_OPCIONES = [
+  { value: 'hoy',    label: 'Hoy',          icon: 'fa-calendar-day' },
+  { value: 'ayer',   label: 'Ayer',         icon: 'fa-calendar-minus' },
+  { value: 'semana', label: 'Esta Semana',  icon: 'fa-calendar-week' },
+];
+
+const DIA_CORTE_OPCIONES = [
+  { value: '1', label: 'Lunes' },     { value: '2', label: 'Martes' },
+  { value: '3', label: 'Miércoles' }, { value: '4', label: 'Jueves' },
+  { value: '5', label: 'Viernes' },   { value: '6', label: 'Sábado' },
+  { value: '7', label: 'Domingo' },
+];
+
+// GET con reintentos: los 500 transitorios del pooler de Supabase se reintentan
+// con un pequeño backoff. Devuelve el JSON o null si nunca respondió OK.
+async function fetchJsonRetry(url, intentos = 3) {
+  for (let i = 0; i < intentos; i++) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) return await res.json();
+      if (res.status < 500) return null; // 4xx → no tiene sentido reintentar
+    } catch (_) { /* error de red → reintentar */ }
+    await new Promise(r => setTimeout(r, 250 * (i + 1)));
+  }
+  return null;
+}
+
+// Procesa una lista en lotes (limita la concurrencia) para no saturar la BD
+async function enLotes(items, tamanoLote, fn) {
+  const out = [];
+  for (let i = 0; i < items.length; i += tamanoLote) {
+    const lote = items.slice(i, i + tamanoLote);
+    out.push(...await Promise.all(lote.map(fn)));
+  }
+  return out;
+}
+
+/* ── Paginación (números desktop · compacto móvil) ── */
+function buildPaginas(pagina, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const out = [1];
+  if (pagina > 3) out.push('...');
+  const start = Math.max(2, pagina - 1);
+  const end = Math.min(total - 1, pagina + 1);
+  for (let i = start; i <= end; i++) out.push(i);
+  if (pagina < total - 2) out.push('...');
+  out.push(total);
+  return out;
+}
+
+function Paginacion({ pagina, totalPaginas, onCambio }) {
+  if (totalPaginas <= 1) return null;
+  return (
+    <div className="staff-pag" role="navigation" aria-label="Paginación">
+      <button type="button" className="staff-pag-btn" disabled={pagina === 1} onClick={() => onCambio(pagina - 1)} aria-label="Anterior">
+        <i className="fas fa-chevron-left"></i>
+      </button>
+      <div className="staff-pag-numbers">
+        {buildPaginas(pagina, totalPaginas).map((p, i) => p === '...'
+          ? <span key={`e${i}`} className="staff-pag-ellipsis">…</span>
+          : <button key={p} type="button" className={`staff-pag-btn ${pagina === p ? 'staff-pag-btn--active' : ''}`} onClick={() => onCambio(p)}>{p}</button>
+        )}
+      </div>
+      <span className="staff-pag-compact">{pagina} / {totalPaginas}</span>
+      <button type="button" className="staff-pag-btn" disabled={pagina === totalPaginas} onClick={() => onCambio(pagina + 1)} aria-label="Siguiente">
+        <i className="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  );
+}
+
+/* ── Picker modal genérico (reemplaza a los <select> nativos) ── */
+function OptionPickerModal({ supertitulo, titulo, opciones, valor, onSelect, onCerrar }) {
+  return createPortal(
+    <div className="staff-picker-overlay" onClick={e => { if (e.target === e.currentTarget) onCerrar(); }}>
+      <div className="staff-picker-modal">
+        <div className="staff-picker-header">
+          <div>
+            {supertitulo && <p className="staff-picker-supertitle">{supertitulo}</p>}
+            <h2 className="staff-picker-title">{titulo}</h2>
+          </div>
+          <button type="button" className="staff-picker-close" onClick={onCerrar} aria-label="Cerrar"><i className="fas fa-times"></i></button>
+        </div>
+        <div className="staff-picker-list">
+          {opciones.map(op => {
+            const activo = String(op.value) === String(valor);
+            return (
+              <button
+                key={op.value}
+                type="button"
+                className={`staff-picker-option${activo ? ' staff-picker-option--active' : ''}`}
+                onClick={() => onSelect(op.value)}
+              >
+                {op.icon && <span className="staff-picker-option-icon"><i className={`fas ${op.icon}`}></i></span>}
+                <span className="staff-picker-option-label">{op.label}</span>
+                {activo && <i className="fas fa-check-circle staff-picker-check"></i>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 export default function GestionStaff() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [coaches, setCoaches] = useState([]);
   const [catalogo, setCatalogo] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,6 +128,9 @@ export default function GestionStaff() {
   // Estados para el Modal Flotante (Glassmorphism)
   const [coachSeleccionado, setCoachSeleccionado] = useState(null);
   const [modalEspVisible, setModalEspVisible] = useState(false);
+  const [modalPagoVisible, setModalPagoVisible] = useState(false);
+  const [coachPagoInfo, setCoachPagoInfo] = useState(null);
+  const [procesandoPago, setProcesandoPago] = useState(false);
   const [espSeleccionadas, setEspSeleccionadas] = useState([]); // IDs de las especialidades activas
   const [nuevaEspecialidad, setNuevaEspecialidad] = useState('');
 
@@ -29,6 +143,27 @@ export default function GestionStaff() {
   // ⭐ Estados para Evaluaciones
   const [modalResenasVisible, setModalResenasVisible] = useState(false);
 
+  // 💼 Estado para la Nómina en la vista individual de Auditoría
+  const [nominaCoachAuditoria, setNominaCoachAuditoria] = useState(null);
+
+  // Funciones de validación de fechas (Clases futuras)
+  const esPasadaOHoy = (fechaStr) => {
+    if (!fechaStr) return false;
+    const d = new Date(fechaStr);
+    const hoy = new Date();
+    d.setHours(0,0,0,0);
+    hoy.setHours(0,0,0,0);
+    return d <= hoy;
+  };
+  const esFuturaManana = (fechaStr) => {
+    if (!fechaStr) return false;
+    const d = new Date(fechaStr);
+    const hoy = new Date();
+    d.setHours(0,0,0,0);
+    hoy.setHours(0,0,0,0);
+    return d > hoy;
+  };
+
   const API_URL = import.meta.env.VITE_API_URL;
 
 
@@ -36,6 +171,18 @@ export default function GestionStaff() {
   const [modalPermisoVisible, setModalPermisoVisible] = useState(false);
   const [formPermiso, setFormPermiso] = useState({ fechaInicio: '', fechaFin: '', motivo: '', conGoceDeSueldo: false });
   const [historialPermisos, setHistorialPermisos] = useState([]);
+
+  // 🛡️ Estados para Auditoría de Clases Global
+  const [vistaActiva, setVistaActiva] = useState('directorio'); // 'directorio' | 'auditoria' | 'nomina'
+  const [auditoriaClases, setAuditoriaClases] = useState([]);
+  const [cargandoAuditoria, setCargandoAuditoria] = useState(false);
+  const [filtroAuditoria, setFiltroAuditoria] = useState('hoy'); // 'hoy' | 'ayer' | 'semana'
+  const [filtroCoachAuditoria, setFiltroCoachAuditoria] = useState('');
+
+  // Paginación y pickers modales
+  const [pagDirectorio, setPagDirectorio] = useState(1);
+  const [pagAuditoria, setPagAuditoria] = useState(1);
+  const [pickerActivo, setPickerActivo] = useState(null); // 'fecha' | 'coach' | 'dia-corte'
 
   const abrirModalPermiso = async (coach) => {
     setCoachSeleccionado(coach);
@@ -81,6 +228,49 @@ export default function GestionStaff() {
     cargarTodo(idAUsar);
   }, [navigate]);
 
+  useEffect(() => {
+    if ((vistaActiva === 'auditoria' || vistaActiva === 'nomina') && box) {
+      cargarAuditoria();
+    }
+  }, [vistaActiva, filtroAuditoria, box]);
+
+  useEffect(() => {
+    if (vistaActiva === 'auditoria' && filtroCoachAuditoria && box) {
+      cargarNominaParaAuditoria(filtroCoachAuditoria);
+    } else {
+      setNominaCoachAuditoria(null);
+    }
+  }, [filtroCoachAuditoria, vistaActiva, box]);
+
+  // Procesar location.state si venimos desde el Dashboard
+  useEffect(() => {
+    if (location.state && location.state.vistaActiva) {
+      setVistaActiva(location.state.vistaActiva);
+      if (location.state.filtroCoachAuditoria) {
+        setFiltroCoachAuditoria(String(location.state.filtroCoachAuditoria));
+        setFiltroAuditoria('semana'); // Cambiamos a semana por defecto para ver bien las clases pendientes
+      }
+      // Limpiar el state para no atorarnos en un loop si recarga la página
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  const cargarNominaParaAuditoria = async (idCoach) => {
+    try {
+      const hoy = new Date();
+      const token = localStorage.getItem('token');
+      // Usar calcular-mensual para la vista general, similar al widget
+      const res = await fetch(`${API_URL}/nomina/calcular-mensual/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setNominaCoachAuditoria(await res.json());
+      }
+    } catch (e) {
+      console.error("Error al cargar nomina para auditoria", e);
+    }
+  };
+
   async function cargarTodo(idBox) {
     if (!idBox) return; // Si no hay ID, no disparamos flechas al aire
     setLoading(true);
@@ -105,20 +295,20 @@ export default function GestionStaff() {
 
       // 4. A cada Coach le buscamos sus especialidades
       // 4. A cada Coach le buscamos sus especialidades y sus calificaciones
-      const coachesArmados = await Promise.all(soloCoaches.map(async (coach) => {
+      // En lotes de 3 coaches (máx. 6 peticiones simultáneas) para no saturar
+      // el pooler de Supabase, con reintentos ante 500 transitorios.
+      const coachesArmados = await enLotes(soloCoaches, 3, async (coach) => {
         const id = coach.idUsuario || coach.id || coach.IdUsuario;
-        try {
-          const [resEsp, resEval] = await Promise.all([
-            fetch(`${API_URL}/especialidades/coach/${id}`),
-            fetch(`${API_URL}/evaluaciones/coach/${id}`)
-          ]);
-          const dataEsp = await resEsp.json();
-          const dataEval = resEval.ok ? await resEval.json() : { promedio: 0, total: 0, resenas: [] };
-          return { ...coach, especialidades: Array.isArray(dataEsp) ? dataEsp : [], evaluaciones: dataEval };
-        } catch {
-          return { ...coach, especialidades: [], evaluaciones: { Promedio: 0, Total: 0, Resenas: [] } };
-        }
-      }));
+        const [dataEsp, dataEval] = await Promise.all([
+          fetchJsonRetry(`${API_URL}/especialidades/coach/${id}`),
+          fetchJsonRetry(`${API_URL}/evaluaciones/coach/${id}`)
+        ]);
+        return {
+          ...coach,
+          especialidades: Array.isArray(dataEsp) ? dataEsp : [],
+          evaluaciones: dataEval || { promedio: 0, total: 0, resenas: [] }
+        };
+      });
 
       setCoaches(coachesArmados);
     } catch (err) {
@@ -190,12 +380,186 @@ export default function GestionStaff() {
   };
 
   // --- LÓGICA DE CONTRATOS Y NÓMINA ---
+  const getWeekBoundaries = (dateObj) => {
+    const day = dateObj.getDay();
+    const diffToMonday = dateObj.getDate() - day + (day === 0 ? -6 : 1);
+    const start = new Date(dateObj.getFullYear(), dateObj.getMonth(), diffToMonday);
+    const end = new Date(dateObj.getFullYear(), dateObj.getMonth(), diffToMonday + 6);
+    
+    const offsetStart = start.getTimezoneOffset() * 60000;
+    const offsetEnd = end.getTimezoneOffset() * 60000;
+    
+    return {
+      fInicioStr: new Date(start.getTime() - offsetStart).toISOString().split('T')[0],
+      fFinStr: new Date(end.getTime() - offsetEnd).toISOString().split('T')[0]
+    };
+  };
+
+  const getDatesForFilter = (filter) => {
+    const hoyObj = new Date();
+    let start, end;
+    if (filter === 'hoy') {
+      start = new Date(hoyObj);
+      end = new Date(hoyObj);
+    } else if (filter === 'ayer') {
+      start = new Date(hoyObj);
+      start.setDate(hoyObj.getDate() - 1);
+      end = new Date(start);
+    } else if (filter === 'semana') {
+      return getWeekBoundaries(hoyObj);
+    }
+    const offsetStart = start.getTimezoneOffset() * 60000;
+    const offsetEnd = end.getTimezoneOffset() * 60000;
+    return {
+      fInicioStr: new Date(start.getTime() - offsetStart).toISOString().split('T')[0],
+      fFinStr: new Date(end.getTime() - offsetEnd).toISOString().split('T')[0]
+    };
+  };
+
+  const cargarAuditoria = async () => {
+    if (!box) return;
+    setCargandoAuditoria(true);
+    try {
+      const { fInicioStr, fFinStr } = getDatesForFilter(filtroAuditoria);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/nomina/auditoria-clases/${box.idBox}/${fInicioStr}/${fFinStr}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setAuditoriaClases(await res.json());
+      }
+    } catch (e) {
+      console.error("Error al cargar auditoría:", e);
+    } finally {
+      setCargandoAuditoria(false);
+    }
+  };
+
+  const abrirModalPago = (coachNomina) => {
+    // Tomar DiaCorte de la primera clase de este coach
+    const rawDiaCorte = coachNomina.clases[0]?.diaCorte ?? coachNomina.clases[0]?.DiaCorte ?? 7;
+    const diaCorte = parseInt(rawDiaCorte);
+
+    const jsDiaCorte = diaCorte === 7 ? 0 : diaCorte;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const day = today.getDay();
+    let diasFaltantes = jsDiaCorte - day;
+    if (diasFaltantes <= 0) diasFaltantes += 7; 
+
+    const proximoPago = new Date(today);
+    proximoPago.setDate(today.getDate() + diasFaltantes);
+
+    const { fInicioStr, fFinStr } = getDatesForFilter(filtroAuditoria);
+
+    setCoachPagoInfo({
+      ...coachNomina,
+      diaCorte,
+      diasFaltantes,
+      proximoPago,
+      fInicioStr,
+      fFinStr
+    });
+    setModalPagoVisible(true);
+  };
+
+  const registrarPagoNomina = async () => {
+    if (!coachPagoInfo) return;
+    setProcesandoPago(true);
+    try {
+      const token = localStorage.getItem('token');
+      const payload = {
+        FechaInicio: coachPagoInfo.fInicioStr,
+        FechaFin: coachPagoInfo.fFinStr
+      };
+      const res = await fetch(`${API_URL}/nomina/pagar-rango/${coachPagoInfo.idCoach}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        Swal.fire('Pago Registrado', data.mensaje || 'Se ha registrado el egreso financiero.', 'success');
+        setModalPagoVisible(false);
+        cargarAuditoria(); 
+      } else {
+        Swal.fire('Error', data.mensaje || 'Error al procesar el pago', 'error');
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire('Error', 'No se pudo conectar al servidor.', 'error');
+    } finally {
+      setProcesandoPago(false);
+    }
+  };
+
+  const validarClaseAuditoria = async (idCoach, idClase, fecha, estado, montoPago) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/nomina/validar-clase`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          IdCoach: idCoach,
+          IdClase: idClase,
+          Fecha: fecha,
+          Estado: estado,
+          MontoPago: parseFloat(montoPago)
+        })
+      });
+      if (res.ok) {
+        cargarAuditoria(); // recargar la tabla de auditoría
+      }
+    } catch (e) {
+      alert("Error al validar asistencia de la clase");
+    }
+  };
+
+  const validarMasivo = async () => {
+    const pendientes = auditoriaClases.filter(c => (c.estado === 'Pendiente' || c.Estado === 'Pendiente') && esPasadaOHoy(c.fecha || c.Fecha));
+    if (pendientes.length === 0) return alert("No hay clases pendientes pasadas o de hoy por validar en esta vista.");
+    
+    if (!await window.wpConfirm(`¿Aprobar ${pendientes.length} clases pendientes mostradas en pantalla?`)) return;
+
+    try {
+      const peticiones = pendientes.map(c => ({
+        IdCoach: c.idCoach || c.IdCoach,
+        IdClase: c.idClase || c.IdClase,
+        Fecha: c.fecha || c.Fecha,
+        Estado: 'Validada',
+        MontoPago: c.montoPago || c.MontoPago
+      }));
+
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/nomina/validar-masivo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(peticiones)
+      });
+      if (res.ok) {
+        alert("Validación masiva completada con éxito. ✅");
+        cargarAuditoria();
+      }
+    } catch (e) {
+      alert("Error en validación masiva.");
+    }
+  };
+
   const cargarAsistencias = async (idCoach) => {
     setCargandoAsistencias(true);
     try {
-      const hoy = new Date();
+      const { fInicioStr, fFinStr } = getWeekBoundaries(new Date());
       const token = localStorage.getItem('token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/asistencias-coach/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/asistencias-coach-semanal/${idCoach}/${fInicioStr}/${fFinStr}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -229,8 +593,8 @@ export default function GestionStaff() {
       });
       if (res.ok) {
         await cargarAsistencias(idCoach);
-        const hoy = new Date();
-        const resNomina = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`, {
+        const { fInicioStr, fFinStr } = getWeekBoundaries(new Date());
+        const resNomina = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular-semanal/${idCoach}/${fInicioStr}/${fFinStr}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (resNomina.ok) {
@@ -243,10 +607,11 @@ export default function GestionStaff() {
   };
 
   const pagarNominaMes = async () => {
-    if (!window.confirm(`¿Seguro que deseas proceder con el pago definitivo de la nómina de ${coachSeleccionado.nombre} por $${nominaActual.granTotal.toFixed(2)}? Se registrará un Egreso Financiero y se cerrará el mes.`)) return;
+    if (!await window.wpConfirm(`¿Seguro que deseas proceder con el pago definitivo de la nómina semanal de ${coachSeleccionado.nombre} por $${nominaActual.granTotal.toFixed(2)}? Se registrará un Egreso Financiero.`)) return;
     try {
       const idCoach = coachSeleccionado.idUsuario || coachSeleccionado.id;
       const hoy = new Date();
+      // En vez de mes/año podríamos mandar la semana, pero para retrocompatibilidad usaremos el mes actual. Idealmente backend también debería tener pagar-semanal.
       const token = localStorage.getItem('token');
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/pagar/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`, {
         method: 'POST',
@@ -283,9 +648,9 @@ export default function GestionStaff() {
         const data = await resContrato.json();
         setFormContrato({ tipoPago: data.tipoPago, monto: data.monto, diaCorte: data.diaCorte });
       }
-      // 2. Traer el cálculo de Nómina de este mes
-      const hoy = new Date();
-      const resNomina = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`, {
+      // 2. Traer el cálculo de Nómina de esta SEMANA
+      const { fInicioStr, fFinStr } = getWeekBoundaries(new Date());
+      const resNomina = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/calcular-semanal/${idCoach}/${fInicioStr}/${fFinStr}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (resNomina.ok) {
@@ -318,7 +683,7 @@ export default function GestionStaff() {
   };
 
   const eliminarResena = async (idResena) => {
-    if (!window.confirm("¿Seguro que deseas eliminar esta reseña (por lenguaje inapropiado o spam)?")) return;
+    if (!await window.wpConfirm("¿Seguro que deseas eliminar esta reseña (por lenguaje inapropiado o spam)?")) return;
     try {
       const res = await fetch(`${API_URL}/evaluaciones/${idResena}`, { method: 'DELETE' });
       if (res.ok) {
@@ -337,110 +702,411 @@ export default function GestionStaff() {
     } catch (e) { alert("Error de conexión"); }
   };
 
+  // Reset de páginas al cambiar datos/filtros
+  useEffect(() => { setPagDirectorio(1); }, [coaches.length]);
+  useEffect(() => { setPagAuditoria(1); }, [auditoriaClases, filtroCoachAuditoria, filtroAuditoria]);
+
+  // Derivados de paginación
+  const totalPagDir = Math.max(1, Math.ceil(coaches.length / PAGE_SIZE));
+  const coachesPagina = coaches.slice((pagDirectorio - 1) * PAGE_SIZE, pagDirectorio * PAGE_SIZE);
+
+  const auditoriaFiltrada = filtroCoachAuditoria
+    ? auditoriaClases.filter(c => (c.idCoach || c.IdCoach)?.toString() === filtroCoachAuditoria)
+    : auditoriaClases;
+  const totalPagAud = Math.max(1, Math.ceil(auditoriaFiltrada.length / PAGE_SIZE));
+  const auditoriaPagina = auditoriaFiltrada.slice((pagAuditoria - 1) * PAGE_SIZE, pagAuditoria * PAGE_SIZE);
+
+  // Opciones de coaches para el filtro de auditoría (lista dinámica)
+  const coachOpciones = [
+    { value: '', label: 'Todos los Coaches', icon: 'fa-users' },
+    ...Array.from(new Set(auditoriaClases.map(c => c.idCoach || c.IdCoach))).map(id => {
+      const nombre = auditoriaClases.find(c => (c.idCoach || c.IdCoach) === id)?.nombreCoach
+        || auditoriaClases.find(c => (c.idCoach || c.IdCoach) === id)?.NombreCoach || `Coach ${id}`;
+      return { value: String(id), label: nombre, icon: 'fa-user' };
+    }),
+  ];
+  const fechaSel = FILTRO_FECHA_OPCIONES.find(o => o.value === filtroAuditoria) || FILTRO_FECHA_OPCIONES[0];
+  const coachSel = coachOpciones.find(o => o.value === filtroCoachAuditoria) || coachOpciones[0];
+
   return (
     <div className="staff-container">
 
-      {/* ── NAVBAR ── */}
-      <nav className="staff-nav">
-        <BackButton to="/admin-box-panel" />
-        <div className="staff-nav-icono">
-          <i className="fas fa-users-cog"></i>
+      {/* ── HEADER (patrón GestionClases) ── */}
+      <header className="gc-header">
+        <div className="d-flex align-items-center gap-3">
+          <BackButton to="/admin-box-panel" />
+          <h1 className="gc-header-title">Control de <span>Staff</span></h1>
         </div>
-        <div>
-          <h1 className="staff-nav-titulo">
-            Control de <span>Staff</span>
-          </h1>
-          {box && <p className="staff-nav-subtitle">{box.nombre}</p>}
-        </div>
-      </nav>
+      </header>
 
       <div className="container-xl px-3 px-md-4 py-4">
 
-        {/* ── LOADING ── */}
-        {loading ? (
-          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
-            <AtletifyLoader />
-          </div>
+        {/* ── TABS DE VISTA ── */}
+        <div className="staff-tabs">
+          <button
+            type="button"
+            className={`staff-tab ${vistaActiva === 'directorio' ? 'staff-tab--active' : ''}`}
+            onClick={() => setVistaActiva('directorio')}
+          >
+            <i className="fas fa-address-card"></i><span>Directorio</span>
+          </button>
+          <button
+            type="button"
+            className={`staff-tab ${vistaActiva === 'auditoria' ? 'staff-tab--active' : ''}`}
+            onClick={() => { setVistaActiva('auditoria'); setFiltroAuditoria('hoy'); }}
+          >
+            <i className="fas fa-check-double"></i><span>Auditoría</span>
+          </button>
+          <button
+            type="button"
+            className={`staff-tab ${vistaActiva === 'nomina' ? 'staff-tab--active' : ''}`}
+            onClick={() => { setVistaActiva('nomina'); setFiltroAuditoria('semana'); }}
+          >
+            <i className="fas fa-money-check-alt"></i><span>Nómina</span>
+          </button>
+        </div>
 
-          /* ── EMPTY STATE ── */
-        ) : coaches.length === 0 ? (
-          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
-            <div className="staff-empty-card">
-              <i className="fas fa-users-slash staff-empty-icono"></i>
-              <h2 className="staff-empty-titulo">Sin Coaches registrados</h2>
-              <p className="staff-empty-desc">
-                Primero registra usuarios con rol "Coach" en tu Box.
-              </p>
-            </div>
-          </div>
 
-          /* ── GRID DE COACHES ── */
-        ) : (
-          <div className="row g-3 g-md-4 justify-content-start">
-            {coaches.map(coach => (
-              <div key={coach.idUsuario || coach.id} className="col-12 col-sm-6 col-lg-4 col-xl-3">
-                <div className="staff-card">
+        {vistaActiva === 'directorio' ? (
+          <>
+            {/* ── LOADING ── */}
+            {loading ? (
+              <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+                <AtletifyLoader />
+              </div>
 
-                  {/* Cabecera: avatar + nombre + rating + correo */}
-                  <div className="staff-card-header">
-                    <div className="staff-avatar">
-                      <span className="staff-avatar-initial">
-                        {coach.nombre.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <span className="staff-badge-rol">Coach</span>
-                    <h3 className="staff-nombre">{coach.nombre}</h3>
-                    <div className="staff-rating">
-                      <i className="fas fa-star staff-rating-star"></i>
-                      <span className="staff-rating-score">{coach.evaluaciones?.promedio || 0}</span>
-                      <span className="staff-rating-count">({coach.evaluaciones?.total || 0})</span>
-                    </div>
-                    <p className="staff-correo">{coach.correo}</p>
-                  </div>
-
-                  {/* Cuerpo: especialidades + acciones */}
-                  <div className="staff-card-body">
-                    <div className="staff-esp-section">
-                      <p className="staff-esp-label">Especialidades</p>
-                      {coach.especialidades && coach.especialidades.length > 0 ? (
-                        <div className="staff-esp-pills">
-                          {coach.especialidades.map(esp => (
-                            <span key={esp.idEspecialidad} className="staff-esp-pill">
-                              {esp.nombre}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="staff-esp-vacio">
-                          <i className="fas fa-plus-circle"></i>
-                          <p>Sin especialidades</p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="staff-actions-grid">
-                      <button className="staff-action-btn staff-action-btn--esp" onClick={() => abrirModal(coach)}>
-                        <i className="fas fa-sliders-h"></i>
-                        <span>Esp.</span>
-                      </button>
-                      <button className="staff-action-btn staff-action-btn--contrato" onClick={() => abrirModalContrato(coach)}>
-                        <i className="fas fa-wallet"></i>
-                        <span>Contrato</span>
-                      </button>
-                      <button className="staff-action-btn staff-action-btn--ausencia" onClick={() => abrirModalPermiso(coach)}>
-                        <i className="fas fa-umbrella-beach"></i>
-                        <span>Ausencia</span>
-                      </button>
-                      <button className="staff-action-btn staff-action-btn--resenas" onClick={() => { setCoachSeleccionado(coach); setModalResenasVisible(true); }}>
-                        <i className="fas fa-star"></i>
-                        <span>Reseñas</span>
-                      </button>
-                    </div>
-                  </div>
-
+              /* ── EMPTY STATE ── */
+            ) : coaches.length === 0 ? (
+              <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+                <div className="staff-empty-card">
+                  <i className="fas fa-users-slash staff-empty-icono"></i>
+                  <h2 className="staff-empty-titulo">Sin Coaches registrados</h2>
+                  <p className="staff-empty-desc">
+                    Primero registra usuarios con rol "Coach" en tu Box.
+                  </p>
                 </div>
               </div>
-            ))}
+
+              /* ── GRID DE COACHES ── */
+            ) : (
+              <div className="staff-coach-grid">
+                {coachesPagina.map(coach => (
+                  <div key={coach.idUsuario || coach.id} className="staff-card">
+
+                      {/* Cabecera: avatar + nombre + rating + correo */}
+                      <div className="staff-card-header">
+                        <div className="staff-avatar">
+                          <span className="staff-avatar-initial">
+                            {coach.nombre.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <span className="staff-badge-rol">Coach</span>
+                        <h3 className="staff-nombre">{coach.nombre}</h3>
+                        <div className="staff-rating">
+                          <i className="fas fa-star staff-rating-star"></i>
+                          <span className="staff-rating-score">{coach.evaluaciones?.promedio || 0}</span>
+                          <span className="staff-rating-count">({coach.evaluaciones?.total || 0})</span>
+                        </div>
+                        <p className="staff-correo">{coach.correo}</p>
+                      </div>
+
+                      {/* Cuerpo: especialidades + acciones */}
+                      <div className="staff-card-body">
+                        <div className="staff-esp-section">
+                          <p className="staff-esp-label">Especialidades</p>
+                          {coach.especialidades && coach.especialidades.length > 0 ? (
+                            <div className="staff-esp-pills">
+                              {coach.especialidades.map(esp => (
+                                <span key={esp.idEspecialidad} className="staff-esp-pill">
+                                  {esp.nombre}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="staff-esp-vacio">
+                              <i className="fas fa-plus-circle"></i>
+                              <p>Sin especialidades</p>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="staff-actions-grid">
+                          <button className="staff-action-btn staff-action-btn--esp" onClick={() => abrirModal(coach)}>
+                            <i className="fas fa-sliders-h"></i>
+                            <span>Esp.</span>
+                          </button>
+                          <button className="staff-action-btn staff-action-btn--contrato" onClick={() => abrirModalContrato(coach)}>
+                            <i className="fas fa-wallet"></i>
+                            <span>Contrato</span>
+                          </button>
+                          <button className="staff-action-btn staff-action-btn--ausencia" onClick={() => abrirModalPermiso(coach)}>
+                            <i className="fas fa-umbrella-beach"></i>
+                            <span>Ausencia</span>
+                          </button>
+                          <button className="staff-action-btn staff-action-btn--resenas" onClick={() => { setCoachSeleccionado(coach); setModalResenasVisible(true); }}>
+                            <i className="fas fa-star"></i>
+                            <span>Reseñas</span>
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+                ))}
+              </div>
+            )}
+            {!loading && coaches.length > 0 && (
+              <Paginacion pagina={pagDirectorio} totalPaginas={totalPagDir} onCambio={setPagDirectorio} />
+            )}
+          </>
+        ) : vistaActiva === 'auditoria' ? (
+          /* ── AUDITORIA DE CLASES ── */
+          <div className="auditoria-container fade-in">
+            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+              <div>
+                <h3 className="text-white mb-1"><i className="fas fa-clipboard-check text-danger me-2"></i> Auditoría Global</h3>
+                <p className="text-white-50 mb-0 small">Verifica que todos los coaches impartieron sus clases correctamente y aprueba la nómina con 1 clic.</p>
+              </div>
+              
+              <div className="staff-toolbar">
+                <button type="button" className="staff-picker-btn" onClick={() => setPickerActivo('coach')}>
+                  <i className="fas fa-user staff-picker-btn-icon"></i>
+                  <span className="staff-picker-btn-label">{coachSel.label}</span>
+                  <i className="fas fa-chevron-down staff-picker-btn-arrow"></i>
+                </button>
+                <button type="button" className="staff-picker-btn" onClick={() => setPickerActivo('fecha')}>
+                  <i className={`fas ${fechaSel.icon} staff-picker-btn-icon`}></i>
+                  <span className="staff-picker-btn-label">{fechaSel.label}</span>
+                  <i className="fas fa-chevron-down staff-picker-btn-arrow"></i>
+                </button>
+                <button className="staff-toolbar-btn-ok" onClick={validarMasivo}>
+                  <i className="fas fa-check-double me-2"></i>Validar Pendientes
+                </button>
+              </div>
+            </div>
+
+            {cargandoAuditoria ? (
+              <div className="text-center py-5">
+                <div className="spinner-border text-danger" role="status"></div>
+                <p className="mt-3 text-white-50">Cargando clases...</p>
+              </div>
+            ) : auditoriaClases.length === 0 ? (
+              <div className="staff-empty-card py-5 text-center">
+                <i className="fas fa-box-open fs-1 text-white-50 mb-3"></i>
+                <h5 className="text-white">Sin clases registradas</h5>
+                <p className="text-white-50 small mb-0">No hay clases configuradas para el periodo seleccionado.</p>
+              </div>
+            ) : (
+              <>
+              <div className="table-responsive d-none d-md-block staff-audit-table-wrap">
+                <table className="table table-hover mb-0 align-middle staff-audit-table" style={{
+                  '--bs-table-bg': 'transparent',
+                  '--bs-table-color': 'var(--text-primary)',
+                  '--bs-table-border-color': 'var(--border)',
+                  '--bs-table-hover-bg': 'var(--bg-card-hover)',
+                  '--bs-table-hover-color': 'var(--text-primary)',
+                  color: 'var(--text-primary)'
+                }}>
+                  <thead>
+                    <tr>
+                      <th className="py-3 text-white-50 fw-normal small px-3">Fecha y Hora</th>
+                      <th className="py-3 text-white-50 fw-normal small">Clase</th>
+                      <th className="py-3 text-white-50 fw-normal small">Coach Asignado</th>
+                      <th className="py-3 text-white-50 fw-normal small text-center">Atletas (Asist / Cupo)</th>
+                      <th className="py-3 text-white-50 fw-normal small text-end">Pago Coach</th>
+                      <th className="py-3 text-white-50 fw-normal small text-center">Estado</th>
+                      <th className="py-3 text-white-50 fw-normal small text-end px-3">Acción Rápida</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditoriaPagina.map((c, i) => {
+                      const idClase = c.idClase ?? c.IdClase;
+                      const idCoach = c.idCoach ?? c.IdCoach;
+                      const fecha = c.fecha ?? c.Fecha;
+                      const estado = c.estado ?? c.Estado;
+                      const monto = c.montoPago ?? c.MontoPago ?? 0;
+                      const totalAsistieron = c.totalAsistieron ?? c.TotalAsistieron ?? 0;
+                      const maximoAtletas = c.maximoAtletas ?? c.MaximoAtletas ?? c.totalReservas ?? c.TotalReservas ?? 0;
+                      const nombreCoach = c.nombreCoach ?? c.NombreCoach ?? 'C';
+                      const nombreClase = c.nombreClase ?? c.NombreClase ?? '';
+                      const horario = c.horario ?? c.Horario ?? '';
+                      
+                      return (
+                        <tr key={`${idClase}-${i}`} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td className="px-3">
+                            <span className="d-block text-white fw-bold">{new Date(fecha).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()}</span>
+                            <span className="text-danger small"><i className="far fa-clock me-1"></i>{horario}</span>
+                          </td>
+                          <td className="text-white fw-medium">{nombreClase}</td>
+                          <td>
+                            <div className="d-flex align-items-center gap-2">
+                              <div className="staff-avatar" style={{ width: '30px', height: '30px', minWidth: '30px' }}>
+                                <span className="staff-avatar-initial fs-6">{nombreCoach.charAt(0)}</span>
+                              </div>
+                              <span className="text-white small text-truncate" style={{ maxWidth: '120px' }}>{nombreCoach}</span>
+                            </div>
+                          </td>
+                          <td className="text-center">
+                            <div className="badge rounded-pill bg-dark border border-secondary px-3 py-2">
+                              <span className="text-success fw-bold">{totalAsistieron}</span>
+                              <span className="text-white-50 mx-1">/</span>
+                              <span className="text-white">{maximoAtletas}</span>
+                            </div>
+                          </td>
+                          <td className="text-end">
+                            <span className="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1 font-monospace">
+                              ${monto.toFixed(2)}
+                            </span>
+                          </td>
+                          <td className="text-center">
+                            {estado === 'Validada' && <span className="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 px-2 py-1"><i className="fas fa-check me-1"></i>Validada</span>}
+                            {estado === 'Falta' && <span className="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-50 px-2 py-1"><i className="fas fa-times me-1"></i>Falta</span>}
+                            {estado === 'Pendiente' && <span className="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-50 px-2 py-1"><i className="fas fa-hourglass-half me-1"></i>Pendiente</span>}
+                          </td>
+                          <td className="text-end px-3">
+                            {estado === 'Pendiente' ? (
+                              !esFuturaManana(fecha) ? (
+                                <div className="btn-group btn-group-sm">
+                                  <button className="btn btn-outline-success border-success text-success bg-success bg-opacity-10 shadow-sm" title="Validar Asistencia" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Validada', monto)}>
+                                    <i className="fas fa-check"></i>
+                                  </button>
+                                  <button className="btn btn-outline-danger border-danger text-danger bg-danger bg-opacity-10 shadow-sm" title="Marcar Falta" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Falta', 0)}>
+                                    <i className="fas fa-times"></i>
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-muted small" style={{ fontSize: '10px' }}><i className="fas fa-lock me-1"></i>Mañana</span>
+                              )
+                            ) : (
+                              <button className="btn btn-sm btn-outline-secondary border-secondary text-secondary bg-secondary bg-opacity-10 shadow-sm" title="Deshacer a Pendiente" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Pendiente', monto)}>
+                                <i className="fas fa-undo"></i>
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* ── Tarjetas auditoría (móvil) ── */}
+              <div className="d-md-none staff-audit-cards">
+                {auditoriaPagina.map((c, i) => {
+                  const idClase = c.idClase ?? c.IdClase;
+                  const idCoach = c.idCoach ?? c.IdCoach;
+                  const fecha = c.fecha ?? c.Fecha;
+                  const estado = c.estado ?? c.Estado;
+                  const monto = c.montoPago ?? c.MontoPago ?? 0;
+                  const totalAsistieron = c.totalAsistieron ?? c.TotalAsistieron ?? 0;
+                  const maximoAtletas = c.maximoAtletas ?? c.MaximoAtletas ?? c.totalReservas ?? c.TotalReservas ?? 0;
+                  const nombreCoach = c.nombreCoach ?? c.NombreCoach ?? 'C';
+                  const nombreClase = c.nombreClase ?? c.NombreClase ?? '';
+                  const horario = c.horario ?? c.Horario ?? '';
+                  return (
+                    <div key={`m-${idClase}-${i}`} className="staff-audit-card">
+                      <div className="staff-audit-card-top">
+                        <div className="staff-audit-card-id">
+                          <div className="staff-audit-card-clase">{nombreClase}</div>
+                          <div className="staff-audit-card-fecha">
+                            <i className="far fa-clock me-1"></i>
+                            {new Date(fecha).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })} · {horario}
+                          </div>
+                        </div>
+                        {estado === 'Validada' && <span className="badge bg-success bg-opacity-25 text-success">Validada</span>}
+                        {estado === 'Falta' && <span className="badge bg-danger bg-opacity-25 text-danger">Falta</span>}
+                        {estado === 'Pendiente' && <span className="badge bg-warning bg-opacity-25 text-warning">Pendiente</span>}
+                      </div>
+                      <div className="staff-audit-card-meta">
+                        <span><i className="fas fa-user me-1"></i>{nombreCoach}</span>
+                        <span><i className="fas fa-users me-1"></i>{totalAsistieron}/{maximoAtletas}</span>
+                        <span className="text-success fw-bold">${monto.toFixed(2)}</span>
+                      </div>
+                      <div className="staff-audit-card-actions">
+                        {estado === 'Pendiente' ? (
+                          <>
+                            <button className="btn btn-sm btn-success flex-grow-1" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Validada', monto)}><i className="fas fa-check me-1"></i>Validar</button>
+                            <button className="btn btn-sm btn-outline-danger flex-grow-1" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Falta', 0)}><i className="fas fa-times me-1"></i>Falta</button>
+                          </>
+                        ) : (
+                          <button className="btn btn-sm btn-dark w-100" onClick={() => validarClaseAuditoria(idCoach, idClase, fecha, 'Pendiente', monto)}><i className="fas fa-undo me-1"></i>Revertir a pendiente</button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <Paginacion pagina={pagAuditoria} totalPaginas={totalPagAud} onCambio={setPagAuditoria} />
+              </>
+            )}
+          </div>
+        ) : (
+          /* ── NOMINA / PAGOS ── */
+          <div className="nomina-container fade-in">
+            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+              <div>
+                <h3 className="text-white mb-1"><i className="fas fa-money-check-alt text-danger me-2"></i> Gestión de Nómina</h3>
+                <p className="text-white-50 mb-0 small">Visualiza el subtotal a pagar por coach basado en las clases que ya han sido validadas.</p>
+              </div>
+              
+              <div className="staff-toolbar">
+                <button type="button" className="staff-picker-btn" onClick={() => setPickerActivo('fecha')}>
+                  <i className={`fas ${fechaSel.icon} staff-picker-btn-icon`}></i>
+                  <span className="staff-picker-btn-label">{fechaSel.label}</span>
+                  <i className="fas fa-chevron-down staff-picker-btn-arrow"></i>
+                </button>
+              </div>
+            </div>
+
+            {cargandoAuditoria ? (
+              <div className="text-center py-5">
+                <div className="spinner-border text-danger" role="status"></div>
+                <p className="mt-3 text-white-50">Calculando nómina...</p>
+              </div>
+            ) : Object.values(auditoriaClases.filter(c => (c.estado ?? c.Estado) === 'Validada').reduce((acc, c) => {
+              const id = c.idCoach ?? c.IdCoach;
+              if (!acc[id]) { acc[id] = { idCoach: id, nombreCoach: c.nombreCoach ?? c.NombreCoach ?? 'Coach', clases: [], totalPagar: 0 }; }
+              acc[id].clases.push(c);
+              acc[id].totalPagar += (c.montoPago ?? c.MontoPago ?? 0);
+              return acc;
+            }, {})).length === 0 ? (
+              <div className="staff-empty-card py-5 text-center">
+                <i className="fas fa-wallet fs-1 text-white-50 mb-3"></i>
+                <h5 className="text-white">Sin clases validadas</h5>
+                <p className="text-white-50 small mb-0">Primero valida las clases en la pestaña de Auditoría para ver los montos a pagar.</p>
+              </div>
+            ) : (
+              <div className="row g-3">
+                {Object.values(auditoriaClases.filter(c => (c.estado ?? c.Estado) === 'Validada').reduce((acc, c) => {
+                  const id = c.idCoach ?? c.IdCoach;
+                  if (!acc[id]) { acc[id] = { idCoach: id, nombreCoach: c.nombreCoach ?? c.NombreCoach ?? 'Coach', clases: [], totalPagar: 0 }; }
+                  acc[id].clases.push(c);
+                  acc[id].totalPagar += (c.montoPago ?? c.MontoPago ?? 0);
+                  return acc;
+                }, {})).map(coachNomina => (
+                  <div key={coachNomina.idCoach} className="col-12 col-sm-6 col-lg-4">
+                    <div className="staff-nomina-coach-card">
+                      <div className="staff-avatar staff-nomina-coach-avatar">
+                        <span className="staff-avatar-initial">{coachNomina.nombreCoach.charAt(0)}</span>
+                      </div>
+                      <h3 className="staff-nomina-coach-nombre">{coachNomina.nombreCoach}</h3>
+                      <p className="staff-nomina-coach-sub">
+                        <i className="fas fa-check-circle"></i> {coachNomina.clases.length} clase(s) validadas
+                      </p>
+
+                      <div className="staff-nomina-coach-total">
+                        <span className="staff-nomina-coach-total-label">Total a Pagar</span>
+                        <span className="staff-nomina-coach-total-valor">${coachNomina.totalPagar.toFixed(2)}</span>
+                      </div>
+
+                      <button className="staff-nomina-coach-btn" onClick={() => abrirModalPago(coachNomina)}>
+                        <i className="fas fa-hand-holding-usd"></i> Registrar Pago
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -737,15 +1403,12 @@ export default function GestionStaff() {
                   />
                 </div>
                 <div className="col-md-3">
-                  <label className="staff-form-label">Día de Pago</label>
-                  <input
-                    type="number"
-                    max="31"
-                    min="1"
-                    className="staff-modal-input"
-                    value={formContrato.diaCorte}
-                    onChange={e => setFormContrato({ ...formContrato, diaCorte: e.target.value })}
-                  />
+                  <label className="staff-form-label">Día de Pago (Semanal)</label>
+                  <button type="button" className="staff-picker-btn staff-picker-btn--full" onClick={() => setPickerActivo('dia-corte')}>
+                    <i className="fas fa-calendar-day staff-picker-btn-icon"></i>
+                    <span className="staff-picker-btn-label">{DIA_CORTE_OPCIONES.find(o => String(o.value) === String(formContrato.diaCorte))?.label || 'Día'}</span>
+                    <i className="fas fa-chevron-down staff-picker-btn-arrow"></i>
+                  </button>
                 </div>
                 <div className="col-12">
                   <BotonSeguro onClick={guardarContrato} className="staff-btn-guardar-contrato" textoProcesando="Guardando...">
@@ -757,14 +1420,14 @@ export default function GestionStaff() {
               {formContrato.tipoPago === 'PorClase' && (
                 <div className="mt-4">
                   <div className="staff-modal-section-title">
-                    <i className="fas fa-calendar-check me-2"></i>Validación de Clases (Este Mes)
+                    <i className="fas fa-calendar-check me-2"></i>Validación de Clases (Esta Semana)
                   </div>
                   {cargandoAsistencias ? (
                     <div className="text-center py-3">
                       <div className="spinner-border text-danger spinner-border-sm" role="status"></div>
                     </div>
                   ) : asistenciasCoach.length === 0 ? (
-                    <p className="text-muted small py-2">No hay clases programadas o registradas este mes.</p>
+                    <p className="text-muted small py-2">No hay clases programadas o registradas esta semana.</p>
                   ) : (
                     <div className="table-responsive" style={{ maxHeight: '220px', overflowY: 'auto' }}>
                       <table className="table table-dark table-striped table-hover align-middle mb-0" style={{ fontSize: '11px', background: 'rgba(0,0,0,0.2)' }}>
@@ -780,11 +1443,12 @@ export default function GestionStaff() {
                         <tbody>
                           {asistenciasCoach.map((ast, idx) => {
                             const dateObj = new Date(ast.fecha);
-                            const fechaFormateada = dateObj.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' });
+                            const offsetDate = new Date(dateObj.getTime() + dateObj.getTimezoneOffset() * 60000); // Evitar desfase de zona horaria
+                            const fechaFormateada = offsetDate.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', weekday: 'short' });
                             return (
                               <tr key={idx}>
-                                <td className="text-white-50">
-                                  {fechaFormateada} <span className="small text-muted">{ast.horario}</span>
+                                <td className="text-white-50 text-capitalize">
+                                  {fechaFormateada} <span className="small text-muted d-block">{ast.horario}</span>
                                   {ast.esSustituto && <span className="badge bg-info ms-1" style={{ fontSize: '8px' }}>Sustituto</span>}
                                 </td>
                                 <td className="fw-bold">{ast.nombreClase}</td>
@@ -838,15 +1502,15 @@ export default function GestionStaff() {
               {nominaActual && (
                 <div className="staff-nomina-card mt-4">
                   <div className="staff-modal-section-title">
-                    <i className="fas fa-calculator me-2"></i>Nómina Proyectada (Este Mes)
+                    <i className="fas fa-calculator me-2"></i>Nómina Proyectada (Esta Semana)
                   </div>
                   <div className="staff-nomina-row">
-                    <span>Sueldo Base ({nominaActual.tipoPago})</span>
-                    <span className="staff-nomina-valor">${nominaActual.sueldoBaseMensual.toFixed(2)}</span>
+                    <span>Sueldo Base Semanal ({nominaActual.tipoPago})</span>
+                    <span className="staff-nomina-valor">${nominaActual.sueldoBaseSemanal?.toFixed(2) || (nominaActual.sueldoBaseMensual || 0).toFixed(2)}</span>
                   </div>
                   {nominaActual.tipoPago === 'PorClase' && (
                     <div className="staff-nomina-note">
-                      Calculado sobre {nominaActual.clasesValidadas} clases validadas este mes
+                      Calculado sobre {nominaActual.clasesValidadas} clases validadas esta semana
                     </div>
                   )}
                   <div className="staff-nomina-row">
@@ -871,11 +1535,161 @@ export default function GestionStaff() {
                     className="btn btn-success w-100 mt-3 py-2 fw-bold text-uppercase"
                     style={{ borderRadius: '12px', fontSize: '12px', letterSpacing: '0.5px' }}
                   >
-                    <i className="fas fa-hand-holding-usd me-1"></i> Pagar Nómina del Mes
+                    <i className="fas fa-hand-holding-usd me-1"></i> Pagar Nómina de la Semana
                   </button>
                 </div>
               )}
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── PICKERS MODALES (reemplazan a los <select> nativos) ── */}
+      {pickerActivo === 'fecha' && (
+        <OptionPickerModal
+          supertitulo="FILTRO"
+          titulo="Periodo"
+          opciones={FILTRO_FECHA_OPCIONES}
+          valor={filtroAuditoria}
+          onSelect={(v) => { setFiltroAuditoria(v); setPickerActivo(null); }}
+          onCerrar={() => setPickerActivo(null)}
+        />
+      )}
+      {pickerActivo === 'coach' && (
+        <OptionPickerModal
+          supertitulo="FILTRO"
+          titulo="Filtrar por Coach"
+          opciones={coachOpciones}
+          valor={filtroCoachAuditoria}
+          onSelect={(v) => { setFiltroCoachAuditoria(v); setPickerActivo(null); }}
+          onCerrar={() => setPickerActivo(null)}
+        />
+      )}
+      {pickerActivo === 'dia-corte' && (
+        <OptionPickerModal
+          supertitulo="CONTRATO"
+          titulo="Día de Pago"
+          opciones={DIA_CORTE_OPCIONES}
+          valor={formContrato.diaCorte}
+          onSelect={(v) => { setFormContrato({ ...formContrato, diaCorte: v }); setPickerActivo(null); }}
+          onCerrar={() => setPickerActivo(null)}
+        />
+      )}
+
+      {/* ── MODAL: CONFIRMAR PAGO DE NÓMINA ── */}
+      {modalPagoVisible && coachPagoInfo && (
+        <div className="staff-modal-overlay" onClick={() => setModalPagoVisible(false)}>
+          <div className="staff-modal staff-modal--md" onClick={e => e.stopPropagation()}>
+            <div className="staff-modal-header">
+              <div className="d-flex align-items-center gap-2">
+                <div className="staff-modal-icon-box staff-modal-icon-box--accent">
+                  <i className="fas fa-money-check-alt"></i>
+                </div>
+                <div>
+                  <h2 className="staff-modal-titulo">Confirmar Pago</h2>
+                  <p className="staff-modal-subtitle">{coachPagoInfo.nombreCoach}</p>
+                </div>
+              </div>
+              <button className="staff-modal-cerrar" onClick={() => setModalPagoVisible(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div className="staff-modal-body">
+              {/* Contador de próximo pago */}
+              <div className="bg-dark-glow p-3 rounded-12 mb-4 border border-info-glow d-flex align-items-center gap-3">
+                <div className="fs-1 text-info"><i className="fas fa-calendar-alt"></i></div>
+                <div>
+                  <h5 className="text-white mb-1 fw-bold">Siguiente Día de Pago</h5>
+                  <p className="text-white-50 small mb-0">
+                    El siguiente pago del coach será el <strong className="text-info">{coachPagoInfo.proximoPago.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</strong>.
+                    <br />Faltan <strong className="text-white">{coachPagoInfo.diasFaltantes} días</strong> para el corte.
+                  </p>
+                </div>
+              </div>
+
+              {/* Resumen de clases agrupadas por semana de pago */}
+              <h5 className="text-white small fw-bold mb-3">Clases Validadas a Pagar ({coachPagoInfo.clases.length})</h5>
+              <div className="quick-val-table-wrapper mb-4" style={{ maxHeight: '200px', overflowY: 'auto', paddingRight: '5px' }}>
+                {(() => {
+                  const rawDiaCorte = coachPagoInfo.diaCorte;
+                  const diaCorteJS = rawDiaCorte === 7 ? 0 : rawDiaCorte;
+                  const startDay = (diaCorteJS + 1) % 7; 
+                  
+                  const getStartOfWeek = (date, sDay) => {
+                    const d = new Date(date);
+                    const day = d.getDay();
+                    const diff = d.getDate() - day + (day < sDay ? -7 : 0) + sDay;
+                    return new Date(d.setDate(diff));
+                  };
+
+                  const sorted = [...coachPagoInfo.clases].sort((a,b) => new Date(a.fecha || a.Fecha) - new Date(b.fecha || b.Fecha));
+                  const weeks = [];
+                  sorted.forEach(c => {
+                    const d = new Date(c.fecha || c.Fecha);
+                    const weekStart = getStartOfWeek(d, startDay);
+                    weekStart.setHours(0,0,0,0);
+                    
+                    let weekObj = weeks.find(w => w.start.getTime() === weekStart.getTime());
+                    if (!weekObj) {
+                      const weekEnd = new Date(weekStart);
+                      weekEnd.setDate(weekEnd.getDate() + 6);
+                      weekObj = { start: weekStart, end: weekEnd, clases: [] };
+                      weeks.push(weekObj);
+                    }
+                    weekObj.clases.push(c);
+                  });
+
+                  return weeks.map((semana, wIdx) => {
+                    const fStart = semana.start.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                    const fEnd = semana.end.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                    
+                    return (
+                      <div key={wIdx} className="mb-3">
+                        <div className="bg-dark rounded px-2 py-1 mb-1 d-flex justify-content-between align-items-center">
+                          <span className="text-warning fw-bold" style={{fontSize: '11px'}}>
+                            <i className="fas fa-calendar-week me-1"></i> Semana del {fStart} al {fEnd}
+                          </span>
+                          <span className="badge bg-secondary">{semana.clases.length} clases</span>
+                        </div>
+                        {semana.clases.map((c, idx) => {
+                          const nombreClase = c.nombreClase || c.NombreClase || c.nombre || c.Nombre;
+                          const fechaStr = new Date(c.fecha || c.Fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', weekday: 'short' });
+                          const monto = c.montoPago || c.MontoPago || 0;
+                          return (
+                            <div key={idx} className="d-flex justify-content-between align-items-center p-2 border-bottom border-secondary-glow ms-2">
+                              <div>
+                                <div className="text-white fw-medium small">{nombreClase}</div>
+                                <div className="text-white-50 text-capitalize" style={{ fontSize: '11px' }}>
+                                  <i className="far fa-calendar me-1"></i>{fechaStr}
+                                </div>
+                              </div>
+                              <div className="text-success fw-bold small">${monto} MXN</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+
+              {/* Total y Botón */}
+              <div className="d-flex justify-content-between align-items-end mt-4">
+                <div>
+                  <div className="text-white-50 small">Total a Transferir</div>
+                  <div className="text-warning fw-bold fs-3">${coachPagoInfo.totalPagar.toFixed(2)}</div>
+                </div>
+                <BotonSeguro 
+                  className="btn btn-success fw-bold px-4 py-2 rounded-10" 
+                  onClick={registrarPagoNomina} 
+                  procesando={procesandoPago}
+                  textoProcesando="Procesando..."
+                >
+                  <i className="fas fa-check-circle me-2"></i>Aprobar y Registrar Egreso
+                </BotonSeguro>
+              </div>
             </div>
           </div>
         </div>

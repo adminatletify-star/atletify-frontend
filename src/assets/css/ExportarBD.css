@@ -1,0 +1,968 @@
+/* ============================================
+   EXPORTAR BD — WolfPack Design System
+   Referencia visual: GestionClases.css (.gc-*)
+   Reutiliza de componentes.css: .badge-estado, etc.
+   Prefijo: .ebx-*
+   ============================================ */
+
+/* === RAÍZ === */
+.ebx-root {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
+  padding: 1.1rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Cuando va embebido en la página exportar-bd-box (con su propio header),
+   el wrapper externo ya aporta el panel; aquí lo dejamos transparente. */
+.ebx-root--embedded {
+  background: transparent;
+  border: none;
+  border-top: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .ebx-root {
+    padding: 1.5rem;
+  }
+}
+
+.ebx-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.ebx-title i {
+  color: var(--primary);
+}
+
+/* === GRID 2 COLUMNAS === */
+.ebx-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 992px) {
+  .ebx-grid {
+    grid-template-columns: 5fr 7fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+}
+
+/* === BLOQUES DE CONFIGURACIÓN === */
+.ebx-block {
+  margin-bottom: 1.25rem;
+}
+
+.ebx-field-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--secondary);
+  margin-bottom: 0.5rem;
+}
+
+.ebx-field-label i {
+  color: var(--primary);
+  font-size: 0.9em;
+}
+
+/* === BOTÓN TRIGGER (box / rol / estatus) === */
+.ebx-picker-btn {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 48px;
+  touch-action: manipulation;
+}
+
+.ebx-picker-btn:hover {
+  border-color: rgba(230, 57, 70, 0.45);
+  background: rgba(230, 57, 70, 0.05);
+}
+
+.ebx-picker-btn--active {
+  border-color: var(--pick-color, var(--primary));
+  background: color-mix(in srgb, var(--pick-color, var(--primary)) 8%, transparent);
+}
+
+.ebx-picker-btn__left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.ebx-picker-btn__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--pick-color, #A8B2D1) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pick-color, #A8B2D1) 30%, transparent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  color: var(--pick-color, var(--text-muted));
+  flex-shrink: 0;
+}
+
+.ebx-picker-btn__label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ebx-picker-btn__label--placeholder {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.ebx-picker-btn__arrow {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* === FILA DE FILTROS === */
+.ebx-filtros {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+}
+
+@media (min-width: 480px) {
+  .ebx-filtros {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* === SELECTOR DE COLUMNAS === */
+.ebx-cols-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.ebx-mini-actions {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.ebx-mini-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+}
+
+.ebx-mini-btn--ok:hover {
+  border-color: var(--success);
+  color: var(--success);
+  background: rgba(46, 204, 113, 0.08);
+}
+
+.ebx-mini-btn--clear:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.08);
+}
+
+.ebx-cols-scroll {
+  /* Sin scroll interno: las categorías y TODAS sus columnas se muestran en flujo
+     natural (la página hace scroll). Antes un max-height:420px las encerraba en
+     una cajita con scroll propio y parecía que faltaban opciones. */
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* === TARJETA DE CATEGORÍA === */
+.ebx-cat {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+.ebx-cat--active {
+  border-color: color-mix(in srgb, var(--cat-color, var(--primary)) 55%, transparent);
+}
+
+.ebx-cat-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
+  cursor: pointer;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--cat-color, #888) 12%, transparent), transparent);
+  user-select: none;
+}
+
+.ebx-cat-head i.ebx-cat-icon {
+  color: var(--cat-color, var(--text-muted));
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.ebx-cat-name {
+  font-family: var(--font-heading-alt);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.ebx-cat-toggle {
+  margin-left: auto;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.ebx-cat-body {
+  background: rgba(0, 0, 0, 0.22);
+  padding: 0.6rem 0.7rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.3rem;
+}
+
+@media (min-width: 480px) {
+  .ebx-cat-body {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.ebx-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  transition: background 0.18s, color 0.18s;
+  min-width: 0;
+}
+
+.ebx-check:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ebx-check--on {
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--cat-color, var(--primary)) 14%, transparent);
+}
+
+.ebx-check input {
+  accent-color: var(--cat-color, var(--primary));
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.ebx-check span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+/* === CONTADOR DE COLUMNAS === */
+.ebx-counter {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  margin: 1rem 0;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.ebx-counter i {
+  color: var(--primary);
+}
+
+.ebx-counter strong {
+  font-family: var(--font-stats);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+/* === BOTÓN PRIMARIO === */
+.ebx-primary-btn {
+  width: 100%;
+  background: var(--primary);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.8rem 1.25rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  touch-action: manipulation;
+}
+
+.ebx-primary-btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 16px var(--primary-glow);
+}
+
+.ebx-primary-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* === ESTADO VACÍO (preview) === */
+.ebx-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 320px;
+  height: 100%;
+  border: 2px dashed var(--border);
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 2rem 1.5rem;
+  color: var(--text-muted);
+}
+
+.ebx-empty i {
+  font-size: 2.75rem;
+  opacity: 0.35;
+  margin-bottom: 1rem;
+}
+
+.ebx-empty-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.4rem;
+}
+
+.ebx-empty-sub {
+  font-size: 0.84rem;
+  margin: 0;
+  max-width: 30ch;
+}
+
+/* === BARRA RESUMEN + DESCARGAS === */
+.ebx-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.85rem;
+  background: linear-gradient(135deg, rgba(230, 57, 70, 0.14), rgba(0, 0, 0, 0.28));
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.ebx-summary-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.ebx-summary-info i {
+  color: var(--primary);
+}
+
+.ebx-summary-info strong {
+  font-family: var(--font-stats);
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.ebx-dl-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ebx-dl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+  color: #fff;
+  transition: var(--transition);
+  touch-action: manipulation;
+}
+
+.ebx-dl-btn--excel {
+  background: #1d8348;
+}
+
+.ebx-dl-btn--excel:hover {
+  background: #21945a;
+  box-shadow: 0 4px 14px rgba(33, 148, 90, 0.4);
+}
+
+.ebx-dl-btn--pdf {
+  background: var(--primary);
+}
+
+.ebx-dl-btn--pdf:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 14px var(--primary-glow);
+}
+
+/* === TABLA DE PREVISUALIZACIÓN === */
+.ebx-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: auto;
+  max-height: 500px;
+  -webkit-overflow-scrolling: touch;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.ebx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  background: var(--bg-base);
+}
+
+.ebx-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.ebx-table th {
+  background: var(--primary-dark, #b71c1c);
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 0.6rem 0.85rem;
+  white-space: nowrap;
+  text-align: left;
+  border-bottom: 2px solid var(--primary);
+}
+
+.ebx-table th.ebx-th-num {
+  text-align: center;
+}
+
+.ebx-table td {
+  padding: 0.5rem 0.85rem;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.ebx-table tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.ebx-table tbody tr:hover {
+  background: var(--bg-card-hover);
+}
+
+.ebx-td-num {
+  text-align: center;
+  color: var(--text-muted);
+  font-family: var(--font-stats);
+  font-weight: 600;
+}
+
+.ebx-pill {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: var(--font-heading-alt);
+}
+
+.ebx-table-empty {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-muted);
+}
+
+.ebx-table-empty i {
+  font-size: 2.5rem;
+  opacity: 0.3;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+/* ============================================
+   MODALES — SIEMPRE CENTRADOS (CLAUDE.md)
+   ============================================ */
+.ebx-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 1060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: ebx-fade-in 0.2s ease;
+}
+
+@keyframes ebx-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.ebx-modal {
+  width: 100%;
+  max-width: 460px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 20px;
+  padding: 1.5rem 1.25rem;
+  animation: ebx-pop-up 0.26s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@media (min-width: 576px) {
+  .ebx-modal {
+    padding: 1.75rem;
+  }
+}
+
+@keyframes ebx-pop-up {
+  from { transform: translateY(16px) scale(0.97); opacity: 0; }
+  to   { transform: translateY(0) scale(1);       opacity: 1; }
+}
+
+.ebx-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.ebx-modal__supertitle {
+  font-family: var(--font-heading-alt);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--primary);
+  text-transform: uppercase;
+  margin: 0 0 0.2rem;
+}
+
+.ebx-modal__title {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 3.5vw, 1.2rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.ebx-modal__close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+  touch-action: manipulation;
+}
+
+.ebx-modal__close:hover {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.ebx-modal__search {
+  position: relative;
+  margin: 0.5rem 0 0.85rem;
+}
+
+.ebx-modal__search i {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  pointer-events: none;
+}
+
+.ebx-modal__search input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  padding: 0.6rem 1rem 0.6rem 2.3rem;
+  outline: none;
+  transition: var(--transition);
+}
+
+.ebx-modal__search input:focus {
+  border-color: rgba(230, 57, 70, 0.4);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.ebx-modal__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+}
+
+/* === OPCIÓN GENÉRICA === */
+.ebx-opcion {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.ebx-opcion:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--opt-color, var(--border));
+}
+
+.ebx-opcion--activo {
+  background: color-mix(in srgb, var(--opt-color, var(--primary)) 10%, transparent);
+  border-color: var(--opt-color, var(--primary));
+  box-shadow: 0 0 16px color-mix(in srgb, var(--opt-color, var(--primary)) 18%, transparent);
+}
+
+.ebx-opcion__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--opt-color, #A8B2D1) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--opt-color, #A8B2D1) 35%, transparent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  color: var(--opt-color, var(--secondary));
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.ebx-opcion__icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.ebx-opcion__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.ebx-opcion__nombre {
+  font-family: var(--font-heading-alt);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ebx-opcion__desc {
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ebx-opcion__check {
+  font-size: 1rem;
+  color: var(--opt-color, var(--primary));
+  flex-shrink: 0;
+}
+
+.ebx-modal__empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2rem 1rem;
+  font-size: 0.85rem;
+}
+
+.ebx-modal__empty i {
+  display: block;
+  font-size: 1.6rem;
+  opacity: 0.4;
+  margin-bottom: 0.5rem;
+}
+
+/* === MODAL CONFIRMACIÓN PDF === */
+.ebx-confirm {
+  max-width: 440px;
+  text-align: center;
+}
+
+.ebx-confirm-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin: 0.25rem auto 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  background: rgba(245, 166, 35, 0.14);
+  border: 2px solid rgba(245, 166, 35, 0.35);
+  color: var(--accent);
+}
+
+.ebx-confirm-title {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.75rem;
+}
+
+.ebx-confirm-text {
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0 0 0.5rem;
+}
+
+.ebx-confirm-text strong {
+  color: var(--text-primary);
+}
+
+.ebx-confirm-tip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: left;
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid rgba(46, 204, 113, 0.25);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  margin: 1rem 0 1.25rem;
+  font-size: 0.8rem;
+  color: #a5d6a7;
+}
+
+.ebx-confirm-tip i {
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.ebx-confirm-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ebx-confirm-btn {
+  flex: 1 1 auto;
+  min-width: 120px;
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  touch-action: manipulation;
+}
+
+.ebx-confirm-btn--cancel {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.ebx-confirm-btn--cancel:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.ebx-confirm-btn--excel {
+  background: #1d8348;
+  border: none;
+  color: #fff;
+}
+
+.ebx-confirm-btn--excel:hover {
+  background: #21945a;
+}
+
+.ebx-confirm-btn--pdf {
+  background: var(--primary);
+  border: none;
+  color: #fff;
+}
+
+.ebx-confirm-btn--pdf:hover {
+  background: var(--primary-dark);
+}
+
+/* ============================================
+   RESPONSIVE (768 / 576 / 380)
+   ============================================ */
+@media (max-width: 576px) {
+  .ebx-summary {
+    padding: 0.75rem;
+  }
+  .ebx-dl-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+  .ebx-dl-btn {
+    flex: 1;
+    justify-content: center;
+  }
+  .ebx-mini-btn {
+    font-size: 0.64rem;
+    padding: 0.4rem 0.6rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .ebx-cat-body {
+    grid-template-columns: 1fr;
+  }
+  .ebx-filtros {
+    grid-template-columns: 1fr;
+  }
+}

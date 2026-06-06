@@ -5,6 +5,7 @@ import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import WolfLanyard from '../components/ReactBits/WolfLanyard';
 import BotonSeguro from '../components/BotonSeguro';
 import '../assets/css/user-panel.css';
+import '../assets/css/visitas-regalo.css';
 import AtletifyLoader from '../components/AtletifyLoader';
 import AnunciosEngine from '../components/AnunciosEngine';
 
@@ -55,6 +56,10 @@ export default function UserPanel() {
   const [showModalPlanes, setShowModalPlanes] = useState(false);
   const [iniciandoPago, setIniciandoPago] = useState(false);
 
+  // Visitas de regalo "trae a un amigo" (modal de bienvenida la primera vez)
+  const [regaloBienvenida, setRegaloBienvenida] = useState(null);
+  const [showModalRegalo, setShowModalRegalo] = useState(false);
+
   // 👇 2. CARGAR EL ADN FINANCIERO DESDE C# 👇
   useEffect(() => {
     const cargarFinanzas = async () => {
@@ -96,6 +101,7 @@ export default function UserPanel() {
       cargarWodYLeaderboard(b.idBox);
       cargarAmistades(u.idUsuario || u.id);
       cargarNotificaciones(u.idUsuario || u.id);
+      verificarVisitasRegalo(u.idUsuario || u.id);
 
       fetch(`${API_BASE}/usuarios/${u.idUsuario || u.id}/estado-mensualidad`)
         .then(res => res.json())
@@ -112,6 +118,37 @@ export default function UserPanel() {
       });
       if (res.ok) setNotificaciones(await res.json());
     } catch (error) { console.error("Error al cargar notis", error); }
+  };
+
+  // Consulta si el atleta tiene visitas de regalo vigentes para mostrar el aviso 1 vez
+  const verificarVisitasRegalo = async (idUsuario) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/usuarios/${idUsuario}/visitas-regalo`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.tieneRegalo) {
+          setRegaloBienvenida(data);              // siempre: alimenta la tarjeta persistente
+          if (!data.avisoMostrado) setShowModalRegalo(true); // modal solo la primera vez
+        }
+      }
+    } catch (error) { console.error("Error al consultar visitas de regalo", error); }
+  };
+
+  const cerrarModalRegalo = async () => {
+    setShowModalRegalo(false);
+    try {
+      const token = localStorage.getItem('token');
+      const idUsuario = user?.idUsuario || user?.id;
+      if (idUsuario) {
+        await fetch(`${API_BASE}/usuarios/${idUsuario}/visitas-regalo/aviso-visto`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
+    } catch (error) { console.error("Error al marcar aviso visto", error); }
   };
 
   const cambiarMiWod = async (idAsistencia, idNuevoWod) => {
@@ -733,6 +770,23 @@ export default function UserPanel() {
                 </div>
               </div>
 
+              {/* Visitas de regalo (tarjeta persistente) */}
+              {regaloBienvenida?.tieneRegalo && (
+                <div className="up-card up-card-clickable vr-gift-card" onClick={() => setShowModalRegalo(true)}>
+                  <div className="up-mini-card">
+                    <div className="up-mini-icon vr-gift-card-icon"><i className="fas fa-gift"></i></div>
+                    <div className="flex-grow-1">
+                      <div className="up-mini-label">Visitas de regalo</div>
+                      <div className="up-mini-value">
+                        {regaloBienvenida.visitasRestantes} {regaloBienvenida.visitasRestantes === 1 ? 'visita' : 'visitas'} para un amigo
+                        {regaloBienvenida.fechaCaducidadTexto && <span className="vr-gift-card-vence"> · vence {regaloBienvenida.fechaCaducidadTexto}</span>}
+                      </div>
+                    </div>
+                    <span className="vr-gift-card-badge">{regaloBienvenida.visitasRestantes}</span>
+                  </div>
+                </div>
+              )}
+
               {/*  LA NUEVA TARJETA DE PLAN (Reemplaza la tuya por esta)  */}
               {finanzas && (
                 <div className="p-4 rounded border border-secondary bg-dark mb-4 position-relative" style={{ boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }}>
@@ -935,6 +989,36 @@ export default function UserPanel() {
           </div>
         </div>
       </div>
+
+      {/* MODAL VISITAS DE REGALO (bienvenida primera vez) */}
+      {showModalRegalo && regaloBienvenida && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 1060, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem' }}>
+          <div className="vr-welcome animate__animated animate__zoomIn">
+            <div className="vr-welcome-badge"><i className="fas fa-gift"></i></div>
+            <h4 className="vr-welcome-title">¡Tienes visitas de regalo!</h4>
+
+            <div className="vr-welcome-count">
+              <span className="vr-welcome-count-num">{regaloBienvenida.visitasRestantes}</span>
+              <span className="vr-welcome-count-label">
+                <strong>{regaloBienvenida.visitasRestantes === 1 ? 'visita' : 'visitas'}</strong>
+                para traer a un amigo a entrenar
+              </span>
+            </div>
+
+            {regaloBienvenida.fechaCaducidadTexto && (
+              <div className="vr-welcome-vence">
+                <i className="fas fa-clock"></i> Vence el <strong>{regaloBienvenida.fechaCaducidadTexto}</strong>
+              </div>
+            )}
+
+            <p className="vr-welcome-hint">Pídele a la administración del box que las canjee en recepción.</p>
+
+            <BotonSeguro onClick={cerrarModalRegalo} className="vr-welcome-btn" textoProcesando="...">
+              ¡Entendido!
+            </BotonSeguro>
+          </div>
+        </div>
+      )}
 
       {/* MODAL NOTIFICACIONES - UNCHANGED */}
       {showModalNotis && (
