@@ -66,11 +66,13 @@
   border-radius: 0;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
 }
 @media (min-width: 640px) {
   .em-modal-wrap {
     border-radius: 20px;
+    height: auto;
     min-height: unset;
     max-height: 92vh;
   }
@@ -110,10 +112,24 @@
   margin: 0;
   line-height: 1.35;
 }
+@media (max-width: 576px) {
+  .em-modal-header { padding: 0.85rem 0.95rem; }
+  .em-modal-header-icon { width: 34px; height: 34px; font-size: 0.88rem; border-radius: 10px; }
+  .em-modal-header-title { font-size: 0.92rem; letter-spacing: 0.5px; }
+  .em-modal-header-sub { font-size: 0.68rem; line-height: 1.3; }
+}
+@media (max-width: 380px) {
+  .em-modal-header { padding: 0.7rem 0.8rem; }
+  .em-modal-header-icon { width: 30px; height: 30px; font-size: 0.8rem; }
+  .em-modal-header-title { font-size: 0.82rem; }
+  .em-modal-header-sub { font-size: 0.64rem; }
+}
 
 .em-modal-scroll {
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   flex: 1;
+  min-height: 0;
   overscroll-behavior: contain;
 }
 
@@ -283,7 +299,7 @@
   cursor: pointer;
   transition: var(--transition);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
   touch-action: manipulation;
@@ -293,7 +309,7 @@
   border-color: rgba(230, 57, 70, 0.4);
   background: rgba(230, 57, 70, 0.04);
 }
-.em-padecimientos-btn__left { display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 0; }
+.em-padecimientos-btn__left { display: flex; align-items: flex-start; gap: 0.75rem; flex: 1; min-width: 0; }
 .em-padecimientos-btn__icon {
   width: 36px;
   height: 36px;
@@ -306,6 +322,7 @@
   color: var(--primary);
   font-size: 0.9rem;
   flex-shrink: 0;
+  margin-top: 1px;
 }
 .em-padecimientos-btn__info { flex: 1; min-width: 0; }
 .em-padecimientos-btn__title {
@@ -315,13 +332,15 @@
   color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  margin: 0 0 0.15rem;
+  margin: 0 0 0.25rem;
+  line-height: 1.2;
 }
 .em-padecimientos-btn__sub {
   font-family: var(--font-body);
   font-size: 0.72rem;
   color: var(--text-muted);
   margin: 0;
+  line-height: 1.35;
 }
 .em-pad-count {
   display: inline-flex;
@@ -336,8 +355,44 @@
   padding: 0.18rem 0.55rem;
   border-radius: 20px;
   white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 .em-pad-count--zero { background: rgba(255,255,255,0.04); border-color: var(--border); color: var(--text-muted); }
+
+/* Responsive: botón padecimientos — layout columna en móvil */
+@media (max-width: 640px) {
+  /* El botón apila: [icon + info] arriba, [badge] abajo */
+  .em-padecimientos-btn {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+    padding: 0.8rem 0.9rem;
+  }
+  /* El left pasa a fila: icon a la izquierda, texto al lado */
+  .em-padecimientos-btn__left {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+  /* El badge queda debajo, alineado a la izquierda */
+  .em-pad-count {
+    align-self: flex-start;
+    margin-top: 0;
+    font-size: 0.72rem;
+    padding: 0.14rem 0.5rem;
+  }
+  .em-padecimientos-btn__icon { width: 30px; height: 30px; font-size: 0.8rem; border-radius: 8px; margin-top: 1px; }
+  .em-padecimientos-btn__title { font-size: 0.8rem; }
+  .em-padecimientos-btn__sub { font-size: 0.66rem; }
+}
+@media (max-width: 380px) {
+  .em-padecimientos-btn { padding: 0.7rem 0.8rem; gap: 0.5rem; }
+  .em-padecimientos-btn__icon { width: 26px; height: 26px; font-size: 0.72rem; }
+  .em-padecimientos-btn__title { font-size: 0.74rem; }
+  .em-padecimientos-btn__sub { font-size: 0.6rem; }
+  .em-pad-count { font-size: 0.66rem; }
+}
 
 /* Tags de condiciones activas (máx 3 visibles) */
 .em-pad-tags {
@@ -376,13 +431,10 @@
   -webkit-backdrop-filter: blur(6px);
   z-index: 10100;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  padding: 0;
+  padding: 1rem;
   animation: emFadeIn 0.18s ease;
-}
-@media (min-width: 576px) {
-  .em-picker-overlay { align-items: center; padding: 1rem; }
 }
 @keyframes emFadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes emSlideUp { from { transform: translateY(28px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -393,8 +445,8 @@
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-top: 3px solid var(--primary);
-  border-radius: 20px 20px 0 0;
-  padding: 1.4rem 1.25rem 2rem;
+  border-radius: 20px;
+  padding: 1.4rem 1.25rem;
   animation: emSlideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   max-height: 85dvh;
   display: flex;
@@ -402,7 +454,7 @@
   overscroll-behavior: contain;
 }
 @media (min-width: 576px) {
-  .em-picker-modal { border-radius: 20px; padding: 1.5rem; }
+  .em-picker-modal { padding: 1.5rem; }
 }
 
 /* Variante ancha para padecimientos */
@@ -469,7 +521,9 @@
 
 .em-picker-scroll {
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   flex: 1;
+  min-height: 0;
   overscroll-behavior: contain;
 }
 
@@ -656,6 +710,33 @@
   letter-spacing: 1px;
 }
 .em-pad-footer__count strong { color: var(--primary); font-family: var(--font-stats); }
+/* En móvil: apila el contador arriba y el botón LISTO a todo el ancho debajo */
+@media (max-width: 480px) {
+  .em-pad-footer { flex-direction: column; align-items: stretch; gap: 0.7rem; }
+}
+
+/* Responsive: modal de padecimientos (ítems y contenedor) */
+@media (max-width: 576px) {
+  .em-picker-overlay { padding: 0.75rem; }
+  .em-picker-modal { padding: 1.1rem 1rem; border-radius: 16px; }
+  .em-picker-modal__title { font-size: 0.88rem; }
+  .em-picker-modal__hint { font-size: 0.68rem; margin-bottom: 0.75rem; }
+  .em-picker-modal__header { margin-bottom: 0.85rem; }
+  .em-picker-close { width: 30px; height: 30px; font-size: 0.72rem; }
+  .em-pad-list { gap: 0.3rem; }
+  .em-pad-item { padding: 0.6rem 0.75rem; gap: 0.6rem; border-radius: 8px; }
+  .em-pad-item__name { font-size: 0.72rem; letter-spacing: 0.3px; }
+  .em-pad-item__dot { width: 18px; height: 18px; font-size: 0.55rem; }
+  .em-pad-footer { margin-top: 0.75rem; padding-top: 0.75rem; }
+  .em-pad-footer__count { font-size: 0.68rem; letter-spacing: 0.5px; }
+}
+@media (max-width: 380px) {
+  .em-picker-overlay { padding: 0.5rem; }
+  .em-picker-modal { padding: 0.9rem 0.85rem; }
+  .em-pad-item { padding: 0.55rem 0.65rem; }
+  .em-pad-item__name { font-size: 0.66rem; }
+  .em-pad-item__dot { width: 16px; height: 16px; }
+}
 
 /* === BOTÓN GUARDAR (= gc-save-btn) === */
 .em-save-btn {

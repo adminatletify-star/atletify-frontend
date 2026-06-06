@@ -260,7 +260,7 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
             />
           </div>
 
-          <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+          <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))' }}>
             <div>
               <label className="etiqueta-campo">Correo <span style={{ color: 'var(--primary)' }}>*</span></label>
               <input type="email" required name="correo" className="entrada-oscura" value={form.correo} onChange={handleChange} placeholder="ejemplo@correo.com" />
@@ -271,7 +271,7 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
             </div>
           </div>
 
-          <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+          <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(min(160px, 100%), 1fr))' }}>
             <div>
               <label className="etiqueta-campo">Fecha de nacimiento <span style={{ color: 'var(--primary)' }}>*</span></label>
               <input type="date" required name="fechaNacimiento" className="entrada-oscura" value={form.fechaNacimiento} onChange={handleChange} />
@@ -290,7 +290,7 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
             </div>
           </div>
 
-          <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+          <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))' }}>
             <div>
               <label className="etiqueta-campo">Tipo de sangre <span style={{ color: 'var(--primary)' }}>*</span></label>
               <button type="button" className="em-select-btn" onClick={() => setModalSangreOpen(true)}>
@@ -324,7 +324,7 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
       {/* ── CONTACTO DE EMERGENCIA ── */}
       <div className="em-section-card">
         <p className="em-section-title"><i className="fas fa-phone-alt"></i> Contacto de Emergencia</p>
-        <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+        <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))' }}>
           <div>
             <label className="etiqueta-campo">Nombre del contacto <span style={{ color: 'var(--primary)' }}>*</span></label>
             <input type="text" required name="contactoEmergenciaNombre" className="entrada-oscura" value={form.contactoEmergenciaNombre} onChange={handleChange} placeholder="Nombre completo" />
