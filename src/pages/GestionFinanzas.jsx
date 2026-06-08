@@ -12,58 +12,10 @@ import PromocionPicker from '../components/PromocionPicker';
 import MetodoPagoPicker from '../components/MetodoPagoPicker';
 import CategoriaBasePicker from '../components/CategoriaBasePicker';
 import NivelAccesoPicker from '../components/NivelAccesoPicker';
-import { comisionEstStripe, netoEstStripe, grossUpStripe } from '../utils/comisionStripe';
 import '../assets/css/GestionFinanzas.css';
 import '../assets/css/visitas-regalo.css';
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api/finanzas`;
-
-// Helper de la sección Planes (solo cuando el box ABSORBE la comisión): muestra lo que paga el
-// atleta y el NETO real que recibirá el box, y permite fijar el precio desde el neto deseado (gross-up).
-function HelperNetoComision({ precio, onPrecio }) {
-  const [neto, setNeto] = useState('');
-  const p = Number(precio) || 0;
-  const comision = comisionEstStripe(p);
-  const netoRecibe = netoEstStripe(p);
-  const aplicar = () => {
-    const n = Number(neto);
-    if (!n || n <= 0) return;
-    onPrecio(String(grossUpStripe(n)));
-    setNeto('');
-  };
-  return (
-    <div className="col-12">
-      <div className="p-3 rounded" style={{ background: 'rgba(245,166,35,0.06)', border: '1px solid rgba(245,166,35,0.25)' }}>
-        <div className="d-flex align-items-center gap-2 mb-2" style={{ color: '#f5a623', fontWeight: 700, fontSize: '0.82rem' }}>
-          <i className="fas fa-hand-holding-usd"></i> El box absorbe la comisión de tarjeta
-        </div>
-        {p > 0 ? (
-          <div className="mb-2" style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)' }}>
-            El atleta paga <strong className="text-white">${p.toFixed(2)}</strong> · recibes neto{' '}
-            <strong className="text-success">~${netoRecibe.toFixed(2)}</strong>
-            <span className="text-secondary"> (Stripe ~${comision.toFixed(2)})</span>
-          </div>
-        ) : (
-          <div className="text-secondary mb-2" style={{ fontSize: '0.82rem' }}>
-            Escribe el precio para ver tu neto, o fija tu neto deseado abajo.
-          </div>
-        )}
-        <div className="d-flex align-items-end gap-2 flex-wrap">
-          <div className="flex-grow-1" style={{ minWidth: '160px' }}>
-            <label className="etiqueta-campo" style={{ fontSize: '0.75rem' }}>¿Mejor fijar tu neto? Escribe cuánto quieres recibir</label>
-            <input type="number" className="finanzas-input" value={neto} onChange={e => setNeto(e.target.value)} placeholder="Ej. 800 (neto)" />
-          </div>
-          <button type="button" className="btn btn-warning fw-bold" style={{ whiteSpace: 'nowrap' }} onClick={aplicar}>
-            <i className="fas fa-calculator me-1"></i> Fijar precio
-          </button>
-        </div>
-        <div className="text-secondary mt-2" style={{ fontSize: '0.72rem' }}>
-          <i className="fas fa-info-circle me-1"></i> Estimado (tarifa Stripe ~4.1% + $3 + IVA). El neto real se confirma al cobrar.
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── Disponibilidad de clases (lógica COMPARTIDA por drop-in normal y cajear) ──
 const JERARQUIA_NIVEL = { novato: 1, principiante: 2, intermedio: 3, rx: 4, avanzado: 4 };
@@ -1018,10 +970,6 @@ export default function GestionFinanzas() {
                           <input type="number" className="finanzas-input" required value={formPlan.precio} onChange={e => setFormPlan({ ...formPlan, precio: e.target.value })} placeholder="Ej. 800" />
                         </div>
 
-                        {box?.absorberComisionTarjeta && (
-                          <HelperNetoComision precio={formPlan.precio} onPrecio={v => setFormPlan(prev => ({ ...prev, precio: v }))} />
-                        )}
-
                         {formPlan.nivelAcceso !== 'Visitas' ? (
                           <div className="col-md-6">
                             <label className="etiqueta-campo">Duración (Días)</label>
@@ -1736,10 +1684,6 @@ export default function GestionFinanzas() {
                   <label className="etiqueta-campo">Precio ($)</label>
                   <input type="number" className="finanzas-input" value={formEditPlan.precio} onChange={e => setFormEditPlan({ ...formEditPlan, precio: e.target.value })} required />
                 </div>
-
-                {box?.absorberComisionTarjeta && (
-                  <HelperNetoComision precio={formEditPlan.precio} onPrecio={v => setFormEditPlan(prev => ({ ...prev, precio: v }))} />
-                )}
 
                 {formEditPlan.nivelAcceso !== 'Visitas' ? (
                   <div className="col-md-6">
