@@ -132,7 +132,7 @@ export default function CalendarioAtleta() {
 
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (res.ok) {
-        alert("¡Récord Personal guardado en la bóveda! 🐺🏆");
+        alert("¡Récord Personal guardado en la bóveda! 🏆");
         setMostrarFormPR(false);
         setFormPR({ idMarca: null, idEjercicio: '', valor: '', unidad: 'lbs', notas: '' });
         cargarMiCalendario(userId, fechaActual.getFullYear(), fechaActual.getMonth());

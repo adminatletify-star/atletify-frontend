@@ -101,7 +101,7 @@ export default function GestionVentasProductos() {
   const eliminarMiniTienda = async () => {
     if (!boxGuardado) return;
     if (apartadoActivo === 'General (Box)') {
-      return alert("No puedes eliminar la tienda principal del Box. Es indestructible. 🐺");
+      return alert("No puedes eliminar la tienda principal del Box. Es indestructible.");
     }
 
     const confirmacion = await window.wpConfirm(`¿Estás seguro de eliminar la tienda "${apartadoActivo}" para siempre?\n\n(Si quedaron productos en el inventario de esta tienda, se moverán automáticamente a "General (Box)").`);

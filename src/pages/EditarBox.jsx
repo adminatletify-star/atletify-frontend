@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { BOXES_ENDPOINT } from '../services/api';
 import BackButton from '../components/BackButton';
 import BotonSeguro from '../components/BotonSeguro';
 import AtletifyLoader from '../components/AtletifyLoader';
+import TimeWheelPicker from '../components/TimeWheelPicker';
+import MesPicker from '../components/MesPicker';
+import OpcionesPicker from '../components/OpcionesPicker';
 import '../assets/css/EditarBox.css';
 
 // El backend expone todo bajo /api. VITE_API_URL viene SIN /api, así que lo
@@ -58,9 +62,41 @@ const DIAS_SEMANA = [
   'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'
 ];
 
-const MESES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+// Formatea "HH:MM" (24h) a "H:MM AM/PM" para mostrar en los botones-hora.
+function fmt12(hhmm) {
+  const [h, m] = (hhmm || '06:00').split(':').map(Number);
+  const period = h < 12 ? 'AM' : 'PM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${String(m).padStart(2, '0')} ${period}`;
+}
+
+// Opciones para los selectores modales (OpcionesPicker) — mismas opciones que los <select> originales.
+const OPCIONES_EXENCION = [
+  { valor: 1, label: '1 mes' },
+  { valor: 2, label: '2 meses' },
+  { valor: 3, label: '3 meses' },
+  { valor: 4, label: '4 meses' },
+  { valor: 6, label: '6 meses' },
+];
+
+const OPCIONES_DIAS_GRACIA = [
+  { valor: 0, label: '0 días', desc: 'Se bloquea inmediatamente' },
+  { valor: 1, label: '1 día' },
+  { valor: 2, label: '2 días' },
+  { valor: 3, label: '3 días' },
+  { valor: 5, label: '5 días' },
+  { valor: 7, label: '7 días' },
+  { valor: 10, label: '10 días' },
+  { valor: 15, label: '15 días' },
+];
+
+const OPCIONES_RENOVACION = [
+  { valor: 1, label: '1 mes' },
+  { valor: 2, label: '2 meses' },
+  { valor: 3, label: '3 meses' },
+  { valor: 6, label: '6 meses' },
+  { valor: 12, label: '12 meses' },
+  { valor: 24, label: '24 meses' },
 ];
 
 const TABS = [
@@ -80,6 +116,7 @@ export default function EditarBox() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingConfig, setSavingConfig] = useState(false);
+  const [metodoPagoProcesando, setMetodoPagoProcesando] = useState(null); // field del método en proceso | null
   const [activeTab, setActiveTab] = useState('identidad');
 
   // ── Toggle seguro de visitas de regalo (contraseña + auditoría) ──
@@ -90,15 +127,12 @@ export default function EditarBox() {
   const [cortesiasVigentes, setCortesiasVigentes] = useState(0);
   const [procesandoVisitas, setProcesandoVisitas] = useState(false);
 
-  // ── Toggle seguro de métodos de pago (contraseña + auditoría) ──
-  const [modalMetodoPago, setModalMetodoPago] = useState(false);
-  const [metodoPagoPendiente, setMetodoPagoPendiente] = useState(null); // { field, activar, label }
-  const [passwordMetodo, setPasswordMetodo] = useState('');
-  const [procesandoMetodo, setProcesandoMetodo] = useState(false);
-
   const [horarios, setHorarios] = useState(
     DIAS_SEMANA.reduce((acc, dia) => ({ ...acc, [dia]: { abierto: true, apertura: '06:00', cierre: '22:00' } }), {})
   );
+
+  // Picker de hora (rueda) para la matriz de horarios: { dia, campo } | null
+  const [pickerHorario, setPickerHorario] = useState(null);
 
   const token = localStorage.getItem('token');
   const headersGet = { 'Authorization': `Bearer ${token}` };
@@ -206,8 +240,9 @@ export default function EditarBox() {
     setConfig(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   }
 
-  // Abre el modal de confirmación (contraseña) para activar/desactivar un método de pago.
-  function abrirModalMetodoPago(field, activar, label) {
+  // Activa/desactiva un método de pago. Persiste de inmediato vía el endpoint seguro
+  // (que además registra la acción en Auditoría de Usuarios). No requiere contraseña.
+  async function toggleMetodoPago(field, activar) {
     // Regla: siempre debe quedar ≥1 método de recepción activo (solo los 3 de recepción).
     const recepcion = ['aceptarTransferencias', 'aceptarEfectivo', 'aceptarTarjetaRecepcion'];
     if (!activar && recepcion.includes(field)) {
@@ -217,31 +252,31 @@ export default function EditarBox() {
         return;
       }
     }
-    setMetodoPagoPendiente({ field, activar, label });
-    setPasswordMetodo('');
-    setModalMetodoPago(true);
-  }
 
-  // Verifica la contraseña y aplica el cambio del método de pago (con auditoría en el backend).
-  async function confirmarToggleMetodoPago() {
-    if (!passwordMetodo.trim() || !metodoPagoPendiente) { alert('Ingresa tu contraseña.'); return; }
+    if (metodoPagoProcesando) return; // anti doble-clic mientras procesa
+
     const idBox = boxLocal?.idBox || boxLocal?.IdBox;
-    const { field, activar } = metodoPagoPendiente;
-    setProcesandoMetodo(true);
+    const valorPrevio = config[field];
+    setMetodoPagoProcesando(field);
+    setConfig(prev => ({ ...prev, [field]: activar })); // actualización optimista
+
     try {
       const res = await fetch(`${API_BASE}/configuracionbox/${idBox}/toggle-metodo-pago`, {
         method: 'POST',
         headers: headersPost,
-        body: JSON.stringify({ contrasena: passwordMetodo, metodo: field, activar })
+        body: JSON.stringify({ metodo: field, activar })
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { alert(data.mensaje || 'No se pudo aplicar el cambio.'); return; }
-      if (data.valido === false) { alert(data.mensaje || 'Contraseña incorrecta.'); return; }
-      setConfig(prev => ({ ...prev, [field]: activar }));
-      setModalMetodoPago(false);
-      setPasswordMetodo('');
-    } catch (e) { alert('Error de conexión.'); }
-    finally { setProcesandoMetodo(false); }
+      if (!res.ok) {
+        setConfig(prev => ({ ...prev, [field]: valorPrevio })); // revertir
+        alert(data.mensaje || 'No se pudo cambiar el método de pago.');
+      }
+    } catch (e) {
+      setConfig(prev => ({ ...prev, [field]: valorPrevio })); // revertir
+      alert('Error de conexión al cambiar el método de pago.');
+    } finally {
+      setMetodoPagoProcesando(null);
+    }
   }
 
   function handleHorarioChange(dia, campo, valor) {
@@ -249,6 +284,25 @@ export default function EditarBox() {
       ...prev,
       [dia]: { ...prev[dia], [campo]: valor }
     }));
+  }
+
+  // Aplica la hora elegida en el picker garantizando coherencia (cierre > apertura).
+  // Si al cambiar la apertura queda igual o después del cierre, empuja el cierre 1h adelante.
+  function aplicarHora(dia, campo, t) {
+    setHorarios(prev => {
+      const cur = prev[dia] || {};
+      if (campo === 'apertura') {
+        const [ah, am] = t.split(':').map(Number);
+        const [ch, cm] = (cur.cierre || '22:00').split(':').map(Number);
+        let cierre = cur.cierre || '22:00';
+        if (ah * 60 + am >= ch * 60 + cm) {
+          const fin = (ah * 60 + am + 60) % (24 * 60);
+          cierre = `${String(Math.floor(fin / 60)).padStart(2, '0')}:${String(fin % 60).padStart(2, '0')}`;
+        }
+        return { ...prev, [dia]: { ...cur, apertura: t, cierre } };
+      }
+      return { ...prev, [dia]: { ...cur, cierre: t } };
+    });
   }
 
   function handleImageUpload(e) {
@@ -281,7 +335,7 @@ export default function EditarBox() {
       const updatedBox = await response.json();
       localStorage.setItem('box', JSON.stringify(updatedBox));
       setBoxLocal(updatedBox);
-      alert('¡Configuración del Box guardada con éxito! 🐺🔥');
+      alert('¡Configuración del Box guardada con éxito!');
     } catch (err) { alert(err.message); }
     finally { setSaving(false); }
   }
@@ -482,17 +536,33 @@ export default function EditarBox() {
                     </div>
                     <div className="col-12">
                       <label className="eb-label">Logo del Box</label>
-                      <div className="d-flex align-items-center gap-3">
-                        {form.logo && (
-                          <img src={form.logo} alt="Logo" style={{ width: '60px', height: '60px', objectFit: 'contain', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', padding: '4px' }} />
+                      <div className="eb-logo-uploader">
+                        {form.logo ? (
+                          <img src={form.logo} alt="Logo del box" className="eb-logo-preview" />
+                        ) : (
+                          <div className="eb-logo-placeholder" aria-hidden="true">
+                            <i className="fas fa-image"></i>
+                          </div>
                         )}
-                        <div className="flex-grow-1">
-                          <input type="file" accept="image/*" className="eb-input" onChange={handleImageUpload} />
-                          {!esLogoArchivo && form.logo && (
-                            <input type="text" name="logo" className="eb-input mt-2" value={form.logo} onChange={handleChange} placeholder="O pega una URL del logo" />
-                          )}
+                        <div className="eb-logo-controls">
+                          <input id="eb-logo-file" type="file" accept="image/*" className="d-none" onChange={handleImageUpload} />
+                          <div className="eb-logo-actions">
+                            <label htmlFor="eb-logo-file" className="eb-btn-upload">
+                              <i className="fas fa-upload"></i>
+                              {form.logo ? 'Cambiar' : 'Subir logo'}
+                            </label>
+                            {form.logo && (
+                              <button type="button" className="eb-btn-quitar" onClick={() => setForm(prev => ({ ...prev, logo: '' }))}>
+                                <i className="fas fa-trash"></i> Quitar
+                              </button>
+                            )}
+                          </div>
+                          <small className="eb-logo-hint">PNG, JPG o SVG · preferible cuadrado.</small>
                         </div>
                       </div>
+                      {!esLogoArchivo && (
+                        <input type="text" name="logo" className="eb-input eb-logo-url" value={form.logo} onChange={handleChange} placeholder="O pega una URL del logo" />
+                      )}
                     </div>
                   </div>
 
@@ -600,29 +670,58 @@ export default function EditarBox() {
                   </div>
 
                   {/* MATRIZ DE DÍAS */}
-                  <div className="p-3 rounded-4 mb-4" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                  <div className="eb-horario-grid mb-4">
                     {DIAS_SEMANA.map(dia => (
-                      <div key={dia} className="row g-2 align-items-center mb-3 pb-3 border-bottom" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
-                        <div className="col-4 col-md-3">
-                          <div className="form-check form-switch">
+                      <div key={dia} className="eb-horario-row">
+                        <div className="eb-horario-dia">
+                          <div className="form-check form-switch m-0">
                             <input className="form-check-input" type="checkbox" id={`chk-${dia}`} checked={horarios[dia]?.abierto} onChange={e => handleHorarioChange(dia, 'abierto', e.target.checked)} />
                             <label className={`form-check-label fw-bold ${horarios[dia]?.abierto ? 'text-white' : 'text-secondary'}`} htmlFor={`chk-${dia}`}>{dia}</label>
                           </div>
                         </div>
-                        <div className="col-8 col-md-9">
-                          {horarios[dia]?.abierto ? (
-                            <div className="d-flex align-items-center gap-2">
-                              <input type="time" className="eb-input py-1" value={horarios[dia]?.apertura || ''} onChange={e => handleHorarioChange(dia, 'apertura', e.target.value)} />
-                              <span className="text-secondary fw-bold mx-1">a</span>
-                              <input type="time" className="eb-input py-1" value={horarios[dia]?.cierre || ''} onChange={e => handleHorarioChange(dia, 'cierre', e.target.value)} />
-                            </div>
-                          ) : (
-                            <span className="badge bg-danger bg-opacity-25 text-danger border border-danger">CERRADO</span>
-                          )}
-                        </div>
+                        {horarios[dia]?.abierto ? (
+                          <div className="eb-horario-times">
+                            <button
+                              type="button"
+                              className={`gc-hora-btn eb-horario-time${pickerHorario?.dia === dia && pickerHorario?.campo === 'apertura' ? ' gc-hora-btn--open' : ''}`}
+                              onClick={() => setPickerHorario({ dia, campo: 'apertura' })}
+                            >
+                              <i className="far fa-clock" />
+                              {fmt12(horarios[dia]?.apertura || '06:00')}
+                            </button>
+                            <span className="eb-horario-sep">a</span>
+                            <button
+                              type="button"
+                              className={`gc-hora-btn eb-horario-time${pickerHorario?.dia === dia && pickerHorario?.campo === 'cierre' ? ' gc-hora-btn--open' : ''}`}
+                              onClick={() => setPickerHorario({ dia, campo: 'cierre' })}
+                            >
+                              <i className="far fa-clock" />
+                              {fmt12(horarios[dia]?.cierre || '22:00')}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="eb-horario-times">
+                            <span className="eb-horario-cerrado">CERRADO</span>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
+
+                  {/* Picker de rueda (TimeWheelPicker) — coherencia: el cierre debe ser > apertura */}
+                  {pickerHorario && createPortal(
+                    <div className="twp-overlay" onClick={e => { if (e.target === e.currentTarget) setPickerHorario(null); }}>
+                      <div className="twp-modal">
+                        <TimeWheelPicker
+                          value={horarios[pickerHorario.dia]?.[pickerHorario.campo] || (pickerHorario.campo === 'apertura' ? '06:00' : '22:00')}
+                          minTime={pickerHorario.campo === 'cierre' ? horarios[pickerHorario.dia]?.apertura : undefined}
+                          onAccept={t => { aplicarHora(pickerHorario.dia, pickerHorario.campo, t); setPickerHorario(null); }}
+                          onCancel={() => setPickerHorario(null)}
+                        />
+                      </div>
+                    </div>,
+                    document.body
+                  )}
 
                   <div className="row g-4 mb-4">
                     <div className="col-md-6">
@@ -662,70 +761,70 @@ export default function EditarBox() {
 
                   {/* ── PAGOS EN LÍNEA: STRIPE CONNECT ── */}
                   <div className="mb-4 p-3 rounded" style={{ background: 'rgba(103, 114, 229, 0.06)', border: '1px solid rgba(103, 114, 229, 0.2)' }}>
-                    <div className="d-flex justify-content-between align-items-center mb-3">
+                    <div className="d-flex flex-column flex-sm-row justify-content-sm-between align-items-start align-items-sm-center gap-2 mb-3">
                       <p className="fw-bold mb-0" style={{ color: '#6772E5', fontFamily: 'var(--font-heading)', fontSize: '0.9rem' }}>
                         <i className="fab fa-stripe fa-lg me-2"></i>Pagos en Línea (Stripe Connect)
                       </p>
 
                       {!config.stripeAccountId ? (
-                        <button type="button" onClick={conectarStripe} className="btn btn-sm text-white fw-bold px-3 py-2" style={{ background: '#6772E5', border: 'none', borderRadius: '8px' }}>
+                        <button type="button" onClick={conectarStripe} className="btn btn-sm text-white fw-bold px-3 py-2 mw-100 text-wrap" style={{ background: '#6772E5', border: 'none', borderRadius: '8px' }}>
                           <i className="fas fa-link me-2"></i>Vincular Banco Mío
                         </button>
                       ) : (
-                        <span className="badge bg-success bg-opacity-25 text-success border border-success p-2">
+                        <span className="badge bg-success bg-opacity-25 text-success border border-success p-2 mw-100 text-wrap text-start">
                           <i className="fas fa-check-circle me-1"></i>Cuenta de Stripe Conectada
                         </span>
                       )}
                     </div>
 
                     <div className="row g-3">
-                      <div className="col-12 col-md-4 d-flex align-items-center">
-                        <div className="form-check form-switch custom-switch">
-                          <input className="form-check-input" type="checkbox" id="switchPagosEnLinea" name="aceptarPagosEnLinea" checked={config.aceptarPagosEnLinea} onChange={() => abrirModalMetodoPago('aceptarPagosEnLinea', !config.aceptarPagosEnLinea, 'Pagos con Tarjeta (App)')} style={{ width: '2.5rem', height: '1.3rem' }} />
-                          <label className="form-check-label ms-2 text-white" htmlFor="switchPagosEnLinea" style={{ fontSize: '0.85rem' }}>
+                      <div className="col-12 col-md-6">
+                        <div className="form-check form-switch eb-metodo-switch">
+                          <input className="form-check-input" type="checkbox" id="switchPagosEnLinea" name="aceptarPagosEnLinea" checked={config.aceptarPagosEnLinea} onChange={() => toggleMetodoPago('aceptarPagosEnLinea', !config.aceptarPagosEnLinea)} disabled={!!metodoPagoProcesando} />
+                          <label className="form-check-label" htmlFor="switchPagosEnLinea">
                             <i className="fas fa-credit-card me-1" style={{ color: '#6772E5' }}></i>
                             Habilitar Pagos con Tarjeta (App)
                           </label>
                         </div>
                       </div>
-                      <div className="col-12 col-md-4 d-flex align-items-center">
-                        <div className="form-check form-switch custom-switch">
-                          <input className="form-check-input" type="checkbox" id="switchTransferencias" name="aceptarTransferencias" checked={config.aceptarTransferencias} onChange={() => abrirModalMetodoPago('aceptarTransferencias', !config.aceptarTransferencias, 'Aceptar Transferencias')} style={{ width: '2.5rem', height: '1.3rem' }} />
-                          <label className="form-check-label ms-2 text-white" htmlFor="switchTransferencias" style={{ fontSize: '0.85rem' }}>
+                      <div className="col-12 col-md-6">
+                        <div className="form-check form-switch eb-metodo-switch">
+                          <input className="form-check-input" type="checkbox" id="switchTransferencias" name="aceptarTransferencias" checked={config.aceptarTransferencias} onChange={() => toggleMetodoPago('aceptarTransferencias', !config.aceptarTransferencias)} disabled={!!metodoPagoProcesando} />
+                          <label className="form-check-label" htmlFor="switchTransferencias">
                             <i className="fas fa-money-bill-transfer me-1" style={{ color: 'var(--info)' }}></i>
                             Aceptar Transferencias
                           </label>
                         </div>
                       </div>
-                      <div className="col-12 col-md-4 d-flex align-items-center">
-                        <div className="form-check form-switch custom-switch">
-                          <input className="form-check-input" type="checkbox" id="switchEfectivo" name="aceptarEfectivo" checked={config.aceptarEfectivo} onChange={() => abrirModalMetodoPago('aceptarEfectivo', !config.aceptarEfectivo, 'Aceptar Efectivo en Recepción')} style={{ width: '2.5rem', height: '1.3rem' }} />
-                          <label className="form-check-label ms-2 text-white" htmlFor="switchEfectivo" style={{ fontSize: '0.85rem' }}>
+                      <div className="col-12 col-md-6">
+                        <div className="form-check form-switch eb-metodo-switch">
+                          <input className="form-check-input" type="checkbox" id="switchEfectivo" name="aceptarEfectivo" checked={config.aceptarEfectivo} onChange={() => toggleMetodoPago('aceptarEfectivo', !config.aceptarEfectivo)} disabled={!!metodoPagoProcesando} />
+                          <label className="form-check-label" htmlFor="switchEfectivo">
                             <i className="fas fa-coins me-1" style={{ color: 'var(--success)' }}></i>
                             Aceptar Efectivo en Recepción
                           </label>
                         </div>
                       </div>
-                      <div className="col-12 col-md-4 d-flex align-items-center">
-                        <div className="form-check form-switch custom-switch">
-                          <input className="form-check-input" type="checkbox" id="switchTarjetaRecepcion" name="aceptarTarjetaRecepcion" checked={config.aceptarTarjetaRecepcion} onChange={() => abrirModalMetodoPago('aceptarTarjetaRecepcion', !config.aceptarTarjetaRecepcion, 'Aceptar Tarjeta en Recepción')} style={{ width: '2.5rem', height: '1.3rem' }} />
-                          <label className="form-check-label ms-2 text-white" htmlFor="switchTarjetaRecepcion" style={{ fontSize: '0.85rem' }}>
+                      <div className="col-12 col-md-6">
+                        <div className="form-check form-switch eb-metodo-switch">
+                          <input className="form-check-input" type="checkbox" id="switchTarjetaRecepcion" name="aceptarTarjetaRecepcion" checked={config.aceptarTarjetaRecepcion} onChange={() => toggleMetodoPago('aceptarTarjetaRecepcion', !config.aceptarTarjetaRecepcion)} disabled={!!metodoPagoProcesando} />
+                          <label className="form-check-label" htmlFor="switchTarjetaRecepcion">
                             <i className="fas fa-credit-card me-1" style={{ color: 'var(--accent-cool, #4fc3f7)' }}></i>
                             Aceptar Tarjeta en Recepción
                           </label>
                         </div>
                       </div>
 
-                      <div className="col-12 col-md-6 d-flex align-items-center mt-3">
-                        <div className="form-check form-switch custom-switch">
-                          <input className="form-check-input" type="checkbox" id="switchComision" name="absorberComisionTarjeta" checked={config.absorberComisionTarjeta} onChange={handleConfigChange} style={{ width: '2.5rem', height: '1.3rem' }} />
-                          <label className="form-check-label ms-2 text-white" htmlFor="switchComision" style={{ fontSize: '0.85rem' }}>
+                      <div className="col-12 col-md-6 mt-md-3">
+                        <div className="form-check form-switch eb-metodo-switch">
+                          <input className="form-check-input" type="checkbox" id="switchComision" name="absorberComisionTarjeta" checked={config.absorberComisionTarjeta} onChange={handleConfigChange} />
+                          <label className="form-check-label" htmlFor="switchComision">
                             <i className="fas fa-hand-holding-usd me-1" style={{ color: '#6772E5' }}></i>
                             El Box absorbe la comisión de tarjeta (~4%)
                           </label>
                         </div>
                       </div>
-                      <div className="col-12 col-md-6 mt-3">
+                      <div className="col-12 col-md-6 mt-md-3">
                         <label className="eb-label" style={{ color: '#6772E5' }}>Compra Mínima para Tarjeta ($)</label>
                         <input type="number" name="compraMinimaTarjeta" className="eb-input" value={config.compraMinimaTarjeta} onChange={handleConfigChange} placeholder="Ej. 100" />
                         <small className="text-secondary" style={{ fontSize: '0.7rem' }}>Menor a esto solo permite fiar ("Deuda") o cobrar en efectivo. Ayuda a evitar comisiones trampa.</small>
@@ -745,19 +844,20 @@ export default function EditarBox() {
                       </div>
                       <div className="col-12 col-md-4">
                         <label className="eb-label">Mes de Cobro Masivo</label>
-                        <select name="mesCobroInscripcion" className="eb-input" value={config.mesCobroInscripcion} onChange={handleConfigChange}>
-                          {MESES.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-                        </select>
+                        <MesPicker
+                          valor={config.mesCobroInscripcion}
+                          onCambiar={(v) => setConfig(prev => ({ ...prev, mesCobroInscripcion: v }))}
+                        />
                       </div>
                       <div className="col-12 col-md-4">
                         <label className="eb-label">Meses de Exención (Nuevos)</label>
-                        <select name="mesesExencionNuevos" className="eb-input" value={config.mesesExencionNuevos} onChange={handleConfigChange}>
-                          <option value="1">1 mes</option>
-                          <option value="2">2 meses</option>
-                          <option value="3">3 meses</option>
-                          <option value="4">4 meses</option>
-                          <option value="6">6 meses</option>
-                        </select>
+                        <OpcionesPicker
+                          valor={config.mesesExencionNuevos}
+                          onCambiar={(v) => setConfig(prev => ({ ...prev, mesesExencionNuevos: v }))}
+                          opciones={OPCIONES_EXENCION}
+                          titulo="Meses de exención"
+                          icono="fas fa-calendar-check"
+                        />
                         <small className="text-secondary" style={{ fontSize: '0.7rem' }}>Si se inscribieron hace menos de {config.mesesExencionNuevos} meses, no pagan la inscripción anual.</small>
                       </div>
                     </div>
@@ -975,16 +1075,13 @@ export default function EditarBox() {
                     <div className="row g-3">
                       <div className="col-12 col-md-6">
                         <label className="eb-label">Días de Gracia (0-15)</label>
-                        <select name="diasGracia" className="eb-input" value={config.diasGracia} onChange={handleConfigChange}>
-                          <option value="0">0 — Se bloquea inmediatamente</option>
-                          <option value="1">1 día</option>
-                          <option value="2">2 días</option>
-                          <option value="3">3 días</option>
-                          <option value="5">5 días</option>
-                          <option value="7">7 días</option>
-                          <option value="10">10 días</option>
-                          <option value="15">15 días</option>
-                        </select>
+                        <OpcionesPicker
+                          valor={config.diasGracia}
+                          onCambiar={(v) => setConfig(prev => ({ ...prev, diasGracia: v }))}
+                          opciones={OPCIONES_DIAS_GRACIA}
+                          titulo="Días de gracia"
+                          icono="fas fa-hourglass-half"
+                        />
                         <small className="text-secondary" style={{ fontSize: '0.7rem' }}>Después del vencimiento, el atleta tiene estos días para pagar antes de perder acceso.</small>
                       </div>
                       
@@ -1007,32 +1104,31 @@ export default function EditarBox() {
 
                       <div className="col-12 col-md-6">
                         <label className="eb-label">Máx. Meses de Renovación Anticipada</label>
-                        <select name="maxMesesRenovacionAnticipada" className="eb-input" value={config.maxMesesRenovacionAnticipada} onChange={handleConfigChange}>
-                          <option value="1">1 mes</option>
-                          <option value="2">2 meses</option>
-                          <option value="3">3 meses</option>
-                          <option value="6">6 meses</option>
-                          <option value="12">12 meses</option>
-                          <option value="24">24 meses</option>
-                        </select>
+                        <OpcionesPicker
+                          valor={config.maxMesesRenovacionAnticipada}
+                          onCambiar={(v) => setConfig(prev => ({ ...prev, maxMesesRenovacionAnticipada: v }))}
+                          opciones={OPCIONES_RENOVACION}
+                          titulo="Renovación anticipada"
+                          icono="fas fa-calendar-plus"
+                        />
                         <small className="text-secondary" style={{ fontSize: '0.7rem' }}>Evita errores: una fecha de vencimiento no puede exceder este límite desde hoy.</small>
                       </div>
                     </div>
                   </div>
 
-                    <div className="d-flex flex-column flex-sm-row gap-3 align-items-stretch mb-4">
+                    <div className="d-flex flex-column flex-lg-row flex-wrap gap-3 align-items-stretch mb-4">
                       <button type="button" className="eb-btn-guardar-form flex-grow-1" onClick={guardarConfiguracion} disabled={savingConfig}>
                         {savingConfig
                           ? <><i className="fas fa-spinner fa-spin me-2"></i>Guardando...</>
                           : <><i className="fas fa-save me-2"></i>Guardar Configuración Financiera</>
                         }
                       </button>
-                      <button type="button" className="eb-btn-cancelar flex-grow-0" onClick={() => navigate('/gestion-finanzas')} style={{ whiteSpace: 'nowrap' }}>
+                      <button type="button" className="eb-btn-cancelar flex-grow-0 justify-content-center text-center" onClick={() => navigate('/gestion-finanzas')}>
                         <i className="fas fa-external-link-alt me-2"></i>Ir al Centro Financiero
                       </button>
-                      
+
                       {config.stripeAccountId && (
-                          <a href="https://dashboard.stripe.com/login" target="_blank" rel="noopener noreferrer" className="btn btn-outline-primary flex-grow-0 d-flex align-items-center justify-content-center" style={{ whiteSpace: 'nowrap', borderRadius: '12px' }}>
+                          <a href="https://dashboard.stripe.com/login" target="_blank" rel="noopener noreferrer" className="btn btn-outline-primary flex-grow-0 d-flex align-items-center justify-content-center text-center" style={{ borderRadius: '12px' }}>
                               <i className="fab fa-stripe fs-5 me-2"></i>Mi Portal de Pagos
                           </a>
                       )}
@@ -1122,44 +1218,6 @@ export default function EditarBox() {
         </div>
       )}
 
-      {/* ── MODAL SEGURO: activar / desactivar método de pago ── */}
-      {modalMetodoPago && metodoPagoPendiente && (
-        <div className="eb-visitas-modal-overlay" onClick={() => !procesandoMetodo && setModalMetodoPago(false)}>
-          <div className="eb-visitas-modal" onClick={e => e.stopPropagation()}>
-            <div className="eb-visitas-modal-icon">
-              <i className={`fas ${metodoPagoPendiente.activar ? 'fa-toggle-on' : 'fa-toggle-off'}`}></i>
-            </div>
-            <h5 className="eb-visitas-modal-title">
-              {metodoPagoPendiente.activar ? 'Activar' : 'Desactivar'} método de pago
-            </h5>
-            <p className="eb-visitas-modal-text">
-              Vas a <strong>{metodoPagoPendiente.activar ? 'activar' : 'desactivar'}</strong> "{metodoPagoPendiente.label}". Confirma con tu contraseña; la acción quedará registrada en la auditoría.
-            </p>
-            <label className="eb-visitas-modal-label">Confirma tu contraseña</label>
-            <input
-              type="password"
-              className="eb-input"
-              value={passwordMetodo}
-              onChange={e => setPasswordMetodo(e.target.value)}
-              placeholder="Tu contraseña de acceso"
-              autoFocus
-              autoComplete="current-password"
-              disabled={procesandoMetodo}
-            />
-            <div className="eb-visitas-modal-actions">
-              <button type="button" className="eb-visitas-btn-cancel" onClick={() => setModalMetodoPago(false)} disabled={procesandoMetodo}>Cancelar</button>
-              <BotonSeguro
-                onClick={confirmarToggleMetodoPago}
-                className={`eb-visitas-btn-confirm ${!metodoPagoPendiente.activar ? 'is-pause' : ''}`}
-                textoProcesando="Verificando..."
-                disabled={procesandoMetodo || !passwordMetodo.trim()}
-              >
-                {metodoPagoPendiente.activar ? 'Activar' : 'Desactivar'}
-              </BotonSeguro>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

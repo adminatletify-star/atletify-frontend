@@ -274,7 +274,7 @@ export default function MiPerfil() {
           localStorage.setItem('usuario', JSON.stringify(current));
         }
         triggerAlert({
-          title: '¡Actualizado! 🎮🐺',
+          title: '¡Actualizado! 🎮',
           message: '¡Player Card actualizada con éxito!',
           type: 'success',
           onConfirm: () => window.location.reload()
@@ -311,7 +311,7 @@ export default function MiPerfil() {
       });
       if (res.ok) {
         triggerAlert({
-          title: '¡PR Registrado! 🔥',
+          title: '¡PR Registrado!',
           message: '¡PR registrado con éxito!',
           type: 'success'
         });
@@ -467,7 +467,7 @@ export default function MiPerfil() {
         }
         setUnfreezePassword('');
         triggerAlert({
-          title: '¡Bienvenido de Vuelta! 🐺🔥',
+          title: '¡Bienvenido de Vuelta!',
           message: 'Tu cuenta ha sido descongelada y reactivada con éxito. ¡Ya puedes disfrutar de todos los servicios del Box!',
           type: 'success'
         });
@@ -504,7 +504,7 @@ export default function MiPerfil() {
       });
       if (res.ok) {
         triggerAlert({
-          title: 'Cuenta Eliminada 🐺',
+          title: 'Cuenta Eliminada',
           message: 'Tu cuenta ha sido eliminada permanentemente del sistema de manera exitosa. Agradecemos enormemente tu tiempo en nuestra manada.',
           type: 'success',
           onConfirm: () => {

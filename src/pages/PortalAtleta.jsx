@@ -91,7 +91,7 @@ export default function PortalAtleta() {
       });
 
       if (resAbono.ok) {
-        alert("¡Abono enviado con éxito! 🐺✅ En espera de validación de la Coach.");
+        alert("¡Abono enviado con éxito! ✅ En espera de validación de la Coach.");
         // Refrescar login para ver los nuevos datos
         hacerLogin(new Event('submit')); 
         setNuevoArchivo(null);

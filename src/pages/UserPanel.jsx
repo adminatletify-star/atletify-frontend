@@ -4,12 +4,27 @@ import DarkVeil from '../components/ReactBits/DarkVeil';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import WolfLanyard from '../components/ReactBits/WolfLanyard';
 import BotonSeguro from '../components/BotonSeguro';
+import OpcionesPicker from '../components/OpcionesPicker';
 import '../assets/css/user-panel.css';
 import '../assets/css/visitas-regalo.css';
 import AtletifyLoader from '../components/AtletifyLoader';
 import AnunciosEngine from '../components/AnunciosEngine';
 
 const API_BASE = import.meta.env.VITE_API_URL;
+
+function roundRectCanvas(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
 
 const getFechaHoyString = () => {
   const hoy = new Date();
@@ -55,6 +70,8 @@ export default function UserPanel() {
   const [finanzas, setFinanzas] = useState(null);
   const [showModalPlanes, setShowModalPlanes] = useState(false);
   const [iniciandoPago, setIniciandoPago] = useState(false);
+  const [showModalDescarga, setShowModalDescarga] = useState(false);
+  const [wodsSeleccionados, setWodsSeleccionados] = useState([]);
 
   // Visitas de regalo "trae a un amigo" (modal de bienvenida la primera vez)
   const [regaloBienvenida, setRegaloBienvenida] = useState(null);
@@ -218,12 +235,12 @@ export default function UserPanel() {
   };
 
   const handleEliminarAmigo = async (idCompa) => {
-    if (!window.confirm('¿Seguro que quieres expulsar a este lobo de tu manada?')) return;
+    if (!window.confirm('¿Seguro que quieres quitar a este compa de tu manada?')) return;
     try {
       const miId = user.idUsuario || user.id;
       const res = await fetch(`${API_BASE}/amistades/eliminar/${miId}/${idCompa}`, { method: 'DELETE' });
       if (res.ok) {
-        alert("Lobo eliminado de tu manada.");
+        alert("Compa eliminado de tu manada.");
         cargarAmistades(miId);
       }
     } catch (error) { console.error("Error al eliminar", error); }
@@ -385,6 +402,388 @@ export default function UserPanel() {
 
   const glassCard = { background: 'rgba(20, 20, 20, 0.6)', backdropFilter: 'blur(12px)', borderRadius: '24px', border: '1px solid rgba(255, 255, 255, 0.08)', boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.5)' };
 
+  const handleClickDescargar = () => {
+    const wodsAMostrar = miClaseHoy
+      ? wodsHoy.filter(w => !w.clasesAsignadas || w.clasesAsignadas.length === 0 || w.clasesAsignadas.some(c => c.idClase === miClaseHoy.idClase))
+      : wodsHoy;
+    if (wodsAMostrar.length === 0) return;
+    if (wodsAMostrar.length === 1) {
+      downloadWodCard(wodsAMostrar);
+    } else {
+      setWodsSeleccionados(wodsAMostrar.map(w => w.idEntrenamiento));
+      setShowModalDescarga(true);
+    }
+  };
+
+  const downloadWodCard = (wodsADescargar) => {
+    if (!wodsADescargar || wodsADescargar.length === 0) return;
+
+    const W = 800;
+    const PAD = 52;
+    const INNER_W = W - PAD * 2;
+    const LINE = 22;
+    const BPAD = 18;
+    const CARD_HDR = 50;
+    const WOD_COLORS_IMG = ['#e63946', '#38bdf8', '#f5a623'];
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = 6000;
+    const ctx = canvas.getContext('2d');
+
+    const wrap = (text, font, maxW) => {
+      ctx.font = font;
+      return text.split('\n').flatMap(para => {
+        if (!para.trim()) return [''];
+        const words = para.split(' ');
+        const lines = [];
+        let cur = '';
+        for (const word of words) {
+          const test = cur ? `${cur} ${word}` : word;
+          if (ctx.measureText(test).width > maxW) { if (cur) lines.push(cur); cur = word; }
+          else cur = test;
+        }
+        if (cur) lines.push(cur);
+        return lines;
+      });
+    };
+
+    // ── FONDO ────────────────────────────────────────────────────
+    ctx.fillStyle = '#0d0d14';
+    ctx.fillRect(0, 0, W, 6000);
+
+    // Glow rojo desde arriba
+    const glowTop = ctx.createRadialGradient(W / 2, 0, 0, W / 2, 0, 520);
+    glowTop.addColorStop(0, 'rgba(230,57,70,0.1)');
+    glowTop.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glowTop;
+    ctx.fillRect(0, 0, W, 6000);
+
+    // Barra top
+    const accentGrad = ctx.createLinearGradient(0, 0, W, 0);
+    accentGrad.addColorStop(0, '#e63946');
+    accentGrad.addColorStop(1, '#c1121f');
+    ctx.fillStyle = accentGrad;
+    ctx.fillRect(0, 0, W, 6);
+
+    let y = 54;
+
+    // ── HEADER ───────────────────────────────────────────────────
+    const avR = 28;
+    const avX = PAD + avR;
+    const avY = y + avR;
+
+    ctx.shadowColor = 'rgba(230,57,70,0.45)';
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = '#e63946';
+    ctx.beginPath();
+    ctx.arc(avX, avY, avR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.font = 'bold 22px system-ui, sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText((box?.nombre || 'A')[0].toUpperCase(), avX, avY);
+    ctx.textBaseline = 'alphabetic';
+
+    const txtX = avX + avR + 16;
+    ctx.font = 'bold 24px system-ui, sans-serif';
+    ctx.fillStyle = '#eef0f5';
+    ctx.textAlign = 'left';
+    ctx.fillText((box?.nombre || 'ATLETIFY BOX').toUpperCase(), txtX, y + 22);
+
+    // Badge "WOD DEL DÍA"
+    ctx.font = 'bold 10px system-ui, sans-serif';
+    const badgeTxt = '▸ WOD DEL DÍA';
+    const badgeW = ctx.measureText(badgeTxt).width + 20;
+    ctx.fillStyle = 'rgba(230,57,70,0.16)';
+    roundRectCanvas(ctx, txtX, y + 32, badgeW, 18, 5);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(230,57,70,0.40)';
+    ctx.lineWidth = 1;
+    roundRectCanvas(ctx, txtX, y + 32, badgeW, 18, 5);
+    ctx.stroke();
+    ctx.fillStyle = '#e63946';
+    ctx.textAlign = 'center';
+    ctx.fillText(badgeTxt, txtX + badgeW / 2, y + 44);
+
+    // Fecha
+    const dateStr = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
+    ctx.font = '12px system-ui, sans-serif';
+    ctx.fillStyle = '#6b7280';
+    ctx.textAlign = 'right';
+    ctx.fillText(dateStr, W - PAD, y + 22);
+
+    y += avR * 2 + 26;
+
+    // Divisor con glow
+    const divGrad = ctx.createLinearGradient(PAD, 0, W - PAD, 0);
+    divGrad.addColorStop(0, 'transparent');
+    divGrad.addColorStop(0.2, 'rgba(230,57,70,0.35)');
+    divGrad.addColorStop(0.8, 'rgba(230,57,70,0.35)');
+    divGrad.addColorStop(1, 'transparent');
+    ctx.strokeStyle = divGrad;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
+    y += 28;
+
+    // ── SECCIONES WOD ────────────────────────────────────────────
+    for (let wi = 0; wi < wodsADescargar.length; wi++) {
+      const wod = wodsADescargar[wi];
+      const wodColor = WOD_COLORS_IMG[wi] || '#e63946';
+
+      // Badge numérico (múltiples WODs)
+      if (wodsADescargar.length > 1) {
+        const br = 15;
+        ctx.shadowColor = wodColor + '66';
+        ctx.shadowBlur = 14;
+        ctx.fillStyle = wodColor;
+        ctx.beginPath();
+        ctx.arc(PAD + br, y + br, br, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.font = 'bold 15px system-ui, sans-serif';
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${wi + 1}`, PAD + br, y + br);
+        ctx.textBaseline = 'alphabetic';
+        y += br * 2 + 14;
+      }
+
+      // Título WOD
+      ctx.font = 'bold 28px system-ui, sans-serif';
+      ctx.fillStyle = '#eef0f5';
+      ctx.textAlign = 'left';
+      ctx.fillText(wod.titulo.toUpperCase(), PAD, y + 24);
+      y += 44;
+
+      // BLOQUES
+      for (const bloque of (wod.bloques || [])) {
+        const dFont = '14px system-ui, sans-serif';
+        const dLines = bloque.descripcionLibre ? wrap(bloque.descripcionLibre, dFont, INNER_W - 24) : [];
+        const hasContent = (bloque.ejercicios?.length > 0) || dLines.length > 0;
+        const contentH = (hasContent ? 16 : 0)
+          + dLines.length * LINE + (dLines.length > 0 ? 12 : 0)
+          + (bloque.ejercicios?.length || 0) * 46;
+        const bH = BPAD + CARD_HDR + contentH + BPAD;
+        const cardTop = y - BPAD;
+
+        // Capas de la card (fondo + header + franja color)
+        ctx.save();
+        roundRectCanvas(ctx, PAD - BPAD, cardTop, INNER_W + BPAD * 2, bH, 14);
+        ctx.clip();
+        ctx.fillStyle = '#131320';
+        ctx.fillRect(PAD - BPAD, cardTop, INNER_W + BPAD * 2, bH);
+        ctx.fillStyle = '#1c1c2e';
+        ctx.fillRect(PAD - BPAD, cardTop, INNER_W + BPAD * 2, BPAD + CARD_HDR);
+        ctx.fillStyle = wodColor;
+        ctx.fillRect(PAD - BPAD, cardTop, 5, bH);
+        ctx.restore();
+
+        // Borde card
+        ctx.strokeStyle = 'rgba(255,255,255,0.09)';
+        ctx.lineWidth = 1;
+        roundRectCanvas(ctx, PAD - BPAD, cardTop, INNER_W + BPAD * 2, bH, 14);
+        ctx.stroke();
+
+        // Separador header/body
+        ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(PAD - BPAD, cardTop + BPAD + CARD_HDR);
+        ctx.lineTo(PAD - BPAD + INNER_W + BPAD * 2, cardTop + BPAD + CARD_HDR);
+        ctx.stroke();
+
+        // Chips en el header (centrados verticalmente en CARD_HDR)
+        const chipY = y + (CARD_HDR - 24) / 2;
+
+        ctx.font = 'bold 12px system-ui, sans-serif';
+        const typeText = (bloque.tipoBloque || '').toUpperCase();
+        const typeW = ctx.measureText(typeText).width + 24;
+        ctx.fillStyle = 'rgba(56,189,248,0.15)';
+        roundRectCanvas(ctx, PAD + 6, chipY, typeW, 24, 7);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(56,189,248,0.38)';
+        ctx.lineWidth = 1;
+        roundRectCanvas(ctx, PAD + 6, chipY, typeW, 24, 7);
+        ctx.stroke();
+        ctx.fillStyle = '#38bdf8';
+        ctx.textAlign = 'center';
+        ctx.fillText(typeText, PAD + 6 + typeW / 2, chipY + 16);
+        ctx.textAlign = 'left';
+
+        if (bloque.tipoModalidad) {
+          ctx.font = '12px system-ui, sans-serif';
+          const modText = bloque.tipoModalidad;
+          const modW = ctx.measureText(modText).width + 22;
+          const modX = PAD + 6 + typeW + 10;
+          ctx.fillStyle = 'rgba(255,255,255,0.05)';
+          roundRectCanvas(ctx, modX, chipY, modW, 24, 7);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+          ctx.lineWidth = 1;
+          roundRectCanvas(ctx, modX, chipY, modW, 24, 7);
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(255,255,255,0.52)';
+          ctx.textAlign = 'center';
+          ctx.fillText(modText, modX + modW / 2, chipY + 16);
+          ctx.textAlign = 'left';
+        }
+
+        if (bloque.capTimeMinutos) {
+          ctx.font = 'bold 12px system-ui, sans-serif';
+          const tcTxt = `TC ${bloque.capTimeMinutos}min`;
+          const tcW = ctx.measureText(tcTxt).width + 22;
+          const tcX = PAD + INNER_W - tcW;
+          ctx.fillStyle = 'rgba(230,57,70,0.15)';
+          roundRectCanvas(ctx, tcX, chipY, tcW, 24, 7);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(230,57,70,0.38)';
+          ctx.lineWidth = 1;
+          roundRectCanvas(ctx, tcX, chipY, tcW, 24, 7);
+          ctx.stroke();
+          ctx.fillStyle = '#e63946';
+          ctx.textAlign = 'center';
+          ctx.fillText(tcTxt, tcX + tcW / 2, chipY + 16);
+          ctx.textAlign = 'left';
+        }
+
+        y += CARD_HDR;
+
+        // Descripción
+        if (dLines.length > 0) {
+          y += 16;
+          ctx.font = dFont;
+          ctx.fillStyle = '#6b7280';
+          ctx.textAlign = 'left';
+          for (const line of dLines) { ctx.fillText(line, PAD + 10, y); y += LINE; }
+          y += 12;
+        } else if (hasContent) {
+          y += 16;
+        }
+
+        // Ejercicios
+        for (let ei = 0; ei < (bloque.ejercicios || []).length; ei++) {
+          const ej = bloque.ejercicios[ei];
+          if (ei > 0) {
+            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(PAD + 10, y - 10);
+            ctx.lineTo(W - PAD - 10, y - 10);
+            ctx.stroke();
+          }
+
+          const repsTxt = ej.esquemaRepeticiones || '';
+          ctx.font = 'bold 20px system-ui, sans-serif';
+          const repsW = repsTxt ? ctx.measureText(repsTxt).width + 28 : 0;
+
+          if (repsTxt) {
+            ctx.fillStyle = 'rgba(230,57,70,0.18)';
+            roundRectCanvas(ctx, PAD + 10, y - 16, repsW, 32, 8);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(230,57,70,0.52)';
+            ctx.lineWidth = 1.5;
+            roundRectCanvas(ctx, PAD + 10, y - 16, repsW, 32, 8);
+            ctx.stroke();
+            ctx.fillStyle = '#e63946';
+            ctx.textAlign = 'center';
+            ctx.fillText(repsTxt, PAD + 10 + repsW / 2, y + 5);
+            ctx.textAlign = 'left';
+          }
+
+          const nameX = PAD + 10 + (repsW ? repsW + 14 : 0);
+
+          if (ej.pesoSugerido) {
+            // Calcular badge de peso primero para limitar el ancho del nombre
+            ctx.font = '13px system-ui, sans-serif';
+            let pesoTxt = ej.pesoSugerido;
+            while (pesoTxt.length > 1 && ctx.measureText(pesoTxt).width > 85) pesoTxt = pesoTxt.slice(0, -1);
+            if (pesoTxt !== ej.pesoSugerido) pesoTxt += '…';
+            const pesoW = ctx.measureText(pesoTxt).width + 18;
+            const pesoX = PAD + INNER_W - pesoW;
+
+            // Nombre acotado para no solapar el badge
+            const maxNameW = pesoX - nameX - 14;
+            ctx.font = '16px system-ui, sans-serif';
+            let nameTxt = ej.ejercicio?.nombre || '';
+            while (nameTxt.length > 1 && ctx.measureText(nameTxt).width > maxNameW) nameTxt = nameTxt.slice(0, -1);
+            if (nameTxt !== (ej.ejercicio?.nombre || '')) nameTxt += '…';
+            ctx.fillStyle = '#d8dce8';
+            ctx.textAlign = 'left';
+            ctx.fillText(nameTxt, nameX, y + 5);
+
+            // Badge peso
+            ctx.font = '13px system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.06)';
+            roundRectCanvas(ctx, pesoX, y - 13, pesoW, 24, 6);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+            ctx.lineWidth = 1;
+            roundRectCanvas(ctx, pesoX, y - 13, pesoW, 24, 6);
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(255,255,255,0.58)';
+            ctx.textAlign = 'center';
+            ctx.fillText(pesoTxt, pesoX + pesoW / 2, y + 5);
+            ctx.textAlign = 'left';
+          } else {
+            // Sin peso — nombre ocupa todo el espacio disponible
+            ctx.font = '16px system-ui, sans-serif';
+            ctx.fillStyle = '#d8dce8';
+            ctx.textAlign = 'left';
+            ctx.fillText(ej.ejercicio?.nombre || '', nameX, y + 5);
+          }
+          y += 46;
+        }
+
+        y += BPAD;
+      }
+
+      y += 16;
+
+      if (wi < wodsADescargar.length - 1) {
+        const sepGrad = ctx.createLinearGradient(PAD, 0, W - PAD, 0);
+        sepGrad.addColorStop(0, 'transparent');
+        sepGrad.addColorStop(0.5, 'rgba(255,255,255,0.09)');
+        sepGrad.addColorStop(1, 'transparent');
+        ctx.strokeStyle = sepGrad;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 7]);
+        ctx.beginPath(); ctx.moveTo(PAD, y + 8); ctx.lineTo(W - PAD, y + 8); ctx.stroke();
+        ctx.setLineDash([]);
+        y += 32;
+      }
+    }
+
+    // Footer
+    y += 22;
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
+    y += 18;
+    ctx.font = '11px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    ctx.textAlign = 'center';
+    ctx.fillText('Generado con Atletify', W / 2, y);
+    y += 22;
+    ctx.fillStyle = accentGrad;
+    ctx.fillRect(0, y, W, 6);
+    y += 6;
+
+    // Recortar al contenido real
+    const out = document.createElement('canvas');
+    out.width = W;
+    out.height = y + 12;
+    out.getContext('2d').drawImage(canvas, 0, 0);
+    const link = document.createElement('a');
+    link.download = `wod-${getFechaHoyString()}.png`;
+    link.href = out.toDataURL('image/png');
+    link.click();
+  };
+
   if (!user) return null;
 
   const notisNoLeidas = notificaciones.filter(n => !n.leida).length;
@@ -412,7 +811,6 @@ export default function UserPanel() {
               <div>
                 <h1 className="up-hero-name mb-1">
                   {String(user?.nombre || 'Atleta').split(' ')[0].toUpperCase()}
-                  <span className="ms-2" style={{ fontSize: '1.5rem' }}>🐺</span>
                 </h1>
                 <div className="d-flex flex-wrap align-items-center gap-2 mt-1">
                   <span className="up-hero-box-tag">
@@ -454,9 +852,9 @@ export default function UserPanel() {
 
           {/* 👇 BLOQUEO DE MEMBRESÍA VENCIDA 👇 */}
           {finanzas?.suscripcion?.estatus === 'Vencida' && (
-            <div className="row justify-content-center mb-5 animate__animated animate__shakeX">
+            <div className="row justify-content-center mb-5">
                 <div className="col-12 col-md-10 col-lg-8">
-                    <div className="card bg-black border-danger shadow-lg p-4 p-md-5 text-center">
+                    <div className="up-card up-card--top-danger p-4 p-md-5 text-center">
                         <i className="fas fa-exclamation-triangle text-danger fs-1 mb-3"></i>
                         <h2 className="text-white fw-bold mb-3" style={{fontFamily: 'var(--font-heading)'}}>MEMBRESÍA VENCIDA</h2>
                         <p className="text-secondary mb-4">
@@ -467,31 +865,26 @@ export default function UserPanel() {
                             </span>
                           )}
                         </p>
-                        
-                        <div className="row g-3 justify-content-center">
+
+                        <div className="d-flex flex-column align-items-stretch gap-3 mx-auto" style={{ maxWidth: '420px' }}>
                             {finanzas?.configuracionBox?.aceptarPagosEnLinea !== false && (
-                                <div className="col-12 col-md-8">
-                                    <button 
-                                        onClick={handlePagarEnLinea} 
-                                        disabled={iniciandoPago}
-                                        className="btn btn-danger w-100 py-3 fw-bold rounded-pill shadow"
-                                    >
-                                        {iniciandoPago ? <><i className="fas fa-spinner fa-spin me-2"></i>Conectando con Stripe...</> : <><i className="fab fa-stripe me-2 fs-5"></i> Domiciliar Tarjeta / Pagar</>}
-                                    </button>
-                                </div>
+                                <BotonSeguro
+                                    onClick={handlePagarEnLinea}
+                                    disabled={iniciandoPago}
+                                    className="up-btn up-btn-primary up-btn-block"
+                                    textoProcesando={<><i className="fas fa-spinner fa-spin me-2"></i>Conectando con Stripe...</>}
+                                >
+                                    <i className="fab fa-stripe me-2 fs-5"></i> Domiciliar Tarjeta / Pagar
+                                </BotonSeguro>
                             )}
                             {finanzas?.configuracionBox?.aceptarTransferencias !== false && (
-                                <div className="col-12 col-md-8">
-                                    <button className="btn btn-outline-info w-100 py-2 fw-bold rounded-pill" onClick={() => alert('Envía tu comprobante de transferencia al WhatsApp de administración para que un coach reactive tu cuenta manualmente.')}>
-                                        <i className="fas fa-file-invoice-dollar me-2"></i> Ya transferí (Subir comprobante)
-                                    </button>
-                                </div>
+                                <button className="up-btn up-btn-outline up-btn-block" onClick={() => alert('Envía tu comprobante de transferencia al WhatsApp de administración para que un administrador reactive tu cuenta manualmente.')}>
+                                    <i className="fas fa-file-invoice-dollar me-2"></i> Ya transferí (Subir comprobante)
+                                </button>
                             )}
                             {finanzas?.configuracionBox?.aceptarEfectivo !== false && (
-                                <div className="col-12 col-md-8">
-                                    <div className="text-muted small mt-2">
-                                        <i className="fas fa-store-alt me-1"></i> O paga en efectivo en recepción
-                                    </div>
+                                <div className="text-muted small">
+                                    <i className="fas fa-store-alt me-1"></i> O paga en efectivo en recepción
                                 </div>
                             )}
                         </div>
@@ -502,17 +895,17 @@ export default function UserPanel() {
 
           {/* 👇 GRACIA ALERT 👇 */}
           {finanzas?.suscripcion?.estatus === 'Gracia' && (
-            <div className="alert bg-warning text-dark border-warning mb-4 shadow-sm fw-bold animate__animated animate__fadeInDown d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <div>
-                  <i className="fas fa-clock me-2"></i> 
-                  Tuvimos un problema con tu último pago o te encuentras en tus días de gracia. Tu acceso será bloqueado pronto si no lo regularizas. 
+            <div className="up-card up-card--top-accent p-3 p-md-4 mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div className="text-secondary" style={{ minWidth: 0, flex: '1 1 240px' }}>
+                  <i className="fas fa-clock me-2" style={{ color: 'var(--accent)' }}></i>
+                  <strong className="text-white">Tuvimos un problema con tu último pago</strong> o te encuentras en tus días de gracia. Tu acceso será bloqueado pronto si no lo regularizas.
                   {finanzas?.configuracionBox?.recargoMontoFijo > 0 && (
-                    <span className="d-block mt-1 text-dark" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                    <span className="d-block mt-2" style={{ fontSize: '0.82rem' }}>
                       💡 Evita pagar un recargo de ${finanzas.configuracionBox.recargoMontoFijo} MXN realizando tu pago en línea a tiempo.
                     </span>
                   )}
                 </div>
-                <button onClick={handlePagarEnLinea} className="btn btn-sm btn-dark fw-bold text-warning rounded-pill">Pagar Ahora</button>
+                <button onClick={handlePagarEnLinea} className="up-btn up-btn-accent up-btn-sm">Pagar Ahora</button>
             </div>
           )}
 
@@ -527,9 +920,16 @@ export default function UserPanel() {
                   <h5 className="up-card-title">
                     <i className="fas fa-clipboard-list text-danger me-2"></i>WOD DEL DÍA
                   </h5>
-                  <span className="up-date-badge">
-                    {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
-                  </span>
+                  <div className="d-flex align-items-center gap-2 flex-wrap">
+                    <span className="up-date-badge">
+                      {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
+                    </span>
+                    {!loadingWod && wodsHoy.length > 0 && (
+                      <button className="up-icon-btn" onClick={handleClickDescargar} title="Descargar imagen del WOD">
+                        <i className="fas fa-download"></i>
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="up-card-body">
                   {loadingWod ? (
@@ -541,43 +941,65 @@ export default function UserPanel() {
                       <p className="text-muted small mb-0">No hay entrenamiento programado para hoy. ¡Recupera esos músculos!</p>
                     </div>
                   ) : (
-                    <div className="d-flex flex-column gap-5">
+                    <div className="d-flex flex-column">
                       {(() => {
                         const wodsAMostrar = miClaseHoy
                           ? wodsHoy.filter(w => !w.clasesAsignadas || w.clasesAsignadas.length === 0 || w.clasesAsignadas.some(c => c.idClase === miClaseHoy.idClase))
                           : wodsHoy;
 
-                        if (wodsAMostrar.length === 0) return <p className="text-secondary opacity-50 text-center">No hay WOD asignado para tu clase específica.</p>;
+                        if (wodsAMostrar.length === 0) return <p className="text-secondary opacity-50 text-center py-3">No hay WOD asignado para tu clase específica.</p>;
 
-                        return wodsAMostrar.map(wod => (
-                          <div key={wod.idEntrenamiento}>
-                            <h3 className="fw-bold text-white mb-4 d-flex align-items-center gap-2" style={{ fontFamily: 'var(--font-heading)' }}>
-                              <i className="fas fa-dumbbell text-danger"></i> {wod.titulo}
-                            </h3>
-                            {wod.bloques?.map(bloque => (
-                              <div key={bloque.idBloque} className="bg-dark bg-opacity-50 p-4 rounded-4 mb-3 border border-secondary border-opacity-25">
-                                <div className="d-flex justify-content-between align-items-start mb-3">
-                                  <h5 className="fw-bold text-info mb-0" style={{ fontFamily: 'var(--font-heading-alt)' }}>{bloque.tipoBloque} <span className="text-white opacity-50 small fw-normal ms-2">({bloque.tipoModalidad})</span></h5>
-                                  {bloque.capTimeMinutos && <span className="badge bg-danger">TC: {bloque.capTimeMinutos}</span>}
-                                </div>
-                                {bloque.descripcionLibre && <p className="text-light mb-3" style={{ whiteSpace: 'pre-wrap' }}>{bloque.descripcionLibre}</p>}
+                        const WOD_COLORS = ['var(--primary)', 'var(--accent-cool)', 'var(--accent)'];
 
-                                {bloque.ejercicios?.length > 0 && (
-                                  <ul className="list-unstyled mb-0">
-                                    {bloque.ejercicios.map((ej, index) => (
-                                      <li key={index} className="mb-2 text-secondary d-flex align-items-center">
-                                        <i className="fas fa-angle-right text-danger me-2 small"></i>
-                                        <strong className="text-white me-2">{ej.esquemaRepeticiones}</strong>
-                                        {ej.ejercicio?.nombre}
-                                        {ej.pesoSugerido && <span className="ms-2 badge bg-secondary bg-opacity-25 text-light">{ej.pesoSugerido}</span>}
-                                      </li>
-                                    ))}
-                                  </ul>
+                        return wodsAMostrar.map((wod, wodIdx) => {
+                          const wodColor = WOD_COLORS[wodIdx] || 'var(--primary)';
+                          return (
+                            <div key={wod.idEntrenamiento} className="up-wod-entry">
+                              <div className="up-wod-title-row">
+                                {wodsAMostrar.length > 1 ? (
+                                  <span className="up-wod-num" style={{ background: wodColor }}>{wodIdx + 1}</span>
+                                ) : (
+                                  <i className="fas fa-dumbbell up-wod-icon"></i>
                                 )}
+                                <span className="up-wod-title">{wod.titulo}</span>
                               </div>
-                            ))}
-                          </div>
-                        ));
+
+                              {wod.bloques?.map(bloque => (
+                                <div key={bloque.idBloque} className="up-bloque" style={wodsAMostrar.length > 1 ? { borderLeft: `3px solid ${wodColor}` } : {}}>
+                                  <div className="up-bloque-header">
+                                    <div className="d-flex align-items-center gap-2 flex-wrap">
+                                      <span className="up-bloque-tipo">{bloque.tipoBloque}</span>
+                                      <span className="up-bloque-mod">{bloque.tipoModalidad}</span>
+                                    </div>
+                                    {bloque.capTimeMinutos && (
+                                      <span className="up-bloque-tc">
+                                        <i className="fas fa-stopwatch me-1"></i>TC {bloque.capTimeMinutos}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="up-bloque-body">
+                                    {bloque.descripcionLibre && (
+                                      <p className="up-bloque-desc">{bloque.descripcionLibre}</p>
+                                    )}
+                                    {bloque.ejercicios?.length > 0 && (
+                                      <ul className="up-ej-list">
+                                        {bloque.ejercicios.map((ej, index) => (
+                                          <li key={index} className="up-ej-item">
+                                            <span className="up-ej-reps">{ej.esquemaRepeticiones}</span>
+                                            <span className="up-ej-name">{ej.ejercicio?.nombre}</span>
+                                            {ej.pesoSugerido && <span className="up-ej-peso">{ej.pesoSugerido}</span>}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+
+                              {wodIdx < wodsAMostrar.length - 1 && <div className="up-wod-divider"></div>}
+                            </div>
+                          );
+                        });
                       })()}
                     </div>
                   )}
@@ -616,25 +1038,24 @@ export default function UserPanel() {
                     </div>
 
                     {mostrarPizarra && (
-                      <div className="px-4 py-3 border-bottom" style={{ borderColor: 'var(--border)' }}>
-                        <div className="d-flex bg-black bg-opacity-50 rounded-pill p-1 mb-3 border border-secondary border-opacity-25">
-                          <button onClick={() => setFiltroGenero('Hombre')} className={`btn flex-grow-1 rounded-pill fw-bold transition-all py-2 ${filtroGenero === 'Hombre' ? 'btn-primary text-white shadow' : 'btn-link text-secondary text-decoration-none'}`}>Hombres</button>
-                          <button onClick={() => setFiltroGenero('Mujer')} className={`btn flex-grow-1 rounded-pill fw-bold transition-all py-2 ${filtroGenero === 'Mujer' ? 'btn-danger text-white shadow' : 'btn-link text-secondary text-decoration-none'}`}>Mujeres</button>
+                      <div className="up-pizarra-filtros">
+                        <div className="up-seg">
+                          <button onClick={() => setFiltroGenero('Hombre')} className={`up-seg-btn ${filtroGenero === 'Hombre' ? 'is-active' : ''}`}>Hombres</button>
+                          <button onClick={() => setFiltroGenero('Mujer')} className={`up-seg-btn ${filtroGenero === 'Mujer' ? 'is-active-f' : ''}`}>Mujeres</button>
                         </div>
-                        <div className="d-flex gap-2 overflow-auto pb-2 align-items-center" style={{ whiteSpace: 'nowrap' }}>
-                          <button onClick={() => setFiltroPizarra('General')} className={`btn btn-sm rounded-pill fw-bold ${filtroPizarra === 'General' ? 'btn-warning text-dark' : 'btn-outline-secondary'}`}>Global</button>
-                          <button onClick={() => setFiltroPizarra('RX')} className={`btn btn-sm rounded-pill fw-bold ${filtroPizarra === 'RX' ? 'btn-danger text-white' : 'btn-outline-secondary'}`}>Solo RX</button>
-                          <button onClick={() => setFiltroPizarra('Scaled')} className={`btn btn-sm rounded-pill fw-bold ${filtroPizarra === 'Scaled' ? 'btn-info text-dark' : 'btn-outline-secondary'}`}>Solo Scaled</button>
+                        <div className="up-chips">
+                          <button onClick={() => setFiltroPizarra('General')} className={`up-chip ${filtroPizarra === 'General' ? 'is-active' : ''}`}>Global</button>
+                          <button onClick={() => setFiltroPizarra('RX')} className={`up-chip ${filtroPizarra === 'RX' ? 'is-active' : ''}`}>Solo RX</button>
+                          <button onClick={() => setFiltroPizarra('Scaled')} className={`up-chip ${filtroPizarra === 'Scaled' ? 'is-active' : ''}`}>Solo Scaled</button>
                           {[...new Set(pizarra.map(p => p.claseHora))].filter(Boolean).map(hora => (
-                            <button key={hora} onClick={() => setFiltroPizarra(hora)} className={`btn btn-sm rounded-pill fw-bold ${filtroPizarra === hora ? 'btn-primary text-white' : 'btn-outline-secondary'}`}>
-                              <i className="far fa-clock me-1"></i> Clase {String(hora || '').substring(0, 5)}
+                            <button key={hora} onClick={() => setFiltroPizarra(hora)} className={`up-chip ${filtroPizarra === hora ? 'is-active' : ''}`}>
+                              <i className="far fa-clock"></i> {String(hora || '').substring(0, 5)}
                             </button>
                           ))}
-                          <div className="ms-2 border-start border-secondary border-opacity-25 ps-2">
-                            <button onClick={() => setSoloCompas(!soloCompas)} className={`btn btn-sm rounded-pill fw-bold shadow-sm ${soloCompas ? 'btn-warning text-dark' : 'btn-outline-secondary'}`}>
-                              <i className="fas fa-paw me-1"></i> {soloCompas ? 'Viendo Manada' : 'Filtrar Compas'}
-                            </button>
-                          </div>
+                          <span className="up-chip-sep"></span>
+                          <button onClick={() => setSoloCompas(!soloCompas)} className={`up-chip ${soloCompas ? 'is-active' : ''}`}>
+                            <i className="fas fa-paw"></i> {soloCompas ? 'Viendo Manada' : 'Compas'}
+                          </button>
                         </div>
                       </div>
                     )}
@@ -685,57 +1106,48 @@ export default function UserPanel() {
                         let lastRx = null;
 
                         return (
-                          <table className="table table-dark table-hover mb-0 align-middle animate__animated animate__fadeIn">
-                            <tbody>
-                              {atletasFiltrados.map((res, index) => {
-                                if (index === 0) {
-                                  currentRank = 1;
-                                } else {
-                                  if (res.valorOrdenamiento !== lastValor || res.esRx !== lastRx) {
-                                    currentRank++;
-                                  }
+                          <div className="up-rank-list animate__animated animate__fadeIn">
+                            {atletasFiltrados.map((res, index) => {
+                              if (index === 0) {
+                                currentRank = 1;
+                              } else {
+                                if (res.valorOrdenamiento !== lastValor || res.esRx !== lastRx) {
+                                  currentRank++;
                                 }
-                                lastValor = res.valorOrdenamiento;
-                                lastRx = res.esRx;
+                              }
+                              lastValor = res.valorOrdenamiento;
+                              lastRx = res.esRx;
 
-                                const posicionReal = currentRank;
-                                return (
-                                  <tr key={index} className="border-bottom border-secondary border-opacity-10">
-                                    <td className="ps-4 py-3" style={{ width: '60px' }}>
-                                      {posicionReal === 1 ? <i className="fas fa-medal fs-3 text-warning"></i> :
-                                        posicionReal === 2 ? <i className="fas fa-medal fs-4 text-secondary" style={{ color: '#C0C0C0' }}></i> :
-                                          posicionReal === 3 ? <i className="fas fa-medal fs-5" style={{ color: '#cd7f32' }}></i> :
-                                            <span className="fw-bold text-secondary fs-5" style={{ fontFamily: 'var(--font-stats)' }}>#{posicionReal}</span>}
-                                    </td>
-                                    <td className="py-3">
-                                      <div className="d-flex align-items-center gap-3">
-                                        <div className="rounded-circle bg-danger bg-opacity-25 d-flex justify-content-center align-items-center text-white fw-bold border border-danger border-opacity-50" style={{ width: '45px', height: '45px', flexShrink: 0, fontSize: '1.2rem', fontFamily: 'var(--font-heading)' }}>
-                                          {res.apodo ? res.apodo.charAt(0).toUpperCase() : res.nombreAtleta.charAt(0).toUpperCase()}
-                                        </div>
-                                        <div className="d-flex flex-column">
-                                          <div className="d-flex align-items-center gap-2 mb-1">
-                                            <div className="fw-bold text-white" style={{ fontSize: '1.1rem', fontFamily: 'var(--font-heading)' }}>{res.apodo || res.nombreAtleta.split(' ')[0]}</div>
-                                            {res.esRx && <span className="badge bg-warning text-dark px-2 rounded-pill shadow-sm" style={{ fontSize: '0.6rem' }}><i className="fas fa-fire"></i> RX</span>}
-                                          </div>
-                                          <div className="d-flex flex-wrap align-items-center gap-2">
-                                            {res.estadoDelDia && <span className="badge bg-black border border-secondary border-opacity-50 text-light fw-normal shadow-sm" style={{ fontSize: '0.75rem' }}>{res.estadoDelDia}</span>}
-                                            {res.nivelGamer && <span className="text-warning fw-bold" style={{ fontSize: '0.65rem', fontFamily: 'var(--font-stats)' }}>LVL: {res.nivelGamer.toUpperCase()}</span>}
-                                          </div>
-                                          {res.comentarios && <small className="text-secondary fst-italic mt-1"><i className="fas fa-comment-alt me-1 opacity-50"></i>{res.comentarios}</small>}
-                                        </div>
-                                      </div>
-                                    </td>
-                                    <td className="text-end pe-4 py-3">
-                                      <span className={`fs-4 fw-bold ${(res.textoDisplay || '').toUpperCase().includes('DNF') ? 'text-danger' : 'text-info'}`} style={{ fontFamily: 'var(--font-stats)' }}>
-                                        {res.textoDisplay || '--'}
-                                      </span>
-                                      <div className="text-secondary small">{String(res.claseHora || '').substring(0, 5)}</div>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
+                              const posicionReal = currentRank;
+                              const esDnf = (res.textoDisplay || '').toUpperCase().includes('DNF');
+                              return (
+                                <div key={index} className="up-rank-row">
+                                  <div className="up-rank-pos">
+                                    {posicionReal === 1 ? <i className="fas fa-medal text-warning"></i> :
+                                      posicionReal === 2 ? <i className="fas fa-medal" style={{ color: '#C0C0C0' }}></i> :
+                                        posicionReal === 3 ? <i className="fas fa-medal" style={{ color: '#cd7f32' }}></i> :
+                                          <>#{posicionReal}</>}
+                                  </div>
+                                  <div className="up-rank-avatar">
+                                    {res.apodo ? res.apodo.charAt(0).toUpperCase() : res.nombreAtleta.charAt(0).toUpperCase()}
+                                  </div>
+                                  <div className="up-rank-info">
+                                    <div className="up-rank-name">{res.apodo || res.nombreAtleta.split(' ')[0]}</div>
+                                    <div className="up-rank-meta">
+                                      {res.esRx && <span className="up-rank-badge up-rank-badge--rx"><i className="fas fa-fire"></i> RX</span>}
+                                      {res.estadoDelDia && <span className="up-rank-badge up-rank-badge--estado">{res.estadoDelDia}</span>}
+                                      {res.nivelGamer && <span className="up-rank-lvl">LVL {res.nivelGamer.toUpperCase()}</span>}
+                                    </div>
+                                    {res.comentarios && <div className="up-rank-comment"><i className="fas fa-comment-alt me-1 opacity-50"></i>{res.comentarios}</div>}
+                                  </div>
+                                  <div className="up-rank-score">
+                                    <div className={`up-rank-score-val ${esDnf ? 'is-dnf' : ''}`}>{res.textoDisplay || '--'}</div>
+                                    <div className="up-rank-score-hora">{String(res.claseHora || '').substring(0, 5)}</div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         );
                       })()}
                     </div>
@@ -789,35 +1201,33 @@ export default function UserPanel() {
 
               {/*  LA NUEVA TARJETA DE PLAN (Reemplaza la tuya por esta)  */}
               {finanzas && (
-                <div className="p-4 rounded border border-secondary bg-dark mb-4 position-relative" style={{ boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }}>
+                <div className="mb-4 position-relative" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderTop: '3px solid var(--primary)', borderRadius: '16px', padding: '1.4rem', boxShadow: '0 4px 32px rgba(0,0,0,0.35)' }}>
 
                   {/* Etiqueta VIP si tiene Precio Especial */}
                   {finanzas.precioEspecial && (
-                    <span className="badge bg-warning text-dark position-absolute top-0 start-50 translate-middle px-3 py-2 border border-dark rounded-pill shadow">
-                      <i className="fas fa-star me-1"></i> Precio Preferencial
-                    </span>
+                    <span className="up-plan-vip"><i className="fas fa-star me-1"></i> Precio Preferencial</span>
                   )}
 
-                  <div className="d-flex justify-content-between align-items-center">
-                    <div>
-                      <p className="text-secondary small fw-bold mb-0">PLAN ACTUAL</p>
-                      <h2 className="text-white fw-bold mb-0" style={{ fontFamily: 'var(--font-heading)' }}>{finanzas.nombrePlan}</h2>
+                  <div className="d-flex justify-content-between align-items-start gap-2">
+                    <div style={{ minWidth: 0 }}>
+                      <div className="up-mini-label">Plan actual</div>
+                      <h2 className="up-plan-name">{finanzas.nombrePlan || '—'}</h2>
                       {finanzas.planInfo?.nivelAcceso && (
-                        <span className="badge bg-secondary bg-opacity-50 mt-1 border border-secondary"><i className="fas fa-dumbbell me-1"></i>Nivel: {finanzas.planInfo.nivelAcceso}</span>
+                        <span className="up-plan-chip"><i className="fas fa-dumbbell me-1"></i>Nivel: {finanzas.planInfo.nivelAcceso}</span>
                       )}
                     </div>
 
-                    <div className="text-end">
+                    <div className="up-plan-stat">
                       {finanzas.suscripcion?.clasesRestantes != null ? (
-                        <div className="text-center p-2 rounded bg-black border border-success">
-                          <h2 className="text-success fw-bold mb-0 lh-1">{finanzas.suscripcion.clasesRestantes}</h2>
-                          <small className="text-secondary fw-bold" style={{ fontSize: '0.6rem' }}>PASES</small>
-                        </div>
+                        <>
+                          <span className="up-plan-stat-num">{finanzas.suscripcion.clasesRestantes}</span>
+                          <span className="up-plan-stat-label">Pases</span>
+                        </>
                       ) : (
-                        <div>
-                          <h5 className="text-success fw-bold mb-0">Vence: {finanzas.suscripcion?.fechaVencimiento ? new Date(finanzas.suscripcion.fechaVencimiento).toLocaleDateString() : '--'}</h5>
-                          <small className="text-secondary">{finanzas.membresias?.[0]?.diasRestantes || 0} días restantes</small>
-                        </div>
+                        <>
+                          <span className="up-plan-stat-date">{finanzas.suscripcion?.fechaVencimiento ? new Date(finanzas.suscripcion.fechaVencimiento).toLocaleDateString() : '--'}</span>
+                          <span className="up-plan-stat-label">{finanzas.membresias?.[0]?.diasRestantes || 0} días</span>
+                        </>
                       )}
                     </div>
                   </div>
@@ -825,9 +1235,9 @@ export default function UserPanel() {
                   {/* EL BOTÓN QUE ABRE EL MODAL */}
                   <button
                     onClick={() => setShowModalPlanes(true)}
-                    className="btn btn-outline-info w-100 mt-3 fw-bold"
+                    className="up-btn up-btn-outline up-btn-block mt-3"
                   >
-                    <i className="fas fa-gem me-2"></i> Ver mis Beneficios y Opciones del Box
+                    <i className="fas fa-gem me-2"></i> Beneficios y opciones
                   </button>
                 </div>
               )}
@@ -888,31 +1298,24 @@ export default function UserPanel() {
                         {miClaseHoy && (
                           <div className="mt-3 border-top border-secondary border-opacity-25 pt-3">
                             <label className="small text-secondary fw-bold mb-2">¿Qué vas a entrenar hoy?</label>
-                            <select
-                              className="form-select form-select-sm bg-dark text-info border-secondary shadow-none"
-                              value={
-                                miClaseHoy.idMiWod != null && miClaseHoy.idMiWod !== -1
-                                  ? miClaseHoy.idMiWod
-                                  : wodsHoy.length > 0 ? wodsHoy[0].idEntrenamiento : 'none'
-                              }
-                              onChange={(e) => {
-                                if (e.target.value === '-1' || parseInt(e.target.value) === -1) {
-                                  cancelarReservaHoy(miClaseHoy.idClase);
-                                } else {
-                                  cambiarMiWod(miClaseHoy.idMiAsistencia, e.target.value);
-                                }
+                            <OpcionesPicker
+                              valor={miClaseHoy.idMiWod != null && miClaseHoy.idMiWod !== -1 ? miClaseHoy.idMiWod : (wodsHoy.length > 0 ? wodsHoy[0].idEntrenamiento : '')}
+                              onCambiar={(v) => {
+                                if (parseInt(v) === -1) cancelarReservaHoy(miClaseHoy.idClase);
+                                else cambiarMiWod(miClaseHoy.idMiAsistencia, v);
                               }}
-                            >
-                              {wodsHoy.length === 0
-                                ? <option value="none" disabled>⏳ Aún no hay WODs programados</option>
-                                : wodsHoy.map(w => <option key={w.idEntrenamiento} value={w.idEntrenamiento}>🏋️ {w.titulo}</option>)
-                              }
-                              <option value={-1}>🎧 OPEN GYM — Cancelar mi lugar</option>
-                            </select>
+                              opciones={[
+                                ...wodsHoy.map(w => ({ valor: w.idEntrenamiento, label: w.titulo, desc: 'Entrenamiento del día' })),
+                                { valor: -1, label: 'Open Gym', desc: 'Cancelar mi lugar (horario libre)' }
+                              ]}
+                              titulo="¿Qué vas a entrenar?"
+                              icono="fas fa-dumbbell"
+                              placeholder={wodsHoy.length === 0 ? 'Aún no hay WODs' : '— Elige tu WOD —'}
+                            />
                           </div>
                         )}
                       </div>
-                      <button onClick={abrirModalReservas} className="btn btn-sm btn-outline-primary rounded-pill w-100 fw-bold">
+                      <button onClick={abrirModalReservas} className="up-btn up-btn-outline up-btn-sm up-btn-block">
                         VER / CAMBIAR HORARIO
                       </button>
                     </div>
@@ -934,7 +1337,7 @@ export default function UserPanel() {
                       </button>
                     </div>
                   ) : (
-                    <button onClick={abrirModalReservas} className="btn btn-danger rounded-pill fw-bold w-100 py-2">
+                    <button onClick={abrirModalReservas} className="up-btn up-btn-primary up-btn-block">
                       <i className="fas fa-plus me-2"></i>RESERVAR UN HORARIO
                     </button>
                   )}
@@ -951,7 +1354,7 @@ export default function UserPanel() {
                 </div>
                 <div className="px-4 pb-4 pt-3">
                   <p className="text-secondary small mb-3" style={{ fontFamily: 'var(--font-body)' }}>Leaderboard en vivo. Entra a la arena y compite.</p>
-                  <button onClick={(e) => { e.stopPropagation(); navigate('/portal-competencias'); }} className="btn btn-outline-warning btn-sm w-100 rounded-pill fw-bold">
+                  <button onClick={(e) => { e.stopPropagation(); navigate('/portal-competencias'); }} className="up-btn up-btn-accent up-btn-sm up-btn-block">
                     ENTRAR A LA ARENA
                   </button>
                 </div>
@@ -1022,15 +1425,15 @@ export default function UserPanel() {
 
       {/* MODAL NOTIFICACIONES - UNCHANGED */}
       {showModalNotis && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 1050, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px' }}>
-          <div className="card border-0 shadow-lg w-100 animate__animated animate__zoomIn" style={{ maxWidth: '450px', background: 'linear-gradient(180deg, #1a0505 0%, #050505 100%)', borderRadius: '24px', border: '1px solid rgba(255, 193, 7, 0.3)' }}>
+        <div className="up-modal-overlay" onClick={() => setShowModalNotis(false)}>
+          <div className="up-modal up-modal--sm" onClick={e => e.stopPropagation()}>
 
-            <div className="p-4 border-bottom border-warning border-opacity-25 d-flex justify-content-between align-items-center">
-              <h5 className="fw-bold text-white mb-0"><i className="fas fa-bell text-warning me-2"></i> Avisos</h5>
-              <button onClick={() => setShowModalNotis(false)} className="btn btn-dark text-white rounded-circle flex-shrink-0 d-flex align-items-center justify-content-center" style={{ width: '36px', height: '36px', minWidth: '36px' }}><i className="fas fa-times"></i></button>
+            <div className="up-modal-header">
+              <h5 className="up-modal-title"><i className="fas fa-bell"></i> Avisos</h5>
+              <button onClick={() => setShowModalNotis(false)} className="up-modal-close"><i className="fas fa-times"></i></button>
             </div>
 
-            <div className="card-body p-4" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+            <div className="up-modal-body">
               {notificaciones.length === 0 ? (
                 <div className="text-center py-4">
                   <i className="fas fa-envelope-open-text text-secondary fs-1 mb-2 opacity-50"></i>
@@ -1064,15 +1467,15 @@ export default function UserPanel() {
 
       {/* MODAL AMISTADES - UNCHANGED */}
       {showModalAmistades && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 1050, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px' }}>
-          <div className="card border-0 shadow-lg w-100 animate__animated animate__zoomIn" style={{ maxWidth: '450px', background: 'linear-gradient(180deg, #1a0505 0%, #050505 100%)', borderRadius: '24px', border: '1px solid rgba(220,53,69,0.3)' }}>
+        <div className="up-modal-overlay" onClick={() => setShowModalAmistades(false)}>
+          <div className="up-modal up-modal--sm" onClick={e => e.stopPropagation()}>
 
-            <div className="p-4 border-bottom border-danger border-opacity-25 d-flex justify-content-between align-items-center">
-              <h5 className="fw-bold text-white mb-0"><i className="fas fa-paw text-danger me-2"></i> Mi Manada</h5>
-              <button onClick={() => setShowModalAmistades(false)} className="btn btn-dark text-white rounded-circle flex-shrink-0 d-flex align-items-center justify-content-center" style={{ width: '36px', height: '36px', minWidth: '36px' }}><i className="fas fa-times"></i></button>
+            <div className="up-modal-header">
+              <h5 className="up-modal-title"><i className="fas fa-paw"></i> Mi Manada</h5>
+              <button onClick={() => setShowModalAmistades(false)} className="up-modal-close"><i className="fas fa-times"></i></button>
             </div>
 
-            <div className="card-body p-4" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+            <div className="up-modal-body">
               {solicitudesPendientes.length > 0 && (
                 <div className="mb-4">
                   <h6 className="text-danger fw-bold small mb-3">NUEVAS SOLICITUDES</h6>
@@ -1146,12 +1549,13 @@ export default function UserPanel() {
 
       {/* MODAL RESERVAS - UNCHANGED */}
       {showModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', zIndex: 1050, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px' }}>
-          <div className="card text-white p-4 w-100 shadow-lg" style={{ ...glassCard, maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div className="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom border-secondary border-opacity-25">
-              <h5 className="fw-bold mb-0"><i className="fas fa-calendar-day text-danger me-2"></i> Clases Disponibles</h5>
-              <button onClick={() => setShowModal(false)} className="btn btn-sm btn-outline-secondary rounded-circle flex-shrink-0 d-flex justify-content-center align-items-center" style={{ width: '35px', height: '35px' }}><i className="fas fa-times"></i></button>
+        <div className="up-modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="up-modal" onClick={e => e.stopPropagation()}>
+            <div className="up-modal-header">
+              <h5 className="up-modal-title"><i className="fas fa-calendar-day"></i> Clases Disponibles</h5>
+              <button onClick={() => setShowModal(false)} className="up-modal-close"><i className="fas fa-times"></i></button>
             </div>
+            <div className="up-modal-body">
 
             <div className="mb-4">
               <RedGrayDatePicker
@@ -1279,15 +1683,18 @@ export default function UserPanel() {
                       {/*  NUEVO: SELECTOR AL RESERVAR (Mapea WODs Reales)  */}
                       {!clase.usuarioInscrito && !disabled && (
                         <div className="mb-3">
-                          <select
-                            className="form-select form-select-sm bg-black text-info border-secondary shadow-none"
-                            value={eleccionWod[clase.idClase] || (wodsHoy.length === 1 ? wodsHoy[0].idEntrenamiento : 0)}
-                            onChange={e => setEleccionWod({ ...eleccionWod, [clase.idClase]: e.target.value })}
-                          >
-                            {wodsHoy.length > 1 && <option value={0}>-- Elige tu WOD --</option>}
-                            {wodsHoy.map(w => <option key={w.idEntrenamiento} value={w.idEntrenamiento}> {w.titulo}</option>)}
-                            <option value={-1}> OPEN GYM (Libre)</option>
-                          </select>
+                          <OpcionesPicker
+                            valor={eleccionWod[clase.idClase] ?? (wodsHoy.length === 1 ? wodsHoy[0].idEntrenamiento : 0)}
+                            onCambiar={v => setEleccionWod({ ...eleccionWod, [clase.idClase]: v })}
+                            opciones={[
+                              ...(wodsHoy.length > 1 ? [{ valor: 0, label: 'Elige tu WOD', desc: 'Selecciona tu entrenamiento' }] : []),
+                              ...wodsHoy.map(w => ({ valor: w.idEntrenamiento, label: w.titulo, desc: 'Entrenamiento del día' })),
+                              { valor: -1, label: 'Open Gym', desc: 'Horario libre' }
+                            ]}
+                            titulo="Elige tu WOD"
+                            icono="fas fa-dumbbell"
+                            placeholder="— Elige tu WOD —"
+                          />
                         </div>
                       )}
                       <BotonSeguro onClick={() => toggleReserva(clase.idClase)} disabled={disabled} className={`btn ${btnColor} w-100 rounded-pill btn-sm fw-bold py-2 transition-all`} textoProcesando={<><i className="fas fa-spinner fa-spin me-1" />{btnText}</>}>
@@ -1298,6 +1705,7 @@ export default function UserPanel() {
                 })}
               </div>
             )}
+            </div>
           </div>
         </div>
       )}
@@ -1305,64 +1713,125 @@ export default function UserPanel() {
 
       {/* 👇 EL MODAL DE BENEFICIOS Y OPCIONES 👇 */}
       {showModalPlanes && finanzas && (
-        <div className="finanzas-modal-overlay" onClick={() => setShowModalPlanes(false)} style={{ zIndex: 9999, position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <div className="bg-dark border border-secondary p-4 rounded" style={{ maxWidth: '500px', width: '90%' }} onClick={e => e.stopPropagation()}>
+        <div className="up-modal-overlay" onClick={() => setShowModalPlanes(false)}>
+          <div className="up-modal" onClick={e => e.stopPropagation()}>
 
-            <div className="d-flex justify-content-between align-items-center mb-3 border-bottom border-secondary pb-2">
-              <h5 className="text-white fw-bold m-0"><i className="fas fa-id-card-alt text-info me-2"></i>Estado de Cuenta</h5>
-              <button className="btn-close btn-close-white" onClick={() => setShowModalPlanes(false)}></button>
+            <div className="up-modal-header">
+              <h5 className="up-modal-title"><i className="fas fa-id-card-alt"></i> Estado de Cuenta</h5>
+              <button className="up-modal-close" onClick={() => setShowModalPlanes(false)}><i className="fas fa-times"></i></button>
             </div>
+            <div className="up-modal-body">
 
             {/* BENEFICIOS DEL PLAN ACTUAL */}
             {finanzas.suscripcion?.estatus === 'Activa' && (
-              <div className="mb-4 p-3 border border-success rounded" style={{ backgroundColor: 'rgba(46, 204, 113, 0.05)' }}>
-                <h6 className="text-success fw-bold mb-3"><i className="fas fa-check-circle me-1"></i> Beneficios de tu plan</h6>
-                <ul className="text-light small m-0" style={{ listStyleType: 'none', paddingLeft: 0 }}>
-                  <li className="mb-2"><i className="fas fa-shield-alt text-primary me-2"></i>Acceso permitido a clases: <strong>{finanzas.planInfo?.nivelAcceso || 'CrossFit'}</strong></li>
-                  <li className="mb-2">
-                    <i className={`fas ${finanzas.planInfo?.permiteScore ? 'fa-chart-line text-success' : 'fa-times text-danger'} me-2`}></i>
-                    {finanzas.planInfo?.permiteScore ? 'Puedes registrar tus PRs en el Leaderboard' : 'Pizarra de Scores bloqueada para este plan'}
+              <div className="up-acc-box">
+                <h6 className="up-acc-box-title"><i className="fas fa-check-circle"></i> Beneficios de tu plan</h6>
+                <ul className="up-acc-list">
+                  <li><i className="fas fa-shield-alt text-primary mt-1"></i><span>Acceso permitido a clases: <strong className="text-white">{finanzas.planInfo?.nivelAcceso || 'CrossFit'}</strong></span></li>
+                  <li>
+                    <i className={`fas ${finanzas.planInfo?.permiteScore ? 'fa-chart-line text-success' : 'fa-times text-danger'} mt-1`}></i>
+                    <span>{finanzas.planInfo?.permiteScore ? 'Puedes registrar tus PRs en el Leaderboard' : 'Pizarra de Scores bloqueada para este plan'}</span>
                   </li>
-                  {finanzas.planInfo?.descripcion && <li className="mb-2"><i className="fas fa-info-circle text-info me-2"></i>{finanzas.planInfo.descripcion}</li>}
+                  {finanzas.planInfo?.descripcion && <li><i className="fas fa-info-circle text-info mt-1"></i><span>{finanzas.planInfo.descripcion}</span></li>}
                 </ul>
               </div>
             )}
 
             {/* ALERTA DE INSCRIPCIÓN */}
             {!finanzas.exentoDePago && finanzas.planInfo?.requiereInscripcion && (
-              <div className="mb-4 p-2 bg-warning bg-opacity-25 border border-warning rounded text-warning small">
-                <i className="fas fa-calendar-check me-2"></i> Tu mes de cobro de anualidad es el mes <strong>{finanzas.configuracionBox?.mesCobroInscripcion}</strong> de cada año.
+              <div className="up-acc-note">
+                <i className="fas fa-calendar-check mt-1"></i>
+                <span>Tu mes de cobro de anualidad es <strong>{['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][finanzas.configuracionBox?.mesCobroInscripcion - 1] ?? finanzas.configuracionBox?.mesCobroInscripcion}</strong> de cada año.</span>
               </div>
             )}
 
             {/* MENÚ DE COMPRAS RÁPIDAS (Precios del Box) */}
-            <h6 className="text-secondary fw-bold mb-3 text-center">MENÚ DE RECEPCIÓN</h6>
-            <div className="row g-2 text-center">
-              <div className="col-4">
-                <div className="p-2 border border-secondary rounded bg-black">
-                  <p className="text-info small fw-bold m-0" style={{ fontSize: '0.7rem' }}>Open Gym</p>
-                  <h6 className="text-white m-0 mt-1">${finanzas.configuracionBox?.costoGymMensual || '--'}</h6>
-                </div>
+            <div className="up-acc-menu-title">Menú de recepción</div>
+            <div className="up-price-grid">
+              <div className="up-price-card">
+                <p className="up-price-label" style={{ color: 'var(--accent-cool)' }}>Open Gym</p>
+                <p className="up-price-val">${finanzas.configuracionBox?.costoGymMensual || '--'}</p>
               </div>
-              <div className="col-4">
-                <div className="p-2 border border-secondary rounded bg-black">
-                  <p className="text-warning small fw-bold m-0" style={{ fontSize: '0.7rem' }}>Drop-In</p>
-                  <h6 className="text-white m-0 mt-1">${finanzas.configuracionBox?.costoDropIn || '--'}</h6>
-                </div>
+              <div className="up-price-card">
+                <p className="up-price-label" style={{ color: 'var(--accent)' }}>Drop-In</p>
+                <p className="up-price-val">${finanzas.configuracionBox?.costoDropIn || '--'}</p>
               </div>
-              <div className="col-4">
-                <div className="p-2 border border-secondary rounded bg-black">
-                  <p className="text-success small fw-bold m-0" style={{ fontSize: '0.7rem' }}>{finanzas.configuracionBox?.cantidadVisitasPaquete || 4} Visitas</p>
-                  <h6 className="text-white m-0 mt-1">${finanzas.configuracionBox?.costoPaqueteVisitas || '--'}</h6>
-                </div>
+              <div className="up-price-card">
+                <p className="up-price-label" style={{ color: 'var(--success)' }}>{finanzas.configuracionBox?.cantidadVisitasPaquete || 4} Visitas</p>
+                <p className="up-price-val">${finanzas.configuracionBox?.costoPaqueteVisitas || '--'}</p>
               </div>
             </div>
 
-            <button className="btn btn-secondary w-100 mt-4" onClick={() => setShowModalPlanes(false)}>Cerrar</button>
+            <button className="up-btn up-btn-ghost up-btn-block mt-4" onClick={() => setShowModalPlanes(false)}>Cerrar</button>
+            </div>
           </div>
         </div>
       )}
 
+      {/* MODAL SELECCIÓN DESCARGA WOD */}
+      {showModalDescarga && (() => {
+        const wodsDisponibles = miClaseHoy
+          ? wodsHoy.filter(w => !w.clasesAsignadas || w.clasesAsignadas.length === 0 || w.clasesAsignadas.some(c => c.idClase === miClaseHoy.idClase))
+          : wodsHoy;
+        const WOD_COLORS_UI = ['var(--primary)', 'var(--accent-cool)', 'var(--accent)'];
+        const todosSeleccionados = wodsSeleccionados.length === wodsDisponibles.length;
+
+        return (
+          <div className="up-modal-overlay" onClick={() => setShowModalDescarga(false)}>
+            <div className="up-modal up-modal--sm" onClick={e => e.stopPropagation()}>
+              <div className="up-modal-header">
+                <h5 className="up-modal-title"><i className="fas fa-download"></i> Descargar WOD</h5>
+                <button className="up-modal-close" onClick={() => setShowModalDescarga(false)}><i className="fas fa-times"></i></button>
+              </div>
+              <div className="up-modal-body">
+                <p className="mb-3" style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Selecciona qué WODs incluir en la imagen:</p>
+                <div className="d-flex flex-column gap-2 mb-4">
+                  {wodsDisponibles.map((wod, idx) => {
+                    const isSelected = wodsSeleccionados.includes(wod.idEntrenamiento);
+                    return (
+                      <div
+                        key={wod.idEntrenamiento}
+                        className={`up-dl-option ${isSelected ? 'is-selected' : ''}`}
+                        onClick={() => setWodsSeleccionados(prev =>
+                          isSelected ? prev.filter(id => id !== wod.idEntrenamiento) : [...prev, wod.idEntrenamiento]
+                        )}
+                      >
+                        <span className="up-dl-dot" style={{ background: WOD_COLORS_UI[idx] }}></span>
+                        <div className="flex-grow-1">
+                          <div className="up-dl-name">{wod.titulo}</div>
+                          <div className="up-dl-meta">{wod.bloques?.length || 0} bloque(s)</div>
+                        </div>
+                        <i className={`fas ${isSelected ? 'fa-check-circle' : 'fa-circle'} up-dl-check ${isSelected ? 'is-checked' : ''}`}></i>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="d-flex flex-column gap-2">
+                  <BotonSeguro
+                    type="button"
+                    className="up-btn up-btn-primary up-btn-block"
+                    disabled={wodsSeleccionados.length === 0}
+                    textoProcesando={<><i className="fas fa-spinner fa-spin me-2"></i>Generando imagen...</>}
+                    onClick={() => {
+                      const seleccion = wodsDisponibles.filter(w => wodsSeleccionados.includes(w.idEntrenamiento));
+                      setShowModalDescarga(false);
+                      downloadWodCard(seleccion);
+                    }}
+                  >
+                    <i className="fas fa-download me-2"></i>Descargar imagen
+                  </BotonSeguro>
+                  <button
+                    className="up-btn up-btn-ghost up-btn-block"
+                    onClick={() => setWodsSeleccionados(todosSeleccionados ? [] : wodsDisponibles.map(w => w.idEntrenamiento))}
+                  >
+                    {todosSeleccionados ? 'Deseleccionar todo' : 'Seleccionar todo'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );
