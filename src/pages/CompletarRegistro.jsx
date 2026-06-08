@@ -9,6 +9,7 @@ import BotonSeguro from '../components/BotonSeguro';
 import PasswordRulesHint from '../components/PasswordRulesHint';
 import { usePasswordStrength } from '../hooks/usePasswordStrength';
 import { useAuth } from '../context/AuthContext';
+import { grossUpStripe } from '../utils/comisionStripe';
 import '../assets/css/Register.css';
 import '../assets/css/CompletarRegistro.css';
 
@@ -18,15 +19,6 @@ const METODOS_PAGO = [
   { id: 'Transferencia', label: 'Transferencia bancaria', icon: 'fa-mobile-alt',      desc: 'Adjuntas el comprobante ahora mismo. Tu Coach validará el pago.' },
   { id: 'PagoEnLinea',   label: 'Pago en línea (tarjeta)', icon: 'fa-globe',          desc: 'Pagas ahora mismo con tu tarjeta de débito/crédito y te activas al instante.', esOnline: true }
 ];
-
-// Gross-up con la tarifa real de Stripe. DEBE coincidir EXACTO con el backend (ComisionStripe.GrossUp):
-//   g = ceil_al_centavo( (B + c*(1+iva)) / (1 - p*(1+iva)) )  con p=0.041, c=3, iva=0.16
-// Garantiza que el box reciba >= la base neta cuando el atleta paga la comisión.
-const grossUpStripe = (base) => {
-  const p = 0.041, c = 3, iva = 0.16, f = 1 + iva;
-  const g = (base + c * f) / (1 - p * f);
-  return Math.ceil(g * 100) / 100;
-};
 
 export default function CompletarRegistro() {
   const navigate = useNavigate();
