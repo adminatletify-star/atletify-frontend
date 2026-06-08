@@ -1349,6 +1349,11 @@ export default function GestionFinanzas() {
                             <span className="small text-secondary">{m.metodoPago}</span>
                             <span className="text-success fw-bold">{m.esCupon ? 'Cupón de visita' : `$${m.monto?.toFixed(2)}`}</span>
                           </div>
+                          {m.comisionStripe != null && (
+                            <div className="text-secondary mt-1" style={{ fontSize: '0.72rem' }}>
+                              Bruto ${m.montoBruto?.toFixed(2)} · Comisión Stripe -${m.comisionStripe?.toFixed(2)}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1367,7 +1372,14 @@ export default function GestionFinanzas() {
                                 <td>{m.nombreAtleta}</td>
                                 <td><span className={`mov-badge ${getBadgeMov(m.tipo)}`}>{m.tipo}</span></td>
                                 <td>{m.metodoPago}</td>
-                                <td className="text-end text-success fw-bold">{m.esCupon ? 'Cupón de visita' : `$${m.monto?.toFixed(2)}`}</td>
+                                <td className="text-end text-success fw-bold">
+                                  {m.esCupon ? 'Cupón de visita' : `$${m.monto?.toFixed(2)}`}
+                                  {m.comisionStripe != null && (
+                                    <div className="text-secondary fw-normal" style={{ fontSize: '0.7rem' }}>
+                                      Bruto ${m.montoBruto?.toFixed(2)} · Comisión -${m.comisionStripe?.toFixed(2)}
+                                    </div>
+                                  )}
+                                </td>
                               </tr>
                             ))
                           )}

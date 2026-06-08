@@ -19,6 +19,15 @@ const METODOS_PAGO = [
   { id: 'PagoEnLinea',   label: 'Pago en línea (tarjeta)', icon: 'fa-globe',          desc: 'Pagas ahora mismo con tu tarjeta de débito/crédito y te activas al instante.', esOnline: true }
 ];
 
+// Gross-up con la tarifa real de Stripe. DEBE coincidir EXACTO con el backend (ComisionStripe.GrossUp):
+//   g = ceil_al_centavo( (B + c*(1+iva)) / (1 - p*(1+iva)) )  con p=0.041, c=3, iva=0.16
+// Garantiza que el box reciba >= la base neta cuando el atleta paga la comisión.
+const grossUpStripe = (base) => {
+  const p = 0.041, c = 3, iva = 0.16, f = 1 + iva;
+  const g = (base + c * f) / (1 - p * f);
+  return Math.ceil(g * 100) / 100;
+};
+
 export default function CompletarRegistro() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -93,8 +102,11 @@ export default function CompletarRegistro() {
   );
   const inscripcionAplicable = planSeleccionado?.requiereInscripcion ? Number(montoInscripcion || 0) : 0;
   const totalCobrar = (planSeleccionado?.precio || 0) + inscripcionAplicable;
-  const comisionTarjeta = metodoPago === 'PagoEnLinea' && !absorberComision ? Math.round(((totalCobrar * 0.036) + 3) * 100) / 100 : 0;
-  const totalConComision = totalCobrar + comisionTarjeta;
+  // Si el atleta paga la comisión: gross-up con la tarifa real de Stripe (idéntico al backend) para
+  // que el box reciba la base neta exacta. Si el box la absorbe: solo la base.
+  const esOnlineConComision = metodoPago === 'PagoEnLinea' && !absorberComision;
+  const totalConComision = esOnlineConComision ? grossUpStripe(totalCobrar) : totalCobrar;
+  const comisionTarjeta = Math.round((totalConComision - totalCobrar) * 100) / 100;
 
   // Solo se ofrecen los métodos de pago que el Box habilitó en Editar Box
   const metodoHabilitado = (m) => {
