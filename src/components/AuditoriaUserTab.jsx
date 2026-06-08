@@ -17,6 +17,10 @@ const AccionBadge = ({ accion }) => {
   else if (accion.includes('ACTIVAR_VISITAS')) { color = '#f5a623'; icon = 'fa-gift'; }
   else if (accion.includes('DESACTIVAR_METODO')) { color = '#e67e22'; icon = 'fa-toggle-off'; }
   else if (accion.includes('ACTIVAR_METODO')) { color = '#22c55e'; icon = 'fa-toggle-on'; }
+  else if (accion.includes('APROBAR')) { color = '#2ECC71'; icon = 'fa-user-check'; }
+  else if (accion.includes('BANEAR')) { color = 'var(--primary)'; icon = 'fa-ban'; }
+  else if (accion.includes('RECORDAR')) { color = '#f5a623'; icon = 'fa-bell'; }
+  else if (accion.includes('RECHAZAR')) { color = '#e67e22'; icon = 'fa-user-times'; }
   else if (accion.includes('ALTA')) { color = '#2ECC71'; icon = 'fa-user-plus'; }
   else if (accion.includes('BAJA') || accion.includes('ELIMINAR')) { color = 'var(--primary)'; icon = 'fa-user-minus'; }
   else if (accion.includes('VENTA') || accion.includes('COBRO')) { color = '#3498db'; icon = 'fa-money-bill-wave'; }
@@ -119,6 +123,10 @@ export default function AuditoriaUserTab({ boxes }) {
           >
             <option value="">Todas las Acciones</option>
             <option value="ALTA_USUARIO">Alta de Usuario</option>
+            <option value="APROBAR_USUARIO">Aprobar Solicitud</option>
+            <option value="RECHAZAR_USUARIO">Rechazar Solicitud</option>
+            <option value="RECORDAR_RECHAZO">Recordatorio de Corrección</option>
+            <option value="BANEAR_USUARIO">Banear Usuario</option>
             <option value="BAJA_USUARIO">Baja de Usuario</option>
             <option value="COBRO_MENSUALIDAD">Cobro Mensualidad</option>
             <option value="VENTA_PRODUCTO">Venta de Producto</option>

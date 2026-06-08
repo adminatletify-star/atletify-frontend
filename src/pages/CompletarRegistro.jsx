@@ -8,6 +8,7 @@ import DateWheelPicker from '../components/DateWheelPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import PasswordRulesHint from '../components/PasswordRulesHint';
 import { usePasswordStrength } from '../hooks/usePasswordStrength';
+import { useAuth } from '../context/AuthContext';
 import '../assets/css/Register.css';
 import '../assets/css/CompletarRegistro.css';
 
@@ -20,6 +21,7 @@ const METODOS_PAGO = [
 
 export default function CompletarRegistro() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const correoParam = searchParams.get('correo');
@@ -312,13 +314,85 @@ export default function CompletarRegistro() {
     }
   };
 
-  // Detectar retorno de Stripe exitoso
+  // ── Retorno de Stripe: verificar el pago, auto-login y entrar al User Panel ──
+  // estadoRetornoStripe: null | 'verificando' | 'manual'
+  const [estadoRetornoStripe, setEstadoRetornoStripe] = useState(null);
+  const retornoIniciadoRef = useRef(false);
+
   useEffect(() => {
-    if (searchParams.get('stripe_success') === '1') {
-      setMetodoPagoConfirmado('PagoEnLinea');
-      setModalExitoOpen(true);
+    if (searchParams.get('stripe_success') !== '1') return;
+    if (retornoIniciadoRef.current) return;     // evita doble ejecución (StrictMode)
+    retornoIniciadoRef.current = true;
+
+    const sessionId = searchParams.get('session_id');
+    const boxId = searchParams.get('box');
+
+    // Sin datos para verificar → mostramos éxito y mandamos al login
+    if (!sessionId || !boxId) {
+      setEstadoRetornoStripe('manual');
+      return;
     }
+
+    setEstadoRetornoStripe('verificando');
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/usuarios/activar-tras-pago`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, idBox: Number(boxId) })
+        });
+        const data = await res.json();
+        if (res.ok && data.token && data.usuario) {
+          login(data.usuario, data.token);   // auto-login
+          navigate('/user-panel');
+          return;
+        }
+        setEstadoRetornoStripe('manual');
+      } catch {
+        setEstadoRetornoStripe('manual');
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  // Al volver de Stripe la URL ya no trae token/correo: mostramos una vista propia
+  // (confirmando el pago o, si no se pudo auto-loguear, el éxito con acceso al login).
+  if (searchParams.get('stripe_success') === '1') {
+    return (
+      <div className="reg-root d-flex justify-content-center align-items-center min-vh-100">
+        <div className="reg-card text-center p-5 slide-in" style={{ maxWidth: '500px' }}>
+          {estadoRetornoStripe === 'manual' ? (
+            <>
+              <i className="fas fa-check-circle fa-4x text-success mb-3"></i>
+              <h3 className="text-white fw-bold mb-2">¡Pago confirmado!</h3>
+              <p className="text-white-50 fs-5 mb-4">
+                Tu cuenta ya está activa. Inicia sesión para entrar a tu panel.
+              </p>
+              <button
+                type="button"
+                className="btn btn-outline-light rounded-pill px-5 py-2 fw-bold w-100"
+                onClick={() => navigate('/login')}
+              >
+                <i className="fas fa-sign-in-alt me-2"></i> Ir al Login
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="cr-loader-orbit mx-auto">
+                <div className="cr-loader-dot"></div>
+                <div className="cr-loader-dot"></div>
+                <div className="cr-loader-dot"></div>
+              </div>
+              <h4 className="text-white mt-4 mb-1">Confirmando tu pago</h4>
+              <p className="text-white-50 mb-0" style={{ fontSize: '0.85rem' }}>
+                Estamos activando tu cuenta, no cierres esta ventana...
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (tokenEstado === 'cargando') {
     return (
@@ -413,7 +487,7 @@ export default function CompletarRegistro() {
             Activa tu <span className="cr-hero-title-accent">Cuenta</span>
           </h1>
           <p className="cr-hero-sub">
-            Bienvenido a la manada. Estamos por activar tu cuenta enlazada a
+            Bienvenido al equipo. Estamos por activar tu cuenta enlazada a
           </p>
           <p className="cr-hero-email">
             <i className="fas fa-envelope"></i> {correoParam}
@@ -519,7 +593,7 @@ export default function CompletarRegistro() {
                     className="reg-input cr-username-input"
                     value={formData.username}
                     onChange={handleChange}
-                    placeholder="Ej. lobo99"
+                    placeholder="Ej. atleta99"
                     style={{ borderColor: usernameBorderColor }}
                     required
                   />

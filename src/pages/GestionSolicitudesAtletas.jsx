@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import AtletifyLoader from '../components/AtletifyLoader';
+import BotonSeguro from '../components/BotonSeguro';
 import '../assets/css/GestionClases.css';
 import '../assets/css/GestionSolicitudes.css';
 
@@ -264,8 +265,16 @@ export default function GestionSolicitudesAtletas() {
                       {p.esMudanza ? (
                         <span className="badge bg-info text-dark rounded-pill"><i className="fas fa-truck-moving me-1"></i> Mudanza</span>
                       ) : (
-                        <span className={`badge rounded-pill ${p.metodoPago === 'Transferencia' ? 'bg-success' : 'bg-warning text-dark'}`}>
-                          <i className={`fas ${p.metodoPago === 'Transferencia' ? 'fa-mobile-alt' : 'fa-money-bill-wave'} me-1`}></i>
+                        <span className={`badge rounded-pill ${
+                          p.metodoPago === 'Transferencia' ? 'bg-success' :
+                          p.metodoPago === 'Tarjeta' ? 'bg-info text-dark' :
+                          p.metodoPago === 'Efectivo' ? 'bg-warning text-dark' : 'bg-secondary'
+                        }`}>
+                          <i className={`fas ${
+                            p.metodoPago === 'Transferencia' ? 'fa-mobile-alt' :
+                            p.metodoPago === 'Tarjeta' ? 'fa-credit-card' :
+                            p.metodoPago === 'Efectivo' ? 'fa-money-bill-wave' : 'fa-question-circle'
+                          } me-1`}></i>
                           {p.metodoPago || 'Sin pago'}
                         </span>
                       )}
@@ -327,8 +336,28 @@ export default function GestionSolicitudesAtletas() {
                         </div>
                       </div>
 
-                      {/* BOTÓN PARA VER EL COMPROBANTE */}
-                      {!p.esMudanza && p.comprobante && (
+                      {/* COMPROBANTE + VERIFICACIÓN EN BANXICO (solo transferencias) */}
+                      {!p.esMudanza && p.metodoPago === 'Transferencia' && (
+                        <div className="d-flex gap-2 mb-3">
+                          {p.comprobante && (
+                            <button className="btn btn-outline-success flex-grow-1" onClick={() => setComprobanteViendo(p.comprobante)}>
+                              <i className="fas fa-eye me-2"></i> Ver Comprobante
+                            </button>
+                          )}
+                          <a
+                            href="https://www.banxico.org.mx/cep/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`btn btn-outline-info ${p.comprobante ? '' : 'w-100'}`}
+                            title="Verificar Comprobante Electrónico de Pago (CEP) en Banxico"
+                          >
+                            <i className="fas fa-external-link-alt me-1"></i> Portal Banxico
+                          </a>
+                        </div>
+                      )}
+
+                      {/* Comprobante para métodos que no son transferencia (por si existiera) */}
+                      {!p.esMudanza && p.metodoPago !== 'Transferencia' && p.comprobante && (
                         <button className="btn btn-outline-success w-100 mb-3" onClick={() => setComprobanteViendo(p.comprobante)}>
                           <i className="fas fa-eye me-2"></i> Ver Comprobante de Pago
                         </button>
@@ -361,9 +390,9 @@ export default function GestionSolicitudesAtletas() {
                                 </span>
                               )}
                             </div>
-                            <button type="button" className="gs-btn-recordar" onClick={() => enviarRecordatorio(p.idUsuario)}>
+                            <BotonSeguro type="button" className="gs-btn-recordar" onClick={() => enviarRecordatorio(p.idUsuario)} textoProcesando={<><i className="fas fa-spinner fa-spin"></i> Enviando...</>}>
                               <i className="fas fa-paper-plane"></i> Enviar recordatorio (+1 día)
-                            </button>
+                            </BotonSeguro>
                           </div>
                         );
                       })()}
@@ -463,9 +492,9 @@ export default function GestionSolicitudesAtletas() {
                   onChange={(e) => setModalAprobar({ ...modalAprobar, notas: e.target.value })}
                 />
 
-                <button onClick={confirmarAprobacion} className="gs-btn-approve w-100 mt-3">
+                <BotonSeguro type="button" onClick={confirmarAprobacion} className="gs-btn-approve w-100 mt-3" textoProcesando={<><i className="fas fa-spinner fa-spin"></i> Aprobando...</>}>
                   <i className="fas fa-check"></i> Aprobar y Registrar Movimiento
-                </button>
+                </BotonSeguro>
               </div>
             </div>
           </div>
@@ -500,9 +529,9 @@ export default function GestionSolicitudesAtletas() {
                 <label className="gs-modal-label">Motivo del rechazo (El atleta lo leerá):</label>
                 <textarea className="gs-modal-textarea" rows="3" placeholder="Ej: La foto del comprobante no es legible..." value={modalRechazo.motivo} onChange={(e) => setModalRechazo({ ...modalRechazo, motivo: e.target.value })}></textarea>
               </div>
-              <button onClick={() => enviarRechazo(false)} className="gs-btn-regano"><i className="fas fa-paper-plane"></i> Enviar Regaño / Rechazar</button>
+              <BotonSeguro type="button" onClick={() => enviarRechazo(false)} className="gs-btn-regano" textoProcesando={<><i className="fas fa-spinner fa-spin"></i> Enviando...</>}><i className="fas fa-paper-plane"></i> Enviar Regaño / Rechazar</BotonSeguro>
               <p className="gs-modal-divider">O si es una cuenta falsa/spam</p>
-              <button onClick={() => enviarRechazo(true)} className="gs-btn-banear"><i className="fas fa-ban"></i> Banear Permanente</button>
+              <BotonSeguro type="button" onClick={() => enviarRechazo(true)} className="gs-btn-banear" textoProcesando={<><i className="fas fa-spinner fa-spin"></i> Baneando...</>}><i className="fas fa-ban"></i> Banear Permanente</BotonSeguro>
             </div>
           </div>
         </div>
