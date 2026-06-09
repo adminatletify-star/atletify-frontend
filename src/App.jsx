@@ -311,6 +311,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 // === GUARDIA DE MANTENIMIENTO ===
 function MaintenanceGuard({ children }) {
   const [enMantenimiento, setEnMantenimiento] = useState(false);
+  const [rolesMantenimiento, setRolesMantenimiento] = useState([]); // roles bloqueados ([] = todos)
   const [checked, setChecked] = useState(false);
   const location = useLocation();
 
@@ -321,6 +322,9 @@ function MaintenanceGuard({ children }) {
         if (res.ok) {
           const data = await res.json();
           setEnMantenimiento(!!data.enMantenimiento);
+          let roles = [];
+          try { roles = JSON.parse(data.rolesMantenimientoJson || '[]'); } catch (e) { roles = []; }
+          setRolesMantenimiento(Array.isArray(roles) ? roles : []);
         }
       } catch (e) {
         // Si falla la consulta, no bloquear
@@ -336,11 +340,15 @@ function MaintenanceGuard({ children }) {
   if (!checked) return children;
 
   if (enMantenimiento) {
-    // Si hay usuario logueado y es Developer → acceso total
+    // Rol del usuario logueado (si lo hay)
+    let rolUsuario = null;
     try {
       const u = JSON.parse(localStorage.getItem('usuario'));
-      if (u?.rol === 'Developer') return children;
+      rolUsuario = u?.rol || null;
     } catch (e) { /* sin usuario */ }
+
+    // Developer siempre tiene acceso total
+    if (rolUsuario === 'Developer') return children;
 
     // Rutas públicas permitidas durante mantenimiento (para que el Dev pueda llegar al login)
     const rutasPermitidas = ['/', '/login', '/registro', '/terminos', '/politica-cookies',
@@ -351,8 +359,15 @@ function MaintenanceGuard({ children }) {
 
     if (esRutaPermitida) return children; // Dejar ver rutas públicas básicas
 
-    // Todo lo demás (portales de juez, atleta, leaderboard, paneles, etc.) → bloqueado
-    return <Mantenimiento />;
+    // Bloquear solo a los roles seleccionados. Lista vacía => se bloquea a todos
+    // (excepto Developer), conservando el comportamiento previo al selector de roles.
+    const bloquearTodos = !Array.isArray(rolesMantenimiento) || rolesMantenimiento.length === 0;
+    const rolBloqueado = bloquearTodos || (rolUsuario && rolesMantenimiento.includes(rolUsuario));
+
+    if (rolBloqueado) return <Mantenimiento />;
+
+    // El rol del usuario no está en mantenimiento → acceso normal
+    return children;
   }
 
   return children;

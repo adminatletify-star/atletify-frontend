@@ -9,6 +9,8 @@ import '../assets/css/user-panel.css';
 import '../assets/css/visitas-regalo.css';
 import AtletifyLoader from '../components/AtletifyLoader';
 import AnunciosEngine from '../components/AnunciosEngine';
+import EjercicioDetailModal from '../components/EjercicioDetailModal';
+import { api } from '../services/api';
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -24,6 +26,22 @@ function roundRectCanvas(ctx, x, y, w, h, r) {
   ctx.lineTo(x, y + r);
   ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
+}
+
+// Precarga el logo del box para dibujarlo en el canvas del WOD.
+// Devuelve el HTMLImageElement listo, o null si no hay logo / falla / no pasa CORS
+// (en ese caso se usa la inicial del box como antes).
+function loadBoxLogo(src) {
+  return new Promise((resolve) => {
+    if (!src || !String(src).trim()) { resolve(null); return; }
+    const img = new Image();
+    // Las URLs remotas necesitan CORS para no "ensuciar" el canvas (toDataURL).
+    // Los data: base64 son same-origin y no lo requieren.
+    if (!String(src).startsWith('data:')) img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
 }
 
 const getFechaHoyString = () => {
@@ -49,6 +67,8 @@ export default function UserPanel() {
 
   const [wodsHoy, setWodsHoy] = useState([]);
   const [loadingWod, setLoadingWod] = useState(true);
+  const [ejercicioModal, setEjercicioModal] = useState(null); // ejercicio del diccionario para el modal de detalle
+  const [cargandoEjId, setCargandoEjId] = useState(null);       // id del ejercicio que se está cargando
   const [pizarra, setPizarra] = useState([]);
   const [filtroPizarra, setFiltroPizarra] = useState('General');
   const [filtroGenero, setFiltroGenero] = useState('Hombre');
@@ -304,6 +324,21 @@ export default function UserPanel() {
     } catch (err) { console.error(err); } finally { setLoadingWod(false); }
   };
 
+  // Abre el modal de detalle del ejercicio (igual que en la pantalla Ejercicios).
+  // Trae el ejercicio completo del diccionario a partir de su id.
+  const abrirDetalleEjercicio = async (idDic) => {
+    if (!idDic || cargandoEjId) return;
+    setCargandoEjId(idDic);
+    try {
+      const full = await api.obtenerEjercicioDiccionario(idDic);
+      setEjercicioModal(full);
+    } catch (e) {
+      console.error('Error cargando ejercicio:', e);
+    } finally {
+      setCargandoEjId(null);
+    }
+  };
+
   const cargarClasesDeFecha = async (idBox, idUsuario, fechaStr) => {
     setLoadingClases(true);
     try {
@@ -415,8 +450,11 @@ export default function UserPanel() {
     }
   };
 
-  const downloadWodCard = (wodsADescargar) => {
+  const downloadWodCard = async (wodsADescargar, forzarSinLogo = false) => {
     if (!wodsADescargar || wodsADescargar.length === 0) return;
+
+    // Logo del box (se dibuja en el círculo del header; si falla, se usa la inicial)
+    const logoImg = forzarSinLogo ? null : await loadBoxLogo(box?.logo);
 
     const W = 800;
     const PAD = 52;
@@ -473,6 +511,7 @@ export default function UserPanel() {
     const avX = PAD + avR;
     const avY = y + avR;
 
+    // Círculo de fondo con glow rojo (sirve de aro y respaldo si el logo es transparente)
     ctx.shadowColor = 'rgba(230,57,70,0.45)';
     ctx.shadowBlur = 18;
     ctx.fillStyle = '#e63946';
@@ -481,12 +520,34 @@ export default function UserPanel() {
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    ctx.font = 'bold 22px system-ui, sans-serif';
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText((box?.nombre || 'A')[0].toUpperCase(), avX, avY);
-    ctx.textBaseline = 'alphabetic';
+    if (logoImg) {
+      // Logo del box recortado en círculo (object-fit: cover)
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(avX, avY, avR, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      const d = avR * 2;
+      const scale = Math.max(d / logoImg.width, d / logoImg.height);
+      const dw = logoImg.width * scale;
+      const dh = logoImg.height * scale;
+      ctx.drawImage(logoImg, avX - dw / 2, avY - dh / 2, dw, dh);
+      ctx.restore();
+      // Aro rojo alrededor del logo
+      ctx.beginPath();
+      ctx.arc(avX, avY, avR, 0, Math.PI * 2);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#e63946';
+      ctx.stroke();
+    } else {
+      // Fallback: inicial del box
+      ctx.font = 'bold 22px system-ui, sans-serif';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText((box?.nombre || 'A')[0].toUpperCase(), avX, avY);
+      ctx.textBaseline = 'alphabetic';
+    }
 
     const txtX = avX + avR + 16;
     ctx.font = 'bold 24px system-ui, sans-serif';
@@ -780,7 +841,15 @@ export default function UserPanel() {
     out.getContext('2d').drawImage(canvas, 0, 0);
     const link = document.createElement('a');
     link.download = `wod-${getFechaHoyString()}.png`;
-    link.href = out.toDataURL('image/png');
+    try {
+      link.href = out.toDataURL('image/png');
+    } catch (e) {
+      // Canvas "tainted" por el logo (CORS de caché): reintentar sin logo
+      if (logoImg) return downloadWodCard(wodsADescargar, true);
+      console.error('No se pudo generar la imagen del WOD:', e);
+      alert('No se pudo generar la imagen del WOD.');
+      return;
+    }
     link.click();
   };
 
@@ -983,13 +1052,27 @@ export default function UserPanel() {
                                     )}
                                     {bloque.ejercicios?.length > 0 && (
                                       <ul className="up-ej-list">
-                                        {bloque.ejercicios.map((ej, index) => (
-                                          <li key={index} className="up-ej-item">
-                                            <span className="up-ej-reps">{ej.esquemaRepeticiones}</span>
-                                            <span className="up-ej-name">{ej.ejercicio?.nombre}</span>
-                                            {ej.pesoSugerido && <span className="up-ej-peso">{ej.pesoSugerido}</span>}
-                                          </li>
-                                        ))}
+                                        {bloque.ejercicios.map((ej, index) => {
+                                          const clicable = !!ej.idEjercicioDiccionario;
+                                          const cargando = cargandoEjId === ej.idEjercicioDiccionario;
+                                          return (
+                                            <li
+                                              key={index}
+                                              className={`up-ej-item ${clicable ? 'up-ej-item--clicable' : ''}`}
+                                              onClick={clicable ? () => abrirDetalleEjercicio(ej.idEjercicioDiccionario) : undefined}
+                                              role={clicable ? 'button' : undefined}
+                                              tabIndex={clicable ? 0 : undefined}
+                                              onKeyDown={clicable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrirDetalleEjercicio(ej.idEjercicioDiccionario); } } : undefined}
+                                            >
+                                              <span className="up-ej-reps">{ej.esquemaRepeticiones}</span>
+                                              <span className="up-ej-name">{ej.ejercicio?.nombre}</span>
+                                              {ej.pesoSugerido && <span className="up-ej-peso">{ej.pesoSugerido}</span>}
+                                              {clicable && (
+                                                <i className={`up-ej-link-icon fas ${cargando ? 'fa-spinner fa-spin' : 'fa-circle-info'}`}></i>
+                                              )}
+                                            </li>
+                                          );
+                                        })}
                                       </ul>
                                     )}
                                   </div>
@@ -1201,7 +1284,7 @@ export default function UserPanel() {
 
               {/*  LA NUEVA TARJETA DE PLAN (Reemplaza la tuya por esta)  */}
               {finanzas && (
-                <div className="mb-4 position-relative" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderTop: '3px solid var(--primary)', borderRadius: '16px', padding: '1.4rem', boxShadow: '0 4px 32px rgba(0,0,0,0.35)' }}>
+                <div className="mb-4 position-relative" style={{ background: 'rgba(20, 20, 30, 0.82)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--border)', borderTop: '3px solid var(--primary)', borderRadius: '16px', padding: '1.4rem', boxShadow: '0 4px 32px rgba(0,0,0,0.35)' }}>
 
                   {/* Etiqueta VIP si tiene Precio Especial */}
                   {finanzas.precioEspecial && (
@@ -1832,6 +1915,9 @@ export default function UserPanel() {
           </div>
         );
       })()}
+
+      {/* Modal de detalle de ejercicio (compartido con la pantalla Ejercicios) */}
+      <EjercicioDetailModal ejercicio={ejercicioModal} onClose={() => setEjercicioModal(null)} />
 
     </div>
   );

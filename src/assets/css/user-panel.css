@@ -1184,6 +1184,26 @@
   border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 .up-ej-item:last-child { border-bottom: none; }
+.up-ej-item--clicable {
+  cursor: pointer;
+  border-radius: 8px;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  margin-left: -0.4rem;
+  margin-right: -0.4rem;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.up-ej-item--clicable:hover { background: rgba(230, 57, 70, 0.07); }
+.up-ej-item--clicable:hover .up-ej-name { color: var(--primary); }
+.up-ej-link-icon {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  opacity: 0.55;
+  flex-shrink: 0;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+.up-ej-item--clicable:hover .up-ej-link-icon { color: var(--primary); opacity: 1; }
 .up-ej-reps {
   font-family: var(--font-stats);
   font-size: 1rem;

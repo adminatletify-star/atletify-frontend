@@ -8,6 +8,17 @@ import '../assets/css/dashboard.css';
 import DeveloperSaaSFinanzas from '../components/DeveloperSaaSFinanzas';
 import '../components/BoxPickerModal.css';
 
+// Roles a los que se les puede aplicar el Modo Mantenimiento (Developer nunca se bloquea).
+// El orden aquí es el orden en que se muestran los chips.
+const ROLES_MANTENIMIENTO = [
+  { key: 'AdminBox', label: 'Admin Box', icon: 'fa-user-shield' },
+  { key: 'Coach',    label: 'Coach',     icon: 'fa-clipboard-user' },
+  { key: 'Atleta',   label: 'Atleta',    icon: 'fa-dumbbell' },
+  { key: 'Juez',     label: 'Juez',      icon: 'fa-gavel' },
+  { key: 'Usuario',  label: 'Usuario',   icon: 'fa-user' },
+];
+const labelRolMantenimiento = (key) => ROLES_MANTENIMIENTO.find(r => r.key === key)?.label || key;
+
 // Misma lógica que Ejercicios: muestra la primera, la última y las cercanas a
 // la actual (±1), insertando … en los huecos. Colapsa siempre (ej. 1 … 6).
 function buildPaginas(pagina, total) {
@@ -209,6 +220,9 @@ export default function Dashboard() {
       if (dataC) {
         try { dataC.planesCompetenciaArray = JSON.parse(dataC.planesCompetenciaJson || "[]"); }
         catch (e) { dataC.planesCompetenciaArray = []; }
+        try { dataC.rolesMantenimientoArray = JSON.parse(dataC.rolesMantenimientoJson || "[]"); }
+        catch (e) { dataC.rolesMantenimientoArray = []; }
+        if (!Array.isArray(dataC.rolesMantenimientoArray)) dataC.rolesMantenimientoArray = [];
         setConfiguracion(dataC);
       }
       setStats({ boxes: boxesList.length, usuarios: usersList.length });
@@ -281,13 +295,22 @@ export default function Dashboard() {
     setConfiguracion(prev => ({ ...prev, [name]: value }));
   };
 
+  // Construye el payload limpio para PUT /configuracion, serializando los arreglos
+  // auxiliares (planes y roles de mantenimiento) y aceptando overrides puntuales.
+  const construirPayloadConfig = (overrides = {}) => {
+    const payload = { ...configuracion, ...overrides };
+    payload.planesCompetenciaJson = JSON.stringify(payload.planesCompetenciaArray || []);
+    payload.rolesMantenimientoJson = JSON.stringify(payload.rolesMantenimientoArray || []);
+    delete payload.planesCompetenciaArray;
+    delete payload.rolesMantenimientoArray;
+    return payload;
+  };
+
   const guardarConfiguracion = async (e) => {
     e.preventDefault();
     setGuardandoConfig(true);
     try {
-      const payloadToSave = { ...configuracion };
-      payloadToSave.planesCompetenciaJson = JSON.stringify(configuracion.planesCompetenciaArray || []);
-      delete payloadToSave.planesCompetenciaArray;
+      const payloadToSave = construirPayloadConfig();
       const token = localStorage.getItem('token');
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/configuracion`, {
         method: 'PUT',
@@ -300,6 +323,34 @@ export default function Dashboard() {
       console.error(error); alert("Error de red");
     } finally {
       setGuardandoConfig(false);
+    }
+  };
+
+  // Activa/desactiva un rol dentro de los bloqueados por mantenimiento y persiste de inmediato.
+  const toggleRolMantenimiento = async (rolKey) => {
+    const actuales = configuracion.rolesMantenimientoArray || [];
+    const previos = actuales;
+    const nuevos = actuales.includes(rolKey)
+      ? actuales.filter(r => r !== rolKey)
+      : [...actuales, rolKey];
+    // Update optimista
+    setConfiguracion(prev => ({ ...prev, rolesMantenimientoArray: nuevos }));
+    try {
+      const token = localStorage.getItem('token');
+      const payloadToSave = construirPayloadConfig({ rolesMantenimientoArray: nuevos });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/configuracion`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(payloadToSave)
+      });
+      if (!res.ok) {
+        setConfiguracion(prev => ({ ...prev, rolesMantenimientoArray: previos }));
+        alert(`No se pudo actualizar los roles de mantenimiento. (${res.status})`);
+      }
+    } catch (err) {
+      console.error(err);
+      setConfiguracion(prev => ({ ...prev, rolesMantenimientoArray: previos }));
+      alert('Error de red al actualizar los roles de mantenimiento.');
     }
   };
 
@@ -961,9 +1012,11 @@ export default function Dashboard() {
                         {configuracion.enMantenimiento && <span className="cfg-mant-badge">ACTIVO</span>}
                       </div>
                       <div className="cfg-mant-desc">
-                        {configuracion.enMantenimiento
-                          ? '⚠️ Todos los usuarios (excepto tú) están bloqueados'
-                          : 'Activa para bloquear el acceso a todos los usuarios excepto Developer'}
+                        {!configuracion.enMantenimiento
+                          ? 'Activa para bloquear el acceso por rol (Developer siempre tiene acceso)'
+                          : (configuracion.rolesMantenimientoArray || []).length === 0
+                            ? '⚠️ Bloquea a TODOS los roles excepto Developer'
+                            : `⚠️ Bloqueados: ${(configuracion.rolesMantenimientoArray || []).map(labelRolMantenimiento).join(', ')}`}
                       </div>
                     </div>
                   </div>
@@ -977,22 +1030,24 @@ export default function Dashboard() {
                         const nuevoEstado = e.target.checked;
                         // Snapshot del estado actual por si hay que revertir
                         const estadoPrevio = configuracion.enMantenimiento || false;
+                        const rolesPrevios = configuracion.rolesMantenimientoArray || [];
                         if (nuevoEstado) {
-                          const ok = await window.wpConfirm('⚠️ ¿Activar Modo Mantenimiento?\n\nTodos los usuarios serán bloqueados excepto Developer.');
+                          const ok = await window.wpConfirm('⚠️ ¿Activar Modo Mantenimiento?\n\nPodrás elegir a qué roles aplicarlo. Por defecto se bloquean todos excepto Developer.');
                           if (!ok) {
                             // Fuerza re-render para que el checkbox vuelva al estado real
                             setConfiguracion(prev => ({ ...prev, enMantenimiento: estadoPrevio }));
                             return;
                           }
                         }
+                        // Al activar sin roles previos, preseleccionar TODOS (mismo efecto que antes)
+                        const rolesParaGuardar = (nuevoEstado && rolesPrevios.length === 0)
+                          ? ROLES_MANTENIMIENTO.map(r => r.key)
+                          : rolesPrevios;
                         // Update optimista para que el switch reaccione de inmediato
-                        setConfiguracion(prev => ({ ...prev, enMantenimiento: nuevoEstado }));
+                        setConfiguracion(prev => ({ ...prev, enMantenimiento: nuevoEstado, rolesMantenimientoArray: rolesParaGuardar }));
                         try {
                           const token = localStorage.getItem('token');
-                          // Payload limpio (mismo cleanup que guardarConfiguracion)
-                          const payloadToSave = { ...configuracion, enMantenimiento: nuevoEstado };
-                          payloadToSave.planesCompetenciaJson = JSON.stringify(configuracion.planesCompetenciaArray || []);
-                          delete payloadToSave.planesCompetenciaArray;
+                          const payloadToSave = construirPayloadConfig({ enMantenimiento: nuevoEstado, rolesMantenimientoArray: rolesParaGuardar });
                           const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/configuracion`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -1000,21 +1055,51 @@ export default function Dashboard() {
                           });
                           if (!res.ok) {
                             const txt = await res.text().catch(() => '');
-                            setConfiguracion(prev => ({ ...prev, enMantenimiento: estadoPrevio }));
+                            setConfiguracion(prev => ({ ...prev, enMantenimiento: estadoPrevio, rolesMantenimientoArray: rolesPrevios }));
                             alert(`No se pudo actualizar el modo mantenimiento. (${res.status}) ${txt}`);
                             return;
                           }
                           alert(nuevoEstado
-                            ? 'Modo Mantenimiento ACTIVADO. Los usuarios no-Developer serán bloqueados al recargar.'
+                            ? 'Modo Mantenimiento ACTIVADO. Elige abajo a qué roles aplicarlo; serán bloqueados al recargar.'
                             : 'Modo Mantenimiento desactivado.');
                         } catch (err) {
                           console.error(err);
-                          setConfiguracion(prev => ({ ...prev, enMantenimiento: estadoPrevio }));
+                          setConfiguracion(prev => ({ ...prev, enMantenimiento: estadoPrevio, rolesMantenimientoArray: rolesPrevios }));
                           alert('Error de red al actualizar el modo mantenimiento.');
                         }
                       }}
                     />
                   </div>
+
+                  {/* Selector de roles afectados (solo cuando está activo) */}
+                  {configuracion.enMantenimiento && (
+                    <div className="cfg-mant-roles">
+                      <div className="cfg-mant-roles-label">
+                        <i className="fas fa-users-gear"></i> Aplicar mantenimiento a:
+                      </div>
+                      <div className="cfg-mant-roles-chips">
+                        {ROLES_MANTENIMIENTO.map(r => {
+                          const sel = (configuracion.rolesMantenimientoArray || []).includes(r.key);
+                          return (
+                            <button
+                              type="button"
+                              key={r.key}
+                              className={`cfg-mant-rol-chip ${sel ? 'cfg-mant-rol-chip--activo' : ''}`}
+                              onClick={() => toggleRolMantenimiento(r.key)}
+                              aria-pressed={sel}
+                            >
+                              <i className={`fas ${r.icon}`}></i>
+                              <span>{r.label}</span>
+                              {sel && <i className="fas fa-check cfg-mant-rol-check"></i>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="cfg-mant-roles-hint">
+                        Solo los roles seleccionados verán la pantalla de mantenimiento. Si no seleccionas ninguno, se bloquea a todos (excepto Developer).
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Cuentas Bloqueadas */}
