@@ -233,11 +233,7 @@ export default function AdminGruposFamiliares() {
 // ============================================================
 function PanelEscuadrones({ grupos, onCobrar, onDisolver, onDetalle }) {
   const totalIntegrantes = grupos.reduce((acc, g) => acc + g.miembros.length, 0);
-  const facturacionMensual = grupos.reduce((acc, g) => {
-    const sumPrecios = g.miembros.reduce((sum, m) => sum + Number(m.precioBase), 0);
-    const desc = sumPrecios * (g.descuentoGlobal / 100);
-    return acc + (sumPrecios - desc);
-  }, 0);
+  const facturacionMensual = grupos.reduce((acc, g) => acc + Number(g.facturacionMensual || 0), 0);
 
   return (
     <div className="agf-panel-escuadrones-wrapper">
@@ -305,15 +301,16 @@ function PanelEscuadrones({ grupos, onCobrar, onDisolver, onDetalle }) {
 function CardEscuadron({ grupo, onCobrar, onDisolver, onDetalle }) {
   const estatus = grupo.estatusPago || 'SinPago';
   const estatusConfig = {
-    Pagado:    { label: 'PAGADO',    class: 'agf-status--pagado',    icon: 'fa-check-circle' },
-    Vencido:   { label: 'VENCIDO',   class: 'agf-status--vencido',   icon: 'fa-exclamation-triangle' },
-    SinPago:   { label: 'SIN PAGO',  class: 'agf-status--sinpago',   icon: 'fa-clock' },
-    Congelado: { label: 'CONGELADO', class: 'agf-status--congelado', icon: 'fa-snowflake' }
+    Pagado:    { label: 'PAGADO',     class: 'agf-status--pagado',    icon: 'fa-check-circle' },
+    Vencido:   { label: 'VENCIDO',    class: 'agf-status--vencido',   icon: 'fa-exclamation-triangle' },
+    SinCobrar: { label: 'SIN COBRAR', class: 'agf-status--sinpago',   icon: 'fa-hourglass-half' },
+    SinPago:   { label: 'SIN PAGO',   class: 'agf-status--sinpago',   icon: 'fa-clock' },
+    Congelado: { label: 'CONGELADO',  class: 'agf-status--congelado', icon: 'fa-snowflake' }
   }[estatus] || { label: estatus, class: 'agf-status--sinpago', icon: 'fa-info-circle' };
 
   const fechaVenc = grupo.fechaVencimientoLider
     ? new Date(grupo.fechaVencimientoLider).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
-    : 'Sin establecer';
+    : (grupo.primerPagoRealizado ? 'Sin establecer' : 'Pendiente del primer cobro');
 
   return (
     <motion.div
@@ -631,17 +628,10 @@ function SquadBuilder({ atletasDisponibles, planes, idBox, onCreado }) {
             Mínimo 4 integrantes para crear el escuadrón.
           </p>
         )}
-        <div className="d-flex align-items-center mb-3 justify-content-center">
-          <label className="agf-checkbox-container m-0" style={{ fontSize: '0.9rem', color: 'var(--text-color)' }}>
-            <input 
-              type="checkbox" 
-              checked={aplicarProrrateo} 
-              onChange={e => setAplicarProrrateo(e.target.checked)} 
-            />
-            <span className="agf-checkmark"></span>
-            Aplicar prorrateo (KPIs) por meses restantes de integrantes actuales
-          </label>
-        </div>
+        <p className="agf-help-text text-center mb-3">
+          <i className="fas fa-info-circle me-1" />
+          El crédito por días no consumidos de los integrantes actuales se calcula automáticamente; podrás aplicarlo (o no) al momento de cobrar.
+        </p>
         <button
           className="agf-btn-create"
           disabled={enviando || totalSlotsLlenos < 4}
@@ -1271,6 +1261,33 @@ function ModalSeleccionMiembro({ atletasDisponibles, atletasYaUsados, planes, on
 }
 
 // ============================================================
+//  BANNER: ADVERTENCIA DE MENSUALIDADES PREPAGADAS
+//  (un integrante perdería meses ya pagados porque el crédito topa en 1 mensualidad)
+// ============================================================
+function AdvertenciasProrrateo({ advertencias }) {
+  if (!advertencias || advertencias.length === 0) return null;
+  const fmtFecha = (d) => d
+    ? new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+    : '—';
+  return (
+    <div className="agf-warn-prepago">
+      <div className="agf-warn-prepago-head">
+        <i className="fas fa-triangle-exclamation" />
+        <span>Atención: mensualidades ya pagadas</span>
+      </div>
+      {advertencias.map(a => (
+        <p key={a.idUsuario} className="agf-warn-prepago-item">
+          <strong>{a.nombre}</strong> tiene mensualidad pagada hasta <strong>{fmtFecha(a.coberturaHasta)}</strong>
+          {' '}(~{a.diasCobertura} días). Al cobrar el grupo, el crédito a favor cubre como máximo
+          {' '}1 mensualidad (<strong>${Number(a.creditoTope).toFixed(2)}</strong>); el excedente de
+          {' '}<strong>~${Number(a.perdidaEstimada).toFixed(2)}</strong> no se reembolsa.
+        </p>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
 //  MODAL: COBRO DEL GRUPO
 // ============================================================
 function ModalCobroGrupo({ grupo, onClose, onPagado }) {
@@ -1282,13 +1299,15 @@ function ModalCobroGrupo({ grupo, onClose, onPagado }) {
   const [metodoPago2, setMetodoPago2] = useState('');
   const [montoMetodo2, setMontoMetodo2] = useState('');
   const [notas, setNotas] = useState('');
+  const [aplicarDescuento, setAplicarDescuento] = useState(false);
+  const [aplicarCreditos, setAplicarCreditos] = useState(false);
+  const [aceptoPerdida, setAceptoPerdida] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
         const d = await api.obtenerDetalleGrupoFamiliar(grupo.idGrupo);
         setDetalle(d);
-        setMontoMetodo1(d.resumenFinanciero?.totalAPagar?.toString() || '');
       } catch (e) {
         alert('Error cargando detalle: ' + e.message);
         onClose();
@@ -1298,16 +1317,42 @@ function ModalCobroGrupo({ grupo, onClose, onPagado }) {
     })();
   }, [grupo.idGrupo, onClose]);
 
+  const rf = detalle?.resumenFinanciero;
+  const esPrimerPago = rf ? !rf.primerPagoRealizado : true;
+  const advertencias = detalle?.advertencias || [];
+
+  // En mes 1 los beneficios son opcionales (toggles). En mes 2+ aplican siempre.
+  const descActivo = !esPrimerPago || aplicarDescuento;
+  const credActivo = !esPrimerPago || aplicarCreditos;
+
+  const totalCalculado = useMemo(() => {
+    if (!rf) return 0;
+    const piso = Number(detalle?.precioMinimoMensual || 0);
+    const desc = descActivo ? Number(rf.montoDescuento || 0) : 0;
+    const cred = credActivo ? Number(rf.totalCreditosDisponibles || 0) : 0;
+    let sub = Number(rf.sumaBruta || 0) - desc - cred;
+    if (sub < piso) sub = piso;
+    if (sub < 0) sub = 0;
+    return Math.round((sub + Number(rf.sumaInscripciones || 0)) * 100) / 100;
+  }, [rf, detalle, descActivo, credActivo]);
+
+  // El monto principal sigue al total calculado (el admin puede ajustarlo para pago híbrido).
+  useEffect(() => {
+    if (rf) setMontoMetodo1(totalCalculado.toString());
+  }, [totalCalculado, rf]);
+
   async function confirmarPago() {
     if (!detalle) return;
     setEnviando(true);
     try {
       await api.pagarGrupoFamiliar(grupo.idGrupo, {
-        montoMetodo1: Number(montoMetodo1) || detalle.resumenFinanciero.totalAPagar,
+        montoMetodo1: Number(montoMetodo1) || totalCalculado,
         metodoPago1,
         montoMetodo2: montoMetodo2 ? Number(montoMetodo2) : null,
         metodoPago2: metodoPago2 || null,
         notas,
+        aplicarDescuentoFamiliar: aplicarDescuento,
+        aplicarCreditos,
         generadoPor: JSON.parse(localStorage.getItem('usuario'))?.nombre || 'Coach'
       });
       alert('¡Pago grupal registrado! Cascada aplicada con éxito.');
@@ -1318,6 +1363,8 @@ function ModalCobroGrupo({ grupo, onClose, onPagado }) {
       setEnviando(false);
     }
   }
+
+  const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 
   return (
     <motion.div className="agf-modal-overlay" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -1331,19 +1378,104 @@ function ModalCobroGrupo({ grupo, onClose, onPagado }) {
           <div className="text-center py-4"><div className="agf-spinner" /></div>
         ) : detalle ? (
           <>
+            {esPrimerPago && (
+              <div className="agf-mes1-banner">
+                <i className="fas fa-info-circle" />
+                <span>
+                  <strong>Primer cobro:</strong> se cobra la mensualidad base completa más la
+                  inscripción de quien la deba. El descuento familiar y los créditos por días no
+                  consumidos puedes aplicarlos ahora o dejarlos para el segundo mes.
+                </span>
+              </div>
+            )}
+
+            <AdvertenciasProrrateo advertencias={advertencias} />
+
             <div className="agf-cobro-summary">
               <div className="agf-calc-row">
-                <span>Suma de planes ({detalle.resumenFinanciero.totalMiembros} miembros)</span>
-                <strong>${detalle.resumenFinanciero.sumaBruta.toFixed(2)}</strong>
+                <span>Mensualidades ({rf.totalMiembros} integrantes)</span>
+                <strong>{fmt(rf.sumaBruta)}</strong>
               </div>
-              <div className="agf-calc-row">
-                <span>Descuento grupal {detalle.resumenFinanciero.porcentajeDescuento}%</span>
-                <strong className="text-danger">- ${detalle.resumenFinanciero.montoDescuento.toFixed(2)}</strong>
-              </div>
+              {rf.sumaInscripciones > 0 && (
+                <div className="agf-calc-row">
+                  <span>Inscripciones anuales</span>
+                  <strong>+ {fmt(rf.sumaInscripciones)}</strong>
+                </div>
+              )}
+              {descActivo && rf.montoDescuento > 0 && (
+                <div className="agf-calc-row">
+                  <span>Descuento familiar {rf.porcentajeDescuento}%</span>
+                  <strong className="text-danger">- {fmt(rf.montoDescuento)}</strong>
+                </div>
+              )}
+              {credActivo && rf.totalCreditosDisponibles > 0 && (
+                <div className="agf-calc-row">
+                  <span>Créditos por días no consumidos</span>
+                  <strong className="text-danger">- {fmt(rf.totalCreditosDisponibles)}</strong>
+                </div>
+              )}
               <div className="agf-calc-row agf-calc-total">
                 <span>TOTAL A COBRAR AL LÍDER</span>
-                <strong className="agf-total-amount">${detalle.resumenFinanciero.totalAPagar.toFixed(2)}</strong>
+                <strong className="agf-total-amount">{fmt(totalCalculado)}</strong>
               </div>
+            </div>
+
+            {/* Toggles del primer cobro */}
+            {esPrimerPago && (
+              <div className="agf-cobro-toggles">
+                <label className="agf-toggle-row">
+                  <input
+                    type="checkbox"
+                    checked={aplicarDescuento}
+                    onChange={e => setAplicarDescuento(e.target.checked)}
+                  />
+                  <span className="agf-toggle-text">
+                    Aplicar descuento familiar ({rf.porcentajeDescuento}%) desde este mes
+                  </span>
+                </label>
+                <label className={`agf-toggle-row ${rf.totalCreditosDisponibles > 0 ? '' : 'agf-toggle-row--disabled'}`}>
+                  <input
+                    type="checkbox"
+                    checked={aplicarCreditos}
+                    disabled={rf.totalCreditosDisponibles <= 0}
+                    onChange={e => setAplicarCreditos(e.target.checked)}
+                  />
+                  <span className="agf-toggle-text">
+                    Aplicar créditos por días no consumidos ({fmt(rf.totalCreditosDisponibles)})
+                  </span>
+                </label>
+              </div>
+            )}
+
+            {/* Desglose itemizado por integrante */}
+            <div className="agf-desglose">
+              <div className="agf-desglose-head">
+                <i className="fas fa-receipt" /> Desglose por integrante
+              </div>
+              {detalle.miembros.map(m => (
+                <div key={m.idUsuario} className="agf-desglose-row">
+                  <div className="agf-desglose-nombre">
+                    {m.rolEnGrupo === 'Lider' && <i className="fas fa-crown agf-crown-mini" />}
+                    {m.nombre} {m.apellidos || ''}
+                    <small className="agf-desglose-plan">{m.nombrePlan}</small>
+                  </div>
+                  <div className="agf-desglose-montos">
+                    <span className="agf-desglose-tag">Mensualidad {fmt(m.precioBase)}</span>
+                    {m.inscripcion > 0 ? (
+                      <span className="agf-desglose-tag agf-tag-insc">Inscripción {fmt(m.inscripcion)}</span>
+                    ) : (
+                      <span className="agf-desglose-tag agf-tag-muted">Inscripción: {m.inscripcionMotivo}</span>
+                    )}
+                    {m.creditoProrrateo > 0 && (
+                      <span className={`agf-desglose-tag ${m.creditoAplicado ? 'agf-tag-muted' : 'agf-tag-credito'}`}>
+                        Crédito {fmt(m.creditoProrrateo)}
+                        {m.diasNoConsumidos ? ` · ${m.diasNoConsumidos} días` : ''}
+                        {m.creditoAplicado ? ' (aplicado)' : ''}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div className="row g-2 mt-3">
@@ -1428,7 +1560,26 @@ function ModalCobroGrupo({ grupo, onClose, onPagado }) {
               </div>
             </div>
 
-            <button className="agf-btn-create mt-3" onClick={confirmarPago} disabled={enviando}>
+            {advertencias.length > 0 && (
+              <label className="agf-acepto-perdida">
+                <input
+                  type="checkbox"
+                  checked={aceptoPerdida}
+                  onChange={e => setAceptoPerdida(e.target.checked)}
+                />
+                <span>
+                  Entiendo que {advertencias.length === 1 ? 'este integrante' : 'estos integrantes'} tiene
+                  {advertencias.length === 1 ? '' : 'n'} mensualidades ya pagadas y que el excedente no se
+                  reembolsa. Deseo continuar de todos modos.
+                </span>
+              </label>
+            )}
+
+            <button
+              className="agf-btn-create mt-3"
+              onClick={confirmarPago}
+              disabled={enviando || (advertencias.length > 0 && !aceptoPerdida)}
+            >
               {enviando ? <><div className="agf-spinner agf-spinner--sm" /> Procesando…</> : <><i className="fas fa-check-circle" /> Confirmar pago en cascada</>}
             </button>
           </>
@@ -1516,6 +1667,8 @@ function ModalDetalleGrupo({ grupo, onClose, onUpdate, onDisolver }) {
                 <strong className="agf-total-amount">${detalle.resumenFinanciero.totalAPagar.toFixed(2)}</strong>
               </div>
             </div>
+
+            <AdvertenciasProrrateo advertencias={detalle.advertencias} />
 
             <h3 className="agf-detalle-h3 mt-3">Integrantes</h3>
             <div className="agf-detalle-miembros">

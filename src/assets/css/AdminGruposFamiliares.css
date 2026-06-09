@@ -1490,6 +1490,150 @@
   margin: 0;
 }
 
+/* ============ COBRO: MES 1, TOGGLES Y DESGLOSE ============ */
+.agf-mes1-banner {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: rgba(79, 195, 247, 0.08);
+  border: 1px solid rgba(79, 195, 247, 0.28);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 1rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--text-primary, #e6e8ee);
+}
+.agf-mes1-banner i { color: #4FC3F7; margin-top: 2px; font-size: 1rem; }
+.agf-mes1-banner strong { color: #4FC3F7; }
+
+.agf-cobro-toggles {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.agf-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(28, 28, 38, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+.agf-toggle-row:hover { border-color: var(--primary, #E63946); }
+.agf-toggle-row input { width: 18px; height: 18px; accent-color: var(--primary, #E63946); cursor: pointer; }
+.agf-toggle-text { font-size: 0.84rem; color: var(--text-primary, #e6e8ee); }
+.agf-toggle-row--disabled { opacity: 0.5; cursor: not-allowed; }
+.agf-toggle-row--disabled:hover { border-color: rgba(255, 255, 255, 0.06); }
+
+.agf-desglose {
+  margin-top: 1rem;
+  background: linear-gradient(135deg, rgba(28, 28, 38, 0.7), rgba(18, 18, 26, 0.5));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+}
+.agf-desglose-head {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted, #8a8e9a);
+  margin-bottom: 10px;
+}
+.agf-desglose-head i { color: var(--primary, #E63946); margin-right: 6px; }
+.agf-desglose-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.agf-desglose-row:last-child { border-bottom: none; }
+.agf-desglose-nombre {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+.agf-crown-mini { color: #F5A623; margin-right: 4px; }
+.agf-desglose-plan {
+  font-size: 0.72rem;
+  color: var(--text-muted, #8a8e9a);
+  font-weight: 400;
+  margin-top: 2px;
+}
+.agf-desglose-montos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+  max-width: 60%;
+}
+.agf-desglose-tag {
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-primary, #e6e8ee);
+  white-space: nowrap;
+}
+.agf-tag-insc { background: rgba(245, 166, 35, 0.1); border-color: rgba(245, 166, 35, 0.3); color: #F5A623; }
+.agf-tag-credito { background: rgba(46, 204, 113, 0.1); border-color: rgba(46, 204, 113, 0.3); color: #2ECC71; }
+.agf-tag-muted { background: rgba(255, 255, 255, 0.03); color: var(--text-muted, #8a8e9a); }
+
+/* ============ ADVERTENCIA: MENSUALIDADES PREPAGADAS ============ */
+.agf-warn-prepago {
+  margin-top: 1rem;
+  background: rgba(231, 76, 60, 0.08);
+  border: 1px solid rgba(231, 76, 60, 0.35);
+  border-left: 4px solid var(--primary, #E63946);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.agf-warn-prepago-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: var(--primary, #E63946);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+.agf-warn-prepago-item {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-primary, #e6e8ee);
+  margin: 0 0 6px 0;
+}
+.agf-warn-prepago-item:last-child { margin-bottom: 0; }
+.agf-warn-prepago-item strong { color: #fff; }
+
+.agf-acepto-perdida {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 1rem;
+  padding: 10px 12px;
+  background: rgba(231, 76, 60, 0.06);
+  border: 1px dashed rgba(231, 76, 60, 0.4);
+  border-radius: 10px;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--text-primary, #e6e8ee);
+  cursor: pointer;
+}
+.agf-acepto-perdida input { width: 18px; height: 18px; accent-color: var(--primary, #E63946); margin-top: 1px; cursor: pointer; }
+
 /* ============ RESPONSIVE ============ */
 @media (max-width: 768px) {
   .agf-title { font-size: 1.4rem; }
@@ -1508,6 +1652,12 @@
   .agf-atleta-card { padding: 10px 12px; }
   .agf-atleta-nombre { font-size: 0.88rem; }
   .agf-atleta-correo { font-size: 0.7rem; }
+
+  /* Desglose: el nombre arriba y los montos debajo (full width) */
+  .agf-desglose-row { flex-direction: column; gap: 6px; }
+  .agf-desglose-montos { max-width: 100%; justify-content: flex-start; }
+  .agf-mes1-banner { font-size: 0.78rem; }
+  .agf-toggle-text { font-size: 0.8rem; }
 }
 
 @media (max-width: 480px) {
