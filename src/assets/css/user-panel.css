@@ -1228,10 +1228,12 @@
   font-weight: 600;
   padding: 0.35rem 0.8rem;
   cursor: pointer;
-  transition: var(--transition);
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation; /* quita el delay de ~300ms del navegador en táctil */
 }
-.up-social-btn:hover { color: var(--text-primary); border-color: rgba(255, 255, 255, 0.2); }
+/* Feedback inmediato al tocar/presionar */
+.up-social-btn:active { transform: scale(0.93); }
 .up-social-btn--like {
   background: rgba(46, 204, 113, 0.12);
   border-color: rgba(46, 204, 113, 0.4);
@@ -1248,7 +1250,11 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-.up-social-btn--comments:hover { color: var(--accent-cool, #38bdf8); border-color: rgba(56, 189, 248, 0.4); }
+/* El hover solo en dispositivos con mouse (evita que se quede "pegado" en táctil) */
+@media (hover: hover) {
+  .up-social-btn:hover { color: var(--text-primary); border-color: rgba(255, 255, 255, 0.2); }
+  .up-social-btn--comments:hover { color: var(--accent-cool, #38bdf8); border-color: rgba(56, 189, 248, 0.4); }
+}
 
 @media (max-width: 380px) {
   .up-social-btn { font-size: 0.74rem; padding: 0.32rem 0.6rem; }

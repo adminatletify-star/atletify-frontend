@@ -52,6 +52,31 @@ const getFechaHoyString = () => {
     String(hoy.getDate()).padStart(2, '0');
 };
 
+// Aplica el toggle de like/dislike en local (mismo comportamiento que el backend),
+// para pintar la reacción al instante sin esperar la red (update optimista).
+const aplicarReaccionLocal = (s, tipo) => {
+  const cur = {
+    likes: s?.likes || 0,
+    dislikes: s?.dislikes || 0,
+    miReaccion: s?.miReaccion ?? null,
+    totalComentarios: s?.totalComentarios || 0,
+  };
+  if (cur.miReaccion === tipo) {
+    // mismo botón => quitar la reacción
+    if (tipo === 'like') cur.likes = Math.max(0, cur.likes - 1);
+    else cur.dislikes = Math.max(0, cur.dislikes - 1);
+    cur.miReaccion = null;
+  } else {
+    // quitar la anterior (si había) y poner la nueva
+    if (cur.miReaccion === 'like') cur.likes = Math.max(0, cur.likes - 1);
+    else if (cur.miReaccion === 'dislike') cur.dislikes = Math.max(0, cur.dislikes - 1);
+    if (tipo === 'like') cur.likes += 1;
+    else cur.dislikes += 1;
+    cur.miReaccion = tipo;
+  }
+  return cur;
+};
+
 // Icono según el emoji embebido en el título de la notificación
 const iconoNoti = (titulo = '') =>
   titulo.includes('💬') ? '💬'
@@ -437,10 +462,18 @@ export default function UserPanel() {
   };
 
   const reaccionarWod = async (idEnt, tipo) => {
+    const previo = socialWod[idEnt] || { likes: 0, dislikes: 0, miReaccion: null, totalComentarios: 0 };
+    // Update optimista: se pinta de inmediato (sin esperar la red)
+    setSocialWod(prev => ({ ...prev, [idEnt]: aplicarReaccionLocal(prev[idEnt] || previo, tipo) }));
     try {
       const c = await api.reaccionarWod(idEnt, tipo);
+      // Reconciliar con los contadores reales del servidor
       setSocialWod(prev => ({ ...prev, [idEnt]: c }));
-    } catch (e) { alert(e.message || 'No se pudo reaccionar.'); }
+    } catch (e) {
+      // Si falla, revertir a lo que había antes
+      setSocialWod(prev => ({ ...prev, [idEnt]: previo }));
+      alert(e.message || 'No se pudo reaccionar.');
+    }
   };
 
   // Ajusta el contador de comentarios cuando se crea/borra desde el modal
