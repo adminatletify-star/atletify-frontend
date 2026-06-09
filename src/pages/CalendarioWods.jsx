@@ -3,9 +3,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import BackButton from '../components/BackButton';
 import AtletifyLoader from '../components/AtletifyLoader';
+import ModalComentariosWod from '../components/ModalComentariosWod';
+import { api } from '../services/api';
 import '../assets/css/CalendarioWods.css';
 
 const API_BASE = import.meta.env.VITE_API_URL;;
+
+const fechaLocalStr = (d) =>
+  d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 
 export default function CalendarioWods() {
   const navigate = useNavigate();
@@ -20,6 +25,10 @@ export default function CalendarioWods() {
 
   // Control de la semana actual
   const [fechaReferencia, setFechaReferencia] = useState(new Date());
+
+  // Capa social: contadores like/dislike/comentarios por WOD + modal de comentarios (modo admin)
+  const [contadoresWod, setContadoresWod] = useState({});
+  const [comentariosWod, setComentariosWod] = useState(null);
 
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));
@@ -48,6 +57,66 @@ export default function CalendarioWods() {
       if (res.ok) cargarEntrenamientos(box.idBox);
     } catch (err) { alert("Error de conexión"); }
   };
+
+  // Guarda un WOD existente del calendario como plantilla reutilizable (sin fecha ni clases)
+  const guardarWodComoPlantilla = async (wod) => {
+    setMenuAbierto(null);
+    if (!box) return;
+    if (!await window.wpConfirm(`¿Guardar "${wod.titulo}" como plantilla reutilizable?`)) return;
+    const payload = {
+      idBox: box.idBox,
+      nombre: wod.titulo,
+      descripcion: null,
+      modoRanking: wod.modoRanking,
+      metricaPrincipal: wod.metricaPrincipal,
+      bloques: (wod.bloques || []).map(b => ({
+        tipoBloque: b.tipoBloque,
+        tipoModalidad: b.tipoModalidad,
+        modalidadEquipo: b.modalidadEquipo,
+        capTimeMinutos: b.capTimeMinutos,
+        minutosExtraCap: b.minutosExtraCap,
+        descripcionLibre: b.descripcionLibre,
+        plantillaJueceo: b.plantillaJueceo, // ya viene como JSON string del backend
+        ejercicios: (b.ejercicios || []).map(ej => ({
+          idEjercicioDiccionario: ej.idEjercicioDiccionario,
+          idEjercicio: ej.idEjercicio,
+          esquemaRepeticiones: ej.esquemaRepeticiones,
+          pesoSugerido: ej.pesoSugerido
+        }))
+      }))
+    };
+    try {
+      await api.crearPlantilla(payload);
+      alert(`"${wod.titulo}" guardado como plantilla.`);
+    } catch (err) {
+      alert(err.message || 'Error al guardar la plantilla');
+    }
+  };
+
+  // Carga contadores de like/dislike/comentarios de los WODs de la semana visible
+  useEffect(() => {
+    if (!entrenamientos.length) return;
+    const base = new Date(fechaReferencia);
+    const diaSemana = base.getDay() || 7;
+    base.setDate(base.getDate() - diaSemana + 1);
+    const dias = [];
+    for (let i = 0; i < 7; i++) { const f = new Date(base); f.setDate(f.getDate() + i); dias.push(fechaLocalStr(f)); }
+    const faltantes = entrenamientos
+      .filter(e => dias.some(d => e.fechaProgramada?.includes(d)))
+      .map(e => e.idEntrenamiento)
+      .filter(id => !(id in contadoresWod));
+    if (faltantes.length === 0) return;
+    let activo = true;
+    (async () => {
+      const entradas = await Promise.all(faltantes.map(async id => {
+        try { return [id, await api.obtenerContadoresWod(id)]; }
+        catch { return [id, { likes: 0, dislikes: 0, totalComentarios: 0 }]; }
+      }));
+      if (activo) setContadoresWod(prev => ({ ...prev, ...Object.fromEntries(entradas) }));
+    })();
+    return () => { activo = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entrenamientos, fechaReferencia]);
 
   // --- LÓGICA DEL CALENDARIO ---
   const obtenerDiasSemana = (fecha) => {
@@ -175,6 +244,10 @@ export default function CalendarioWods() {
           <h1 className="cw-header-title me-auto">
             Calendario de <span style={{ color: 'var(--primary)' }}>WODs</span>
           </h1>
+          <Link to="/wods-guardados" className="cw-plantillas-btn">
+            <i className="fas fa-bookmark"></i>
+            <span className="d-none d-sm-inline">Plantillas</span>
+          </Link>
           <Link to="/creador-wods" className="cw-nuevo-btn">
             <i className="fas fa-plus"></i>
             <span className="d-none d-sm-inline">Nuevo WOD</span>
@@ -293,6 +366,24 @@ export default function CalendarioWods() {
                                       </li>
                                       <li>
                                         <button
+                                          onClick={() => { setComentariosWod(wod); setMenuAbierto(null); }}
+                                          className="dropdown-item"
+                                          style={{ color: 'var(--accent-cool)' }}
+                                        >
+                                          <i className="fas fa-comments me-2"></i>Ver comentarios
+                                        </button>
+                                      </li>
+                                      <li>
+                                        <button
+                                          onClick={() => guardarWodComoPlantilla(wod)}
+                                          className="dropdown-item"
+                                          style={{ color: 'var(--accent)' }}
+                                        >
+                                          <i className="fas fa-bookmark me-2"></i>Guardar como plantilla
+                                        </button>
+                                      </li>
+                                      <li>
+                                        <button
                                           onClick={() => { eliminarWod(wod.idEntrenamiento); setMenuAbierto(null); }}
                                           className="dropdown-item text-danger"
                                         >
@@ -324,6 +415,25 @@ export default function CalendarioWods() {
                                 ) : (
                                   <span className="cw-badge cw-badge-box">Todo el Box</span>
                                 )}
+                                {(() => {
+                                  const c = contadoresWod[wod.idEntrenamiento];
+                                  if (!c) return null;
+                                  return (
+                                    <>
+                                      <span className="cw-badge cw-badge-likes" title="Me gusta">
+                                        <i className="fas fa-thumbs-up me-1"></i>{c.likes}
+                                      </span>
+                                      <span className="cw-badge cw-badge-dislikes" title="No me gusta">
+                                        <i className="fas fa-thumbs-down me-1"></i>{c.dislikes}
+                                      </span>
+                                      {c.totalComentarios > 0 && (
+                                        <span className="cw-badge cw-badge-coments" title="Comentarios">
+                                          <i className="fas fa-comment me-1"></i>{c.totalComentarios}
+                                        </span>
+                                      )}
+                                    </>
+                                  );
+                                })()}
                               </div>
 
                               {/* BOTÓN RÁPIDO TV */}
@@ -354,6 +464,21 @@ export default function CalendarioWods() {
         </div>
 
       </div>
+
+      {/* Modal de comentarios (modo admin: lee y borra cualquiera) */}
+      {comentariosWod && (
+        <ModalComentariosWod
+          wod={comentariosWod}
+          onCerrar={() => setComentariosWod(null)}
+          onCountChange={(delta) => setContadoresWod(prev => ({
+            ...prev,
+            [comentariosWod.idEntrenamiento]: {
+              ...(prev[comentariosWod.idEntrenamiento] || { likes: 0, dislikes: 0, totalComentarios: 0 }),
+              totalComentarios: Math.max(0, ((prev[comentariosWod.idEntrenamiento]?.totalComentarios) || 0) + delta)
+            }
+          }))}
+        />
+      )}
     </div>
   );
 }

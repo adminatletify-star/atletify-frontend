@@ -43,6 +43,7 @@ import AdminGruposFamiliares from './pages/AdminGruposFamiliares';
 import CreadorWods from './pages/CreadorWods';
 import CalendarioWods from './pages/CalendarioWods';
 import EditarWod from './pages/EditarWod';
+import WodsGuardados from './pages/WodsGuardados';
 import HistorialCompetenciasPublico from './pages/HistorialCompetenciasPublico';
 import HistorialBoxDetalle from './pages/HistorialBoxDetalle';
 import AdminArchivadasDev from './pages/AdminArchivadasDev';
@@ -488,6 +489,7 @@ function App() {
               <Route path="/calendario-wods" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><CalendarioWods /></ProtectedRoute>} />
               <Route path="/creador-wods" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><CreadorWods /></ProtectedRoute>} />
               <Route path="/editar-wod/:id" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><EditarWod /></ProtectedRoute>} />
+              <Route path="/wods-guardados" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><WodsGuardados /></ProtectedRoute>} />
               <Route path="/admin-box/validaciones" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><ValidacionTransferencias /></ProtectedRoute>} />
               <Route path="/directorio" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><Directorio /></ProtectedRoute>} />
               <Route path="/gestion-solicitudes" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><GestionSolicitudesAtletas /></ProtectedRoute>} />

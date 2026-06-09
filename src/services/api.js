@@ -13,7 +13,12 @@ const handleResponse = async (response) => {
       console.error('Server error response:', text);
       throw new Error(`Error ${response.status}: ${text.substring(0, 100)}`);
     }
-    throw new Error(errorData.mensaje || `Error ${response.status}`);
+    // Extrae también errores de validación de ASP.NET (ValidationProblemDetails),
+    // p. ej. el mensaje del filtro de groserías que llega dentro de "errors".
+    const validationMsg = errorData.errors
+      ? Object.values(errorData.errors).flat().find(Boolean)
+      : null;
+    throw new Error(errorData.mensaje || errorData.detalle || validationMsg || errorData.title || `Error ${response.status}`);
   }
   return response.json();
 };
@@ -59,6 +64,156 @@ export const api = {
   eliminarEjercicioDiccionario: async (id) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${API_BASE_URL}/ejercicios-diccionario/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
+  // Plantillas de WODs (moldes reutilizables) — endpoints protegidos por rol
+  crearPlantilla: async (datos) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/plantillas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(datos)
+    });
+    return handleResponse(response);
+  },
+
+  obtenerPlantillasBox: async (idBox) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/plantillas/box/${idBox}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
+  obtenerPlantilla: async (id) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/plantillas/${id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
+  aplicarPlantilla: async (id, datos) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/plantillas/${id}/aplicar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(datos)
+    });
+    return handleResponse(response);
+  },
+
+  actualizarPlantilla: async (id, datos) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/plantillas/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(datos)
+    });
+    return handleResponse(response);
+  },
+
+  toggleFavoritaPlantilla: async (id, esFavorita) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/plantillas/${id}/favorita`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ esFavorita })
+    });
+    return handleResponse(response);
+  },
+
+  eliminarPlantilla: async (id) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/plantillas/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
+  // === Capa social del WOD (like/dislike, comentarios, reacciones) ===
+  reaccionarWod: async (idEntrenamiento, tipo) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/wod-social/${idEntrenamiento}/reaccionar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ tipo })
+    });
+    return handleResponse(response);
+  },
+
+  obtenerContadoresWod: async (idEntrenamiento) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/wod-social/${idEntrenamiento}/contadores`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
+  obtenerComentariosWod: async (idEntrenamiento, cursor = null, limit = 10) => {
+    const token = localStorage.getItem('token');
+    const qs = `?limit=${limit}${cursor ? `&cursor=${cursor}` : ''}`;
+    const response = await fetch(`${API_BASE_URL}/wod-social/${idEntrenamiento}/comentarios${qs}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
+  obtenerRespuestasComentario: async (idPadre, cursor = null, limit = 10) => {
+    const token = localStorage.getItem('token');
+    const qs = `?limit=${limit}${cursor ? `&cursor=${cursor}` : ''}`;
+    const response = await fetch(`${API_BASE_URL}/wod-social/comentarios/${idPadre}/respuestas${qs}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
+  contextoComentario: async (idComentario) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/wod-social/comentarios/${idComentario}/contexto`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
+  crearComentarioWod: async (idEntrenamiento, texto) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/wod-social/${idEntrenamiento}/comentarios`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ texto })
+    });
+    return handleResponse(response);
+  },
+
+  responderComentarioWod: async (idPadre, texto) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/wod-social/comentarios/${idPadre}/responder`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ texto })
+    });
+    return handleResponse(response);
+  },
+
+  reaccionarComentarioWod: async (idComentario, emoji) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/wod-social/comentarios/${idComentario}/reaccionar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ emoji })
+    });
+    return handleResponse(response);
+  },
+
+  borrarComentarioWod: async (idComentario) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/wod-social/comentarios/${idComentario}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });

@@ -1,0 +1,385 @@
+/* ============================================================
+   Modal de comentarios del WOD (estilo IG/FB) — prefijo .cwc-
+   Modal centrado en todo tamaño, border-top primary, scroll infinito.
+   ============================================================ */
+
+.cwc-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 3000;
+}
+
+.cwc-modal {
+  width: 100%;
+  max-width: 540px;
+  height: min(88vh, 760px);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header */
+.cwc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.cwc-title {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  margin: 0;
+}
+.cwc-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.cwc-close:hover { color: var(--primary); border-color: rgba(230, 57, 70, 0.4); }
+
+/* Aviso de groserías */
+.cwc-aviso {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.7rem 1rem;
+  margin: 0;
+  background: rgba(245, 166, 35, 0.1);
+  border-bottom: 1px solid rgba(245, 166, 35, 0.25);
+  color: var(--accent);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+.cwc-aviso i { margin-top: 2px; }
+
+/* Lista con scroll */
+.cwc-lista {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.cwc-loader-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+}
+.cwc-loader-mini {
+  display: flex;
+  justify-content: center;
+  transform: scale(0.6);
+}
+.cwc-sentinel { height: 1px; }
+
+.cwc-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 3rem 1rem;
+}
+.cwc-empty i { font-size: 2.2rem; opacity: 0.35; display: block; margin-bottom: 0.8rem; }
+.cwc-empty p { font-size: 0.9rem; margin: 0; }
+
+/* Item */
+.cwc-item {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+.cwc-item--respuesta { margin-left: 0; }
+.cwc-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.95rem;
+}
+.cwc-item--respuesta .cwc-avatar { width: 30px; height: 30px; font-size: 0.82rem; }
+.cwc-item-body { min-width: 0; flex: 1; }
+
+.cwc-bubble {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.6rem 0.85rem;
+}
+.cwc-item-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.2rem;
+}
+.cwc-autor {
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+}
+.cwc-fecha { font-size: 0.66rem; color: var(--text-muted); }
+.cwc-texto {
+  font-size: 0.86rem;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.cwc-texto--eliminado { color: var(--text-muted); font-style: italic; }
+
+/* Mención "↪ Pedro" cuando una respuesta va dirigida a otra respuesta (estilo Facebook) */
+.cwc-responde-a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  color: var(--accent-cool, #38bdf8);
+  font-weight: 700;
+  margin-right: 0.35rem;
+}
+.cwc-responde-a i { font-size: 0.6rem; }
+
+/* Resaltado al llegar desde una notificación */
+.cwc-item--resaltado .cwc-bubble {
+  animation: cwc-flash 2.6s ease;
+}
+@keyframes cwc-flash {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); border-color: var(--border); }
+  12%, 65% { box-shadow: 0 0 0 2px var(--primary), 0 0 18px rgba(230, 57, 70, 0.45); border-color: var(--primary); }
+}
+
+.cwc-reacciones-resumen {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  margin-top: 0.45rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.8rem;
+}
+.cwc-reacciones-count { font-size: 0.7rem; color: var(--text-muted); margin-left: 0.15rem; font-family: var(--font-stats); }
+
+/* Acciones */
+.cwc-acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.3rem;
+  padding-left: 0.25rem;
+}
+.cwc-accion-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.cwc-accion-btn:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.05); }
+.cwc-accion-btn--activo { color: var(--primary); }
+.cwc-accion-btn--danger:hover { color: var(--primary); background: rgba(230, 57, 70, 0.08); }
+.cwc-mi-reaccion { font-size: 1rem; }
+
+/* Picker de reacciones */
+.cwc-reaccionar-wrap { position: relative; }
+.cwc-picker {
+  position: absolute;
+  bottom: 110%;
+  left: 0;
+  display: flex;
+  gap: 0.15rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.3rem 0.45rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  z-index: 5;
+}
+.cwc-picker-emoji {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+  line-height: 1;
+  padding: 0.1rem;
+}
+.cwc-picker-emoji:hover { transform: scale(1.35); }
+
+/* Respuestas */
+.cwc-respuestas { margin-top: 0.35rem; }
+.cwc-ver-respuestas {
+  background: transparent;
+  border: none;
+  color: var(--accent-cool, #38bdf8);
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.cwc-ver-respuestas:hover { text-decoration: underline; }
+.cwc-respuestas-lista {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+  padding-left: 1.4rem;
+}
+/* Línea vertical que agrupa las respuestas (estilo Facebook) */
+.cwc-respuestas-lista::before {
+  content: '';
+  position: absolute;
+  left: 0.4rem;
+  top: 0;
+  bottom: 1.2rem;
+  width: 2px;
+  background: var(--border);
+  border-radius: 2px;
+}
+/* Codo horizontal que conecta cada respuesta con la línea */
+.cwc-respuestas-lista > .cwc-item { position: relative; }
+.cwc-respuestas-lista > .cwc-item::before {
+  content: '';
+  position: absolute;
+  left: -1rem;
+  top: 16px;
+  width: 0.85rem;
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+}
+/* A partir de cierto nivel ya no se sangra más (estilo Facebook): se apoya en "↪ Pedro" */
+.cwc-respuestas-lista--plana { padding-left: 0; }
+.cwc-respuestas-lista--plana::before { display: none; }
+.cwc-respuestas-lista--plana > .cwc-item::before { display: none; }
+
+/* Composer */
+.cwc-composer {
+  border-top: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  flex-shrink: 0;
+  background: var(--bg-elevated);
+}
+.cwc-respondiendo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.3rem 0.6rem;
+  margin-bottom: 0.5rem;
+}
+.cwc-respondiendo strong { color: var(--primary); }
+.cwc-respondiendo button { background: none; border: none; color: var(--text-muted); cursor: pointer; }
+.cwc-composer-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+.cwc-input {
+  flex: 1;
+  resize: none;
+  max-height: 120px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.86rem;
+  outline: none;
+  transition: var(--transition);
+  font-family: var(--font-body);
+}
+.cwc-input:focus { border-color: rgba(230, 57, 70, 0.4); }
+.cwc-publicar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--primary);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+.cwc-publicar:hover:not(:disabled) { background: var(--primary-dark); box-shadow: 0 4px 16px var(--primary-glow); }
+.cwc-publicar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Responsive */
+@media (max-width: 576px) {
+  .cwc-overlay { padding: 0; }
+  .cwc-modal { height: 100vh; height: 100dvh; max-width: 100%; border-radius: 0; border-top-width: 3px; }
+  .cwc-header { padding: 0.8rem 1rem; }
+  .cwc-title { font-size: 0.95rem; }
+  .cwc-aviso { font-size: 0.66rem; padding: 0.6rem 0.85rem; }
+  .cwc-lista { padding: 0.85rem 0.85rem; gap: 0.85rem; }
+  .cwc-bubble { padding: 0.55rem 0.75rem; }
+  .cwc-texto { font-size: 0.82rem; }
+  .cwc-avatar { width: 32px; height: 32px; font-size: 0.85rem; }
+  .cwc-item--respuesta .cwc-avatar { width: 26px; height: 26px; font-size: 0.74rem; }
+  .cwc-respuestas-lista { padding-left: 1.2rem; }
+  .cwc-respuestas-lista > .cwc-item::before { left: -0.85rem; width: 0.7rem; }
+  .cwc-composer { padding: 0.6rem 0.8rem; }
+}
+@media (max-width: 400px) {
+  .cwc-lista { padding: 0.7rem 0.6rem; }
+  .cwc-item { gap: 0.45rem; }
+  .cwc-acciones { gap: 0.05rem; flex-wrap: wrap; }
+  .cwc-accion-btn { font-size: 0.68rem; padding: 0.18rem 0.32rem; }
+  .cwc-picker { padding: 0.25rem 0.35rem; }
+  .cwc-picker-emoji { font-size: 1.05rem; }
+  .cwc-aviso { font-size: 0.62rem; }
+  .cwc-publicar { width: 40px; height: 40px; }
+}

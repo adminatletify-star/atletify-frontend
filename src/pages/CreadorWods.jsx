@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import BackButton from '../components/BackButton';
@@ -22,11 +23,41 @@ const getFechaLocalString = () => {
     String(hoy.getDate()).padStart(2, '0');
 };
 
+// Arma los bloques (con su plantillaJueceo procesada y serializada) para el payload.
+// Lo usan tanto "Guardar WOD" como "Guardar como plantilla" — mismo shape de BloqueDto.
+function construirBloquesPayload(bloques, modoRanking, metricaPrincipal) {
+  return bloques.map(b => {
+    let plantillaFinal = b.plantillaJueceo;
+    if (modoRanking === 'Auto') {
+      if (metricaPrincipal === 'Tiempo') plantillaFinal = ['Tiempo Total (MM:SS)'];
+      else if (metricaPrincipal === 'Peso') plantillaFinal = ['Peso Máximo'];
+      else if (metricaPrincipal === 'Reps') plantillaFinal = ['Total Repeticiones'];
+      else if (metricaPrincipal === 'RondasReps') plantillaFinal = ['Rondas', 'Repeticiones'];
+    } else {
+      if (plantillaFinal.length === 0) plantillaFinal = ['Score Principal'];
+    }
+    return {
+      ...b,
+      capTimeMinutos: b.capTimeMinutos || null,
+      minutosExtraCap: b.minutosExtraCap ? parseInt(b.minutosExtraCap) : null,
+      ejercicios: b.ejercicios.filter(ej => ej.idEjercicio !== '').map(ej => ({
+        ...ej,
+        idEjercicioDiccionario: parseInt(ej.idEjercicio)
+      })),
+      plantillaJueceo: JSON.stringify(plantillaFinal)
+    };
+  });
+}
+
 export default function CreadorWods() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const fechaParam = searchParams.get('fecha');
   const fechaLimpia = fechaParam ? fechaParam.substring(0, 10) : getFechaLocalString();
+  const plantillaParam = searchParams.get('plantilla');
+
+  // Si viene ?plantilla={id}, el creador entra en "modo edición de plantilla"
+  const [editandoPlantillaId, setEditandoPlantillaId] = useState(null);
 
   const [box, setBox] = useState(null);
   const [glosarioEjercicios, setGlosarioEjercicios] = useState([]);
@@ -41,6 +72,11 @@ export default function CreadorWods() {
   const [estaPublicado, setEstaPublicado] = useState(true);
   const [notasAdicionales, setNotasAdicionales] = useState('');
   const [clasesSeleccionadas, setClasesSeleccionadas] = useState([]);
+
+  // Modal "Guardar como plantilla"
+  const [showModalPlantilla, setShowModalPlantilla] = useState(false);
+  const [nombrePlantilla, setNombrePlantilla] = useState('');
+  const [descripcionPlantilla, setDescripcionPlantilla] = useState('');
 
   // EL ROMPECABEZAS (Ahora incluye la Plantilla de Jueceo)
   const [bloques, setBloques] = useState([
@@ -67,6 +103,44 @@ export default function CreadorWods() {
     setBox(b);
     cargarDatos(b.idBox);
   }, [navigate]);
+
+  // Modo edición de plantilla: cargar el molde y precargar el formulario
+  useEffect(() => {
+    if (!box || !plantillaParam) return;
+    (async () => {
+      try {
+        const p = await api.obtenerPlantilla(plantillaParam);
+        setEditandoPlantillaId(p.idPlantilla);
+        setTitulo(p.nombre || 'Plantilla');
+        setDescripcionPlantilla(p.descripcion || '');
+        setModoRanking(p.modoRanking || 'Auto');
+        setMetricaPrincipal(p.metricaPrincipal || 'Tiempo');
+        const bloquesParseados = (p.bloques || []).map(b => {
+          let jueceo = ['Score Principal'];
+          try { if (b.plantillaJueceo) jueceo = JSON.parse(b.plantillaJueceo); } catch (e) { /* fallback */ }
+          return {
+            tipoBloque: b.tipoBloque,
+            tipoModalidad: b.tipoModalidad,
+            modalidadEquipo: b.modalidadEquipo,
+            capTimeMinutos: b.capTimeMinutos || '',
+            minutosExtraCap: b.minutosExtraCap || '',
+            descripcionLibre: b.descripcionLibre || '',
+            plantillaJueceo: Array.isArray(jueceo) ? jueceo : ['Score Principal'],
+            inputMetrica: '',
+            ejercicios: (b.ejercicios || []).map(ej => ({
+              idEjercicio: String(ej.idEjercicioDiccionario ?? ''),
+              esquemaRepeticiones: ej.esquemaRepeticiones || '',
+              pesoSugerido: ej.pesoSugerido || ''
+            }))
+          };
+        });
+        if (bloquesParseados.length > 0) setBloques(bloquesParseados);
+      } catch (e) {
+        alert('No se pudo cargar la plantilla.');
+        navigate('/wods-guardados');
+      }
+    })();
+  }, [box, plantillaParam, navigate]);
 
   async function cargarDatos(idBox) {
     try {
@@ -148,32 +222,11 @@ export default function CreadorWods() {
   // --- GUARDAR WOD ---
   const handleGuardar = async (e) => {
     e.preventDefault();
+    // En modo edición de plantilla, el submit del form guarda la plantilla (no un WOD)
+    if (editandoPlantillaId) { guardarEdicionPlantilla(); return; }
     setLoading(true);
 
-    const bloquesLimpios = bloques.map(b => {
-      // 👈 LÓGICA DEL CAPITÁN: Definir la métrica según el modo
-      let plantillaFinal = b.plantillaJueceo;
-
-      if (modoRanking === 'Auto') {
-        if (metricaPrincipal === 'Tiempo') plantillaFinal = ['Tiempo Total (MM:SS)'];
-        else if (metricaPrincipal === 'Peso') plantillaFinal = ['Peso Máximo'];
-        else if (metricaPrincipal === 'Reps') plantillaFinal = ['Total Repeticiones'];
-        else if (metricaPrincipal === 'RondasReps') plantillaFinal = ['Rondas', 'Repeticiones'];
-      } else {
-        if (plantillaFinal.length === 0) plantillaFinal = ['Score Principal'];
-      }
-
-      return {
-        ...b,
-        capTimeMinutos: b.capTimeMinutos || null,
-        minutosExtraCap: b.minutosExtraCap ? parseInt(b.minutosExtraCap) : null,
-        ejercicios: b.ejercicios.filter(ej => ej.idEjercicio !== '').map(ej => ({
-          ...ej,
-          idEjercicioDiccionario: parseInt(ej.idEjercicio)
-        })),
-        plantillaJueceo: JSON.stringify(plantillaFinal) // 👈 Guardamos la plantilla ya procesada
-      };
-    });
+    const bloquesLimpios = construirBloquesPayload(bloques, modoRanking, metricaPrincipal);
 
     //  TRUCO DE ZONA HORARIA: Forzamos el mediodía (T12:00:00Z) para que no cambie de día
     //  MANDAMOS LA FECHA COMO TEXTO PURO (Ej. "2026-03-21"), SIN ZONAS HORARIAS
@@ -208,6 +261,54 @@ export default function CreadorWods() {
     finally { setLoading(false); }
   };
 
+  // Abre el modal de plantilla precargando el nombre con el título actual del WOD
+  const abrirModalPlantilla = () => {
+    setNombrePlantilla(titulo);
+    setDescripcionPlantilla('');
+    setShowModalPlantilla(true);
+  };
+
+  // --- GUARDAR CAMBIOS DE UNA PLANTILLA EXISTENTE (PUT) ---
+  const guardarEdicionPlantilla = async () => {
+    if (!box || !editandoPlantillaId) return;
+    const payload = {
+      idBox: box.idBox,
+      nombre: (titulo || 'Plantilla').trim(),
+      descripcion: descripcionPlantilla.trim() || null,
+      modoRanking,
+      metricaPrincipal: modoRanking === 'Auto' ? metricaPrincipal : null,
+      bloques: construirBloquesPayload(bloques, modoRanking, metricaPrincipal)
+    };
+    try {
+      await api.actualizarPlantilla(editandoPlantillaId, payload);
+      alert('Plantilla actualizada.');
+      navigate('/wods-guardados');
+    } catch (err) {
+      alert(err.message || 'Error al actualizar la plantilla');
+    }
+  };
+
+  // --- GUARDAR COMO PLANTILLA (molde reutilizable, sin fecha ni clases) ---
+  const guardarComoPlantilla = async () => {
+    if (!box) return;
+    const payload = {
+      idBox: box.idBox,
+      nombre: (nombrePlantilla || titulo || 'Plantilla').trim(),
+      descripcion: descripcionPlantilla.trim() || null,
+      modoRanking,
+      metricaPrincipal: modoRanking === 'Auto' ? metricaPrincipal : null,
+      bloques: construirBloquesPayload(bloques, modoRanking, metricaPrincipal)
+    };
+    try {
+      await api.crearPlantilla(payload);
+      setShowModalPlantilla(false);
+      alert('Plantilla guardada. Aplícala a cualquier día desde "WODs guardados".');
+      navigate('/wods-guardados');
+    } catch (err) {
+      alert(err.message || 'Error al guardar la plantilla');
+    }
+  };
+
   // Mapa de tipoBloque → clase CSS
   const bloqueColorClass = (tipo) => ({
     'WOD': 'crw-bloque--wod',
@@ -224,9 +325,11 @@ export default function CreadorWods() {
       ══════════════════════════════════ */}
       <header className="crw-header">
         <div className="d-flex align-items-center gap-3">
-          <BackButton to="/calendario-wods" />
+          <BackButton to={editandoPlantillaId ? '/wods-guardados' : '/calendario-wods'} />
           <h1 className="crw-header-title">
-            Armar <span style={{ color: 'var(--primary)' }}>WOD</span>
+            {editandoPlantillaId
+              ? <>Editar <span style={{ color: 'var(--primary)' }}>Plantilla</span></>
+              : <>Armar <span style={{ color: 'var(--primary)' }}>WOD</span></>}
           </h1>
         </div>
       </header>
@@ -243,8 +346,10 @@ export default function CreadorWods() {
             </p>
 
             <div className="row g-3 mb-4">
-              <div className="col-12 col-md-8">
-                <label className="etiqueta-campo">Título del Entrenamiento</label>
+              <div className={editandoPlantillaId ? 'col-12' : 'col-12 col-md-8'}>
+                <label className="etiqueta-campo">
+                  {editandoPlantillaId ? 'Nombre de la plantilla' : 'Título del Entrenamiento'}
+                </label>
                 <input
                   type="text"
                   className="crw-titulo-input"
@@ -254,49 +359,68 @@ export default function CreadorWods() {
                   placeholder="Ej: Murph, Lunes de Pierna..."
                 />
               </div>
-              <div className="col-12 col-md-4">
-                <label className="etiqueta-campo">
-                  <i className="fas fa-calendar me-1" style={{ color: 'var(--accent-cool)' }}></i>
-                  Fecha Programada
-                </label>
-                <RedGrayDatePicker
-                  required
-                  value={fechaProgramada}
-                  onChange={setFechaProgramada}
-                  inputClassName="shadow-none p-3 rounded-4"
-                />
-              </div>
-            </div>
-
-            <hr className="separador" />
-
-            <div className="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap">
-              <p className="crw-section-label mb-0" style={{ flex: 'none' }}>
-                <i className="fas fa-clock"></i>¿A qué clases aplica?
-              </p>
-              <button type="button" onClick={seleccionarTodasClases} className="crw-select-all-btn">
-                <i className="fas fa-check-double me-1"></i>
-                <span className="d-none d-sm-inline">Seleccionar </span>Todas
-              </button>
-            </div>
-
-            <div className="crw-clases-container">
-              {clasesDisponibles.length === 0 && (
-                <p className="crw-empty-text">No hay clases disponibles</p>
+              {!editandoPlantillaId && (
+                <div className="col-12 col-md-4">
+                  <label className="etiqueta-campo">
+                    <i className="fas fa-calendar me-1" style={{ color: 'var(--accent-cool)' }}></i>
+                    Fecha Programada
+                  </label>
+                  <RedGrayDatePicker
+                    required
+                    value={fechaProgramada}
+                    onChange={setFechaProgramada}
+                    inputClassName="shadow-none p-3 rounded-4"
+                  />
+                </div>
               )}
-              {clasesDisponibles.map(c => (
-                <button
-                  key={c.idClase}
-                  type="button"
-                  className={`crw-clase-chip ${clasesSeleccionadas.includes(c.idClase) ? 'crw-clase-chip--active' : ''}`}
-                  onClick={() => toggleClase(c.idClase)}
-                >
-                  <i className={`${clasesSeleccionadas.includes(c.idClase) ? 'fas' : 'far'} fa-check-circle`}></i>
-                  <span className="d-none d-sm-inline">{c.horarioInicio.substring(0, 5)} — </span>
-                  {c.nombre}
-                </button>
-              ))}
+              {editandoPlantillaId && (
+                <div className="col-12">
+                  <label className="etiqueta-campo">Descripción (opcional)</label>
+                  <textarea
+                    className="entrada-oscura"
+                    rows="2"
+                    value={descripcionPlantilla}
+                    onChange={e => setDescripcionPlantilla(e.target.value)}
+                    placeholder="Notas sobre la plantilla..."
+                  />
+                </div>
+              )}
             </div>
+
+            {/* Clases: solo aplica a un WOD con fecha, no a un molde */}
+            {!editandoPlantillaId && (
+              <>
+                <hr className="separador" />
+
+                <div className="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap">
+                  <p className="crw-section-label mb-0" style={{ flex: 'none' }}>
+                    <i className="fas fa-clock"></i>¿A qué clases aplica?
+                  </p>
+                  <button type="button" onClick={seleccionarTodasClases} className="crw-select-all-btn">
+                    <i className="fas fa-check-double me-1"></i>
+                    <span className="d-none d-sm-inline">Seleccionar </span>Todas
+                  </button>
+                </div>
+
+                <div className="crw-clases-container">
+                  {clasesDisponibles.length === 0 && (
+                    <p className="crw-empty-text">No hay clases disponibles</p>
+                  )}
+                  {clasesDisponibles.map(c => (
+                    <button
+                      key={c.idClase}
+                      type="button"
+                      className={`crw-clase-chip ${clasesSeleccionadas.includes(c.idClase) ? 'crw-clase-chip--active' : ''}`}
+                      onClick={() => toggleClase(c.idClase)}
+                    >
+                      <i className={`${clasesSeleccionadas.includes(c.idClase) ? 'fas' : 'far'} fa-check-circle`}></i>
+                      <span className="d-none d-sm-inline">{c.horarioInicio.substring(0, 5)} — </span>
+                      {c.nombre}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           {/* ══════════════════════════════════
@@ -558,30 +682,89 @@ export default function CreadorWods() {
               BARRA DE PIE — PUBLICAR + GUARDAR
           ══════════════════════════════════ */}
           <div className="crw-footer-bar">
-            <div className="crw-toggle-row">
-              <input
-                className="form-check-input m-0"
-                type="checkbox"
-                role="switch"
-                checked={estaPublicado}
-                onChange={e => setEstaPublicado(e.target.checked)}
-                style={{ width: '48px', height: '24px' }}
-              />
-              <p className="crw-toggle-label mb-0">
-                {estaPublicado
-                  ? <span style={{ color: 'var(--success)' }}><i className="fas fa-eye me-2"></i>Público</span>
-                  : <span style={{ color: 'var(--text-muted)' }}><i className="fas fa-eye-slash me-2"></i>Borrador</span>
-                }
-              </p>
-            </div>
+            {!editandoPlantillaId && (
+              <div className="crw-toggle-row">
+                <input
+                  className="form-check-input m-0"
+                  type="checkbox"
+                  role="switch"
+                  checked={estaPublicado}
+                  onChange={e => setEstaPublicado(e.target.checked)}
+                  style={{ width: '48px', height: '24px' }}
+                />
+                <p className="crw-toggle-label mb-0">
+                  {estaPublicado
+                    ? <span style={{ color: 'var(--success)' }}><i className="fas fa-eye me-2"></i>Público</span>
+                    : <span style={{ color: 'var(--text-muted)' }}><i className="fas fa-eye-slash me-2"></i>Borrador</span>
+                  }
+                </p>
+              </div>
+            )}
 
-            <BotonSeguro type="button" onClick={handleGuardar} className="crw-save-btn" textoProcesando="Guardando...">
-              <i className="fas fa-save"></i>Guardar WOD
-            </BotonSeguro>
+            <div className="crw-footer-actions">
+              {editandoPlantillaId ? (
+                <BotonSeguro type="button" onClick={guardarEdicionPlantilla} className="crw-save-btn" textoProcesando="Guardando...">
+                  <i className="fas fa-save"></i>Guardar cambios
+                </BotonSeguro>
+              ) : (
+                <>
+                  <button type="button" onClick={abrirModalPlantilla} className="crw-plantilla-btn">
+                    <i className="fas fa-bookmark"></i>
+                    <span className="crw-plantilla-btn-label">Guardar como plantilla</span>
+                  </button>
+                  <BotonSeguro type="button" onClick={handleGuardar} className="crw-save-btn" textoProcesando="Guardando...">
+                    <i className="fas fa-save"></i>Guardar WOD
+                  </BotonSeguro>
+                </>
+              )}
+            </div>
           </div>
 
         </form>
       </div>
+
+      {/* ══ MODAL: GUARDAR COMO PLANTILLA ══ */}
+      {showModalPlantilla && createPortal(
+        <div className="crw-plmodal-overlay" onClick={() => setShowModalPlantilla(false)}>
+          <div className="crw-plmodal" onClick={e => e.stopPropagation()}>
+            <button type="button" className="crw-plmodal-close" onClick={() => setShowModalPlantilla(false)}>
+              <i className="fas fa-times"></i>
+            </button>
+            <h3 className="crw-plmodal-title">
+              <i className="fas fa-bookmark me-2" style={{ color: 'var(--primary)' }}></i>Guardar como plantilla
+            </h3>
+            <p className="crw-info-text mb-3">
+              Guarda este WOD como molde reutilizable para aplicarlo a cualquier día con un clic. No se guarda fecha ni clases.
+            </p>
+            <label className="etiqueta-campo">Nombre de la plantilla</label>
+            <input
+              type="text"
+              className="entrada-oscura mb-3"
+              value={nombrePlantilla}
+              onChange={e => setNombrePlantilla(e.target.value)}
+              placeholder="Ej: Fran, Murph..."
+              autoFocus
+            />
+            <label className="etiqueta-campo">Descripción (opcional)</label>
+            <textarea
+              className="entrada-oscura mb-3"
+              rows="2"
+              value={descripcionPlantilla}
+              onChange={e => setDescripcionPlantilla(e.target.value)}
+              placeholder="Notas sobre la plantilla..."
+            />
+            <div className="crw-plmodal-footer">
+              <button type="button" className="crw-plmodal-cancel" onClick={() => setShowModalPlantilla(false)}>
+                Cancelar
+              </button>
+              <BotonSeguro type="button" onClick={guardarComoPlantilla} className="crw-save-btn" textoProcesando="Guardando...">
+                <i className="fas fa-bookmark"></i>Guardar plantilla
+              </BotonSeguro>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

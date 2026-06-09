@@ -518,3 +518,114 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* Acciones del pie: guardar plantilla + guardar WOD */
+.crw-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* Botón secundario "Guardar como plantilla" (acento ámbar) */
+.crw-plantilla-btn {
+  padding: 0.75rem 1.25rem;
+  background: transparent;
+  border: 1px solid rgba(245, 166, 35, 0.45);
+  border-radius: 20px;
+  color: var(--accent);
+  font-family: var(--font-heading-alt);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+}
+.crw-plantilla-btn:hover {
+  background: rgba(245, 166, 35, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px rgba(245, 166, 35, 0.15);
+}
+
+/* === MODAL "GUARDAR COMO PLANTILLA" === */
+.crw-plmodal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 3000;
+}
+.crw-plmodal {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+.crw-plmodal-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.crw-plmodal-close:hover { color: var(--primary); border-color: rgba(230, 57, 70, 0.4); }
+.crw-plmodal-title {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  margin: 0 0 0.4rem;
+  padding-right: 2rem;
+}
+.crw-plmodal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+.crw-plmodal-cancel {
+  padding: 0.7rem 1.2rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.crw-plmodal-cancel:hover { color: var(--text-primary); border-color: rgba(255, 255, 255, 0.25); }
+
+/* Responsive: en móvil el botón de plantilla queda solo con ícono */
+@media (max-width: 576px) {
+  .crw-plantilla-btn-label { display: none; }
+  .crw-plantilla-btn { padding: 0.72rem 0.9rem; }
+  .crw-footer-actions { width: 100%; justify-content: flex-end; }
+  .crw-plmodal { padding: 1.2rem; border-radius: 18px; }
+}

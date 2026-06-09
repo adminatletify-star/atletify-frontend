@@ -1204,6 +1204,121 @@
   transition: color 0.15s ease, opacity 0.15s ease;
 }
 .up-ej-item--clicable:hover .up-ej-link-icon { color: var(--primary); opacity: 1; }
+
+/* === Barra social del WOD (like / dislike / comentarios) === */
+.up-wod-social {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-wrap: wrap;
+}
+.up-social-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-family: var(--font-stats);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+  transition: var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.up-social-btn:hover { color: var(--text-primary); border-color: rgba(255, 255, 255, 0.2); }
+.up-social-btn--like {
+  background: rgba(46, 204, 113, 0.12);
+  border-color: rgba(46, 204, 113, 0.4);
+  color: var(--success, #2ecc71);
+}
+.up-social-btn--dislike {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: rgba(230, 57, 70, 0.4);
+  color: var(--primary);
+}
+.up-social-btn--comments {
+  font-family: var(--font-heading-alt);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.up-social-btn--comments:hover { color: var(--accent-cool, #38bdf8); border-color: rgba(56, 189, 248, 0.4); }
+
+@media (max-width: 380px) {
+  .up-social-btn { font-size: 0.74rem; padding: 0.32rem 0.6rem; }
+}
+
+/* === Avisos (notificaciones) con swipe-para-borrar === */
+.up-noti-tip {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0 0 0.25rem;
+  opacity: 0.85;
+}
+.up-noti-swipe {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+.up-noti-swipe-bg {
+  position: absolute;
+  inset: 0;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  color: #fff;
+  font-size: 0.95rem;
+}
+.up-noti-row {
+  position: relative;
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-start;
+  padding: 0.8rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+}
+.up-noti-row--leida { opacity: 0.65; }
+.up-noti-row:not(.up-noti-row--leida) { border-left: 3px solid var(--accent); }
+.up-noti-icon { font-size: 1.35rem; line-height: 1; margin-top: 2px; flex-shrink: 0; }
+.up-noti-text { min-width: 0; }
+.up-noti-titulo {
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  font-size: 0.84rem;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+.up-noti-row--leida .up-noti-titulo { color: var(--text-muted); }
+.up-noti-msg {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+.up-noti-hint {
+  font-size: 0.66rem;
+  margin-top: 4px;
+  font-weight: 600;
+  color: var(--accent-cool, #38bdf8);
+}
+.up-noti-hint--leer { color: var(--accent); }
+
 .up-ej-reps {
   font-family: var(--font-stats);
   font-size: 1rem;

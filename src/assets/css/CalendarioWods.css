@@ -59,6 +59,33 @@
   box-shadow: 0 4px 16px var(--primary-glow);
 }
 
+/* Botón "Plantillas" (variante outline ámbar) */
+.cw-plantillas-btn {
+  background: transparent;
+  border: 1px solid rgba(245, 166, 35, 0.45);
+  border-radius: 20px;
+  color: var(--accent);
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 0.5rem 1.1rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.cw-plantillas-btn:hover {
+  background: rgba(245, 166, 35, 0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 4px 16px rgba(245, 166, 35, 0.15);
+}
+
 /* === NAVEGADOR DE SEMANA === */
 .cw-week-navigator {
   background: var(--bg-elevated);
@@ -323,6 +350,23 @@
   background: rgba(79, 195, 247, 0.05);
   border: 1px solid rgba(79, 195, 247, 0.14);
   color: var(--accent-cool);
+}
+
+/* Contadores sociales del WOD (para decidir si se guarda como plantilla) */
+.cw-badge-likes {
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid rgba(46, 204, 113, 0.28);
+  color: var(--success);
+}
+.cw-badge-dislikes {
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.28);
+  color: var(--primary);
+}
+.cw-badge-coments {
+  background: rgba(245, 166, 35, 0.08);
+  border: 1px solid rgba(245, 166, 35, 0.22);
+  color: var(--accent);
 }
 
 /* === BOTÓN MODO PIZARRA (dentro de la card) === */

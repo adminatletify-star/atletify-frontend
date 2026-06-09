@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import DarkVeil from '../components/ReactBits/DarkVeil';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
@@ -10,6 +10,7 @@ import '../assets/css/visitas-regalo.css';
 import AtletifyLoader from '../components/AtletifyLoader';
 import AnunciosEngine from '../components/AnunciosEngine';
 import EjercicioDetailModal from '../components/EjercicioDetailModal';
+import ModalComentariosWod from '../components/ModalComentariosWod';
 import { api } from '../services/api';
 
 const API_BASE = import.meta.env.VITE_API_URL;
@@ -51,6 +52,75 @@ const getFechaHoyString = () => {
     String(hoy.getDate()).padStart(2, '0');
 };
 
+// Icono según el emoji embebido en el título de la notificación
+const iconoNoti = (titulo = '') =>
+  titulo.includes('💬') ? '💬'
+  : titulo.includes('🔥') ? '🔥'
+  : titulo.includes('❤️') ? '❤️'
+  : titulo.includes('👍') ? '👍'
+  : titulo.includes('💀') ? '💀'
+  : titulo.includes('🔀') ? '🔀'
+  : '🔔';
+
+// Fila de notificación con swipe-para-borrar (dedo o cursor, vía pointer events)
+function NotificacionRow({ noti, onAbrir, onBorrar }) {
+  const [dx, setDx] = useState(0);
+  const arrastrando = useRef(false);
+  const startX = useRef(0);
+  const movido = useRef(false);
+
+  const onDown = (e) => {
+    arrastrando.current = true;
+    startX.current = e.clientX;
+    movido.current = false;
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) { /* noop */ }
+  };
+  const onMove = (e) => {
+    if (!arrastrando.current) return;
+    const d = e.clientX - startX.current;
+    if (Math.abs(d) > 6) movido.current = true;
+    setDx(d);
+  };
+  const onUp = () => {
+    if (!arrastrando.current) return;
+    arrastrando.current = false;
+    if (Math.abs(dx) > 110) {
+      setDx(dx > 0 ? 600 : -600);
+      setTimeout(() => onBorrar(noti.idNotificacion), 160);
+      return;
+    }
+    const huboSwipe = movido.current;
+    setDx(0);
+    if (!huboSwipe) onAbrir(noti);
+  };
+
+  return (
+    <div className="up-noti-swipe">
+      <div className="up-noti-swipe-bg">
+        <i className="fas fa-trash"></i>
+        <i className="fas fa-trash"></i>
+      </div>
+      <div
+        className={`up-noti-row ${noti.leida ? 'up-noti-row--leida' : ''}`}
+        style={{ transform: `translateX(${dx}px)`, transition: arrastrando.current ? 'none' : 'transform 0.2s ease' }}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerCancel={onUp}
+      >
+        <div className="up-noti-icon">{iconoNoti(noti.titulo)}</div>
+        <div className="up-noti-text">
+          <div className="up-noti-titulo">{noti.titulo}</div>
+          <div className="up-noti-msg">{noti.Mensaje || noti.mensaje}</div>
+          {noti.idEntrenamiento
+            ? <div className="up-noti-hint"><i className="fas fa-up-right-from-square me-1"></i>Toca para ver el comentario</div>
+            : (!noti.leida && <div className="up-noti-hint up-noti-hint--leer">Toca para marcar como leída</div>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function UserPanel() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -69,6 +139,9 @@ export default function UserPanel() {
   const [loadingWod, setLoadingWod] = useState(true);
   const [ejercicioModal, setEjercicioModal] = useState(null); // ejercicio del diccionario para el modal de detalle
   const [cargandoEjId, setCargandoEjId] = useState(null);       // id del ejercicio que se está cargando
+  const [socialWod, setSocialWod] = useState({});              // { [idEntrenamiento]: { likes, dislikes, miReaccion, totalComentarios } }
+  const [comentariosWod, setComentariosWod] = useState(null);  // WOD cuyo modal de comentarios está abierto
+  const [focoComentario, setFocoComentario] = useState(null);  // { idComentario, idComentarioRaiz } al venir de una notificación
   const [pizarra, setPizarra] = useState([]);
   const [filtroPizarra, setFiltroPizarra] = useState('General');
   const [filtroGenero, setFiltroGenero] = useState('Hombre');
@@ -234,6 +307,31 @@ export default function UserPanel() {
     } catch (error) { console.error(error); }
   };
 
+  // Borra un aviso (swipe en el modal). Optimista + DELETE en el backend.
+  const borrarNotificacion = async (idNoti) => {
+    setNotificaciones(prev => prev.filter(n => n.idNotificacion !== idNoti));
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${API_BASE}/interacciones/notificaciones/${idNoti}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (error) { console.error(error); }
+  };
+
+  // Tap en un aviso: si apunta a un comentario abre el modal en él y se limpia del buzón;
+  // si no, solo lo marca como leído.
+  const abrirAviso = (noti) => {
+    if (noti.idEntrenamiento) {
+      setFocoComentario({ idComentario: noti.idComentario, idComentarioRaiz: noti.idComentarioRaiz });
+      setComentariosWod({ idEntrenamiento: noti.idEntrenamiento });
+      setShowModalNotis(false);
+      borrarNotificacion(noti.idNotificacion); // se limpia del buzón al abrir el comentario
+    } else if (!noti.leida) {
+      leerNotificacion(noti.idNotificacion);
+    }
+  };
+
   const cargarAmistades = async (idUsuario) => {
     try {
       const [resPendientes, resCompas] = await Promise.all([
@@ -318,10 +416,39 @@ export default function UserPanel() {
         const todosWods = await resWods.json();
         const wodsDelDia = todosWods.filter(w => w.fechaProgramada?.includes(hoyStr) && w.estaPublicado);
         setWodsHoy(wodsDelDia);
+        cargarSocialWods(wodsDelDia);
       }
       const resPizarra = await fetch(`${API_BASE}/asistencias/box/${idBox}/leaderboard/${hoyStr}`);
       if (resPizarra.ok) setPizarra(await resPizarra.json());
     } catch (err) { console.error(err); } finally { setLoadingWod(false); }
+  };
+
+  // Carga los contadores (like/dislike/comentarios) de los WODs de hoy
+  const cargarSocialWods = async (wods) => {
+    const entradas = await Promise.all((wods || []).map(async w => {
+      try {
+        const c = await api.obtenerContadoresWod(w.idEntrenamiento);
+        return [w.idEntrenamiento, c];
+      } catch {
+        return [w.idEntrenamiento, { likes: 0, dislikes: 0, miReaccion: null, totalComentarios: 0 }];
+      }
+    }));
+    setSocialWod(Object.fromEntries(entradas));
+  };
+
+  const reaccionarWod = async (idEnt, tipo) => {
+    try {
+      const c = await api.reaccionarWod(idEnt, tipo);
+      setSocialWod(prev => ({ ...prev, [idEnt]: c }));
+    } catch (e) { alert(e.message || 'No se pudo reaccionar.'); }
+  };
+
+  // Ajusta el contador de comentarios cuando se crea/borra desde el modal
+  const ajustarContadorComentarios = (idEnt, delta) => {
+    setSocialWod(prev => ({
+      ...prev,
+      [idEnt]: { ...(prev[idEnt] || {}), totalComentarios: Math.max(0, ((prev[idEnt]?.totalComentarios) || 0) + delta) }
+    }));
   };
 
   // Abre el modal de detalle del ejercicio (igual que en la pantalla Ejercicios).
@@ -1079,6 +1206,36 @@ export default function UserPanel() {
                                 </div>
                               ))}
 
+                              {/* Barra social: like / dislike / comentarios */}
+                              {(() => {
+                                const s = socialWod[wod.idEntrenamiento] || { likes: 0, dislikes: 0, miReaccion: null, totalComentarios: 0 };
+                                return (
+                                  <div className="up-wod-social">
+                                    <button
+                                      className={`up-social-btn ${s.miReaccion === 'like' ? 'up-social-btn--like' : ''}`}
+                                      onClick={() => reaccionarWod(wod.idEntrenamiento, 'like')}
+                                      aria-label="Me gusta"
+                                    >
+                                      <i className="fas fa-thumbs-up"></i><span>{s.likes}</span>
+                                    </button>
+                                    <button
+                                      className={`up-social-btn ${s.miReaccion === 'dislike' ? 'up-social-btn--dislike' : ''}`}
+                                      onClick={() => reaccionarWod(wod.idEntrenamiento, 'dislike')}
+                                      aria-label="No me gusta"
+                                    >
+                                      <i className="fas fa-thumbs-down"></i><span>{s.dislikes}</span>
+                                    </button>
+                                    <button
+                                      className="up-social-btn up-social-btn--comments ms-auto"
+                                      onClick={() => { setFocoComentario(null); setComentariosWod(wod); }}
+                                    >
+                                      <i className="fas fa-comment"></i>
+                                      <span>{s.totalComentarios > 0 ? `${s.totalComentarios} ` : ''}Comentarios</span>
+                                    </button>
+                                  </div>
+                                );
+                              })()}
+
                               {wodIdx < wodsAMostrar.length - 1 && <div className="up-wod-divider"></div>}
                             </div>
                           );
@@ -1524,22 +1681,14 @@ export default function UserPanel() {
                 </div>
               ) : (
                 <div className="d-flex flex-column gap-2">
+                  <p className="up-noti-tip"><i className="fas fa-hand-pointer me-1"></i>Desliza un aviso para borrarlo</p>
                   {notificaciones.map(noti => (
-                    <div
+                    <NotificacionRow
                       key={noti.idNotificacion}
-                      className={`p-3 rounded-4 border ${noti.leida ? 'bg-dark border-secondary border-opacity-25' : 'bg-warning bg-opacity-10 border-warning border-opacity-50'} cursor-pointer`}
-                      onClick={() => !noti.leida && leerNotificacion(noti.idNotificacion)}
-                      style={{ cursor: noti.leida ? 'default' : 'pointer' }}
-                    >
-                      <div className="d-flex align-items-start gap-3">
-                        <div className="mt-1 fs-4">{noti.titulo.includes('🔥') ? '🔥' : noti.titulo.includes('❤️') ? '❤️' : noti.titulo.includes('💀') ? '💀' : noti.titulo.includes('🔀') ? '🔀' : '🔔'}</div>
-                        <div>
-                          <div className={`fw-bold ${noti.leida ? 'text-secondary' : 'text-white'}`}>{noti.titulo}</div>
-                          <div className={`small ${noti.leida ? 'text-secondary opacity-75' : 'text-light'}`}>{noti.Mensaje || noti.mensaje}</div>
-                          {!noti.leida && <div className="text-warning small fw-bold mt-1" style={{ fontSize: '0.7rem' }}>Toca para marcar como leída</div>}
-                        </div>
-                      </div>
-                    </div>
+                      noti={noti}
+                      onAbrir={abrirAviso}
+                      onBorrar={borrarNotificacion}
+                    />
                   ))}
                 </div>
               )}
@@ -1918,6 +2067,16 @@ export default function UserPanel() {
 
       {/* Modal de detalle de ejercicio (compartido con la pantalla Ejercicios) */}
       <EjercicioDetailModal ejercicio={ejercicioModal} onClose={() => setEjercicioModal(null)} />
+
+      {/* Modal de comentarios del WOD (like/dislike viven en la card) */}
+      {comentariosWod && (
+        <ModalComentariosWod
+          wod={comentariosWod}
+          focus={focoComentario}
+          onCerrar={() => { setComentariosWod(null); setFocoComentario(null); }}
+          onCountChange={(delta) => ajustarContadorComentarios(comentariosWod.idEntrenamiento, delta)}
+        />
+      )}
 
     </div>
   );
