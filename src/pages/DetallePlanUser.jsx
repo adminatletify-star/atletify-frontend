@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import '../assets/css/DetallePlanUser.css';
@@ -41,35 +41,66 @@ export default function DetallePlanUser() {
   const [subiendoArchivo, setSubiendoArchivo] = useState(false);
   const [errorSubida, setErrorSubida] = useState(null);
   const [tiempoTick, setTiempoTick] = useState(0);
+  const [enviando, setEnviando] = useState(false);          // guard anti doble-submit
+  const [confirmandoPago, setConfirmandoPago] = useState(false); // verificando pago al volver de Stripe
 
-  useEffect(() => {
+  const cargarMiPlan = useCallback(async () => {
     const raw = localStorage.getItem('usuario');
     const token = localStorage.getItem('token');
     if (!raw || !token) { navigate('/login'); return; }
-
-    fetch(`${API_BASE}/usuarios/mi-plan`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Error al cargar');
-        return res.json();
-      })
-      .then(d => {
-        setData(d);
-        const boxId = d?.suscripcion?.idBox || JSON.parse(raw)?.idBoxPredeterminado || 1;
-        fetch(`${API_BASE}/api/homepublic/planes/${boxId}`)
-          .then(res => res.json())
-          .then(planes => {
-            setPlanesBox(planes);
-            const currentPlan = planes.find(p => p.idPlan === d?.suscripcion?.idPlan);
-            if (currentPlan) setPlanSeleccionado(currentPlan);
-            else if (planes.length > 0) setPlanSeleccionado(planes[0]);
-          })
-          .catch(err => console.error("Error al cargar planes del box:", err));
-      })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
+    try {
+      const res = await fetch(`${API_BASE}/usuarios/mi-plan`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Error al cargar');
+      const d = await res.json();
+      setData(d);
+      const boxId = d?.suscripcion?.idBox || JSON.parse(raw)?.idBoxPredeterminado || 1;
+      try {
+        const planesRes = await fetch(`${API_BASE}/api/homepublic/planes/${boxId}`);
+        const planes = await planesRes.json();
+        setPlanesBox(planes);
+        const currentPlan = planes.find(p => p.idPlan === d?.suscripcion?.idPlan);
+        if (currentPlan) setPlanSeleccionado(currentPlan);
+        else if (planes.length > 0) setPlanSeleccionado(planes[0]);
+      } catch (err) { console.error("Error al cargar planes del box:", err); }
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
   }, [navigate]);
+
+  useEffect(() => { cargarMiPlan(); }, [cargarMiPlan]);
+
+  // Retorno desde Stripe Checkout (pago en línea).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = localStorage.getItem('token');
+
+    if (params.get('b2c_cancel') === '1') {
+      window.history.replaceState({}, '', '/detalle-plan-user');
+      alert('Pago cancelado. No se realizó ningún cargo.');
+      return;
+    }
+
+    if (params.get('b2c_success') === '1') {
+      const sessionId = params.get('session_id');
+      const idBox = JSON.parse(localStorage.getItem('usuario') || '{}')?.idBoxPredeterminado || 1;
+      window.history.replaceState({}, '', '/detalle-plan-user');
+      if (!sessionId) return;
+      setConfirmandoPago(true);
+      fetch(`${API_BASE}/finanzas/confirmar-b2c`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ idBox, sessionId })
+      })
+        .then(r => r.json())
+        .then(d => alert(d.mensaje || 'Pago procesado.'))
+        .catch(() => alert('No pudimos confirmar el pago automáticamente. Si se realizó el cargo, se reflejará en breve.'))
+        .finally(() => { setConfirmandoPago(false); cargarMiPlan(); });
+    }
+  }, [cargarMiPlan]);
 
   const sub = data?.suscripcion;
 
@@ -164,8 +195,34 @@ export default function DetallePlanUser() {
     }
   };
 
+  const handleCancelarSolicitud = async () => {
+    if (enviando) return;
+    setEnviando(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/usuarios/suscripcion/${sub.idSuscripcion}/cancelar-solicitud-cambio`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const resData = await res.json();
+      if (res.ok) {
+        alert(resData.mensaje || 'Solicitud cancelada.');
+        await cargarMiPlan();
+      } else {
+        alert(resData.mensaje || 'No se pudo cancelar la solicitud.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error de red al cancelar la solicitud.');
+    } finally {
+      setEnviando(false);
+    }
+  };
+
   const handleCambiarFacturacionSubmit = async (e) => {
     e.preventDefault();
+    if (enviando) return; // guard: evita doble-submit / clics repetidos
+
     if (metodoPago === 'Transferencia' && !archivoComprobante) {
       alert('Por favor sube la captura de tu comprobante de pago.');
       return;
@@ -188,14 +245,37 @@ export default function DetallePlanUser() {
       }
     }
 
+    setEnviando(true);
     try {
       const token = localStorage.getItem('token');
+
+      // PAGO EN LÍNEA → Stripe. No se cobra ni se acreditan días aquí.
+      // Si todavía tiene mensualidad vigente, Stripe colecta la tarjeta ($0 hoy) y
+      // cobra automáticamente al vencimiento. Si ya está vencido, cobra de inmediato.
+      if (metodoPago === 'En Línea') {
+        const idBox = sub?.idBox || JSON.parse(localStorage.getItem('usuario') || '{}')?.idBoxPredeterminado || 1;
+        const res = await fetch(`${API_BASE}/finanzas/checkout-b2c/${idBox}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({
+            idSuscripcion: sub.idSuscripcion,
+            idPlanDestino: planSeleccionado.idPlan,
+            returnPath: '/detalle-plan-user'
+          })
+        });
+        const d = await res.json();
+        if (res.ok && d.url) {
+          window.location.href = d.url; // redirige al checkout seguro de Stripe
+          return;
+        }
+        alert(d.mensaje || 'No se pudo iniciar el pago en línea.');
+        return;
+      }
+
+      // TRANSFERENCIA / RECEPCIÓN → queda como solicitud pendiente de validación.
       const res = await fetch(`${API_BASE}/usuarios/suscripcion/${sub.idSuscripcion}/cambiar-facturacion`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
           periodo: planSeleccionado.nombre,
           metodoPago,
@@ -205,19 +285,18 @@ export default function DetallePlanUser() {
       });
       const resData = await res.json();
       if (res.ok) {
-        setData(prev => ({
-          ...prev,
-          suscripcion: resData.suscripcion
-        }));
         alert(resData.mensaje || 'Cambio solicitado exitosamente');
         setShowBillingModal(false);
         setArchivoComprobante(null);
+        await cargarMiPlan(); // refetch: refleja el estado pendiente sin dejar la UI stale
       } else {
         alert(resData.mensaje || 'Error al solicitar cambio de facturación');
       }
     } catch (err) {
       console.error(err);
       alert('Error de red al solicitar cambio de facturación');
+    } finally {
+      setEnviando(false);
     }
   };
 
@@ -233,6 +312,17 @@ export default function DetallePlanUser() {
   const esAlerta = diasRestantes >= 0 && diasRestantes <= 5;
 
   const pendingPlanName = planesBox.find(p => String(p.idPlan) === String(sub?.cambioPeriodoPendiente))?.nombre || sub?.cambioPeriodoPendiente;
+
+  // Métodos de pago que el box realmente acepta (enforcement de la config financiera).
+  // Si no llegó la config, somos permisivos para no bloquear el pago por error.
+  const cfgBox = data?.configuracionBox;
+  const hayCfg = !!cfgBox;
+  const metodosDisponibles = {
+    'En Línea': hayCfg ? !!(cfgBox.aceptarPagosEnLinea && cfgBox.stripeConectado) : true,
+    'Transferencia': hayCfg ? !!cfgBox.aceptarTransferencias : true,
+    'Recepción': hayCfg ? !!(cfgBox.aceptarEfectivo || cfgBox.aceptarTarjetaRecepcion) : true,
+  };
+  const metodosActivos = ['En Línea', 'Transferencia', 'Recepción'].filter(m => metodosDisponibles[m]);
 
   const daysColor = esVencida ? 'var(--danger)' : esAlerta ? 'var(--warning)' : 'var(--success)';
   const fillClass = esVencida ? 'dpu-progress-fill--vencida' : esAlerta ? 'dpu-progress-fill--alerta' : '';
@@ -253,7 +343,7 @@ export default function DetallePlanUser() {
   );
 
   /* ---------- renders ---------- */
-  if (loading) {
+  if (loading || confirmandoPago) {
     return (
       <div className="dpu-page">
         <nav className="dpu-navbar">
@@ -261,7 +351,10 @@ export default function DetallePlanUser() {
           <div className="dpu-navbar-icon"><i className="fas fa-id-card"></i></div>
           <p className="dpu-navbar-brand mb-0">Mis <span>Mensualidades</span></p>
         </nav>
-        <div className="dpu-loading"><div className="dpu-spinner"></div></div>
+        <div className="dpu-loading">
+          <div className="dpu-spinner"></div>
+          {confirmandoPago && <p className="text-muted mt-3">Confirmando tu pago con Stripe…</p>}
+        </div>
       </div>
     );
   }
@@ -353,6 +446,25 @@ export default function DetallePlanUser() {
             </div>
 
             {/* === BANNERS DE SOLICITUDES PENDIENTES === */}
+            {data?.inscripcionPendiente?.debe && (
+              <div className="dpu-pending-banner dpu-pending-banner--transfer mb-4">
+                <div className="d-flex align-items-start gap-3">
+                  <div className="dpu-banner-icon-box text-info">
+                    <i className="fas fa-id-badge"></i>
+                  </div>
+                  <div className="flex-grow-1">
+                    <strong className="d-block text-info mb-1" style={{ fontSize: '0.9rem' }}>
+                      Anualidad de inscripción {data.inscripcionPendiente.anio} pendiente
+                    </strong>
+                    <p className="mb-0 text-muted text-xs" style={{ lineHeight: '1.4' }}>
+                      Este es el mes para pagar tu inscripción anual (<strong className="text-white">${data.inscripcionPendiente.monto?.toFixed(2)}</strong>).
+                      Puedes pagarla en recepción, <strong>aparte</strong> de tu mensualidad o <strong>junto</strong> con ella. No es obligatorio pagarla con tarjeta.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {sub.cambioPeriodoPendiente && (
               sub.metodoPagoPendiente === 'Recepción' ? (
                 <div className="dpu-pending-banner dpu-pending-banner--cash mb-4">
@@ -371,6 +483,19 @@ export default function DetallePlanUser() {
                           {getTiempoRestante(sub.fechaSolicitudCambio)}
                         </strong>
                       </div>
+                      <p className="text-muted mt-2 mb-2" style={{ fontSize: '0.72rem', lineHeight: '1.4' }}>
+                        <i className="fas fa-info-circle me-1"></i>
+                        Es solo para el <strong>cambio</strong> que solicitaste; tu mensualidad actual sigue vigente y <strong>no pierdes tus días</strong>.
+                      </p>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-light"
+                        style={{ borderRadius: '8px', fontSize: '0.72rem' }}
+                        disabled={enviando}
+                        onClick={handleCancelarSolicitud}
+                      >
+                        <i className="fas fa-times me-1"></i> Cancelar solicitud
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -397,6 +522,15 @@ export default function DetallePlanUser() {
                           </button>
                         </div>
                       )}
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-light mt-2"
+                        style={{ borderRadius: '8px', fontSize: '0.72rem' }}
+                        disabled={enviando}
+                        onClick={handleCancelarSolicitud}
+                      >
+                        <i className="fas fa-times me-1"></i> Cancelar solicitud
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -494,11 +628,12 @@ export default function DetallePlanUser() {
                   <button 
                     type="button" 
                     className="dpu-btn-action--change"
-                    disabled={sub.cambioPeriodoPendiente != null}
+                    disabled={enviando}
                     onClick={() => {
                       const currentPlan = planesBox.find(p => p.idPlan === sub.idPlan);
                       if (currentPlan) setPlanSeleccionado(currentPlan);
-                      setMetodoPago(sub.metodoPago === 'En Línea' ? 'En Línea' : sub.metodoPago);
+                      // Método inicial: el actual si el box aún lo acepta, si no el primero disponible.
+                      setMetodoPago(metodosActivos.includes(sub.metodoPago) ? sub.metodoPago : (metodosActivos[0] || 'Recepción'));
                       setArchivoComprobante(null);
                       setErrorSubida(null);
                       setShowBillingModal(true);
@@ -716,48 +851,61 @@ export default function DetallePlanUser() {
               <div className="mb-4">
                 <label className="dpu-modal-label mb-2"><span className="badge bg-primary me-2">2</span>Selecciona tu método de pago</label>
                 <div className="row g-2">
-                  <div className="col-4">
-                    <label className={`dpu-pm-select-card ${metodoPago === 'En Línea' ? 'active' : ''}`}>
-                      <input 
-                        type="radio" 
-                        name="metodoPago" 
-                        value="En Línea" 
-                        checked={metodoPago === 'En Línea'} 
-                        onChange={(e) => setMetodoPago(e.target.value)}
-                        className="d-none"
-                      />
-                      <i className="fas fa-credit-card"></i>
-                      <span>En Línea</span>
-                    </label>
-                  </div>
-                  <div className="col-4">
-                    <label className={`dpu-pm-select-card ${metodoPago === 'Transferencia' ? 'active' : ''}`}>
-                      <input 
-                        type="radio" 
-                        name="metodoPago" 
-                        value="Transferencia" 
-                        checked={metodoPago === 'Transferencia'} 
-                        onChange={(e) => setMetodoPago(e.target.value)}
-                        className="d-none"
-                      />
-                      <i className="fas fa-university"></i>
-                      <span>Transferencia</span>
-                    </label>
-                  </div>
-                  <div className="col-4">
-                    <label className={`dpu-pm-select-card ${metodoPago === 'Recepción' ? 'active' : ''}`}>
-                      <input 
-                        type="radio" 
-                        name="metodoPago" 
-                        value="Recepción" 
-                        checked={metodoPago === 'Recepción'} 
-                        onChange={(e) => setMetodoPago(e.target.value)}
-                        className="d-none"
-                      />
-                      <i className="fas fa-cash-register"></i>
-                      <span>Recepción</span>
-                    </label>
-                  </div>
+                  {metodosDisponibles['En Línea'] && (
+                    <div className="col-4">
+                      <label className={`dpu-pm-select-card ${metodoPago === 'En Línea' ? 'active' : ''}`}>
+                        <input
+                          type="radio"
+                          name="metodoPago"
+                          value="En Línea"
+                          checked={metodoPago === 'En Línea'}
+                          onChange={(e) => setMetodoPago(e.target.value)}
+                          className="d-none"
+                        />
+                        <i className="fas fa-credit-card"></i>
+                        <span>En Línea</span>
+                      </label>
+                    </div>
+                  )}
+                  {metodosDisponibles['Transferencia'] && (
+                    <div className="col-4">
+                      <label className={`dpu-pm-select-card ${metodoPago === 'Transferencia' ? 'active' : ''}`}>
+                        <input
+                          type="radio"
+                          name="metodoPago"
+                          value="Transferencia"
+                          checked={metodoPago === 'Transferencia'}
+                          onChange={(e) => setMetodoPago(e.target.value)}
+                          className="d-none"
+                        />
+                        <i className="fas fa-university"></i>
+                        <span>Transferencia</span>
+                      </label>
+                    </div>
+                  )}
+                  {metodosDisponibles['Recepción'] && (
+                    <div className="col-4">
+                      <label className={`dpu-pm-select-card ${metodoPago === 'Recepción' ? 'active' : ''}`}>
+                        <input
+                          type="radio"
+                          name="metodoPago"
+                          value="Recepción"
+                          checked={metodoPago === 'Recepción'}
+                          onChange={(e) => setMetodoPago(e.target.value)}
+                          className="d-none"
+                        />
+                        <i className="fas fa-cash-register"></i>
+                        <span>Recepción</span>
+                      </label>
+                    </div>
+                  )}
+                  {metodosActivos.length === 0 && (
+                    <div className="col-12">
+                      <p className="text-muted text-center text-xs m-0 py-2">
+                        Este box no tiene métodos de pago habilitados por ahora. Acércate a recepción.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -823,9 +971,9 @@ export default function DetallePlanUser() {
                 {metodoPago === 'En Línea' && (
                   <div className="text-center py-2">
                     <i className="fas fa-credit-card text-success mb-2" style={{ fontSize: '1.8rem' }}></i>
-                    <strong className="d-block text-success text-sm">Pago Directo e Instantáneo</strong>
+                    <strong className="d-block text-success text-sm">Pago seguro con tarjeta (Stripe)</strong>
                     <p className="text-muted m-0 mt-1 text-xs">
-                      Se procesará un cobro automático por un total de <strong>
+                      Te llevaremos al checkout seguro de Stripe para registrar tu tarjeta. Tu mensualidad es <strong>
                         ${(() => {
                           if (data?.grupoFamiliar?.esLider && data.grupoFamiliar.miembros) {
                             let suma = data.grupoFamiliar.miembros.reduce((acc, m) => acc + (m.rolEnGrupo === 'Lider' ? (planSeleccionado?.precio || 0) : m.precioBase), 0);
@@ -837,7 +985,10 @@ export default function DetallePlanUser() {
                           }
                           return (planSeleccionado?.precio || 0).toFixed(2);
                         })()}
-                      </strong>. Tu membresía se activará de forma inmediata.
+                      </strong> al mes.{' '}
+                      {diasRestantes > 0
+                        ? <>Como aún tienes <strong>{diasRestantes} día(s)</strong> de mensualidad vigente, <strong>hoy no se te cobra</strong>: el cobro automático se hará al vencer y luego cada mes.</>
+                        : <>Tu mensualidad está vencida, así que el cobro se procesa ahora y se renovará automáticamente cada mes.</>}
                     </p>
                   </div>
                 )}
@@ -936,13 +1087,13 @@ export default function DetallePlanUser() {
                 >
                   Cancelar
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="btn btn-success btn-sm d-flex align-items-center justify-content-center gap-2"
-                  disabled={subiendoArchivo || (metodoPago === 'Transferencia' && !archivoComprobante)}
+                  disabled={subiendoArchivo || enviando || (metodoPago === 'Transferencia' && !archivoComprobante)}
                   style={{ borderRadius: '8px', padding: '0.4rem 1.25rem', background: 'var(--success)', border: 'none' }}
                 >
-                  {subiendoArchivo ? 'Guardando...' : 'Confirmar Cambio'}
+                  {enviando ? 'Procesando…' : subiendoArchivo ? 'Guardando...' : (metodoPago === 'En Línea' ? 'Ir a pagar' : 'Confirmar Cambio')}
                 </button>
               </div>
             </form>

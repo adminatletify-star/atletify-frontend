@@ -198,7 +198,7 @@ export default function AdminGruposFamiliares() {
 
         {modalDisolver.open && (
           <ModalPasswordAdmin
-            accionMensaje={`Disolver escuadrón "${modalDisolver.grupo?.nombreGrupo}". Los miembros (excepto el líder) perderán el descuento grupal. Ingresa tu contraseña de administrador para confirmar.`}
+            accionMensaje={`Disolver escuadrón "${modalDisolver.grupo?.nombreGrupo}". Los miembros (excepto el líder) perderán el descuento grupal. Ingresa el PIN del box para confirmar.`}
             onClose={() => setModalDisolver({ open: false, grupo: null })}
             onConfirm={async () => {
               try {
@@ -416,7 +416,6 @@ function SquadBuilder({ atletasDisponibles, planes, idBox, onCreado }) {
   const [modalSlot, setModalSlot] = useState({ open: false, slotIdx: null });
   const [enviando, setEnviando] = useState(false);
   const [descuentoManual, setDescuentoManual] = useState('');
-  const [aplicarProrrateo, setAplicarProrrateo] = useState(false);
 
   const totalSlotsLlenos = slots.filter(s => s.data).length;
   const porcentajeAuto = calcularDescuentoProgresivo(totalSlotsLlenos);
@@ -511,7 +510,7 @@ function SquadBuilder({ atletasDisponibles, planes, idBox, onCreado }) {
       miembrosExistentesIds: existentes.length > 0 ? existentes : null,
       miembrosExistentes: existentesFull.length > 0 ? existentesFull : null,
       miembrosNuevos: nuevos.length > 0 ? nuevos : null,
-      aplicarProrrateo,
+      aplicarProrrateo: true, // el crédito se calcula siempre; aplicarlo es decisión del cobro
       idUsuarioLider,
       indiceLiderNuevo,
       porcentajeDescuentoManual: descuentoManual !== '' ? Number(descuentoManual) : null,
@@ -830,29 +829,30 @@ function ModalSeleccionMiembro({ atletasDisponibles, atletasYaUsados, planes, on
   const verificarPasswordYGenerar = async (e) => {
     if (e) e.preventDefault();
     if (!passwordAdmin) {
-      alert('Ingresa tu contraseña de administrador para confirmar.');
+      alert('Ingresa el PIN del box para confirmar.');
       return;
     }
     setVerificandoPassword(true);
     try {
+      const boxLS = JSON.parse(localStorage.getItem('box') || 'null');
       const adminUser = JSON.parse(localStorage.getItem('usuario') || 'null');
-      if (!adminUser || !adminUser.correo) {
-        alert('No se pudo identificar tu sesión. Vuelve a iniciar sesión.');
+      const idBox = boxLS?.idBox || adminUser?.idBoxPredeterminado;
+      if (!idBox) {
+        alert('No se pudo identificar el box. Vuelve a iniciar sesión.');
         return;
       }
-      const API_BASE_URL = import.meta.env.VITE_API_URL?.endsWith('/api') 
-        ? import.meta.env.VITE_API_URL 
+      const API_BASE_URL = import.meta.env.VITE_API_URL?.endsWith('/api')
+        ? import.meta.env.VITE_API_URL
         : `${import.meta.env.VITE_API_URL}/api`;
 
-      // Usando el mismo endpoint que en ModalPasswordAdmin
-      const res = await fetch(`${API_BASE_URL}/usuarios/login`, {
+      const res = await fetch(`${API_BASE_URL}/configuracionbox/${idBox}/verificar-pin`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ correo: adminUser.correo, contrasena: passwordAdmin })
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        body: JSON.stringify({ pin: passwordAdmin })
       });
       const data = await res.json().catch(() => ({}));
 
-      if (res.ok && data.token) {
+      if (res.ok && data.valido === true) {
         const prefijo = form.nombre ? form.nombre.substring(0, 3).toUpperCase() : 'WOLF';
         const randomNum = Math.floor(1000 + Math.random() * 9000);
         const nuevaPass = `${prefijo}-${randomNum}*`;
@@ -861,7 +861,7 @@ function ModalSeleccionMiembro({ atletasDisponibles, atletasYaUsados, planes, on
         setPasswordAdmin('');
         alert('Contraseña genérica generada. ¡Anótala y dásela al familiar!');
       } else {
-        alert('Contraseña incorrecta.');
+        alert(data.mensaje || 'PIN incorrecto.');
       }
     } catch (err) {
       alert('Error de conexión al verificar.');
@@ -1216,14 +1216,16 @@ function ModalSeleccionMiembro({ atletasDisponibles, atletasYaUsados, planes, on
                     <>
                       {mostrarModalPassword ? (
                         <div className="text-start w-100">
-                          <label className="form-label" style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>Confirma tu contraseña</label>
+                          <label className="form-label" style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>Ingresa el PIN del box</label>
                           <input
                             type="password"
+                            inputMode="numeric"
+                            maxLength={4}
                             className="form-control mb-3"
                             style={{ background: '#13131a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '8px', padding: '10px' }}
                             value={passwordAdmin}
-                            onChange={(e) => setPasswordAdmin(e.target.value)}
-                            placeholder="Tu contraseña de acceso"
+                            onChange={(e) => setPasswordAdmin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                            placeholder="PIN de 4 dígitos"
                             disabled={verificandoPassword}
                             onKeyDown={(e) => e.key === 'Enter' && verificarPasswordYGenerar()}
                             autoFocus
@@ -1359,6 +1361,27 @@ function ModalCobroGrupo({ grupo, onClose, onPagado }) {
       onPagado();
     } catch (e) {
       alert('Error: ' + e.message);
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  // Genera el link de Stripe y abre el checkout para que el líder pague con su tarjeta.
+  async function pagarEnLinea() {
+    if (!detalle) return;
+    setEnviando(true);
+    try {
+      const r = await api.checkoutStripeGrupoFamiliar(grupo.idGrupo, {
+        aplicarDescuentoFamiliar: aplicarDescuento,
+        aplicarCreditos
+      });
+      if (r?.url) {
+        window.location.href = r.url;
+      } else {
+        alert('No se pudo generar el link de pago.');
+      }
+    } catch (e) {
+      alert('Error al generar el pago en línea: ' + e.message);
     } finally {
       setEnviando(false);
     }
@@ -1580,7 +1603,16 @@ function ModalCobroGrupo({ grupo, onClose, onPagado }) {
               onClick={confirmarPago}
               disabled={enviando || (advertencias.length > 0 && !aceptoPerdida)}
             >
-              {enviando ? <><div className="agf-spinner agf-spinner--sm" /> Procesando…</> : <><i className="fas fa-check-circle" /> Confirmar pago en cascada</>}
+              {enviando ? <><div className="agf-spinner agf-spinner--sm" /> Procesando…</> : <><i className="fas fa-check-circle" /> Registrar pago (recepción)</>}
+            </button>
+
+            <button
+              className="agf-btn agf-btn--ghost w-100 mt-2"
+              onClick={pagarEnLinea}
+              disabled={enviando || (advertencias.length > 0 && !aceptoPerdida)}
+              title="El líder paga toda la mensualidad del grupo con su tarjeta vía Stripe"
+            >
+              <i className="fas fa-credit-card" /> Pagar en línea con tarjeta (líder)
             </button>
           </>
         ) : null}
@@ -1760,26 +1792,26 @@ function ModalPasswordAdmin({ onClose, onConfirm, accionMensaje }) {
     setEnviando(true);
     setError('');
     try {
-      const u = JSON.parse(localStorage.getItem('usuario'));
-      if (!u || !u.correo) throw new Error('No hay sesión de administrador activa.');
-      
-      const API_BASE_URL = import.meta.env.VITE_API_URL?.endsWith('/api') 
-        ? import.meta.env.VITE_API_URL 
+      const boxLS = JSON.parse(localStorage.getItem('box') || 'null');
+      const u = JSON.parse(localStorage.getItem('usuario') || 'null');
+      const idBox = boxLS?.idBox || u?.idBoxPredeterminado;
+      if (!idBox) throw new Error('No se pudo identificar el box.');
+
+      const API_BASE_URL = import.meta.env.VITE_API_URL?.endsWith('/api')
+        ? import.meta.env.VITE_API_URL
         : `${import.meta.env.VITE_API_URL}/api`;
 
-      const res = await fetch(`${API_BASE_URL}/usuarios/login`, {
+      const res = await fetch(`${API_BASE_URL}/configuracionbox/${idBox}/verificar-pin`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ correo: u.correo, contrasena: pass })
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        body: JSON.stringify({ pin: pass })
       });
-      
-      if(!res.ok) throw new Error('Contraseña incorrecta');
-      const data = await res.json();
-      
-      if(data.token) {
+      const data = await res.json().catch(() => ({}));
+
+      if(res.ok && data.valido === true) {
         onConfirm();
       } else {
-        throw new Error('Error al verificar.');
+        throw new Error(data.mensaje || 'PIN incorrecto');
       }
     } catch(e) {
       setError(e.message);
@@ -1792,14 +1824,16 @@ function ModalPasswordAdmin({ onClose, onConfirm, accionMensaje }) {
     <motion.div className="agf-modal-overlay" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <motion.div className="agf-modal agf-modal--confirm" onClick={e => e.stopPropagation()} initial={{ scale: 0.9 }} animate={{ scale: 1 }}>
         <h3 className="agf-confirm-title text-danger"><i className="fas fa-lock" /> Autorización Requerida</h3>
-        <p className="agf-confirm-msg text-start mt-2" style={{fontSize: '0.9rem'}}>{accionMensaje || "Por seguridad, confirma tu contraseña de administrador para continuar."}</p>
-        
-        <input 
-          type="password" 
-          className="agf-input mt-3 text-center" 
-          placeholder="Tu contraseña de Admin"
+        <p className="agf-confirm-msg text-start mt-2" style={{fontSize: '0.9rem'}}>{accionMensaje || "Por seguridad, ingresa el PIN del box para continuar."}</p>
+
+        <input
+          type="password"
+          inputMode="numeric"
+          maxLength={4}
+          className="agf-input mt-3 text-center"
+          placeholder="PIN de 4 dígitos"
           value={pass}
-          onChange={e => setPass(e.target.value)}
+          onChange={e => setPass(e.target.value.replace(/\D/g, '').slice(0, 4))}
           onKeyDown={e => e.key === 'Enter' && verificar()}
           autoFocus
         />

@@ -209,6 +209,9 @@ export default function HistorialVentas() {
 
     if (v.abonos && v.abonos.length > 0) {
       v.abonos.forEach(a => {
+        // No mostrar el abono como registro separado si la venta original fue de Transferencia
+        if (v.metodoPago === 'Transferencia') return;
+        
         if (enRango(a.fechaAbono)) {
           transacciones.push({
             tipo: 'Abono',
@@ -383,6 +386,8 @@ export default function HistorialVentas() {
       }
       if (v.abonos && v.abonos.length > 0) {
         v.abonos.forEach(a => {
+          if (v.metodoPago === 'Transferencia') return;
+
           pdfTransacciones.push({
             tipo: 'Abono',
             fecha: a.fechaAbono,

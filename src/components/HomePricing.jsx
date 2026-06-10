@@ -6,7 +6,7 @@ export default function HomePricing() {
     {
       id: 'starter',
       nombre: 'Starter',
-      precio: '$1500',
+      precio: '$1499',
       limite: 'Hasta 60 atletas',
       descripcion: 'Ideal para boxes chicos o en crecimiento.',
       beneficios: [
@@ -21,7 +21,7 @@ export default function HomePricing() {
     {
       id: 'pro',
       nombre: 'Pro',
-      precio: '$2500',
+      precio: '$2499',
       limite: 'Hasta 120 atletas',
       descripcion: 'El plan estándar para operar un box exitoso.',
       beneficios: [
@@ -38,7 +38,7 @@ export default function HomePricing() {
     {
       id: 'premium',
       nombre: 'Premium',
-      precio: '$3500',
+      precio: '$3499',
       limite: 'Hasta 200 atletas',
       descripcion: 'Para boxes grandes o con competencias propias.',
       beneficios: [
@@ -77,7 +77,7 @@ export default function HomePricing() {
           </motion.p>
         </div>
 
-        <div className="row g-4 justify-content-center">
+        <div className="row g-4 justify-content-center pricing-row">
           {planes.map((plan, index) => (
             <div key={plan.id} className="col-12 col-md-6 col-lg-4">
               <motion.div 

@@ -149,21 +149,22 @@ export default function RegistroManual() {
   const verificarPasswordYGenerar = async (e) => {
     e.preventDefault();
     if (!passwordAdmin) {
-      showAlert('Ingresa tu contraseña para confirmar.', 'warning');
+      showAlert('Ingresa el PIN del box para confirmar.', 'warning');
       return;
     }
     setVerificandoPassword(true);
     try {
+      const boxLS = JSON.parse(localStorage.getItem('box') || 'null');
       const adminUser = JSON.parse(localStorage.getItem('usuario') || 'null');
-      const idAdmin = adminUser?.idUsuario || adminUser?.id;
-      if (!idAdmin) {
-        showAlert('No se pudo identificar al usuario logueado. Vuelve a iniciar sesión.', 'danger');
+      const idBox = boxLS?.idBox || adminUser?.idBoxPredeterminado;
+      if (!idBox) {
+        showAlert('No se pudo identificar el box. Vuelve a iniciar sesión.', 'danger');
         return;
       }
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/verificar-password-admin`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/configuracionbox/${idBox}/verificar-pin`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idUsuario: idAdmin, contrasena: passwordAdmin })
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        body: JSON.stringify({ pin: passwordAdmin })
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data?.valido === true) {
@@ -175,7 +176,7 @@ export default function RegistroManual() {
         setPasswordAdmin('');
         showAlert('Contraseña genérica generada. Anótala y dásela al atleta.', 'success');
       } else {
-        showAlert(data?.mensaje || 'Contraseña incorrecta.', 'danger');
+        showAlert(data?.mensaje || 'PIN incorrecto.', 'danger');
       }
     } catch {
       showAlert('Error de conexión al verificar.', 'danger');
@@ -523,7 +524,7 @@ export default function RegistroManual() {
                 <div className="mb-4">
                   <div className="registro-security-icon"><i className="fas fa-shield-alt text-danger fa-2x"></i></div>
                   <h4 className="registro-security-title">Credenciales</h4>
-                  <p className="registro-security-desc">Genera una contraseña genérica para este atleta. Confirma con tu contraseña de acceso para autorizar la acción.</p>
+                  <p className="registro-security-desc">Genera una contraseña genérica para este atleta. Confirma con el PIN del box para autorizar la acción.</p>
                 </div>
 
                 {contrasenaGenerada ? (
@@ -535,15 +536,17 @@ export default function RegistroManual() {
                   <>
                     {mostrarModalPassword ? (
                       <form className="registro-pin-container" onSubmit={verificarPasswordYGenerar}>
-                        <label className="form-label registro-label">Confirma tu contraseña</label>
+                        <label className="form-label registro-label">Ingresa el PIN del box</label>
                         <input
                           type="password"
+                          inputMode="numeric"
+                          maxLength={4}
                           className="form-control registro-input registro-pin-input mb-3"
                           value={passwordAdmin}
-                          onChange={(e) => setPasswordAdmin(e.target.value)}
-                          placeholder="Tu contraseña de acceso"
+                          onChange={(e) => setPasswordAdmin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                          placeholder="PIN de 4 dígitos"
                           autoFocus
-                          autoComplete="current-password"
+                          autoComplete="off"
                           disabled={verificandoPassword}
                         />
                         <div className="d-flex gap-2">

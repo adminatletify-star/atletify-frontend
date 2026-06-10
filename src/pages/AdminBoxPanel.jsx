@@ -55,6 +55,7 @@ export default function AdminBoxPanel() {
   const [solicitudes, setSolicitudes] = useState([]);
   const [dashboardData, setDashboardData] = useState(null);
   const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [validacionesCount, setValidacionesCount] = useState(0);
 
   // Estados para expandir/colapsar accesos rápidos (> 3 opciones)
   const [verMasDiarias, setVerMasDiarias] = useState(false);
@@ -127,6 +128,7 @@ export default function AdminBoxPanel() {
       if (b?.idBox) {
         cargarDashboard(b.idBox);
         cargarAtletas(b.idBox);
+        cargarValidacionesCount(b.idBox);
       } else {
         setLoading(false);
       }
@@ -152,6 +154,21 @@ export default function AdminBoxPanel() {
       console.error("Error al cargar dashboard financiero:", err);
     } finally {
       setDashboardLoading(false);
+    }
+  }
+
+  async function cargarValidacionesCount(idBox) {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/validaciones/pendientes/count/${idBox}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setValidacionesCount(data.count || 0);
+      }
+    } catch (err) {
+      console.error("Error al cargar count de validaciones:", err);
     }
   }
 
@@ -1389,16 +1406,28 @@ export default function AdminBoxPanel() {
             {/* WIDGET 0: BANDEJA DE VALIDACIONES */}
             {isAdmin && (
               <Link to="/admin-box/validaciones" className="text-decoration-none d-block mb-4 abp-clickable-card-link">
-                <div className="abp-glass-card abp-clickable-card" style={{ borderLeft: '3px solid var(--primary)' }}>
+                <div className="abp-glass-card abp-clickable-card" style={{ borderLeft: validacionesCount > 0 ? '3px solid var(--danger)' : '3px solid var(--primary)' }}>
                   <div className="d-flex justify-content-between align-items-center mb-3">
                     <h4 className="abp-card-title mb-0">Bandeja de Validaciones</h4>
-                    <div className="abp-widget-icon text-primary">
+                    <div className={`abp-widget-icon ${validacionesCount > 0 ? 'text-danger' : 'text-primary'}`}>
                       <i className="fas fa-university"></i>
                     </div>
                   </div>
                   <p className="text-muted small mb-3">Ver y aprobar transferencias bancarias pendientes (Membresías, Tienda, etc.)</p>
                   
-                  <div className="text-primary text-center mt-3 fw-bold" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>
+                  {validacionesCount > 0 ? (
+                    <div className="bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded-3 p-2 text-center mb-2 animate-pulse">
+                      <span className="text-danger fw-bold" style={{ fontSize: '13px' }}>
+                        <i className="fas fa-exclamation-circle me-1"></i> {validacionesCount} {validacionesCount === 1 ? 'validación pendiente' : 'validaciones pendientes'}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="text-center text-muted mb-2 small">
+                      <i className="fas fa-check-circle text-success me-1"></i> Todo al día
+                    </div>
+                  )}
+
+                  <div className={`${validacionesCount > 0 ? 'text-danger' : 'text-primary'} text-center mt-3 fw-bold`} style={{ fontSize: '11px', letterSpacing: '0.5px' }}>
                     <i className="fas fa-check-double me-1"></i>Ir a Bandeja <i className="fas fa-chevron-right ms-1"></i>
                   </div>
                 </div>

@@ -32,18 +32,58 @@ export default function TiendaBox() {
   const [misPedidos, setMisPedidos] = useState([]);
   const [cargandoPedidos, setCargandoPedidos] = useState(false);
   const [pedidoExpandido, setPedidoExpandido] = useState(null);
+  const [comprobanteBase64, setComprobanteBase64] = useState(null);
+  const [cfgBox, setCfgBox] = useState(null); // config financiera del box (métodos aceptados, mínimo tarjeta)
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("El comprobante debe pesar menos de 2MB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => setComprobanteBase64(reader.result);
+      reader.readAsDataURL(file);
+    } else {
+      setComprobanteBase64(null);
+    }
+  };
 
   const productos = productosTotales.filter(p =>
     activeTab === 'catalogo-fisico' ? !p.esSobrePedido : p.esSobrePedido
   );
   const totalCarrito = carrito.reduce((acc, i) => acc + i.precioVenta * i.cantidad, 0);
 
+  // Métodos que el box acepta (autoservicio) + mínimo de tarjeta, desde la config del box.
+  // Si no llegó la config, somos permisivos para no bloquear la compra.
+  const minTarjeta = cfgBox?.compraMinimaTarjeta ?? 100;
+  const metodosTienda = {
+    'Efectivo en Recepción': cfgBox ? !!cfgBox.aceptarEfectivo : true,
+    'Tarjeta en Recepción': cfgBox ? !!cfgBox.aceptarTarjetaRecepcion : true,
+    'Transferencia': cfgBox ? !!cfgBox.aceptarTransferencias : true,
+  };
+
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));
     if (!b) { navigate('/login'); return; }
     setBoxGuardado(b);
     cargarProductos(b.idBox);
+    // Config financiera del box (para respetar métodos aceptados + mínimo de tarjeta).
+    fetch(`${import.meta.env.VITE_API_URL}/api/configuracionbox/${b.idBox}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(c => setCfgBox(c))
+      .catch(() => {});
   }, [navigate]);
+
+  // Si el método seleccionado deja de estar disponible (box lo desactivó), cambiar al primero válido.
+  useEffect(() => {
+    if (!cfgBox) return;
+    if (!metodosTienda[metodoPago]) {
+      const primero = Object.keys(metodosTienda).find(m => metodosTienda[m]);
+      if (primero) setMetodoPago(primero);
+    }
+  }, [cfgBox]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (activeTab === 'mis-pedidos') cargarMisPedidos();
@@ -128,6 +168,12 @@ export default function TiendaBox() {
 
   const realizarPedido = async () => {
     if (!carrito.length || !boxGuardado) return;
+
+    if (metodoPago === 'Transferencia' && totalCarrito >= minTarjeta && !comprobanteBase64) {
+      alert("Por favor, adjunta tu comprobante de transferencia para proceder.");
+      return;
+    }
+
     setProcesando(true);
     try {
       const token = localStorage.getItem('token');
@@ -138,13 +184,15 @@ export default function TiendaBox() {
           idBox: boxGuardado.idBox,
           apartado: APARTADO,
           metodoPago,
+          comprobanteBase64: (metodoPago === 'Transferencia' && totalCarrito >= minTarjeta) ? comprobanteBase64 : null,
           detalles: carrito.map(i => ({ idProducto: i.idProducto, cantidad: i.cantidad }))
         })
       });
       const data = await res.json();
       if (res.ok) {
-        alert('¡Pedido realizado con éxito!\nTienes 24 horas para pagarlo en el Box.');
+        alert(data.mensaje || '¡Pedido realizado con éxito!');
         setCarrito([]);
+        setComprobanteBase64(null);
         setActiveTab('mis-pedidos');
         cargarProductos(boxGuardado.idBox);
       } else {
@@ -255,15 +303,33 @@ export default function TiendaBox() {
           <div>
             <label className="tb-metodo-label">Método de Pago</label>
             <select className="tb-metodo-select" value={metodoPago} onChange={e => setMetodoPago(e.target.value)}>
-              <option value="Efectivo en Recepción">Efectivo en Recepción</option>
-              {totalCarrito >= 100 && <option value="Tarjeta en Recepción">Tarjeta en Recepción (Mín. $100)</option>}
-              {totalCarrito >= 100 && <option value="Transferencia">Transferencia (Mín. $100)</option>}
+              {metodosTienda['Efectivo en Recepción'] && <option value="Efectivo en Recepción">Efectivo en Recepción</option>}
+              {metodosTienda['Tarjeta en Recepción'] && totalCarrito >= minTarjeta && <option value="Tarjeta en Recepción">Tarjeta en Recepción (Mín. ${minTarjeta})</option>}
+              {metodosTienda['Transferencia'] && totalCarrito >= minTarjeta && <option value="Transferencia">Transferencia (Mín. ${minTarjeta})</option>}
               {usuario?.esDeConfianza && <option value="Fiar (Anotar en mi cuenta)">Fiar (Anotar a mi Deuda)</option>}
             </select>
-            {totalCarrito < 100 && (
+            {(metodosTienda['Tarjeta en Recepción'] || metodosTienda['Transferencia']) && totalCarrito < minTarjeta && (
               <p className="tb-cart-min-warn">
-                <i className="fas fa-info-circle" /> Mínimo $100 para Tarjeta o Transferencia.
+                <i className="fas fa-info-circle" /> Mínimo ${minTarjeta} para Tarjeta o Transferencia.
               </p>
+            )}
+
+            {metodoPago === 'Transferencia' && totalCarrito >= minTarjeta && (
+              <div style={{ marginTop: '1rem', padding: '1rem', background: '#252535', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <label className="tb-metodo-label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <i className="fas fa-file-invoice-dollar text-primary" /> Comprobante de Pago
+                </label>
+                <input 
+                  type="file" 
+                  className="form-control form-control-sm"
+                  style={{ background: '#1e1e2d', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }}
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+                <small style={{ color: '#aaa', display: 'block', marginTop: '0.4rem', fontSize: '0.75rem' }}>
+                  El admin validará el comprobante (Máx. 2MB).
+                </small>
+              </div>
             )}
           </div>
 
