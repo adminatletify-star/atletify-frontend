@@ -220,6 +220,15 @@ export const api = {
     return handleResponse(response);
   },
 
+  // Lista de quiénes reaccionaron a un comentario (estilo FB): [{ idUsuario, nombre, emoji }]
+  obtenerReaccionesComentario: async (idComentario) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/wod-social/comentarios/${idComentario}/reacciones`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
   // Usuarios
   obtenerUsuarios: async () => {
     const response = await fetch(`${API_BASE_URL}/usuarios`);

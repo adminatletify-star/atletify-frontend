@@ -23,6 +23,116 @@ function tiempoRelativo(fechaIso) {
   return d.toLocaleDateString();
 }
 
+// Calcula localmente el nuevo estado de reacciones replicando el toggle del backend:
+// misma reacción => se quita; otra distinta => se cambia; ninguna => se agrega.
+function calcularReaccionLocal(reaccionesActuales, miReaccionActual, emoji) {
+  const mapa = new Map((reaccionesActuales || []).map(r => [r.emoji, r.count]));
+  const prev = miReaccionActual ?? null;
+  let nuevaMia;
+  if (prev === emoji) {
+    nuevaMia = null;
+    mapa.set(emoji, (mapa.get(emoji) || 1) - 1);
+  } else {
+    nuevaMia = emoji;
+    if (prev) mapa.set(prev, (mapa.get(prev) || 1) - 1);
+    mapa.set(emoji, (mapa.get(emoji) || 0) + 1);
+  }
+  const reacciones = [...mapa.entries()]
+    .filter(([, count]) => count > 0)
+    .map(([em, count]) => ({ emoji: em, count }));
+  return { reacciones, miReaccion: nuevaMia };
+}
+
+// Colapsa la paginación con … (misma lógica que Ejercicios)
+function buildPaginas(pagina, total) {
+  return Array.from({ length: total }, (_, idx) => idx + 1)
+    .filter(n => n === 1 || n === total || Math.abs(n - pagina) <= 1)
+    .reduce((acc, n, i, arr) => {
+      if (i > 0 && n - arr[i - 1] > 1) acc.push('...');
+      acc.push(n);
+      return acc;
+    }, []);
+}
+
+function PaginacionReacciones({ pagina, total, onPagina }) {
+  if (total <= 1) return null;
+  return (
+    <div className="cwc-pag">
+      <button type="button" className="cwc-pag-arrow" disabled={pagina <= 1} onClick={() => onPagina(pagina - 1)}>
+        <i className="fas fa-chevron-left"></i>
+      </button>
+      {buildPaginas(pagina, total).map((p, i) => p === '...'
+        ? <span key={`e${i}`} className="cwc-pag-ellipsis">…</span>
+        : <button key={p} type="button" className={`cwc-pag-num ${p === pagina ? 'is-active' : ''}`} onClick={() => onPagina(p)}>{p}</button>
+      )}
+      <button type="button" className="cwc-pag-arrow" disabled={pagina >= total} onClick={() => onPagina(pagina + 1)}>
+        <i className="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  );
+}
+
+// Modal "quiénes reaccionaron" (estilo FB): pestañas por emoji + lista paginada 10/10.
+function ModalReacciones({ items, cargando, onCerrar }) {
+  const [filtro, setFiltro] = useState('todas');
+  const [pagina, setPagina] = useState(1);
+  const PAGE = 10;
+
+  const conteos = {};
+  for (const it of items) conteos[it.emoji] = (conteos[it.emoji] || 0) + 1;
+  const emojis = Object.keys(conteos);
+
+  const filtrados = filtro === 'todas' ? items : items.filter(it => it.emoji === filtro);
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / PAGE));
+  const paginaSegura = Math.min(pagina, totalPaginas);
+  const visibles = filtrados.slice((paginaSegura - 1) * PAGE, paginaSegura * PAGE);
+
+  const cambiarFiltro = (f) => { setFiltro(f); setPagina(1); };
+
+  return createPortal(
+    <div className="cwc-overlay cwc-react-overlay" onClick={onCerrar}>
+      <div className="cwc-modal cwc-react-modal" onClick={e => e.stopPropagation()}>
+        <div className="cwc-header">
+          <h3 className="cwc-title"><i className="fas fa-heart me-2"></i>Reacciones</h3>
+          <button className="cwc-close" onClick={onCerrar}><i className="fas fa-times"></i></button>
+        </div>
+
+        {cargando ? (
+          <div className="cwc-loader-wrap"><AtletifyLoader /></div>
+        ) : items.length === 0 ? (
+          <div className="cwc-empty"><i className="far fa-smile"></i><p>Aún nadie ha reaccionado.</p></div>
+        ) : (
+          <>
+            <div className="cwc-react-tabs">
+              <button type="button" className={`cwc-react-tab ${filtro === 'todas' ? 'is-active' : ''}`} onClick={() => cambiarFiltro('todas')}>
+                Todas <span className="cwc-react-tab-count">{items.length}</span>
+              </button>
+              {emojis.map(em => (
+                <button type="button" key={em} className={`cwc-react-tab ${filtro === em ? 'is-active' : ''}`} onClick={() => cambiarFiltro(em)}>
+                  <span className="cwc-react-tab-emoji">{em}</span><span className="cwc-react-tab-count">{conteos[em]}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="cwc-react-lista">
+              {visibles.map((it, i) => (
+                <div key={`${it.idUsuario}-${it.emoji}-${i}`} className="cwc-react-row">
+                  <div className="cwc-avatar">{(it.nombre || '?').charAt(0).toUpperCase()}</div>
+                  <span className="cwc-react-nombre">{it.nombre}</span>
+                  <span className="cwc-react-emoji">{it.emoji}</span>
+                </div>
+              ))}
+            </div>
+
+            <PaginacionReacciones pagina={paginaSegura} total={totalPaginas} onPagina={setPagina} />
+          </>
+        )}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 export default function ModalComentariosWod({ wod, onCerrar, onCountChange, focus = null }) {
   const idEnt = wod.idEntrenamiento;
   const [comentarios, setComentarios] = useState([]);   // comentarios raíz
@@ -34,9 +144,26 @@ export default function ModalComentariosWod({ wod, onCerrar, onCountChange, focu
   const [respondiendoA, setRespondiendoA] = useState(null);
   const [pickerAbierto, setPickerAbierto] = useState(null);
   const [resaltadoId, setResaltadoId] = useState(null);
+  const [reaccionesView, setReaccionesView] = useState(null); // { idComentario, cargando, items } | null
   const sentinelRef = useRef(null);
   const itemRefs = useRef({});
   const focoResuelto = useRef(false);
+
+  // Cierra el picker de reacciones al tocar fuera de él o al hacer scroll (sin obligar a elegir un emoji)
+  useEffect(() => {
+    if (pickerAbierto === null) return;
+    const cerrar = (e) => {
+      // un clic/tap DENTRO del wrap (botón Reaccionar o un emoji) no cierra; el scroll siempre cierra
+      if (e.type === 'pointerdown' && e.target.closest && e.target.closest('.cwc-reaccionar-wrap')) return;
+      setPickerAbierto(null);
+    };
+    document.addEventListener('pointerdown', cerrar);
+    window.addEventListener('scroll', cerrar, true); // capture: detecta scroll en cualquier contenedor
+    return () => {
+      document.removeEventListener('pointerdown', cerrar);
+      window.removeEventListener('scroll', cerrar, true);
+    };
+  }, [pickerAbierto]);
 
   useEffect(() => {
     let activo = true;
@@ -117,42 +244,121 @@ export default function ModalComentariosWod({ wod, onCerrar, onCountChange, focu
   };
 
   // ---- acciones ----
-  const publicar = async () => {
+  // Nombre para el comentario optimista (se reemplaza por el del servidor al reconciliar).
+  const nombreUsuario = (() => {
+    try { return JSON.parse(localStorage.getItem('usuario'))?.nombre || 'Tú'; }
+    catch { return 'Tú'; }
+  })();
+
+  // Publica con UI OPTIMISTA: pinta el comentario al instante, limpia el input y
+  // libera el botón de inmediato; el viaje a la red se reconcilia en segundo plano
+  // y, si falla, se revierte y se devuelve el texto para reintentar.
+  const publicar = () => {
     const texto = nuevoTexto.trim();
     if (!texto) return;
-    try {
-      if (respondiendoA) {
-        const parentId = respondiendoA.idComentario;
-        const nueva = await api.responderComentarioWod(parentId, texto);
-        // asegurar que el hilo del padre esté cargado/abierto
-        if (!hijos[parentId]) {
-          const data = await api.obtenerRespuestasComentario(parentId, null, 10);
-          setHijos(prev => prev[parentId] ? prev : ({ ...prev, [parentId]: { items: data.items || [], siguienteCursor: data.siguienteCursor ?? null, abierto: true, cargando: false } }));
-        }
-        setHijos(prev => {
-          const cur = prev[parentId] || { items: [], siguienteCursor: null, abierto: true, cargando: false };
-          if (cur.items.some(x => x.idComentario === nueva.idComentario)) return { ...prev, [parentId]: { ...cur, abierto: true } };
-          return { ...prev, [parentId]: { ...cur, items: [...cur.items, nueva], abierto: true } };
-        });
-        bumpRespuestas(parentId, 1);
-        setRespondiendoA(null);
-      } else {
-        const nuevo = await api.crearComentarioWod(idEnt, texto);
-        setComentarios(prev => [nuevo, ...prev]);
-      }
-      onCountChange && onCountChange(1);
-      setNuevoTexto('');
-    } catch (e) {
-      alert(e.message || 'No se pudo publicar el comentario.');
+
+    const reply = respondiendoA;
+    const parentId = reply?.idComentario ?? null;
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const hiloExistia = parentId != null && !!hijos[parentId];
+
+    const optimista = {
+      idComentario: tempId,
+      autor: nombreUsuario,
+      texto,
+      fechaCreacion: new Date().toISOString(),
+      reacciones: [],
+      miReaccion: null,
+      totalRespuestas: 0,
+      puedeBorrar: false,
+      eliminado: false,
+      pendiente: true,
+      idComentarioPadre: parentId,
+      respondeA: reply ? reply.autor : null,
+    };
+
+    // 1) Pintar al instante + limpiar input + cerrar "respondiendo".
+    if (parentId != null) {
+      setHijos(prev => {
+        const cur = prev[parentId] || { items: [], siguienteCursor: null, abierto: true, cargando: false };
+        return { ...prev, [parentId]: { ...cur, items: [...cur.items, optimista], abierto: true } };
+      });
+      bumpRespuestas(parentId, 1);
+    } else {
+      setComentarios(prev => [optimista, ...prev]);
     }
+    onCountChange && onCountChange(1);
+    setNuevoTexto('');
+    setRespondiendoA(null);
+
+    // 2) Reconciliar con el servidor en segundo plano (no bloquea el botón).
+    (async () => {
+      try {
+        if (parentId != null) {
+          // Si el hilo era nuevo, traer en segundo plano las respuestas previas.
+          if (!hiloExistia) {
+            try {
+              const prevData = await api.obtenerRespuestasComentario(parentId, null, 10);
+              setHijos(prev => {
+                const cur = prev[parentId];
+                if (!cur) return prev;
+                const previos = (prevData.items || []).filter(p => !cur.items.some(x => x.idComentario === p.idComentario));
+                return { ...prev, [parentId]: { ...cur, items: [...previos, ...cur.items], siguienteCursor: prevData.siguienteCursor ?? null } };
+              });
+            } catch { /* si falla, al menos queda el comentario optimista visible */ }
+          }
+          const real = await api.responderComentarioWod(parentId, texto);
+          setHijos(prev => {
+            const cur = prev[parentId];
+            if (!cur) return prev;
+            return { ...prev, [parentId]: { ...cur, items: cur.items.map(x => x.idComentario === tempId ? real : x) } };
+          });
+        } else {
+          const real = await api.crearComentarioWod(idEnt, texto);
+          setComentarios(prev => prev.map(c => c.idComentario === tempId ? real : c));
+        }
+      } catch (e) {
+        // Revertir: quitar el optimista y devolver el texto para reintentar.
+        if (parentId != null) {
+          setHijos(prev => {
+            const cur = prev[parentId];
+            if (!cur) return prev;
+            return { ...prev, [parentId]: { ...cur, items: cur.items.filter(x => x.idComentario !== tempId) } };
+          });
+          bumpRespuestas(parentId, -1);
+        } else {
+          setComentarios(prev => prev.filter(c => c.idComentario !== tempId));
+        }
+        onCountChange && onCountChange(-1);
+        setNuevoTexto(curr => curr || texto);          // no pisar si ya escribió otra cosa
+        setRespondiendoA(curr => curr || reply);
+        alert(e.message || 'No se pudo publicar el comentario.');
+      }
+    })();
   };
 
-  const reaccionar = async (comentario, emoji) => {
+  const reaccionar = (comentario, emoji) => {
     setPickerAbierto(null);
-    try {
-      const res = await api.reaccionarComentarioWod(comentario.idComentario, emoji);
-      actualizarComentario(comentario.idComentario, { reacciones: res.reacciones || [], miReaccion: res.miReaccion ?? null });
-    } catch (e) { alert(e.message || 'No se pudo reaccionar.'); }
+    // snapshot para revertir si la red falla
+    const snapshot = { reacciones: comentario.reacciones || [], miReaccion: comentario.miReaccion ?? null };
+    // 1) pintar al instante (mismo toggle que el backend)
+    actualizarComentario(comentario.idComentario, calcularReaccionLocal(snapshot.reacciones, snapshot.miReaccion, emoji));
+    // 2) reconciliar con el servidor en segundo plano
+    api.reaccionarComentarioWod(comentario.idComentario, emoji)
+      .then(res => actualizarComentario(comentario.idComentario, { reacciones: res.reacciones || [], miReaccion: res.miReaccion ?? null }))
+      .catch(e => {
+        actualizarComentario(comentario.idComentario, snapshot); // revertir
+        alert(e.message || 'No se pudo reaccionar.');
+      });
+  };
+
+  // Abre el modal con la lista de quiénes reaccionaron (estilo FB).
+  const verReacciones = (comentario) => {
+    if (!comentario.idComentario || comentario.pendiente) return; // ignorar comentarios optimistas
+    setReaccionesView({ idComentario: comentario.idComentario, cargando: true, items: [] });
+    api.obtenerReaccionesComentario(comentario.idComentario)
+      .then(items => setReaccionesView(v => (v && v.idComentario === comentario.idComentario) ? { ...v, cargando: false, items: items || [] } : v))
+      .catch(() => setReaccionesView(v => (v && v.idComentario === comentario.idComentario) ? { ...v, cargando: false, items: [] } : v));
   };
 
   const borrar = async (comentario) => {
@@ -272,14 +478,14 @@ export default function ModalComentariosWod({ wod, onCerrar, onCountChange, focu
       <div
         key={c.idComentario}
         ref={el => { if (el) itemRefs.current[c.idComentario] = el; }}
-        className={`cwc-item ${nivel > 0 ? 'cwc-item--respuesta' : ''} ${resaltadoId === c.idComentario ? 'cwc-item--resaltado' : ''}`}
+        className={`cwc-item ${nivel > 0 ? 'cwc-item--respuesta' : ''} ${resaltadoId === c.idComentario ? 'cwc-item--resaltado' : ''} ${c.pendiente ? 'cwc-item--pendiente' : ''}`}
       >
         <div className="cwc-avatar">{inicial}</div>
         <div className="cwc-item-body">
           <div className="cwc-bubble">
             <div className="cwc-item-head">
               <span className="cwc-autor">{c.autor}</span>
-              <span className="cwc-fecha">{tiempoRelativo(c.fechaCreacion)}</span>
+              <span className="cwc-fecha">{c.pendiente ? 'enviando…' : tiempoRelativo(c.fechaCreacion)}</span>
             </div>
             {c.eliminado
               ? <p className="cwc-texto cwc-texto--eliminado"><i className="fas fa-ban me-1"></i>Comentario eliminado</p>
@@ -289,14 +495,14 @@ export default function ModalComentariosWod({ wod, onCerrar, onCountChange, focu
                 </p>}
 
             {totalReacciones > 0 && (
-              <div className="cwc-reacciones-resumen">
+              <button type="button" className="cwc-reacciones-resumen" onClick={() => verReacciones(c)}>
                 {(c.reacciones || []).map(r => <span key={r.emoji}>{r.emoji}</span>)}
                 <span className="cwc-reacciones-count">{totalReacciones}</span>
-              </div>
+              </button>
             )}
           </div>
 
-          {!c.eliminado && (
+          {!c.eliminado && !c.pendiente && (
             <div className="cwc-acciones">
               <div className="cwc-reaccionar-wrap">
                 <button
@@ -349,8 +555,10 @@ export default function ModalComentariosWod({ wod, onCerrar, onCountChange, focu
     );
   };
 
-  return createPortal(
-    <div className="cwc-overlay" onClick={onCerrar}>
+  return (
+    <>
+      {createPortal(
+        <div className="cwc-overlay" onClick={onCerrar}>
       <div className="cwc-modal" onClick={e => e.stopPropagation()}>
         <div className="cwc-header">
           <h3 className="cwc-title"><i className="fas fa-comments me-2"></i>Comentarios</h3>
@@ -401,6 +609,7 @@ export default function ModalComentariosWod({ wod, onCerrar, onCountChange, focu
               onClick={publicar}
               className="cwc-publicar"
               textoProcesando="..."
+              tiempoBloqueo={400}
               disabled={!nuevoTexto.trim()}
             >
               <i className="fas fa-paper-plane"></i>
@@ -409,6 +618,15 @@ export default function ModalComentariosWod({ wod, onCerrar, onCountChange, focu
         </div>
       </div>
     </div>,
-    document.body
+        document.body
+      )}
+      {reaccionesView && (
+        <ModalReacciones
+          items={reaccionesView.items}
+          cargando={reaccionesView.cargando}
+          onCerrar={() => setReaccionesView(null)}
+        />
+      )}
+    </>
   );
 }

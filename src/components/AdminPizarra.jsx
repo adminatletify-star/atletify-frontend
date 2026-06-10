@@ -81,7 +81,7 @@ export default function AdminPizarra({ box }) {
     setLoadingPizarra(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/asistencias/box/${box.idBox}/leaderboard/${fechaSel}`, {
+      const res = await fetch(`${API_BASE}/asistencias/box/${box.idBox}/leaderboard/${fechaSel}?incluirOcultos=true`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {

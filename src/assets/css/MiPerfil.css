@@ -66,16 +66,114 @@
 }
 
 .mp-layout {
+  display: block;
+}
+
+/* ── BARRA DE TAB-CARDS ───────────────────────────────────── */
+.mp-tabbar {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.25rem;
-  align-items: start;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
 }
-@media (min-width: 992px) {
-  .mp-layout { grid-template-columns: 1fr 300px; }
+.mp-tabcard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid transparent;     /* se enciende en estado activo */
+  border-radius: 14px;
+  padding: clamp(0.55rem, 2.5vw, 0.8rem) 0.4rem;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
-@media (min-width: 1200px) {
-  .mp-layout { grid-template-columns: 1fr 320px; }
+.mp-tabcard i {
+  font-size: clamp(1rem, 3.2vw, 1.25rem);
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+.mp-tabcard-label {
+  font-family: var(--font-heading-alt);
+  font-size: clamp(0.55rem, 2vw, 0.66rem);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.1;
+}
+/* Estado activo: rima con el border-top 3px var(--primary) de .mp-hero/.mp-card */
+.mp-tabcard--active {
+  border-top-color: var(--primary);
+  background: rgba(230,57,70,0.06);
+  box-shadow: 0 4px 16px var(--primary-glow);
+}
+.mp-tabcard--active i { color: var(--primary); transform: scale(1.08); }
+.mp-tabcard--active .mp-tabcard-label { color: var(--primary); }
+/* Badge contador de PRs (clona .mp-hero-badge--racha) */
+.mp-tabcard-badge {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: rgba(230,57,70,0.12);
+  border: 1px solid rgba(230,57,70,0.3);
+  color: var(--primary);
+  font-family: var(--font-stats);
+  font-size: 0.6rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+/* Mini-indicador de cuenta congelada en la tab Cuenta */
+.mp-tabcard-frozen-dot {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 0.7rem !important;
+  color: #4fc3f7 !important;
+  animation: mp-pulse-glow 3s infinite ease-in-out;
+}
+/* Hover solo con mouse (en táctil no se queda "pegado") */
+@media (hover: hover) {
+  .mp-tabcard:hover:not(.mp-tabcard--active) {
+    border-color: rgba(230,57,70,0.35);
+    background: rgba(230,57,70,0.03);
+  }
+  .mp-tabcard:hover:not(.mp-tabcard--active) i,
+  .mp-tabcard:hover:not(.mp-tabcard--active) .mp-tabcard-label { color: var(--primary); }
+}
+/* Feedback táctil inmediato */
+.mp-tabcard:active { transform: scale(0.95); }
+.mp-tabcard:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* ── PANEL DE PESTAÑA (animación de entrada) ──────────────── */
+.mp-tab-panel { animation: mpTabIn 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes mpTabIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mp-tab-panel { animation: none; }
+  .mp-tabcard--active i { transform: none; }
+}
+
+/* Móvil pequeño (iPhone SE): que las 3 tab-cards no se aprieten */
+@media (max-width: 380px) {
+  .mp-tabbar { gap: 0.4rem; }
+  .mp-tabcard { border-radius: 12px; padding: 0.5rem 0.3rem; }
+  .mp-tabcard-label { letter-spacing: 0.5px; }
 }
 
 /* ── HERO CARD ──────────────────────────────────────────── */
@@ -185,9 +283,7 @@
   letter-spacing: 1.5px;
   margin: 0 0 0.1rem;
   line-height: 1.1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .mp-hero-realname {
   font-family: var(--font-body);
@@ -226,6 +322,26 @@
   border-color: rgba(220,53,69,0.3);
   color: #ff6b6b;
 }
+/* Badge de likes (es un botón clicable -> abre el modal de quién dio like) */
+button.mp-hero-badge--likes {
+  cursor: pointer;
+  font-family: var(--font-heading-alt);
+  background: rgba(230,57,70,0.1);
+  border-color: rgba(230,57,70,0.3);
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+button.mp-hero-badge--likes:active { transform: scale(0.94); }
+@media (hover: hover) {
+  button.mp-hero-badge--likes:hover {
+    background: rgba(230,57,70,0.18);
+    border-color: rgba(230,57,70,0.5);
+  }
+}
 
 /* Progress bar */
 .mp-progress-bar-wrap {
@@ -257,6 +373,33 @@
   border-radius: 4px;
   transition: width 0.5s ease;
   box-shadow: 0 0 6px var(--primary-glow);
+}
+
+/* ── RESPONSIVE: pantallas pequeñas ───────────────────────── */
+/* Ocultar las descripciones grises de los switches en móvil (dejar solo los títulos blancos) */
+@media (max-width: 576px) {
+  .mp-switch-desc { display: none; }
+}
+/* Hero apilado (avatar arriba, info centrada a todo el ancho) en pantallas angostas:
+   el nombre y el badge de racha dejan de recortarse */
+@media (max-width: 420px) {
+  .mp-hero-body {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.85rem;
+  }
+  .mp-hero-info { width: 100%; }
+  .mp-hero-badges { justify-content: center; }
+}
+/* Hero más compacto en móviles muy pequeños */
+@media (max-width: 380px) {
+  .mp-hero-body { padding: 0.9rem 0.95rem; }
+  .mp-hero-avatar { width: 64px; height: 64px; font-size: 1.7rem; }
+  .mp-hero-name { font-size: 1.15rem; letter-spacing: 1px; }
+  .mp-hero-realname { font-size: 0.7rem; }
+  .mp-hero-badge { font-size: 0.56rem; padding: 0.16rem 0.45rem; }
+  .mp-progress-bar-wrap { padding: 0.6rem 0.95rem; }
 }
 
 /* ── CARDS (= .gc-form-card) ─────────────────────────────── */
@@ -336,6 +479,38 @@
   border-color: rgba(79,195,247,0.55);
   box-shadow: 0 0 0 3px rgba(79,195,247,0.12);
 }
+
+/* ── USERNAME LIVE-CHECK ──────────────────────────────────── */
+.mp-username-wrap { position: relative; }
+.mp-username-input { padding-right: 42px !important; }
+
+.mp-username-indicator {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  pointer-events: none;
+}
+.mp-username-indicator--available { color: #22c55e; }
+.mp-username-indicator--taken,
+.mp-username-indicator--invalid   { color: #ef4444; }
+.mp-username-indicator--short,
+.mp-username-indicator--checking  { color: #f59e0b; }
+
+.mp-username-hint {
+  margin: 0.45rem 0 0;
+  font-size: clamp(0.68rem, 2vw, 0.78rem);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  letter-spacing: 0.2px;
+}
+.mp-username-hint--ok    { color: #22c55e; }
+.mp-username-hint--err   { color: #f08090; }
+.mp-username-hint--warn  { color: #f59e0b; }
+.mp-username-hint--check { color: var(--text-muted); }
 
 /* ── DATE TRIGGER ────────────────────────────────────────── */
 .mp-date-trigger {
@@ -438,12 +613,6 @@
 }
 .mp-btn-security:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ── SIDEBAR ─────────────────────────────────────────────── */
-.mp-sidebar-sticky {
-  position: sticky;
-  top: 80px;
-}
-
 /* ── DATE PICKER OVERLAY ─────────────────────────────────── */
 .mp-date-overlay {
   position: fixed;
@@ -526,6 +695,134 @@
 .mp-pr-card-unit  { font-size: 0.72rem; color: var(--text-muted); font-weight: 400; }
 .mp-pr-card-date  { font-family: var(--font-body); font-size: 0.6rem; color: var(--accent); }
 
+/* Reacciones recibidas en cada PR */
+.mp-pr-card--clickable { cursor: pointer; }
+@media (hover: hover) {
+  .mp-pr-card--clickable:hover { border-color: rgba(230,57,70,0.4); }
+}
+.mp-pr-card-reacc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: center;
+  margin-top: 0.45rem;
+}
+.mp-pr-rcount {
+  font-family: var(--font-stats);
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 9px;
+  padding: 0.04rem 0.35rem;
+  white-space: nowrap;
+}
+
+/* ── MODAL SOCIAL (quién dio like / quién reaccionó) ──────── */
+.mp-social-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.mp-social-modal {
+  width: 100%;
+  max-width: 420px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 20px;
+  overflow: hidden;
+  animation: mpTabIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mp-social-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+}
+.mp-social-title {
+  flex: 1;
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: clamp(0.85rem, 2.5vw, 1rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+}
+.mp-social-title i { color: var(--primary); margin-right: 0.35rem; }
+.mp-social-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}
+.mp-social-close:active { transform: scale(0.92); }
+.mp-social-body {
+  overflow-y: auto;
+  padding: 0.6rem 0.9rem 1rem;
+}
+.mp-social-loading { display: flex; justify-content: center; padding: 2rem 0; }
+.mp-social-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 2rem 1rem;
+  margin: 0;
+}
+.mp-social-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.4rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.mp-social-row:last-child { border-bottom: none; }
+.mp-social-avatar {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, #ff6b6b 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+}
+.mp-social-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.mp-social-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mp-social-name {
+  font-family: var(--font-heading-alt);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mp-social-user { color: var(--text-muted); font-weight: 400; }
+.mp-social-date { font-family: var(--font-body); font-size: 0.68rem; color: var(--text-muted); }
+.mp-social-emoji { font-size: 1.3rem; flex-shrink: 0; }
+
 /* Chart */
 .mp-chart-wrap {
   background: var(--bg-card);
@@ -547,9 +844,10 @@
 .mp-chart-bars {
   display: flex;
   align-items: flex-end;
+  justify-content: safe center;
   gap: 0.65rem;
   overflow-x: auto;
-  height: 190px;
+  height: clamp(150px, 42vw, 190px);
   padding: 0.25rem 0.1rem;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
@@ -558,8 +856,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-end;
+  height: 100%;
   flex-shrink: 0;
   width: 50px;
+}
+/* Track de altura definida: hace que el height % de la barra se resuelva bien */
+.mp-chart-bar-track {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 }
 .mp-chart-label {
   font-family: var(--font-stats);

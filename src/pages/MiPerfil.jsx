@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { USUARIOS_ENDPOINT, VENTAS_ENDPOINT } from '../services/api';
 import DateWheelPicker from '../components/DateWheelPicker';
 import BackButton from '../components/BackButton';
@@ -23,6 +23,8 @@ const API_BASE = import.meta.env.VITE_API_URL;
 
 export default function MiPerfil() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const reaccionMarcaAbiertaRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [userAuth, setUserAuth] = useState(null);
   const [progreso, setProgreso] = useState(0);
@@ -31,7 +33,7 @@ export default function MiPerfil() {
   const [deudaReal, setDeudaReal] = useState(0);
 
   const [form, setForm] = useState({
-    nombre: '', apellidos: '', foto: '', telefono: '', fechaNacimiento: '',
+    nombre: '', apellidos: '', username: '', foto: '', telefono: '', fechaNacimiento: '',
     peso: '', tallaPlayera: '', categoriaBase: '',
     tipoDeSangre: '', tieneExperiencia: false, deporteExperiencia: '',
     tieneDiscapacidad: '', genero: '', apodo: '', estadoDelDia: '',
@@ -45,6 +47,25 @@ export default function MiPerfil() {
     contrasenaActual: '', nuevaContrasena: '', confirmarContrasena: ''
   });
   const reglasPassword = usePasswordStrength(passForm.nuevaContrasena);
+
+  // ── Username live-check ──────────────────────────────────────
+  // 'idle' | 'current' | 'checking' | 'available' | 'taken' | 'short' | 'invalid'
+  const [usernameEstado, setUsernameEstado] = useState('idle');
+  const usernameOriginalRef = useRef('');   // username con el que cargó la página (en minúsculas)
+  const usernameDebounceRef = useRef(null);
+
+  // ── Pestañas de la Player Card ───────────────────────────────
+  const TABS = [
+    { key: 'perfil',  label: 'Perfil',  icon: 'fa-id-badge' },
+    { key: 'records', label: 'Récords', icon: 'fa-trophy' },
+    { key: 'cuenta',  label: 'Cuenta',  icon: 'fa-shield-halved' },
+  ];
+  const [tabActiva, setTabActiva] = useState(() => {
+    const h = window.location.hash.replace('#', '');
+    return ['perfil', 'records', 'cuenta'].includes(h) ? h : 'perfil';
+  });
+  const tabRefs = useRef({});
+  const hashInicialRef = useRef(window.location.hash); // hash con el que se cargó la página
 
   const [freezePassword, setFreezePassword] = useState('');
   const [freezing, setFreezing] = useState(false);
@@ -94,6 +115,11 @@ export default function MiPerfil() {
   const [historialCompleto, setHistorialCompleto] = useState([]);
   const [graficaEjercicioId, setGraficaEjercicioId] = useState('');
 
+  // Social: likes recibidos en mi perfil + resumen de reacciones por PR + modal de detalle
+  const [misLikes, setMisLikes] = useState(0);
+  const [misReaccionesResumen, setMisReaccionesResumen] = useState({}); // idMarca -> { total, conteos }
+  const [modalSocial, setModalSocial] = useState(null); // { tipo:'likes'|'reacciones', titulo, items, cargando }
+
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('usuario'));
     const b = JSON.parse(localStorage.getItem('box'));
@@ -103,7 +129,77 @@ export default function MiPerfil() {
     fetchExpediente(idUsuario);
     fetchDeudaReal(idUsuario);
     cargarDatosPRs(b.idBox, idUsuario);
+    cargarSocialMine(idUsuario);
   }, [navigate]);
+
+  // Verificación de disponibilidad del username en tiempo real (debounce 400ms)
+  useEffect(() => {
+    const u = form.username.trim();
+
+    // Igual a su username actual → sin cambios, todo en orden (sin llamada a la red)
+    if (u.toLowerCase() === usernameOriginalRef.current && usernameOriginalRef.current !== '') {
+      setUsernameEstado('current');
+      return;
+    }
+    if (!u) { setUsernameEstado('idle'); return; }
+    if (!/^[a-zA-Z0-9._-]+$/.test(u)) { setUsernameEstado('invalid'); return; }
+    if (u.length < 3) { setUsernameEstado('short'); return; }
+
+    setUsernameEstado('checking');
+    if (usernameDebounceRef.current) clearTimeout(usernameDebounceRef.current);
+    usernameDebounceRef.current = setTimeout(async () => {
+      try {
+        const idUsuario = userAuth?.id || userAuth?.idUsuario;
+        const res = await fetch(`${USUARIOS_ENDPOINT}/verificar-username/${encodeURIComponent(u)}?excluirId=${idUsuario}`);
+        if (!res.ok) { setUsernameEstado('idle'); return; }
+        const data = await res.json();
+        setUsernameEstado(data.disponible ? 'available' : 'taken');
+      } catch {
+        setUsernameEstado('idle');
+      }
+    }, 400);
+
+    return () => { if (usernameDebounceRef.current) clearTimeout(usernameDebounceRef.current); };
+  }, [form.username, userAuth]);
+
+  // Sincroniza la pestaña activa con el hash de la URL (sobrevive al reload tras Guardar)
+  // y resetea el scroll al cambiar de pestaña.
+  useEffect(() => {
+    if (window.location.hash !== '#' + tabActiva) {
+      window.history.replaceState(null, '', '#' + tabActiva);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [tabActiva]);
+
+  // Si el hash cambia sin re-montar (mismo /mi-perfil), sincronizar la pestaña
+  useEffect(() => {
+    const onHashChange = () => {
+      const h = window.location.hash.replace('#', '');
+      if (['perfil', 'records', 'cuenta'].includes(h)) setTabActiva(h);
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  // Si llegamos desde una notificación de reacción a PR, abrir el modal de reacciones de ese PR
+  useEffect(() => {
+    const idMarca = location.state?.reaccionesMarca;
+    if (!idMarca || reaccionMarcaAbiertaRef.current || recordsMaximos.length === 0) return;
+    reaccionMarcaAbiertaRef.current = true;
+    const pr = recordsMaximos.find(p => p.idMarca === idMarca) || { idMarca, nombreEjercicio: 'tu PR' };
+    abrirModalReacciones(pr);
+  }, [location.state, recordsMaximos]);
+
+  // Navegación por flechas entre pestañas (accesibilidad: role=tablist)
+  function onTabKey(e, idx) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const dir = e.key === 'ArrowRight' ? 1 : -1;
+      const next = (idx + dir + TABS.length) % TABS.length;
+      setTabActiva(TABS[next].key);
+      tabRefs.current[TABS[next].key]?.focus();
+    }
+  }
 
   async function fetchDeudaReal(idUsuario) {
     try {
@@ -129,9 +225,11 @@ export default function MiPerfil() {
         if (data.FechaNacimiento || data.fechaNacimiento) {
           fechaFormat = new Date(data.FechaNacimiento || data.fechaNacimiento).toISOString().split('T')[0];
         }
+        const usernameCargado = data.Username || data.username || '';
         const datosCargados = {
           nombre: data.Nombre || data.nombre || '',
           apellidos: data.Apellidos || data.apellidos || '',
+          username: usernameCargado,
           foto: data.Foto || data.foto || '',
           telefono: data.Telefono || data.telefono || '',
           fechaNacimiento: fechaFormat,
@@ -158,7 +256,13 @@ export default function MiPerfil() {
           estatus: data.Estatus || data.estatus || 'Activo'
         };
         setRachaVisible(data.RachaActual || data.rachaActual || 0);
+        usernameOriginalRef.current = usernameCargado.toLowerCase();
+        setUsernameEstado('current');
         setForm(datosCargados);
+        // Si la cuenta llega congelada y el usuario no pidió una pestaña concreta, lo llevamos a Cuenta (Descongelar)
+        if ((data.Estatus || data.estatus) === 'TemporalmenteInactivo' && !hashInicialRef.current) {
+          setTabActiva('cuenta');
+        }
         calcularProgreso(datosCargados);
         
         // Sync local storage
@@ -186,6 +290,45 @@ export default function MiPerfil() {
         if (data.recordsMaximos.length > 0) setGraficaEjercicioId(data.recordsMaximos[0].idEjercicio);
       }
     } catch (error) { console.error('Error al cargar PRs:', error); }
+  }
+
+  // Carga mi conteo de likes de perfil + el resumen de reacciones de mis PRs
+  async function cargarSocialMine(idUsuario) {
+    const token = localStorage.getItem('token');
+    const auth = { 'Authorization': `Bearer ${token}` };
+    try {
+      const [resLikes, resResumen] = await Promise.all([
+        fetch(`${API_BASE}/interacciones/like-perfil/${idUsuario}/estado`, { headers: auth }),
+        fetch(`${API_BASE}/interacciones/usuario/${idUsuario}/reacciones-resumen`, { headers: auth }),
+      ]);
+      if (resLikes.ok) { const d = await resLikes.json(); setMisLikes(d.totalLikes || 0); }
+      if (resResumen.ok) {
+        const arr = await resResumen.json();
+        setMisReaccionesResumen(Object.fromEntries(arr.map(r => [r.idMarca, r])));
+      }
+    } catch (e) { console.error('Error social:', e); }
+  }
+
+  async function abrirModalLikes() {
+    const idUsuario = userAuth?.id || userAuth?.idUsuario;
+    setModalSocial({ tipo: 'likes', titulo: 'Likes a tu perfil', items: [], cargando: true });
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/interacciones/like-perfil/${idUsuario}/lista`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const items = res.ok ? await res.json() : [];
+      setModalSocial({ tipo: 'likes', titulo: 'Likes a tu perfil', items, cargando: false });
+    } catch (e) { setModalSocial(m => (m ? { ...m, cargando: false } : null)); }
+  }
+
+  async function abrirModalReacciones(pr) {
+    const titulo = `Reacciones · ${pr.nombreEjercicio}`;
+    setModalSocial({ tipo: 'reacciones', titulo, items: [], cargando: true });
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/interacciones/marca/${pr.idMarca}/reacciones`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const items = res.ok ? await res.json() : [];
+      setModalSocial({ tipo: 'reacciones', titulo, items, cargando: false });
+    } catch (e) { setModalSocial(m => (m ? { ...m, cargando: false } : null)); }
   }
 
   const calcularEdad = (fechaStr) => {
@@ -251,6 +394,21 @@ export default function MiPerfil() {
 
   async function handleGuardarExpediente(e) {
     e.preventDefault();
+
+    // No permitir guardar con un nombre de usuario inválido o ya ocupado
+    if (usernameEstado === 'taken') {
+      triggerAlert({ title: 'Usuario no disponible', message: 'Ese nombre de usuario ya está ocupado. Elige otro.', type: 'error' });
+      return;
+    }
+    if (usernameEstado === 'invalid') {
+      triggerAlert({ title: 'Usuario inválido', message: 'El nombre de usuario solo admite letras, números, punto, guión y guión bajo.', type: 'error' });
+      return;
+    }
+    if (usernameEstado === 'short') {
+      triggerAlert({ title: 'Usuario muy corto', message: 'El nombre de usuario debe tener al menos 3 caracteres.', type: 'error' });
+      return;
+    }
+
     const payload = {
       ...form,
       peso: form.peso ? parseFloat(form.peso) : null,
@@ -266,6 +424,7 @@ export default function MiPerfil() {
         if (current) {
           current.nombre = form.nombre;
           current.apodo = form.apodo;
+          current.username = form.username;
           current.estadoDelDia = form.estadoDelDia;
           current.categoriaBase = form.categoriaBase;
           current.nivelGamer = form.nivelGamer;
@@ -555,6 +714,23 @@ export default function MiPerfil() {
     <div className="mp-loading"><AtletifyLoader /></div>
   );
 
+  const usernameHint = (() => {
+    switch (usernameEstado) {
+      case 'checking':  return { icon: 'fa-circle-notch fa-spin', text: 'Verificando disponibilidad...',                       clase: 'mp-username-hint mp-username-hint--check' };
+      case 'available': return { icon: 'fa-check-circle',          text: '¡Nombre de usuario disponible!',                      clase: 'mp-username-hint mp-username-hint--ok' };
+      case 'taken':     return { icon: 'fa-times-circle',          text: 'Este nombre de usuario ya está ocupado',              clase: 'mp-username-hint mp-username-hint--err' };
+      case 'short':     return { icon: 'fa-exclamation-circle',    text: 'Mínimo 3 caracteres',                                 clase: 'mp-username-hint mp-username-hint--warn' };
+      case 'invalid':   return { icon: 'fa-exclamation-circle',    text: 'Solo letras, números, punto, guión y guión bajo',     clase: 'mp-username-hint mp-username-hint--warn' };
+      default:          return null;
+    }
+  })();
+
+  const usernameBorderColor =
+    usernameEstado === 'available' ? '#22c55e' :
+    usernameEstado === 'taken' || usernameEstado === 'invalid' ? '#ef4444' :
+    usernameEstado === 'short' || usernameEstado === 'checking' ? '#f59e0b' :
+    '';
+
   return (
     <>
       <div className="mp-page">
@@ -576,7 +752,7 @@ export default function MiPerfil() {
               <div className="mp-frozen-banner-content">
                 <h4 className="mp-frozen-banner-title">Cuenta Congelada</h4>
                 <p className="mp-frozen-banner-text">
-                  Tu cuenta está inactiva temporalmente. Todos tus datos y marcas están a salvo, pero no podrás reservar clases, registrar PRs o modificar tu información hasta que la descongeles. La renovación automática de tu membresía ha sido desactivada. Reactívala usando tu contraseña en el panel lateral.
+                  Tu cuenta está inactiva temporalmente. Todos tus datos y marcas están a salvo, pero no podrás reservar clases, registrar PRs o modificar tu información hasta que la descongeles. La renovación automática de tu membresía ha sido desactivada. Reactívala usando tu contraseña en la pestaña Cuenta.
                 </p>
               </div>
             </div>
@@ -599,9 +775,12 @@ export default function MiPerfil() {
               </div>
 
               <div className="mp-hero-info">
-                <h2 className="mp-hero-name">{form.apodo || form.nombre.split(' ')[0]}</h2>
-                <p className="mp-hero-realname">{form.nombre}{form.apellidos ? ` ${form.apellidos}` : ''}</p>
+                <h2 className="mp-hero-name">{[form.nombre, form.apellidos].filter(Boolean).join(' ') || form.apodo || 'Atleta'}</h2>
+                <p className="mp-hero-realname">{form.apodo ? `"${form.apodo}"` : (form.username ? `@${form.username}` : '')}</p>
                 <div className="mp-hero-badges">
+                  <button type="button" className="mp-hero-badge mp-hero-badge--likes" onClick={abrirModalLikes}>
+                    <i className="fas fa-heart" /> {misLikes} {misLikes === 1 ? 'like' : 'likes'}
+                  </button>
                   <span className="mp-hero-badge mp-hero-badge--racha">
                     <i className="fas fa-fire" /> Racha: {rachaVisible} días
                   </span>
@@ -623,10 +802,38 @@ export default function MiPerfil() {
             </div>
           </div>
 
-          {/* LAYOUT PRINCIPAL */}
-          <div className="mp-layout">
+          {/* BARRA DE PESTAÑAS */}
+          <nav className="mp-tabbar" role="tablist" aria-label="Secciones de Player Card">
+            {TABS.map((t, idx) => {
+              const activa = tabActiva === t.key;
+              const badge = t.key === 'records' && recordsMaximos.length > 0 ? recordsMaximos.length : null;
+              const congelada = t.key === 'cuenta' && form.estatus === 'TemporalmenteInactivo';
+              return (
+                <button
+                  key={t.key}
+                  ref={el => (tabRefs.current[t.key] = el)}
+                  type="button"
+                  role="tab"
+                  id={`mp-tab-${t.key}`}
+                  aria-selected={activa}
+                  aria-controls={`mp-panel-${t.key}`}
+                  tabIndex={activa ? 0 : -1}
+                  className={`mp-tabcard ${activa ? 'mp-tabcard--active' : ''}`}
+                  onClick={() => setTabActiva(t.key)}
+                  onKeyDown={e => onTabKey(e, idx)}
+                >
+                  <i className={`fas ${t.icon}`} aria-hidden="true" />
+                  {congelada && <i className="fas fa-snowflake mp-tabcard-frozen-dot" aria-hidden="true" />}
+                  <span className="mp-tabcard-label">{t.label}</span>
+                  {badge !== null && <span className="mp-tabcard-badge">{badge}</span>}
+                </button>
+              );
+            })}
+          </nav>
 
-            {/* ── FORMULARIO PRINCIPAL ── */}
+          {/* ══ PANEL: PERFIL ══ */}
+          {tabActiva === 'perfil' && (
+          <div id="mp-panel-perfil" role="tabpanel" aria-labelledby="mp-tab-perfil" className="mp-tab-panel">
             <div className={`mp-card ${form.estatus === 'TemporalmenteInactivo' ? 'mp-form-frozen' : ''}`}>
               <div className="mp-card-body-lg">
                 <form onSubmit={handleGuardarExpediente}>
@@ -667,6 +874,35 @@ export default function MiPerfil() {
                     <i className="fas fa-id-card" /> Datos Reales
                   </h5>
                   <div className="row g-3 mb-4">
+                    <div className="col-12">
+                      <label className="mp-label">Nombre de Usuario (alias único)</label>
+                      <div className="mp-username-wrap">
+                        <input
+                          type="text"
+                          className="mp-input mp-username-input"
+                          autoComplete="username"
+                          placeholder="Tu alias para iniciar sesión"
+                          value={form.username}
+                          onChange={e => setForm({ ...form, username: e.target.value.replace(/\s+/g, '').replace(/[^a-zA-Z0-9._-]/g, '') })}
+                          style={usernameBorderColor ? { borderColor: usernameBorderColor } : undefined}
+                        />
+                        {usernameEstado !== 'idle' && usernameEstado !== 'current' && (
+                          <span className={`mp-username-indicator mp-username-indicator--${usernameEstado}`}>
+                            <i className={`fas ${
+                              usernameEstado === 'checking'  ? 'fa-circle-notch fa-spin' :
+                              usernameEstado === 'available' ? 'fa-check-circle' :
+                              usernameEstado === 'taken' || usernameEstado === 'invalid' ? 'fa-times-circle' :
+                              'fa-exclamation-circle'
+                            }`} />
+                          </span>
+                        )}
+                      </div>
+                      {usernameHint && (
+                        <p className={usernameHint.clase}>
+                          <i className={`fas ${usernameHint.icon}`} /> {usernameHint.text}
+                        </p>
+                      )}
+                    </div>
                     <div className="col-md-6">
                       <label className="mp-label">Nombre Completo</label>
                       <input type="text" className="mp-input" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} required />
@@ -740,6 +976,81 @@ export default function MiPerfil() {
                     )}
                   </div>
 
+                  {/* Expediente Médico */}
+                  <h5 className="mp-section-title mp-section-title--medical">
+                    <i className="fas fa-heartbeat" /> Expediente Médico
+                  </h5>
+                  <p className="mp-medical-note">
+                    <i className="fas fa-lock" /> Esta información solo será visible para el equipo de Coaches en el Directorio.
+                  </p>
+                  <div className="row g-3 mb-4">
+                    <div className="col-md-4">
+                      <label className="mp-label">Tipo de Sangre</label>
+                      <TipoSangrePicker valor={form.tipoDeSangre} onCambiar={v => setForm({ ...form, tipoDeSangre: v })} />
+                    </div>
+                    <div className="col-md-8">
+                      <label className="mp-label">Lesiones, cirugías o enfermedades crónicas</label>
+                      <input type="text" className="mp-input mp-input--medical" placeholder="Ej. Asma, hernia discal... (Déjalo en blanco si no aplica)" value={form.tieneDiscapacidad} onChange={e => setForm({ ...form, tieneDiscapacidad: e.target.value })} />
+                    </div>
+                  </div>
+
+                  {/* Privacidad y Comunidad */}
+                  <h5 className="mp-section-title mt-4">
+                    <i className="fas fa-shield-alt" /> Privacidad y Comunidad
+                  </h5>
+                  <p className="mp-medical-note">
+                    <i className="fas fa-eye-slash" /> Configura quién puede ver tu perfil y estadísticas.
+                  </p>
+                  <div className="row g-3 mb-4">
+                    <div className="col-12">
+                      <div className="form-check form-switch d-flex align-items-center gap-2">
+                        <input className="form-check-input" type="checkbox" role="switch" style={{ width: '40px', height: '20px' }} checked={form.ocultarDelLeaderboard} onChange={e => setForm({ ...form, ocultarDelLeaderboard: e.target.checked })} />
+                        <div>
+                          <label className="mp-switch-label ms-2 d-block mb-0">Ocultar del Leaderboard</label>
+                          <small className="text-secondary ms-2 mp-switch-desc">Tus scores no aparecerán en el Top del día, pero tu coach sí podrá verlos.</small>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-12">
+                      <div className="form-check form-switch d-flex align-items-center gap-2">
+                        <input className="form-check-input" type="checkbox" role="switch" style={{ width: '40px', height: '20px' }} checked={form.ocultarGamerCard} onChange={e => setForm({ ...form, ocultarGamerCard: e.target.checked })} />
+                        <div>
+                          <label className="mp-switch-label ms-2 d-block mb-0">Ocultar Gamer Card (Modo Fantasma)</label>
+                          <small className="text-secondary ms-2 mp-switch-desc">Ocultar tu perfil del directorio de la comunidad. Nadie podrá ver tus PRs ni Nivel Gamer.</small>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-12">
+                      <div className="form-check form-switch d-flex align-items-center gap-2">
+                        <input className="form-check-input" type="checkbox" role="switch" style={{ width: '40px', height: '20px' }} checked={form.deshabilitarSolicitudes} onChange={e => setForm({ ...form, deshabilitarSolicitudes: e.target.checked })} />
+                        <div>
+                          <label className="mp-switch-label ms-2 d-block mb-0">No recibir solicitudes de amistad</label>
+                          <small className="text-secondary ms-2 mp-switch-desc">Otros atletas no podrán enviarte solicitudes para añadirte a su manada.</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <BotonSeguro
+                    type="submit"
+                    className="mp-btn-save"
+                    textoProcesando={<><i className="fas fa-spinner fa-spin" /> Guardando...</>}
+                    disabled={form.estatus === 'TemporalmenteInactivo' || ['taken', 'invalid', 'short', 'checking'].includes(usernameEstado)}
+                  >
+                    <i className="fas fa-save" /> Guardar Player Card
+                  </BotonSeguro>
+                </form>
+              </div>
+            </div>
+          </div>
+          )}
+
+          {/* ══ PANEL: RÉCORDS ══ */}
+          {tabActiva === 'records' && (
+          <div id="mp-panel-records" role="tabpanel" aria-labelledby="mp-tab-records" className="mp-tab-panel">
+            <div className={`mp-card ${form.estatus === 'TemporalmenteInactivo' ? 'mp-form-frozen' : ''}`}>
+              <div className="mp-card-body-lg">
+
                   {/* PRs */}
                   <h5 className="mp-section-title">
                     <i className="fas fa-trophy" /> Mis Récords Personales (PRs)
@@ -754,17 +1065,33 @@ export default function MiPerfil() {
                       </div>
                     ) : (
                       <div className="mp-pr-scroll">
-                        {recordsMaximos.map(pr => (
-                          <div key={pr.idMarca} className="mp-pr-card">
-                            <span className="mp-pr-card-name">{pr.nombreEjercicio}</span>
-                            <p className="mp-pr-card-value">
-                              {pr.valor} <span className="mp-pr-card-unit">{pr.unidad}</span>
-                            </p>
-                            <span className="mp-pr-card-date">
-                              {new Date(pr.fechaLogro).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: '2-digit' })}
-                            </span>
-                          </div>
-                        ))}
+                        {recordsMaximos.map(pr => {
+                          const reac = misReaccionesResumen[pr.idMarca];
+                          const tieneReac = reac?.total > 0;
+                          return (
+                            <div
+                              key={pr.idMarca}
+                              className={`mp-pr-card ${tieneReac ? 'mp-pr-card--clickable' : ''}`}
+                              onClick={tieneReac ? () => abrirModalReacciones(pr) : undefined}
+                              title={tieneReac ? 'Ver quién reaccionó' : undefined}
+                            >
+                              <span className="mp-pr-card-name">{pr.nombreEjercicio}</span>
+                              <p className="mp-pr-card-value">
+                                {pr.valor} <span className="mp-pr-card-unit">{pr.unidad}</span>
+                              </p>
+                              <span className="mp-pr-card-date">
+                                {new Date(pr.fechaLogro).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: '2-digit' })}
+                              </span>
+                              {tieneReac && (
+                                <div className="mp-pr-card-reacc">
+                                  {reac.conteos.map(c => (
+                                    <span key={c.emoji} className="mp-pr-rcount">{c.emoji} {c.count}</span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -795,11 +1122,13 @@ export default function MiPerfil() {
                               return (
                                 <div key={hit.idMarca} className="mp-chart-col">
                                   <span className={`mp-chart-label${esMax ? ' mp-chart-label--max' : ''}`}>{hit.valor}</span>
-                                  <div
-                                    className={`mp-chart-bar${esMax ? ' mp-chart-bar--max' : ''}`}
-                                    style={{ height: `${alturaPct}%` }}
-                                    title={hit.notas || 'Sin notas'}
-                                  />
+                                  <div className="mp-chart-bar-track">
+                                    <div
+                                      className={`mp-chart-bar${esMax ? ' mp-chart-bar--max' : ''}`}
+                                      style={{ height: `${alturaPct}%` }}
+                                      title={hit.notas || 'Sin notas'}
+                                    />
+                                  </div>
                                   <span className="mp-chart-date">
                                     {new Date(hit.fechaLogro).toLocaleDateString('es-ES', { month: 'short', year: '2-digit' })}
                                   </span>
@@ -818,19 +1147,19 @@ export default function MiPerfil() {
                       <i className="fas fa-plus-circle" /> Registrar Nuevo PR
                     </p>
                     <div className="row g-2 align-items-end">
-                      <div className="col-md-5">
+                      <div className="col-12 col-md-5">
                         <label className="mp-label">Movimiento Olímpico</label>
                         <EjercicioOlimpicoPicker ejercicios={ejerciciosOlimpicos} valor={formMarca.idEjercicio} onCambiar={v => setFormMarca({ ...formMarca, idEjercicio: v })} />
                       </div>
-                      <div className="col-4 col-md-3">
+                      <div className="col-6 col-md-3">
                         <label className="mp-label">Peso</label>
                         <input type="number" step="0.5" className="mp-input" style={{ textAlign: 'center' }} value={formMarca.valor} onChange={e => setFormMarca({ ...formMarca, valor: e.target.value })} placeholder="0" />
                       </div>
-                      <div className="col-4 col-md-2">
+                      <div className="col-6 col-md-2">
                         <label className="mp-label">Unidad</label>
                         <UnidadPesoPicker valor={formMarca.unidad} onCambiar={v => setFormMarca({ ...formMarca, unidad: v })} />
                       </div>
-                      <div className="col-4 col-md-2">
+                      <div className="col-12 col-md-2">
                         <BotonSeguro
                           type="button"
                           onClick={handleGuardarPR}
@@ -838,7 +1167,7 @@ export default function MiPerfil() {
                           className="mp-btn-pr"
                           textoProcesando={<i className="fas fa-spinner fa-spin" />}
                         >
-                          <i className="fas fa-save" />
+                          <i className="fas fa-save" /><span className="d-md-none ms-2">Guardar PR</span>
                         </BotonSeguro>
                       </div>
                     </div>
@@ -882,75 +1211,15 @@ export default function MiPerfil() {
                     </div>
                   )}
 
-                  {/* Expediente Médico */}
-                  <h5 className="mp-section-title mp-section-title--medical">
-                    <i className="fas fa-heartbeat" /> Expediente Médico
-                  </h5>
-                  <p className="mp-medical-note">
-                    <i className="fas fa-lock" /> Esta información solo será visible para el equipo de Coaches en el Directorio.
-                  </p>
-                  <div className="row g-3 mb-4">
-                    <div className="col-md-4">
-                      <label className="mp-label">Tipo de Sangre</label>
-                      <TipoSangrePicker valor={form.tipoDeSangre} onCambiar={v => setForm({ ...form, tipoDeSangre: v })} />
-                    </div>
-                    <div className="col-md-8">
-                      <label className="mp-label">Lesiones, cirugías o enfermedades crónicas</label>
-                      <input type="text" className="mp-input mp-input--medical" placeholder="Ej. Asma, hernia discal... (Déjalo en blanco si no aplica)" value={form.tieneDiscapacidad} onChange={e => setForm({ ...form, tieneDiscapacidad: e.target.value })} />
-                    </div>
-                  </div>
-
-                  {/* Privacidad y Comunidad */}
-                  <h5 className="mp-section-title mt-4">
-                    <i className="fas fa-shield-alt" /> Privacidad y Comunidad
-                  </h5>
-                  <p className="mp-medical-note">
-                    <i className="fas fa-eye-slash" /> Configura quién puede ver tu perfil y estadísticas.
-                  </p>
-                  <div className="row g-3 mb-4">
-                    <div className="col-12">
-                      <div className="form-check form-switch d-flex align-items-center gap-2">
-                        <input className="form-check-input" type="checkbox" role="switch" style={{ width: '40px', height: '20px' }} checked={form.ocultarDelLeaderboard} onChange={e => setForm({ ...form, ocultarDelLeaderboard: e.target.checked })} />
-                        <div>
-                          <label className="mp-switch-label ms-2 d-block mb-0">Ocultar del Leaderboard</label>
-                          <small className="text-secondary ms-2">Tus scores no aparecerán en el Top del día, pero tu coach sí podrá verlos.</small>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-12">
-                      <div className="form-check form-switch d-flex align-items-center gap-2">
-                        <input className="form-check-input" type="checkbox" role="switch" style={{ width: '40px', height: '20px' }} checked={form.ocultarGamerCard} onChange={e => setForm({ ...form, ocultarGamerCard: e.target.checked })} />
-                        <div>
-                          <label className="mp-switch-label ms-2 d-block mb-0">Ocultar Gamer Card (Modo Fantasma)</label>
-                          <small className="text-secondary ms-2">Ocultar tu perfil del directorio de la comunidad. Nadie podrá ver tus PRs ni Nivel Gamer.</small>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-12">
-                      <div className="form-check form-switch d-flex align-items-center gap-2">
-                        <input className="form-check-input" type="checkbox" role="switch" style={{ width: '40px', height: '20px' }} checked={form.deshabilitarSolicitudes} onChange={e => setForm({ ...form, deshabilitarSolicitudes: e.target.checked })} />
-                        <div>
-                          <label className="mp-switch-label ms-2 d-block mb-0">No recibir solicitudes de amistad</label>
-                          <small className="text-secondary ms-2">Otros atletas no podrán enviarte solicitudes para añadirte a su manada.</small>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <BotonSeguro
-                    type="submit"
-                    className="mp-btn-save"
-                    textoProcesando={<><i className="fas fa-spinner fa-spin" /> Guardando...</>}
-                    disabled={form.estatus === 'TemporalmenteInactivo'}
-                  >
-                    <i className="fas fa-save" /> Guardar Player Card
-                  </BotonSeguro>
-                </form>
               </div>
             </div>
+          </div>
+          )}
 
-            {/* ── SIDEBAR SEGURIDAD & ACCIONES DE CUENTA ── */}
-            <div className="mp-card mp-sidebar-sticky">
+          {/* ══ PANEL: CUENTA ══ */}
+          {tabActiva === 'cuenta' && (
+          <div id="mp-panel-cuenta" role="tabpanel" aria-labelledby="mp-tab-cuenta" className="mp-tab-panel">
+            <div className="mp-card">
               <div className="mp-card-body">
                 {form.estatus === 'TemporalmenteInactivo' ? (
                   /* Formulario Descongelar Cuenta */
@@ -1175,8 +1444,8 @@ export default function MiPerfil() {
                 )}
               </div>
             </div>
-
           </div>
+          )}
         </div>
       </div>
 
@@ -1211,6 +1480,54 @@ export default function MiPerfil() {
           }}
           onCancel={() => setImageToCrop(null)}
         />
+      )}
+
+      {/* MODAL SOCIAL: quién dio like / quién reaccionó */}
+      {modalSocial && (
+        <div className="mp-social-overlay" onClick={() => setModalSocial(null)}>
+          <div className="mp-social-modal" onClick={e => e.stopPropagation()}>
+            <div className="mp-social-header">
+              <h3 className="mp-social-title">
+                <i className={`fas ${modalSocial.tipo === 'likes' ? 'fa-heart' : 'fa-fire'}`} /> {modalSocial.titulo}
+              </h3>
+              <button type="button" className="mp-social-close" onClick={() => setModalSocial(null)}>
+                <i className="fas fa-times" />
+              </button>
+            </div>
+            <div className="mp-social-body">
+              {modalSocial.cargando ? (
+                <div className="mp-social-loading"><AtletifyLoader /></div>
+              ) : modalSocial.items.length === 0 ? (
+                <p className="mp-social-empty">
+                  {modalSocial.tipo === 'likes'
+                    ? 'Aún nadie le ha dado like a tu perfil.'
+                    : 'Aún nadie ha reaccionado a este PR.'}
+                </p>
+              ) : (
+                modalSocial.items.map((it, i) => (
+                  <div key={i} className="mp-social-row">
+                    <div className="mp-social-avatar">
+                      {it.foto
+                        ? <img src={it.foto} alt={it.nombre} />
+                        : (it.nombre || '?').charAt(0).toUpperCase()}
+                    </div>
+                    <div className="mp-social-info">
+                      <span className="mp-social-name">
+                        {it.nombre}{it.username ? <span className="mp-social-user"> @{it.username}</span> : ''}
+                      </span>
+                      <span className="mp-social-date">
+                        {new Date(it.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: '2-digit' })}
+                        {' · '}
+                        {new Date(it.fecha).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    {modalSocial.tipo === 'reacciones' && <span className="mp-social-emoji">{it.emoji}</span>}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* CUSTOM PREMIUM CONFIRM MODAL */}
