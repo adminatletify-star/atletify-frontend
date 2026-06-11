@@ -74,6 +74,7 @@ export default function AdminBoxPanel() {
   const [clasesCoachPast, setClasesCoachPast] = useState([]);
   const [nominaCoachPast, setNominaCoachPast] = useState(null);
   const [diaCorteCoach, setDiaCorteCoach] = useState(7);
+  const [historialCoach, setHistorialCoach] = useState([]); // pagos ya realizados al coach
   const [evaluacionesCoach, setEvaluacionesCoach] = useState(null);
   const [cargandoCoachDashboard, setCargandoCoachDashboard] = useState(false);
   const [activeCycleAccordion, setActiveCycleAccordion] = useState('current');
@@ -261,6 +262,12 @@ export default function AdminBoxPanel() {
       if (resEval.ok) {
         setEvaluacionesCoach(await resEval.json());
       }
+
+      // 4. Historial de pagos del coach (lo que YA se le ha pagado — no desaparece)
+      const resHist = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/historial-coach/${idCoach}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (resHist.ok) setHistorialCoach(await resHist.json());
 
     } catch (err) {
       console.error("Error al cargar dashboard de coach:", err);
@@ -622,6 +629,38 @@ export default function AdminBoxPanel() {
                               </Link>
                             </div>
                           </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+
+              {/* MIS PAGOS (HISTORIAL REAL — lo que ya se me pagó) */}
+              <section className="abp-glass-card mb-4" style={{ borderLeft: '4px solid var(--success)' }}>
+                <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary">
+                  <h4 className="abp-card-title mb-0">
+                    <i className="fas fa-receipt me-2 text-success"></i>Mis Pagos
+                  </h4>
+                </div>
+                {(!historialCoach || historialCoach.length === 0) ? (
+                  <div className="text-center py-4 text-muted">
+                    <i className="fas fa-receipt fs-2 text-secondary mb-2 d-block"></i>
+                    <span>Aún no tienes pagos registrados. Cuando te paguen un periodo, aparecerá aquí.</span>
+                  </div>
+                ) : (
+                  <div className="d-flex flex-column gap-2">
+                    {historialCoach.slice(0, 8).map(h => {
+                      const fmt = (d) => d ? new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }) : '—';
+                      return (
+                        <div key={h.idPagoNomina ?? h.IdPagoNomina} className="d-flex justify-content-between align-items-center p-2 rounded-8 bg-dark-glow">
+                          <div>
+                            <div className="text-white small fw-bold">{fmt(h.periodoInicio ?? h.PeriodoInicio)} – {fmt(h.periodoFin ?? h.PeriodoFin)}</div>
+                            <div className="text-muted" style={{ fontSize: '11px' }}>
+                              <i className="far fa-calendar-check me-1"></i>Pagado el {fmt(h.fechaPago ?? h.FechaPago)} · {h.numeroClases ?? h.NumeroClases ?? 0} clase(s)
+                            </div>
+                          </div>
+                          <span className="badge bg-success bg-opacity-25 text-success border border-success px-2 py-1">{formatearDinero(h.montoTotal ?? h.MontoTotal ?? 0)}</span>
                         </div>
                       );
                     })}

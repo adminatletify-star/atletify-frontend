@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import TipoPagoPicker from '../components/TipoPagoPicker';
+import PeriodicidadPicker from '../components/PeriodicidadPicker';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import BotonSeguro from '../components/BotonSeguro';
 import AtletifyLoader from '../components/AtletifyLoader';
@@ -12,9 +13,11 @@ import '../assets/css/GestionStaff.css';
 const PAGE_SIZE = 10;
 
 const FILTRO_FECHA_OPCIONES = [
-  { value: 'hoy',    label: 'Hoy',          icon: 'fa-calendar-day' },
-  { value: 'ayer',   label: 'Ayer',         icon: 'fa-calendar-minus' },
-  { value: 'semana', label: 'Esta Semana',  icon: 'fa-calendar-week' },
+  { value: 'hoy',      label: 'Hoy',             icon: 'fa-calendar-day' },
+  { value: 'ayer',     label: 'Ayer',            icon: 'fa-calendar-minus' },
+  { value: 'semana',   label: 'Esta Semana',     icon: 'fa-calendar-week' },
+  { value: 'quincena', label: 'Últimos 15 días', icon: 'fa-calendar-week' },
+  { value: 'mes',      label: 'Este Mes',        icon: 'fa-calendar-alt' },
 ];
 
 const DIA_CORTE_OPCIONES = [
@@ -23,6 +26,8 @@ const DIA_CORTE_OPCIONES = [
   { value: '5', label: 'Viernes' },   { value: '6', label: 'Sábado' },
   { value: '7', label: 'Domingo' },
 ];
+
+const fmtFecha = (d) => d ? new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: '2-digit' }) : '—';
 
 // GET con reintentos: los 500 transitorios del pooler de Supabase se reintentan
 // con un pequeño backoff. Devuelve el JSON o null si nunca respondió OK.
@@ -136,10 +141,15 @@ export default function GestionStaff() {
 
   // 💰 Estados para el Modal de Contratos y Nómina
   const [modalContratoVisible, setModalContratoVisible] = useState(false);
-  const [formContrato, setFormContrato] = useState({ tipoPago: 'PorClase', monto: 0, diaCorte: 15 });
+  const [formContrato, setFormContrato] = useState({ tipoPago: 'PorClase', periodicidad: 'Semanal', monto: 0, diaCorte: 5 });
   const [nominaActual, setNominaActual] = useState(null);
   const [asistenciasCoach, setAsistenciasCoach] = useState([]);
   const [cargandoAsistencias, setCargandoAsistencias] = useState(false);
+  // 🧾 Historial de nóminas pagadas (no desaparece al cambiar de semana)
+  const [historialNomina, setHistorialNomina] = useState([]);
+  const [cargandoHistorial, setCargandoHistorial] = useState(false);
+  const [pagHistorial, setPagHistorial] = useState(1);
+  const [filtroCoachHistorial, setFiltroCoachHistorial] = useState(''); // '' = todos
   // ⭐ Estados para Evaluaciones
   const [modalResenasVisible, setModalResenasVisible] = useState(false);
 
@@ -233,6 +243,12 @@ export default function GestionStaff() {
       cargarAuditoria();
     }
   }, [vistaActiva, filtroAuditoria, box]);
+
+  useEffect(() => {
+    if ((vistaActiva === 'historial' || vistaActiva === 'nomina') && box) {
+      cargarHistorial();
+    }
+  }, [vistaActiva, box]);
 
   useEffect(() => {
     if (vistaActiva === 'auditoria' && filtroCoachAuditoria && box) {
@@ -397,23 +413,53 @@ export default function GestionStaff() {
 
   const getDatesForFilter = (filter) => {
     const hoyObj = new Date();
+    // TOPE DURO: la tabla nunca muestra clases a más de 1 día en el futuro (hoy = a validar,
+    // mañana = preview "se valida mañana"). Los filtros largos sólo extienden hacia el PASADO.
+    const manana = new Date(hoyObj); manana.setDate(hoyObj.getDate() + 1);
     let start, end;
-    if (filter === 'hoy') {
+    if (filter === 'ayer') {
+      start = new Date(hoyObj); start.setDate(hoyObj.getDate() - 1);
+      end = new Date(start); // sólo ayer
+    } else if (filter === 'semana') {
+      const day = hoyObj.getDay();
+      const diffToMonday = hoyObj.getDate() - day + (day === 0 ? -6 : 1);
+      start = new Date(hoyObj.getFullYear(), hoyObj.getMonth(), diffToMonday); // lunes de esta semana
+      end = new Date(manana);
+    } else if (filter === 'quincena') {
+      start = new Date(hoyObj); start.setDate(hoyObj.getDate() - 14); // últimos 15 días
+      end = new Date(manana);
+    } else if (filter === 'mes') {
+      start = new Date(hoyObj.getFullYear(), hoyObj.getMonth(), 1); // 1º del mes
+      end = new Date(manana);
+    } else { // 'hoy' (default): sólo hoy (sin preview de mañana, por estética)
       start = new Date(hoyObj);
       end = new Date(hoyObj);
-    } else if (filter === 'ayer') {
-      start = new Date(hoyObj);
-      start.setDate(hoyObj.getDate() - 1);
-      end = new Date(start);
-    } else if (filter === 'semana') {
-      return getWeekBoundaries(hoyObj);
     }
+    if (end > manana) end = new Date(manana); // cap futuro (sólo aplica a semana/quincena/mes)
     const offsetStart = start.getTimezoneOffset() * 60000;
     const offsetEnd = end.getTimezoneOffset() * 60000;
     return {
       fInicioStr: new Date(start.getTime() - offsetStart).toISOString().split('T')[0],
       fFinStr: new Date(end.getTime() - offsetEnd).toISOString().split('T')[0]
     };
+  };
+
+  const cargarHistorial = async () => {
+    if (!box) return;
+    setCargandoHistorial(true);
+    setPagHistorial(1);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/nomina/historial/${box.idBox}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setHistorialNomina(res.ok ? await res.json() : []);
+    } catch (e) {
+      console.error('Error al cargar historial de nómina', e);
+      setHistorialNomina([]);
+    } finally {
+      setCargandoHistorial(false);
+    }
   };
 
   const cargarAuditoria = async () => {
@@ -484,7 +530,7 @@ export default function GestionStaff() {
       if (res.ok) {
         Swal.fire('Pago Registrado', data.mensaje || 'Se ha registrado el egreso financiero.', 'success');
         setModalPagoVisible(false);
-        cargarAuditoria(); 
+        cargarHistorial(); // refresco ligero: refleja el pago (las clases validadas no cambian)
       } else {
         Swal.fire('Error', data.mensaje || 'Error al procesar el pago', 'error');
       }
@@ -646,7 +692,7 @@ export default function GestionStaff() {
       });
       if (resContrato.ok) {
         const data = await resContrato.json();
-        setFormContrato({ tipoPago: data.tipoPago, monto: data.monto, diaCorte: data.diaCorte });
+        setFormContrato({ tipoPago: data.tipoPago, periodicidad: data.periodicidad || data.Periodicidad || 'Semanal', monto: data.monto, diaCorte: data.diaCorte });
       }
       // 2. Traer el cálculo de Nómina de esta SEMANA
       const { fInicioStr, fFinStr } = getWeekBoundaries(new Date());
@@ -665,7 +711,7 @@ export default function GestionStaff() {
       const token = localStorage.getItem('token');
       const payload = {
         IdUsuario: idCoach,
-        TipoPago: formContrato.tipoPago, Monto: parseFloat(formContrato.monto), DiaCorte: parseInt(formContrato.diaCorte), Activo: true
+        TipoPago: formContrato.tipoPago, Periodicidad: formContrato.periodicidad, Monto: parseFloat(formContrato.monto), DiaCorte: parseInt(formContrato.diaCorte), Activo: true
       };
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/contrato`, {
         method: 'POST',
@@ -710,9 +756,21 @@ export default function GestionStaff() {
   const totalPagDir = Math.max(1, Math.ceil(coaches.length / PAGE_SIZE));
   const coachesPagina = coaches.slice((pagDirectorio - 1) * PAGE_SIZE, pagDirectorio * PAGE_SIZE);
 
-  const auditoriaFiltrada = filtroCoachAuditoria
+  // Orden: pendientes ACCIONABLES (hoy/pasado) arriba, luego MAÑANA (preview), luego validadas/faltas.
+  const rankAuditoria = (c) => {
+    const est = c.estado ?? c.Estado;
+    if (est === 'Pendiente') return esFuturaManana(c.fecha ?? c.Fecha) ? 1 : 0;
+    return 2;
+  };
+  const auditoriaFiltrada = (filtroCoachAuditoria
     ? auditoriaClases.filter(c => (c.idCoach || c.IdCoach)?.toString() === filtroCoachAuditoria)
-    : auditoriaClases;
+    : auditoriaClases)
+    .slice()
+    .sort((a, b) => {
+      const ra = rankAuditoria(a), rb = rankAuditoria(b);
+      if (ra !== rb) return ra - rb;
+      return new Date(b.fecha ?? b.Fecha) - new Date(a.fecha ?? a.Fecha); // dentro de cada grupo, recientes primero
+    });
   const totalPagAud = Math.max(1, Math.ceil(auditoriaFiltrada.length / PAGE_SIZE));
   const auditoriaPagina = auditoriaFiltrada.slice((pagAuditoria - 1) * PAGE_SIZE, pagAuditoria * PAGE_SIZE);
 
@@ -727,6 +785,31 @@ export default function GestionStaff() {
   ];
   const fechaSel = FILTRO_FECHA_OPCIONES.find(o => o.value === filtroAuditoria) || FILTRO_FECHA_OPCIONES[0];
   const coachSel = coachOpciones.find(o => o.value === filtroCoachAuditoria) || coachOpciones[0];
+
+  // Historial: opciones de coach (derivadas de los pagos ya hechos) + lista filtrada
+  const coachHistorialOpciones = [
+    { value: '', label: 'Todos los Coaches', icon: 'fa-users' },
+    ...Array.from(new Map(
+      historialNomina.map(h => [String(h.idCoach ?? h.IdCoach), h.nombreCoach ?? h.NombreCoach ?? 'Coach'])
+    ).entries()).map(([id, nombre]) => ({ value: id, label: nombre, icon: 'fa-user' })),
+  ];
+  const coachHistSel = coachHistorialOpciones.find(o => o.value === filtroCoachHistorial) || coachHistorialOpciones[0];
+  const historialFiltrado = filtroCoachHistorial
+    ? historialNomina.filter(h => String(h.idCoach ?? h.IdCoach) === filtroCoachHistorial)
+    : historialNomina;
+
+  // Vista de Nómina: ¿el coach ya tiene pagado el periodo del filtro actual? (traslape con el historial)
+  const rangoNominaActual = getDatesForFilter(filtroAuditoria);
+  const coachYaPagado = (idCoach) => {
+    const ini = new Date(rangoNominaActual.fInicioStr);
+    const fin = new Date(rangoNominaActual.fFinStr);
+    return historialNomina.some(h => {
+      if (String(h.idCoach ?? h.IdCoach) !== String(idCoach)) return false;
+      const pIni = new Date(h.periodoInicio ?? h.PeriodoInicio);
+      const pFin = new Date(h.periodoFin ?? h.PeriodoFin);
+      return pIni <= fin && ini <= pFin;
+    });
+  };
 
   return (
     <div className="staff-container">
@@ -763,6 +846,13 @@ export default function GestionStaff() {
             onClick={() => { setVistaActiva('nomina'); setFiltroAuditoria('semana'); }}
           >
             <i className="fas fa-money-check-alt"></i><span>Nómina</span>
+          </button>
+          <button
+            type="button"
+            className={`staff-tab ${vistaActiva === 'historial' ? 'staff-tab--active' : ''}`}
+            onClick={() => setVistaActiva('historial')}
+          >
+            <i className="fas fa-history"></i><span>Historial</span>
           </button>
         </div>
 
@@ -1040,7 +1130,7 @@ export default function GestionStaff() {
               </>
             )}
           </div>
-        ) : (
+        ) : vistaActiva === 'nomina' ? (
           /* ── NOMINA / PAGOS ── */
           <div className="nomina-container fade-in">
             <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
@@ -1099,13 +1189,101 @@ export default function GestionStaff() {
                         <span className="staff-nomina-coach-total-valor">${coachNomina.totalPagar.toFixed(2)}</span>
                       </div>
 
-                      <button className="staff-nomina-coach-btn" onClick={() => abrirModalPago(coachNomina)}>
-                        <i className="fas fa-hand-holding-usd"></i> Registrar Pago
-                      </button>
+                      {coachYaPagado(coachNomina.idCoach) ? (
+                        <div className="staff-nomina-coach-btn" style={{ background: 'rgba(46,204,113,0.12)', borderColor: 'var(--success)', color: 'var(--success)', cursor: 'default' }}>
+                          <i className="fas fa-check-circle"></i> Pagado este periodo
+                        </div>
+                      ) : (
+                        <button className="staff-nomina-coach-btn" onClick={() => abrirModalPago(coachNomina)}>
+                          <i className="fas fa-hand-holding-usd"></i> Registrar Pago
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+        ) : null}
+
+        {vistaActiva === 'historial' && (
+          <div className="nomina-container fade-in">
+            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+              <div>
+                <h3 className="text-white mb-1"><i className="fas fa-history text-danger me-2"></i> Historial de Nóminas Pagadas</h3>
+                <p className="text-white-50 mb-0 small">Registro permanente de los pagos a coaches. No desaparece al cambiar de semana.</p>
+              </div>
+              <div className="staff-toolbar">
+                <button type="button" className="staff-picker-btn" onClick={() => setPickerActivo('coach-historial')}>
+                  <i className={`fas ${coachHistSel.icon} staff-picker-btn-icon`}></i>
+                  <span className="staff-picker-btn-label">{coachHistSel.label}</span>
+                  <i className="fas fa-chevron-down staff-picker-btn-arrow"></i>
+                </button>
+              </div>
+            </div>
+
+            {cargandoHistorial ? (
+              <div className="text-center py-5">
+                <div className="spinner-border text-danger" role="status"></div>
+                <p className="mt-3 text-white-50">Cargando historial...</p>
+              </div>
+            ) : historialFiltrado.length === 0 ? (
+              <div className="staff-empty-card py-5 text-center">
+                <i className="fas fa-receipt fs-1 text-white-50 mb-3"></i>
+                <h5 className="text-white">{filtroCoachHistorial ? 'Este coach no tiene pagos registrados' : 'Aún no hay pagos registrados'}</h5>
+                <p className="text-white-50 small mb-0">Cuando pagues una nómina aparecerá aquí.</p>
+              </div>
+            ) : (
+              <>
+                <div className="table-responsive d-none d-md-block staff-audit-table-wrap">
+                  <table className="table table-hover mb-0 align-middle staff-audit-table" style={{
+                    '--bs-table-bg': 'transparent',
+                    '--bs-table-color': 'var(--text-primary)',
+                    '--bs-table-border-color': 'var(--border)',
+                    '--bs-table-hover-bg': 'var(--bg-card-hover)',
+                    '--bs-table-hover-color': 'var(--text-primary)',
+                    color: 'var(--text-primary)'
+                  }}>
+                    <thead>
+                      <tr>
+                        <th className="py-3 text-white-50 fw-normal small px-3">Coach</th>
+                        <th className="py-3 text-white-50 fw-normal small">Periodo</th>
+                        <th className="py-3 text-white-50 fw-normal small">Cadencia</th>
+                        <th className="py-3 text-white-50 fw-normal small text-center">Clases</th>
+                        <th className="py-3 text-white-50 fw-normal small text-end">Monto</th>
+                        <th className="py-3 text-white-50 fw-normal small text-end px-3">Pagado el</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {historialFiltrado.slice((pagHistorial - 1) * PAGE_SIZE, pagHistorial * PAGE_SIZE).map(h => (
+                        <tr key={h.idPagoNomina ?? h.IdPagoNomina}>
+                          <td className="fw-bold px-3 text-white">{h.nombreCoach ?? h.NombreCoach ?? 'Coach'}</td>
+                          <td className="text-white-50">{fmtFecha(h.periodoInicio ?? h.PeriodoInicio)} – {fmtFecha(h.periodoFin ?? h.PeriodoFin)}</td>
+                          <td><span className="badge rounded-pill bg-secondary bg-opacity-25 text-white">{h.periodicidad ?? h.Periodicidad ?? '—'}</span></td>
+                          <td className="text-center text-white-50">{h.numeroClases ?? h.NumeroClases ?? 0}</td>
+                          <td className="text-end"><span className="badge rounded-pill bg-success bg-opacity-10 text-success">${(h.montoTotal ?? h.MontoTotal ?? 0).toFixed(2)}</span></td>
+                          <td className="text-white-50 text-end px-3">{fmtFecha(h.fechaPago ?? h.FechaPago)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="d-md-none">
+                  {historialFiltrado.slice((pagHistorial - 1) * PAGE_SIZE, pagHistorial * PAGE_SIZE).map(h => (
+                    <div key={h.idPagoNomina ?? h.IdPagoNomina} className="staff-nomina-coach-card mb-2" style={{ textAlign: 'left' }}>
+                      <div className="d-flex justify-content-between align-items-center">
+                        <h3 className="staff-nomina-coach-nombre m-0" style={{ fontSize: '1rem' }}>{h.nombreCoach ?? h.NombreCoach ?? 'Coach'}</h3>
+                        <span className="badge rounded-pill bg-success bg-opacity-10 text-success">${(h.montoTotal ?? h.MontoTotal ?? 0).toFixed(2)}</span>
+                      </div>
+                      <p className="text-white-50 small m-0 mt-1">{fmtFecha(h.periodoInicio ?? h.PeriodoInicio)} – {fmtFecha(h.periodoFin ?? h.PeriodoFin)} · {h.periodicidad ?? h.Periodicidad}</p>
+                      <p className="text-white-50 small m-0">{h.numeroClases ?? h.NumeroClases ?? 0} clase(s) · pagado el {fmtFecha(h.fechaPago ?? h.FechaPago)}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <Paginacion pagina={pagHistorial} totalPaginas={Math.max(1, Math.ceil(historialFiltrado.length / PAGE_SIZE))} onCambio={setPagHistorial} />
+              </>
             )}
           </div>
         )}
@@ -1393,8 +1571,15 @@ export default function GestionStaff() {
                     onCambiar={val => setFormContrato({ ...formContrato, tipoPago: val })}
                   />
                 </div>
-                <div className="col-md-3">
-                  <label className="staff-form-label">Monto ($)</label>
+                <div className="col-md-6">
+                  <label className="staff-form-label">Cadencia de Pago</label>
+                  <PeriodicidadPicker
+                    valor={formContrato.periodicidad}
+                    onCambiar={val => setFormContrato({ ...formContrato, periodicidad: val })}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="staff-form-label">{formContrato.tipoPago === 'PorClase' ? 'Monto por clase ($)' : 'Monto fijo por periodo ($)'}</label>
                   <input
                     type="number"
                     className="staff-modal-input"
@@ -1402,8 +1587,8 @@ export default function GestionStaff() {
                     onChange={e => setFormContrato({ ...formContrato, monto: e.target.value })}
                   />
                 </div>
-                <div className="col-md-3">
-                  <label className="staff-form-label">Día de Pago (Semanal)</label>
+                <div className="col-md-6">
+                  <label className="staff-form-label">{formContrato.periodicidad === 'Semanal' ? 'Día de Pago (de la semana)' : 'Día de Pago (referencia)'}</label>
                   <button type="button" className="staff-picker-btn staff-picker-btn--full" onClick={() => setPickerActivo('dia-corte')}>
                     <i className="fas fa-calendar-day staff-picker-btn-icon"></i>
                     <span className="staff-picker-btn-label">{DIA_CORTE_OPCIONES.find(o => String(o.value) === String(formContrato.diaCorte))?.label || 'Día'}</span>
@@ -1563,6 +1748,16 @@ export default function GestionStaff() {
           opciones={coachOpciones}
           valor={filtroCoachAuditoria}
           onSelect={(v) => { setFiltroCoachAuditoria(v); setPickerActivo(null); }}
+          onCerrar={() => setPickerActivo(null)}
+        />
+      )}
+      {pickerActivo === 'coach-historial' && (
+        <OptionPickerModal
+          supertitulo="HISTORIAL"
+          titulo="Ver historial de"
+          opciones={coachHistorialOpciones}
+          valor={filtroCoachHistorial}
+          onSelect={(v) => { setFiltroCoachHistorial(v); setPagHistorial(1); setPickerActivo(null); }}
           onCerrar={() => setPickerActivo(null)}
         />
       )}
