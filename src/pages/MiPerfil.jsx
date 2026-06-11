@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { USUARIOS_ENDPOINT, VENTAS_ENDPOINT } from '../services/api';
 import DateWheelPicker from '../components/DateWheelPicker';
 import BackButton from '../components/BackButton';
@@ -12,6 +13,7 @@ import TallaPlayeraPicker from '../components/TallaPlayeraPicker';
 import CategoriaBasePicker from '../components/CategoriaBasePicker';
 import TipoSangrePicker from '../components/TipoSangrePicker';
 import EjercicioOlimpicoPicker from '../components/EjercicioOlimpicoPicker';
+import PorcentajePicker from '../components/PorcentajePicker';
 import UnidadPesoPicker from '../components/UnidadPesoPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import PasswordRulesHint from '../components/PasswordRulesHint';
@@ -24,6 +26,7 @@ const API_BASE = import.meta.env.VITE_API_URL;
 export default function MiPerfil() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { actualizarUsuario } = useAuth();
   const reaccionMarcaAbiertaRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [userAuth, setUserAuth] = useState(null);
@@ -110,6 +113,7 @@ export default function MiPerfil() {
   const [formMarca, setFormMarca] = useState({ idEjercicio: '', valor: '', unidad: 'lbs' });
   const [guardandoPR, setGuardandoPR] = useState(false);
   const [prParaCalcular, setPrParaCalcular] = useState('');
+  const [pctCalculo, setPctCalculo] = useState(70); // % seleccionado en la calculadora
   const [mostrarDatePicker, setMostrarDatePicker] = useState(false);
   const [recordsMaximos, setRecordsMaximos] = useState([]);
   const [historialCompleto, setHistorialCompleto] = useState([]);
@@ -287,7 +291,14 @@ export default function MiPerfil() {
         const data = await resMarcas.json();
         setRecordsMaximos(data.recordsMaximos);
         setHistorialCompleto(data.historialCompleto);
-        if (data.recordsMaximos.length > 0) setGraficaEjercicioId(data.recordsMaximos[0].idEjercicio);
+        // Al (re)cargar, dejamos los tres selectores apuntando al primer récord para que
+        // "Mi Progresión", "Registrar Nuevo PR" y la "Calculadora" no aparezcan vacíos al volver.
+        if (data.recordsMaximos.length > 0) {
+          const primero = data.recordsMaximos[0];
+          setGraficaEjercicioId(primero.idEjercicio);
+          setFormMarca(prev => ({ ...prev, idEjercicio: primero.idEjercicio.toString() }));
+          setPrParaCalcular(primero.idMarca.toString());
+        }
       }
     } catch (error) { console.error('Error al cargar PRs:', error); }
   }
@@ -348,6 +359,7 @@ export default function MiPerfil() {
   };
 
   const guardarFotoInmediata = async (base64Foto) => {
+    const fotoAnterior = form.foto; // para revertir si falla la red
     try {
       const payload = {
         ...form, foto: base64Foto,
@@ -358,10 +370,12 @@ export default function MiPerfil() {
         method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
       });
       if (res.ok) {
-        const current = JSON.parse(localStorage.getItem('usuario'));
-        if (current) { current.foto = base64Foto; localStorage.setItem('usuario', JSON.stringify(current)); }
-        window.location.reload();
+        // El avatar de la pantalla ya se pintó de forma optimista en onCropComplete (setForm).
+        // Actualizamos el AuthContext para que el navbar (y el selector de cuentas) se
+        // refresquen al instante, sin recargar la página (evita el flash feo).
+        actualizarUsuario({ foto: base64Foto });
       } else {
+        setForm(prev => ({ ...prev, foto: fotoAnterior })); // revertir
         triggerAlert({
           title: 'Error de Foto',
           message: 'Hubo un error al guardar la foto en la base de datos.',
@@ -369,6 +383,7 @@ export default function MiPerfil() {
         });
       }
     } catch (err) {
+      setForm(prev => ({ ...prev, foto: fotoAnterior })); // revertir
       triggerAlert({
         title: 'Error de Conexión',
         message: 'Error de conexión al guardar la foto.',
@@ -391,6 +406,37 @@ export default function MiPerfil() {
     setImageToCrop(URL.createObjectURL(file));
     e.target.value = '';
   };
+
+  // Guardado automático y optimista de los switches de privacidad.
+  // Pinta el cambio al instante, persiste SOLO ese campo en 2.º plano (PUT parcial)
+  // y revierte si la red falla. No usa "Guardar Player Card".
+  async function togglePrivacidad(campo, valor) {
+    if (form.estatus === 'TemporalmenteInactivo') {
+      triggerAlert({
+        title: 'Cuenta congelada',
+        message: 'Descongela tu cuenta para cambiar tu configuración de privacidad.',
+        type: 'error'
+      });
+      return;
+    }
+    const anterior = form[campo];
+    setForm(prev => ({ ...prev, [campo]: valor })); // UI optimista: se pinta al instante
+    try {
+      const res = await fetch(`${USUARIOS_ENDPOINT}/${userAuth.id || userAuth.idUsuario}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [campo]: valor })
+      });
+      if (!res.ok) throw new Error('save_failed');
+    } catch {
+      setForm(prev => ({ ...prev, [campo]: anterior })); // revertir si falla
+      triggerAlert({
+        title: 'No se pudo guardar',
+        message: 'No se pudo actualizar tu privacidad. Revisa tu conexión e inténtalo de nuevo.',
+        type: 'error'
+      });
+    }
+  }
 
   async function handleGuardarExpediente(e) {
     e.preventDefault();
@@ -436,7 +482,9 @@ export default function MiPerfil() {
           title: '¡Actualizado! 🎮',
           message: '¡Player Card actualizada con éxito!',
           type: 'success',
-          onConfirm: () => window.location.reload()
+          // Refrescamos los datos desde el servidor en sitio (sin window.location.reload),
+          // así el usuario se queda en la misma pestaña y posición de scroll.
+          onConfirm: () => fetchExpediente(userAuth.id || userAuth.idUsuario)
         });
       } else {
         triggerAlert({
@@ -486,6 +534,17 @@ export default function MiPerfil() {
     } finally {
       setGuardandoPR(false);
     }
+  }
+
+  // Al elegir un ejercicio en "Mi Progresión", lo replicamos automáticamente en
+  // "Registrar Nuevo PR" (mismo idEjercicio) y en "Calculadora de Porcentajes"
+  // (que se indexa por idMarca → buscamos el récord de ese ejercicio).
+  function seleccionarEjercicioProgresion(v) {
+    const idEjercicio = parseInt(v);
+    setGraficaEjercicioId(idEjercicio);
+    setFormMarca(prev => ({ ...prev, idEjercicio: v }));
+    const marca = recordsMaximos.find(r => r.idEjercicio === idEjercicio);
+    if (marca) setPrParaCalcular(marca.idMarca.toString());
   }
 
   async function handleCambiarContrasena(e) {
@@ -737,7 +796,7 @@ export default function MiPerfil() {
 
         {/* HEADER */}
         <header className="mp-header">
-          <BackButton />
+          <BackButton to="/user-panel" />
           <div>
             <h1 className="mp-header-title">Player <span>Card</span></h1>
             <p className="mp-header-sub">Gestiona tu perfil y estadísticas</p>
@@ -1004,7 +1063,7 @@ export default function MiPerfil() {
                   <div className="row g-3 mb-4">
                     <div className="col-12">
                       <div className="form-check form-switch d-flex align-items-center gap-2">
-                        <input className="form-check-input" type="checkbox" role="switch" style={{ width: '40px', height: '20px' }} checked={form.ocultarDelLeaderboard} onChange={e => setForm({ ...form, ocultarDelLeaderboard: e.target.checked })} />
+                        <input className="form-check-input" type="checkbox" role="switch" style={{ width: '40px', height: '20px' }} checked={form.ocultarDelLeaderboard} onChange={e => togglePrivacidad('ocultarDelLeaderboard', e.target.checked)} />
                         <div>
                           <label className="mp-switch-label ms-2 d-block mb-0">Ocultar del Leaderboard</label>
                           <small className="text-secondary ms-2 mp-switch-desc">Tus scores no aparecerán en el Top del día, pero tu coach sí podrá verlos.</small>
@@ -1013,7 +1072,7 @@ export default function MiPerfil() {
                     </div>
                     <div className="col-12">
                       <div className="form-check form-switch d-flex align-items-center gap-2">
-                        <input className="form-check-input" type="checkbox" role="switch" style={{ width: '40px', height: '20px' }} checked={form.ocultarGamerCard} onChange={e => setForm({ ...form, ocultarGamerCard: e.target.checked })} />
+                        <input className="form-check-input" type="checkbox" role="switch" style={{ width: '40px', height: '20px' }} checked={form.ocultarGamerCard} onChange={e => togglePrivacidad('ocultarGamerCard', e.target.checked)} />
                         <div>
                           <label className="mp-switch-label ms-2 d-block mb-0">Ocultar Gamer Card (Modo Fantasma)</label>
                           <small className="text-secondary ms-2 mp-switch-desc">Ocultar tu perfil del directorio de la comunidad. Nadie podrá ver tus PRs ni Nivel Gamer.</small>
@@ -1022,7 +1081,7 @@ export default function MiPerfil() {
                     </div>
                     <div className="col-12">
                       <div className="form-check form-switch d-flex align-items-center gap-2">
-                        <input className="form-check-input" type="checkbox" role="switch" style={{ width: '40px', height: '20px' }} checked={form.deshabilitarSolicitudes} onChange={e => setForm({ ...form, deshabilitarSolicitudes: e.target.checked })} />
+                        <input className="form-check-input" type="checkbox" role="switch" style={{ width: '40px', height: '20px' }} checked={form.deshabilitarSolicitudes} onChange={e => togglePrivacidad('deshabilitarSolicitudes', e.target.checked)} />
                         <div>
                           <label className="mp-switch-label ms-2 d-block mb-0">No recibir solicitudes de amistad</label>
                           <small className="text-secondary ms-2 mp-switch-desc">Otros atletas no podrán enviarte solicitudes para añadirte a su manada.</small>
@@ -1106,7 +1165,7 @@ export default function MiPerfil() {
                         <EjercicioOlimpicoPicker
                           ejercicios={recordsMaximos.map(p => ({ idEjercicio: p.idEjercicio, nombre: p.nombreEjercicio }))}
                           valor={graficaEjercicioId?.toString()}
-                          onCambiar={v => setGraficaEjercicioId(parseInt(v))}
+                          onCambiar={seleccionarEjercicioProgresion}
                         />
                       </div>
 
@@ -1121,7 +1180,7 @@ export default function MiPerfil() {
                               const esMax = hit.valor === Math.max(...historialFiltrado.map(h => h.valor));
                               return (
                                 <div key={hit.idMarca} className="mp-chart-col">
-                                  <span className={`mp-chart-label${esMax ? ' mp-chart-label--max' : ''}`}>{hit.valor}</span>
+                                  <span className={`mp-chart-label${esMax ? ' mp-chart-label--max' : ''}`}>{hit.valor}<small className="mp-chart-unit"> {hit.unidad}</small></span>
                                   <div className="mp-chart-bar-track">
                                     <div
                                       className={`mp-chart-bar${esMax ? ' mp-chart-bar--max' : ''}`}
@@ -1180,34 +1239,52 @@ export default function MiPerfil() {
                         <i className="fas fa-calculator" /> Calculadora de Porcentajes
                       </p>
                       <p className="mp-calc-sub">Porcentajes de entrenamiento basados en tu récord máximo histórico.</p>
-                      <div className="row g-3">
-                        <div className="col-md-7">
+                      <div className="row g-2">
+                        <div className="col-12 col-md-7">
+                          <label className="mp-label">Ejercicio</label>
                           <EjercicioOlimpicoPicker
                             ejercicios={recordsMaximos.map(m => ({ idEjercicio: m.idMarca, nombre: `${m.nombreEjercicio} (${m.valor} ${m.unidad})` }))}
                             valor={prParaCalcular?.toString()}
                             onCambiar={v => setPrParaCalcular(v)}
                           />
                         </div>
+                        <div className="col-12 col-md-5">
+                          <label className="mp-label">Porcentaje</label>
+                          <PorcentajePicker
+                            valor={pctCalculo}
+                            onCambiar={setPctCalculo}
+                            calcular={pct => {
+                              const m = recordsMaximos.find(r => r.idMarca.toString() === prParaCalcular);
+                              if (!m) return '';
+                              const r = m.unidad === 'lbs' ? Math.round(m.valor * pct / 100 / 5) * 5 : Math.round(m.valor * pct / 100);
+                              return `${r} ${m.unidad}`;
+                            }}
+                          />
+                        </div>
                       </div>
 
-                      {prParaCalcular && (() => {
+                      {prParaCalcular ? (() => {
                         const marcaObj = recordsMaximos.find(m => m.idMarca.toString() === prParaCalcular);
                         if (!marcaObj) return null;
                         const redondear = (v, u) => u === 'lbs' ? Math.round(v / 5) * 5 : Math.round(v);
+                        const resultado = redondear(marcaObj.valor * (pctCalculo / 100), marcaObj.unidad);
                         return (
-                          <div className="mp-calc-results">
-                            {[40, 50, 60, 70, 75, 80, 85, 90, 95].map(pct => (
-                              <div key={pct} className="mp-calc-item">
-                                <span className="mp-calc-pct">{pct}%</span>
-                                <span className="mp-calc-val">
-                                  {redondear(marcaObj.valor * (pct / 100), marcaObj.unidad)}
-                                  <span className="mp-calc-unit"> {marcaObj.unidad}</span>
-                                </span>
-                              </div>
-                            ))}
+                          <div className="mp-calc-hero">
+                            <span className="mp-calc-hero-pct">{pctCalculo}%</span>
+                            <div className="mp-calc-hero-val">
+                              {resultado}<span className="mp-calc-hero-unit">{marcaObj.unidad}</span>
+                            </div>
+                            <p className="mp-calc-hero-sub">
+                              {pctCalculo}% de tu récord de {marcaObj.valor} {marcaObj.unidad} en {marcaObj.nombreEjercicio}
+                            </p>
                           </div>
                         );
-                      })()}
+                      })() : (
+                        <div className="mp-calc-empty">
+                          <i className="fas fa-hand-pointer" />
+                          <p>Selecciona un ejercicio para ver tus porcentajes.</p>
+                        </div>
+                      )}
                     </div>
                   )}
 

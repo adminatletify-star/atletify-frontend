@@ -233,6 +233,7 @@ export default function HomeMegaMenu({ user, mobileMenuOpen, setMobileMenuOpen }
                   <div className="hmm-col">
                     <span className="hmm-col-title">GENERAL</span>
                     <Link to="/" className="hmm-link-simple" onClick={handleLinkClick}>Panel Base</Link>
+                    <Link to="/faq" className="hmm-link-simple" onClick={handleLinkClick}>Preguntas Frecuentes</Link>
                   </div>
                 </div>
               </div>
@@ -351,6 +352,11 @@ export default function HomeMegaMenu({ user, mobileMenuOpen, setMobileMenuOpen }
             <Link to="/simulador-barra-publico" className="hmm-mobile-item" onClick={handleLinkClick}>
               <span className="hmm-mobile-item-icon"><i className="fas fa-weight-hanging"></i></span>
               <span className="hmm-mobile-item-label">Simulador de Barra</span>
+              <i className="fas fa-chevron-right hmm-mobile-item-arrow"></i>
+            </Link>
+            <Link to="/faq" className="hmm-mobile-item" onClick={handleLinkClick}>
+              <span className="hmm-mobile-item-icon"><i className="fas fa-circle-question"></i></span>
+              <span className="hmm-mobile-item-label">Preguntas Frecuentes</span>
               <i className="fas fa-chevron-right hmm-mobile-item-arrow"></i>
             </Link>
           </div>

@@ -1,0 +1,40 @@
+/* =============================================
+   PORCENTAJE PICKER — Arctic Wolf Design System
+   Namespace: pctp-*
+   ============================================= */
+.pctp-trigger { display:inline-flex; align-items:center; justify-content:space-between; gap:.5rem; padding:.52rem .9rem; border-radius:10px; border:1.5px solid rgba(230,57,70,.3); background:rgba(230,57,70,.06); color:var(--primary,#e63946); font-family:var(--font-body,'Inter',sans-serif); font-size:.84rem; font-weight:600; cursor:pointer; transition:filter .18s,transform .18s; white-space:nowrap; width:100%; text-align:left; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.pctp-trigger--vacio { color:var(--text-muted,#888); border-color:rgba(168,178,209,.3); background:rgba(168,178,209,.06); border-style:dashed; }
+.pctp-trigger:active { transform:scale(.98); }
+@media (hover:hover) { .pctp-trigger:hover { filter:brightness(1.15); transform:translateY(-1px); } }
+.pctp-trigger-left { display:flex; align-items:center; gap:.5rem; min-width:0; }
+.pctp-trigger-icon { font-size:.78rem; }
+.pctp-trigger-nombre { font-family:var(--font-heading-alt,'Barlow Condensed',sans-serif); font-weight:700; font-size:.88rem; text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pctp-chevron { font-size:.6rem; opacity:.6; flex-shrink:0; }
+
+.pctp-overlay { position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.72); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:1.25rem; animation:pctp-fade .18s ease; }
+@keyframes pctp-fade { from{opacity:0} to{opacity:1} }
+
+.pctp-panel { background:var(--bg-card,#1c1c26); border:1px solid var(--border,rgba(255,255,255,.1)); border-top:3px solid var(--primary,#e63946); border-radius:20px; width:100%; max-width:380px; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; animation:pctp-up .22s cubic-bezier(.34,1.56,.64,1); box-shadow:0 28px 64px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.04); }
+@keyframes pctp-up { from{opacity:0;transform:translateY(28px) scale(.94)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+.pctp-header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid var(--border,rgba(255,255,255,.08)); flex-shrink:0; }
+.pctp-title { font-family:var(--font-heading,'Oswald',sans-serif); font-size:.82rem; font-weight:700; color:var(--text-muted,#888); text-transform:uppercase; letter-spacing:1.2px; display:flex; align-items:center; gap:.45rem; }
+.pctp-title i { color:var(--primary,#e63946); }
+.pctp-close { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); color:var(--text-muted,#888); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:.75rem; transition:background .15s,color .15s; flex-shrink:0; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+@media (hover:hover) { .pctp-close:hover { background:rgba(230,57,70,.15); color:var(--primary,#e63946); } }
+
+.pctp-options { padding:.75rem 1rem 1rem; display:flex; flex-direction:column; gap:.4rem; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(230,57,70,.3) transparent; }
+.pctp-option { display:flex; align-items:center; gap:.75rem; width:100%; padding:.7rem 1rem; border-radius:12px; border:1.5px solid transparent; background:rgba(255,255,255,.025); color:var(--text-primary,#f0f0f5); cursor:pointer; transition:background .15s,transform .15s,border-color .15s; text-align:left; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.pctp-option:active { transform:scale(.98); }
+@media (hover:hover) { .pctp-option:hover { background:rgba(230,57,70,.06); border-color:rgba(230,57,70,.2); transform:translateX(4px); } }
+.pctp-option--activo { background:rgba(230,57,70,.1); border-color:rgba(230,57,70,.5); }
+.pctp-opt-pct { font-family:var(--font-heading-alt,'Barlow Condensed',sans-serif); font-size:1.05rem; font-weight:700; letter-spacing:.3px; min-width:48px; }
+.pctp-option--activo .pctp-opt-pct { color:var(--primary,#e63946); }
+.pctp-opt-val { font-family:var(--font-stats,'Rajdhani',sans-serif); font-size:.9rem; font-weight:600; color:var(--text-muted,#888); flex:1; }
+.pctp-option--activo .pctp-opt-val { color:var(--text-primary,#f0f0f5); }
+.pctp-check { font-size:.75rem; color:var(--primary,#e63946); flex-shrink:0; }
+
+@media (max-width:576px) {
+  .pctp-panel { max-width:340px; }
+  .pctp-opt-pct { font-size:.98rem; }
+}

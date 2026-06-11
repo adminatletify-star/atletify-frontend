@@ -264,6 +264,45 @@
   box-shadow: 0 4px 16px var(--primary-glow);
 }
 
+/* ── ACCIONES DE LA TARJETA (Ver reseñas + Dejar reseña) ──── */
+.ur-card-actions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.ur-card-actions .ur-evaluar-btn { margin-top: 0; }
+
+/* Botón secundario "Ver reseñas" (outline) */
+.ur-ver-btn {
+  width: 100%;
+  background: rgba(245, 166, 35, 0.08);
+  border: 1px solid rgba(245, 166, 35, 0.28);
+  border-radius: 10px;
+  color: var(--accent);
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ur-ver-btn:active { transform: scale(0.97); }
+@media (hover: hover) {
+  .ur-ver-btn:hover {
+    background: rgba(245, 166, 35, 0.16);
+    border-color: rgba(245, 166, 35, 0.5);
+  }
+}
+
 /* ── MODAL OVERLAY ────────────────────────────────────────── */
 .ur-modal-overlay {
   position: fixed;
@@ -523,6 +562,103 @@
   color: var(--text-muted);
   font-size: 0.9rem;
 }
+
+/* ── MODAL DE RESEÑAS (lista) ─────────────────────────────── */
+.ur-modal--resenas { max-width: 480px; }
+
+.ur-resenas-body {
+  max-height: 62vh;
+  overflow-y: auto;
+  gap: 0.6rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.ur-resena-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.ur-resena-item--pendiente {
+  opacity: 0.7;
+  border-style: dashed;
+  border-color: rgba(245, 166, 35, 0.4);
+}
+
+.ur-resena-top {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.ur-resena-avatar {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary), #ff6b6b);
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #fff;
+}
+.ur-resena-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.ur-resena-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.ur-resena-autor {
+  font-family: var(--font-heading-alt);
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ur-resena-fecha {
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}
+
+.ur-resena-stars {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.ur-resena-stars .fa-star { font-size: 0.72rem; color: var(--border); }
+.ur-resena-stars .fa-star.filled { color: var(--accent); }
+
+.ur-resena-comentario {
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  color: var(--text-secondary, #c2c2ce);
+  line-height: 1.45;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.ur-resena-comentario--vacio { color: var(--text-muted); font-style: italic; }
+
+.ur-resenas-empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--text-muted);
+}
+.ur-resenas-empty i { font-size: 2rem; opacity: 0.35; display: block; margin-bottom: 0.6rem; }
+.ur-resenas-empty p { font-size: 0.88rem; margin: 0; }
 
 /* ── ANIMACIONES ──────────────────────────────────────────── */
 @keyframes fadeIn {

@@ -266,23 +266,30 @@ export default function WolfLanyard({
               <div className="wl-section">
                 <div className="wl-section-title">
                   <i className="fas fa-trophy"></i> RÉCORDS PERSONALES
+                  {marcas.length > 0 && <span className="wl-section-count">{marcas.length}</span>}
                 </div>
                 {cargandoMarcas ? (
                   <div className="text-center py-3">
                     <div className="spinner-border spinner-border-sm text-warning"></div>
                   </div>
                 ) : marcas.length === 0 ? (
-                  <p className="wl-empty-text">Aún no ha registrado ningún récord.</p>
+                  <div className="wl-pr-empty">
+                    <i className="fas fa-medal"></i>
+                    <p>Aún no ha registrado ningún récord.</p>
+                  </div>
                 ) : (
                   <div className="wl-prs-grid">
                     {marcas.map(marca => (
                       <div key={marca.idMarca} className="wl-pr-card">
-                        <div className="wl-pr-exercise" title={marca.nombreEjercicio}>
-                          {marca.nombreEjercicio}
+                        <div className="wl-pr-head">
+                          <span className="wl-pr-icon"><i className="fas fa-dumbbell"></i></span>
+                          <span className="wl-pr-exercise" title={marca.nombreEjercicio}>
+                            {marca.nombreEjercicio}
+                          </span>
                         </div>
                         <div className="wl-pr-value">
-                          {marca.valor}
-                          <span className="wl-pr-unit"> {marca.unidad}</span>
+                          <span className="wl-pr-number">{marca.valor}</span>
+                          <span className="wl-pr-unit">{marca.unidad}</span>
                         </div>
                         {reaccionesResumen?.[marca.idMarca]?.total > 0 && (
                           <div className="wl-pr-reacciones-count">

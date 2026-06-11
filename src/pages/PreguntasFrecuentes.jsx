@@ -64,7 +64,7 @@ function Paginacion({ pagina, totalPaginas, onCambio }) {
   );
 }
 
-export default function PreguntasFrecuentes() {
+export default function PreguntasFrecuentes({ publico = false }) {
   const navigate = useNavigate();
   const [secciones, setSecciones] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,10 +74,13 @@ export default function PreguntasFrecuentes() {
   const [pagsPreg, setPagsPreg] = useState({}); // idSeccion → página actual de sus preguntas
 
   useEffect(() => {
-    const u = JSON.parse(localStorage.getItem('usuario') || 'null');
-    if (!u) { navigate('/login'); return; }
+    // La página pública (sin login) no exige sesión; el FAQ por rol sí.
+    if (!publico) {
+      const u = JSON.parse(localStorage.getItem('usuario') || 'null');
+      if (!u) { navigate('/login'); return; }
+    }
     cargar();
-  }, [navigate]);
+  }, [navigate, publico]);
 
   // Reset paginación de secciones al cambiar búsqueda
   useEffect(() => { setPagSec(1); }, [busqueda]);
@@ -85,7 +88,7 @@ export default function PreguntasFrecuentes() {
   async function cargar() {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/mias`);
+      const res = await fetch(`${API}/${publico ? 'publicas' : 'mias'}`);
       if (res.ok) {
         const data = await res.json();
         setSecciones(Array.isArray(data) ? data : []);
@@ -140,11 +143,11 @@ export default function PreguntasFrecuentes() {
   }
 
   if (loading) {
-    return <div className="faq-root faq-loading-wrap"><AtletifyLoader /></div>;
+    return <div className={`faq-root faq-loading-wrap ${publico ? 'faq-root--publico' : ''}`}><AtletifyLoader /></div>;
   }
 
   return (
-    <div className="faq-root">
+    <div className={`faq-root ${publico ? 'faq-root--publico' : ''}`}>
       <header className="faq-header">
         <div className="faq-header-inner">
           <BackButton />
@@ -184,7 +187,7 @@ export default function PreguntasFrecuentes() {
           <div className="faq-empty">
             <i className="fas fa-circle-question faq-empty-icon"></i>
             <h2 className="faq-empty-title">Aún no hay preguntas</h2>
-            <p className="faq-empty-text">El administrador de la plataforma todavía no ha publicado preguntas para tu rol. Vuelve más tarde.</p>
+            <p className="faq-empty-text">{publico ? 'El administrador de la plataforma todavía no ha publicado preguntas públicas. Vuelve más tarde.' : 'El administrador de la plataforma todavía no ha publicado preguntas para tu rol. Vuelve más tarde.'}</p>
           </div>
         ) : seccionesFiltradas.length === 0 ? (
           <div className="faq-empty">

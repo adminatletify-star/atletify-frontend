@@ -367,7 +367,7 @@ function MaintenanceGuard({ children }) {
     // Rutas públicas permitidas durante mantenimiento (para que el Dev pueda llegar al login)
     const rutasPermitidas = ['/', '/login', '/registro', '/terminos', '/politica-cookies',
       '/forgot-password', '/reset-password', '/sobre-nosotros', '/wolfpack',
-      '/ejercicios', '/directorio-boxes', '/simulador-barra-publico'];
+      '/ejercicios', '/directorio-boxes', '/simulador-barra-publico', '/faq'];
     const rutaActual = location.pathname;
     const esRutaPermitida = rutasPermitidas.some(r => rutaActual === r || rutaActual.startsWith('/registro/'));
 
@@ -408,6 +408,7 @@ function App() {
               <Route path="/historial-competencias/:idBox" element={<HistorialBoxDetalle />} />
               <Route path="/simulador-barra-publico" element={<SimuladorBarraPublico />} />
               <Route path="/ejercicios" element={<Ejercicios />} />
+              <Route path="/faq" element={<PreguntasFrecuentes publico />} />
               <Route path="/directorio-boxes" element={<DirectorioBoxes />} />
               <Route path="/public-drop-in" element={<PublicDropIn />} />
               <Route path="/public-drop-in/:idBox" element={<PublicDropIn />} />

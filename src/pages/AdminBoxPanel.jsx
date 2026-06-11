@@ -15,6 +15,7 @@ import {
   Legend
 } from 'recharts';
 import '../assets/css/AdminBoxPanel.css';
+import AtletifyLoader from '../components/AtletifyLoader';
 
 function getPayCycles(diaCorte) {
   const dCorte = parseInt(diaCorte) || 7;
@@ -983,7 +984,7 @@ export default function AdminBoxPanel() {
   if (loading) {
     return (
       <div className="abp-loading">
-        <div className="spinner-border text-danger" role="status" style={{ width: '3rem', height: '3rem' }}></div>
+        <AtletifyLoader />
       </div>
     );
   }

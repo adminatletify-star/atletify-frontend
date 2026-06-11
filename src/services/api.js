@@ -272,6 +272,19 @@ export const api = {
     return handleResponse(response);
   },
 
+  // Sistema de PRESENCIA: marca al usuario como activo "ahora". Se llama periódicamente
+  // (~cada 60s) mientras la app está abierta para que sus compas lo vean "En línea".
+  // Es best-effort: si falla, no rompe nada (el interceptor global ya inyecta el token).
+  heartbeat: async (idUsuario) => {
+    if (!idUsuario) return;
+    try {
+      await fetch(`${API_BASE_URL}/usuarios/${idUsuario}/heartbeat`, {
+        method: 'POST',
+        keepalive: true
+      });
+    } catch (e) { /* presencia silenciosa */ }
+  },
+
   // Boxes
   obtenerBoxes: async () => {
     const response = await fetch(`${API_BASE_URL}/box`);

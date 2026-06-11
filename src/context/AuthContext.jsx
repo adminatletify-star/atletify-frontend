@@ -1,6 +1,6 @@
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { COMPETENCIAS_ENDPOINT } from '../services/api';
+import { api, COMPETENCIAS_ENDPOINT } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -260,6 +260,33 @@ export function AuthProvider({ children }) {
     refetchBoxes();
   }, [refetchBoxes]);
 
+  // === PRESENCIA: heartbeat global ===
+  // Mientras haya sesión válida, le avisamos al backend cada 60s que el usuario
+  // sigue activo. Sus compas lo verán como "En línea / Ausente / Desconectado"
+  // según cuánto haya pasado desde el último latido. Se ejecuta en cualquier
+  // pantalla (no solo el panel del atleta), así que la presencia es real en toda la app.
+  useEffect(() => {
+    const id = getIdFromUser(usuario);
+    const tkn = token || localStorage.getItem('token');
+    if (!id || !isTokenValid(tkn)) return;
+
+    let cancelado = false;
+    const latir = () => {
+      if (!cancelado && document.visibilityState !== 'hidden') api.heartbeat(id);
+    };
+
+    latir(); // latido inmediato al entrar / cambiar de cuenta
+    const intervalo = setInterval(latir, 60000);
+    const onVisible = () => { if (document.visibilityState === 'visible') latir(); };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      cancelado = true;
+      clearInterval(intervalo);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [usuario, token]);
+
   const cambiarBox = (idBox) => {
     setBoxActivo(idBox);
     localStorage.setItem('boxActivo', JSON.stringify(idBox));
@@ -290,6 +317,31 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Actualiza campos del usuario activo en memoria (estado React) + localStorage,
+  // y sincroniza esos mismos campos dentro de cuentasGuardadas. Úsalo cuando el
+  // usuario edita su perfil (foto, nombre, etc.) para que el navbar y el selector
+  // de cuentas se refresquen al instante SIN recargar la página.
+  const actualizarUsuario = (cambios) => {
+    if (!cambios) return;
+    const actualizado = { ...(usuario || {}), ...cambios };
+    setUsuario(actualizado);
+    localStorage.setItem('usuario', JSON.stringify(actualizado));
+
+    const idActual = getIdFromUser(actualizado);
+    setCuentasGuardadas(prevCuentas => {
+      let changed = false;
+      const nuevas = prevCuentas.map(c => {
+        if (String(getIdFromUser(c.usuario)) === String(idActual)) {
+          changed = true;
+          return { ...c, usuario: { ...c.usuario, ...cambios } };
+        }
+        return c;
+      });
+      if (changed) localStorage.setItem('cuentasGuardadas', JSON.stringify(nuevas));
+      return changed ? nuevas : prevCuentas;
+    });
+  };
+
   const isAuthenticated = !!usuario;
   const isDeveloper = usuario?.rol === 'Developer';
   const isCoach = usuario?.rol === 'Coach';
@@ -309,6 +361,7 @@ export function AuthProvider({ children }) {
       isTokenValid,
       login,
       logout,
+      actualizarUsuario,
       removerCuenta,
       isAuthenticated,
       isDeveloper,

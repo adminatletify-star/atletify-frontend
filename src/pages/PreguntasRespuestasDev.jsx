@@ -11,16 +11,20 @@ const API = `${import.meta.env.VITE_API_URL}/api/faq`;
 const ROLES_VISIBLES = [
   { key: 'AdminBox', label: 'AdminBox', flag: 'visibleAdminBox', color: '#ef4444' },
   { key: 'Coach',    label: 'Coach',    flag: 'visibleCoach',    color: '#22c55e' },
-  { key: 'Atleta',   label: 'Atleta',   flag: 'visibleAtleta',   color: '#f59e0b' }
+  { key: 'Atleta',   label: 'Atleta',   flag: 'visibleAtleta',   color: '#f59e0b' },
+  { key: 'Publico',  label: 'Público',  flag: 'visiblePublico',  color: '#3b82f6' }
 ];
+
+// true si el ítem (sección o pregunta) no es visible para ninguna audiencia.
+const sinVisibilidad = (item) => ROLES_VISIBLES.every(r => !item[r.flag]);
 
 const SECCION_INIT = {
   idSeccion: 0, nombre: '', descripcion: '', icono: '',
-  orden: 0, activa: true, visibleAdminBox: false, visibleCoach: false, visibleAtleta: false
+  orden: 0, activa: true, visibleAdminBox: false, visibleCoach: false, visibleAtleta: false, visiblePublico: false
 };
 const PREGUNTA_INIT = {
   idPregunta: 0, idSeccion: 0, pregunta: '', respuesta: '',
-  orden: 0, activa: true, visibleAdminBox: false, visibleCoach: false, visibleAtleta: false
+  orden: 0, activa: true, visibleAdminBox: false, visibleCoach: false, visibleAtleta: false, visiblePublico: false
 };
 
 const normalizar = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
@@ -287,10 +291,14 @@ export default function PreguntasRespuestasDev() {
   }, [secciones]);
 
   const flagRol = useMemo(() => {
-    if (rolPrevia === 'AdminBox') return 'visibleAdminBox';
-    if (rolPrevia === 'Coach') return 'visibleCoach';
-    return 'visibleAtleta';
+    const found = ROLES_VISIBLES.find(r => r.key === rolPrevia);
+    return found ? found.flag : 'visibleAtleta';
   }, [rolPrevia]);
+
+  const labelPrevia = useMemo(
+    () => ROLES_VISIBLES.find(r => r.key === rolPrevia)?.label || rolPrevia,
+    [rolPrevia]
+  );
 
   const previaSecciones = useMemo(() => {
     return secciones
@@ -405,7 +413,7 @@ export default function PreguntasRespuestasDev() {
                             {r.label}
                           </span>
                         ))}
-                        {!s.visibleAdminBox && !s.visibleCoach && !s.visibleAtleta && (
+                        {sinVisibilidad(s) && (
                           <span className="prd-chip-empty">— Nadie —</span>
                         )}
                       </div>
@@ -461,7 +469,7 @@ export default function PreguntasRespuestasDev() {
                                   {r.label}
                                 </span>
                               ))}
-                              {!s.visibleAdminBox && !s.visibleCoach && !s.visibleAtleta && (
+                              {sinVisibilidad(s) && (
                                 <span className="prd-chip-empty">— Nadie —</span>
                               )}
                             </div>
@@ -568,7 +576,7 @@ export default function PreguntasRespuestasDev() {
                               {r.label}
                             </span>
                           ))}
-                          {!p.visibleAdminBox && !p.visibleCoach && !p.visibleAtleta && (
+                          {sinVisibilidad(p) && (
                             <span className="prd-chip-empty">— Nadie —</span>
                           )}
                         </div>
@@ -619,7 +627,7 @@ export default function PreguntasRespuestasDev() {
                                     {r.label}
                                   </span>
                                 ))}
-                                {!p.visibleAdminBox && !p.visibleCoach && !p.visibleAtleta && (
+                                {sinVisibilidad(p) && (
                                   <span className="prd-chip-empty">— Nadie —</span>
                                 )}
                               </div>
@@ -658,13 +666,13 @@ export default function PreguntasRespuestasDev() {
             <div className="prd-previa-header">
               <p className="prd-previa-label">Simular como</p>
               <div className="prd-previa-roles">
-                {['AdminBox', 'Coach', 'Atleta'].map(r => (
+                {ROLES_VISIBLES.map(r => (
                   <button
-                    key={r}
-                    className={`prd-previa-rol ${rolPrevia === r ? 'prd-previa-rol--active' : ''}`}
-                    onClick={() => setRolPrevia(r)}
+                    key={r.key}
+                    className={`prd-previa-rol ${rolPrevia === r.key ? 'prd-previa-rol--active' : ''}`}
+                    onClick={() => setRolPrevia(r.key)}
                   >
-                    {r}
+                    {r.label}
                   </button>
                 ))}
               </div>
@@ -673,7 +681,7 @@ export default function PreguntasRespuestasDev() {
             {previaSecciones.length === 0 ? (
               <div className="prd-empty">
                 <i className="fas fa-eye-slash prd-empty-icon"></i>
-                <p>El rol <strong>{rolPrevia}</strong> no tiene ninguna pregunta visible asignada.</p>
+                <p>{rolPrevia === 'Publico' ? <>La <strong>página pública</strong> no tiene</> : <>El rol <strong>{labelPrevia}</strong> no tiene</>} ninguna pregunta visible asignada.</p>
               </div>
             ) : (
               <div className="prd-previa-stack">
@@ -879,7 +887,7 @@ function ModalSeleccionSeccion({ secciones, seleccionadoId, onSeleccionar, onCer
                           {r.label}
                         </span>
                       ))}
-                      {!s.visibleAdminBox && !s.visibleCoach && !s.visibleAtleta && (
+                      {sinVisibilidad(s) && (
                         <span className="prd-chip-empty">Sin roles</span>
                       )}
                     </div>
@@ -1009,16 +1017,12 @@ function ModalPregunta({ modal, setModal, onSubmit, secciones, preguntas }) {
 
   const handleCambioSeccion = (nuevoId) => {
     const nuevaSec = secciones.find(s => s.idSeccion === nuevoId);
-    setModal(prev => ({
-      ...prev,
-      data: {
-        ...prev.data,
-        idSeccion: nuevoId,
-        visibleAdminBox: prev.data.visibleAdminBox && (nuevaSec?.visibleAdminBox ?? false),
-        visibleCoach: prev.data.visibleCoach && (nuevaSec?.visibleCoach ?? false),
-        visibleAtleta: prev.data.visibleAtleta && (nuevaSec?.visibleAtleta ?? false)
-      }
-    }));
+    setModal(prev => {
+      const data = { ...prev.data, idSeccion: nuevoId };
+      // Una pregunta no puede ser visible para una audiencia si la sección no la permite.
+      ROLES_VISIBLES.forEach(r => { data[r.flag] = !!data[r.flag] && !!(nuevaSec?.[r.flag]); });
+      return { ...prev, data };
+    });
   };
 
   const preguntasConMismoOrden = preguntas

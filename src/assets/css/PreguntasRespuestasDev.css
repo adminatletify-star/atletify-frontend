@@ -1401,7 +1401,8 @@
 /* ── Roles grid (checkboxes) ── */
 .prd-roles-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* 2×2 para los 4 roles (AdminBox/Coach/Atleta/Público) sin huérfanos */
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
   margin-top: 0.2rem;
 }

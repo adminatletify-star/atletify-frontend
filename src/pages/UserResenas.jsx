@@ -7,6 +7,32 @@ import AtletifyLoader from '../components/AtletifyLoader';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+// El backend guarda la fecha en UTC; si no trae zona horaria, la tratamos como UTC.
+function fechaResena(iso) {
+  if (!iso) return '';
+  let s = String(iso);
+  if (!/[zZ]$|[+-]\d{2}:?\d{2}$/.test(s)) s += 'Z';
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return '';
+  const seg = Math.max(0, (Date.now() - d.getTime()) / 1000);
+  if (seg < 60) return 'hace un momento';
+  if (seg < 3600) return `hace ${Math.floor(seg / 60)} min`;
+  if (seg < 86400) return `hace ${Math.floor(seg / 3600)} h`;
+  if (seg < 604800) return `hace ${Math.floor(seg / 86400)} d`;
+  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// Estrellas fijas (1–5) rellenas hasta `valor` — para mostrar la valoración de cada reseña.
+function StarRow({ valor }) {
+  return (
+    <div className="ur-resena-stars">
+      {[1, 2, 3, 4, 5].map(n => (
+        <i key={n} className={`fas fa-star${n <= valor ? ' filled' : ''}`} />
+      ))}
+    </div>
+  );
+}
+
 function StarDisplay({ score, total }) {
   const filled = Math.round(score);
   return (
@@ -35,6 +61,12 @@ export default function UserResenas() {
   const [modalVisible, setModalVisible] = useState(false);
   const [estrellas, setEstrellas] = useState(5);
   const [comentario, setComentario] = useState('');
+
+  // Modal de "ver reseñas": guardamos el ID y derivamos el coach desde `coaches`,
+  // así las actualizaciones optimistas se reflejan en vivo en la lista abierta.
+  const [resenasCoachId, setResenasCoachId] = useState(null);
+  const idDe = (c) => c && (c.idUsuario || c.id || c.IdUsuario);
+  const coachResenas = resenasCoachId != null ? coaches.find(c => idDe(c) === resenasCoachId) : null;
 
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));
@@ -89,28 +121,62 @@ export default function UserResenas() {
     setTimeout(() => setCoachSeleccionado(null), 300);
   };
 
+  const abrirResenas = (coach) => setResenasCoachId(idDe(coach));
+  const cerrarResenas = () => setResenasCoachId(null);
+
+  // Recalcula el promedio/total de un coach y le antepone la nueva reseña (UI optimista).
+  const aplicarResenaLocal = (idCoach, resena) => {
+    setCoaches(prev => prev.map(c => {
+      if (idDe(c) !== idCoach) return c;
+      const ev = c.evaluaciones || { promedio: 0, total: 0, resenas: [] };
+      const total = ev.total || 0;
+      const nuevoTotal = total + 1;
+      const nuevoPromedio = Math.round((((ev.promedio || 0) * total + resena.estrellas) / nuevoTotal) * 10) / 10;
+      return { ...c, evaluaciones: { ...ev, promedio: nuevoPromedio, total: nuevoTotal, resenas: [resena, ...(ev.resenas || [])] } };
+    }));
+  };
+
+  // Envía la reseña con UI optimista: se pinta al instante, se reconcilia SOLO ese coach
+  // en segundo plano y se revierte si falla. NO recarga toda la interfaz.
   const enviarResena = async () => {
+    const coach = coachSeleccionado;
+    if (!coach) return;
+    const idCoach = idDe(coach);
+    const idAtleta = usuario.idUsuario || usuario.id || usuario.IdUsuario;
+    const estrellasEnviadas = estrellas;
+    const comentarioEnviado = comentario.trim();
+
+    const resenaOptimista = {
+      idEvaluacion: `tmp-${Date.now()}`,
+      estrellas: estrellasEnviadas,
+      comentario: comentarioEnviado,
+      fechaEvaluacion: new Date().toISOString(),
+      nombreAtleta: usuario.nombre || 'Tú',
+      fotoAtleta: usuario.foto || null,
+      _pendiente: true
+    };
+
+    const snapshot = coaches;          // para revertir si falla
+    aplicarResenaLocal(idCoach, resenaOptimista);
+    cerrarModal();                     // cierre instantáneo, sin loader global
+
     try {
-      const payload = {
-        IdCoach: coachSeleccionado.idUsuario || coachSeleccionado.id || coachSeleccionado.IdUsuario,
-        IdAtleta: usuario.idUsuario || usuario.id || usuario.IdUsuario,
-        Estrellas: estrellas,
-        Comentario: comentario
-      };
       const res = await fetch(`${API_URL}/evaluaciones`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ IdCoach: idCoach, IdAtleta: idAtleta, Estrellas: estrellasEnviadas, Comentario: comentarioEnviado })
       });
-      if (res.ok) {
-        alert("¡Gracias por tu retroalimentación! ⭐");
-        cerrarModal();
-        cargarCoaches(box ? box.idBox : 1);
-      } else {
-        alert("Ocurrió un error al enviar tu reseña.");
+      if (!res.ok) throw new Error('post-failed');
+
+      // Reconciliación: re-fetch SOLO este coach para traer ids/datos reales.
+      const r = await fetch(`${API_URL}/evaluaciones/coach/${idCoach}`);
+      if (r.ok) {
+        const data = await r.json();
+        setCoaches(prev => prev.map(c => (idDe(c) === idCoach ? { ...c, evaluaciones: data } : c)));
       }
     } catch {
-      alert("Error de conexión al enviar reseña.");
+      setCoaches(snapshot);            // revertir el cambio optimista
+      alert('No se pudo enviar tu reseña. Inténtalo de nuevo.');
     }
   };
 
@@ -186,9 +252,16 @@ export default function UserResenas() {
                       )}
                     </div>
 
-                    <button className="ur-evaluar-btn" onClick={() => abrirModal(coach)}>
-                      <i className="fas fa-comment-dots" /> Dejar Reseña
-                    </button>
+                    <div className="ur-card-actions">
+                      {(coach.evaluaciones?.total || 0) > 0 && (
+                        <button className="ur-ver-btn" onClick={() => abrirResenas(coach)}>
+                          <i className="fas fa-star" /> Ver {coach.evaluaciones.total} reseña{coach.evaluaciones.total !== 1 ? 's' : ''}
+                        </button>
+                      )}
+                      <button className="ur-evaluar-btn" onClick={() => abrirModal(coach)}>
+                        <i className="fas fa-comment-dots" /> Dejar Reseña
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -258,6 +331,62 @@ export default function UserResenas() {
                   <i className="fas fa-paper-plane" /> Enviar Reseña
                 </BotonSeguro>
               </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* MODAL — VER RESEÑAS */}
+      {coachResenas && (
+        <div className="ur-modal-overlay" onClick={cerrarResenas}>
+          <div className="ur-modal ur-modal--resenas" onClick={e => e.stopPropagation()}>
+
+            <div className="ur-modal-header">
+              <div className="ur-modal-avatar">
+                {(coachResenas.nombre || '?').charAt(0).toUpperCase()}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p className="ur-modal-title">{coachResenas.nombre}</p>
+                <p className="ur-modal-sub">
+                  {(coachResenas.evaluaciones?.total || 0)} reseña{(coachResenas.evaluaciones?.total || 0) !== 1 ? 's' : ''}
+                  {(coachResenas.evaluaciones?.promedio || 0) > 0 && <> · {Number(coachResenas.evaluaciones.promedio).toFixed(1)} ★</>}
+                </p>
+              </div>
+              <button className="ur-modal-close" onClick={cerrarResenas}>
+                <i className="fas fa-times" />
+              </button>
+            </div>
+
+            <div className="ur-modal-body ur-resenas-body">
+              {(coachResenas.evaluaciones?.resenas || []).length === 0 ? (
+                <div className="ur-resenas-empty">
+                  <i className="fas fa-comment-slash" />
+                  <p>Este coach aún no tiene reseñas.</p>
+                </div>
+              ) : (
+                (coachResenas.evaluaciones.resenas).map(r => (
+                  <div key={r.idEvaluacion} className={`ur-resena-item${r._pendiente ? ' ur-resena-item--pendiente' : ''}`}>
+                    <div className="ur-resena-top">
+                      <div className="ur-resena-avatar">
+                        {r.fotoAtleta
+                          ? <img src={r.fotoAtleta} alt={r.nombreAtleta} />
+                          : <span>{(r.nombreAtleta || '?').charAt(0).toUpperCase()}</span>}
+                      </div>
+                      <div className="ur-resena-meta">
+                        <span className="ur-resena-autor">{r.nombreAtleta || 'Atleta'}</span>
+                        <span className="ur-resena-fecha">
+                          {r._pendiente ? 'Enviando…' : fechaResena(r.fechaEvaluacion)}
+                        </span>
+                      </div>
+                      <StarRow valor={r.estrellas} />
+                    </div>
+                    {r.comentario
+                      ? <p className="ur-resena-comentario">{r.comentario}</p>
+                      : <p className="ur-resena-comentario ur-resena-comentario--vacio">Sin comentario.</p>}
+                  </div>
+                ))
+              )}
             </div>
 
           </div>

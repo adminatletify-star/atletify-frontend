@@ -112,7 +112,7 @@ export default function SobreNosotros() {
             <div className="col-lg-5">
               <div className="sn-portrait-wrap">
                 <img
-                  src={FOTOS[11]}
+                  src="/equipo/cris%20y%20liz.jpeg"
                   alt="Cristopher Alonso Tun Aguilar"
                   className="sn-portrait"
                 />

@@ -40,6 +40,19 @@
   }
 }
 
+/* === MODO PÚBLICO (bajo el navbar fijo .hmm-navbar del home) ===
+   El navbar del home es position:fixed (z-index 1050) y ocupa el top.
+   Bajamos el contenido para que no quede tapado y soltamos el sticky del
+   header (si no, al hacer scroll volvería a meterse bajo el navbar). */
+.faq-root--publico { padding-top: 5.5rem; }
+.faq-root--publico .faq-header {
+  position: static;
+  top: auto;
+}
+@media (min-width: 768px) {
+  .faq-root--publico { padding-top: 6rem; }
+}
+
 .faq-header-inner {
   display: flex;
   align-items: center;

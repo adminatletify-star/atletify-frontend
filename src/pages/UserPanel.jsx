@@ -11,9 +11,54 @@ import AtletifyLoader from '../components/AtletifyLoader';
 import AnunciosEngine from '../components/AnunciosEngine';
 import EjercicioDetailModal from '../components/EjercicioDetailModal';
 import ModalComentariosWod from '../components/ModalComentariosWod';
+import ModalCompararPRs from '../components/ModalCompararPRs';
 import { api } from '../services/api';
 
 const API_BASE = import.meta.env.VITE_API_URL;
+
+// ===========================================================================
+//  SISTEMA DE PRESENCIA — "Mi Equipo" (En línea / Ausente / Desconectado)
+// ===========================================================================
+// El backend guarda UltimaConexion en UTC; si el string no trae zona horaria,
+// lo tratamos como UTC (misma convención que ModalComentariosWod).
+function parseFechaUTC(fechaIso) {
+  if (!fechaIso) return null;
+  let str = String(fechaIso);
+  if (!/[zZ]$|[+-]\d{2}:?\d{2}$/.test(str)) str += 'Z';
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+// Texto "hace X" a partir de los segundos transcurridos.
+function haceTexto(segundos) {
+  if (segundos < 60) return 'hace un momento';
+  if (segundos < 3600) return `hace ${Math.floor(segundos / 60)} min`;
+  if (segundos < 86400) return `hace ${Math.floor(segundos / 3600)} h`;
+  if (segundos < 604800) return `hace ${Math.floor(segundos / 86400)} d`;
+  return `hace ${Math.floor(segundos / 604800)} sem`;
+}
+
+// Deriva el estado de presencia desde la última conexión:
+//  < 3 min  → En línea  ·  3–15 min → Ausente  ·  resto / sin dato → Desconectado.
+function calcularPresencia(ultimaConexion) {
+  const d = parseFechaUTC(ultimaConexion);
+  if (!d) return { estado: 'desconectado', label: 'Desconectado', detalle: 'sin conexión reciente', rank: 4 };
+  const seg = Math.max(0, (Date.now() - d.getTime()) / 1000);
+  if (seg < 180) return { estado: 'en-linea', label: 'En línea', detalle: 'ahora', rank: 0 };
+  if (seg < 900) return { estado: 'ausente', label: 'Ausente', detalle: haceTexto(seg), rank: 1 };
+  return { estado: 'desconectado', label: 'Desconectado', detalle: haceTexto(seg), rank: 2 };
+}
+
+// Color estable por usuario para el avatar (réplica del look de la referencia).
+const AVATAR_COLORS = [
+  ['#e63946', '#b5121b'], ['#7c5cff', '#5a3fd6'], ['#2ecc71', '#1c9e57'],
+  ['#f5a623', '#d4860f'], ['#38bdf8', '#0e8fd0'], ['#ec4899', '#be2d76'],
+  ['#14b8a6', '#0d8276'], ['#f97316', '#c75710'],
+];
+function colorAvatar(id) {
+  const n = Math.abs(Number(id) || 0);
+  return AVATAR_COLORS[n % AVATAR_COLORS.length];
+}
 
 function roundRectCanvas(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -229,6 +274,9 @@ export default function UserPanel() {
   const respondiendoRef = useRef(new Set()); // anti doble-tap al responder solicitudes desde la campana
   const [showModalAmistades, setShowModalAmistades] = useState(false);
   const [soloCompas, setSoloCompas] = useState(false);
+  const [presenciaTick, setPresenciaTick] = useState(0); // fuerza recálculo de "hace X" en el modal de compas
+  const [buscarCompa, setBuscarCompa] = useState(''); // buscador dentro del modal de Mi Equipo
+  const [compararCon, setCompararCon] = useState(null); // compa con quien comparar PRs (abre ModalCompararPRs)
 
   const [notificaciones, setNotificaciones] = useState([]);
   const [showModalNotis, setShowModalNotis] = useState(false);
@@ -441,6 +489,21 @@ export default function UserPanel() {
     } catch (error) { console.error(error); }
   };
 
+  // Mientras el modal de "Mi Equipo" está abierto, refrescamos la presencia cada 30s:
+  // re-fetch de la lista (trae UltimaConexion fresca) + tick para recalcular el "hace X".
+  useEffect(() => {
+    if (!showModalAmistades) return;
+    const uid = user?.idUsuario || user?.id;
+    if (uid) cargarAmistades(uid); // refresco inmediato al abrir
+    const intervalo = setInterval(() => {
+      setPresenciaTick(x => x + 1);
+      const id = user?.idUsuario || user?.id;
+      if (id) cargarAmistades(id);
+    }, 30000);
+    return () => clearInterval(intervalo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showModalAmistades]);
+
   const responderSolicitud = async (idAmistad, respuesta) => {
     try {
       const res = await fetch(`${API_BASE}/amistades/responder/${idAmistad}`, {
@@ -459,12 +522,12 @@ export default function UserPanel() {
   };
 
   const handleEliminarAmigo = async (idCompa) => {
-    if (!window.confirm('¿Seguro que quieres quitar a este compa de tu manada?')) return;
+    if (!window.confirm('¿Seguro que quieres quitar a este compa de tu equipo?')) return;
     try {
       const miId = user.idUsuario || user.id;
       const res = await fetch(`${API_BASE}/amistades/eliminar/${miId}/${idCompa}`, { method: 'DELETE' });
       if (res.ok) {
-        alert("Compa eliminado de tu manada.");
+        alert("Compa eliminado de tu equipo.");
         cargarAmistades(miId);
       }
     } catch (error) { console.error("Error al eliminar", error); }
@@ -1542,7 +1605,7 @@ export default function UserPanel() {
             {/* ===== RIGHT COL ===== */}
             <div className="col-lg-4 d-flex flex-column gap-3">
 
-              {/* Mi Manada */}
+              {/* Mi Equipo */}
               <div
                 className="up-card up-card-clickable"
                 onClick={() => setShowModalAmistades(true)}
@@ -1552,8 +1615,8 @@ export default function UserPanel() {
                     <i className="fas fa-paw"></i>
                   </div>
                   <div className="flex-grow-1">
-                    <div className="up-mini-label">Mi Manada</div>
-                    <div className="up-mini-value">{misCompas.length} compas en la manada</div>
+                    <div className="up-mini-label">Mi Equipo</div>
+                    <div className="up-mini-value">{misCompas.length} compas en el equipo</div>
                   </div>
                   <i className="fas fa-chevron-right text-secondary small"></i>
                 </div>
@@ -1835,48 +1898,143 @@ export default function UserPanel() {
         </div>
       )}
 
-      {/* MODAL AMISTADES - UNCHANGED */}
+      {/* MODAL MI EQUIPO — presencia en tiempo real (En línea / Ausente / Desconectado) */}
       {showModalAmistades && (
         <div className="up-modal-overlay" onClick={() => setShowModalAmistades(false)}>
-          <div className="up-modal up-modal--sm" onClick={e => e.stopPropagation()}>
+          <div className="up-modal up-modal--sm up-team-modal" data-tick={presenciaTick} onClick={e => e.stopPropagation()}>
 
-            <div className="up-modal-header">
-              <h5 className="up-modal-title"><i className="fas fa-paw"></i> Mi Manada</h5>
+            <div className="up-team-header">
+              <div className="up-team-header-icon"><i className="fas fa-paw"></i></div>
+              <div className="up-team-header-text">
+                <h5 className="up-team-title">MI <span>EQUIPO</span></h5>
+                <p className="up-team-subtitle">Tus compas en tiempo real</p>
+              </div>
               <button onClick={() => setShowModalAmistades(false)} className="up-modal-close"><i className="fas fa-times"></i></button>
             </div>
 
-            <div className="up-modal-body">
-              <h6 className="text-secondary fw-bold small mb-3">TUS COMPAS ({misCompas.length})</h6>
-              {misCompas.length === 0 ? (
-                <p className="text-secondary small text-center">Aún no has agregado a nadie a tu manada.</p>
-              ) : (
-                <div className="d-flex flex-wrap gap-2">
-                  {misCompas.map(compa => (
-                    <div
-                      key={compa.idLobo}
-                      className="badge bg-dark border border-secondary border-opacity-50 px-3 py-2 rounded-pill text-light shadow-sm d-flex align-items-center gap-2"
-                      style={{ cursor: 'pointer', transition: 'transform 0.1s' }}
-                      onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
-                      onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-                      onClick={() => { setShowModalAmistades(false); handleAbrirPerfilCompa(compa.idLobo); }}
-                    >
-                      <i className="fas fa-user text-danger"></i>
-                      <span>{compa.apodo || compa.nombre.split(' ')[0]}</span>
-                      <button
-                        className="btn btn-sm btn-link text-secondary p-0 ms-1 d-flex align-items-center justify-content-center"
-                        style={{ width: '20px', height: '20px' }}
-                        onClick={(e) => { e.stopPropagation(); handleEliminarAmigo(compa.idLobo); }}
-                        title="Eliminar de mi Manada"
-                      >
-                        <i className="fas fa-times"></i>
-                      </button>
+            <div className="up-modal-body up-team-body">
+              {(() => {
+                const norm = (s) => (s || '').toString().normalize('NFD').replace(new RegExp('[\\u0300-\\u036f]', 'g'), '').toLowerCase();
+                const conPresencia = misCompas.map(c => ({ ...c, _p: calcularPresencia(c.ultimaConexion) }));
+                const enLineaCount = conPresencia.filter(c => c._p.estado === 'en-linea').length;
+                const q = norm(buscarCompa);
+                const lista = conPresencia
+                  .filter(c => !q
+                    || norm(c.apodo).includes(q)
+                    || norm(c.nombre).includes(q)
+                    || norm(c._p.label).includes(q))
+                  .sort((a, b) => (a._p.rank - b._p.rank)
+                    || norm(a.apodo || a.nombre).localeCompare(norm(b.apodo || b.nombre)));
+
+                return (
+                  <>
+                    <div className="up-team-stats">
+                      <span className="up-team-stat up-team-stat--online">
+                        <span className="up-team-stat-dot"></span>{enLineaCount} en línea
+                      </span>
+                      <span className="up-team-stat">{misCompas.length} en el equipo</span>
+                      <span className="up-team-stats-label">TUS COMPAS</span>
                     </div>
-                  ))}
-                </div>
-              )}
+
+                    {misCompas.length > 4 && (
+                      <div className="up-team-search">
+                        <i className="fas fa-search up-team-search-icon"></i>
+                        <input
+                          type="text"
+                          className="up-team-search-input"
+                          placeholder="Buscar compa..."
+                          value={buscarCompa}
+                          onChange={e => setBuscarCompa(e.target.value)}
+                        />
+                      </div>
+                    )}
+
+                    {misCompas.length === 0 ? (
+                      <div className="up-team-empty">
+                        <i className="fas fa-user-group"></i>
+                        <p>Aún no has agregado a nadie a tu equipo.</p>
+                      </div>
+                    ) : lista.length === 0 ? (
+                      <div className="up-team-empty">
+                        <i className="fas fa-magnifying-glass"></i>
+                        <p>Sin resultados para “{buscarCompa}”.</p>
+                      </div>
+                    ) : (
+                      <div className="up-team-list">
+                        {lista.map(compa => {
+                          const nombre = compa.apodo || compa.nombre.split(' ')[0];
+                          const inicial = (nombre || '?').charAt(0).toUpperCase();
+                          const [c1, c2] = colorAvatar(compa.idLobo);
+                          const p = compa._p;
+                          const tieneFoto = compa.foto && String(compa.foto).trim();
+                          return (
+                            <div
+                              key={compa.idLobo}
+                              className={`up-team-row up-team-row--${p.estado}`}
+                              onClick={() => handleAbrirPerfilCompa(compa.idLobo)}
+                            >
+                              <div
+                                className="up-team-avatar"
+                                style={{
+                                  background: tieneFoto ? '#0e0e14' : `linear-gradient(135deg, ${c1}, ${c2})`,
+                                  borderColor: c1
+                                }}
+                              >
+                                {tieneFoto
+                                  ? <img src={compa.foto} alt={nombre} />
+                                  : <span>{inicial}</span>}
+                                <span className={`up-team-status-dot up-team-status-dot--${p.estado}`}></span>
+                              </div>
+
+                              <div className="up-team-info">
+                                <div className="up-team-name-row">
+                                  <span className="up-team-name">{nombre}</span>
+                                  {p.estado === 'en-linea' && compa.estadoDia && (
+                                    <span className="up-team-estado">{compa.estadoDia}</span>
+                                  )}
+                                </div>
+                                <div className="up-team-presence">
+                                  <span className={`up-team-presence-dot up-team-presence-dot--${p.estado}`}></span>
+                                  <span className="up-team-presence-label">{p.label}</span>
+                                  <span className="up-team-presence-sep">·</span>
+                                  <span className="up-team-presence-detail">{p.detalle}</span>
+                                </div>
+                              </div>
+
+                              <button
+                                className="up-team-compare"
+                                onClick={(e) => { e.stopPropagation(); setCompararCon(compa); }}
+                                title="Comparar récords"
+                              >
+                                <i className="fas fa-eye"></i>
+                              </button>
+                              <button
+                                className="up-team-remove"
+                                onClick={(e) => { e.stopPropagation(); handleEliminarAmigo(compa.idLobo); }}
+                                title="Quitar de mi equipo"
+                              >
+                                <i className="fas fa-times"></i>
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>
+      )}
+
+      {/* COMPARAR PRs — Tú vs compa (se abre con el botón 👁 de Mi Equipo) */}
+      {compararCon && (
+        <ModalCompararPRs
+          miId={user?.idUsuario || user?.id}
+          compa={compararCon}
+          onCerrar={() => setCompararCon(null)}
+        />
       )}
 
       {/* WOLF LANYARD — Perfil del compa */}

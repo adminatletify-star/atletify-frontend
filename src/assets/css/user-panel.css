@@ -1529,3 +1529,307 @@
 @media (max-width: 400px) {
   .up-dl-btn-label { display: none; }
 }
+
+/* ============================================================
+   MODAL MI EQUIPO — presencia en tiempo real
+   (En línea / Ausente / Desconectado · última conexión)
+   ============================================================ */
+.up-team-modal { max-width: 440px; }
+
+/* --- Header: ícono + título + subtítulo --- */
+.up-team-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.up-team-header-icon {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.28);
+}
+.up-team-header-text { flex-grow: 1; min-width: 0; }
+.up-team-title {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.1;
+}
+.up-team-title span { color: var(--primary); }
+.up-team-subtitle {
+  margin: 0.18rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.up-team-body { padding: 1rem 1.1rem 1.2rem; }
+
+/* --- Fila de stats: en línea / total / etiqueta --- */
+.up-team-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.9rem;
+}
+.up-team-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.32rem 0.7rem;
+}
+.up-team-stat--online {
+  color: var(--success, #2ecc71);
+  background: rgba(46, 204, 113, 0.1);
+  border-color: rgba(46, 204, 113, 0.28);
+}
+.up-team-stat-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success, #2ecc71);
+  box-shadow: 0 0 6px rgba(46, 204, 113, 0.8);
+}
+.up-team-stats-label {
+  margin-left: auto;
+  font-family: var(--font-stats, var(--font-heading));
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+/* --- Buscador --- */
+.up-team-search {
+  position: relative;
+  margin-bottom: 0.85rem;
+}
+.up-team-search-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+.up-team-search-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  padding: 0.6rem 0.85rem 0.6rem 2.3rem;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.up-team-search-input:focus {
+  border-color: rgba(230, 57, 70, 0.45);
+  background: rgba(255, 255, 255, 0.06);
+}
+.up-team-search-input::placeholder { color: var(--text-muted); }
+
+/* --- Lista de compas --- */
+.up-team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.up-team-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 14px;
+  background: var(--bg-elevated, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.up-team-row:active { transform: scale(0.985); }
+@media (hover: hover) {
+  .up-team-row:hover {
+    border-color: rgba(230, 57, 70, 0.32);
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* Avatar con anillo de color + punto de estado */
+.up-team-avatar {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 13px;
+  border: 2px solid var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.up-team-avatar span {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.up-team-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 11px;
+}
+.up-team-status-dot {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2.5px solid var(--bg-card, #16161e);
+}
+.up-team-status-dot--en-linea { background: #2ecc71; }
+.up-team-status-dot--ausente { background: #f5a623; }
+.up-team-status-dot--desconectado { background: #6b7280; }
+
+/* Info (nombre + estado de presencia) */
+.up-team-info { flex-grow: 1; min-width: 0; }
+.up-team-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.up-team-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.up-team-estado {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 48%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.up-team-presence {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+}
+.up-team-presence-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.up-team-presence-dot--en-linea { background: #2ecc71; box-shadow: 0 0 6px rgba(46, 204, 113, 0.7); }
+.up-team-presence-dot--ausente { background: #f5a623; }
+.up-team-presence-dot--desconectado { background: #6b7280; }
+.up-team-presence-label { font-weight: 600; color: var(--text-secondary, #c7c7d1); }
+.up-team-row--en-linea .up-team-presence-label { color: #2ecc71; }
+.up-team-row--ausente .up-team-presence-label { color: #f5a623; }
+.up-team-presence-sep { color: var(--text-muted); }
+.up-team-presence-detail { color: var(--text-muted); }
+
+/* Botones de acción de la fila (comparar / quitar) */
+.up-team-compare,
+.up-team-remove {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.up-team-compare { margin-right: -0.45rem; } /* agrupa el ojo junto a la × */
+.up-team-compare:active,
+.up-team-remove:active { transform: scale(0.9); }
+@media (hover: hover) {
+  .up-team-compare:hover {
+    background: rgba(79, 195, 247, 0.14);
+    border-color: rgba(79, 195, 247, 0.32);
+    color: var(--accent-cool, #4fc3f7);
+  }
+  .up-team-remove:hover {
+    background: rgba(230, 57, 70, 0.14);
+    border-color: rgba(230, 57, 70, 0.3);
+    color: var(--primary);
+  }
+}
+
+/* Empty state */
+.up-team-empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--text-muted);
+}
+.up-team-empty i {
+  font-size: 2rem;
+  opacity: 0.35;
+  display: block;
+  margin-bottom: 0.7rem;
+}
+.up-team-empty p { font-size: 0.9rem; margin: 0; }
+
+/* Responsive */
+@media (max-width: 576px) {
+  .up-team-header { padding: 0.9rem 1rem; gap: 0.7rem; }
+  .up-team-header-icon { width: 40px; height: 40px; font-size: 1rem; border-radius: 10px; }
+  .up-team-title { font-size: 0.92rem; letter-spacing: 1px; }
+  .up-team-subtitle { font-size: 0.72rem; }
+  .up-team-body { padding: 0.85rem 0.9rem 1rem; }
+  .up-team-avatar { width: 44px; height: 44px; }
+  .up-team-avatar span { font-size: 1.1rem; }
+  .up-team-name { font-size: 0.9rem; }
+  .up-team-row { padding: 0.6rem 0.65rem; gap: 0.65rem; }
+}
+@media (max-width: 380px) {
+  .up-team-estado { display: none; }
+  .up-team-title { font-size: 0.82rem; }
+}
