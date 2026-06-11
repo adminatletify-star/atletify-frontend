@@ -220,6 +220,15 @@ export const api = {
     return handleResponse(response);
   },
 
+  // Lista de quiénes reaccionaron a un comentario (estilo FB): [{ idUsuario, nombre, emoji }]
+  obtenerReaccionesComentario: async (idComentario) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/wod-social/comentarios/${idComentario}/reacciones`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
   // Usuarios
   obtenerUsuarios: async () => {
     const response = await fetch(`${API_BASE_URL}/usuarios`);
@@ -609,6 +618,20 @@ export const api = {
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(pago)
+    });
+    return handleResponse(response);
+  },
+
+  // Genera el link de Stripe para que el líder pague TODO el grupo con su tarjeta (desglosado).
+  checkoutStripeGrupoFamiliar: async (idGrupo, payload) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/GruposFamiliares/${idGrupo}/checkout-stripe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
     });
     return handleResponse(response);
   },

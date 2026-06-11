@@ -192,7 +192,7 @@ export default function MisResultados() {
     try {
       const fechaCorta = new Date(item.fecha).toISOString().split('T')[0];
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/asistencias/box/${box.idBox}/leaderboard/${fechaCorta}`, {
+      const res = await fetch(`${API_BASE}/asistencias/box/${box.idBox}/leaderboard/${fechaCorta}?incluirOcultos=true`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       if (!res.ok) return null;

@@ -6,7 +6,7 @@ import OfflineIndicator from './components/OfflineIndicator';
 import Layout from './components/Layout';
 import { jwtDecode } from "jwt-decode";
 import Mantenimiento from './pages/Mantenimiento';
-import { switchToAccountByEmail } from './services/accountSwitch';
+import { switchToAccountByEmail, syncTokenToSavedAccount } from './services/accountSwitch';
 
 // Importaciones de Páginas
 import Home from './pages/Home';
@@ -146,6 +146,19 @@ window.fetch = async function () {
 
   // 2. Hacer la petición original
   const response = await originalFetch.call(this, resource, config);
+
+  // 2.5 SESIÓN DESLIZANTE: si el backend renovó el JWT (le quedaban < 6 días),
+  // lo manda en "X-Nuevo-Token". Lo guardamos para que la sesión "viva" mientras
+  // haya actividad y sólo venza tras 7 días seguidos SIN usar la app.
+  try {
+    const nuevoToken = response.headers.get('X-Nuevo-Token');
+    if (nuevoToken && nuevoToken !== localStorage.getItem('token')) {
+      localStorage.setItem('token', nuevoToken);
+      syncTokenToSavedAccount(nuevoToken);
+    }
+  } catch (_) {
+    // Respuesta sin headers accesibles (p. ej. opaca por CORS): ignorar.
+  }
 
   // 3. Manejar Unauthorized (Token expirado o inválido)
   if (response.status === 401) {

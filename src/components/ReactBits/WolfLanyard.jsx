@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import BotonSeguro from '../BotonSeguro';
 import './WolfLanyard.css';
 
 // ── Spring physics constants ───────────────────────────────────────
@@ -13,6 +14,11 @@ export default function WolfLanyard({
   marcas = [],
   cargandoMarcas = false,
   miId,
+  reaccionesResumen = {},
+  likesPerfil = 0,
+  yaLeDiLike = false,
+  onLikePerfil,
+  estadoAmistad = 'ninguna',
   onClose,
   onReaccionar,
   onSolicitarAmistad,
@@ -218,10 +224,23 @@ export default function WolfLanyard({
                   {lobo.rachaActual >= 3 && <span className="wl-fire-badge"><i className="fas fa-fire"></i></span>}
                 </div>
                 <h2 className="wl-name">{lobo.nombre.toUpperCase()}</h2>
+                {lobo.username && <p className="wl-username">@{lobo.username}</p>}
                 {lobo.apodo && <p className="wl-apodo">"{lobo.apodo}"</p>}
                 <span className={`wl-role-tag ${isCoach ? 'wl-role-coach' : 'wl-role-atleta'}`}>
                   {isCoach ? 'COACH' : 'ATLETA'}
                 </span>
+                {lobo.idUsuario !== miId && (
+                  <button
+                    type="button"
+                    className={`wl-like-btn ${yaLeDiLike ? 'wl-like-btn--active' : ''}`}
+                    onMouseDown={stopDrag}
+                    onTouchStart={stopDrag}
+                    onClick={(e) => { e.stopPropagation(); onLikePerfil?.(lobo.idUsuario); }}
+                  >
+                    <i className="fas fa-heart"></i>
+                    <span>{likesPerfil} {likesPerfil === 1 ? 'like' : 'likes'}</span>
+                  </button>
+                )}
               </div>
 
               {/* Badges */}
@@ -265,6 +284,13 @@ export default function WolfLanyard({
                           {marca.valor}
                           <span className="wl-pr-unit"> {marca.unidad}</span>
                         </div>
+                        {reaccionesResumen?.[marca.idMarca]?.total > 0 && (
+                          <div className="wl-pr-reacciones-count">
+                            {reaccionesResumen[marca.idMarca].conteos.map(c => (
+                              <span key={c.emoji} className="wl-pr-rcount">{c.emoji} {c.count}</span>
+                            ))}
+                          </div>
+                        )}
                         {lobo.idUsuario !== miId && (
                           <div className="wl-reactions">
                             <button className="wl-react-btn" title="¡Máquina!"
@@ -318,16 +344,39 @@ export default function WolfLanyard({
 
               {/* CTA */}
               {lobo.idUsuario !== miId && (
-                <div className="wl-cta-wrap">
-                  <button
-                    className="wl-cta-btn"
-                    onMouseDown={stopDrag}
-                    onTouchStart={stopDrag}
-                    onClick={() => onSolicitarAmistad(lobo.idUsuario)}
-                  >
-                    <i className="fas fa-paw me-2"></i>AÑADIR A MI MANADA
-                  </button>
-                </div>
+                lobo.deshabilitarSolicitudes ? (
+                  <div className="wl-cta-wrap">
+                    <p className="wl-cta-disabled">
+                      <i className="fas fa-lock me-2"></i>Este atleta no acepta solicitudes
+                    </p>
+                  </div>
+                ) : estadoAmistad === 'Aceptada' ? (
+                  <div className="wl-cta-wrap">
+                    <p className="wl-cta-compas">
+                      <i className="fas fa-user-check me-2"></i>Ya son compas
+                    </p>
+                  </div>
+                ) : estadoAmistad === 'Pendiente' ? (
+                  <div className="wl-cta-wrap">
+                    <button className="wl-cta-btn wl-cta-btn--pending" disabled onMouseDown={stopDrag} onTouchStart={stopDrag}>
+                      <i className="fas fa-clock me-2"></i>SOLICITUD ENVIADA
+                    </button>
+                  </div>
+                ) : (
+                  <div className="wl-cta-wrap">
+                    <BotonSeguro
+                      type="button"
+                      className="wl-cta-btn"
+                      tiempoBloqueo={400}
+                      onMouseDown={stopDrag}
+                      onTouchStart={stopDrag}
+                      onClick={() => onSolicitarAmistad(lobo.idUsuario)}
+                      textoProcesando={<><i className="fas fa-spinner fa-spin me-2"></i>ENVIANDO...</>}
+                    >
+                      <i className="fas fa-paw me-2"></i>AÑADIR A MI MANADA
+                    </BotonSeguro>
+                  </div>
+                )
               )}
 
             </div>{/* end scroll body */}

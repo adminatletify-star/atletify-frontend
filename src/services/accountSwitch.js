@@ -69,6 +69,35 @@ export function switchToAccountByEmail(expectedCorreo) {
 }
 
 /**
+ * Sesión deslizante: cuando el backend renueva el JWT (header "X-Nuevo-Token"),
+ * además de actualizar `token` en localStorage hay que reflejarlo en la entrada
+ * de la cuenta activa dentro de `cuentasGuardadas`, para que al cambiar de cuenta
+ * y volver no se cargue un token viejo a punto de vencer.
+ * No falla si no hay cuentas guardadas o si el JSON está corrupto.
+ */
+export function syncTokenToSavedAccount(nuevoToken) {
+  if (!nuevoToken) return;
+  const activo = getActiveCorreo();
+  if (!activo) return;
+
+  try {
+    const cuentas = JSON.parse(localStorage.getItem('cuentasGuardadas') || '[]');
+    if (!Array.isArray(cuentas) || cuentas.length === 0) return;
+
+    let cambiado = false;
+    for (const c of cuentas) {
+      if (norm(c?.usuario?.correo) === activo && c.token !== nuevoToken) {
+        c.token = nuevoToken;
+        cambiado = true;
+      }
+    }
+    if (cambiado) localStorage.setItem('cuentasGuardadas', JSON.stringify(cuentas));
+  } catch {
+    /* cuentasGuardadas corrupto: ignorar */
+  }
+}
+
+/**
  * Correo del usuario activo en localStorage (normalizado).
  */
 export function getActiveCorreo() {

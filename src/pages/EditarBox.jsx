@@ -127,6 +127,16 @@ export default function EditarBox() {
   const [cortesiasVigentes, setCortesiasVigentes] = useState(0);
   const [procesandoVisitas, setProcesandoVisitas] = useState(false);
 
+  // PIN de acciones del box (autoriza alta de atletas / disolver grupos).
+  // Ver: sin contraseña (oculto con ojito). Editar: requiere la contraseña de cuenta.
+  const [pinValue, setPinValue] = useState('');
+  const [pinConfigurado, setPinConfigurado] = useState(false);
+  const [pinVisible, setPinVisible] = useState(false);
+  const [modalPin, setModalPin] = useState(false);
+  const [nuevoPin, setNuevoPin] = useState('');
+  const [passwordPin, setPasswordPin] = useState('');
+  const [guardandoPin, setGuardandoPin] = useState(false);
+
   const [horarios, setHorarios] = useState(
     DIAS_SEMANA.reduce((acc, dia) => ({ ...acc, [dia]: { abierto: true, apertura: '06:00', cierre: '22:00' } }), {})
   );
@@ -151,7 +161,49 @@ export default function EditarBox() {
     const boxIdSeguro = storedBox.idBox || storedBox.IdBox;
     cargarBox(boxIdSeguro);
     cargarConfiguracion(boxIdSeguro);
+    cargarPin(boxIdSeguro);
   }, [navigate]);
+
+  async function cargarPin(idBox) {
+    try {
+      const res = await fetch(`${API_BASE}/configuracionbox/${idBox}/pin`, { headers: headersGet });
+      if (res.ok) {
+        const d = await res.json();
+        setPinValue(d.pin || '');
+        setPinConfigurado(!!d.configurado);
+      }
+    } catch { /* noop */ }
+  }
+
+  async function guardarPin() {
+    if (nuevoPin.length !== 4) { alert('El PIN debe ser de exactamente 4 dígitos.'); return; }
+    if (!passwordPin) { alert('Ingresa tu contraseña de cuenta para confirmar el cambio.'); return; }
+    setGuardandoPin(true);
+    try {
+      const idBox = boxLocal?.idBox || boxLocal?.IdBox;
+      const res = await fetch(`${API_BASE}/configuracionbox/${idBox}/pin`, {
+        method: 'POST',
+        headers: headersPost,
+        body: JSON.stringify({ pin: nuevoPin, contrasena: passwordPin })
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok && d.valido === true) {
+        setPinValue(nuevoPin);
+        setPinConfigurado(true);
+        setModalPin(false);
+        setNuevoPin('');
+        setPasswordPin('');
+        setPinVisible(false);
+        alert('PIN actualizado.');
+      } else {
+        alert(d.mensaje || 'No se pudo actualizar el PIN.');
+      }
+    } catch {
+      alert('Error de conexión al guardar el PIN.');
+    } finally {
+      setGuardandoPin(false);
+    }
+  }
 
   async function cargarBox(idBox) {
     try {
@@ -759,6 +811,30 @@ export default function EditarBox() {
                     Estos valores son la base de todos los cálculos financieros de tu Box. Definen cuánto cuesta cada servicio y se aplican automáticamente en el punto de venta, el registro de atletas y las renovaciones.
                   </div>
 
+                  {/* ── PIN DE ACCIONES DEL BOX ── */}
+                  <div className="mb-4 p-3 rounded" style={{ background: 'rgba(230, 57, 70, 0.06)', border: '1px solid rgba(230, 57, 70, 0.25)' }}>
+                    <p className="fw-bold mb-1" style={{ color: 'var(--primary)', fontFamily: 'var(--font-heading)', fontSize: '0.9rem' }}>
+                      <i className="fas fa-key me-2"></i>PIN de Acciones
+                    </p>
+                    <p className="text-secondary mb-3" style={{ fontSize: '0.78rem', lineHeight: 1.4 }}>
+                      PIN de 4 dígitos para autorizar el alta de atletas y disolver grupos (en vez de tu contraseña de cuenta).
+                      Para verlo no necesitas contraseña; para cambiarlo sí.
+                    </p>
+                    <div className="d-flex align-items-center gap-2 flex-wrap">
+                      <div className="d-flex align-items-center gap-2 px-3 py-2 rounded" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                        <span style={{ fontFamily: 'monospace', fontSize: '1.4rem', letterSpacing: '6px', color: '#fff', minWidth: '90px', textAlign: 'center' }}>
+                          {!pinConfigurado ? '— — — —' : (pinVisible ? (pinValue || '') : '••••')}
+                        </span>
+                        <button type="button" className="btn btn-sm btn-link text-secondary p-0" title={pinVisible ? 'Ocultar' : 'Mostrar'} onClick={() => setPinVisible(v => !v)} disabled={!pinConfigurado}>
+                          <i className={pinVisible ? 'fas fa-eye-slash' : 'fas fa-eye'} style={{ fontSize: '1rem' }}></i>
+                        </button>
+                      </div>
+                      <button type="button" className="btn btn-sm btn-outline-light" style={{ borderRadius: '8px' }} onClick={() => { setNuevoPin(''); setPasswordPin(''); setModalPin(true); }}>
+                        <i className="fas fa-pen me-1"></i> {pinConfigurado ? 'Editar PIN' : 'Configurar PIN'}
+                      </button>
+                    </div>
+                  </div>
+
                   {/* ── PAGOS EN LÍNEA: STRIPE CONNECT ── */}
                   <div className="mb-4 p-3 rounded" style={{ background: 'rgba(103, 114, 229, 0.06)', border: '1px solid rgba(103, 114, 229, 0.2)' }}>
                     <div className="d-flex flex-column flex-sm-row justify-content-sm-between align-items-start align-items-sm-center gap-2 mb-3">
@@ -1144,6 +1220,25 @@ export default function EditarBox() {
       </div>
 
       {/* ── MODAL SEGURO: activar / pausar visitas de regalo ── */}
+      {modalPin && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={() => !guardandoPin && setModalPin(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '380px', background: 'var(--bg-elevated, #1a1a22)', borderTop: '3px solid var(--primary)', borderRadius: '16px', padding: '1.5rem' }}>
+            <h5 className="fw-bold text-white mb-1"><i className="fas fa-key me-2" style={{ color: 'var(--primary)' }}></i>{pinConfigurado ? 'Editar PIN' : 'Configurar PIN'}</h5>
+            <p className="text-secondary" style={{ fontSize: '0.8rem' }}>Define un PIN de 4 dígitos. Necesitas tu contraseña de cuenta para confirmar el cambio.</p>
+            <label className="form-label text-secondary" style={{ fontSize: '0.78rem' }}>Nuevo PIN (4 dígitos)</label>
+            <input type="text" inputMode="numeric" maxLength={4} className="form-control mb-3 text-center" style={{ background: '#13131a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '8px', letterSpacing: '8px', fontSize: '1.3rem' }} value={nuevoPin} onChange={e => setNuevoPin(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="••••" disabled={guardandoPin} autoFocus />
+            <label className="form-label text-secondary" style={{ fontSize: '0.78rem' }}>Tu contraseña de cuenta</label>
+            <input type="password" className="form-control mb-3" style={{ background: '#13131a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '8px' }} value={passwordPin} onChange={e => setPasswordPin(e.target.value)} placeholder="Contraseña de acceso" disabled={guardandoPin} autoComplete="current-password" />
+            <div className="d-flex gap-2 mt-2">
+              <button type="button" className="btn btn-outline-secondary w-50" style={{ borderRadius: '8px' }} onClick={() => setModalPin(false)} disabled={guardandoPin}>Cancelar</button>
+              <button type="button" className="btn btn-danger w-50" style={{ borderRadius: '8px' }} onClick={guardarPin} disabled={guardandoPin || nuevoPin.length !== 4 || !passwordPin}>
+                {guardandoPin ? <><i className="fas fa-spinner fa-spin me-1"></i></> : 'Guardar PIN'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {modalVisitas && (
         <div className="eb-visitas-modal-overlay" onClick={() => !procesandoVisitas && setModalVisitas(null)}>
           <div className="eb-visitas-modal" onClick={e => e.stopPropagation()}>

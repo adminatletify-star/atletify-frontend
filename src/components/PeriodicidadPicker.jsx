@@ -2,31 +2,15 @@ import { useState } from 'react';
 import './TipoPagoPicker.css';
 
 const OPCIONES = [
-  {
-    valor: 'PorClase',
-    nombre: 'Por Clase',
-    desc: 'Se paga por cada clase impartida',
-    icono: 'fas fa-chalkboard-teacher',
-    key: 'porclase',
-  },
-  {
-    valor: 'MensualFijo',
-    nombre: 'Monto Fijo',
-    desc: 'Monto fijo por periodo, independiente de las clases',
-    icono: 'fas fa-calendar-check',
-    key: 'mensual',
-  },
+  { valor: 'Semanal',   nombre: 'Semanal',   desc: 'Se paga cada semana',                 icono: 'fas fa-calendar-week', key: 'porclase' },
+  { valor: 'Quincenal', nombre: 'Quincenal', desc: 'Se paga cada quincena (1–15 y 16–fin)', icono: 'fas fa-calendar-day',  key: 'mensual' },
+  { valor: 'Mensual',   nombre: 'Mensual',   desc: 'Se paga una vez al mes',              icono: 'fas fa-calendar-alt',  key: 'mensual' },
 ];
 
-export default function TipoPagoPicker({ valor, onCambiar }) {
+export default function PeriodicidadPicker({ valor, onCambiar }) {
   const [abierto, setAbierto] = useState(false);
-
   const opcionActual = OPCIONES.find(o => o.valor === valor) || OPCIONES[0];
-
-  const seleccionar = (v) => {
-    setAbierto(false);
-    if (v !== valor) onCambiar(v);
-  };
+  const seleccionar = (v) => { setAbierto(false); if (v !== valor) onCambiar(v); };
 
   return (
     <>
@@ -45,16 +29,14 @@ export default function TipoPagoPicker({ valor, onCambiar }) {
       {abierto && (
         <div className="tpp-overlay" onClick={() => setAbierto(false)}>
           <div className="tpp-panel" onClick={e => e.stopPropagation()}>
-
             <div className="tpp-header">
               <span className="tpp-title">
-                <i className="fas fa-file-contract"></i> Tipo de Salario
+                <i className="fas fa-clock"></i> Cadencia de Pago
               </span>
               <button type="button" className="tpp-close" onClick={() => setAbierto(false)}>
                 <i className="fas fa-times"></i>
               </button>
             </div>
-
             <div className="tpp-options">
               {OPCIONES.map(op => (
                 <button
@@ -74,7 +56,6 @@ export default function TipoPagoPicker({ valor, onCambiar }) {
                 </button>
               ))}
             </div>
-
           </div>
         </div>
       )}

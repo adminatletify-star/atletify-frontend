@@ -47,6 +47,20 @@ const CardNav = ({
     return () => window.removeEventListener('atletify:dashsidebar-open', handler);
   }, []);
 
+  // Cierra el menú al hacer clic/tocar fuera del panel (solo mientras está desplegado).
+  // El listener se monta cuando isExpanded pasa a true, así que no captura el mismo
+  // clic que abrió el menú. Usa closeMenuRef.current para no quedar con un closeMenu obsoleto.
+  useEffect(() => {
+    if (!isExpanded) return;
+    const handleClickOutside = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) {
+        closeMenuRef.current?.();
+      }
+    };
+    document.addEventListener('pointerdown', handleClickOutside);
+    return () => document.removeEventListener('pointerdown', handleClickOutside);
+  }, [isExpanded]);
+
   // Detecta cambios de breakpoint. El resize se throttlea con requestAnimationFrame
   // porque en móvil dispara muchísimo (barra de URL al hacer scroll, teclado,
   // rotación) y cada disparo sincrónico contra el reflow del nav causaba lag.

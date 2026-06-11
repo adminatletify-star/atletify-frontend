@@ -77,18 +77,54 @@ const aplicarReaccionLocal = (s, tipo) => {
   return cur;
 };
 
+// Aplica una reacción a un PR en local con la MISMA semántica que el backend (upsert por usuario):
+// re-tocar el mismo emoji no cambia nada; cambiar de emoji mantiene el total; reacción nueva suma 1.
+function aplicarReaccionMarcaLocal(resumen, idMarca, emoji) {
+  const cur = resumen[idMarca] || { idMarca, total: 0, conteos: [], miEmoji: null };
+  const conteos = (cur.conteos || []).map(c => ({ ...c }));
+  let total = cur.total || 0;
+  const prevEmoji = cur.miEmoji || null;
+  const bump = (em, delta) => {
+    const i = conteos.findIndex(c => c.emoji === em);
+    if (i >= 0) { conteos[i].count += delta; if (conteos[i].count <= 0) conteos.splice(i, 1); }
+    else if (delta > 0) conteos.push({ emoji: em, count: 1 });
+  };
+  if (prevEmoji === emoji) {
+    // mismo emoji: el backend no agrega ni quita -> no tocar
+  } else if (prevEmoji) {
+    bump(prevEmoji, -1); bump(emoji, +1); // cambio de emoji -> total igual
+  } else {
+    bump(emoji, +1); total += 1; // reacción nueva
+  }
+  return { ...resumen, [idMarca]: { idMarca, total, conteos, miEmoji: emoji } };
+}
+
 // Icono según el emoji embebido en el título de la notificación
 const iconoNoti = (titulo = '') =>
   titulo.includes('💬') ? '💬'
   : titulo.includes('🔥') ? '🔥'
   : titulo.includes('❤️') ? '❤️'
   : titulo.includes('👍') ? '👍'
+  : titulo.includes('🤝') ? '🤝'
   : titulo.includes('💀') ? '💀'
   : titulo.includes('🔀') ? '🔀'
   : '🔔';
 
+// Tipo (color de acento) del aviso, según destino o el emoji del título
+const tipoNoti = (noti) => {
+  if (noti.destino === 'solicitud') return 'solicitud';
+  const t = noti.titulo || '';
+  if (t.includes('🤝')) return 'solicitud';        // solicitud aceptada (verde)
+  if (t.includes('💬')) return 'comentario';       // comentario/respuesta (cyan)
+  if (t.includes('❤️')) return 'like';             // like al perfil (rosa)
+  if (t.includes('🔥') || t.includes('👍') || t.includes('💀') || t.includes('🔀')) return 'reaccion'; // reacción a PR/comentario (ámbar)
+  return 'general';                                 // genérica (rojo)
+};
+
 // Fila de notificación con swipe-para-borrar (dedo o cursor, vía pointer events)
-function NotificacionRow({ noti, onAbrir, onBorrar }) {
+function NotificacionRow({ noti, onAbrir, onBorrar, onResponder }) {
+  const esSolicitud = noti.destino === 'solicitud';
+  const tipo = tipoNoti(noti);
   const [dx, setDx] = useState(0);
   const arrastrando = useRef(false);
   const startX = useRef(0);
@@ -116,7 +152,8 @@ function NotificacionRow({ noti, onAbrir, onBorrar }) {
     }
     const huboSwipe = movido.current;
     setDx(0);
-    if (!huboSwipe) onAbrir(noti);
+    // Tap: solo notificaciones "accionables" (no las informativas ni las de solicitud, que traen botones)
+    if (!huboSwipe && !esSolicitud && (noti.idEntrenamiento || noti.destino)) onAbrir(noti);
   };
 
   return (
@@ -126,7 +163,7 @@ function NotificacionRow({ noti, onAbrir, onBorrar }) {
         <i className="fas fa-trash"></i>
       </div>
       <div
-        className={`up-noti-row ${noti.leida ? 'up-noti-row--leida' : ''}`}
+        className={`up-noti-row up-noti-row--${tipo} ${noti.leida ? 'up-noti-row--leida' : ''}`}
         style={{ transform: `translateX(${dx}px)`, transition: arrastrando.current ? 'none' : 'transform 0.2s ease' }}
         onPointerDown={onDown}
         onPointerMove={onMove}
@@ -137,9 +174,25 @@ function NotificacionRow({ noti, onAbrir, onBorrar }) {
         <div className="up-noti-text">
           <div className="up-noti-titulo">{noti.titulo}</div>
           <div className="up-noti-msg">{noti.Mensaje || noti.mensaje}</div>
-          {noti.idEntrenamiento
-            ? <div className="up-noti-hint"><i className="fas fa-up-right-from-square me-1"></i>Toca para ver el comentario</div>
-            : (!noti.leida && <div className="up-noti-hint up-noti-hint--leer">Toca para marcar como leída</div>)}
+          {(noti.idEntrenamiento || (noti.destino && !esSolicitud)) && (
+            <div className="up-noti-hint"><i className="fas fa-up-right-from-square me-1"></i>Toca para ver</div>
+          )}
+          {esSolicitud && (
+            <div className="up-noti-acciones">
+              <button
+                type="button"
+                className="up-noti-btn up-noti-btn--accept"
+                onPointerDown={e => e.stopPropagation()}
+                onClick={e => { e.stopPropagation(); onResponder(noti, 'Aceptada'); }}
+              ><i className="fas fa-check me-1"></i>Aceptar</button>
+              <button
+                type="button"
+                className="up-noti-btn up-noti-btn--reject"
+                onPointerDown={e => e.stopPropagation()}
+                onClick={e => { e.stopPropagation(); onResponder(noti, 'Rechazada'); }}
+              ><i className="fas fa-times me-1"></i>Rechazar</button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -172,8 +225,8 @@ export default function UserPanel() {
   const [filtroGenero, setFiltroGenero] = useState('Hombre');
   const [estadoMensualidad, setEstadoMensualidad] = useState(null);
 
-  const [solicitudesPendientes, setSolicitudesPendientes] = useState([]);
   const [misCompas, setMisCompas] = useState([]);
+  const respondiendoRef = useRef(new Set()); // anti doble-tap al responder solicitudes desde la campana
   const [showModalAmistades, setShowModalAmistades] = useState(false);
   const [soloCompas, setSoloCompas] = useState(false);
 
@@ -183,6 +236,8 @@ export default function UserPanel() {
   const [loboSeleccionado, setLoboSeleccionado] = useState(null);
   const [marcasLobo, setMarcasLobo] = useState([]);
   const [cargandoMarcas, setCargandoMarcas] = useState(false);
+  const [perfilLikesU, setPerfilLikesU] = useState({ totalLikes: 0, yaLeDiLike: false });
+  const [reaccionesResumenU, setReaccionesResumenU] = useState({}); // idMarca -> { total, conteos }
   const [eleccionWod, setEleccionWod] = useState({});
   // 👇 1. ESTADOS PARA LA NUEVA LÓGICA FINANCIERA 👇
   const [finanzas, setFinanzas] = useState(null);
@@ -332,6 +387,21 @@ export default function UserPanel() {
     } catch (error) { console.error(error); }
   };
 
+  // Abre la bandeja y marca TODO como leído (el contador rojo se limpia al instante).
+  const abrirBandejaNotis = () => {
+    setShowModalNotis(true);
+    if (!notificaciones.some(n => !n.leida)) return;
+    setNotificaciones(prev => prev.map(n => ({ ...n, leida: true }))); // optimista: limpia el badge ya
+    try {
+      const idUsuario = user?.idUsuario || user?.id;
+      const token = localStorage.getItem('token');
+      fetch(`${API_BASE}/interacciones/notificaciones/usuario/${idUsuario}/leer-todas`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).catch(() => {});
+    } catch (error) { /* noop */ }
+  };
+
   // Borra un aviso (swipe en el modal). Optimista + DELETE en el backend.
   const borrarNotificacion = async (idNoti) => {
     setNotificaciones(prev => prev.filter(n => n.idNotificacion !== idNoti));
@@ -352,6 +422,12 @@ export default function UserPanel() {
       setComentariosWod({ idEntrenamiento: noti.idEntrenamiento });
       setShowModalNotis(false);
       borrarNotificacion(noti.idNotificacion); // se limpia del buzón al abrir el comentario
+    } else if (noti.destino === 'records') {
+      // Reacción a un PR -> Mi Perfil pestaña Récords, abriendo el modal de reacciones de ese PR;
+      // se limpia del buzón al abrirla (igual que las notis de comentario).
+      setShowModalNotis(false);
+      borrarNotificacion(noti.idNotificacion);
+      navigate('/mi-perfil#records', { state: { reaccionesMarca: noti.idMarca } });
     } else if (!noti.leida) {
       leerNotificacion(noti.idNotificacion);
     }
@@ -359,11 +435,8 @@ export default function UserPanel() {
 
   const cargarAmistades = async (idUsuario) => {
     try {
-      const [resPendientes, resCompas] = await Promise.all([
-        fetch(`${API_BASE}/amistades/pendientes/${idUsuario}`),
-        fetch(`${API_BASE}/amistades/mis-compas/${idUsuario}`)
-      ]);
-      if (resPendientes.ok) setSolicitudesPendientes(await resPendientes.json());
+      // Las solicitudes ahora llegan por la campana; aquí solo cargamos los compas confirmados.
+      const resCompas = await fetch(`${API_BASE}/amistades/mis-compas/${idUsuario}`);
       if (resCompas.ok) setMisCompas(await resCompas.json());
     } catch (error) { console.error(error); }
   };
@@ -375,6 +448,14 @@ export default function UserPanel() {
       });
       if (res.ok) cargarAmistades(user.idUsuario || user.id);
     } catch (error) { console.error(error); }
+  };
+
+  // Aceptar/Rechazar una solicitud desde la propia notificación: responde y la quita del buzón.
+  const responderDesdeNoti = (noti, respuesta) => {
+    if (!noti.idAmistad || respondiendoRef.current.has(noti.idAmistad)) return; // anti doble-tap
+    respondiendoRef.current.add(noti.idAmistad);
+    borrarNotificacion(noti.idNotificacion);
+    responderSolicitud(noti.idAmistad, respuesta);
   };
 
   const handleEliminarAmigo = async (idCompa) => {
@@ -392,33 +473,62 @@ export default function UserPanel() {
   const handleAbrirPerfilCompa = async (idLobo) => {
     setCargandoMarcas(true);
     setLoboSeleccionado(null);
+    setMarcasLobo([]);
+    setReaccionesResumenU({});
+    setPerfilLikesU({ totalLikes: 0, yaLeDiLike: false });
+    const token = localStorage.getItem('token');
+    const auth = { 'Authorization': `Bearer ${token}` };
     try {
-      const resUser = await fetch(`${API_BASE}/usuarios/${idLobo}`);
+      // perfil-publico: subconjunto seguro visible para cualquier atleta (GET /usuarios/{id} tiene guard PII -> 403)
+      const resUser = await fetch(`${API_BASE}/usuarios/${idLobo}/perfil-publico`, { headers: auth });
       if (resUser.ok) setLoboSeleccionado(await resUser.json());
 
-      const resPRs = await fetch(`${API_BASE}/marcaspersonales/usuario/${idLobo}`);
-      if (resPRs.ok) setMarcasLobo(await resPRs.json());
+      const [resPRs, resLikes, resResumen] = await Promise.all([
+        fetch(`${API_BASE}/marcaspersonales/usuario/${idLobo}`),
+        fetch(`${API_BASE}/interacciones/like-perfil/${idLobo}/estado`, { headers: auth }),
+        fetch(`${API_BASE}/interacciones/usuario/${idLobo}/reacciones-resumen`, { headers: auth }),
+      ]);
+      if (resPRs.ok) { const data = await resPRs.json(); setMarcasLobo(data.recordsMaximos || data || []); }
+      if (resLikes.ok) setPerfilLikesU(await resLikes.json());
+      if (resResumen.ok) { const arr = await resResumen.json(); setReaccionesResumenU(Object.fromEntries(arr.map(r => [r.idMarca, r]))); }
     } catch (error) { console.error(error); }
     finally { setCargandoMarcas(false); }
   };
 
+  // Reacción a un PR — UI optimista (bumpea conteo y reconcilia)
   async function handleReaccionar(idMarca, emoji) {
+    if (!loboSeleccionado) return;
+    const previo = reaccionesResumenU;
+    setReaccionesResumenU(prev => aplicarReaccionMarcaLocal(prev, idMarca, emoji));
     try {
-      const payload = { idMarca, idUsuarioReacciona: (user.idUsuario || user.id), emoji };
       const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE}/interacciones/reaccionar`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ idMarca, emoji })
       });
-      if (res.ok) alert(`¡Reaccionaste con ${emoji}!`);
-      else {
-        const err = await res.json(); alert(err.mensaje || "Error al reaccionar.");
-      }
-    } catch (error) { console.error(error); }
+      if (!res.ok) throw new Error();
+      const resR = await fetch(`${API_BASE}/interacciones/usuario/${loboSeleccionado.idUsuario}/reacciones-resumen`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (resR.ok) { const arr = await resR.json(); setReaccionesResumenU(Object.fromEntries(arr.map(r => [r.idMarca, r]))); }
+    } catch (error) { setReaccionesResumenU(previo); }
+  }
+
+  // Like al perfil — UI optimista (toggle)
+  async function handleLikePerfilU(idPerfil) {
+    const previo = perfilLikesU;
+    setPerfilLikesU(previo.yaLeDiLike
+      ? { totalLikes: Math.max(0, previo.totalLikes - 1), yaLeDiLike: false }
+      : { totalLikes: previo.totalLikes + 1, yaLeDiLike: true });
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/interacciones/like-perfil/${idPerfil}`, {
+        method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error();
+      setPerfilLikesU(await res.json());
+    } catch (error) { setPerfilLikesU(previo); }
   }
 
   const verificarReservaDeHoy = async (idBox, idUsuario) => {
@@ -1058,7 +1168,7 @@ export default function UserPanel() {
             <div className="d-flex align-items-center gap-3">
               <button
                 className="up-notif-btn position-relative"
-                onClick={() => setShowModalNotis(true)}
+                onClick={abrirBandejaNotis}
               >
                 <i className={`fas fa-bell ${notisNoLeidas > 0 ? 'fa-shake' : ''}`}></i>
                 {notisNoLeidas > 0 && (
@@ -1434,24 +1544,18 @@ export default function UserPanel() {
 
               {/* Mi Manada */}
               <div
-                className={`up-card up-card-clickable ${solicitudesPendientes.length > 0 ? 'up-card-pending-danger' : ''}`}
+                className="up-card up-card-clickable"
                 onClick={() => setShowModalAmistades(true)}
               >
                 <div className="up-mini-card">
-                  <div className={`up-mini-icon up-mini-icon-danger ${solicitudesPendientes.length > 0 ? 'up-icon-pulse' : ''}`}>
-                    <i className={solicitudesPendientes.length > 0 ? "fas fa-user-plus fa-shake" : "fas fa-paw"}></i>
+                  <div className="up-mini-icon up-mini-icon-danger">
+                    <i className="fas fa-paw"></i>
                   </div>
                   <div className="flex-grow-1">
                     <div className="up-mini-label">Mi Manada</div>
                     <div className="up-mini-value">{misCompas.length} compas en la manada</div>
                   </div>
-                  {solicitudesPendientes.length > 0 ? (
-                    <span className="badge bg-danger rounded-pill px-2 py-1 animate__animated animate__pulse animate__infinite fw-bold">
-                      {solicitudesPendientes.length}
-                    </span>
-                  ) : (
-                    <i className="fas fa-chevron-right text-secondary small"></i>
-                  )}
+                  <i className="fas fa-chevron-right text-secondary small"></i>
                 </div>
               </div>
 
@@ -1721,6 +1825,7 @@ export default function UserPanel() {
                       noti={noti}
                       onAbrir={abrirAviso}
                       onBorrar={borrarNotificacion}
+                      onResponder={responderDesdeNoti}
                     />
                   ))}
                 </div>
@@ -1741,32 +1846,7 @@ export default function UserPanel() {
             </div>
 
             <div className="up-modal-body">
-              {solicitudesPendientes.length > 0 && (
-                <div className="mb-4">
-                  <h6 className="text-danger fw-bold small mb-3">NUEVAS SOLICITUDES</h6>
-                  <div className="d-flex flex-column gap-3">
-                    {solicitudesPendientes.map(sol => (
-                      <div key={sol.idAmistad} className="bg-black bg-opacity-50 p-3 rounded-4 border border-secondary border-opacity-25 d-flex align-items-center justify-content-between">
-                        <div className="d-flex align-items-center gap-3">
-                          <div className="rounded-circle bg-danger text-white d-flex justify-content-center align-items-center fw-bold" style={{ width: '40px', height: '40px' }}>
-                            {sol.apodo ? sol.apodo.charAt(0).toUpperCase() : sol.nombre.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="text-white fw-bold">{sol.apodo || sol.nombre.split(' ')[0]}</div>
-                            <div className="text-secondary small" style={{ fontSize: '0.7rem' }}>LVL: {sol.nivel}</div>
-                          </div>
-                        </div>
-                        <div className="d-flex gap-2">
-                          <button onClick={() => responderSolicitud(sol.idAmistad, 'Aceptada')} className="btn btn-sm btn-success rounded-circle shadow-sm" style={{ width: '35px', height: '35px' }}><i className="fas fa-check"></i></button>
-                          <button onClick={() => responderSolicitud(sol.idAmistad, 'Rechazada')} className="btn btn-sm btn-outline-secondary rounded-circle" style={{ width: '35px', height: '35px' }}><i className="fas fa-times"></i></button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <h6 className="text-secondary fw-bold small mb-3 border-top border-secondary border-opacity-25 pt-4">TUS COMPAS ({misCompas.length})</h6>
+              <h6 className="text-secondary fw-bold small mb-3">TUS COMPAS ({misCompas.length})</h6>
               {misCompas.length === 0 ? (
                 <p className="text-secondary small text-center">Aún no has agregado a nadie a tu manada.</p>
               ) : (
@@ -1806,6 +1886,11 @@ export default function UserPanel() {
           marcas={marcasLobo}
           cargandoMarcas={cargandoMarcas}
           miId={user?.idUsuario || user?.id}
+          reaccionesResumen={reaccionesResumenU}
+          likesPerfil={perfilLikesU.totalLikes}
+          yaLeDiLike={perfilLikesU.yaLeDiLike}
+          onLikePerfil={handleLikePerfilU}
+          estadoAmistad="Aceptada"  /* este lanyard solo se abre desde la lista de compas ya aceptados */
           onClose={() => setLoboSeleccionado(null)}
           onReaccionar={handleReaccionar}
           onSolicitarAmistad={() => { }}

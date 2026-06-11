@@ -113,6 +113,8 @@
   align-items: flex-start;
 }
 .cwc-item--respuesta { margin-left: 0; }
+/* Comentario en vuelo (UI optimista): se ve atenuado hasta que el servidor confirma */
+.cwc-item--pendiente { opacity: 0.55; }
 .cwc-avatar {
   width: 36px;
   height: 36px;
@@ -190,7 +192,17 @@
   border-radius: 999px;
   padding: 0.1rem 0.5rem;
   font-size: 0.8rem;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
+@media (hover: hover) {
+  .cwc-reacciones-resumen:hover { border-color: rgba(230, 57, 70, 0.4); }
+}
+.cwc-reacciones-resumen:active { transform: scale(0.95); }
 .cwc-reacciones-count { font-size: 0.7rem; color: var(--text-muted); margin-left: 0.15rem; font-family: var(--font-stats); }
 
 /* Acciones */
@@ -353,8 +365,14 @@
   align-items: center;
   justify-content: center;
   transition: var(--transition);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
-.cwc-publicar:hover:not(:disabled) { background: var(--primary-dark); box-shadow: 0 4px 16px var(--primary-glow); }
+/* Hover solo con mouse: en táctil se quedaría "pegado" tras tocar */
+@media (hover: hover) {
+  .cwc-publicar:hover:not(:disabled) { background: var(--primary-dark); box-shadow: 0 4px 16px var(--primary-glow); }
+}
+.cwc-publicar:active:not(:disabled) { transform: scale(0.93); }
 .cwc-publicar:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Responsive */
@@ -382,4 +400,132 @@
   .cwc-picker-emoji { font-size: 1.05rem; }
   .cwc-aviso { font-size: 0.62rem; }
   .cwc-publicar { width: 40px; height: 40px; }
+}
+
+/* ============================================================
+   Modal "quiénes reaccionaron" (estilo FB) — prefijo .cwc-react-
+   Reutiliza .cwc-overlay/.cwc-modal pero queda centrado y compacto
+   en todo tamaño (no full-screen como el de comentarios).
+   ============================================================ */
+.cwc-react-modal {
+  height: auto;
+  max-height: min(80vh, 600px);
+  max-width: 440px;
+}
+
+/* Pestañas por emoji (Todas / 👍 / ❤️ ...) */
+.cwc-react-tabs {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.8rem 1rem;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  -webkit-overflow-scrolling: touch;
+}
+.cwc-react-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.cwc-react-tab.is-active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.cwc-react-tab-emoji { font-size: 0.95rem; }
+.cwc-react-tab-count { font-family: var(--font-stats); font-size: 0.72rem; opacity: 0.9; }
+@media (hover: hover) {
+  .cwc-react-tab:hover:not(.is-active) { border-color: rgba(230, 57, 70, 0.3); background: rgba(230, 57, 70, 0.1); }
+}
+.cwc-react-tab:active { transform: scale(0.95); }
+
+/* Lista de personas */
+.cwc-react-lista {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.6rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.cwc-react-row { display: flex; align-items: center; gap: 0.6rem; }
+.cwc-react-nombre {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cwc-react-emoji { font-size: 1.15rem; flex-shrink: 0; }
+
+/* Paginación (mismo estilo que Ejercicios .ej-pag-*) */
+.cwc-pag {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.7rem 1rem 0.9rem;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.cwc-pag-num {
+  min-width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--secondary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.cwc-pag-num.is-active { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
+.cwc-pag-arrow {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.cwc-pag-arrow:disabled { opacity: 0.4; cursor: not-allowed; }
+.cwc-pag-ellipsis { color: var(--text-muted); padding: 0 0.2rem; }
+@media (hover: hover) {
+  .cwc-pag-num:hover,
+  .cwc-pag-arrow:hover:not(:disabled) { background: rgba(230, 57, 70, 0.1); border-color: rgba(230, 57, 70, 0.3); }
+}
+.cwc-pag-num:active,
+.cwc-pag-arrow:active:not(:disabled) { transform: scale(0.93); }
+
+/* En móvil queda centrado y compacto (no full-screen como el de comentarios) */
+.cwc-react-overlay { padding: 1rem; }
+@media (max-width: 576px) {
+  .cwc-react-overlay .cwc-react-modal {
+    height: auto;
+    max-height: 85vh;
+    max-width: 100%;
+    width: 100%;
+    border-radius: 20px;
+    border-top-width: 3px;
+  }
 }

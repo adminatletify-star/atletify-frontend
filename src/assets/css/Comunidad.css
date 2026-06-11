@@ -307,6 +307,17 @@
   text-transform: uppercase;
 }
 
+.com-card-username {
+  font-family: var(--font-stats);
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  margin: 0 0 0.3rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
 .com-card-apodo {
   font-family: var(--font-body);
   font-style: italic;

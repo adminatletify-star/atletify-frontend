@@ -44,6 +44,9 @@ export default function Dashboard() {
   const [configuracion, setConfiguracion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [guardandoConfig, setGuardandoConfig] = useState(false);
+  // Planes del Home (tabla PlanSaaS) — editables desde Developer
+  const [planesHome, setPlanesHome] = useState([]);
+  const [guardandoPlanId, setGuardandoPlanId] = useState(null);
   const [filtroNombre, setFiltroNombre] = useState('');
   const [filtroRol, setFiltroRol] = useState('');
   const [filtroBox, setFiltroBox] = useState('');
@@ -304,6 +307,91 @@ export default function Dashboard() {
     delete payload.planesCompetenciaArray;
     delete payload.rolesMantenimientoArray;
     return payload;
+  };
+
+  // ── Planes del Home (PlanSaaS) ──────────────────────────────
+  const cargarPlanesHome = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/planes`, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) return;
+      const data = await res.json();
+      setPlanesHome((Array.isArray(data) ? data : []).map(p => ({
+        ...p,
+        _beneficiosTexto: (() => { try { return JSON.parse(p.beneficiosJSON || '[]').join('\n'); } catch { return ''; } })()
+      })));
+    } catch (e) { console.error('Error al cargar planes del home', e); }
+  };
+  useEffect(() => { cargarPlanesHome(); }, []);
+
+  const setCampoPlanHome = (idx, campo, valor) => {
+    setPlanesHome(prev => prev.map((p, i) => (i === idx ? { ...p, [campo]: valor } : p)));
+  };
+
+  const agregarPlanHome = () => {
+    setPlanesHome(prev => [...prev, {
+      idPlan: 0, nombre: 'Nuevo Plan', descripcion: '', precio: 0, mesesDuracion: 1,
+      limiteAtletas: 50, costoPorAtletaExtra: 0, incluyeCompetencias: false, esRecomendado: false,
+      categoria: 'Administración', costoCapacitacion: 0, beneficiosJSON: '[]', activo: true, _beneficiosTexto: ''
+    }]);
+  };
+
+  const construirPayloadPlan = (plan) => {
+    const { _beneficiosTexto, ...rest } = plan;
+    return {
+      ...rest,
+      beneficiosJSON: JSON.stringify((_beneficiosTexto || '').split('\n').map(s => s.trim()).filter(Boolean))
+    };
+  };
+
+  const guardarPlanHome = async (idx) => {
+    const plan = planesHome[idx];
+    const esNuevo = !plan.idPlan || plan.idPlan === 0;
+    setGuardandoPlanId(plan.idPlan || `nuevo-${idx}`);
+    try {
+      const token = localStorage.getItem('token');
+      const url = esNuevo
+        ? `${import.meta.env.VITE_API_URL}/api/developer/planes`
+        : `${import.meta.env.VITE_API_URL}/api/developer/planes/${plan.idPlan}`;
+      const res = await fetch(url, {
+        method: esNuevo ? 'POST' : 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(construirPayloadPlan(plan))
+      });
+      if (res.ok) { await cargarPlanesHome(); alert('Plan guardado. El home se actualiza solo.'); }
+      else alert('Error al guardar el plan.');
+    } catch (e) { alert('Error de red al guardar el plan.'); }
+    finally { setGuardandoPlanId(null); }
+  };
+
+  const toggleActivoPlanHome = async (idx) => {
+    const plan = planesHome[idx];
+    const nuevoActivo = !plan.activo;
+    setCampoPlanHome(idx, 'activo', nuevoActivo);
+    if (!plan.idPlan) return; // plan nuevo sin guardar: solo estado local
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${import.meta.env.VITE_API_URL}/api/developer/planes/${plan.idPlan}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(construirPayloadPlan({ ...plan, activo: nuevoActivo }))
+      });
+    } catch (e) { console.error(e); }
+  };
+
+  const eliminarPlanHome = async (idx) => {
+    const plan = planesHome[idx];
+    if (!plan.idPlan) { setPlanesHome(prev => prev.filter((_, i) => i !== idx)); return; }
+    if (!window.confirm(`¿Eliminar el plan "${plan.nombre}"? (Si está en uso por un box, mejor ocúltalo.)`)) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/planes/${plan.idPlan}`, {
+        method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) await cargarPlanesHome();
+      else alert(data.mensaje || data || 'No se pudo eliminar (puede estar en uso). Usa "Ocultar" en su lugar.');
+    } catch (e) { alert('Error de red al eliminar.'); }
   };
 
   const guardarConfiguracion = async (e) => {
@@ -793,6 +881,100 @@ export default function Dashboard() {
               <DeveloperSaaSFinanzas
                 onDataChanged={async () => { await cargarDataGlobal(); await refetchBoxes?.(); }}
               />
+            )}
+
+            {/* ══ Planes del Home (Suscripción — tabla PlanSaaS) ══ */}
+            {activeSection === 'config' && (
+              <section className="dash-section">
+                <div className="dash-section-head">
+                  <h2 className="dash-section-title">
+                    <i className="fas fa-tags"></i> Planes del Home (Suscripción)
+                  </h2>
+                  <button type="button" className="cfg-add-btn" onClick={agregarPlanHome}>
+                    <i className="fas fa-plus"></i> <span className="cfg-add-btn-label">Añadir Plan</span>
+                  </button>
+                </div>
+                <p className="mb-3" style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.72)' }}>
+                  Estos son los planes que se muestran en la página pública (sección <strong style={{ color: '#fff' }}>Planes y Precios</strong>).
+                  Edita el precio o los beneficios, y usa <strong style={{ color: '#fff' }}>Mostrar/Ocultar</strong> para que un plan aparezca o no en el home.
+                </p>
+
+                {planesHome.length === 0 && (
+                  <div className="empty-state" style={{ padding: '1.5rem' }}>
+                    <i className="fas fa-tags"></i>
+                    <p>No hay planes. Crea uno con “Añadir Plan”.</p>
+                  </div>
+                )}
+
+                <div className="row g-3">
+                  {planesHome.map((plan, idx) => (
+                    <div key={plan.idPlan || `nuevo-${idx}`} className="col-12 col-lg-6">
+                      <div className={`cfg-card ${plan.activo ? '' : 'opacity-75'}`} style={{ borderLeft: `3px solid ${plan.activo ? '#2ecc71' : '#888'}` }}>
+                        <div className="cfg-card-head">
+                          <div className="cfg-card-title">
+                            <i className="fas fa-tag"></i> {plan.nombre || 'Plan'}
+                            {plan.esRecomendado && <span className="badge bg-danger ms-2" style={{ fontSize: '0.6rem' }}>RECOMENDADO</span>}
+                            {!plan.activo && <span className="badge bg-secondary ms-2" style={{ fontSize: '0.6rem' }}>OCULTO</span>}
+                          </div>
+                          <button type="button" className="cfg-plan-delete" title="Eliminar plan" onClick={() => eliminarPlanHome(idx)}>
+                            <i className="fas fa-trash-alt"></i>
+                          </button>
+                        </div>
+
+                        <div className="mb-2">
+                          <label className="etiqueta-campo">Nombre</label>
+                          <input type="text" className="entrada-oscura" value={plan.nombre || ''} onChange={e => setCampoPlanHome(idx, 'nombre', e.target.value)} />
+                        </div>
+                        <div className="row g-2 mb-2">
+                          <div className="col-6">
+                            <label className="etiqueta-campo">Precio ($/mes)</label>
+                            <div className="cfg-input-group">
+                              <span className="cfg-input-prefix">$</span>
+                              <input type="number" min="0" step="1" className="entrada-oscura cfg-input-inner" value={plan.precio} onChange={e => setCampoPlanHome(idx, 'precio', parseFloat(e.target.value) || 0)} />
+                            </div>
+                          </div>
+                          <div className="col-6">
+                            <label className="etiqueta-campo">Límite atletas (0 = ∞)</label>
+                            <input type="number" min="0" className="entrada-oscura" value={plan.limiteAtletas} onChange={e => setCampoPlanHome(idx, 'limiteAtletas', parseInt(e.target.value) || 0)} />
+                          </div>
+                        </div>
+                        <div className="row g-2 mb-2">
+                          <div className="col-6">
+                            <label className="etiqueta-campo">$ por atleta extra</label>
+                            <div className="cfg-input-group">
+                              <span className="cfg-input-prefix">$</span>
+                              <input type="number" min="0" className="entrada-oscura cfg-input-inner" value={plan.costoPorAtletaExtra} onChange={e => setCampoPlanHome(idx, 'costoPorAtletaExtra', parseFloat(e.target.value) || 0)} />
+                            </div>
+                          </div>
+                          <div className="col-6 d-flex align-items-end pb-2">
+                            <label className="d-flex align-items-center gap-2 m-0" style={{ cursor: 'pointer' }}>
+                              <input type="checkbox" checked={!!plan.esRecomendado} onChange={e => setCampoPlanHome(idx, 'esRecomendado', e.target.checked)} />
+                              <span className="etiqueta-campo m-0">Recomendado</span>
+                            </label>
+                          </div>
+                        </div>
+                        <div className="mb-2">
+                          <label className="etiqueta-campo">Descripción</label>
+                          <input type="text" className="entrada-oscura" value={plan.descripcion || ''} onChange={e => setCampoPlanHome(idx, 'descripcion', e.target.value)} />
+                        </div>
+                        <div className="mb-3">
+                          <label className="etiqueta-campo">Beneficios (uno por línea)</label>
+                          <textarea className="entrada-oscura" rows="4" value={plan._beneficiosTexto || ''} onChange={e => setCampoPlanHome(idx, '_beneficiosTexto', e.target.value)} placeholder={"Reserva de Clases\nControl de Asistencia\n..."} />
+                        </div>
+
+                        <div className="d-flex gap-2">
+                          <button type="button" className="btn btn-sm flex-grow-1" style={{ background: '#e63946', color: '#fff', borderRadius: '8px', border: 'none' }} disabled={guardandoPlanId !== null} onClick={() => guardarPlanHome(idx)}>
+                            {guardandoPlanId === (plan.idPlan || `nuevo-${idx}`) ? 'Guardando…' : (<><i className="fas fa-save me-1"></i> Guardar</>)}
+                          </button>
+                          <button type="button" className={`btn btn-sm ${plan.activo ? 'btn-outline-warning' : 'btn-outline-success'}`} style={{ borderRadius: '8px' }} onClick={() => toggleActivoPlanHome(idx)}>
+                            <i className={`fas ${plan.activo ? 'fa-eye-slash' : 'fa-eye'} me-1`}></i> {plan.activo ? 'Ocultar' : 'Mostrar'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
             )}
 
             {/* ══ SECCIÓN 3: Planes de Competencias SaaS y Redes ══ */}
