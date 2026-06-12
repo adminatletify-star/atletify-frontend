@@ -11,6 +11,7 @@ import AtletifyLoader from '../components/AtletifyLoader';
 import AnunciosEngine from '../components/AnunciosEngine';
 import EjercicioDetailModal from '../components/EjercicioDetailModal';
 import ModalComentariosWod from '../components/ModalComentariosWod';
+import { formatear12 } from '../components/HoraPicker';
 import ModalCompararPRs from '../components/ModalCompararPRs';
 import { api } from '../services/api';
 
@@ -95,6 +96,60 @@ const getFechaHoyString = () => {
   return hoy.getFullYear() + '-' +
     String(hoy.getMonth() + 1).padStart(2, '0') + '-' +
     String(hoy.getDate()).padStart(2, '0');
+};
+
+// ── Revelación programada del WOD (espejo de la config guardada en el backend) ──
+// Convierte "HH:mm" (de HOY, hora local) a un Date. Null si no hay hora válida.
+const horaHoyADate = (hhmm) => {
+  if (!hhmm || typeof hhmm !== 'string' || !hhmm.includes(':')) return null;
+  const [h, m] = hhmm.split(':').map(Number);
+  if (Number.isNaN(h)) return null;
+  const d = new Date();
+  d.setHours(h, m || 0, 0, 0);
+  return d;
+};
+
+// ¿Ya se reveló este WOD para el atleta? Respeta el modo del WOD y, en "PorClase",
+// la clase reservada del atleta (miClase). Si no hay hora configurada → inmediato.
+const wodRevelado = (wod, miClase, ahora = new Date()) => {
+  if (!wod || !wod.estaPublicado) return false;
+  const modo = wod.modoRevelacion || 'Inmediato';
+  if (modo === 'Inmediato') return true;
+  if (modo === 'HoraFija') {
+    const t = horaHoyADate(wod.horaRevelacion);
+    return !t || ahora >= t;
+  }
+  // PorClase
+  const clases = wod.clasesAsignadas || [];
+  let objetivo = null;
+  if (miClase) {
+    const c = clases.find(x => x.idClase === miClase.idClase);
+    if (c && c.horaRevelacion) objetivo = horaHoyADate(c.horaRevelacion);
+  }
+  if (!objetivo) {
+    // sin hora propia → cae a la más temprana configurada entre las clases asignadas
+    const horas = clases.map(c => horaHoyADate(c.horaRevelacion)).filter(Boolean);
+    if (!horas.length) return true; // ninguna clase tiene hora → inmediato
+    objetivo = new Date(Math.min(...horas.map(d => d.getTime())));
+  }
+  return ahora >= objetivo;
+};
+
+// Hora "HH:mm" que se muestra en el teaser ("Se revela a las …").
+const horaRevelacionMostrar = (wod, miClase) => {
+  if (!wod) return null;
+  const modo = wod.modoRevelacion || 'Inmediato';
+  if (modo === 'HoraFija') return wod.horaRevelacion || null;
+  if (modo === 'PorClase') {
+    const clases = wod.clasesAsignadas || [];
+    if (miClase) {
+      const c = clases.find(x => x.idClase === miClase.idClase);
+      if (c && c.horaRevelacion) return c.horaRevelacion;
+    }
+    const horas = clases.map(c => c.horaRevelacion).filter(Boolean).sort();
+    return horas[0] || null;
+  }
+  return null;
 };
 
 // Aplica el toggle de like/dislike en local (mismo comportamiento que el backend),
@@ -247,6 +302,7 @@ function NotificacionRow({ noti, onAbrir, onBorrar, onResponder }) {
 export default function UserPanel() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [claseBase, setClaseBase] = useState(null); // clase fija del atleta (nombre + hora) para el tag del header
   const [box, setBox] = useState(null);
 
   const [tieneReservaHoy, setTieneReservaHoy] = useState(false);
@@ -259,6 +315,11 @@ export default function UserPanel() {
   const [loadingClases, setLoadingClases] = useState(false);
 
   const [wodsHoy, setWodsHoy] = useState([]);
+  const [nowTick, setNowTick] = useState(0); // re-render periódico para revelar el WOD al llegar su hora
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(t => t + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
   const [loadingWod, setLoadingWod] = useState(true);
   const [ejercicioModal, setEjercicioModal] = useState(null); // ejercicio del diccionario para el modal de detalle
   const [cargandoEjId, setCargandoEjId] = useState(null);       // id del ejercicio que se está cargando
@@ -345,6 +406,34 @@ export default function UserPanel() {
         .then(res => res.json())
         .then(data => setEstadoMensualidad(data))
         .catch(err => console.error(err));
+
+      // Refrescar el perfil desde el backend (la clase fija pudo cambiarla un admin desde
+      // "editar usuario"; el localStorage queda viejo) + traer nombre/hora de la clase base.
+      (async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const resU = await fetch(`${API_BASE}/usuarios/${u.idUsuario || u.id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          let fresh = u;
+          if (resU.ok) {
+            const data = await resU.json();
+            fresh = { ...u, ...data };
+            setUser(fresh);
+            localStorage.setItem('usuario', JSON.stringify(fresh));
+          }
+          if (fresh.idClasePredeterminada) {
+            const resC = await fetch(`${API_BASE}/clases/box/${b.idBox}`);
+            if (resC.ok) {
+              const clases = await resC.json();
+              const lista = Array.isArray(clases) ? clases : (clases.data || []);
+              setClaseBase(lista.find(c => c.idClase === fresh.idClasePredeterminada) || null);
+            }
+          } else {
+            setClaseBase(null);
+          }
+        } catch (e) { console.error('Error al refrescar perfil/clase base', e); }
+      })();
     }
   }, [navigate]);
 
@@ -770,10 +859,23 @@ export default function UserPanel() {
 
   const glassCard = { background: 'rgba(20, 20, 20, 0.6)', backdropFilter: 'blur(12px)', borderRadius: '24px', border: '1px solid rgba(255, 255, 255, 0.08)', boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.5)' };
 
+  // Filtra los WODs de hoy por la clase reservada del atleta + su revelación programada.
+  // `nowTick` se referencia para que estas listas se recalculen al re-renderizar por el timer.
+  const wodPasaClase = (w) => !w.clasesAsignadas || w.clasesAsignadas.length === 0 || (miClaseHoy && w.clasesAsignadas.some(c => c.idClase === miClaseHoy.idClase));
+  const getWodsVisibles = () => {
+    void nowTick;
+    const ahora = new Date();
+    const base = miClaseHoy ? wodsHoy.filter(wodPasaClase) : wodsHoy;
+    return base.filter(w => wodRevelado(w, miClaseHoy, ahora));
+  };
+  const getWodsBloqueados = () => {
+    const ahora = new Date();
+    const base = miClaseHoy ? wodsHoy.filter(wodPasaClase) : wodsHoy;
+    return base.filter(w => !wodRevelado(w, miClaseHoy, ahora));
+  };
+
   const handleClickDescargar = () => {
-    const wodsAMostrar = miClaseHoy
-      ? wodsHoy.filter(w => !w.clasesAsignadas || w.clasesAsignadas.length === 0 || w.clasesAsignadas.some(c => c.idClase === miClaseHoy.idClase))
-      : wodsHoy;
+    const wodsAMostrar = getWodsVisibles();
     if (wodsAMostrar.length === 0) return;
     if (wodsAMostrar.length === 1) {
       downloadWodCard(wodsAMostrar);
@@ -1221,7 +1323,13 @@ export default function UserPanel() {
                   </span>
                   <span className="up-hero-clase-tag">
                     <i className="fas fa-bookmark me-1"></i>
-                    {user?.idClasePredeterminada ? 'Clase Fija' : 'Open Box'}
+                    {user?.idClasePredeterminada
+                      ? (claseBase
+                          ? `${String(claseBase.horarioInicio || '').substring(0, 5)} · ${claseBase.nombre}`
+                          : 'Clase Fija')
+                      : miClaseHoy
+                        ? `${String(miClaseHoy.horaInicio || miClaseHoy.horarioInicio || '').substring(0, 5)} · ${miClaseHoy.nombre}`
+                        : 'Sin reserva hoy'}
                   </span>
                 </div>
               </div>
@@ -1326,7 +1434,7 @@ export default function UserPanel() {
                     <span className="up-date-badge">
                       {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
                     </span>
-                    {!loadingWod && wodsHoy.length > 0 && (
+                    {!loadingWod && getWodsVisibles().length > 0 && (
                       <button className="up-icon-btn" onClick={handleClickDescargar} title="Descargar imagen del WOD">
                         <i className="fas fa-download"></i>
                       </button>
@@ -1345,11 +1453,24 @@ export default function UserPanel() {
                   ) : (
                     <div className="d-flex flex-column">
                       {(() => {
-                        const wodsAMostrar = miClaseHoy
-                          ? wodsHoy.filter(w => !w.clasesAsignadas || w.clasesAsignadas.length === 0 || w.clasesAsignadas.some(c => c.idClase === miClaseHoy.idClase))
-                          : wodsHoy;
+                        const wodsAMostrar = getWodsVisibles();
 
-                        if (wodsAMostrar.length === 0) return <p className="text-secondary opacity-50 text-center py-3">No hay WOD asignado para tu clase específica.</p>;
+                        if (wodsAMostrar.length === 0) {
+                          const bloqueados = getWodsBloqueados();
+                          if (bloqueados.length > 0) {
+                            const horaRev = horaRevelacionMostrar(bloqueados[0], miClaseHoy);
+                            return (
+                              <div className="text-center py-5">
+                                <i className="fas fa-lock fs-1 mb-3 text-warning opacity-75"></i>
+                                <h4 className="text-white fw-bold mb-2" style={{ fontFamily: 'var(--font-heading)' }}>WOD sorpresa</h4>
+                                <p className="text-white-50 small mb-0">
+                                  El entrenamiento de hoy se revela{horaRev ? <> a las <strong className="text-warning">{formatear12(horaRev)}</strong></> : ' pronto'}. ¡Prepárate! 🔒
+                                </p>
+                              </div>
+                            );
+                          }
+                          return <p className="text-secondary opacity-50 text-center py-3">No hay WOD asignado para tu clase específica.</p>;
+                        }
 
                         const WOD_COLORS = ['var(--primary)', 'var(--accent-cool)', 'var(--accent)'];
 
@@ -1453,10 +1574,8 @@ export default function UserPanel() {
               </div>
 
               {/* PIZARRA */}
-              {wodsHoy.length > 0 && (() => {
-                const wodAsignado = miClaseHoy
-                  ? wodsHoy.find(w => !w.clasesAsignadas || w.clasesAsignadas.length === 0 || w.clasesAsignadas.some(c => c.idClase === miClaseHoy.idClase))
-                  : wodsHoy[0];
+              {getWodsVisibles().length > 0 && (() => {
+                const wodAsignado = getWodsVisibles()[0];
 
                 if (!wodAsignado) return null;
 
@@ -1739,7 +1858,7 @@ export default function UserPanel() {
                           <div className="mt-3 border-top border-secondary border-opacity-25 pt-3">
                             <label className="small text-secondary fw-bold mb-2">¿Qué vas a entrenar hoy?</label>
                             <OpcionesPicker
-                              valor={miClaseHoy.idMiWod != null && miClaseHoy.idMiWod !== -1 ? miClaseHoy.idMiWod : (wodsHoy.length > 0 ? wodsHoy[0].idEntrenamiento : '')}
+                              valor={miClaseHoy.idMiWod != null && miClaseHoy.idMiWod !== -1 ? miClaseHoy.idMiWod : ''}
                               onCambiar={(v) => {
                                 if (parseInt(v) === -1) cancelarReservaHoy(miClaseHoy.idClase);
                                 else cambiarMiWod(miClaseHoy.idMiAsistencia, v);

@@ -29,6 +29,58 @@ const DIA_CORTE_OPCIONES = [
 
 const fmtFecha = (d) => d ? new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: '2-digit' }) : '—';
 
+// Fecha local → 'yyyy-MM-dd' (sin desfase de zona horaria, a diferencia de toISOString)
+const toYMD = (dt) => {
+  const m = String(dt.getMonth() + 1).padStart(2, '0');
+  const da = String(dt.getDate()).padStart(2, '0');
+  return `${dt.getFullYear()}-${m}-${da}`;
+};
+
+// Periodo de pago CERRADO más reciente según la cadencia del coach (espejo exacto del
+// backend NominaController.PeriodoCadenciaCerrado). Siempre devuelve un periodo completo y
+// terminado → nunca se paga una semana a medias ni quedan días huérfanos. `proximoCorte` es
+// cuándo cerrará el periodo EN CURSO (lo que el admin verá como "se paga el …").
+//   Semanal:   diaCorte = día de pago (1=Lun..7=Dom); periodo = los 7 días anteriores al corte.
+//   Quincenal: quincenas de calendario [1..15] y [16..fin]; periodo = la última cerrada.
+//   Mensual:   mes de calendario; periodo = el mes anterior completo.
+const periodoCadenciaCerrado = (periodicidad, diaCorte, hoy = new Date()) => {
+  const d = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+  const per = periodicidad || 'Semanal';
+  const ini = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate(), 0, 0, 0, 0);
+  const fin = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate(), 23, 59, 59, 999);
+
+  if (per === 'Mensual') {
+    const inicio = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+    const finP = new Date(d.getFullYear(), d.getMonth(), 0); // último día del mes anterior
+    const proximoCorte = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    return { inicio: ini(inicio), fin: fin(finP), proximoCorte };
+  }
+  if (per === 'Quincenal') {
+    if (d.getDate() >= 16) {
+      return {
+        inicio: ini(new Date(d.getFullYear(), d.getMonth(), 1)),
+        fin: fin(new Date(d.getFullYear(), d.getMonth(), 15)),
+        proximoCorte: new Date(d.getFullYear(), d.getMonth() + 1, 1),
+      };
+    }
+    return {
+      inicio: ini(new Date(d.getFullYear(), d.getMonth() - 1, 16)),
+      fin: fin(new Date(d.getFullYear(), d.getMonth(), 0)),
+      proximoCorte: new Date(d.getFullYear(), d.getMonth(), 15),
+    };
+  }
+  // Semanal
+  let pd = parseInt(diaCorte);
+  if (!(pd >= 1 && pd <= 7)) pd = 1;
+  const isoHoy = d.getDay() === 0 ? 7 : d.getDay();
+  const diasAtras = (isoHoy - pd + 7) % 7;
+  const corteRef = new Date(d); corteRef.setDate(d.getDate() - diasAtras);
+  const inicio = new Date(corteRef); inicio.setDate(corteRef.getDate() - 7);
+  const finP = new Date(corteRef); finP.setDate(corteRef.getDate() - 1);
+  const proximoCorte = new Date(corteRef); proximoCorte.setDate(corteRef.getDate() + 7);
+  return { inicio: ini(inicio), fin: fin(finP), proximoCorte };
+};
+
 // GET con reintentos: los 500 transitorios del pooler de Supabase se reintentan
 // con un pequeño backoff. Devuelve el JSON o null si nunca respondió OK.
 async function fetchJsonRetry(url, intentos = 3) {
@@ -466,7 +518,18 @@ export default function GestionStaff() {
     if (!box) return;
     setCargandoAuditoria(true);
     try {
-      const { fInicioStr, fFinStr } = getDatesForFilter(filtroAuditoria);
+      let fInicioStr, fFinStr;
+      if (vistaActiva === 'nomina') {
+        // Nómina paga por CADENCIA (periodo cerrado por coach), no por el filtro de pantalla.
+        // Cargamos una ventana amplia (desde el 1º de hace 2 meses) para tener todas las clases
+        // validadas de los últimos periodos cerrados, sea semanal/quincenal/mensual.
+        const hoy = new Date();
+        const ini = new Date(hoy.getFullYear(), hoy.getMonth() - 2, 1);
+        fInicioStr = toYMD(ini);
+        fFinStr = toYMD(hoy);
+      } else {
+        ({ fInicioStr, fFinStr } = getDatesForFilter(filtroAuditoria));
+      }
       const token = localStorage.getItem('token');
       const res = await fetch(`${API_URL}/nomina/auditoria-clases/${box.idBox}/${fInicioStr}/${fFinStr}`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -482,29 +545,17 @@ export default function GestionStaff() {
   };
 
   const abrirModalPago = (coachNomina) => {
-    // Tomar DiaCorte de la primera clase de este coach
-    const rawDiaCorte = coachNomina.clases[0]?.diaCorte ?? coachNomina.clases[0]?.DiaCorte ?? 7;
-    const diaCorte = parseInt(rawDiaCorte);
-
-    const jsDiaCorte = diaCorte === 7 ? 0 : diaCorte;
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const day = today.getDay();
-    let diasFaltantes = jsDiaCorte - day;
-    if (diasFaltantes <= 0) diasFaltantes += 7; 
-
-    const proximoPago = new Date(today);
-    proximoPago.setDate(today.getDate() + diasFaltantes);
-
-    const { fInicioStr, fFinStr } = getDatesForFilter(filtroAuditoria);
+    // El periodo a pagar ya viene anclado a la cadencia del coach (inicio/fin/proximoCorte).
+    const proximoPago = coachNomina.proximoCorte;
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    const diasFaltantes = Math.max(0, Math.round((proximoPago - hoy) / 86400000));
 
     setCoachPagoInfo({
       ...coachNomina,
-      diaCorte,
       diasFaltantes,
       proximoPago,
-      fInicioStr,
-      fFinStr
+      fInicioStr: toYMD(coachNomina.inicio),
+      fFinStr: toYMD(coachNomina.fin),
     });
     setModalPagoVisible(true);
   };
@@ -652,29 +703,6 @@ export default function GestionStaff() {
     }
   };
 
-  const pagarNominaMes = async () => {
-    if (!await window.wpConfirm(`¿Seguro que deseas proceder con el pago definitivo de la nómina semanal de ${coachSeleccionado.nombre} por $${nominaActual.granTotal.toFixed(2)}? Se registrará un Egreso Financiero.`)) return;
-    try {
-      const idCoach = coachSeleccionado.idUsuario || coachSeleccionado.id;
-      const hoy = new Date();
-      // En vez de mes/año podríamos mandar la semana, pero para retrocompatibilidad usaremos el mes actual. Idealmente backend también debería tener pagar-semanal.
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/nomina/pagar/${idCoach}/${hoy.getFullYear()}/${hoy.getMonth() + 1}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert(data.mensaje || "Nómina pagada con éxito. ✅");
-        setModalContratoVisible(false);
-      } else {
-        alert(data.mensaje || "Error al pagar la nómina");
-      }
-    } catch (e) {
-      alert("Error al procesar el pago");
-    }
-  };
-
   const abrirModalContrato = async (coach) => {
     setCoachSeleccionado(coach);
     setModalContratoVisible(true);
@@ -798,11 +826,8 @@ export default function GestionStaff() {
     ? historialNomina.filter(h => String(h.idCoach ?? h.IdCoach) === filtroCoachHistorial)
     : historialNomina;
 
-  // Vista de Nómina: ¿el coach ya tiene pagado el periodo del filtro actual? (traslape con el historial)
-  const rangoNominaActual = getDatesForFilter(filtroAuditoria);
-  const coachYaPagado = (idCoach) => {
-    const ini = new Date(rangoNominaActual.fInicioStr);
-    const fin = new Date(rangoNominaActual.fFinStr);
+  // Vista de Nómina: ¿el coach ya tiene pagado ESTE periodo (de su cadencia)? (traslape con el historial)
+  const coachYaPagado = (idCoach, ini, fin) => {
     return historialNomina.some(h => {
       if (String(h.idCoach ?? h.IdCoach) !== String(idCoach)) return false;
       const pIni = new Date(h.periodoInicio ?? h.PeriodoInicio);
@@ -810,6 +835,41 @@ export default function GestionStaff() {
       return pIni <= fin && ini <= pFin;
     });
   };
+
+  // Agrupación de Nómina por coach, anclada a la cadencia de cada uno. Para cada coach:
+  // tomamos su periodo cerrado más reciente, filtramos SUS clases validadas dentro de ese
+  // periodo y sumamos. Así lo que se muestra == lo que el backend pagará (mismo periodo).
+  const nominaPorCoach = (() => {
+    const groups = {};
+    for (const c of auditoriaClases) {
+      if ((c.estado ?? c.Estado) !== 'Validada') continue;
+      const id = c.idCoach ?? c.IdCoach;
+      if (!groups[id]) {
+        groups[id] = {
+          idCoach: id,
+          nombreCoach: c.nombreCoach ?? c.NombreCoach ?? 'Coach',
+          periodicidad: c.periodicidad ?? c.Periodicidad ?? 'Semanal',
+          diaCorte: parseInt(c.diaCorte ?? c.DiaCorte ?? 1),
+          tipoPago: c.tipoPago ?? c.TipoPago ?? 'PorClase',
+          montoContrato: c.montoContrato ?? c.MontoContrato ?? 0,
+          clasesAll: [],
+        };
+      }
+      groups[id].clasesAll.push(c);
+    }
+    return Object.values(groups).map(g => {
+      const per = periodoCadenciaCerrado(g.periodicidad, g.diaCorte);
+      const clases = g.clasesAll.filter(c => {
+        const f = new Date(c.fecha ?? c.Fecha);
+        return f >= per.inicio && f <= per.fin;
+      });
+      const esMontoFijo = g.tipoPago !== 'PorClase';
+      // PorClase: suma de clases validadas del periodo. Monto Fijo: monto del contrato por periodo.
+      const totalPagar = esMontoFijo ? g.montoContrato : clases.reduce((s, c) => s + (c.montoPago ?? c.MontoPago ?? 0), 0);
+      const pagado = coachYaPagado(g.idCoach, per.inicio, per.fin);
+      return { ...g, ...per, esMontoFijo, clases, totalPagar, pagado };
+    });
+  })();
 
   return (
     <div className="staff-container">
@@ -843,7 +903,7 @@ export default function GestionStaff() {
           <button
             type="button"
             className={`staff-tab ${vistaActiva === 'nomina' ? 'staff-tab--active' : ''}`}
-            onClick={() => { setVistaActiva('nomina'); setFiltroAuditoria('semana'); }}
+            onClick={() => setVistaActiva('nomina')}
           >
             <i className="fas fa-money-check-alt"></i><span>Nómina</span>
           </button>
@@ -1136,15 +1196,7 @@ export default function GestionStaff() {
             <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
               <div>
                 <h3 className="text-white mb-1"><i className="fas fa-money-check-alt text-danger me-2"></i> Gestión de Nómina</h3>
-                <p className="text-white-50 mb-0 small">Visualiza el subtotal a pagar por coach basado en las clases que ya han sido validadas.</p>
-              </div>
-              
-              <div className="staff-toolbar">
-                <button type="button" className="staff-picker-btn" onClick={() => setPickerActivo('fecha')}>
-                  <i className={`fas ${fechaSel.icon} staff-picker-btn-icon`}></i>
-                  <span className="staff-picker-btn-label">{fechaSel.label}</span>
-                  <i className="fas fa-chevron-down staff-picker-btn-arrow"></i>
-                </button>
+                <p className="text-white-50 mb-0 small">Cada coach se paga por su <strong>cadencia</strong>: se muestra el último periodo <strong>cerrado</strong>. La semana/periodo en curso no se puede pagar por adelantado.</p>
               </div>
             </div>
 
@@ -1153,13 +1205,7 @@ export default function GestionStaff() {
                 <div className="spinner-border text-danger" role="status"></div>
                 <p className="mt-3 text-white-50">Calculando nómina...</p>
               </div>
-            ) : Object.values(auditoriaClases.filter(c => (c.estado ?? c.Estado) === 'Validada').reduce((acc, c) => {
-              const id = c.idCoach ?? c.IdCoach;
-              if (!acc[id]) { acc[id] = { idCoach: id, nombreCoach: c.nombreCoach ?? c.NombreCoach ?? 'Coach', clases: [], totalPagar: 0 }; }
-              acc[id].clases.push(c);
-              acc[id].totalPagar += (c.montoPago ?? c.MontoPago ?? 0);
-              return acc;
-            }, {})).length === 0 ? (
+            ) : nominaPorCoach.length === 0 ? (
               <div className="staff-empty-card py-5 text-center">
                 <i className="fas fa-wallet fs-1 text-white-50 mb-3"></i>
                 <h5 className="text-white">Sin clases validadas</h5>
@@ -1167,13 +1213,7 @@ export default function GestionStaff() {
               </div>
             ) : (
               <div className="row g-3">
-                {Object.values(auditoriaClases.filter(c => (c.estado ?? c.Estado) === 'Validada').reduce((acc, c) => {
-                  const id = c.idCoach ?? c.IdCoach;
-                  if (!acc[id]) { acc[id] = { idCoach: id, nombreCoach: c.nombreCoach ?? c.NombreCoach ?? 'Coach', clases: [], totalPagar: 0 }; }
-                  acc[id].clases.push(c);
-                  acc[id].totalPagar += (c.montoPago ?? c.MontoPago ?? 0);
-                  return acc;
-                }, {})).map(coachNomina => (
+                {nominaPorCoach.map(coachNomina => (
                   <div key={coachNomina.idCoach} className="col-12 col-sm-6 col-lg-4">
                     <div className="staff-nomina-coach-card">
                       <div className="staff-avatar staff-nomina-coach-avatar">
@@ -1181,7 +1221,10 @@ export default function GestionStaff() {
                       </div>
                       <h3 className="staff-nomina-coach-nombre">{coachNomina.nombreCoach}</h3>
                       <p className="staff-nomina-coach-sub">
-                        <i className="fas fa-check-circle"></i> {coachNomina.clases.length} clase(s) validadas
+                        <i className="fas fa-calendar-week"></i> Periodo {fmtFecha(coachNomina.inicio)} – {fmtFecha(coachNomina.fin)}
+                      </p>
+                      <p className="staff-nomina-coach-sub" style={{ marginTop: '-4px' }}>
+                        <i className="fas fa-check-circle"></i> {coachNomina.esMontoFijo ? 'Monto fijo del periodo' : `${coachNomina.clases.length} clase(s) validadas`}
                       </p>
 
                       <div className="staff-nomina-coach-total">
@@ -1189,15 +1232,22 @@ export default function GestionStaff() {
                         <span className="staff-nomina-coach-total-valor">${coachNomina.totalPagar.toFixed(2)}</span>
                       </div>
 
-                      {coachYaPagado(coachNomina.idCoach) ? (
+                      {coachNomina.pagado ? (
                         <div className="staff-nomina-coach-btn" style={{ background: 'rgba(46,204,113,0.12)', borderColor: 'var(--success)', color: 'var(--success)', cursor: 'default' }}>
                           <i className="fas fa-check-circle"></i> Pagado este periodo
+                        </div>
+                      ) : coachNomina.totalPagar <= 0 ? (
+                        <div className="staff-nomina-coach-btn" style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'var(--border)', color: 'var(--text-muted)', cursor: 'default' }}>
+                          <i className="fas fa-hourglass-half"></i> Nada que pagar en el periodo
                         </div>
                       ) : (
                         <button className="staff-nomina-coach-btn" onClick={() => abrirModalPago(coachNomina)}>
                           <i className="fas fa-hand-holding-usd"></i> Registrar Pago
                         </button>
                       )}
+                      <p className="staff-nomina-coach-hint" style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: '8px 0 0', textAlign: 'center' }}>
+                        <i className="fas fa-lock me-1"></i>El periodo en curso se podrá pagar el {fmtFecha(coachNomina.proximoCorte)}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -1714,14 +1764,12 @@ export default function GestionStaff() {
                     <span className="staff-nomina-total-label">A Pagar</span>
                     <span className="staff-nomina-total-valor">${nominaActual.granTotal.toFixed(2)}</span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={pagarNominaMes}
-                    className="btn btn-success w-100 mt-3 py-2 fw-bold text-uppercase"
-                    style={{ borderRadius: '12px', fontSize: '12px', letterSpacing: '0.5px' }}
-                  >
-                    <i className="fas fa-hand-holding-usd me-1"></i> Pagar Nómina de la Semana
-                  </button>
+                  <div className="d-flex align-items-center gap-2 mt-3 p-2 rounded-10" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)' }}>
+                    <i className="fas fa-info-circle text-info"></i>
+                    <span className="text-white-50" style={{ fontSize: '11px' }}>
+                      El pago se registra en la pestaña <strong className="text-white">Nómina</strong>, por periodo cerrado de la cadencia del coach.
+                    </span>
+                  </div>
                 </div>
               )}
 

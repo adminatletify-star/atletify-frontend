@@ -208,6 +208,110 @@
   line-height: 1.5;
 }
 
+/* === REVELACIÓN PROGRAMADA === */
+.crw-reveal-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.crw-reveal-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.9rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--secondary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.crw-reveal-chip:hover {
+  border-color: rgba(230, 57, 70, 0.35);
+  color: var(--primary);
+  background: rgba(230, 57, 70, 0.06);
+}
+
+.crw-reveal-chip--active {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: rgba(230, 57, 70, 0.45);
+  color: var(--primary);
+  box-shadow: 0 2px 10px rgba(230, 57, 70, 0.12);
+}
+
+.crw-reveal-detail {
+  border-left: 2px solid rgba(230, 57, 70, 0.25);
+  padding-left: 0.85rem;
+}
+
+.crw-reveal-time {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font-stats);
+  font-size: 0.95rem;
+  padding: 0.5rem 0.75rem;
+  max-width: 150px;
+  width: 100%;
+  color-scheme: dark;
+}
+
+.crw-reveal-time:focus {
+  outline: none;
+  border-color: rgba(230, 57, 70, 0.5);
+  box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.12);
+}
+
+.crw-reveal-perclass {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.crw-reveal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+}
+
+.crw-reveal-row-clase {
+  font-family: var(--font-heading-alt);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
+}
+
+/* Fila destacada "Misma hora para todas" (atajo) */
+.crw-reveal-row--all {
+  background: rgba(230, 57, 70, 0.08);
+  border-color: rgba(230, 57, 70, 0.3);
+  border-style: dashed;
+  margin-bottom: 0.2rem;
+}
+.crw-reveal-row--all .crw-reveal-row-clase { color: var(--primary); }
+
+.crw-reveal-row .crw-reveal-time {
+  max-width: 120px;
+}
+
+@media (max-width: 576px) {
+  .crw-reveal-chip { font-size: 0.72rem; padding: 0.4rem 0.7rem; }
+  .crw-reveal-row { padding: 0.5rem 0.6rem; }
+  .crw-reveal-row-clase { font-size: 0.74rem; }
+}
+
 /* === BLOQUE DE ENTRENAMIENTO === */
 .crw-bloque {
   position: relative;
@@ -472,6 +576,12 @@
   gap: 1rem;
   margin-bottom: 2rem;
 }
+
+/* Footer sin el toggle de visibilidad (ahora vive en el selector de Visibilidad):
+   centramos las píldoras de acción para que no quede vacío de un lado. */
+.crw-footer-bar--solo { justify-content: center; }
+.crw-footer-bar--solo .crw-footer-actions,
+.crw-footer-bar--solo .ew-footer-actions { justify-content: center; }
 
 /* === TOGGLE PUBLICADO === */
 .crw-toggle-row {

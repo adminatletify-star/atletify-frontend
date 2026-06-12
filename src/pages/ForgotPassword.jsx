@@ -23,8 +23,13 @@ export default function ForgotPassword() {
       });
 
       if (response.ok) {
-        setMensaje("Si el correo existe en nuestro sistema, hemos enviado un enlace de recuperación. Revisa tu consola (o tu email).");
-        setCorreo('');
+        const data = await response.json().catch(() => ({}));
+        if (data.limiteExcedido) {
+          setMensaje(data.mensaje || "Has superado el límite de solicitudes de recuperación por hoy. Intenta de nuevo mañana.");
+        } else {
+          setMensaje("Si el correo existe en nuestro sistema, hemos enviado un enlace de recuperación. Revisa tu correo y, si no lo encuentras, revisa tu bandeja de spam.");
+          setCorreo('');
+        }
       } else {
         setMensaje("Hubo un error al procesar tu solicitud.");
       }

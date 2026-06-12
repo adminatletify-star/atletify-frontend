@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
+import HoraPicker, { formatear12 } from '../components/HoraPicker';
 import BackButton from '../components/BackButton';
 import ModoRankingPicker from '../components/ModoRankingPicker';
 import MetricaGanarPicker from '../components/MetricaGanarPicker';
@@ -40,6 +41,11 @@ export default function EditarWod() {
   const [bloques, setBloques] = useState([]);
   const [modoRanking, setModoRanking] = useState('Auto');
   const [metricaPrincipal, setMetricaPrincipal] = useState('Tiempo');
+
+  // Revelación programada del WOD al atleta
+  const [modoRevelacion, setModoRevelacion] = useState('Inmediato');
+  const [horaRevelacion, setHoraRevelacion] = useState('');
+  const [horasRevelacionClase, setHorasRevelacionClase] = useState({});
 
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));
@@ -89,6 +95,11 @@ export default function EditarWod() {
         setClasesSeleccionadas(wod.clasesIds || []);
         setModoRanking(wod.modoRanking || 'Auto');
         setMetricaPrincipal(wod.metricaPrincipal || 'Tiempo');
+        setModoRevelacion(wod.modoRevelacion || 'Inmediato');
+        setHoraRevelacion(wod.horaRevelacion || '');
+        const mapaHoras = {};
+        (wod.clasesRevelacion || []).forEach(c => { if (c.horaRevelacion) mapaHoras[c.idClase] = c.horaRevelacion; });
+        setHorasRevelacionClase(mapaHoras);
 
         // 👈 MAGIA RECUPERADA: Parseamos la Plantilla de Jueceo
         const bloquesParseados = wod.bloques.map(b => ({
@@ -170,6 +181,11 @@ export default function EditarWod() {
       };
     });
 
+    // Modo de revelación final: "Programar hora" se resuelve a PorClase si hay clases, o HoraFija si no.
+    const modoRevFinal = !estaPublicado ? 'Inmediato'
+      : modoRevelacion === 'Inmediato' ? 'Inmediato'
+      : (clasesSeleccionadas.length > 0 ? 'PorClase' : 'HoraFija');
+
     // 👈 MANDAMOS LA FECHA COMO TEXTO PURO (Ej. "2026-03-21"), SIN ZONAS HORARIAS
     const payload = {
       idBox: box.idBox,
@@ -181,8 +197,12 @@ export default function EditarWod() {
       bloques: bloquesLimpios,
       modoRanking: modoRanking,
       metricaPrincipal: modoRanking === 'Auto' ? metricaPrincipal : null,
-      rankingPublicado: modoRanking === 'Auto' ? true : false
-
+      rankingPublicado: modoRanking === 'Auto' ? true : false,
+      modoRevelacion: modoRevFinal,
+      horaRevelacion: modoRevFinal === 'HoraFija' ? (horaRevelacion || null) : null,
+      revelacionesClase: modoRevFinal === 'PorClase'
+        ? clasesSeleccionadas.map(id => ({ idClase: id, horaRevelacion: horasRevelacionClase[id] || null }))
+        : null
     };
 
     const url = esClon ? `${API_BASE}/entrenamientos` : `${API_BASE}/entrenamientos/${id}`;
@@ -295,6 +315,105 @@ export default function EditarWod() {
               </button>
             ))}
           </div>
+
+          {/* ── VISIBILIDAD / REVELACIÓN ── */}
+          <hr className="separador" />
+          <p className="crw-section-label mb-2">
+            <i className="fas fa-eye"></i>Visibilidad para los atletas
+          </p>
+          <div className="crw-reveal-modes">
+            {[
+              { v: 'Borrador', icon: 'fa-pen-ruler', label: 'Borrador' },
+              { v: 'Inmediato', icon: 'fa-bolt', label: 'Al instante' },
+              { v: 'Programar', icon: 'fa-clock', label: 'Programar hora' },
+            ].map(m => {
+              const activo = m.v === 'Borrador' ? !estaPublicado
+                : m.v === 'Inmediato' ? (estaPublicado && modoRevelacion === 'Inmediato')
+                : (estaPublicado && modoRevelacion !== 'Inmediato');
+              return (
+                <button
+                  key={m.v}
+                  type="button"
+                  className={`crw-reveal-chip ${activo ? 'crw-reveal-chip--active' : ''}`}
+                  onClick={() => {
+                    if (m.v === 'Borrador') setEstaPublicado(false);
+                    else if (m.v === 'Inmediato') { setEstaPublicado(true); setModoRevelacion('Inmediato'); }
+                    else { setEstaPublicado(true); setModoRevelacion(clasesSeleccionadas.length > 0 ? 'PorClase' : 'HoraFija'); }
+                  }}
+                >
+                  <i className={`fas ${m.icon} me-1`}></i>{m.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {!estaPublicado && (
+            <p className="crw-info-text mt-2">
+              <i className="fas fa-eye-slash me-1"></i>Solo tú lo ves. Los atletas no verán este WOD hasta que lo publiques.
+            </p>
+          )}
+
+          {estaPublicado && modoRevelacion === 'Inmediato' && (
+            <p className="crw-info-text mt-2">
+              <i className="fas fa-info-circle me-1"></i>Visible para los atletas en cuanto guardes el WOD.
+            </p>
+          )}
+
+          {estaPublicado && modoRevelacion !== 'Inmediato' && (
+            <div className="crw-reveal-detail mt-3">
+              {clasesSeleccionadas.length === 0 ? (
+                <>
+                  <label className="etiqueta-campo">Hora de revelación</label>
+                  <HoraPicker value={horaRevelacion} onChange={setHoraRevelacion} placeholder="Elegir hora" />
+                  <p className="crw-info-text mt-2">
+                    <i className="fas fa-info-circle me-1"></i>
+                    El WOD aparece a esa hora para todos. <em>Tip: asigna clases arriba para darle una hora distinta a cada una.</em>
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="crw-reveal-perclass">
+                    <div className="crw-reveal-row crw-reveal-row--all">
+                      <span className="crw-reveal-row-clase">
+                        <i className="fas fa-wand-magic-sparkles me-1"></i>Misma hora para todas
+                      </span>
+                      <HoraPicker
+                        compact
+                        value={horaRevelacion}
+                        onChange={(val) => {
+                          setHoraRevelacion(val);
+                          setHorasRevelacionClase(Object.fromEntries(clasesSeleccionadas.map(id => [id, val])));
+                        }}
+                        placeholder="--:--"
+                      />
+                    </div>
+                    {clasesSeleccionadas.map(id => {
+                      const clase = clasesDisponibles.find(c => c.idClase === id);
+                      if (!clase) return null;
+                      return (
+                        <div key={id} className="crw-reveal-row">
+                          <span className="crw-reveal-row-clase">
+                            <i className="far fa-clock me-1"></i>
+                            {formatear12(clase.horarioInicio)} — {clase.nombre}
+                          </span>
+                          <HoraPicker
+                            compact
+                            value={horasRevelacionClase[id] || ''}
+                            onChange={(val) => setHorasRevelacionClase(prev => ({ ...prev, [id]: val }))}
+                            placeholder="--:--"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="crw-info-text mt-2">
+                    <i className="fas fa-info-circle me-1"></i>
+                    Cada clase ve el WOD a su hora (ej. clase 5:00 PM → revelar 4:00 PM). Sin hora = visible al guardar.
+                  </p>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ══════════════════════════════════
@@ -430,16 +549,12 @@ export default function EditarWod() {
                   const ejercicioInfo = glosarioEjercicios.find(g => g.idEjercicio == ej.idEjercicio);
                   const categoria = ejercicioInfo?.categoria || '';
                   
-                  let placeholderReps = "Reps/Dist.";
-                  let regexFiltro = /[^0-9xXmcal\s-]/gi;
-                  
-                  if (categoria === 'Monostructural') {
-                    placeholderReps = "Ej: 400m, 15cal";
-                    regexFiltro = /[^0-9mcal\s]/gi;
-                  } else if (categoria === 'Weightlifting' || categoria === 'Gymnastics') {
-                    placeholderReps = "Ej: 4x12, 21-15";
-                    regexFiltro = /[^0-9xX\s-]/gi;
-                  }
+                  let placeholderReps = "Ej: 1km, 21";
+                  // Filtro permisivo: números, letras y % / . - (permite "1km", "1000m", "21-15", "50%").
+                  const regexFiltro = /[^0-9a-zA-Z%\/.\-\s]/g;
+
+                  if (categoria === 'Monostructural') placeholderReps = "Ej: 400m, 15cal";
+                  else if (categoria === 'Weightlifting' || categoria === 'Gymnastics') placeholderReps = "Ej: 4x12, 21-15";
 
                   return (
                     <div key={eIndex} className="crw-ejercicio-row row g-2 align-items-center">
@@ -449,7 +564,7 @@ export default function EditarWod() {
                           className="crw-reps-input"
                           placeholder={placeholderReps}
                           value={ej.esquemaRepeticiones}
-                          maxLength="15"
+                          maxLength="5"
                           onChange={e => {
                             let val = e.target.value.replace(regexFiltro, '');
                             actualizarEjercicio(bIndex, eIndex, 'esquemaRepeticiones', val);
@@ -467,11 +582,11 @@ export default function EditarWod() {
                         <input
                           type="text"
                           className="crw-peso-input"
-                          placeholder="Peso (Ej: 135/95)"
+                          placeholder="Ej: 70%, 50kg"
                           value={ej.pesoSugerido}
-                          maxLength="15"
+                          maxLength="10"
                           onChange={e => {
-                            let val = e.target.value.replace(/[^0-9.\s/lbskg]/gi, '');
+                            let val = e.target.value.replace(/[^0-9a-zA-Z%\/.\-\s]/g, '');
                             actualizarEjercicio(bIndex, eIndex, 'pesoSugerido', val);
                           }}
                         />
@@ -555,24 +670,7 @@ export default function EditarWod() {
         {/* ══════════════════════════════════
             BARRA DE PIE — PUBLICAR + GUARDAR
         ══════════════════════════════════ */}
-        <div className="crw-footer-bar">
-          <div className="crw-toggle-row">
-            <input
-              className="form-check-input m-0"
-              type="checkbox"
-              role="switch"
-              checked={estaPublicado}
-              onChange={e => setEstaPublicado(e.target.checked)}
-              style={{ width: '48px', height: '24px' }}
-            />
-            <p className="crw-toggle-label mb-0">
-              {estaPublicado
-                ? <span style={{ color: 'var(--success)' }}><i className="fas fa-eye me-2"></i>Público</span>
-                : <span style={{ color: 'var(--text-muted)' }}><i className="fas fa-eye-slash me-2"></i>Borrador</span>
-              }
-            </p>
-          </div>
-
+        <div className="crw-footer-bar crw-footer-bar--solo">
           <div className="ew-footer-actions">
             <BotonSeguro
               type="button"
