@@ -52,6 +52,7 @@ export default function AdminBoxPanel() {
   const [user, setUser] = useState(null);
   const [box, setBox] = useState(null);
   const [atletas, setAtletas] = useState([]);
+  const [equipo, setEquipo] = useState([]); // Coaches + AdminBox + Staff del box
   const [loading, setLoading] = useState(true);
   const [solicitudes, setSolicitudes] = useState([]);
   const [dashboardData, setDashboardData] = useState(null);
@@ -199,6 +200,15 @@ export default function AdminBoxPanel() {
         (x.rol === 'Coach' || x.Rol === 'Coach')
       );
       cargarCoachesPendientes(coachesBox);
+
+      // Equipo de trabajo (coaches + administradores + staff del box) — mismo criterio
+      // que AtletasBox y el semáforo, para que ningún conteo se contradiga.
+      const equipoBox = usuariosBox.filter(x => {
+        const r = x.rol || x.Rol;
+        return (x.idBoxPredeterminado === idBox || x.IdBoxPredeterminado === idBox) &&
+          (r === 'Coach' || r === 'AdminBox' || r === 'Staff');
+      });
+      setEquipo(equipoBox);
 
     } catch (err) {
       console.error(err);
@@ -1072,6 +1082,22 @@ export default function AdminBoxPanel() {
                     </div>
                     <div className="abp-stat-icon" style={{ background: 'rgba(231,76,60,0.1)', color: 'var(--danger)' }}>
                       <i className="fas fa-times-circle"></i>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </div>
+
+            <div className="col-6 col-md-3">
+              <Link to="/atletas-box?grupo=equipo" className="text-decoration-none d-block">
+                <div className="abp-stat-card" style={{ '--accent-line': 'var(--text-muted)', cursor: 'pointer' }}>
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div className="abp-stat-card-content">
+                      <div className="abp-stat-number" style={{ color: 'var(--text-primary)' }}>{equipo.length}</div>
+                      <div className="abp-stat-label">Equipo de trabajo</div>
+                    </div>
+                    <div className="abp-stat-icon" style={{ background: 'rgba(168,178,209,0.1)', color: 'var(--text-muted)' }}>
+                      <i className="fas fa-user-shield"></i>
                     </div>
                   </div>
                 </div>

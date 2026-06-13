@@ -113,7 +113,11 @@ export default function ModalAdminBox({ abierto, datosBox, boxExistente = null, 
             ubicacion: boxData.ubicacion.trim(),
             activo: true,
             costoMensualidad: 0,
-            costoMensualidadKids: 0
+            costoMensualidadKids: 0,
+            // Plan SaaS elegido al crear (opcional). Con plan -> Activo + próximo cobro a 30 días.
+            idPlanSaaS: boxData.idPlanSaaS || null,
+            estatusSaaS: boxData.idPlanSaaS ? 'Activo' : 'Pendiente',
+            fechaVencimientoSaaS: boxData.idPlanSaaS ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null
           })
         });
 

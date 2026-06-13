@@ -25,7 +25,7 @@ const normalizar = (s) =>
 
 const esStaff = (a) => {
   const rol = a.rol || a.Rol;
-  return rol === 'Coach' || rol === 'AdminBox';
+  return rol === 'Coach' || rol === 'AdminBox' || rol === 'Staff';
 };
 
 /* ── Paginación (mismo patrón que PreguntasRespuestasDev) ── */
@@ -125,7 +125,7 @@ export default function AtletasBox() {
       const todos = Array.isArray(data) ? data : (data.data || []);
       const delBox = todos.filter(x =>
         (x.idBoxPredeterminado === idBox || x.IdBoxPredeterminado === idBox) &&
-        (x.rol === 'Atleta' || x.Rol === 'Atleta' || x.rol === 'Coach' || x.Rol === 'Coach' || x.rol === 'AdminBox' || x.Rol === 'AdminBox')
+        (x.rol === 'Atleta' || x.Rol === 'Atleta' || x.rol === 'Coach' || x.Rol === 'Coach' || x.rol === 'AdminBox' || x.Rol === 'AdminBox' || x.rol === 'Staff' || x.Rol === 'Staff')
       );
       setAtletas(delBox);
     } catch (err) { console.error(err); }
@@ -150,9 +150,16 @@ export default function AtletasBox() {
     } catch (err) { console.error(err); alert('Error de conexión'); }
   }
 
+  // Chip de grupo: 'atletas' (Rol=Atleta) | 'equipo' (Coach/AdminBox) | 'inactivos'
+  const [grupo, setGrupo] = useState(searchParams.get('grupo') || 'atletas');
+
   // Derivados
   const activos = atletas.filter(a => a.activo);
   const inactivos = atletas.filter(a => !a.activo);
+  // Solo atletas reales (Rol=Atleta) — mismo criterio que el dashboard y el semáforo.
+  const atletasReales = atletas.filter(a => (a.rol || a.Rol) === 'Atleta');
+  // Equipo de trabajo (coaches + administradores del box).
+  const equipo = atletas.filter(esStaff);
   const categorias = [...new Set(atletas.map(a => a.categoriaBase).filter(Boolean))].sort();
 
   // Filtro + búsqueda sobre TODO lo visible (nombre, correo, teléfono,
@@ -160,9 +167,15 @@ export default function AtletasBox() {
   const atletasMostrados = atletas.filter(a => {
     const rolActual = a.rol || a.Rol;
     const matchCat = !filtroCat || a.categoriaBase === filtroCat;
+    // El chip de grupo separa atletas / equipo de trabajo / inactivos.
+    const matchGrupo =
+      grupo === 'equipo' ? esStaff(a)
+      : grupo === 'inactivos' ? !a.activo
+      : rolActual === 'Atleta'; // 'atletas' (default)
+    // filtroEstatus sigue activo para los deep-links del dashboard (?estatus=activo/inactivo).
     const matchEstatus = !filtroEstatus || (filtroEstatus === 'activo' ? a.activo : !a.activo);
     const matchRol = !filtroRol || rolActual === filtroRol;
-    if (!matchCat || !matchEstatus || !matchRol) return false;
+    if (!matchCat || !matchGrupo || !matchEstatus || !matchRol) return false;
     if (!busqueda) return true;
     const termino = normalizar(busqueda);
     const haystack = normalizar([
@@ -267,26 +280,26 @@ export default function AtletasBox() {
         ══════════════════════════════════ */}
         <div className="atb-chips">
           <button
-            className={`atb-chip total-chip ${filtroEstatus === '' ? 'seleccionado' : ''}`}
-            onClick={() => setFiltroEstatus('')}
+            className={`atb-chip total-chip ${grupo === 'atletas' ? 'seleccionado' : ''}`}
+            onClick={() => { setGrupo('atletas'); setFiltroRol(''); setFiltroEstatus(''); }}
           >
-            <i className="fas fa-users"></i>
-            <span>Todos</span>
-            <span className="atb-chip-num">{atletas.length}</span>
+            <i className="fas fa-running"></i>
+            <span>Atletas</span>
+            <span className="atb-chip-num">{atletasReales.length}</span>
           </button>
 
           <button
-            className={`atb-chip activo-chip ${filtroEstatus === 'activo' ? 'seleccionado' : ''}`}
-            onClick={() => setFiltroEstatus('activo')}
+            className={`atb-chip activo-chip ${grupo === 'equipo' ? 'seleccionado' : ''}`}
+            onClick={() => { setGrupo('equipo'); setFiltroRol(''); setFiltroEstatus(''); }}
           >
-            <i className="fas fa-check-circle"></i>
-            <span>Activos</span>
-            <span className="atb-chip-num">{activos.length}</span>
+            <i className="fas fa-user-shield"></i>
+            <span>Equipo de trabajo</span>
+            <span className="atb-chip-num">{equipo.length}</span>
           </button>
 
           <button
-            className={`atb-chip inactivo-chip ${filtroEstatus === 'inactivo' ? 'seleccionado' : ''}`}
-            onClick={() => setFiltroEstatus('inactivo')}
+            className={`atb-chip inactivo-chip ${grupo === 'inactivos' ? 'seleccionado' : ''}`}
+            onClick={() => { setGrupo('inactivos'); setFiltroRol(''); setFiltroEstatus(''); }}
           >
             <i className="fas fa-times-circle"></i>
             <span>Inactivos</span>

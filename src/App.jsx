@@ -81,6 +81,8 @@ import PuntoDeVenta from './pages/PuntoDeVenta';
 import SimuladorBarra from './pages/SimuladorBarra';
 import MisResultados from './pages/MisResultados';
 import AlmacenPanel from './pages/AlmacenPanel';
+import ModuloGate from './components/ModuloGate';
+import MiSuscripcion from './pages/MiSuscripcion';
 import EditarBox from './pages/EditarBox';
 import AdminCompetencias from './pages/AdminCompetencias';
 import AdminCompetenciasHistorial from './pages/AdminCompetenciasHistorial';
@@ -459,8 +461,9 @@ function App() {
               <Route path="/admin-competencias/roster/:id" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AdminRosterFinanzas /></ProtectedRoute>} />
               {/* --- ZONA ADMINISTRACIÓN Y COACHES --- */}
               <Route path="/admin-box-panel" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><AdminBoxPanel /></ProtectedRoute>} />
-              <Route path="/admin-box/grupos-familiares" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><AdminGruposFamiliares /></ProtectedRoute>} />
-              <Route path="/exportar-bd-box" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><ExportarBDBox /></ProtectedRoute>} />
+              <Route path="/admin-box/grupos-familiares" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><ModuloGate modulo="grupos-familiares"><AdminGruposFamiliares /></ModuloGate></ProtectedRoute>} />
+              <Route path="/exportar-bd-box" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><ModuloGate modulo="exportaciones"><ExportarBDBox /></ModuloGate></ProtectedRoute>} />
+              <Route path="/mi-suscripcion" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><MiSuscripcion /></ProtectedRoute>} />
               <Route path="/gestion-staff" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><GestionStaff /></ProtectedRoute>} />
               <Route path="/editar-usuario/:id" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox', 'Coach']}><EditarUsuario /></ProtectedRoute>} />
               <Route path="/crear-clase" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><CrearClaseAdminBox /></ProtectedRoute>} />
@@ -484,7 +487,9 @@ function App() {
                 path="/finanzas-globales"
                 element={
                   <ProtectedRoute allowedRoles={['Developer', 'AdminBox']}>
-                    <AdminFinanzasGlobales />
+                    <ModuloGate modulo="finanzas-reportes-globales">
+                      <AdminFinanzasGlobales />
+                    </ModuloGate>
                   </ProtectedRoute>
                 }
               />
@@ -503,7 +508,7 @@ function App() {
               <Route path="/calendario-wods" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><CalendarioWods /></ProtectedRoute>} />
               <Route path="/creador-wods" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><CreadorWods /></ProtectedRoute>} />
               <Route path="/editar-wod/:id" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><EditarWod /></ProtectedRoute>} />
-              <Route path="/wods-guardados" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><WodsGuardados /></ProtectedRoute>} />
+              <Route path="/wods-guardados" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><ModuloGate modulo="wod-plantillas"><WodsGuardados /></ModuloGate></ProtectedRoute>} />
               <Route path="/admin-box/validaciones" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><ValidacionTransferencias /></ProtectedRoute>} />
               <Route path="/directorio" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><Directorio /></ProtectedRoute>} />
               <Route path="/gestion-solicitudes" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><GestionSolicitudesAtletas /></ProtectedRoute>} />
@@ -523,7 +528,7 @@ function App() {
               <Route path="/gestion-inventario" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><GestionInventario /></ProtectedRoute>} />
               <Route path="/historial-ventas" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><HistorialVentas /></ProtectedRoute>} />
               <Route path="/gestion-fiado" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><GestionFiado /></ProtectedRoute>} />
-              <Route path="/almacen-panel" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><AlmacenPanel /></ProtectedRoute>} />
+              <Route path="/almacen-panel" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><ModuloGate modulo="ventas-avanzado"><AlmacenPanel /></ModuloGate></ProtectedRoute>} />
               <Route path="/wolf-beneficios" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><WolfBeneficios /></ProtectedRoute>} />
               <Route path="/buzon-sugerencias" element={<ProtectedRoute allowedRoles={['Atleta', 'Coach', 'AdminBox', 'Developer']}><BuzonSugerencias /></ProtectedRoute>} />
               <Route path="/gestion-reglamento" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><GestionReglamento /></ProtectedRoute>} />
@@ -532,7 +537,7 @@ function App() {
               {/* --- ZONA ATLETAS Y USUARIOS --- */}
               <Route path="/user-panel" element={<ProtectedRoute allowedRoles={['Usuario', 'Atleta', 'AdminBox', 'Coach', 'Developer']}><UserPanel /></ProtectedRoute>} />
               <Route path="/clases" element={<ProtectedRoute allowedRoles={['Usuario', 'Atleta']}><ClasesDisponibles /></ProtectedRoute>} />
-              <Route path="/mis-kids" element={<ProtectedRoute allowedRoles={['Usuario', 'Atleta', 'AdminBox']}><MisKids /></ProtectedRoute>} />
+              <Route path="/mis-kids" element={<ProtectedRoute allowedRoles={['Usuario', 'Atleta', 'AdminBox']}><ModuloGate modulo="kids"><MisKids /></ModuloGate></ProtectedRoute>} />
               <Route path="/mis-clases" element={<ProtectedRoute allowedRoles={['Usuario', 'Atleta']}><MisClases /></ProtectedRoute>} />
               <Route path="/completar-expediente" element={<ProtectedRoute allowedRoles={['Usuario', 'Atleta']}><CompletarExpediente /></ProtectedRoute>} />
               <Route path="/expediente-medico" element={<ProtectedRoute allowedRoles={['Usuario', 'Atleta']}><ExpedienteMedicoPage /></ProtectedRoute>} />

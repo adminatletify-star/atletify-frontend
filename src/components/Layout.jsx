@@ -8,6 +8,7 @@ import { BOXES_ENDPOINT } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ModalFirmaReglamento from './ModalFirmaReglamento';
 import ModalExpedienteMedico from './ModalExpedienteMedico';
+import { esModuloCore } from '../config/modulosSaaS';
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -111,7 +112,7 @@ export default function Layout() {
   };
 
   // 👇 LA MAGIA AQUÍ: useMemo memoriza el menú para no interrumpir la animación
-  const navItems = useMemo(() => {
+  const navItemsRaw = useMemo(() => {
     if (!user) return [];
 
     if (user.rol === 'AdminBox' || user.rol === 'Developer') {
@@ -130,13 +131,13 @@ export default function Layout() {
           label: 'Administración', icon: 'fa-store', bgColor: '#1f1015', textColor: '#fff',
           links: [
             { label: 'Punto de Venta / Tienda', href: '/gestion-ventas-productos' },
-            { label: 'Inventario de Almacén', href: '/almacen-panel' },
+            { label: 'Inventario de Almacén', href: '/almacen-panel', modulo: 'ventas-avanzado' },
             { label: 'Gestión de Clases', href: '/gestion-clases' },
             { label: 'Mensualidades', href: "/gestion-finanzas" },
-            { label: 'Finanzas Globales', href: '/finanzas-globales' },
+            { label: 'Finanzas Globales', href: '/finanzas-globales', modulo: 'finanzas-reportes-globales' },
             { label: 'Anuncios y Campañas', href: '/gestion-anuncios' },
-            { label: 'Gestión Competencias', href: '/admin-competencias' },
-            { label: 'Historial Competencias', href: '/admin-competencias/historial' },
+            { label: 'Gestión Competencias', href: '/admin-competencias', modulo: 'competencias' },
+            { label: 'Historial Competencias', href: '/admin-competencias/historial', modulo: 'competencias' },
             { label: 'Beneficios', href: '/wolf-beneficios' },
           ]
         },
@@ -146,6 +147,7 @@ export default function Layout() {
             { label: 'Panel Principal', href: '/admin-box-panel' },
             { label: 'Staff y Coaches', href: '/gestion-staff' },
             { label: 'Editar Box', href: '/editar-box' },
+            { label: 'Mi Suscripción', href: '/mi-suscripcion' },
             { label: 'Bandeja de pagos (Staff)', href: '/admin-roster' },
             { label: 'Bandeja de Validaciones', href: '/admin-box/validaciones' },
             { label: 'Buzón de Sugerencias', href: '/buzon-sugerencias' },
@@ -203,6 +205,17 @@ export default function Layout() {
       }
     ];
   }, [user?.idUsuario, user?.rol]); // Solo depende del rol del usuario, box no se usa aquí
+
+  // Filtra los links por módulo del plan SaaS del box. Developer ve todo; las
+  // claves CORE siempre pasan. Solo recalcula al cambiar el box (no por navegación).
+  const navItems = useMemo(() => {
+    const modulosBox = Array.isArray(box?.modulos) ? box.modulos : [];
+    const tiene = (clave) =>
+      !clave || user?.rol === 'Developer' || esModuloCore(clave) || modulosBox.includes(clave);
+    return navItemsRaw
+      .map(g => ({ ...g, links: (g.links || []).filter(l => tiene(l.modulo)) }))
+      .filter(g => g.links.length > 0);
+  }, [navItemsRaw, box, user?.rol]);
 
   // Ruta de inicio según rol (para el tab Inicio del MobileNavBar)
   const homeRoute = useMemo(() => {

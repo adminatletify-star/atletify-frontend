@@ -1,0 +1,112 @@
+/* Mi Suscripción — panel del AdminBox. Lenguaje visual GestionClases. */
+
+.msus-root { min-height: 100vh; background: var(--bg-base); padding-bottom: 3rem; }
+.msus-loading { display: flex; align-items: center; justify-content: center; min-height: 70vh; }
+
+.msus-header {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: rgba(18, 18, 24, 0.72);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.msus-header-titulo {
+  margin: 0; font-family: var(--font-heading, inherit);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  font-size: 1.05rem; color: var(--text-primary);
+}
+.msus-header-titulo span { color: var(--primary); }
+
+.msus-grid {
+  max-width: 880px; margin: 1.5rem auto 0; padding: 0 1.25rem;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+}
+.msus-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
+  padding: 1.25rem 1.35rem;
+}
+.msus-card--full { grid-column: 1 / -1; }
+
+.msus-card-head { display: flex; align-items: center; justify-content: space-between; }
+.msus-card-label {
+  font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-muted); font-family: var(--font-stats, inherit);
+}
+
+.msus-estatus { font-size: 0.7rem; padding: 0.22rem 0.6rem; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.03em; }
+.msus-estatus--ok   { color: var(--success); background: rgba(46, 204, 113, 0.12); border: 1px solid rgba(46, 204, 113, 0.3); }
+.msus-estatus--warn { color: var(--accent);  background: rgba(241, 196, 15, 0.12); border: 1px solid rgba(241, 196, 15, 0.3); }
+.msus-estatus--bad  { color: var(--primary); background: rgba(230, 57, 70, 0.12); border: 1px solid rgba(230, 57, 70, 0.3); }
+
+.msus-plan-nombre { margin: 0.6rem 0 0.25rem; font-family: var(--font-heading, inherit); font-size: 1.6rem; color: var(--text-primary); }
+.msus-plan-desc { margin: 0 0 0.75rem; font-size: 0.85rem; color: var(--text-muted); }
+.msus-precio { display: flex; align-items: baseline; gap: 0.3rem; margin-bottom: 0.5rem; }
+.msus-precio-num { font-family: var(--font-heading, inherit); font-size: 1.7rem; color: var(--text-primary); }
+.msus-precio-unit { font-size: 0.85rem; color: var(--text-muted); }
+.msus-vence { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; }
+.msus-vence strong { color: var(--text-primary); }
+
+.msus-btn-primary {
+  width: 100%;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  background: var(--primary); color: #fff; border: none;
+  font-family: var(--font-heading-alt, inherit); text-transform: uppercase; letter-spacing: 0.03em;
+  font-size: 0.85rem; padding: 0.78rem 1rem; border-radius: 10px; cursor: pointer;
+  transition: box-shadow 0.2s ease;
+}
+.msus-btn-primary:hover { box-shadow: 0 4px 16px var(--primary-glow, rgba(230, 57, 70, 0.4)); }
+
+.msus-cupo-num { font-family: var(--font-heading, inherit); font-size: 2rem; color: var(--text-primary); margin-top: 0.4rem; }
+.msus-cupo-de { font-size: 1.1rem; color: var(--text-muted); }
+.msus-cupo-ilimitado { display: flex; align-items: baseline; gap: 0.6rem; margin-top: 0.4rem; }
+.msus-cupo-inf { font-size: 0.85rem; color: var(--success); text-transform: uppercase; letter-spacing: 0.05em; }
+.msus-barra { height: 8px; background: var(--bg-base); border-radius: 999px; overflow: hidden; margin: 0.6rem 0; }
+.msus-barra-fill { height: 100%; background: var(--success); border-radius: 999px; transition: width 0.3s ease; }
+.msus-barra-fill--over { background: var(--primary); }
+.msus-excedente {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.82rem; color: var(--primary);
+  background: rgba(230, 57, 70, 0.07); border: 1px solid rgba(230, 57, 70, 0.2);
+  border-radius: 10px; padding: 0.6rem 0.75rem; margin-top: 0.4rem;
+}
+.msus-cupo-ok { font-size: 0.85rem; color: var(--success); display: flex; align-items: center; gap: 0.4rem; margin: 0.4rem 0 0; }
+.msus-hint { margin: 0.75rem 0 0; font-size: 0.76rem; color: var(--text-muted); opacity: 0.8; }
+
+.msus-modulos { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+.msus-mod-chip {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-size: 0.78rem; color: var(--text-primary);
+  background: rgba(230, 57, 70, 0.06); border: 1px solid rgba(230, 57, 70, 0.2);
+  padding: 0.35rem 0.7rem; border-radius: 8px;
+}
+.msus-mod-chip i { color: var(--primary); font-size: 0.78rem; }
+
+.msus-hist { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.msus-hist-row {
+  display: grid; grid-template-columns: 1.2fr 1.4fr 0.9fr 0.9fr; gap: 0.5rem;
+  align-items: center; font-size: 0.8rem; color: var(--text-muted);
+  padding: 0.5rem 0; border-top: 1px solid var(--border);
+}
+.msus-hist-monto { color: var(--text-primary); font-family: var(--font-stats, inherit); }
+.msus-hist-estado { text-align: right; font-size: 0.72rem; text-transform: uppercase; }
+.msus-hist-estado.pagado { color: var(--success); }
+.msus-hist-estado.pend { color: var(--accent); }
+
+.msus-empty { text-align: center; padding: 4rem 1rem; color: var(--text-muted); }
+.msus-empty i { font-size: 2rem; opacity: 0.35; display: block; margin-bottom: 0.75rem; }
+
+@media (max-width: 768px) {
+  .msus-plan-nombre { font-size: 1.4rem; }
+}
+@media (max-width: 576px) {
+  .msus-grid { grid-template-columns: 1fr; margin-top: 1rem; padding: 0 1rem; }
+  .msus-card { padding: 1.1rem 1.1rem; border-radius: 14px; }
+  .msus-plan-nombre { font-size: 1.25rem; }
+  .msus-precio-num { font-size: 1.5rem; }
+  .msus-hist-row { grid-template-columns: 1fr 1fr; }
+  .msus-hist-estado { text-align: left; }
+}

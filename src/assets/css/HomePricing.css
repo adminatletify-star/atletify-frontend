@@ -197,6 +197,10 @@
   .home-pricing-section .pricing-row {
     display: flex;
     flex-wrap: nowrap;
+    /* Bootstrap pone justify-content:center !important; eso deja la 1ª tarjeta
+       (Starter) en el overflow izquierdo inalcanzable. Forzamos flex-start para
+       poder deslizar desde la primera. */
+    justify-content: flex-start !important;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;

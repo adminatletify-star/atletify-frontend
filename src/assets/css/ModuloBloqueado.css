@@ -1,0 +1,157 @@
+/* Paywall genérico de módulo no incluido en el plan. Sigue el lenguaje visual
+   de GestionClases: centrado, border-top primary, backdrop, uppercase. */
+
+.mb-root {
+  min-height: 100vh;
+  background: var(--bg-base);
+  padding: 0 0 3rem;
+}
+
+.mb-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: rgba(18, 18, 24, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.mb-header-titulo {
+  margin: 0;
+  font-family: var(--font-heading, inherit);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+.mb-header-titulo span { color: var(--primary); }
+
+.mb-card {
+  max-width: 540px;
+  margin: 3rem auto 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+}
+
+.mb-icon-wrap {
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.08);
+  border: 1px solid rgba(230, 57, 70, 0.22);
+}
+.mb-icon-wrap i {
+  font-size: 2.1rem;
+  color: var(--primary);
+}
+
+.mb-tier-badge {
+  display: inline-block;
+  font-family: var(--font-stats, inherit);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: rgba(241, 196, 15, 0.08);
+  border: 1px solid rgba(241, 196, 15, 0.25);
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  margin-bottom: 1rem;
+}
+
+.mb-titulo {
+  font-family: var(--font-heading, inherit);
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  margin: 0 0 0.75rem;
+}
+
+.mb-desc {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0 auto 1.75rem;
+  max-width: 420px;
+}
+
+.mb-acciones {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.mb-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  font-family: var(--font-heading-alt, inherit);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.9rem;
+  padding: 0.8rem 1.4rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.1s ease;
+}
+.mb-btn-primary:hover { box-shadow: 0 4px 16px var(--primary-glow, rgba(230, 57, 70, 0.4)); }
+.mb-btn-primary:active { transform: scale(0.98); }
+
+.mb-btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  font-size: 0.9rem;
+  padding: 0.8rem 1.4rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.mb-btn-ghost:hover { color: var(--text-primary); border-color: var(--text-muted); }
+
+.mb-hint {
+  margin: 1.5rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  opacity: 0.75;
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+  .mb-card { margin-top: 2rem; padding: 2.1rem 1.6rem; }
+  .mb-titulo { font-size: 1.3rem; }
+  .mb-desc { font-size: 0.88rem; }
+}
+
+/* Móvil */
+@media (max-width: 576px) {
+  .mb-card { margin: 1.5rem 1rem 0; padding: 1.8rem 1.25rem; border-radius: 14px; }
+  .mb-icon-wrap { width: 68px; height: 68px; }
+  .mb-icon-wrap i { font-size: 1.7rem; }
+  .mb-titulo { font-size: 1.15rem; }
+  .mb-desc { font-size: 0.82rem; }
+  .mb-btn-primary, .mb-btn-ghost { font-size: 0.82rem; padding: 0.72rem 1.1rem; }
+}
+
+/* Móvil pequeño */
+@media (max-width: 380px) {
+  .mb-titulo { font-size: 1.02rem; }
+  .mb-desc { font-size: 0.76rem; }
+  .mb-acciones { flex-direction: column; }
+  .mb-btn-primary, .mb-btn-ghost { width: 100%; justify-content: center; }
+}

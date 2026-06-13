@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import BackButton from '../components/BackButton';
 import BotonSeguro from '../components/BotonSeguro';
@@ -7,8 +7,16 @@ import '../assets/css/crear-box.css';
 
 export default function CrearBox() {
   const { refetchBoxes } = useAuth();
-  const [form, setForm] = useState({ nombre: '', ubicacion: '' });
+  const [form, setForm] = useState({ nombre: '', ubicacion: '', idPlanSaaS: null });
   const [mostrarModalAdminBox, setMostrarModalAdminBox] = useState(false);
+  const [planes, setPlanes] = useState([]);
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/api/saas/planes`)
+      .then(r => (r.ok ? r.json() : []))
+      .then(d => setPlanes(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -20,7 +28,7 @@ export default function CrearBox() {
   const handleAdminBoxSuccess = () => {
     refetchBoxes();
     setMostrarModalAdminBox(false);
-    setForm({ nombre: '', ubicacion: '' });
+    setForm({ nombre: '', ubicacion: '', idPlanSaaS: null });
   };
 
   return (
@@ -76,6 +84,36 @@ export default function CrearBox() {
                     onChange={(e) => setForm({ ...form, ubicacion: e.target.value })}
                     required
                   />
+                </div>
+
+                <div className="mb-4">
+                  <label className="etiqueta-campo">Plan de suscripción</label>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {planes.map(p => {
+                      const sel = form.idPlanSaaS === p.idPlan;
+                      return (
+                        <button
+                          type="button"
+                          key={p.idPlan}
+                          onClick={() => setForm({ ...form, idPlanSaaS: sel ? null : p.idPlan })}
+                          style={{
+                            flex: '1 1 28%', minWidth: '92px', padding: '0.6rem 0.5rem',
+                            borderRadius: '10px', cursor: 'pointer',
+                            background: sel ? 'rgba(230,57,70,0.12)' : 'var(--bg-base)',
+                            border: `1px solid ${sel ? 'var(--primary)' : 'var(--border)'}`,
+                            color: 'var(--text-primary)', display: 'flex', flexDirection: 'column',
+                            gap: '2px', alignItems: 'center'
+                          }}
+                        >
+                          <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{p.nombre}</span>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>${Number(p.precio).toLocaleString('es-MX')}/mes</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+                    Opcional. Si eliges plan, el box queda Activo con ese plan; si no, queda Pendiente y le asignas plan después en Control de Permisos.
+                  </p>
                 </div>
 
                 <BotonSeguro

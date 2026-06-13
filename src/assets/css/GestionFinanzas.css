@@ -220,6 +220,7 @@
 .finanzas-salud-cnt--verde  { color: var(--success);     background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.2); }
 .finanzas-salud-cnt--rojo   { color: var(--danger);      background: rgba(231, 76, 60, 0.1);  border: 1px solid rgba(231, 76, 60, 0.2);  }
 .finanzas-salud-cnt--azul   { color: var(--accent-cool); background: rgba(79, 195, 247, 0.1); border: 1px solid rgba(79, 195, 247, 0.2); }
+.finanzas-salud-cnt--gris   { color: var(--text-primary); background: rgba(168, 178, 209, 0.08); border: 1px solid rgba(168, 178, 209, 0.2); }
 
 /* === LISTA MOROSOS (Dashboard) === */
 .finanzas-moroso-item {

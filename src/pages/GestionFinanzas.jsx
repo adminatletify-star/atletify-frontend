@@ -809,6 +809,7 @@ export default function GestionFinanzas() {
                         <div className="finanzas-salud-row"><span className="finanzas-salud-label" style={{ color: 'var(--success)' }}><i className="fas fa-check-circle"></i>Al Día</span><span className="finanzas-salud-cnt finanzas-salud-cnt--verde">{dashboardData.estadoAtletas.alDia} atletas</span></div>
                         <div className="finanzas-salud-row"><span className="finanzas-salud-label" style={{ color: 'var(--danger)' }}><i className="fas fa-times-circle"></i>Vencidos</span><span className="finanzas-salud-cnt finanzas-salud-cnt--rojo">{dashboardData.estadoAtletas.morosos} atletas</span></div>
                         <div className="finanzas-salud-row"><span className="finanzas-salud-label" style={{ color: 'var(--accent-cool)' }}><i className="fas fa-snowflake"></i>Congelados</span><span className="finanzas-salud-cnt finanzas-salud-cnt--azul">{dashboardData.estadoAtletas.congelados} atletas</span></div>
+                        <div className="finanzas-salud-row"><span className="finanzas-salud-label" style={{ color: 'var(--text-muted)' }}><i className="fas fa-user-shield"></i>Equipo de trabajo</span><span className="finanzas-salud-cnt finanzas-salud-cnt--gris">{dashboardData.estadoAtletas.equipoTrabajo ?? 0} miembros</span></div>
                       </div>
                     </div>
                     <div className="col-12 col-md-6 col-lg-4">
@@ -878,6 +879,7 @@ export default function GestionFinanzas() {
                         <div>
                           <div className="finanzas-atleta-nombre">
                             {s.nombre}
+                            {(s.rol === 'Coach' || s.rol === 'Staff' || s.rol === 'AdminBox') && <span className="badge bg-secondary ms-2" style={{ fontSize: '0.6rem' }}><i className="fas fa-user-shield"></i> Staff</span>}
                             {s.esDeConfianza && <span className="badge bg-info text-dark ms-2" style={{ fontSize: '0.6rem' }}><i className="fas fa-handshake"></i> Confianza</span>}
                           </div>
                           <div className="finanzas-atleta-tel"><i className="fas fa-phone me-1"></i>{s.telefono || 'Sin número'}</div>
@@ -918,7 +920,7 @@ export default function GestionFinanzas() {
                       {semaforoFiltrado.length === 0 ? <tr><td colSpan="4"><div className="finanzas-empty"><p>No hay atletas que coincidan.</p></div></td></tr> : (
                         semaforoFiltrado.map(s => (
                           <tr key={s.idUsuario}>
-                            <td><div className="finanzas-atleta-nombre">{s.nombre} {s.esDeConfianza && <span className="badge bg-info text-dark ms-2" style={{ fontSize: '0.65rem' }} title="Atleta de Confianza (Fiado)"><i className="fas fa-handshake"></i> Confianza</span>}</div><div className="finanzas-atleta-tel"><i className="fas fa-phone me-1"></i>{s.telefono || 'Sin número'}</div></td>
+                            <td><div className="finanzas-atleta-nombre">{s.nombre} {(s.rol === 'Coach' || s.rol === 'Staff' || s.rol === 'AdminBox') && <span className="badge bg-secondary ms-2" style={{ fontSize: '0.65rem' }} title="Equipo de trabajo"><i className="fas fa-user-shield"></i> Staff</span>} {s.esDeConfianza && <span className="badge bg-info text-dark ms-2" style={{ fontSize: '0.65rem' }} title="Atleta de Confianza (Fiado)"><i className="fas fa-handshake"></i> Confianza</span>}</div><div className="finanzas-atleta-tel"><i className="fas fa-phone me-1"></i>{s.telefono || 'Sin número'}</div></td>
                             <td style={{ color: 'var(--secondary)' }}>
                               {s.plan}
                               {s.grupoFamiliar && <div className="text-warning mt-1" style={{fontSize:'0.75rem'}}><i className="fas fa-users me-1"></i>{s.grupoFamiliar}</div>}

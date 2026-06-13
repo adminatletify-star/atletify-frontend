@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import AtletifyLoader from '../components/AtletifyLoader';
 import ModalAdminBox from './ModalAdminBox';
+import ModalModulosBox from './ModalModulosBox';
 import '../assets/css/DeveloperSaaSFinanzas.css';
 
 const PAGE_SIZE = 10;
@@ -45,6 +46,9 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
   const [confirmDelete, setConfirmDelete] = useState(null); // { idBox, nombre }
   const [textoConfirm, setTextoConfirm] = useState('');
   const [eliminando, setEliminando] = useState(false);
+
+  // ── Modal de módulos por box (override del plan) ──
+  const [modulosPicker, setModulosPicker] = useState(null); // el objeto box completo
 
   const authHeader = () => ({
     Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -416,6 +420,9 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
                         </td>
                         <td style={{ textAlign: 'center' }}>
                           <div className="dsf-actions">
+                            <button type="button" className="dsf-icon-btn" title="Módulos del box" onClick={() => setModulosPicker(box)}>
+                              <i className="fas fa-sliders-h"></i>
+                            </button>
                             <button type="button" className="dsf-add-btn" onClick={() => setChooser({ idBox: box.idBox, nombre: box.nombre })}>
                               <i className="fas fa-user-plus"></i>
                               <span className="dsf-add-btn-label">Admin</span>
@@ -488,6 +495,10 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
                     </div>
 
                     <div className="dsf-card-actions">
+                      <button type="button" className="dsf-add-btn" onClick={() => setModulosPicker(box)}>
+                        <i className="fas fa-sliders-h"></i>
+                        <span className="dsf-add-btn-label">Módulos</span>
+                      </button>
                       <button type="button" className="dsf-add-btn" onClick={() => setChooser({ idBox: box.idBox, nombre: box.nombre })}>
                         <i className="fas fa-user-plus"></i>
                         <span className="dsf-add-btn-label">Agregar admin</span>
@@ -531,6 +542,20 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
           </>
         )}
       </div>
+
+      {/* ════ MODAL: MÓDULOS DEL BOX (override del plan) ════ */}
+      {modulosPicker && (
+        <ModalModulosBox
+          box={modulosPicker}
+          planes={planes}
+          onClose={() => setModulosPicker(null)}
+          onSaved={(idBox, overrideJSON, compActivo, vencISO) => {
+            setBoxes(prev => prev.map(b => b.idBox === idBox
+              ? { ...b, modulosOverrideJSON: overrideJSON, moduloCompetenciasActivo: compActivo, fechaVencimientoSaaS: vencISO ?? b.fechaVencimientoSaaS }
+              : b));
+          }}
+        />
+      )}
 
       {/* ════ MODAL: SELECCIONAR PLAN ════ */}
       {planPicker && createPortal(
