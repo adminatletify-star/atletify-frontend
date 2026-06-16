@@ -4,6 +4,7 @@ import { VENTAS_ENDPOINT, PRODUCTOS_ENDPOINT } from '../services/api';
 import BackButton from '../components/BackButton';
 import { useAuth } from '../context/AuthContext';
 import AtletifyLoader from '../components/AtletifyLoader';
+import CuentasTransferenciaTrigger from '../components/CuentasTransferenciaTrigger';
 import '../assets/css/TiendaBox.css';
 
 const APARTADO = 'General (Box)';
@@ -319,7 +320,10 @@ export default function TiendaBox() {
                 <label className="tb-metodo-label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <i className="fas fa-file-invoice-dollar text-primary" /> Comprobante de Pago
                 </label>
-                <input 
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <CuentasTransferenciaTrigger idBox={boxGuardado?.idBox} montoExacto={totalCarrito} />
+                </div>
+                <input
                   type="file" 
                   className="form-control form-control-sm"
                   style={{ background: '#1e1e2d', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }}

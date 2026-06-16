@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
+import CuentasTransferenciaTrigger from '../components/CuentasTransferenciaTrigger';
 import '../assets/css/DetallePlanUser.css';
 
 const API_BASE = import.meta.env.VITE_API_URL;
@@ -90,6 +91,29 @@ export default function DetallePlanUser() {
     const params = new URLSearchParams(window.location.search);
     const token = localStorage.getItem('token');
 
+    // Retorno desde el Portal de Stripe (cambio de tarjeta). Confirmamos si la tarjeta cambió.
+    if (params.get('portal_return') === '1') {
+      window.history.replaceState({}, '', '/detalle-plan-user');
+      const idSus = sessionStorage.getItem('portal_sub');
+      const pmAntes = sessionStorage.getItem('portal_pm_antes');
+      sessionStorage.removeItem('portal_sub');
+      sessionStorage.removeItem('portal_pm_antes');
+      if (idSus) {
+        fetch(`${API_BASE}/finanzas/confirmar-cambio-tarjeta`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ idSuscripcion: Number(idSus), pmAntes: pmAntes || null })
+        })
+          .then(r => r.json())
+          .then(d => { if (d.ok) alert(`Tu tarjeta de pago en línea se actualizó${d.last4 ? ` (•••• ${d.last4})` : ''}.`); })
+          .catch(() => {})
+          .finally(() => cargarMiPlan());
+      } else {
+        cargarMiPlan();
+      }
+      return;
+    }
+
     if (params.get('b2c_cancel') === '1') {
       window.history.replaceState({}, '', '/detalle-plan-user');
       alert('Pago cancelado. No se realizó ningún cargo.');
@@ -176,32 +200,62 @@ export default function DetallePlanUser() {
     }
   };
 
+  // Abre el Portal de Stripe para CAMBIAR/actualizar la tarjeta de la suscripción existente
+  // (sin crear una segunda suscripción). Guardamos la tarjeta previa para detectar el cambio al volver.
+  const handleAbrirPortalTarjeta = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const idBox = sub?.idBox || JSON.parse(localStorage.getItem('usuario') || '{}')?.idBoxPredeterminado || 1;
+      const res = await fetch(`${API_BASE}/finanzas/portal-tarjeta/${idBox}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ idSuscripcion: sub.idSuscripcion, returnPath: '/detalle-plan-user' })
+      });
+      const d = await res.json();
+      if (res.ok && d.url) {
+        sessionStorage.setItem('portal_sub', String(sub.idSuscripcion));
+        sessionStorage.setItem('portal_pm_antes', d.pmAntes || '');
+        window.location.href = d.url; // portal seguro de Stripe
+        return;
+      }
+      alert(d.mensaje || 'No se pudo abrir el portal para cambiar tu tarjeta.');
+    } catch (err) {
+      console.error(err);
+      alert('Error de red al abrir el portal de pago.');
+    }
+  };
+
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setSubiendoArchivo(true);
     setErrorSubida(null);
 
-    const formData = new FormData();
-    formData.append('file', file);
+    // Anti-PDFs y anti-archivos pesados: solo imágenes hasta ~5MB.
+    if (!file.type || !file.type.startsWith('image/')) {
+      setSubiendoArchivo(false);
+      setErrorSubida('Solo se aceptan imágenes (JPG o PNG).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setSubiendoArchivo(false);
+      setErrorSubida('La imagen no puede superar los 5 MB.');
+      return;
+    }
 
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/competencias/upload-comprobante`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
+      // El comprobante se guarda como data URL en la BD (igual que registro/tienda),
+      // así NO queda como archivo público en wwwroot.
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
       });
-      if (res.ok) {
-        const resData = await res.json();
-        setArchivoComprobante(resData.url);
-      } else {
-        const resData = await res.json().catch(() => ({}));
-        setErrorSubida(resData.mensaje || 'Error al subir comprobante');
-      }
+      setArchivoComprobante(dataUrl);
     } catch (err) {
       console.error(err);
-      setErrorSubida('Error de conexión al subir el archivo');
+      setErrorSubida('No se pudo leer la imagen. Intenta de nuevo.');
     } finally {
       setSubiendoArchivo(false);
     }
@@ -235,8 +289,9 @@ export default function DetallePlanUser() {
     e.preventDefault();
     if (enviando) return; // guard: evita doble-submit / clics repetidos
 
+    // La transferencia SIEMPRE requiere comprobante para que el administrador pueda validarla.
     if (metodoPago === 'Transferencia' && !archivoComprobante) {
-      alert('Por favor sube la captura de tu comprobante de pago.');
+      alert('Por favor sube la captura de tu comprobante de transferencia.');
       return;
     }
     if (!planSeleccionado) {
@@ -660,22 +715,35 @@ export default function DetallePlanUser() {
               {/* Acciones del Plan (Solo Líder o Usuarios Individuales) */}
               {(!data?.grupoFamiliar || data?.grupoFamiliar?.esLider) && (
                 <div className="d-flex flex-wrap gap-2 mt-4 pt-3 border-top border-secondary border-opacity-10 justify-content-between align-items-center">
-                  <button 
-                    type="button" 
-                    className="dpu-btn-action--change"
-                    disabled={enviando}
-                    onClick={() => {
-                      const currentPlan = planesBox.find(p => p.idPlan === sub.idPlan);
-                      if (currentPlan) setPlanSeleccionado(currentPlan);
-                      // Método inicial: el actual si el box aún lo acepta, si no el primero disponible.
-                      setMetodoPago(metodosActivos.includes(sub.metodoPago) ? sub.metodoPago : (metodosActivos[0] || 'Recepción'));
-                      setArchivoComprobante(null);
-                      setErrorSubida(null);
-                      setShowBillingModal(true);
-                    }}
-                  >
-                    <i className="fas fa-sync-alt me-2"></i> Cambiar Facturación
-                  </button>
+                  <div className="d-flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="dpu-btn-action--change"
+                      disabled={enviando}
+                      onClick={() => {
+                        const currentPlan = planesBox.find(p => p.idPlan === sub.idPlan);
+                        if (currentPlan) setPlanSeleccionado(currentPlan);
+                        // Método inicial: el actual si el box aún lo acepta, si no el primero disponible.
+                        setMetodoPago(metodosActivos.includes(sub.metodoPago) ? sub.metodoPago : (metodosActivos[0] || 'Recepción'));
+                        setArchivoComprobante(null);
+                        setErrorSubida(null);
+                        setShowBillingModal(true);
+                      }}
+                    >
+                      <i className="fas fa-sync-alt me-2"></i> Cambiar Facturación
+                    </button>
+
+                    {/* Cambiar tarjeta: solo con pago en línea activo y una tarjeta ya registrada en Stripe */}
+                    {sub.metodoPago === 'En Línea' && sub.stripeCustomerId && (
+                      <button
+                        type="button"
+                        className="dpu-btn-action--change"
+                        onClick={handleAbrirPortalTarjeta}
+                      >
+                        <i className="fas fa-credit-card me-2"></i> Cambiar tarjeta
+                      </button>
+                    )}
+                  </div>
 
                   {sub.cancelacionProgramada ? (
                     <div className="dpu-cancel-badge-small">
@@ -1039,29 +1107,30 @@ export default function DetallePlanUser() {
 
                 {metodoPago === 'Transferencia' && (
                   <div>
-                    <div className="bg-black bg-opacity-30 rounded p-3 mb-3 border border-secondary border-opacity-10 text-xs">
-                      <strong className="text-info d-block mb-1"><i className="fas fa-university me-1"></i> Datos Bancarios de Transferencia</strong>
-                      <div className="text-muted">
-                        <div className="d-flex justify-content-between mb-1"><span>Banco:</span> <strong className="text-white">BBVA Bancomer</strong></div>
-                        <div className="d-flex justify-content-between mb-1"><span>CLABE:</span> <strong className="text-white">0123 4567 8901 2345 67</strong></div>
-                        <div className="d-flex justify-content-between mb-1"><span>Beneficiario:</span> <strong className="text-white">Atletify Box S.A. de C.V.</strong></div>
-                        <div className="d-flex justify-content-between border-top border-secondary border-opacity-10 mt-2 pt-2"><span>Monto exacto a transferir:</span> <strong className="text-success">
-                          ${(() => {
-                            if (data?.grupoFamiliar?.esLider && data.grupoFamiliar.miembros) {
-                              let suma = data.grupoFamiliar.miembros.reduce((acc, m) => acc + (m.rolEnGrupo === 'Lider' ? (planSeleccionado?.precio || 0) : m.precioBase), 0);
-                              let desc = 0; const global = data.grupoFamiliar.descuentoGlobal;
-                              if (global?.tipo === 'DescuentoPorcentaje') desc = suma * ((global.valor || 0) / 100);
-                              else if (global?.tipo === 'DescuentoPesos') desc = global.valor || 0;
-                              else if (global?.tipo === 'PrecioFijo') desc = suma - (global.valor || suma);
-                              return Math.max(suma - desc, data.grupoFamiliar.precioMinimoMensual || 0).toFixed(2);
-                            }
-                            return (planSeleccionado?.precio || 0).toFixed(2);
-                          })()}
-                        </strong></div>
-                      </div>
+                    <div className="mb-3">
+                      <CuentasTransferenciaTrigger
+                        idBox={sub?.idBox || JSON.parse(localStorage.getItem('usuario') || '{}')?.idBoxPredeterminado || 1}
+                        montoExacto={(() => {
+                          if (data?.grupoFamiliar?.esLider && data.grupoFamiliar.miembros) {
+                            let suma = data.grupoFamiliar.miembros.reduce((acc, m) => acc + (m.rolEnGrupo === 'Lider' ? (planSeleccionado?.precio || 0) : m.precioBase), 0);
+                            let desc = 0; const global = data.grupoFamiliar.descuentoGlobal;
+                            if (global?.tipo === 'DescuentoPorcentaje') desc = suma * ((global.valor || 0) / 100);
+                            else if (global?.tipo === 'DescuentoPesos') desc = global.valor || 0;
+                            else if (global?.tipo === 'PrecioFijo') desc = suma - (global.valor || suma);
+                            return Math.max(suma - desc, data.grupoFamiliar.precioMinimoMensual || 0);
+                          }
+                          return (planSeleccionado?.precio || 0);
+                        })()}
+                      />
                     </div>
 
-                    <label className="dpu-modal-label mb-2"><i className="fas fa-upload me-1 text-info"></i> Sube tu captura o comprobante de pago</label>
+                    {diasRestantes > 0 && (
+                      <div className="text-muted text-xs mb-2" style={{ lineHeight: 1.4 }}>
+                        <i className="fas fa-info-circle me-1 text-info"></i>
+                        Aún tienes <strong>{diasRestantes} día(s)</strong> vigentes: al pagar por adelantado, tu nuevo plan <strong>empieza cuando termine el actual</strong> (no pierdes tus días).
+                      </div>
+                    )}
+                    <label className="dpu-modal-label mb-2"><i className="fas fa-upload me-1 text-info"></i> Sube tu comprobante de transferencia</label>
                     <div className="dpu-upload-zone">
                       <input 
                         type="file" 
@@ -1082,7 +1151,7 @@ export default function DetallePlanUser() {
                             <span className="text-success text-xs d-block fw-bold">✓ Comprobante cargado con éxito</span>
                             <span className="text-muted text-xxs d-block mt-1">Pulsa para cambiar de archivo</span>
                             <div className="mt-2 text-center">
-                              <img src={`${import.meta.env.VITE_API_URL}${archivoComprobante}`} alt="Comprobante" style={{ maxWidth: '80px', maxHeight: '50px', objectFit: 'cover', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.2)' }} />
+                              <img src={archivoComprobante?.startsWith('data:') || archivoComprobante?.startsWith('http') ? archivoComprobante : `${import.meta.env.VITE_API_URL}${archivoComprobante}`} alt="Comprobante" style={{ maxWidth: '80px', maxHeight: '50px', objectFit: 'cover', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.2)' }} />
                             </div>
                           </div>
                         ) : (
@@ -1213,10 +1282,10 @@ export default function DetallePlanUser() {
                 <i className="fas fa-times"></i>
               </button>
             </div>
-            <img 
-              src={`${import.meta.env.VITE_API_URL}${fotoComprobanteModal}`} 
-              alt="Comprobante Zoom" 
-              style={{ width: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }} 
+            <img
+              src={fotoComprobanteModal?.startsWith('data:') || fotoComprobanteModal?.startsWith('http') ? fotoComprobanteModal : `${import.meta.env.VITE_API_URL}${fotoComprobanteModal}`}
+              alt="Comprobante Zoom"
+              style={{ width: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}
             />
           </div>
         </div>

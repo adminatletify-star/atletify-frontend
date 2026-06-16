@@ -7,6 +7,7 @@ import TallaPlayeraPicker from '../components/TallaPlayeraPicker';
 import DateWheelPicker from '../components/DateWheelPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import PasswordRulesHint from '../components/PasswordRulesHint';
+import CuentasTransferenciaTrigger from '../components/CuentasTransferenciaTrigger';
 import { usePasswordStrength } from '../hooks/usePasswordStrength';
 import { useAuth } from '../context/AuthContext';
 import '../assets/css/Register.css';
@@ -806,6 +807,9 @@ export default function CompletarRegistro() {
                 {metodoPago === 'Transferencia' && (
                   <div className="cr-comprobante mb-4">
                     <label className="reg-label">Comprobante de Transferencia</label>
+                    <div className="mb-3">
+                      <CuentasTransferenciaTrigger idBox={idBoxAsignado} montoExacto={totalCobrar} />
+                    </div>
                     {!comprobantePreview ? (
                       <label className="cr-uploader">
                         <i className="fas fa-cloud-upload-alt"></i>

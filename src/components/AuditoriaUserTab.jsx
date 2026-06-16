@@ -13,7 +13,12 @@ const AccionBadge = ({ accion }) => {
   let color = 'var(--text-muted)';
   let icon = 'fa-info-circle';
 
-  if (accion.includes('DESACTIVAR_VISITAS')) { color = '#e67e22'; icon = 'fa-pause-circle'; }
+  if (accion === 'ELIMINAR_CUENTA_TRANSFERENCIA') { color = 'var(--primary)'; icon = 'fa-university'; }
+  else if (accion.includes('CUENTA_TRANSFERENCIA')) { color = '#16a085'; icon = 'fa-university'; }
+  else if (accion === 'APROBAR_CAMBIO_FACTURACION') { color = '#2ECC71'; icon = 'fa-file-circle-check'; }
+  else if (accion === 'RECHAZAR_CAMBIO_FACTURACION') { color = '#e67e22'; icon = 'fa-file-circle-xmark'; }
+  else if (accion === 'SOLICITAR_CAMBIO_FACTURACION') { color = '#3498db'; icon = 'fa-file-invoice-dollar'; }
+  else if (accion.includes('DESACTIVAR_VISITAS')) { color = '#e67e22'; icon = 'fa-pause-circle'; }
   else if (accion.includes('ACTIVAR_VISITAS')) { color = '#f5a623'; icon = 'fa-gift'; }
   else if (accion.includes('DESACTIVAR_METODO')) { color = '#e67e22'; icon = 'fa-toggle-off'; }
   else if (accion.includes('ACTIVAR_METODO')) { color = '#22c55e'; icon = 'fa-toggle-on'; }
@@ -135,6 +140,12 @@ export default function AuditoriaUserTab({ boxes }) {
             <option value="DESACTIVAR_VISITAS_REGALO">Pausar Visitas de Regalo</option>
             <option value="ACTIVAR_METODO_PAGO">Activar Método de Pago</option>
             <option value="DESACTIVAR_METODO_PAGO">Desactivar Método de Pago</option>
+            <option value="CREAR_CUENTA_TRANSFERENCIA">Crear Cuenta de Transferencia</option>
+            <option value="EDITAR_CUENTA_TRANSFERENCIA">Editar Cuenta de Transferencia</option>
+            <option value="ELIMINAR_CUENTA_TRANSFERENCIA">Eliminar Cuenta de Transferencia</option>
+            <option value="SOLICITAR_CAMBIO_FACTURACION">Solicitar Cambio de Facturación</option>
+            <option value="APROBAR_CAMBIO_FACTURACION">Aprobar Cambio de Facturación</option>
+            <option value="RECHAZAR_CAMBIO_FACTURACION">Rechazar Cambio de Facturación</option>
           </select>
         </div>
       </div>

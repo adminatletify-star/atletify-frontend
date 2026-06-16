@@ -1,0 +1,539 @@
+/* ══════════════════════════════════════════════════════════════
+   Cuentas / Tarjetas para Transferir — Atletify Design System
+   Prefijo .ct-*  ·  usado por:
+     - CuentasTransferenciaTrigger (atleta: botón + modal con copiar)
+     - GestionCuentasTransferencia (admin: CRUD en editar-box)
+   ══════════════════════════════════════════════════════════════ */
+
+/* ───────────────────────── Botón "Ver tarjetas para transferir" ───────────────────────── */
+.ct-ver-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.72rem 1rem;
+  background: rgba(22, 160, 133, 0.1);
+  border: 1px solid rgba(22, 160, 133, 0.45);
+  border-radius: 10px;
+  color: #2bc7a8;
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.08s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ct-ver-btn i { font-size: 0.95rem; }
+.ct-ver-btn:active { transform: scale(0.97); }
+@media (hover: hover) {
+  .ct-ver-btn:hover { background: rgba(22, 160, 133, 0.18); border-color: rgba(22, 160, 133, 0.7); }
+}
+
+/* ───────────────────────── Overlay + Modal (compartido) ───────────────────────── */
+.ct-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  /* Por encima de cualquier modal de la app:
+     - DetallePlanUser usa 99999 !important para "Cambiar Plan"
+     - CompletarRegistro usa 10010
+     - Otros modales internos llegan a 1500-9999
+     Por eso este overlay (que se invoca DESDE dentro de otros modales) sube a 2147483000. */
+  z-index: 2147483000;
+  display: flex;
+  align-items: center;       /* SIEMPRE centrado (CLAUDE.md) */
+  justify-content: center;
+  padding: 1rem;
+  animation: ctFade 0.16s ease;
+}
+@keyframes ctFade { from { opacity: 0; } to { opacity: 1; } }
+
+.ct-modal {
+  background: var(--bg-card, #1C1C26);
+  border: 1px solid var(--border, rgba(255,255,255,0.06));
+  border-top: 3px solid var(--primary, #E63946);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 460px;
+  max-height: 88vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+  animation: ctSlideIn 0.18s ease;
+}
+.ct-modal--form { max-width: 520px; }
+/* Border-top mantiene var(--primary) (regla CLAUDE.md). Solo el ícono del título usa accent (visual de "ayuda"). */
+.ct-modal--ayuda { max-width: 480px; }
+@keyframes ctSlideIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ct-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.06));
+  flex-shrink: 0;
+}
+.ct-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-heading, 'Barlow Condensed', sans-serif);
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-primary, #F0F0F5);
+}
+.ct-modal-title i { color: var(--primary, #E63946); }
+.ct-modal--ayuda .ct-modal-title i { color: var(--accent, #F5A623); }
+
+.ct-modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #6B7280);
+  cursor: pointer;
+  padding: 0.35rem 0.55rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  line-height: 1;
+  transition: color 0.2s, background 0.2s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ct-modal-close:active { transform: scale(0.92); }
+@media (hover: hover) {
+  .ct-modal-close:hover { color: var(--primary, #E63946); background: rgba(230, 57, 70, 0.1); }
+}
+
+.ct-modal-body {
+  padding: 1.1rem 1.25rem 1.25rem;
+  overflow-y: auto;
+}
+
+/* ───────────────────────── Monto exacto (en el modal del atleta) ───────────────────────── */
+.ct-monto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background: rgba(46, 204, 113, 0.08);
+  border: 1px solid rgba(46, 204, 113, 0.25);
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  margin-bottom: 1rem;
+}
+.ct-monto-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #6B7280);
+}
+.ct-monto-valor {
+  font-family: var(--font-stats, 'Inter', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #2ecc71;
+}
+
+/* ───────────────────────── Lista de cuentas (atleta) ───────────────────────── */
+.ct-lista { display: flex; flex-direction: column; gap: 0.85rem; }
+
+.ct-cuenta-card {
+  background: var(--bg-elevated, #14141A);
+  border: 1px solid var(--border, rgba(255,255,255,0.06));
+  border-top: 3px solid var(--primary, #E63946);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+}
+.ct-cuenta-alias {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--primary, #E63946);
+  margin-bottom: 0.6rem;
+}
+.ct-cuenta-alias i { font-size: 0.7rem; }
+
+.ct-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--border, rgba(255,255,255,0.05));
+}
+.ct-dato:first-of-type { border-top: none; }
+.ct-dato-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #6B7280);
+}
+.ct-dato-valor-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.ct-dato-valor {
+  color: var(--text-primary, #F0F0F5);
+  font-size: 0.95rem;
+  font-weight: 600;
+  word-break: break-word;
+}
+.ct-mono { font-family: 'Inter', ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.02em; }
+
+/* Botón copiar */
+.ct-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  padding: 0.4rem 0.7rem;
+  background: rgba(230, 57, 70, 0.08);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  border-radius: 8px;
+  color: var(--primary, #E63946);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.08s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ct-copy-btn:active { transform: scale(0.93); }
+@media (hover: hover) {
+  .ct-copy-btn:hover { background: rgba(230, 57, 70, 0.16); border-color: rgba(230, 57, 70, 0.55); }
+}
+.ct-copy-btn--ok {
+  background: rgba(46, 204, 113, 0.12) !important;
+  border-color: rgba(46, 204, 113, 0.5) !important;
+  color: #2ecc71 !important;
+}
+
+.ct-nota {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin: 1rem 0 0;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--text-muted, #6B7280);
+}
+.ct-nota i { color: var(--accent, #F5A623); margin-top: 0.1rem; }
+
+/* ───────────────────────── Estados de carga / vacío ───────────────────────── */
+.ct-loading { display: flex; align-items: center; justify-content: center; min-height: 140px; }
+.ct-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.6rem;
+  padding: 1.6rem 1rem;
+  color: var(--text-muted, #6B7280);
+  font-size: 0.85rem;
+}
+.ct-empty i { font-size: 1.9rem; opacity: 0.35; }
+.ct-empty--admin { padding: 1.2rem 1rem; }
+
+/* ════════════════════════════════════════════════════════════════
+   ADMIN — sección en editar-box
+   ════════════════════════════════════════════════════════════════ */
+.ct-admin-desc {
+  font-size: 0.74rem;
+  color: var(--text-muted, #6B7280);
+  margin: 0 0 0.85rem;
+  line-height: 1.4;
+}
+
+/* "?" de ayuda */
+.ct-help-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-left: 0.5rem;
+  padding: 0;
+  background: rgba(22, 160, 133, 0.14);
+  border: 1px solid rgba(22, 160, 133, 0.4);
+  border-radius: 50%;
+  color: #16a085;
+  font-size: 0.62rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.08s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ct-help-btn:active { transform: scale(0.9); }
+@media (hover: hover) {
+  .ct-help-btn:hover { background: rgba(22, 160, 133, 0.28); }
+}
+
+/* Botón agregar */
+.ct-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: auto;
+  padding: 0.55rem 0.95rem;
+  background: #16a085;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.08s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ct-add-btn:active { transform: scale(0.96); }
+@media (hover: hover) {
+  .ct-add-btn:hover { background: #138d76; box-shadow: 0 4px 16px rgba(22, 160, 133, 0.35); }
+}
+
+/* Lista admin */
+.ct-admin-lista { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.ct-admin-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: var(--bg-elevated, #14141A);
+  border: 1px solid var(--border, rgba(255,255,255,0.06));
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+}
+.ct-admin-item--inactiva { opacity: 0.6; }
+.ct-admin-item-info { min-width: 0; flex: 1; }
+.ct-admin-item-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+.ct-admin-item-nombre {
+  font-weight: 700;
+  color: var(--text-primary, #F0F0F5);
+  font-size: 0.9rem;
+}
+.ct-estado {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  padding: 0.12rem 0.45rem;
+  border-radius: 6px;
+}
+.ct-estado--on { background: rgba(46, 204, 113, 0.12); border: 1px solid rgba(46, 204, 113, 0.4); color: #2ecc71; }
+.ct-estado--off { background: rgba(230, 57, 70, 0.1); border: 1px solid rgba(230, 57, 70, 0.35); color: var(--primary, #E63946); }
+.ct-admin-item-banco {
+  font-size: 0.78rem;
+  color: var(--secondary, #A8B2D1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ct-admin-item-clabe {
+  font-family: 'Inter', ui-monospace, monospace;
+  font-size: 0.72rem;
+  color: var(--text-muted, #6B7280);
+  margin-top: 0.1rem;
+}
+.ct-admin-item-acciones { display: flex; gap: 0.4rem; flex-shrink: 0; }
+
+/* Botones de acción cuadrados (editar/eliminar) */
+.ct-icon-btn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.08s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ct-icon-btn:active { transform: scale(0.9); }
+.ct-icon-btn--edit { border: 1px solid var(--accent, #F5A623); color: var(--accent, #F5A623); }
+.ct-icon-btn--del { border: 1px solid var(--primary, #E63946); color: var(--primary, #E63946); }
+@media (hover: hover) {
+  .ct-icon-btn--edit:hover { background: rgba(245, 166, 35, 0.12); }
+  .ct-icon-btn--del:hover { background: rgba(230, 57, 70, 0.12); }
+}
+
+/* ───────────────────────── Formulario (modal alta/edición) ───────────────────────── */
+.ct-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+.ct-form-campo { display: flex; flex-direction: column; gap: 0.3rem; }
+.ct-form-campo--full { grid-column: 1 / -1; }
+.ct-form-campo--switch { grid-column: 1 / -1; }
+.ct-form-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--secondary, #A8B2D1);
+  font-weight: 600;
+}
+.ct-req { color: var(--primary, #E63946); }
+.ct-opt { color: var(--text-muted, #6B7280); text-transform: none; font-weight: 400; letter-spacing: 0; }
+.ct-form-input {
+  width: 100%;
+  background: var(--bg-base, #0B0B0F);
+  border: 1px solid var(--border, rgba(255,255,255,0.1));
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  color: var(--text-primary, #F0F0F5);
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+.ct-form-input:focus { outline: none; border-color: var(--primary, #E63946); }
+.ct-form-input::placeholder { color: var(--text-muted, #6B7280); }
+.ct-form-hint { font-size: 0.68rem; color: var(--text-muted, #6B7280); line-height: 1.35; }
+
+/* Switch "visible" */
+.ct-switch { display: inline-flex; align-items: center; gap: 0.6rem; cursor: pointer; user-select: none; }
+.ct-switch input { display: none; }
+.ct-switch-track {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  background: var(--bg-base, #0B0B0F);
+  border: 1px solid var(--border, rgba(255,255,255,0.12));
+  border-radius: 999px;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+.ct-switch-thumb {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 18px; height: 18px;
+  background: var(--text-muted, #6B7280);
+  border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+.ct-switch input:checked + .ct-switch-track { background: rgba(46, 204, 113, 0.25); border-color: rgba(46, 204, 113, 0.6); }
+.ct-switch input:checked + .ct-switch-track .ct-switch-thumb { transform: translateX(18px); background: #2ecc71; }
+.ct-switch-label { font-size: 0.8rem; color: var(--text-primary, #F0F0F5); }
+
+.ct-form-error {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.9rem;
+  padding: 0.6rem 0.75rem;
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.35);
+  border-radius: 10px;
+  color: #ff6b78;
+  font-size: 0.8rem;
+}
+
+.ct-form-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.2rem;
+}
+.ct-btn-cancelar {
+  padding: 0.6rem 1rem;
+  background: transparent;
+  border: 1px solid var(--border, rgba(255,255,255,0.12));
+  border-radius: 10px;
+  color: var(--secondary, #A8B2D1);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, transform 0.08s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ct-btn-cancelar:active { transform: scale(0.96); }
+@media (hover: hover) { .ct-btn-cancelar:hover { border-color: var(--secondary, #A8B2D1); color: var(--text-primary, #F0F0F5); } }
+
+.ct-btn-guardar {
+  padding: 0.6rem 1.3rem;
+  background: var(--primary, #E63946);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--font-heading-alt, 'Barlow Condensed', sans-serif);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: box-shadow 0.2s, background 0.2s, transform 0.08s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ct-btn-guardar:active { transform: scale(0.97); }
+@media (hover: hover) { .ct-btn-guardar:hover { box-shadow: 0 4px 16px var(--primary-glow, rgba(230,57,70,0.25)); } }
+
+/* ───────────────────────── Modal de ayuda ───────────────────────── */
+.ct-ayuda-p { font-size: 0.88rem; color: var(--text-primary, #F0F0F5); line-height: 1.5; margin: 0 0 0.85rem; }
+.ct-ayuda-lista { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.7rem; }
+.ct-ayuda-lista li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--secondary, #A8B2D1);
+}
+.ct-ayuda-lista li strong { color: var(--text-primary, #F0F0F5); }
+.ct-ayuda-lista li i { color: var(--accent, #F5A623); margin-top: 0.15rem; flex-shrink: 0; width: 1rem; text-align: center; }
+
+/* ════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .ct-modal-title { font-size: 0.92rem; }
+  .ct-monto-valor { font-size: 1.15rem; }
+}
+@media (max-width: 576px) {
+  .ct-modal-body { padding: 0.95rem 1rem 1.1rem; }
+  .ct-modal-header { padding: 0.85rem 1rem; }
+  .ct-form-grid { grid-template-columns: 1fr; gap: 0.7rem; }
+  .ct-copy-txt { display: none; }           /* en móvil el botón copiar queda solo con ícono */
+  .ct-copy-btn { padding: 0.45rem 0.6rem; }
+  .ct-add-label { display: none; }           /* botón agregar solo ícono en móvil */
+  .ct-add-btn { padding: 0.55rem 0.75rem; }
+  .ct-dato-valor { font-size: 0.9rem; }
+}
+@media (max-width: 380px) {
+  .ct-modal-title { font-size: 0.85rem; }
+  .ct-cuenta-card { padding: 0.75rem 0.8rem; }
+  .ct-admin-item { padding: 0.65rem 0.7rem; }
+  .ct-monto-valor { font-size: 1.05rem; }
+}

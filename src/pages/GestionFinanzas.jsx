@@ -133,11 +133,19 @@ export default function GestionFinanzas() {
   const [solicitudes, setSolicitudes] = useState([]);
   const [loadingSolicitudes, setLoadingSolicitudes] = useState(false);
   const [fotoModalUrl, setFotoModalUrl] = useState(null);
+  // Solicitud de pago en recepción que se está aprobando: dispara el selector Efectivo/Tarjeta/Mixto.
+  const [aprobarRecepcion, setAprobarRecepcion] = useState(null);
+  const [modoMixto, setModoMixto] = useState(false);
+  const [mixtoEfectivo, setMixtoEfectivo] = useState('');
+  const cerrarPickerRecepcion = () => { setAprobarRecepcion(null); setModoMixto(false); setMixtoEfectivo(''); };
 
   const cargarSolicitudes = useCallback(async () => {
+    if (!box?.idBox) return; // esperar a que cargue el box que se está administrando
     setLoadingSolicitudes(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/solicitudes-cambio`, {
+      // Pasamos el box que se está viendo: el Developer/Admin no está atado a un box, así que
+      // sin esto el backend filtraba por su IdBoxPredeterminado y devolvía vacío.
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/solicitudes-cambio?idBox=${box.idBox}`, {
         headers: headersGet
       });
       if (res.ok) {
@@ -148,17 +156,19 @@ export default function GestionFinanzas() {
     } finally {
       setLoadingSolicitudes(false);
     }
-  }, [headersGet]);
+  }, [headersGet, box]);
 
-  const manejarAprobar = async (idSuscripcion) => {
+  const aprobarReal = async (idSuscripcion, payload = null) => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/suscripcion/${idSuscripcion}/aprobar-cambio`, {
-        method: 'PUT',
-        headers: headersGet
-      });
+      // Con desglose (recepción) mandamos JSON; sin él (transferencia) va un PUT simple.
+      const opts = payload
+        ? { method: 'PUT', headers: headersPost, body: JSON.stringify(payload) }
+        : { method: 'PUT', headers: headersGet };
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/suscripcion/${idSuscripcion}/aprobar-cambio`, opts);
       const data = await res.json();
       if (res.ok) {
         alert(data.mensaje || 'Solicitud aprobada con éxito');
+        cerrarPickerRecepcion();
         cargarSolicitudes();
         if (box) cargarDatos(box.idBox);
       } else {
@@ -168,6 +178,15 @@ export default function GestionFinanzas() {
       console.error(err);
       alert('Error de red al aprobar.');
     }
+  };
+
+  const manejarAprobar = async (s) => {
+    // Si es un PAGO en recepción, primero pedimos el medio (efectivo/tarjeta) para el movimiento.
+    if (s.metodoPagoPendiente === 'Recepción' && (s.montoPendiente ?? 0) > 0) {
+      setAprobarRecepcion(s);
+      return;
+    }
+    await aprobarReal(s.idSuscripcion);
   };
 
   const manejarRechazar = async (idSuscripcion) => {
@@ -1395,6 +1414,11 @@ export default function GestionFinanzas() {
                             <span className="small text-secondary">{m.metodoPago}</span>
                             <span className="text-success fw-bold">{m.esCupon ? 'Cupón de visita' : `$${m.monto?.toFixed(2)}`}</span>
                           </div>
+                          {m.metodoPago2 && (
+                            <div className="text-secondary mt-1" style={{ fontSize: '0.72rem' }}>
+                              {m.metodoPago1} ${m.montoMetodo1?.toFixed(2)} · {m.metodoPago2} ${m.montoMetodo2?.toFixed(2)}
+                            </div>
+                          )}
                           {m.comisionStripe != null && (
                             <div className="text-secondary mt-1" style={{ fontSize: '0.72rem' }}>
                               Bruto ${m.montoBruto?.toFixed(2)} · Comisión Stripe -${m.comisionStripe?.toFixed(2)}
@@ -1417,7 +1441,14 @@ export default function GestionFinanzas() {
                                 <td>{new Date(m.fecha).toLocaleDateString()}</td>
                                 <td>{m.nombreAtleta}</td>
                                 <td><span className={`mov-badge ${getBadgeMov(m.tipo)}`}>{m.tipo}</span></td>
-                                <td>{m.metodoPago}</td>
+                                <td>
+                                  {m.metodoPago}
+                                  {m.metodoPago2 && (
+                                    <div className="text-secondary" style={{ fontSize: '0.7rem' }}>
+                                      {m.metodoPago1} ${m.montoMetodo1?.toFixed(2)} · {m.metodoPago2} ${m.montoMetodo2?.toFixed(2)}
+                                    </div>
+                                  )}
+                                </td>
                                 <td className="text-end text-success fw-bold">
                                   {m.esCupon ? 'Cupón de visita' : `$${m.monto?.toFixed(2)}`}
                                   {m.comisionStripe != null && (
@@ -1480,7 +1511,7 @@ export default function GestionFinanzas() {
                             <div className="mb-3">
                               <div className="text-secondary small mb-1">Comprobante de Transferencia:</div>
                               <img 
-                                src={s.comprobanteUrlPendiente.startsWith('http') ? s.comprobanteUrlPendiente : `${import.meta.env.VITE_API_URL}${s.comprobanteUrlPendiente}`}
+                                src={(s.comprobanteUrlPendiente.startsWith('data:') || s.comprobanteUrlPendiente.startsWith('http')) ? s.comprobanteUrlPendiente : `${import.meta.env.VITE_API_URL}${s.comprobanteUrlPendiente}`}
                                 alt="Miniatura" 
                                 className="img-thumbnail bg-dark border-secondary cursor-pointer" 
                                 style={{ maxHeight: '80px', cursor: 'zoom-in', objectFit: 'cover' }}
@@ -1491,7 +1522,7 @@ export default function GestionFinanzas() {
 
                           <div className="d-flex gap-2">
                             <BotonSeguro 
-                              onClick={() => manejarAprobar(s.idSuscripcion)} 
+                              onClick={() => manejarAprobar(s)}
                               className="btn btn-success btn-sm w-50 fw-bold"
                               textoProcesando="Aprobando..."
                             >
@@ -1539,7 +1570,7 @@ export default function GestionFinanzas() {
                               <td>
                                 {s.metodoPagoPendiente === 'Transferencia' && s.comprobanteUrlPendiente ? (
                                   <img 
-                                    src={s.comprobanteUrlPendiente.startsWith('http') ? s.comprobanteUrlPendiente : `${import.meta.env.VITE_API_URL}${s.comprobanteUrlPendiente}`}
+                                    src={(s.comprobanteUrlPendiente.startsWith('data:') || s.comprobanteUrlPendiente.startsWith('http')) ? s.comprobanteUrlPendiente : `${import.meta.env.VITE_API_URL}${s.comprobanteUrlPendiente}`}
                                     alt="Miniatura" 
                                     className="img-thumbnail bg-dark border-secondary cursor-pointer" 
                                     style={{ maxHeight: '50px', maxWidth: '80px', cursor: 'zoom-in', objectFit: 'cover' }}
@@ -1554,7 +1585,7 @@ export default function GestionFinanzas() {
                               <td className="text-end">
                                 <div className="d-flex gap-2 justify-content-end">
                                   <BotonSeguro 
-                                    onClick={() => manejarAprobar(s.idSuscripcion)} 
+                                    onClick={() => manejarAprobar(s)}
                                     className="btn btn-success btn-sm fw-bold px-3"
                                     textoProcesando="Aprobando..."
                                   >
@@ -2162,16 +2193,106 @@ export default function GestionFinanzas() {
               >
                 <i className="fas fa-times"></i>
               </button>
-              <img 
-                src={fotoModalUrl.startsWith('http') ? fotoModalUrl : `${import.meta.env.VITE_API_URL}${fotoModalUrl}`} 
-                alt="Comprobante de pago" 
-                className="img-fluid rounded shadow-lg" 
+              <img
+                src={(fotoModalUrl.startsWith('data:') || fotoModalUrl.startsWith('http')) ? fotoModalUrl : `${import.meta.env.VITE_API_URL}${fotoModalUrl}`}
+                alt="Comprobante de pago"
+                className="img-fluid rounded shadow-lg"
                 style={{ maxHeight: '80vh', objectFit: 'contain', width: '100%', margin: '0 auto' }}
               />
             </div>
           </div>
         </div>
       )}
+
+      {/* Selector de medio para un pago en RECEPCIÓN: efectivo / tarjeta / mixto (efectivo + tarjeta). */}
+      {aprobarRecepcion && (() => {
+        const efOK = !!box?.aceptarEfectivo;
+        const tjOK = !!box?.aceptarTarjetaRecepcion;
+        const fallback = !efOK && !tjOK; // si la config no llegó, ofrecemos ambos
+        const puedeMixto = (efOK || fallback) && (tjOK || fallback); // mixto requiere ambos métodos
+        const total = aprobarRecepcion.montoPendiente ?? 0;
+        const efNum = isNaN(parseFloat(mixtoEfectivo)) ? 0 : parseFloat(mixtoEfectivo);
+        const tjNum = Math.max(0, +(total - efNum).toFixed(2));
+        const mixtoValido = efNum > 0 && efNum < total; // mixto real: parte efectivo y parte tarjeta
+        return (
+          <div
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 1060 }}
+            onClick={cerrarPickerRecepcion}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{ background: 'var(--bg-elevated)', borderTop: '3px solid var(--primary)', borderRadius: '20px', maxWidth: '420px', width: '100%', padding: '1.5rem', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}
+            >
+              <h5 className="font-heading text-white mb-1" style={{ textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '1.05rem' }}>Pago en recepción</h5>
+              <p className="text-secondary small mb-3">
+                Registra cómo pagó <strong className="text-white">{aprobarRecepcion.nombreAtleta}</strong> los <strong className="text-success">${total.toFixed(2)}</strong>.
+              </p>
+
+              {!modoMixto ? (
+                <div className="d-flex flex-column gap-2">
+                  {(efOK || fallback) && (
+                    <BotonSeguro
+                      onClick={() => aprobarReal(aprobarRecepcion.idSuscripcion, { metodoRecepcion: 'Efectivo' })}
+                      className="btn btn-success w-100 fw-bold"
+                      textoProcesando="Registrando..."
+                    >
+                      <i className="fas fa-money-bill-wave me-2"></i> Efectivo
+                    </BotonSeguro>
+                  )}
+                  {(tjOK || fallback) && (
+                    <BotonSeguro
+                      onClick={() => aprobarReal(aprobarRecepcion.idSuscripcion, { metodoRecepcion: 'Tarjeta' })}
+                      className="btn btn-primary w-100 fw-bold"
+                      textoProcesando="Registrando..."
+                    >
+                      <i className="fas fa-credit-card me-2"></i> Tarjeta en recepción
+                    </BotonSeguro>
+                  )}
+                  {puedeMixto && (
+                    <button type="button" className="btn btn-outline-light w-100 fw-bold" onClick={() => { setModoMixto(true); setMixtoEfectivo(''); }}>
+                      <i className="fas fa-layer-group me-2"></i> Mixto (efectivo + tarjeta)
+                    </button>
+                  )}
+                  <button type="button" className="btn btn-outline-secondary btn-sm mt-1" onClick={cerrarPickerRecepcion}>
+                    Cancelar
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <label className="text-secondary small d-block mb-1">Parte en efectivo</label>
+                  <div className="input-group mb-2">
+                    <span className="input-group-text">$</span>
+                    <input
+                      type="number" className="form-control" min="0" max={total} step="0.01"
+                      value={mixtoEfectivo} onChange={e => setMixtoEfectivo(e.target.value)}
+                      placeholder="0.00" autoFocus
+                    />
+                  </div>
+                  <div className="d-flex justify-content-between align-items-center p-2 rounded mb-2" style={{ background: 'rgba(0,0,0,0.25)' }}>
+                    <span className="text-secondary small"><i className="fas fa-credit-card me-1"></i> Parte en tarjeta (automático)</span>
+                    <strong className="text-white">${tjNum.toFixed(2)}</strong>
+                  </div>
+                  <div className="text-secondary small mb-3 text-center">Total a cubrir: <strong className="text-success">${total.toFixed(2)}</strong></div>
+                  {mixtoEfectivo !== '' && !mixtoValido && (
+                    <div className="text-danger small mb-2 text-center"><i className="fas fa-exclamation-circle me-1"></i> La parte en efectivo debe ser mayor a $0 y menor al total. Si es todo efectivo o todo tarjeta, usa esos botones.</div>
+                  )}
+                  <div className="d-flex gap-2">
+                    <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => setModoMixto(false)}>Atrás</button>
+                    <BotonSeguro
+                      onClick={() => aprobarReal(aprobarRecepcion.idSuscripcion, { metodoRecepcion: 'Mixto', montoEfectivo: efNum, montoTarjeta: tjNum })}
+                      className="btn btn-success btn-sm flex-grow-1 fw-bold"
+                      textoProcesando="Registrando..."
+                      disabled={!mixtoValido}
+                    >
+                      <i className="fas fa-check me-2"></i> Registrar pago mixto
+                    </BotonSeguro>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );

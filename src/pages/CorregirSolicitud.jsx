@@ -8,6 +8,7 @@ import GeneroPicker from '../components/GeneroPicker';
 import CategoriaBasePicker from '../components/CategoriaBasePicker';
 import TallaPlayeraPicker from '../components/TallaPlayeraPicker';
 import BotonSeguro from '../components/BotonSeguro';
+import CuentasTransferenciaTrigger from '../components/CuentasTransferenciaTrigger';
 import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/Register.css';
 import '../assets/css/CompletarRegistro.css';
@@ -27,6 +28,12 @@ export default function CorregirSolicitud() {
     try {
       const b = JSON.parse(localStorage.getItem('box') || 'null');
       return b?.nombre || b?.Nombre || null;
+    } catch { return null; }
+  })();
+  const boxIdLocal = (() => {
+    try {
+      const b = JSON.parse(localStorage.getItem('box') || 'null');
+      return b?.idBox || b?.IdBox || null;
     } catch { return null; }
   })();
   const [loading, setLoading] = useState(true);
@@ -420,6 +427,9 @@ export default function CorregirSolicitud() {
             {metodoPago === 'Transferencia' && (
               <div className="cr-comprobante mb-4">
                 <label className="reg-label">Nuevo Comprobante de Transferencia</label>
+                <div className="mb-3">
+                  <CuentasTransferenciaTrigger idBox={usuarioDB?.idBoxPredeterminado || boxIdLocal || 1} />
+                </div>
                 {!comprobantePreview ? (
                   <label className="cr-uploader">
                     <i className="fas fa-cloud-upload-alt"></i>

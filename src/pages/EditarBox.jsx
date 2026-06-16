@@ -8,6 +8,7 @@ import AtletifyLoader from '../components/AtletifyLoader';
 import TimeWheelPicker from '../components/TimeWheelPicker';
 import MesPicker from '../components/MesPicker';
 import OpcionesPicker from '../components/OpcionesPicker';
+import GestionCuentasTransferencia from '../components/GestionCuentasTransferencia';
 import '../assets/css/EditarBox.css';
 
 // El backend expone todo bajo /api. VITE_API_URL viene SIN /api, así que lo
@@ -942,6 +943,9 @@ export default function EditarBox() {
                       </div>
                     </div>
                   </div>
+
+                  {/* ── TARJETAS PARA TRANSFERIR ── */}
+                  <GestionCuentasTransferencia idBox={form.idBox} />
 
                   {/* ── INSCRIPCIÓN ANUAL ── */}
                   <div className="mb-4 p-3 rounded" style={{ background: 'rgba(243, 156, 18, 0.06)', border: '1px solid rgba(243, 156, 18, 0.2)' }}>
