@@ -12,10 +12,20 @@ import PromocionPicker from '../components/PromocionPicker';
 import MetodoPagoPicker from '../components/MetodoPagoPicker';
 import CategoriaBasePicker from '../components/CategoriaBasePicker';
 import NivelAccesoPicker from '../components/NivelAccesoPicker';
+import Swal from 'sweetalert2';
 import '../assets/css/GestionFinanzas.css';
 import '../assets/css/visitas-regalo.css';
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api/finanzas`;
+
+// Diálogos con el mismo estilo oscuro/curvo que Validación de Transferencias (SweetAlert2).
+const gfSwal = Swal.mixin({
+  customClass: { popup: 'swal2-curvo', confirmButton: 'swal2-btn-curvo', cancelButton: 'swal2-btn-curvo' },
+  background: '#1e1e2d',
+  color: '#fff',
+  confirmButtonColor: '#198754',
+  cancelButtonColor: '#6c757d'
+});
 
 // ── Disponibilidad de clases (lógica COMPARTIDA por drop-in normal y cajear) ──
 const JERARQUIA_NIVEL = { novato: 1, principiante: 2, intermedio: 3, rx: 4, avanzado: 4 };
@@ -198,6 +208,7 @@ export default function GestionFinanzas() {
 
   // 🐺 MODAL DE PUNTO DE VENTA V3 🐺
   const [showModalCobro, setShowModalCobro] = useState(false);
+  const [atletaConAutoCobro, setAtletaConAutoCobro] = useState(false); // tiene auto-cobro Stripe activo
   const [formCobro, setFormCobro] = useState({
     monto1: '', metodo1: 'Efectivo',
     monto2: '', metodo2: '',
@@ -608,6 +619,26 @@ export default function GestionFinanzas() {
     } catch (e) { alert('Error de conexión.'); }
   };
 
+  // Antes de abrir el cobro: si el atleta pertenece a un grupo familiar, NO se renueva
+  // individualmente desde el semáforo (rompería el cobro en cadena que paga el líder).
+  // Lo mandamos al módulo de Grupos Familiares, que ya maneja la renovación correcta.
+  const intentarRenovar = async (s) => {
+    if (s.grupoFamiliar) {
+      const r = await gfSwal.fire({
+        icon: 'info',
+        title: 'Atleta en grupo familiar',
+        html: `<b>${s.nombre}</b> pertenece al grupo <b>"${s.grupoFamiliar}"</b>.<br/><br/>La mensualidad de un grupo se renueva <b>en cadena</b> (la paga el líder) desde <b>Grupos Familiares</b>, no individualmente desde el semáforo.`,
+        showCancelButton: true,
+        confirmButtonText: 'Ir a Grupos Familiares',
+        cancelButtonText: 'Cancelar'
+      });
+      if (r.isConfirmed) navigate('/admin-box/grupos-familiares');
+      return;
+    }
+    setAtletaARenovar(s);
+    setShowModal(true);
+  };
+
   const abrirPuntoDePago = async () => {
     if (!planSeleccionado) return alert('Selecciona un plan para renovar');
 
@@ -633,6 +664,17 @@ export default function GestionFinanzas() {
     } catch (e) {
       console.error('Error al calcular precio:', e);
     }
+
+    // ¿El atleta tiene cobro automático con tarjeta (Stripe) activo? Para advertir que se cancelará
+    // al cobrar en recepción (anti doble-cobro).
+    setAtletaConAutoCobro(false);
+    try {
+      const resR = await fetch(`${import.meta.env.VITE_API_URL}/api/cobranza/atleta/${atletaARenovar.idUsuario}`, { headers: headersGet });
+      if (resR.ok) {
+        const dr = await resR.json();
+        setAtletaConAutoCobro(!!(dr.suscripcion?.stripeSubscriptionId && dr.suscripcion?.autoRenovacion));
+      }
+    } catch { /* noop */ }
 
     setShowModalCobro(true);
   };
@@ -678,8 +720,10 @@ export default function GestionFinanzas() {
         headers: headersPost,
         body: JSON.stringify({ idUsuario: atletaARenovar.idUsuario, idPlan: parseInt(planSeleccionado) }),
       });
-      if (!resRenovar.ok) return alert('Error al renovar suscripción');
-      const dataRenovar = await resRenovar.json();
+      const dataRenovar = await resRenovar.json().catch(() => ({}));
+      // Defensa en profundidad: si por cualquier ruta llega aquí un integrante de grupo, el backend
+      // (GrupoGuard) lo rechaza; mostramos su mensaje real en vez de un error genérico.
+      if (!resRenovar.ok) return alert(dataRenovar.mensaje || 'Error al renovar suscripción');
 
       // 2. Activamos y Cobramos (V3)
       const resPago = await fetch(`${import.meta.env.VITE_API_URL}/api/cobranza/pagar`, {
@@ -884,7 +928,7 @@ export default function GestionFinanzas() {
                           </div>
                           <div className="finanzas-atleta-tel"><i className="fas fa-phone me-1"></i>{s.telefono || 'Sin número'}</div>
                           <div className="small mt-1" style={{ color: 'var(--secondary)' }}>{s.plan}</div>
-                          {s.grupoFamiliar && <div className="small mt-1 text-warning"><i className="fas fa-users me-1"></i>{s.grupoFamiliar}</div>}
+                          {s.grupoFamiliar && <div className="small mt-1 text-warning"><i className="fas fa-users me-1"></i>{s.grupoFamiliar}{s.esLiderGrupo && <span className="badge ms-1" style={{ background: 'var(--primary)', fontSize: '0.6rem', verticalAlign: 'middle' }}>LÍDER</span>}</div>}
                         </div>
                         <span className={`finanzas-badge ${getBadgeColor(s.estado)}`} style={{ whiteSpace: 'nowrap' }}>
                           {s.estado === 'Verde' ? `Al día · ${s.diasRestantes}d`
@@ -898,7 +942,7 @@ export default function GestionFinanzas() {
                       <div className="d-flex gap-2">
                         <button
                           className="finanzas-btn-accion finanzas-btn-accion--renovar"
-                          onClick={() => { setAtletaARenovar(s); setShowModal(true); }}
+                          onClick={() => intentarRenovar(s)}
                           disabled={s.estado === 'VIP'}
                           style={{ opacity: s.estado === 'VIP' ? 0.4 : 1, cursor: s.estado === 'VIP' ? 'not-allowed' : 'pointer' }}
                         >
@@ -923,7 +967,7 @@ export default function GestionFinanzas() {
                             <td><div className="finanzas-atleta-nombre">{s.nombre} {(s.rol === 'Coach' || s.rol === 'Staff' || s.rol === 'AdminBox') && <span className="badge bg-secondary ms-2" style={{ fontSize: '0.65rem' }} title="Equipo de trabajo"><i className="fas fa-user-shield"></i> Staff</span>} {s.esDeConfianza && <span className="badge bg-info text-dark ms-2" style={{ fontSize: '0.65rem' }} title="Atleta de Confianza (Fiado)"><i className="fas fa-handshake"></i> Confianza</span>}</div><div className="finanzas-atleta-tel"><i className="fas fa-phone me-1"></i>{s.telefono || 'Sin número'}</div></td>
                             <td style={{ color: 'var(--secondary)' }}>
                               {s.plan}
-                              {s.grupoFamiliar && <div className="text-warning mt-1" style={{fontSize:'0.75rem'}}><i className="fas fa-users me-1"></i>{s.grupoFamiliar}</div>}
+                              {s.grupoFamiliar && <div className="text-warning mt-1" style={{fontSize:'0.75rem'}}><i className="fas fa-users me-1"></i>{s.grupoFamiliar}{s.esLiderGrupo && <span className="badge ms-1" style={{ background: 'var(--primary)', fontSize: '0.6rem', verticalAlign: 'middle' }}>LÍDER</span>}</div>}
                             </td>
                             <td><span className={`finanzas-badge ${getBadgeColor(s.estado)}`}>{s.estado === 'Verde' ? `Al día · ${s.diasRestantes}d`
                               : s.estado === 'Amarillo' ? `Por vencer · ${s.diasRestantes}d`
@@ -936,7 +980,7 @@ export default function GestionFinanzas() {
                               <div className="d-flex gap-2 justify-content-end flex-wrap">
                                 <button
                                   className="finanzas-btn-accion finanzas-btn-accion--renovar"
-                                  onClick={() => { setAtletaARenovar(s); setShowModal(true); }}
+                                  onClick={() => intentarRenovar(s)}
                                   disabled={s.estado === 'VIP'}
                                   style={{ opacity: s.estado === 'VIP' ? 0.4 : 1, cursor: s.estado === 'VIP' ? 'not-allowed' : 'pointer' }}
                                 >
@@ -1560,6 +1604,17 @@ export default function GestionFinanzas() {
           <div className="finanzas-modal" style={{ maxWidth: '450px' }} onClick={e => e.stopPropagation()}>
             <p className="finanzas-pdv-titulo text-success fw-bold"><i className="fas fa-cash-register me-2"></i>Punto de Venta</p>
             <p className="finanzas-modal-sub mb-3">Atleta: <strong>{atletaARenovar.nombre}</strong></p>
+
+            {atletaConAutoCobro && (
+              <div className="mb-3 p-2" style={{ background: 'rgba(230,57,70,0.08)', border: '1px solid rgba(230,57,70,0.25)', borderRadius: '8px' }}>
+                <small className="d-block" style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.78rem' }}>
+                  <i className="fas fa-triangle-exclamation me-1"></i> Este atleta tiene cobro automático con tarjeta (Stripe)
+                </small>
+                <small className="text-secondary" style={{ fontSize: '0.72rem', lineHeight: 1.4 }}>
+                  Al cobrar en recepción se cancelará su cobro automático para evitar un doble cargo, y se le avisará en su buzón.
+                </small>
+              </div>
+            )}
 
             <form onSubmit={procesarRenovacionConPago}>
               <div className="mb-3">

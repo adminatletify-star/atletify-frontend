@@ -12,14 +12,26 @@ function formatFecha(dateStr) {
   return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function getTiempoRestante(fechaSolicitud) {
-  if (!fechaSolicitud) return '—';
-  const limite = new Date(fechaSolicitud).getTime() + 24 * 60 * 60 * 1000;
-  const diff = limite - Date.now();
-  if (diff <= 0) return 'Expirado (Procesando...)';
-  const horas = Math.floor(diff / (3600 * 1000));
-  const minutos = Math.floor((diff % (3600 * 1000)) / (60 * 1000));
-  return `${horas}h y ${minutos}m`;
+// Aviso de la solicitud de pago en recepción. El "plazo" ya NO es un reloj fijo de 24h:
+// es natural, hasta que vence la mensualidad del atleta.
+//   • le quedan > 24h  → solo recordatorio con la fecha de vencimiento (sin prisa).
+//   • le quedan < 24h  → cuenta regresiva real (horas y minutos) hasta el vencimiento.
+//   • ya venció        → sin plazo; mensaje de "pásate a pagar para reactivar".
+function getRecepcionAviso(fechaVencimiento) {
+  if (!fechaVencimiento) {
+    return { modo: 'mensaje', texto: 'Pasa a recepción a pagar tu mensualidad.' };
+  }
+  const diff = new Date(fechaVencimiento).getTime() - Date.now();
+  if (diff <= 0) {
+    return { modo: 'vencida', texto: 'Tu mensualidad venció. Pasa a recepción a pagar cuanto antes para reactivarla.' };
+  }
+  if (diff < 24 * 60 * 60 * 1000) {
+    const horas = Math.floor(diff / (3600 * 1000));
+    const minutos = Math.floor((diff % (3600 * 1000)) / (60 * 1000));
+    return { modo: 'contador', texto: `${horas}h ${minutos}m`, nota: 'antes de que venza tu mensualidad' };
+  }
+  const dias = Math.ceil(diff / (24 * 60 * 60 * 1000));
+  return { modo: 'mensaje', texto: `Mantente atento: tu mensualidad vence el ${formatFecha(fechaVencimiento)} (${dias} día${dias === 1 ? '' : 's'}).` };
 }
 
 export default function DetallePlanUser() {
@@ -313,16 +325,29 @@ export default function DetallePlanUser() {
 
   const pendingPlanName = planesBox.find(p => String(p.idPlan) === String(sub?.cambioPeriodoPendiente))?.nombre || sub?.cambioPeriodoPendiente;
 
+  // Aviso dinámico para la solicitud de pago en recepción (se recalcula en cada render; el
+  // intervalo de tiempoTick fuerza el refresco cuando hay una solicitud de recepción pendiente).
+  const avisoRecepcion = getRecepcionAviso(sub?.fechaVencimiento);
+
   // Métodos de pago que el box realmente acepta (enforcement de la config financiera).
-  // Si no llegó la config, somos permisivos para no bloquear el pago por error.
+  // Si NO llegó la config, somos conservadores: no ofrecemos un método que el backend rechazaría.
+  // mi-plan ahora resuelve el box igual que cambiar-facturacion, así que la config llega salvo
+  // que el box no tenga ninguna configurada (ahí el atleta paga en recepción a la antigua).
   const cfgBox = data?.configuracionBox;
   const hayCfg = !!cfgBox;
   const metodosDisponibles = {
-    'En Línea': hayCfg ? !!(cfgBox.aceptarPagosEnLinea && cfgBox.stripeConectado) : true,
-    'Transferencia': hayCfg ? !!cfgBox.aceptarTransferencias : true,
-    'Recepción': hayCfg ? !!(cfgBox.aceptarEfectivo || cfgBox.aceptarTarjetaRecepcion) : true,
+    'En Línea': hayCfg ? !!(cfgBox.aceptarPagosEnLinea && cfgBox.stripeConectado) : false,
+    'Transferencia': hayCfg ? !!cfgBox.aceptarTransferencias : false,
+    'Recepción': hayCfg ? !!(cfgBox.aceptarEfectivo || cfgBox.aceptarTarjetaRecepcion) : false,
   };
   const metodosActivos = ['En Línea', 'Transferencia', 'Recepción'].filter(m => metodosDisponibles[m]);
+
+  // No hay cambio real si se mantiene el mismo plan Y el mismo método que ya tiene el atleta.
+  // (En Línea queda fuera: re-elegirlo sí tiene sentido — actualiza tarjeta/renueva en Stripe.)
+  const sinCambios = !!planSeleccionado
+    && planSeleccionado.idPlan === sub?.idPlan
+    && metodoPago === sub?.metodoPago
+    && metodoPago !== 'En Línea';
 
   const daysColor = esVencida ? 'var(--danger)' : esAlerta ? 'var(--warning)' : 'var(--success)';
   const fillClass = esVencida ? 'dpu-progress-fill--vencida' : esAlerta ? 'dpu-progress-fill--alerta' : '';
@@ -477,16 +502,26 @@ export default function DetallePlanUser() {
                       <p className="mb-2 text-muted text-xs" style={{ lineHeight: '1.4' }}>
                         Solicitaste cambiar a <strong className="text-white">{pendingPlanName}</strong> con pago en Recepción {sub.estatus === 'Vencida' ? '+ atraso ' : ''}por <strong className="text-white">${sub.montoPendiente?.toFixed(2)}</strong>.
                       </p>
-                      <div className="d-flex align-items-center justify-content-between bg-black bg-opacity-30 rounded px-3 py-2">
-                        <span className="text-muted text-xs"><i className="far fa-clock me-1"></i> Plazo restante:</span>
-                        <strong className="text-warning" style={{ fontFamily: 'var(--font-stats)', fontSize: '0.9rem' }}>
-                          {getTiempoRestante(sub.fechaSolicitudCambio)}
-                        </strong>
-                      </div>
-                      <p className="text-muted mt-2 mb-2" style={{ fontSize: '0.72rem', lineHeight: '1.4' }}>
-                        <i className="fas fa-info-circle me-1"></i>
-                        Es solo para el <strong>cambio</strong> que solicitaste; tu mensualidad actual sigue vigente y <strong>no pierdes tus días</strong>.
-                      </p>
+                      {avisoRecepcion.modo === 'contador' ? (
+                        <div className="d-flex align-items-center justify-content-between bg-black bg-opacity-30 rounded px-3 py-2">
+                          <span className="text-muted text-xs"><i className="far fa-clock me-1"></i> Te quedan:</span>
+                          <strong className="text-warning" style={{ fontFamily: 'var(--font-stats)', fontSize: '0.9rem' }}>
+                            {avisoRecepcion.texto} <span className="text-muted" style={{ fontWeight: 400, fontSize: '0.7rem' }}>{avisoRecepcion.nota}</span>
+                          </strong>
+                        </div>
+                      ) : (
+                        <div className="bg-black bg-opacity-30 rounded px-3 py-2">
+                          <span className={`text-xs ${avisoRecepcion.modo === 'vencida' ? 'text-danger' : 'text-muted'}`}>
+                            <i className="far fa-clock me-1"></i> {avisoRecepcion.texto}
+                          </span>
+                        </div>
+                      )}
+                      {avisoRecepcion.modo !== 'vencida' && (
+                        <p className="text-muted mt-2 mb-2" style={{ fontSize: '0.72rem', lineHeight: '1.4' }}>
+                          <i className="fas fa-info-circle me-1"></i>
+                          Es solo para el <strong>cambio</strong> que solicitaste; tu mensualidad actual sigue vigente y <strong>no pierdes tus días</strong>.
+                        </p>
+                      )}
                       <button
                         type="button"
                         className="btn btn-sm btn-outline-light"
@@ -864,6 +899,9 @@ export default function DetallePlanUser() {
                         />
                         <i className="fas fa-credit-card"></i>
                         <span>En Línea</span>
+                        {sub?.metodoPago === 'En Línea' && (
+                          <span style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--success)', marginTop: '3px' }}>● Actual</span>
+                        )}
                       </label>
                     </div>
                   )}
@@ -880,6 +918,9 @@ export default function DetallePlanUser() {
                         />
                         <i className="fas fa-university"></i>
                         <span>Transferencia</span>
+                        {sub?.metodoPago === 'Transferencia' && (
+                          <span style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--success)', marginTop: '3px' }}>● Actual</span>
+                        )}
                       </label>
                     </div>
                   )}
@@ -896,6 +937,9 @@ export default function DetallePlanUser() {
                         />
                         <i className="fas fa-cash-register"></i>
                         <span>Recepción</span>
+                        {sub?.metodoPago === 'Recepción' && (
+                          <span style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--success)', marginTop: '3px' }}>● Actual</span>
+                        )}
                       </label>
                     </div>
                   )}
@@ -1056,10 +1100,10 @@ export default function DetallePlanUser() {
 
                 {metodoPago === 'Recepción' && (
                   <div className="text-center py-2">
-                    <i className="fas fa-exclamation-triangle text-warning mb-2" style={{ fontSize: '1.8rem' }}></i>
-                    <strong className="d-block text-warning text-sm">Plazo Límite de 24 Horas</strong>
+                    <i className={`fas ${esVencida ? 'fa-exclamation-circle text-danger' : 'fa-store text-warning'} mb-2`} style={{ fontSize: '1.8rem' }}></i>
+                    <strong className={`d-block text-sm ${esVencida ? 'text-danger' : 'text-warning'}`}>Pago en recepción</strong>
                     <p className="text-muted m-0 mt-1 text-xs" style={{ lineHeight: '1.4' }}>
-                      Al confirmar esta solicitud, tendrás un plazo de <strong>24 horas</strong> para pagar un total de <strong>
+                      Al confirmar, registramos tu solicitud para pagar un total de <strong>
                         ${(() => {
                           if (data?.grupoFamiliar?.esLider && data.grupoFamiliar.miembros) {
                             let suma = data.grupoFamiliar.miembros.reduce((acc, m) => acc + (m.rolEnGrupo === 'Lider' ? (planSeleccionado?.precio || 0) : m.precioBase), 0);
@@ -1071,13 +1115,24 @@ export default function DetallePlanUser() {
                           }
                           return (planSeleccionado?.precio || 0).toFixed(2);
                         })()}
-                      </strong> en efectivo o tarjeta en la recepción del Box. De lo contrario, la solicitud caducará.
+                      </strong> en efectivo o tarjeta en la recepción del Box.{' '}
+                      {esVencida
+                        ? <>Tu mensualidad está vencida: <strong>pásate a pagar cuanto antes</strong> para reactivarla (sin plazo límite).</>
+                        : diasRestantes <= 1
+                          ? <>Te queda <strong>menos de 1 día</strong> de mensualidad; pasa a pagar antes de que venza.</>
+                          : <>Puedes pagar <strong>antes de que venza tu mensualidad</strong> (el {formatFecha(sub?.fechaVencimiento)}); <strong>no pierdes tus días</strong>.</>}
                     </p>
                   </div>
                 )}
               </div>
 
               {/* Botón de Confirmación */}
+              {sinCambios && (
+                <p className="text-muted text-center text-xs mb-2" style={{ fontStyle: 'italic' }}>
+                  <i className="fas fa-info-circle me-1"></i>
+                  Ya tienes este plan con pago en <strong>{sub?.metodoPago}</strong>. Elige un plan o método distinto para solicitar un cambio.
+                </p>
+              )}
               <div className="d-flex gap-2 justify-content-end">
                 <button 
                   type="button" 
@@ -1090,7 +1145,7 @@ export default function DetallePlanUser() {
                 <button
                   type="submit"
                   className="btn btn-success btn-sm d-flex align-items-center justify-content-center gap-2"
-                  disabled={subiendoArchivo || enviando || (metodoPago === 'Transferencia' && !archivoComprobante)}
+                  disabled={subiendoArchivo || enviando || sinCambios || (metodoPago === 'Transferencia' && !archivoComprobante)}
                   style={{ borderRadius: '8px', padding: '0.4rem 1.25rem', background: 'var(--success)', border: 'none' }}
                 >
                   {enviando ? 'Procesando…' : subiendoArchivo ? 'Guardando...' : (metodoPago === 'En Línea' ? 'Ir a pagar' : 'Confirmar Cambio')}

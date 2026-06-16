@@ -117,6 +117,11 @@ export default function EditarBox() {
   const [saving, setSaving] = useState(false);
   const [savingConfig, setSavingConfig] = useState(false);
   const [metodoPagoProcesando, setMetodoPagoProcesando] = useState(null); // field del método en proceso | null
+  // Confirmación + PIN para modificar los métodos de pago (acción sensible)
+  const [modalMetodoPago, setModalMetodoPago] = useState(null); // { field, activar, etiqueta } | null
+  const [pinMetodoPago, setPinMetodoPago] = useState('');
+  const [errorMetodoPago, setErrorMetodoPago] = useState(null);
+  const [stripeSubsCount, setStripeSubsCount] = useState(null); // atletas afectados al desactivar pagos en línea
   const [activeTab, setActiveTab] = useState('identidad');
 
   // ── Toggle seguro de visitas de regalo (contraseña + auditoría) ──
@@ -292,9 +297,17 @@ export default function EditarBox() {
     setConfig(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   }
 
-  // Activa/desactiva un método de pago. Persiste de inmediato vía el endpoint seguro
-  // (que además registra la acción en Auditoría de Usuarios). No requiere contraseña.
-  async function toggleMetodoPago(field, activar) {
+  // Modificar un método de pago es una acción sensible: abre un modal de confirmación que pide el
+  // PIN de Acciones (si el box tiene uno) y, al desactivar pagos en línea, advierte a cuántos
+  // atletas con cobro automático afecta. El cambio se aplica en confirmarMetodoPago().
+  const ETIQUETAS_METODO = {
+    aceptarPagosEnLinea: 'Pagos con Tarjeta (App)',
+    aceptarTransferencias: 'Aceptar Transferencias',
+    aceptarEfectivo: 'Aceptar Efectivo en Recepción',
+    aceptarTarjetaRecepcion: 'Aceptar Tarjeta en Recepción',
+  };
+
+  function toggleMetodoPago(field, activar) {
     // Regla: siempre debe quedar ≥1 método de recepción activo (solo los 3 de recepción).
     const recepcion = ['aceptarTransferencias', 'aceptarEfectivo', 'aceptarTarjetaRecepcion'];
     if (!activar && recepcion.includes(field)) {
@@ -304,28 +317,50 @@ export default function EditarBox() {
         return;
       }
     }
-
     if (metodoPagoProcesando) return; // anti doble-clic mientras procesa
 
-    const idBox = boxLocal?.idBox || boxLocal?.IdBox;
-    const valorPrevio = config[field];
-    setMetodoPagoProcesando(field);
-    setConfig(prev => ({ ...prev, [field]: activar })); // actualización optimista
+    setPinMetodoPago('');
+    setErrorMetodoPago(null);
+    setStripeSubsCount(null);
+    setModalMetodoPago({ field, activar, etiqueta: ETIQUETAS_METODO[field] || field });
 
+    // Si se va a DESACTIVAR pagos en línea, averiguar a cuántos atletas afecta (para el aviso).
+    if (field === 'aceptarPagosEnLinea' && !activar) {
+      const idBox = boxLocal?.idBox || boxLocal?.IdBox;
+      fetch(`${API_BASE}/configuracionbox/${idBox}/suscripciones-stripe-count`, { headers: headersGet })
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => { if (d) setStripeSubsCount(d.count); })
+        .catch(() => {});
+    }
+  }
+
+  // Aplica el cambio del método de pago tras confirmar (y validar el PIN en el backend).
+  async function confirmarMetodoPago() {
+    if (!modalMetodoPago) return;
+    const { field, activar } = modalMetodoPago;
+    if (pinConfigurado && pinMetodoPago.length !== 4) {
+      setErrorMetodoPago('Ingresa tu PIN de 4 dígitos.');
+      return;
+    }
+    const idBox = boxLocal?.idBox || boxLocal?.IdBox;
+    setMetodoPagoProcesando(field);
+    setErrorMetodoPago(null);
     try {
       const res = await fetch(`${API_BASE}/configuracionbox/${idBox}/toggle-metodo-pago`, {
         method: 'POST',
         headers: headersPost,
-        body: JSON.stringify({ metodo: field, activar })
+        body: JSON.stringify({ metodo: field, activar, pin: pinMetodoPago })
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setConfig(prev => ({ ...prev, [field]: valorPrevio })); // revertir
-        alert(data.mensaje || 'No se pudo cambiar el método de pago.');
+      if (res.ok && data.valido !== false) {
+        setConfig(prev => ({ ...prev, [field]: activar }));
+        setModalMetodoPago(null);
+        setPinMetodoPago('');
+      } else {
+        setErrorMetodoPago(data.mensaje || 'No se pudo cambiar el método de pago.');
       }
-    } catch (e) {
-      setConfig(prev => ({ ...prev, [field]: valorPrevio })); // revertir
-      alert('Error de conexión al cambiar el método de pago.');
+    } catch {
+      setErrorMetodoPago('Error de conexión al cambiar el método de pago.');
     } finally {
       setMetodoPagoProcesando(null);
     }
@@ -1233,6 +1268,53 @@ export default function EditarBox() {
               <button type="button" className="btn btn-outline-secondary w-50" style={{ borderRadius: '8px' }} onClick={() => setModalPin(false)} disabled={guardandoPin}>Cancelar</button>
               <button type="button" className="btn btn-danger w-50" style={{ borderRadius: '8px' }} onClick={guardarPin} disabled={guardandoPin || nuevoPin.length !== 4 || !passwordPin}>
                 {guardandoPin ? <><i className="fas fa-spinner fa-spin me-1"></i></> : 'Guardar PIN'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalMetodoPago && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={() => !metodoPagoProcesando && setModalMetodoPago(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '420px', background: 'var(--bg-elevated, #1a1a22)', borderTop: '3px solid var(--primary)', borderRadius: '16px', padding: '1.5rem' }}>
+            <h5 className="fw-bold text-white mb-1">
+              <i className={`fas ${modalMetodoPago.activar ? 'fa-toggle-on' : 'fa-toggle-off'} me-2`} style={{ color: 'var(--primary)' }}></i>
+              {modalMetodoPago.activar ? 'Activar' : 'Desactivar'} método de pago
+            </h5>
+            <p className="text-secondary" style={{ fontSize: '0.82rem' }}>
+              Vas a <strong className="text-white">{modalMetodoPago.activar ? 'activar' : 'desactivar'}</strong> «{modalMetodoPago.etiqueta}» para este box.
+            </p>
+
+            {modalMetodoPago.field === 'aceptarPagosEnLinea' && !modalMetodoPago.activar && (
+              <div className="mb-3 p-3" style={{ background: 'rgba(230,57,70,0.08)', border: '1px solid rgba(230,57,70,0.25)', borderRadius: '10px' }}>
+                <p className="mb-1" style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--primary)' }}>
+                  <i className="fas fa-triangle-exclamation me-1"></i> Se cancelará la renovación automática en Stripe
+                </p>
+                <p className="mb-0 text-secondary" style={{ fontSize: '0.78rem', lineHeight: 1.5 }}>
+                  {stripeSubsCount == null
+                    ? 'A los atletas que pagan con tarjeta se les cancelará el cobro automático y se les avisará por correo para que cambien de método antes de vencer.'
+                    : <>Se cancelará el cobro automático de <strong className="text-white">{stripeSubsCount} atleta{stripeSubsCount === 1 ? '' : 's'}</strong>. Conservan acceso hasta su vencimiento y se les avisará por correo para que cambien de método.</>}
+                </p>
+              </div>
+            )}
+
+            {pinConfigurado ? (
+              <>
+                <label className="form-label text-secondary" style={{ fontSize: '0.78rem' }}>PIN de Acciones (4 dígitos)</label>
+                <input type="password" inputMode="numeric" maxLength={4} className="form-control mb-2 text-center" style={{ background: '#13131a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '8px', letterSpacing: '8px', fontSize: '1.3rem' }} value={pinMetodoPago} onChange={e => setPinMetodoPago(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="••••" disabled={!!metodoPagoProcesando} autoFocus />
+              </>
+            ) : (
+              <p className="text-secondary" style={{ fontSize: '0.78rem' }}>
+                <i className="fas fa-info-circle me-1"></i> Este box no tiene PIN de Acciones. Configúralo arriba para proteger estos cambios.
+              </p>
+            )}
+
+            {errorMetodoPago && <div className="text-danger mb-2" style={{ fontSize: '0.78rem' }}><i className="fas fa-exclamation-circle me-1"></i>{errorMetodoPago}</div>}
+
+            <div className="d-flex gap-2 mt-2">
+              <button type="button" className="btn btn-outline-secondary w-50" style={{ borderRadius: '8px' }} onClick={() => setModalMetodoPago(null)} disabled={!!metodoPagoProcesando}>Cancelar</button>
+              <button type="button" className={`btn w-50 ${modalMetodoPago.activar ? 'btn-success' : 'btn-danger'}`} style={{ borderRadius: '8px' }} onClick={confirmarMetodoPago} disabled={!!metodoPagoProcesando || (pinConfigurado && pinMetodoPago.length !== 4)}>
+                {metodoPagoProcesando ? <i className="fas fa-spinner fa-spin"></i> : (modalMetodoPago.activar ? 'Activar' : 'Desactivar')}
               </button>
             </div>
           </div>

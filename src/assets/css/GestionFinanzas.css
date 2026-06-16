@@ -2,6 +2,18 @@
    GESTION FINANZAS — Paleta: Arctic Wolf
    ============================================= */
 
+/* Diálogos SweetAlert2 (mismo look oscuro/curvo que Validación de Transferencias) */
+.swal2-curvo {
+  border-radius: 28px !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+.swal2-btn-curvo {
+  border-radius: 50px !important;
+  padding: 12px 32px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px;
+}
+
 /* === CONTAINER === */
 .finanzas-container {
   background: linear-gradient(160deg, var(--bg-base) 0%, var(--bg-elevated) 100%);
