@@ -6,7 +6,19 @@ import BotonSeguro from '../components/BotonSeguro';
 import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/GestionInventario.css';
 
-const FORM_VACIO = { nombre: '', costo: '', precioVenta: '', stockActual: '', stockMinimo: '', fotoUrl: '', categoria: '', subCategoria: '', talla: '', descripcion: '', esSobrePedido: false, esBorrador: false };
+const FORM_VACIO = { nombre: '', costo: '', precioVenta: '', stockActual: '', stockMinimo: '', fotoUrl: '', categoria: '', subCategoria: '', talla: '', descripcion: '', esSobrePedido: false, esBorrador: false, permitePersonalizacion: false, costoPersonalizacion: '', tallasDisponibles: [] };
+
+const TALLAS_OPCIONES = ['XS', 'S', 'M', 'L', 'XL', 'Unitalla'];
+
+// El backend guarda la fecha en UTC en una columna 'timestamp without time zone',
+// así que el JSON llega SIN marca de zona. La tratamos como UTC para convertirla
+// a la hora local del navegador (si ya trae zona, se respeta).
+function fechaLocal(s) {
+  if (!s) return '';
+  const tieneZona = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(s);
+  const d = new Date(tieneZona ? s : s + 'Z');
+  return isNaN(d) ? s : d.toLocaleString();
+}
 
 export default function GestionInventario() {
   const navigate = useNavigate();
@@ -19,10 +31,23 @@ export default function GestionInventario() {
   // Formulario: null = oculto, 'nuevo' = agregar, número = editar
   const [modoForm, setModoForm] = useState(null);
   const [form, setForm] = useState(FORM_VACIO);
-  const [agregarStockId, setAgregarStockId] = useState(null);
-  const [cantidadAStock, setCantidadAStock] = useState('');
   const [soloStockBajo, setSoloStockBajo] = useState(false);
   const [vistaActual, setVistaActual] = useState('normal');
+
+  // Modal de movimiento de stock (reponer / ajustar)
+  const [modalStock, setModalStock] = useState(null);    // producto seleccionado
+  const [modalModo, setModalModo] = useState('reponer');  // 'reponer' | 'ajustar'
+  const [stockCantidad, setStockCantidad] = useState('');
+  const [stockNuevo, setStockNuevo] = useState('');
+  const [stockMotivo, setStockMotivo] = useState('');
+  const [guardandoStock, setGuardandoStock] = useState(false);
+
+  // Historial de movimientos de stock
+  const [movData, setMovData] = useState(null);           // { items, total, totalPaginas, pagina }
+  const [loadingMov, setLoadingMov] = useState(false);
+  const [movTipo, setMovTipo] = useState('');
+  const [movProductoFiltro, setMovProductoFiltro] = useState('');
+  const [movPagina, setMovPagina] = useState(1);
 
   const apartadoActual = localStorage.getItem('apartadoVentas') || 'General (Box)';
 
@@ -74,7 +99,10 @@ export default function GestionInventario() {
       talla: p.talla || '',
       descripcion: p.descripcion || '',
       esSobrePedido: p.esSobrePedido || false,
-      esBorrador: p.esBorrador || false
+      esBorrador: p.esBorrador || false,
+      permitePersonalizacion: p.permitePersonalizacion || false,
+      costoPersonalizacion: p.costoPersonalizacion || '',
+      tallasDisponibles: p.tallasDisponibles ? p.tallasDisponibles.split(',').map(s => s.trim()).filter(Boolean) : []
     });
     setModoForm(p.idProducto);
   }
@@ -112,7 +140,10 @@ export default function GestionInventario() {
             talla: form.categoria === 'Ropa' ? form.talla || null : null,
             descripcion: form.descripcion.trim() || null,
             esSobrePedido: form.esSobrePedido,
-            esBorrador: form.esBorrador
+            esBorrador: form.esBorrador,
+            permitePersonalizacion: form.esSobrePedido && form.permitePersonalizacion,
+            costoPersonalizacion: parseFloat(form.costoPersonalizacion) || 0,
+            tallasDisponibles: (form.esSobrePedido && form.categoria === 'Ropa' && form.tallasDisponibles.length) ? form.tallasDisponibles.join(',') : null
           })
         });
         if (!res.ok) throw new Error('Error al crear producto.');
@@ -138,7 +169,10 @@ export default function GestionInventario() {
             talla: form.categoria === 'Ropa' ? form.talla || null : null,
             descripcion: form.descripcion.trim() || null,
             esSobrePedido: form.esSobrePedido,
-            esBorrador: form.esBorrador
+            esBorrador: form.esBorrador,
+            permitePersonalizacion: form.esSobrePedido && form.permitePersonalizacion,
+            costoPersonalizacion: parseFloat(form.costoPersonalizacion) || 0,
+            tallasDisponibles: (form.esSobrePedido && form.categoria === 'Ropa' && form.tallasDisponibles.length) ? form.tallasDisponibles.join(',') : null
           })
         });
         if (!res.ok) throw new Error('Error al actualizar producto.');
@@ -176,38 +210,73 @@ export default function GestionInventario() {
     }
   }
 
-  async function confirmarAgregarStock(p) {
-    const cantidad = parseInt(cantidadAStock);
-    if (isNaN(cantidad) || cantidad <= 0) { alert('Ingresa una cantidad válida mayor a 0.'); return; }
-    setGuardando(true);
+  function abrirModalStock(p) {
+    setModalStock(p);
+    setModalModo('reponer');
+    setStockCantidad('');
+    setStockNuevo(String(p.stockActual));
+    setStockMotivo('');
+  }
+
+  function cerrarModalStock() {
+    setModalStock(null);
+    setStockCantidad('');
+    setStockNuevo('');
+    setStockMotivo('');
+  }
+
+  async function guardarMovimientoStock() {
+    if (!modalStock) return;
+    const token = localStorage.getItem('token');
+    setGuardandoStock(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${PRODUCTOS_ENDPOINT}/${p.idProducto}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          idBox: box.idBox,
-          nombre: p.nombre,
-          precioVenta: p.precioVenta,
-          stockActual: p.stockActual + cantidad,
-          stockMinimo: p.stockMinimo,
-          fotoUrl: p.fotoUrl || null
-        })
-      });
-      if (!res.ok) throw new Error('Error al actualizar stock.');
-      alert(`Stock de "${p.nombre}" actualizado (+${cantidad}).`);
-      setAgregarStockId(null);
-      setCantidadAStock('');
+      let res;
+      if (modalModo === 'reponer') {
+        const cant = parseInt(stockCantidad);
+        if (isNaN(cant) || cant <= 0) { alert('Ingresa una cantidad válida mayor a 0.'); setGuardandoStock(false); return; }
+        res = await fetch(`${PRODUCTOS_ENDPOINT}/${modalStock.idProducto}/reponer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ idBox: box.idBox, cantidad: cant, motivo: stockMotivo.trim() || null })
+        });
+      } else {
+        const nuevo = parseInt(stockNuevo);
+        if (isNaN(nuevo) || nuevo < 0) { alert('Ingresa un stock válido (0 o mayor).'); setGuardandoStock(false); return; }
+        if (!stockMotivo.trim()) { alert('El motivo es obligatorio al ajustar el stock.'); setGuardandoStock(false); return; }
+        res = await fetch(`${PRODUCTOS_ENDPOINT}/${modalStock.idProducto}/ajustar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ idBox: box.idBox, nuevoStock: nuevo, motivo: stockMotivo.trim() })
+        });
+      }
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensaje || 'Error al guardar el movimiento.'); }
+      cerrarModalStock();
       await cargarProductos();
+      if (vistaActual === 'historial') await cargarMovimientos();
     } catch (err) {
       alert(err.message || 'Error inesperado.');
     } finally {
-      setGuardando(false);
+      setGuardandoStock(false);
     }
   }
+
+  const cargarMovimientos = useCallback(async () => {
+    if (!box) return;
+    setLoadingMov(true);
+    try {
+      const token = localStorage.getItem('token');
+      const params = new URLSearchParams({ apartado: apartadoActual, pagina: String(movPagina), pageSize: '10' });
+      if (movTipo) params.append('tipo', movTipo);
+      if (movProductoFiltro) params.append('idProducto', String(movProductoFiltro));
+      const res = await fetch(`${PRODUCTOS_ENDPOINT}/movimientos/${box.idBox}?${params}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) setMovData(await res.json());
+    } catch (e) { void e; } finally { setLoadingMov(false); }
+  }, [box, movPagina, movTipo, movProductoFiltro, apartadoActual]);
+
+  useEffect(() => { if (vistaActual === 'historial') cargarMovimientos(); }, [vistaActual, cargarMovimientos]);
+  useEffect(() => { setMovPagina(1); }, [movTipo, movProductoFiltro]);
 
   return (
     <div className="gi-page">
@@ -293,20 +362,30 @@ export default function GestionInventario() {
                   </div>
                 </div>
 
-                <div className="col-6 col-md-4">
-                  <label className="etiqueta-campo">Stock inicial</label>
-                  <input
-                    type="number" min="0"
-                    className="entrada-oscura"
-                    value={form.stockActual}
-                    onChange={e => {
-                      if (e.target.value.length <= 5) setForm({ ...form, stockActual: e.target.value });
-                    }}
-                    placeholder="0"
-                    style={{ fontFamily: 'var(--font-stats)', fontWeight: 700 }}
-                    disabled={form.esSobrePedido}
-                  />
-                </div>
+                {modoForm === 'nuevo' ? (
+                  <div className="col-6 col-md-4">
+                    <label className="etiqueta-campo">Stock inicial</label>
+                    <input
+                      type="number" min="0"
+                      className="entrada-oscura"
+                      value={form.stockActual}
+                      onChange={e => {
+                        if (e.target.value.length <= 5) setForm({ ...form, stockActual: e.target.value });
+                      }}
+                      placeholder="0"
+                      style={{ fontFamily: 'var(--font-stats)', fontWeight: 700 }}
+                      disabled={form.esSobrePedido}
+                    />
+                  </div>
+                ) : (
+                  <div className="col-6 col-md-4">
+                    <label className="etiqueta-campo">Stock actual</label>
+                    <div className="gi-stock-readonly">
+                      <span>{form.stockActual}</span>
+                      <small>Usa Reponer / Ajustar</small>
+                    </div>
+                  </div>
+                )}
 
                 <div className="col-12 col-md-4">
                   <label className="etiqueta-campo">Stock mínimo</label>
@@ -361,6 +440,38 @@ export default function GestionInventario() {
                         Guardar como Borrador (Oculto en Tienda del Box)
                       </label>
                     </div>
+
+                    {form.esSobrePedido && (
+                      <>
+                        <div className="form-check form-switch custom-switch-danger mt-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            role="switch"
+                            id="permitePersonalizacion"
+                            checked={form.permitePersonalizacion}
+                            onChange={e => setForm({ ...form, permitePersonalizacion: e.target.checked })}
+                          />
+                          <label className="form-check-label text-white ms-2 fw-bold" htmlFor="permitePersonalizacion">
+                            <i className="fas fa-pen-nib text-info me-2"></i>
+                            Permite personalización (el atleta puede ponerle un nombre, con costo extra)
+                          </label>
+                        </div>
+                        {form.permitePersonalizacion && (
+                          <div className="mt-2" style={{ maxWidth: '240px' }}>
+                            <label className="etiqueta-campo">Costo de personalización ($)</label>
+                            <input
+                              type="number" min="0" step="0.01"
+                              className="entrada-oscura"
+                              value={form.costoPersonalizacion}
+                              onChange={e => { if (e.target.value.length <= 6) setForm({ ...form, costoPersonalizacion: e.target.value }); }}
+                              placeholder="0.00"
+                              style={{ fontFamily: 'var(--font-stats)', fontWeight: 700 }}
+                            />
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
 
@@ -401,22 +512,41 @@ export default function GestionInventario() {
                 )}
 
                 {form.categoria === 'Ropa' && (
-                  <div className="col-12 col-md-4">
-                    <label className="etiqueta-campo">Talla</label>
-                    <select 
-                      className="entrada-oscura form-select"
-                      value={form.talla}
-                      onChange={e => setForm({ ...form, talla: e.target.value })}
-                    >
-                      <option value="">Selecciona talla...</option>
-                      <option value="XS">XS</option>
-                      <option value="S">S</option>
-                      <option value="M">M</option>
-                      <option value="L">L</option>
-                      <option value="XL">XL</option>
-                      <option value="Unitalla">Unitalla</option>
-                    </select>
-                  </div>
+                  form.esSobrePedido ? (
+                    <div className="col-12">
+                      <label className="etiqueta-campo">
+                        Tallas disponibles <span style={{ fontWeight: 400, textTransform: 'none', color: 'var(--text-muted)' }}>(el atleta elige una al pedir)</span>
+                      </label>
+                      <div className="gi-tallas-multi">
+                        {TALLAS_OPCIONES.map(t => {
+                          const activa = form.tallasDisponibles.includes(t);
+                          return (
+                            <button
+                              type="button"
+                              key={t}
+                              className={`gi-talla-chip ${activa ? 'activa' : ''}`}
+                              onClick={() => setForm(f => ({
+                                ...f,
+                                tallasDisponibles: activa ? f.tallasDisponibles.filter(x => x !== t) : [...f.tallasDisponibles, t]
+                              }))}
+                            >{t}</button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="col-12 col-md-4">
+                      <label className="etiqueta-campo">Talla</label>
+                      <select
+                        className="entrada-oscura form-select"
+                        value={form.talla}
+                        onChange={e => setForm({ ...form, talla: e.target.value })}
+                      >
+                        <option value="">Selecciona talla...</option>
+                        {TALLAS_OPCIONES.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                  )
                 )}
 
                 <div className="col-12">
@@ -545,13 +675,106 @@ export default function GestionInventario() {
                 <i className="fas fa-exclamation-triangle"></i> Stock bajo
               </button>
             )}
+
+            <button
+              className={`gi-chip gi-chip--divider ${vistaActual === 'historial' ? 'gi-chip--historial' : ''}`}
+              onClick={() => { setVistaActual('historial'); setSoloStockBajo(false); }}
+            >
+              <i className="fas fa-clock-rotate-left"></i> Historial
+            </button>
           </div>
         </div>
 
         {/* ══════════════════════════════════
             GRID DE PRODUCTOS
         ══════════════════════════════════ */}
-        {loading ? (
+        {vistaActual === 'historial' ? (
+          <div className="gi-hist">
+            <div className="gi-hist-filtros">
+              <div className="gi-hist-tipos">
+                {[['', 'Todos'], ['Ingreso', 'Ingresos'], ['Ajuste', 'Ajustes']].map(([v, l]) => (
+                  <button
+                    key={v || 'todos'}
+                    className={`gi-chip ${movTipo === v ? 'gi-chip--normal' : ''}`}
+                    onClick={() => setMovTipo(v)}
+                  >{l}</button>
+                ))}
+              </div>
+              <select
+                className="entrada-oscura form-select gi-hist-prod-filtro"
+                value={movProductoFiltro}
+                onChange={e => setMovProductoFiltro(e.target.value)}
+              >
+                <option value="">Todos los productos</option>
+                {productos.map(p => <option key={p.idProducto} value={p.idProducto}>{p.nombre}</option>)}
+              </select>
+            </div>
+
+            {loadingMov ? (
+              <div className="gi-loading"><AtletifyLoader /></div>
+            ) : !movData || movData.items.length === 0 ? (
+              <div className="gi-empty">
+                <i className="fas fa-clock-rotate-left"></i>
+                <p>Sin movimientos de stock registrados todavía.</p>
+              </div>
+            ) : (
+              <>
+                {/* Móvil: tarjetas */}
+                <div className="d-md-none">
+                  {movData.items.map(m => (
+                    <div key={m.idMovimiento} className="gi-hist-card">
+                      <div className="d-flex justify-content-between align-items-center mb-1">
+                        <span className={`gi-hist-badge ${m.tipo === 'Ingreso' ? 'gi-hist-badge--ingreso' : 'gi-hist-badge--ajuste'}`}>{m.tipo}</span>
+                        <span className="gi-hist-fecha">{fechaLocal(m.fecha)}</span>
+                      </div>
+                      <div className="gi-hist-prod-nombre">{m.nombreProducto || '(producto eliminado)'}</div>
+                      <div className="gi-hist-cambio">
+                        <span className={m.cantidad >= 0 ? 'text-success fw-bold' : 'text-danger fw-bold'}>
+                          {m.cantidad >= 0 ? `+${m.cantidad}` : m.cantidad}
+                        </span>
+                        <span className="gi-hist-flecha">{m.stockAntes} &rarr; {m.stockDespues}</span>
+                      </div>
+                      {m.motivo && <div className="gi-hist-motivo">&ldquo;{m.motivo}&rdquo;</div>}
+                      <div className="gi-hist-quien"><i className="fas fa-user me-1"></i>{m.nombreUsuario || '—'}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Escritorio: tabla */}
+                <div className="gi-hist-table-wrap d-none d-md-block">
+                  <table className="gi-hist-table">
+                    <thead>
+                      <tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cambio</th><th>Stock</th><th>Motivo</th><th>Quién</th></tr>
+                    </thead>
+                    <tbody>
+                      {movData.items.map(m => (
+                        <tr key={m.idMovimiento}>
+                          <td className="gi-hist-fecha">{fechaLocal(m.fecha)}</td>
+                          <td>{m.nombreProducto || '(eliminado)'}</td>
+                          <td><span className={`gi-hist-badge ${m.tipo === 'Ingreso' ? 'gi-hist-badge--ingreso' : 'gi-hist-badge--ajuste'}`}>{m.tipo}</span></td>
+                          <td className={m.cantidad >= 0 ? 'text-success fw-bold' : 'text-danger fw-bold'}>{m.cantidad >= 0 ? `+${m.cantidad}` : m.cantidad}</td>
+                          <td><span className="gi-hist-stock">{m.stockAntes}<span className="gi-hist-arrow">&rarr;</span>{m.stockDespues}</span></td>
+                          <td>{m.motivo || '—'}</td>
+                          <td>{m.nombreUsuario || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Paginación (10 por página) */}
+                {movData.totalPaginas > 1 && (
+                  <div className="gi-hist-pag">
+                    <button className="gi-hist-pag-btn" disabled={movData.pagina <= 1} onClick={() => setMovPagina(p => Math.max(1, p - 1))}><i className="fas fa-chevron-left"></i></button>
+                    <span className="gi-hist-pag-info">{movData.pagina} / {movData.totalPaginas}</span>
+                    <button className="gi-hist-pag-btn" disabled={movData.pagina >= movData.totalPaginas} onClick={() => setMovPagina(p => p + 1)}><i className="fas fa-chevron-right"></i></button>
+                  </div>
+                )}
+                <p className="gi-count-hint">{movData.total} movimiento(s)</p>
+              </>
+            )}
+          </div>
+        ) : loading ? (
           <div className="gi-loading">
             <AtletifyLoader />
           </div>
@@ -647,69 +870,36 @@ export default function GestionInventario() {
                         )}
 
                         {/* Acciones */}
-                        {agregarStockId === p.idProducto ? (
-                          <div className="gi-add-stock-zona">
-                            <input
-                              type="number" min="1"
-                              className="gi-add-stock-input"
-                              value={cantidadAStock}
-                              onChange={e => setCantidadAStock(e.target.value)}
-                              placeholder="0"
-                              autoFocus
-                              onKeyDown={e => {
-                                if (e.key === 'Enter') confirmarAgregarStock(p);
-                                if (e.key === 'Escape') { setAgregarStockId(null); setCantidadAStock(''); }
-                              }}
-                            />
-                            <BotonSeguro
-                              onClick={() => confirmarAgregarStock(p)}
-                              className="gi-add-stock-ok"
-                              title="Confirmar"
-                              disabled={guardando}
-                              textoProcesando=""
-                            >
-                              <i className="fas fa-check"></i>
-                            </BotonSeguro>
+                        <div className="gi-actions">
+                          {(!p.esSobrePedido && !p.esBorrador) && (
                             <button
-                              onClick={() => { setAgregarStockId(null); setCantidadAStock(''); }}
-                              className="gi-add-stock-cancel"
-                              title="Cancelar"
+                              onClick={() => abrirModalStock(p)}
+                              className={`gi-action-btn ${p.stockActual <= 0 ? 'btn btn-danger text-white w-100 rounded-pill' : 'gi-action-btn--stock'}`}
+                              style={p.stockActual <= 0 ? { padding: '5px 15px', fontWeight: 'bold' } : {}}
+                              title={p.stockActual <= 0 ? "Reabastecer (agregar stock)" : "Mover stock (reponer / ajustar)"}
                             >
-                              <i className="fas fa-times"></i>
+                              <i className="fas fa-plus-circle"></i>
+                              <span className="ms-1" style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.5px' }}>
+                                {p.stockActual <= 0 ? 'REABASTECER' : 'STOCK'}
+                              </span>
                             </button>
-                          </div>
-                        ) : (
-                          <div className="gi-actions">
-                            {(!p.esSobrePedido && !p.esBorrador) && (
-                              <button
-                                onClick={() => { setAgregarStockId(p.idProducto); setCantidadAStock(''); }}
-                                className={`gi-action-btn ${p.stockActual <= 0 ? 'btn btn-danger text-white w-100 rounded-pill' : 'gi-action-btn--stock'}`}
-                                style={p.stockActual <= 0 ? { padding: '5px 15px', fontWeight: 'bold' } : {}}
-                                title={p.stockActual <= 0 ? "Reabastecer (Agregar stock)" : "Agregar stock"}
-                              >
-                                <i className="fas fa-plus-circle"></i> 
-                                <span className="ms-1" style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.5px' }}>
-                                  {p.stockActual <= 0 ? 'REABASTECER' : 'STOCK'}
-                                </span>
-                              </button>
-                            )}
-                            <button
-                              onClick={() => abrirEditar(p)}
-                              className="gi-action-btn gi-action-btn--edit"
-                              title="Editar"
-                            >
-                              <i className="fas fa-pen"></i>
-                            </button>
-                            <BotonSeguro
-                              onClick={() => eliminar(p)}
-                              className="gi-action-btn gi-action-btn--delete"
-                              title="Eliminar"
-                              textoProcesando=""
-                            >
-                              <i className="fas fa-trash"></i>
-                            </BotonSeguro>
-                          </div>
-                        )}
+                          )}
+                          <button
+                            onClick={() => abrirEditar(p)}
+                            className="gi-action-btn gi-action-btn--edit"
+                            title="Editar"
+                          >
+                            <i className="fas fa-pen"></i>
+                          </button>
+                          <BotonSeguro
+                            onClick={() => eliminar(p)}
+                            className="gi-action-btn gi-action-btn--delete"
+                            title="Eliminar"
+                            textoProcesando=""
+                          >
+                            <i className="fas fa-trash"></i>
+                          </BotonSeguro>
+                        </div>
 
                       </div>
                     </div>
@@ -732,6 +922,75 @@ export default function GestionInventario() {
         )}
 
       </div>
+
+      {/* ══════════════════════════════════
+          MODAL: MOVIMIENTO DE STOCK (reponer / ajustar)
+      ══════════════════════════════════ */}
+      {modalStock && (
+        <div className="gi-modal-overlay" onClick={cerrarModalStock}>
+          <div className="gi-modal" onClick={e => e.stopPropagation()}>
+            <div className="gi-modal-header">
+              <span><i className="fas fa-boxes me-2"></i>Stock &mdash; {modalStock.nombre}</span>
+              <button className="gi-modal-close" onClick={cerrarModalStock} title="Cerrar"><i className="fas fa-times"></i></button>
+            </div>
+            <div className="gi-modal-body">
+              <div className="gi-modal-actual">Stock actual: <strong>{modalStock.stockActual}</strong></div>
+
+              <div className="gi-modal-modos">
+                <button type="button" className={`gi-modal-modo ${modalModo === 'reponer' ? 'activo' : ''}`} onClick={() => setModalModo('reponer')}>
+                  <i className="fas fa-plus-circle"></i> Reponer
+                </button>
+                <button type="button" className={`gi-modal-modo ${modalModo === 'ajustar' ? 'activo' : ''}`} onClick={() => setModalModo('ajustar')}>
+                  <i className="fas fa-sliders-h"></i> Ajustar
+                </button>
+              </div>
+
+              {modalModo === 'reponer' ? (
+                <>
+                  <label className="etiqueta-campo">Cantidad a agregar *</label>
+                  <input type="number" min="1" className="entrada-oscura" value={stockCantidad}
+                    onChange={e => setStockCantidad(e.target.value)} placeholder="0" autoFocus
+                    style={{ fontFamily: 'var(--font-stats)', fontWeight: 700 }} />
+                  <label className="etiqueta-campo mt-2">Motivo (opcional)</label>
+                  <input className="entrada-oscura" value={stockMotivo}
+                    onChange={e => setStockMotivo(e.target.value)} placeholder="Ej. Compra a proveedor" />
+                  {parseInt(stockCantidad) > 0 && (
+                    <div className="gi-modal-preview">El stock quedar&aacute; en <strong>{modalStock.stockActual + parseInt(stockCantidad)}</strong></div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <label className="etiqueta-campo">Stock real (valor corregido) *</label>
+                  <input type="number" min="0" className="entrada-oscura" value={stockNuevo}
+                    onChange={e => setStockNuevo(e.target.value)} placeholder="0" autoFocus
+                    style={{ fontFamily: 'var(--font-stats)', fontWeight: 700 }} />
+                  <label className="etiqueta-campo mt-2">Motivo <span className="text-danger">*</span></label>
+                  <input className="entrada-oscura" value={stockMotivo}
+                    onChange={e => setStockMotivo(e.target.value)} placeholder="Ej. Conteo f&iacute;sico, merma, error de captura" />
+                  {stockNuevo !== '' && !isNaN(parseInt(stockNuevo)) && (
+                    <div className="gi-modal-preview">
+                      Cambio: {(() => {
+                        const d = parseInt(stockNuevo) - modalStock.stockActual;
+                        if (d === 0) return <strong>sin cambio</strong>;
+                        return <strong className={d > 0 ? 'text-success' : 'text-danger'}>{d > 0 ? `+${d}` : d}</strong>;
+                      })()}
+                    </div>
+                  )}
+                  <div className="gi-modal-aviso"><i className="fas fa-info-circle me-1"></i>El ajuste exige un motivo y queda registrado en el historial.</div>
+                </>
+              )}
+            </div>
+            <div className="gi-modal-footer">
+              <BotonSeguro onClick={guardarMovimientoStock} className="gi-guardar-btn" textoProcesando="Guardando..." disabled={guardandoStock}>
+                <i className="fas fa-save"></i>Guardar
+              </BotonSeguro>
+              <button type="button" className="gi-cancelar-btn" onClick={cerrarModalStock}>
+                <i className="fas fa-times"></i>Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

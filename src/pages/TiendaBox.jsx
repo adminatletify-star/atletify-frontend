@@ -36,6 +36,11 @@ export default function TiendaBox() {
   const [comprobanteBase64, setComprobanteBase64] = useState(null);
   const [cfgBox, setCfgBox] = useState(null); // config financiera del box (métodos aceptados, mínimo tarjeta)
 
+  // Modal de opciones del pedido (talla + personalización) para sobre-pedido
+  const [modalPedido, setModalPedido] = useState(null);
+  const [mpTalla, setMpTalla] = useState('');
+  const [mpTexto, setMpTexto] = useState('');
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -54,7 +59,11 @@ export default function TiendaBox() {
   const productos = productosTotales.filter(p =>
     activeTab === 'catalogo-fisico' ? !p.esSobrePedido : p.esSobrePedido
   );
-  const totalCarrito = carrito.reduce((acc, i) => acc + i.precioVenta * i.cantidad, 0);
+  // Identidad de línea: mismo producto con distinta talla/nombre = líneas distintas.
+  const claveDe = (idProducto, talla, texto) => `${idProducto}|${talla || ''}|${(texto || '').trim().toUpperCase()}`;
+  const requiereOpciones = (p) => p.esSobrePedido && (((p.tallasDisponibles || '').trim()) || p.permitePersonalizacion);
+  const precioLinea = (i) => i.precioVenta + (i.cargoPers || 0);
+  const totalCarrito = carrito.reduce((acc, i) => acc + precioLinea(i) * i.cantidad, 0);
 
   // Métodos que el box acepta (autoservicio) + mínimo de tarjeta, desde la config del box.
   // Si no llegó la config, somos permisivos para no bloquear la compra.
@@ -135,31 +144,68 @@ export default function TiendaBox() {
     }
   };
 
+  const nuevaLinea = (p, cantidad, talla, texto, cargoPers) => ({
+    claveLinea: claveDe(p.idProducto, talla, texto),
+    idProducto: p.idProducto,
+    nombre: p.nombre,
+    precioVenta: p.precioVenta,
+    fotoUrl: p.fotoUrl,
+    cantidad,
+    tallaElegida: talla || null,
+    textoPersonalizacion: texto || null,
+    cargoPers: cargoPers || 0
+  });
+
   const agregarAlCarrito = (producto) => {
     if (!producto.esSobrePedido && producto.stockActual <= 0) {
       alert('Producto agotado.'); return;
     }
+    // Sobre-pedido con talla/personalización → abrir modal para elegir.
+    if (requiereOpciones(producto)) { abrirModalPedido(producto); return; }
+
+    const clave = claveDe(producto.idProducto, '', '');
     setCarrito(prev => {
-      const existente = prev.find(i => i.idProducto === producto.idProducto);
+      const existente = prev.find(i => i.claveLinea === clave);
       if (existente) {
         if (!producto.esSobrePedido && existente.cantidad >= producto.stockActual) {
           alert('No puedes agregar más, se alcanzó el stock máximo.'); return prev;
         }
-        return prev.map(i => i.idProducto === producto.idProducto ? { ...i, cantidad: i.cantidad + 1 } : i);
+        return prev.map(i => i.claveLinea === clave ? { ...i, cantidad: i.cantidad + 1 } : i);
       }
-      return [...prev, { ...producto, cantidad: 1 }];
+      return [...prev, nuevaLinea(producto, 1, null, null, 0)];
     });
   };
 
-  const removerDelCarrito = (idProducto) =>
-    setCarrito(prev => prev.filter(i => i.idProducto !== idProducto));
+  const abrirModalPedido = (p) => { setModalPedido(p); setMpTalla(''); setMpTexto(''); };
+  const cerrarModalPedido = () => { setModalPedido(null); setMpTalla(''); setMpTexto(''); };
 
-  const modificarCantidad = (idProducto, delta) => {
+  const confirmarLineaPedido = () => {
+    const p = modalPedido;
+    if (!p) return;
+    const tallas = (p.tallasDisponibles || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (tallas.length && !mpTalla) { alert('Elige una talla.'); return; }
+    let texto = mpTexto.trim();
+    if (texto.length > 12) { alert('El nombre admite máximo 12 caracteres.'); return; }
+    if (!p.permitePersonalizacion) texto = '';
+    const cargo = (p.permitePersonalizacion && texto) ? (p.costoPersonalizacion || 0) : 0;
+    const clave = claveDe(p.idProducto, mpTalla, texto);
+    setCarrito(prev => {
+      const existente = prev.find(i => i.claveLinea === clave);
+      if (existente) return prev.map(i => i.claveLinea === clave ? { ...i, cantidad: i.cantidad + 1 } : i);
+      return [...prev, nuevaLinea(p, 1, mpTalla || null, texto || null, cargo)];
+    });
+    cerrarModalPedido();
+  };
+
+  const removerDelCarrito = (claveLinea) =>
+    setCarrito(prev => prev.filter(i => i.claveLinea !== claveLinea));
+
+  const modificarCantidad = (claveLinea, delta) => {
     setCarrito(prev => prev.map(item => {
-      if (item.idProducto !== idProducto) return item;
+      if (item.claveLinea !== claveLinea) return item;
       const nuevaCantidad = item.cantidad + delta;
       if (nuevaCantidad <= 0) return item;
-      const prod = productosTotales.find(p => p.idProducto === idProducto);
+      const prod = productosTotales.find(p => p.idProducto === item.idProducto);
       if (prod && !prod.esSobrePedido && nuevaCantidad > prod.stockActual) {
         alert('No hay suficiente stock.'); return item;
       }
@@ -186,7 +232,7 @@ export default function TiendaBox() {
           apartado: APARTADO,
           metodoPago,
           comprobanteBase64: (metodoPago === 'Transferencia' && totalCarrito >= minTarjeta) ? comprobanteBase64 : null,
-          detalles: carrito.map(i => ({ idProducto: i.idProducto, cantidad: i.cantidad }))
+          detalles: carrito.map(i => ({ idProducto: i.idProducto, cantidad: i.cantidad, tallaElegida: i.tallaElegida || null, textoPersonalizacion: i.textoPersonalizacion || null }))
         })
       });
       const data = await res.json();
@@ -208,7 +254,7 @@ export default function TiendaBox() {
 
   /* ── RENDERS PARCIALES ──────────────────────────────────── */
   const renderProductCard = (p) => {
-    const cantEnCarrito = carrito.find(c => c.idProducto === p.idProducto)?.cantidad || 0;
+    const cantEnCarrito = carrito.filter(c => c.idProducto === p.idProducto).reduce((a, c) => a + c.cantidad, 0);
     const agotado = !p.esSobrePedido && p.stockActual <= 0;
     const maxAlcanzado = !p.esSobrePedido && cantEnCarrito >= p.stockActual;
     const esFisico = activeTab === 'catalogo-fisico';
@@ -249,10 +295,12 @@ export default function TiendaBox() {
             <button
               className={`tb-add-btn${cantEnCarrito > 0 ? ' tb-add-btn--in-cart' : ''}`}
               onClick={() => agregarAlCarrito(p)}
-              disabled={agotado || maxAlcanzado}
+              disabled={agotado || (maxAlcanzado && !requiereOpciones(p))}
             >
-              <i className={`fas fa-${cantEnCarrito > 0 ? 'check' : 'cart-plus'}`} />
-              {maxAlcanzado && !agotado ? 'Máximo alcanzado' : cantEnCarrito > 0 ? `En carrito (${cantEnCarrito})` : 'Agregar'}
+              <i className={`fas fa-${(!requiereOpciones(p) && cantEnCarrito > 0) ? 'check' : 'cart-plus'}`} />
+              {requiereOpciones(p)
+                ? (cantEnCarrito > 0 ? `Agregar otra (${cantEnCarrito})` : 'Elegir y agregar')
+                : (maxAlcanzado && !agotado ? 'Máximo alcanzado' : cantEnCarrito > 0 ? `En carrito (${cantEnCarrito})` : 'Agregar')}
             </button>
           )}
         </div>
@@ -275,20 +323,29 @@ export default function TiendaBox() {
         <>
           <div>
             {carrito.map(item => (
-              <div className="tb-cart-item" key={item.idProducto}>
+              <div className="tb-cart-item" key={item.claveLinea}>
                 <div className="tb-cart-item-row">
-                  <span className="tb-cart-item-name">{item.nombre}</span>
-                  <span className="tb-cart-item-subtotal">${(item.precioVenta * item.cantidad).toFixed(2)}</span>
+                  <span className="tb-cart-item-name">
+                    {item.nombre}
+                    {item.tallaElegida && <span className="tb-cart-variant"> · Talla {item.tallaElegida}</span>}
+                  </span>
+                  <span className="tb-cart-item-subtotal">${(precioLinea(item) * item.cantidad).toFixed(2)}</span>
                 </div>
+                {item.textoPersonalizacion && (
+                  <div className="tb-cart-pers">
+                    <i className="fas fa-pen-nib" /> &ldquo;{item.textoPersonalizacion}&rdquo;
+                    {item.cargoPers > 0 && <span className="tb-cart-pers-extra"> +${item.cargoPers.toFixed(2)} c/u</span>}
+                  </div>
+                )}
                 <div className="tb-cart-controls">
-                  <button className="tb-qty-btn" onClick={() => modificarCantidad(item.idProducto, -1)} disabled={item.cantidad <= 1}>
+                  <button className="tb-qty-btn" onClick={() => modificarCantidad(item.claveLinea, -1)} disabled={item.cantidad <= 1}>
                     <i className="fas fa-minus" />
                   </button>
                   <span className="tb-qty-value">{item.cantidad}</span>
-                  <button className="tb-qty-btn" onClick={() => modificarCantidad(item.idProducto, 1)}>
+                  <button className="tb-qty-btn" onClick={() => modificarCantidad(item.claveLinea, 1)}>
                     <i className="fas fa-plus" />
                   </button>
-                  <button className="tb-remove-btn" onClick={() => removerDelCarrito(item.idProducto)}>
+                  <button className="tb-remove-btn" onClick={() => removerDelCarrito(item.claveLinea)}>
                     <i className="fas fa-trash" />
                   </button>
                 </div>
@@ -540,8 +597,11 @@ export default function TiendaBox() {
                                   <p className="tb-order-item-name">{d.producto?.nombre}</p>
                                   <p className="tb-order-item-qty">
                                     {d.cantidad} × ${d.precioUnitario.toFixed(2)}
-                                    {d.producto?.talla && ` · Talla ${d.producto.talla}`}
+                                    {(d.tallaElegida || d.producto?.talla) && ` · Talla ${d.tallaElegida || d.producto.talla}`}
                                   </p>
+                                  {d.textoPersonalizacion && (
+                                    <p className="tb-order-item-pers"><i className="fas fa-pen-nib" /> &ldquo;{d.textoPersonalizacion}&rdquo;</p>
+                                  )}
                                 </div>
                                 <span className="tb-order-item-sub">${d.subtotal.toFixed(2)}</span>
                               </div>
@@ -567,6 +627,58 @@ export default function TiendaBox() {
         )}
 
       </div>
+
+      {/* MODAL: opciones del pedido (talla + personalización) */}
+      {modalPedido && (
+        <div className="tb-modal-overlay" onClick={cerrarModalPedido}>
+          <div className="tb-modal" onClick={e => e.stopPropagation()}>
+            <div className="tb-modal-header">
+              <span><i className="fas fa-store me-2" /> {modalPedido.nombre}</span>
+              <button className="tb-modal-close" onClick={cerrarModalPedido} aria-label="Cerrar"><i className="fas fa-times" /></button>
+            </div>
+            <div className="tb-modal-body">
+              <p className="tb-modal-price">${modalPedido.precioVenta.toFixed(2)}</p>
+
+              {(modalPedido.tallasDisponibles || '').trim() && (
+                <>
+                  <label className="tb-modal-label">Elige tu talla *</label>
+                  <div className="tb-modal-tallas">
+                    {modalPedido.tallasDisponibles.split(',').map(s => s.trim()).filter(Boolean).map(t => (
+                      <button type="button" key={t} className={`tb-talla-chip${mpTalla === t ? ' activa' : ''}`} onClick={() => setMpTalla(t)}>{t}</button>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {modalPedido.permitePersonalizacion && (
+                <>
+                  <label className="tb-modal-label">
+                    ¿Quieres un nombre? <span className="tb-modal-extra">+${(modalPedido.costoPersonalizacion || 0).toFixed(2)}</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="tb-modal-input"
+                    maxLength={12}
+                    value={mpTexto}
+                    onChange={e => setMpTexto(e.target.value)}
+                    placeholder="Hasta 12 letras (opcional)"
+                  />
+                  <p className="tb-modal-hint">
+                    {mpTexto.trim()
+                      ? `Se cobrará +$${(modalPedido.costoPersonalizacion || 0).toFixed(2)} por pieza`
+                      : 'Déjalo vacío si no quieres personalizar.'} · {12 - mpTexto.length} restantes
+                  </p>
+                </>
+              )}
+            </div>
+            <div className="tb-modal-footer">
+              <button className="tb-order-btn" onClick={confirmarLineaPedido}>
+                <i className="fas fa-cart-plus" /> Agregar al pedido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

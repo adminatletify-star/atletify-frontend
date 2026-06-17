@@ -107,6 +107,31 @@ const renderClaseDisponible = (c, nivelAtleta, selId, onSelect) => {
   );
 };
 
+// ── Estado de inscripción anual (pestaña "Anualidad") ──
+const ESTADO_INSC_LABEL = {
+  Pagada: 'Pagada',
+  Exenta: 'Exenta',
+  ExentoReciente: 'Exento',
+  Pendiente: 'Pendiente',
+  NoAplica: 'No aplica',
+};
+// Orden por prioridad: los que requieren atención (pendientes) primero.
+const PRIORIDAD_INSC = { Pendiente: 0, ExentoReciente: 1, Pagada: 2, Exenta: 3, NoAplica: 4 };
+const PAGE_SIZE_INSC = 10;
+const labelInsc = (estado) => ESTADO_INSC_LABEL[estado] || estado;
+// Etiqueta corta del estado de mensualidad (contexto en la pestaña Anualidad).
+const labelMembresia = (e) => ({ Verde: 'Al día', Amarillo: 'Por vencer', Rojo: 'Vencida', Azul: 'Congelada', Gris: 'Cancelada', VIP: 'Pase libre' }[e] || e || '—');
+const getBadgeInsc = (estado) => {
+  switch (estado) {
+    case 'Pagada': return 'finanzas-insc-badge--pagada';
+    case 'Exenta': return 'finanzas-insc-badge--exenta';
+    case 'ExentoReciente': return 'finanzas-insc-badge--exento';
+    case 'Pendiente': return 'finanzas-insc-badge--pendiente';
+    default: return 'finanzas-insc-badge--naplica';
+  }
+};
+const normInsc = (s) => (s || '').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
 export default function GestionFinanzas() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -278,6 +303,13 @@ export default function GestionFinanzas() {
   const [filtroMes, setFiltroMes] = useState('');
   const [busquedaMov, setBusquedaMov] = useState('');
 
+  // Pestaña Anualidad (estado de inscripción anual)
+  const [inscData, setInscData] = useState(null); // { cicloAnio, mesCobro, montoConfig, resumen, atletas }
+  const [loadingInsc, setLoadingInsc] = useState(false);
+  const [busquedaInsc, setBusquedaInsc] = useState('');
+  const [filtroEstadoInsc, setFiltroEstadoInsc] = useState('Todos');
+  const [paginaInsc, setPaginaInsc] = useState(1);
+
   const cargarDatos = useCallback(async (idBox) => {
     setLoading(true);
     try {
@@ -322,6 +354,14 @@ export default function GestionFinanzas() {
       if (resMov.ok) setMovimientos(await resMov.json());
       if (resResumen.ok) setResumenMov(await resResumen.json());
     } catch (e) { console.error(e); } finally { setLoadingMov(false); }
+  }, []);
+
+  const cargarInscripciones = useCallback(async (idBox) => {
+    setLoadingInsc(true);
+    try {
+      const res = await fetch(`${API_BASE}/inscripciones/${idBox}`, { headers: headersGet });
+      if (res.ok) setInscData(await res.json());
+    } catch (e) { console.error(e); } finally { setLoadingInsc(false); }
   }, []);
 
   const cargarDropins = useCallback(async (idBox) => {
@@ -470,7 +510,9 @@ export default function GestionFinanzas() {
     if (pestaña === 'dropin' && box) { cargarDropins(box.idBox); cargarAtletasConVisitas(box.idBox); }
     if (pestaña === 'paquetes' && box) cargarPaquetes(box.idBox);
     if (pestaña === 'solicitudes') cargarSolicitudes();
-  }, [pestaña, box, filtroMes, filtroTipoMov, cargarMovimientos, cargarDropins, cargarPaquetes, cargarSolicitudes, cargarAtletasConVisitas]);
+    // Caché: solo la primera vez (al volver a la pestaña usa lo ya cargado → instantáneo).
+    if (pestaña === 'inscripcion' && box && !inscData) cargarInscripciones(box.idBox);
+  }, [pestaña, box, filtroMes, filtroTipoMov, cargarMovimientos, cargarDropins, cargarPaquetes, cargarSolicitudes, cargarAtletasConVisitas, cargarInscripciones, inscData]);
 
   const crearDescuento = async (e) => {
     e.preventDefault();
@@ -823,6 +865,33 @@ export default function GestionFinanzas() {
       m.metodoPago?.toLowerCase().includes(term);
   });
 
+  // Pestaña Anualidad: filtrar (búsqueda + chip de estado) y ordenar (pendientes primero).
+  const inscripcionesFiltradas = useMemo(() => {
+    const lista = inscData?.atletas || [];
+    const term = normInsc(busquedaInsc);
+    return lista
+      .filter(a => {
+        if (filtroEstadoInsc !== 'Todos') {
+          if (filtroEstadoInsc === 'Exento') {
+            if (a.estado !== 'Exenta' && a.estado !== 'ExentoReciente') return false;
+          } else if (a.estado !== filtroEstadoInsc) return false;
+        }
+        if (!term) return true;
+        return normInsc(`${a.nombre} ${a.telefono || ''} ${a.grupoFamiliar || ''} ${a.motivo || ''}`).includes(term);
+      })
+      .sort((x, y) => {
+        const px = PRIORIDAD_INSC[x.estado] ?? 9;
+        const py = PRIORIDAD_INSC[y.estado] ?? 9;
+        if (px !== py) return px - py;
+        return (x.nombre || '').localeCompare(y.nombre || '');
+      });
+  }, [inscData, busquedaInsc, filtroEstadoInsc]);
+
+  const totalPaginasInsc = Math.max(1, Math.ceil(inscripcionesFiltradas.length / PAGE_SIZE_INSC));
+  const inscripcionesPagina = inscripcionesFiltradas.slice((paginaInsc - 1) * PAGE_SIZE_INSC, paginaInsc * PAGE_SIZE_INSC);
+  // Resetear a la página 1 cuando cambia búsqueda, filtro o los datos.
+  useEffect(() => { setPaginaInsc(1); }, [busquedaInsc, filtroEstadoInsc, inscData]);
+
   return (
     <div className="finanzas-container">
 
@@ -838,6 +907,7 @@ export default function GestionFinanzas() {
           <div className="finanzas-tabs">
             {sliderStyle && <div className="finanzas-tab-slider" style={sliderStyle} />}
             <button ref={el => tabRefs.current['semaforo'] = el} className={`finanzas-tab ${pestaña === 'semaforo' ? 'activo' : ''}`} onClick={() => setPestaña('semaforo')}><i className="fas fa-traffic-light"></i>Semáforo</button>
+            <button ref={el => tabRefs.current['inscripcion'] = el} className={`finanzas-tab ${pestaña === 'inscripcion' ? 'activo' : ''}`} onClick={() => setPestaña('inscripcion')}><i className="fas fa-id-card"></i>Anualidad</button>
             <button ref={el => tabRefs.current['planes'] = el} className={`finanzas-tab ${pestaña === 'planes' ? 'activo' : ''}`} onClick={() => setPestaña('planes')}><i className="fas fa-tags"></i>Planes</button>
             <button ref={el => tabRefs.current['descuentos'] = el} className={`finanzas-tab ${pestaña === 'descuentos' ? 'activo' : ''}`} onClick={() => setPestaña('descuentos')}><i className="fas fa-percent"></i>Promos</button>
             <button ref={el => tabRefs.current['dropin'] = el} className={`finanzas-tab ${pestaña === 'dropin' ? 'activo' : ''}`} onClick={() => setPestaña('dropin')}><i className="fas fa-plane-arrival"></i>Drop-In</button>
@@ -1463,6 +1533,121 @@ export default function GestionFinanzas() {
                         </tbody>
                       </table>
                     </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* TAB: ANUALIDAD (estado de inscripción anual del ciclo) */}
+            {pestaña === 'inscripcion' && (
+              <div className="finanzas-card">
+                <div className="finanzas-card-titulo d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <span><i className="fas fa-id-card" style={{ color: 'var(--accent)' }}></i> Inscripción Anual</span>
+                  <div className="d-flex align-items-center gap-2">
+                    {inscData && (
+                      <span className="finanzas-insc-ciclo">Ciclo {inscData.cicloAnio} · Cuota ${Number(inscData.montoConfig || 0).toFixed(0)}</span>
+                    )}
+                    <button type="button" className="finanzas-insc-refresh" title="Actualizar" disabled={loadingInsc} onClick={() => box && cargarInscripciones(box.idBox)}>
+                      <i className={`fas fa-sync-alt ${loadingInsc ? 'fa-spin' : ''}`}></i>
+                    </button>
+                  </div>
+                </div>
+
+                {loadingInsc ? (
+                  <div className="text-center py-5"><AtletifyLoader /></div>
+                ) : (
+                  <>
+                    {/* Resumen de conteos */}
+                    {inscData?.resumen && (
+                      <div className="finanzas-insc-resumen">
+                        <div className="finanzas-insc-stat finanzas-insc-stat--pagada"><span className="finanzas-insc-stat-num">{inscData.resumen.pagadas}</span><span className="finanzas-insc-stat-lbl">Pagadas</span></div>
+                        <div className="finanzas-insc-stat finanzas-insc-stat--pendiente"><span className="finanzas-insc-stat-num">{inscData.resumen.pendientes}</span><span className="finanzas-insc-stat-lbl">Pendientes</span></div>
+                        <div className="finanzas-insc-stat finanzas-insc-stat--exento"><span className="finanzas-insc-stat-num">{inscData.resumen.exentos}</span><span className="finanzas-insc-stat-lbl">Exentos</span></div>
+                        <div className="finanzas-insc-stat finanzas-insc-stat--naplica"><span className="finanzas-insc-stat-num">{inscData.resumen.noAplica}</span><span className="finanzas-insc-stat-lbl">No aplica</span></div>
+                      </div>
+                    )}
+
+                    {/* Toolbar: búsqueda + chips de estado */}
+                    <div className="finanzas-insc-toolbar">
+                      <div className="mov-search-wrapper finanzas-insc-search">
+                        <i className="fas fa-search mov-search-icon"></i>
+                        <input type="text" className="finanzas-input mov-search-input" placeholder="Buscar atleta..." value={busquedaInsc} onChange={e => setBusquedaInsc(e.target.value)} />
+                      </div>
+                      <div className="finanzas-insc-chips">
+                        {[
+                          { k: 'Todos', l: 'Todos' },
+                          { k: 'Pendiente', l: 'Pendientes' },
+                          { k: 'Pagada', l: 'Pagadas' },
+                          { k: 'Exento', l: 'Exentos' },
+                          { k: 'NoAplica', l: 'No aplica' },
+                        ].map(c => (
+                          <button key={c.k} type="button" className={`finanzas-insc-chip ${filtroEstadoInsc === c.k ? 'activo' : ''}`} onClick={() => setFiltroEstadoInsc(c.k)}>{c.l}</button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Contador */}
+                    <div className="finanzas-insc-count">
+                      Mostrando {inscripcionesFiltradas.length === 0 ? 0 : (paginaInsc - 1) * PAGE_SIZE_INSC + 1}–{Math.min(paginaInsc * PAGE_SIZE_INSC, inscripcionesFiltradas.length)} de {inscripcionesFiltradas.length}
+                    </div>
+
+                    {/* Vista móvil: tarjetas */}
+                    <div className="d-md-none">
+                      {inscripcionesPagina.length === 0 ? (
+                        <div className="finanzas-empty"><p>No hay atletas que coincidan.</p></div>
+                      ) : inscripcionesPagina.map(a => (
+                        <div key={a.idUsuario} className="finanzas-card mb-2 p-3 h-auto">
+                          <div className="d-flex justify-content-between align-items-start gap-2">
+                            <div>
+                              <div className="finanzas-atleta-nombre">{a.nombre}{(a.rol === 'Coach' || a.rol === 'Staff' || a.rol === 'AdminBox') && <span className="badge bg-secondary ms-2" style={{ fontSize: '0.6rem' }}><i className="fas fa-user-shield"></i> Staff</span>}</div>
+                              <div className="finanzas-atleta-tel"><i className="fas fa-phone me-1"></i>{a.telefono || 'Sin número'}</div>
+                              {a.grupoFamiliar && <div className="small mt-1 text-warning"><i className="fas fa-users me-1"></i>{a.grupoFamiliar}</div>}
+                              <div className="small mt-1"><span className="finanzas-insc-mens-lbl">Mensualidad:</span> <span className={`finanzas-badge ${getBadgeColor(a.estadoMembresia)}`} style={{ fontSize: '0.56rem', padding: '0.1rem 0.45rem' }}>{labelMembresia(a.estadoMembresia)}</span></div>
+                              {a.estado === 'Pagada' && a.fechaPago && <div className="small mt-1" style={{ color: 'var(--text-muted)' }}><i className="fas fa-calendar-check me-1"></i>{a.fechaAprox ? '~' : ''}{new Date(a.fechaPago).toLocaleDateString()}{a.monto != null ? ` · $${Number(a.monto).toFixed(0)}` : ''}{a.fechaAprox ? ' (aprox.)' : ''}</div>}
+                              {a.estado === 'Pendiente' && a.monto != null && <div className="small mt-1 text-danger"><i className="fas fa-exclamation-circle me-1"></i>Debe ${Number(a.monto).toFixed(0)}</div>}
+                              {a.estado !== 'Pagada' && a.estado !== 'Pendiente' && a.motivo && <div className="small mt-1" style={{ color: 'var(--text-muted)' }}>{a.motivo}</div>}
+                            </div>
+                            <span className={`finanzas-insc-badge ${getBadgeInsc(a.estado)}`}>{labelInsc(a.estado)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Vista escritorio: tabla */}
+                    <div className="finanzas-table-wrapper d-none d-md-block">
+                      <table className="finanzas-table">
+                        <thead><tr><th>Atleta</th><th>Estado</th><th>Fecha de pago</th><th style={{ textAlign: 'right' }}>Monto</th></tr></thead>
+                        <tbody>
+                          {inscripcionesPagina.length === 0 ? (
+                            <tr><td colSpan="4"><div className="finanzas-empty"><p>No hay atletas que coincidan.</p></div></td></tr>
+                          ) : inscripcionesPagina.map(a => (
+                            <tr key={a.idUsuario}>
+                              <td>
+                                <div className="finanzas-atleta-nombre">{a.nombre}{(a.rol === 'Coach' || a.rol === 'Staff' || a.rol === 'AdminBox') && <span className="badge bg-secondary ms-2" style={{ fontSize: '0.65rem' }} title="Equipo de trabajo"><i className="fas fa-user-shield"></i> Staff</span>}</div>
+                                <div className="finanzas-atleta-tel"><i className="fas fa-phone me-1"></i>{a.telefono || 'Sin número'}</div>
+                                {a.grupoFamiliar && <div className="text-warning mt-1" style={{ fontSize: '0.75rem' }}><i className="fas fa-users me-1"></i>{a.grupoFamiliar}</div>}
+                                <div className="mt-1"><span className="finanzas-insc-mens-lbl">Mensualidad:</span> <span className={`finanzas-badge ${getBadgeColor(a.estadoMembresia)}`} style={{ fontSize: '0.58rem', padding: '0.12rem 0.5rem' }}>{labelMembresia(a.estadoMembresia)}</span></div>
+                              </td>
+                              <td>
+                                <span className={`finanzas-insc-badge ${getBadgeInsc(a.estado)}`}>{labelInsc(a.estado)}</span>
+                                {a.motivo && a.estado !== 'Pagada' && <div className="text-secondary mt-1" style={{ fontSize: '0.72rem' }}>{a.motivo}</div>}
+                              </td>
+                              <td style={{ color: 'var(--text-muted)' }}>{a.fechaPago ? <span title={a.fechaAprox ? 'Fecha aproximada: pago previo a la tabla de inscripciones (sin recibo exacto en el sistema)' : undefined}>{a.fechaAprox ? '~ ' : ''}{new Date(a.fechaPago).toLocaleDateString()}</span> : '—'}</td>
+                              <td className="text-end">{a.monto != null ? <span className={a.estado === 'Pendiente' ? 'text-danger fw-bold' : 'text-success fw-bold'}>${Number(a.monto).toFixed(2)}</span> : <span className="text-secondary">—</span>}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Paginación (10 por página) */}
+                    {totalPaginasInsc > 1 && (
+                      <div className="finanzas-insc-pag">
+                        <button className="finanzas-insc-pag-btn" disabled={paginaInsc <= 1} onClick={() => setPaginaInsc(p => Math.max(1, p - 1))}><i className="fas fa-chevron-left"></i></button>
+                        <span className="finanzas-insc-pag-info">{paginaInsc} / {totalPaginasInsc}</span>
+                        <button className="finanzas-insc-pag-btn" disabled={paginaInsc >= totalPaginasInsc} onClick={() => setPaginaInsc(p => Math.min(totalPaginasInsc, p + 1))}><i className="fas fa-chevron-right"></i></button>
+                      </div>
+                    )}
                   </>
                 )}
               </div>

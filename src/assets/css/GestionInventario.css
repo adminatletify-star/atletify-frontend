@@ -682,3 +682,307 @@
   color: var(--text-muted);
   margin: 0;
 }
+
+/* ============================================
+   STOCK DE SOLO LECTURA (form de edición)
+   ============================================ */
+.gi-stock-readonly {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  min-height: 42px;
+}
+.gi-stock-readonly span {
+  font-family: var(--font-stats);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.gi-stock-readonly small {
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}
+
+/* ============================================
+   HISTORIAL DE MOVIMIENTOS DE STOCK
+   ============================================ */
+.gi-chip--historial {
+  background: rgba(79, 195, 247, 0.1);
+  border-color: rgba(79, 195, 247, 0.5);
+  color: var(--accent-cool);
+}
+
+.gi-hist { display: flex; flex-direction: column; gap: 0.9rem; }
+
+.gi-hist-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+.gi-hist-tipos { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.gi-hist-prod-filtro { max-width: 260px; flex: 1 1 180px; }
+
+.gi-hist-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.gi-hist-badge--ingreso { color: var(--success); background: rgba(46,204,113,0.1); border-color: rgba(46,204,113,0.3); }
+.gi-hist-badge--ajuste  { color: var(--accent);  background: rgba(245,166,35,0.1); border-color: rgba(245,166,35,0.3); }
+
+/* Tabla escritorio */
+.gi-hist-table-wrap {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.gi-hist-table { width: 100%; border-collapse: collapse; }
+.gi-hist-table thead th {
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+.gi-hist-table tbody td {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  padding: 0.6rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.gi-hist-table tbody tr:last-child td { border-bottom: none; }
+.gi-hist-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.gi-hist-fecha { color: var(--text-muted); font-size: 0.76rem; white-space: nowrap; }
+
+/* Tarjetas móvil */
+.gi-hist-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+  margin-bottom: 0.6rem;
+}
+.gi-hist-prod-nombre {
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+.gi-hist-cambio {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-stats);
+  font-size: 1rem;
+}
+.gi-hist-flecha {
+  font-family: var(--font-stats);
+  color: var(--text-primary);
+  opacity: 0.85;
+  font-size: 0.9rem;
+}
+
+/* Columna Stock (antes → después) en la tabla */
+.gi-hist-stock {
+  font-family: var(--font-stats);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.gi-hist-arrow {
+  color: var(--text-muted);
+  margin: 0 0.4rem;
+  font-weight: 400;
+}
+.gi-hist-motivo {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 0.35rem;
+}
+.gi-hist-quien {
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-top: 0.3rem;
+}
+
+/* Paginación */
+.gi-hist-pag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.4rem;
+}
+.gi-hist-pag-btn {
+  width: 36px; height: 36px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.gi-hist-pag-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.gi-hist-pag-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.gi-hist-pag-info { font-family: var(--font-stats); font-size: 0.85rem; color: var(--text-muted); }
+
+/* ============================================
+   MODAL DE MOVIMIENTO DE STOCK
+   ============================================ */
+.gi-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+.gi-modal {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.gi-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+.gi-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+.gi-modal-close:hover { color: var(--primary); background: rgba(230,57,70,0.1); }
+.gi-modal-body { padding: 1.1rem; display: flex; flex-direction: column; }
+.gi-modal-actual {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.85rem;
+}
+.gi-modal-actual strong { color: var(--text-primary); font-family: var(--font-stats); font-size: 1rem; }
+.gi-modal-modos { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+.gi-modal-modo {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.gi-modal-modo.activo {
+  background: rgba(245,166,35,0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.gi-modal-preview {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 0.6rem;
+}
+.gi-modal-aviso {
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-top: 0.7rem;
+  opacity: 0.85;
+}
+.gi-modal-footer { display: flex; gap: 0.6rem; padding: 0 1.1rem 1.1rem; }
+.gi-modal-footer .gi-guardar-btn,
+.gi-modal-footer .gi-cancelar-btn { flex: 1; justify-content: center; }
+
+@media (max-width: 576px) {
+  .gi-hist-prod-filtro { max-width: 100%; flex-basis: 100%; }
+  .gi-modal { border-radius: 16px; }
+  .gi-modal-header { font-size: 0.88rem; }
+}
+
+/* ============================================
+   TALLAS MÚLTIPLES (alta de prenda sobre-pedido)
+   ============================================ */
+.gi-tallas-multi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.15rem;
+}
+.gi-talla-chip {
+  min-width: 46px;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.gi-talla-chip:hover { border-color: var(--accent); color: var(--text-primary); }
+.gi-talla-chip.activa {
+  background: rgba(245, 166, 35, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}

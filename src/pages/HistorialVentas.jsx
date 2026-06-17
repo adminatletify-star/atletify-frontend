@@ -542,32 +542,40 @@ export default function HistorialVentas() {
   const generarListaComprasPDF = () => {
     // Incluir ventas Pagadas en espera y las ventas Fiadas (que se autorizaron en confianza)
     const ventasPagadas = ventas.filter(v => v.estatus === 'Pagado (Pendiente Entrega)' || v.estatus === 'Fiado');
-    const productosAgrupados = {};
+    // Agrupar por producto + talla + personalización (nombre): así el admin sabe exacto
+    // cuántas piezas de cada talla pedir y cuáles van personalizadas (a bordar/imprimir).
+    const grupos = {};
 
     ventasPagadas.forEach(v => {
-      if (v.detalles) {
-        v.detalles.forEach(d => {
-          if (d.producto?.esSobrePedido) {
-            const id = d.idProducto;
-            if (!productosAgrupados[id]) {
-              productosAgrupados[id] = {
-                nombre: d.producto.nombre || `Producto #${id}`,
-                cantidad: 0,
-                costoAprox: 0
-              };
-            }
-            productosAgrupados[id].cantidad += d.cantidad;
-            productosAgrupados[id].costoAprox += parseFloat(d.subtotal);
-          }
-        });
-      }
+      if (!v.detalles) return;
+      v.detalles.forEach(d => {
+        if (!d.producto?.esSobrePedido) return;
+        const talla = d.tallaElegida || '';
+        const pers = (d.textoPersonalizacion || '').trim().toUpperCase();
+        const key = `${d.idProducto}|${talla}|${pers}`;
+        if (!grupos[key]) {
+          grupos[key] = {
+            nombre: d.producto.nombre || `Producto #${d.idProducto}`,
+            talla: talla || '—',
+            personalizacion: pers || '—',
+            cantidad: 0,
+            costoAprox: 0
+          };
+        }
+        grupos[key].cantidad += d.cantidad;
+        grupos[key].costoAprox += parseFloat(d.subtotal);
+      });
     });
 
-    const rows = Object.values(productosAgrupados).map(p => ({
-      producto: p.nombre,
-      cantidad: p.cantidad,
-      valorVendido: `$${p.costoAprox.toFixed(2)}`
-    }));
+    const rows = Object.values(grupos)
+      .sort((a, b) => a.nombre.localeCompare(b.nombre) || a.talla.localeCompare(b.talla))
+      .map(p => ({
+        producto: p.nombre,
+        talla: p.talla,
+        personalizacion: p.personalizacion,
+        cantidad: p.cantidad,
+        valorVendido: `$${p.costoAprox.toFixed(2)}`
+      }));
 
     if (rows.length === 0) {
       alert("No hay productos 'Sobre Pedido' pagados pendientes por surtir en este momento.");
@@ -577,24 +585,26 @@ export default function HistorialVentas() {
     const doc = new jsPDF();
     doc.setFontSize(16);
     doc.text('Lista de Compras a Proveedor (Sobre Pedido)', 14, 20);
-    
+
     doc.setFontSize(10);
-    doc.text('Este reporte incluye los productos que ya han sido PAGADOS o autorizados en', 14, 28);
-    doc.text('FIADO. Es seguro realizar el pedido al proveedor.', 14, 34);
+    doc.text('Incluye productos PAGADOS o autorizados en FIADO. Es seguro pedirlos al proveedor.', 14, 28);
+    doc.text('Las prendas con nombre van personalizadas (a bordar/imprimir).', 14, 34);
     doc.text(`Generado el: ${new Date().toLocaleString('es-MX')}`, 14, 42);
 
     autoTable(doc, {
       startY: 50,
       columns: [
-        { header: 'Producto a pedir', dataKey: 'producto' },
-        { header: 'Cantidad Total Requerida', dataKey: 'cantidad' },
-        { header: 'Dinero Cobrado por estos', dataKey: 'valorVendido' }
+        { header: 'Producto', dataKey: 'producto' },
+        { header: 'Talla', dataKey: 'talla' },
+        { header: 'Personalización', dataKey: 'personalizacion' },
+        { header: 'Cantidad', dataKey: 'cantidad' },
+        { header: 'Cobrado', dataKey: 'valorVendido' }
       ],
       body: rows,
       theme: 'grid',
       headStyles: { fillColor: [46, 204, 113] },
-      styles: { fontSize: 10, halign: 'center' },
-      columnStyles: { 0: { halign: 'left' } }
+      styles: { fontSize: 9, halign: 'center' },
+      columnStyles: { 0: { halign: 'left' }, 2: { halign: 'left' } }
     });
 
     doc.save(`Lista_Compras_${new Date().toISOString().slice(0,10)}.pdf`);

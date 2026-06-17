@@ -629,6 +629,107 @@
 }
 .tb-order-item-qty    { font-family: var(--font-body); font-size: 0.67rem; color: var(--text-muted); margin: 0; }
 .tb-order-item-sub    { font-family: var(--font-stats); font-size: 0.82rem; font-weight: 700; color: var(--primary); white-space: nowrap; }
+.tb-order-item-pers   { font-family: var(--font-body); font-size: 0.66rem; color: var(--accent); margin: 0.15rem 0 0; }
+
+/* ── Variantes en carrito (talla + personalización) ── */
+.tb-cart-variant { color: var(--text-muted); font-weight: 600; font-size: 0.85em; }
+.tb-cart-pers {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--accent);
+  margin: 0.15rem 0 0.35rem;
+}
+.tb-cart-pers-extra { color: var(--text-muted); }
+
+/* ── MODAL de opciones del pedido (talla + personalización) ── */
+.tb-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+.tb-modal {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.tb-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+.tb-modal-close {
+  background: none; border: none; color: var(--text-muted);
+  font-size: 1rem; cursor: pointer; width: 30px; height: 30px; border-radius: 8px;
+}
+.tb-modal-close:hover { color: var(--primary); }
+.tb-modal-body { padding: 1.1rem; }
+.tb-modal-price {
+  font-family: var(--font-stats);
+  font-size: 1.3rem; font-weight: 700; color: var(--primary);
+  margin: 0 0 0.85rem;
+}
+.tb-modal-label {
+  display: block;
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem; letter-spacing: 0.5px; text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0.6rem 0 0.4rem;
+}
+.tb-modal-extra { color: var(--accent); font-weight: 700; }
+.tb-modal-tallas { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.tb-talla-chip {
+  min-width: 46px;
+  padding: 0.45rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-base);
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.82rem; font-weight: 700;
+  cursor: pointer; transition: all 0.15s ease;
+}
+.tb-talla-chip:hover { border-color: var(--primary); color: var(--text-primary); }
+.tb-talla-chip.activa { background: var(--primary); border-color: var(--primary); color: #fff; }
+.tb-modal-input {
+  width: 100%;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 0.6rem 0.8rem;
+  outline: none;
+  text-transform: uppercase;
+}
+.tb-modal-input:focus { border-color: var(--primary); }
+.tb-modal-hint {
+  font-family: var(--font-body);
+  font-size: 0.7rem; color: var(--text-muted);
+  margin: 0.4rem 0 0;
+}
+.tb-modal-footer { padding: 0 1.1rem 1.1rem; }
+.tb-modal-footer .tb-order-btn { width: 100%; }
 
 .tb-vencimiento-warn {
   margin-top: 0.75rem;
