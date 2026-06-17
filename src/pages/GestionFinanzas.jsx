@@ -12,6 +12,7 @@ import PromocionPicker from '../components/PromocionPicker';
 import MetodoPagoPicker from '../components/MetodoPagoPicker';
 import CategoriaBasePicker from '../components/CategoriaBasePicker';
 import NivelAccesoPicker from '../components/NivelAccesoPicker';
+import { evaluarNivelClase } from '../utils/nivelClase';
 import Swal from 'sweetalert2';
 import '../assets/css/GestionFinanzas.css';
 import '../assets/css/visitas-regalo.css';
@@ -28,7 +29,7 @@ const gfSwal = Swal.mixin({
 });
 
 // ── Disponibilidad de clases (lógica COMPARTIDA por drop-in normal y cajear) ──
-const JERARQUIA_NIVEL = { novato: 1, principiante: 2, intermedio: 3, rx: 4, avanzado: 4 };
+// (jerarquía de niveles centralizada en utils/nivelClase.js)
 const MAP_DIAS_SEMANA = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 
 const parseMinHora = (hhmm) => {
@@ -56,14 +57,8 @@ const calcularEstadoClase = (c, nivelAtleta) => {
   const cupoLleno = c.maximoAtletas <= 0 || c.inscritos >= c.maximoAtletas;
 
   const niveles = c.nivelesPermitidos || 'Todos';
-  let nivelNoPermitido = false;
-  if (niveles !== 'Todos') {
-    const nivelAtletaVal = JERARQUIA_NIVEL[(nivelAtleta || '').toLowerCase()] || 1;
-    let nivelClaseVal = 0;
-    Object.keys(JERARQUIA_NIVEL).forEach(n => { if (niveles.toLowerCase().includes(n)) nivelClaseVal = Math.max(nivelClaseVal, JERARQUIA_NIVEL[n]); });
-    if (nivelClaseVal === 0) nivelClaseVal = 1;
-    if (nivelAtletaVal < nivelClaseVal) nivelNoPermitido = true;
-  }
+  // Piso jerárquico (nivel más bajo permitido); solo bloquea si la clase es Requerida (Obligatoria).
+  const nivelNoPermitido = evaluarNivelClase(nivelAtleta, c.nivelesPermitidos, c.nivelObligatorio).bloqueado;
 
   const visible = esHoy && !finalizada && !cupoLleno;
   return { visible, enCurso, finalizada, cupoLleno, nivelNoPermitido, niveles, bloqueada: nivelNoPermitido };

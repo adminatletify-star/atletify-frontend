@@ -18,6 +18,12 @@ const AccionBadge = ({ accion }) => {
   else if (accion === 'APROBAR_CAMBIO_FACTURACION') { color = '#2ECC71'; icon = 'fa-file-circle-check'; }
   else if (accion === 'RECHAZAR_CAMBIO_FACTURACION') { color = '#e67e22'; icon = 'fa-file-circle-xmark'; }
   else if (accion === 'SOLICITAR_CAMBIO_FACTURACION') { color = '#3498db'; icon = 'fa-file-invoice-dollar'; }
+  else if (accion === 'CREAR_WOD') { color = '#2ECC71'; icon = 'fa-calendar-plus'; }
+  else if (accion === 'EDITAR_WOD') { color = '#f5a623'; icon = 'fa-pen'; }
+  else if (accion === 'ELIMINAR_WOD') { color = 'var(--primary)'; icon = 'fa-dumbbell'; }
+  else if (accion === 'CREAR_CLASE') { color = '#2ECC71'; icon = 'fa-calendar-check'; }
+  else if (accion === 'EDITAR_CLASE') { color = '#f5a623'; icon = 'fa-pen-to-square'; }
+  else if (accion === 'ELIMINAR_CLASE') { color = 'var(--primary)'; icon = 'fa-calendar-xmark'; }
   else if (accion.includes('DESACTIVAR_VISITAS')) { color = '#e67e22'; icon = 'fa-pause-circle'; }
   else if (accion.includes('ACTIVAR_VISITAS')) { color = '#f5a623'; icon = 'fa-gift'; }
   else if (accion.includes('DESACTIVAR_METODO')) { color = '#e67e22'; icon = 'fa-toggle-off'; }
@@ -136,6 +142,12 @@ export default function AuditoriaUserTab({ boxes }) {
             <option value="COBRO_MENSUALIDAD">Cobro Mensualidad</option>
             <option value="VENTA_PRODUCTO">Venta de Producto</option>
             <option value="CREAR_TIENDITA">Creación Tiendita</option>
+            <option value="CREAR_WOD">Crear WOD</option>
+            <option value="EDITAR_WOD">Editar WOD</option>
+            <option value="ELIMINAR_WOD">Eliminar WOD</option>
+            <option value="CREAR_CLASE">Crear Clase</option>
+            <option value="EDITAR_CLASE">Editar Clase</option>
+            <option value="ELIMINAR_CLASE">Eliminar Clase</option>
             <option value="ACTIVAR_VISITAS_REGALO">Activar Visitas de Regalo</option>
             <option value="DESACTIVAR_VISITAS_REGALO">Pausar Visitas de Regalo</option>
             <option value="ACTIVAR_METODO_PAGO">Activar Método de Pago</option>

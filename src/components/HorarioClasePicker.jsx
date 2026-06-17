@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { evaluarNivelClase } from '../utils/nivelClase';
 import './HorarioClasePicker.css';
-
-const NIVEL_RANK = { 'Novato': 1, 'Principiante': 2, 'Intermedio': 3, 'RX': 4 };
 
 const DIAS_MAP = { L: 'Lun', M: 'Mar', X: 'Mié', J: 'Jue', V: 'Vie', S: 'Sáb', D: 'Dom' };
 const DIAS_ORDER = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
@@ -20,13 +19,21 @@ const NIVEL_INFO = {
   'RX':           { color: '#F5A623', emoji: '🔥', label: 'RX' },
 };
 
+const ORDEN_NIVELES = ['Novato', 'Principiante', 'Intermedio', 'RX'];
+
+// nivelesPermitidos puede ser CSV ("Principiante, Intermedio"). Devuelve los niveles
+// canónicos ordenados jerárquicamente para mostrarlos. "Todos"/vacío → [].
+const nivelesDe = (np) => {
+  if (!np || np.trim().toLowerCase() === 'todos') return [];
+  const set = np.split(',').map(s => s.trim().toLowerCase());
+  return ORDEN_NIVELES.filter(n => set.includes(n.toLowerCase()));
+};
+
+// Se oculta una clase del selector solo si su nivel es OBLIGATORIO y el usuario no
+// llega al piso jerárquico. Si es solo sugerido (o "Todos"), siempre es seleccionable.
 function esAccesible(clase, categoriaUsuario) {
-  const np = clase.nivelesPermitidos;
-  if (!np || np === 'Todos') return true;
   if (!categoriaUsuario) return true;
-  const rankClase   = NIVEL_RANK[np] || 0;
-  const rankUsuario = NIVEL_RANK[categoriaUsuario] || 0;
-  return rankClase <= rankUsuario;
+  return !evaluarNivelClase(categoriaUsuario, clase.nivelesPermitidos, clase.nivelObligatorio).bloqueado;
 }
 
 export default function HorarioClasePicker({ clases, valor, onCambiar, categoriaUsuario }) {
@@ -107,7 +114,9 @@ export default function HorarioClasePicker({ clases, valor, onCambiar, categoria
               {clasesFiltradas.map(c => {
                 const activo = String(c.idClase) === String(valor);
                 const np = c.nivelesPermitidos;
-                const nivelInfo = NIVEL_INFO[np] || NIVEL_INFO['Todos'];
+                const nivelesArr = nivelesDe(np);
+                // Color/emoji según el nivel más bajo (el piso); texto = lista completa.
+                const nivelInfo = NIVEL_INFO[nivelesArr[0]] || NIVEL_INFO['Todos'];
                 return (
                   <button
                     key={c.idClase}
@@ -131,7 +140,7 @@ export default function HorarioClasePicker({ clases, valor, onCambiar, categoria
                           className="hcp-nivel-chip"
                           style={{ '--nivel-color': nivelInfo.color }}
                         >
-                          {nivelInfo.emoji} {np && np !== 'Todos' ? np : 'Todos'}
+                          {nivelInfo.emoji} {nivelesArr.length ? nivelesArr.join(', ') : 'Todos'}
                         </span>
                       </div>
                     </div>

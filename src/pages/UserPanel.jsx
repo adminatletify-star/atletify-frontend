@@ -11,6 +11,7 @@ import AtletifyLoader from '../components/AtletifyLoader';
 import AnunciosEngine from '../components/AnunciosEngine';
 import EjercicioDetailModal from '../components/EjercicioDetailModal';
 import ModalComentariosWod from '../components/ModalComentariosWod';
+import { evaluarNivelClase } from '../utils/nivelClase';
 import { formatear12 } from '../components/HoraPicker';
 import ModalCompararPRs from '../components/ModalCompararPRs';
 import { api } from '../services/api';
@@ -803,33 +804,18 @@ export default function UserPanel() {
   const toggleReserva = async (idClase) => {
 
     const clase = clasesDisponibles.find(c => c.idClase === idClase);
-    const nivelAtleta = user.categoriaBase || "Principiante";
-    //  INTERCEPTOR DE CATEGORÍAS
-    if (clase.nivelRequerido && clase.nivelRequerido !== "Cualquiera" && !clase.usuarioInscrito) {
-      const jerarquia = { "novato": 1, "principiante": 2, "intermedio": 3, "rx": 4 };
-      const nivelAtletaVal = jerarquia[nivelAtleta.trim().toLowerCase()] || 1;
-
-      let nivelClaseVal = 0;
-      Object.keys(jerarquia).forEach(nivel => {
-        if (clase.nivelRequerido.toLowerCase().includes(nivel)) {
-          nivelClaseVal = Math.max(nivelClaseVal, jerarquia[nivel]);
-        }
-      });
-
-      // Si no pudimos determinar el nivel de la clase, asumimos 1 (Cualquiera/Novato)
-      if (nivelClaseVal === 0) nivelClaseVal = 1;
-
-      // Solo bloqueamos si el atleta tiene un nivel MENOR al requerido
-      if (nivelAtletaVal < nivelClaseVal) {
-        // Si es obligatorio, bloqueamos completamente
-        if (clase.nivelObligatorio) {
-          alert(`Esta clase requiere nivel ${clase.nivelRequerido}. ¡Sigue entrenando duro para llegar ahí!`);
-          return;
-        }
-
-        // Si NO es obligatorio, lanzamos la advertencia de "Bajo tu propio riesgo"
+    const nivelAtleta = user.categoriaBase || "Novato";
+    //  INTERCEPTOR DE CATEGORÍAS (jerárquico): piso = nivel más bajo permitido.
+    //  Requerido → bloquea; Sugerido → advierte pero deja continuar. "Todos" = sin restricción.
+    if (!clase.usuarioInscrito) {
+      const ev = evaluarNivelClase(nivelAtleta, clase.nivelesPermitidos, clase.nivelObligatorio);
+      if (ev.bloqueado) {
+        alert(`Esta clase es para nivel ${clase.nivelesPermitidos} (o superior). Tu categoría es ${nivelAtleta}. ¡Sigue entrenando para llegar ahí!`);
+        return;
+      }
+      if (ev.advertencia) {
         const confirmar = await window.wpConfirm(
-          `ADVERTENCIA DE NIVEL\n\nEsta clase está programada para nivel ${clase.nivelRequerido}, y tú eres ${nivelAtleta}.\n\n¿Estás seguro de que quieres tomarla? El WOD podría ser muy exigente.`
+          `ADVERTENCIA DE NIVEL\n\nEsta clase está sugerida para nivel ${clase.nivelesPermitidos} (o superior), y tú eres ${nivelAtleta}.\n\n¿Seguro que quieres tomarla? El WOD podría ser muy exigente.`
         );
         if (!confirmar) return;
       }
@@ -2208,24 +2194,9 @@ export default function UserPanel() {
                   const esMiClaseBase = clase.idClase === user.idClasePredeterminada;
                   const categoriaAtleta = user.categoriaBase || 'Novato';
                   const nivelesClase = clase.nivelesPermitidos || 'Todos';
-
-                  let nivelNoPermitido = false;
-                  if (nivelesClase !== 'Todos') {
-                    const jerarquia = { "novato": 1, "principiante": 2, "intermedio": 3, "rx": 4 };
-                    const nivelAtletaVal = jerarquia[categoriaAtleta.trim().toLowerCase()] || 1;
-
-                    let nivelClaseVal = 0;
-                    Object.keys(jerarquia).forEach(nivel => {
-                      if (nivelesClase.toLowerCase().includes(nivel)) {
-                        nivelClaseVal = Math.max(nivelClaseVal, jerarquia[nivel]);
-                      }
-                    });
-                    if (nivelClaseVal === 0) nivelClaseVal = 1;
-
-                    if (nivelAtletaVal < nivelClaseVal) {
-                      nivelNoPermitido = true;
-                    }
-                  }
+                  // Solo se bloquea visualmente si la clase es Requerida (Obligatoria) y el atleta
+                  // no llega al piso; si es Sugerida, la tarjeta queda activa y toggleReserva avisa.
+                  const nivelNoPermitido = evaluarNivelClase(categoriaAtleta, clase.nivelesPermitidos, clase.nivelObligatorio).bloqueado;
 
                   let btnColor = 'btn-danger';
                   let btnText = 'APARTAR LUGAR';

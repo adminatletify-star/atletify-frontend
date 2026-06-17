@@ -17,6 +17,23 @@ const NIVELES = [
   { value: 'RX', emoji: '🔥', label: 'RX (Avanzado)', desc: 'Atleta avanzado — pesos y tiempos RX', color: '#F5A623' },
 ];
 
+// Niveles reales seleccionables (sin "Todos"), en orden jerárquico ascendente.
+// El orden de este array ES la jerarquía: Novato < Principiante < Intermedio < RX.
+const NIVELES_SELECCIONABLES = NIVELES.filter(n => n.value !== 'Todos');
+const VALORES_NIVEL = NIVELES_SELECCIONABLES.map(n => n.value);
+
+// CSV del backend ("Principiante, Intermedio") → array canónico ['Principiante','Intermedio'].
+// "Todos"/vacío → [] (sin restricción).
+const parseNiveles = (str) => {
+  if (!str || str.trim().toLowerCase() === 'todos') return [];
+  return str.split(',')
+    .map(s => VALORES_NIVEL.find(v => v.toLowerCase() === s.trim().toLowerCase()))
+    .filter(Boolean);
+};
+
+// Ordena un array de niveles según la jerarquía (para mostrar y guardar consistente).
+const ordenarNiveles = (arr) => VALORES_NIVEL.filter(v => arr.includes(v));
+
 export default function GestionClases() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -36,8 +53,18 @@ export default function GestionClases() {
   const [form, setForm] = useState({
     nombre: '', descripcion: '', horarioInicio: '06:00', horarioFin: '07:00',
     diasRecurrentes: [], maximoAtletas: 15, idCoach: '', cuentaParaRacha: true, esClaseKids: false,
-    admiteDropIns: true, cupoVisitantes: '', nivelesPermitidos: 'Todos'
+    admiteDropIns: true, cupoVisitantes: '', niveles: [], nivelObligatorio: false
   });
+
+  // Agrega/quita un nivel de la selección múltiple de la clase.
+  const toggleNivel = (value) => {
+    setForm(prev => ({
+      ...prev,
+      niveles: prev.niveles.includes(value)
+        ? prev.niveles.filter(n => n !== value)
+        : [...prev.niveles, value]
+    }));
+  };
 
   const fmt12 = (hhmm) => {
     const [h, m] = hhmm.split(':').map(Number);
@@ -117,7 +144,8 @@ export default function GestionClases() {
       esClaseKids: clase.esClaseKids || false,
       admiteDropIns: clase.admiteDropIns !== undefined ? clase.admiteDropIns : true,
       cupoVisitantes: clase.cupoVisitantes || '',
-      nivelesPermitidos: clase.nivelesPermitidos || 'Todos'
+      niveles: parseNiveles(clase.nivelesPermitidos),
+      nivelObligatorio: clase.nivelObligatorio || false
     });
     setDiasSeleccionados(clase.diasRecurrentes.split(','));
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -125,7 +153,7 @@ export default function GestionClases() {
 
   const cancelarEdicion = () => {
     setClaseEditando(null);
-    setForm({ nombre: '', descripcion: '', horarioInicio: '06:00', horarioFin: '07:00', maximoAtletas: 15, idCoach: '', cuentaParaRacha: true, esClaseKids: false, admiteDropIns: true, cupoVisitantes: '', nivelesPermitidos: 'Todos' });
+    setForm({ nombre: '', descripcion: '', horarioInicio: '06:00', horarioFin: '07:00', maximoAtletas: 15, idCoach: '', cuentaParaRacha: true, esClaseKids: false, admiteDropIns: true, cupoVisitantes: '', niveles: [], nivelObligatorio: false });
     setDiasSeleccionados(['L', 'M', 'X', 'J', 'V']);
   };
 
@@ -150,7 +178,9 @@ export default function GestionClases() {
       esClaseKids: form.esClaseKids,
       admiteDropIns: form.admiteDropIns,
       cupoVisitantes: form.cupoVisitantes ? parseInt(form.cupoVisitantes) : null,
-      nivelesPermitidos: form.nivelesPermitidos,
+      // Sin niveles seleccionados = abierto a todos (y el switch deja de aplicar).
+      nivelesPermitidos: form.niveles.length ? ordenarNiveles(form.niveles).join(', ') : 'Todos',
+      nivelObligatorio: form.niveles.length ? form.nivelObligatorio : false,
       activa: true
     };
 
@@ -187,7 +217,16 @@ export default function GestionClases() {
     } catch (error) { console.error(error); }
   };
 
-  const nivelActual = NIVELES.find(n => n.value === form.nivelesPermitidos) || NIVELES[0];
+  // Resumen para el botón que abre el modal de niveles (multi-selección).
+  const nivelesOrdenados = ordenarNiveles(form.niveles);
+  const nivelResumen = nivelesOrdenados.length === 0
+    ? { emoji: '📊', label: 'Todas las categorías', color: '#A8B2D1' }
+    : {
+        emoji: '🎯',
+        label: `${nivelesOrdenados.join(', ')} · ${form.nivelObligatorio ? 'Requerido' : 'Sugerido'}`,
+        // color del nivel más bajo (el piso jerárquico)
+        color: (NIVELES.find(n => n.value === nivelesOrdenados[0]) || NIVELES[0]).color
+      };
   const coachActual = coaches.find(c => c.idUsuario.toString() === form.idCoach) || null;
 
   if (loading) return (
@@ -446,11 +485,11 @@ export default function GestionClases() {
                       type="button"
                       className="gc-nivel-btn"
                       onClick={() => setMostrarModalNivel(true)}
-                      style={{ '--nivel-color': nivelActual.color }}
+                      style={{ '--nivel-color': nivelResumen.color }}
                     >
                       <span className="gc-nivel-btn__left">
-                        <span className="gc-nivel-btn__emoji">{nivelActual.emoji}</span>
-                        <span className="gc-nivel-btn__label">{nivelActual.label}</span>
+                        <span className="gc-nivel-btn__emoji">{nivelResumen.emoji}</span>
+                        <span className="gc-nivel-btn__label">{nivelResumen.label}</span>
                       </span>
                       <i className="fas fa-chevron-right gc-nivel-btn__arrow" />
                     </button>
@@ -546,18 +585,36 @@ export default function GestionClases() {
                             </span>
                           )}
                           {clase.nivelesPermitidos && clase.nivelesPermitidos !== 'Todos' && (() => {
-                            const niv = NIVELES.find(n => n.value === clase.nivelesPermitidos);
+                            const nivs = parseNiveles(clase.nivelesPermitidos);
+                            if (nivs.length === 0) return null;
                             return (
-                              <span className="gc-meta-badge" style={{
-                                background: `${niv?.color}18`,
-                                color: niv?.color,
-                                border: `1px solid ${niv?.color}55`,
-                                borderRadius: '20px', padding: '2px 8px',
-                                fontSize: '0.7rem', fontWeight: '700'
-                              }}>
-                                <i className="fas fa-layer-group me-1" style={{ fontSize: '0.65rem' }} />
-                                {clase.nivelesPermitidos}
-                              </span>
+                              <>
+                                {nivs.map(v => {
+                                  const niv = NIVELES.find(n => n.value === v);
+                                  return (
+                                    <span key={v} className="gc-meta-badge" style={{
+                                      background: `${niv?.color}18`,
+                                      color: niv?.color,
+                                      border: `1px solid ${niv?.color}55`,
+                                      borderRadius: '20px', padding: '2px 8px',
+                                      fontSize: '0.7rem', fontWeight: '700'
+                                    }}>
+                                      <i className="fas fa-layer-group me-1" style={{ fontSize: '0.65rem' }} />
+                                      {v}
+                                    </span>
+                                  );
+                                })}
+                                <span className="gc-meta-badge" style={{
+                                  background: clase.nivelObligatorio ? 'rgba(230,57,70,0.1)' : 'rgba(245,166,35,0.1)',
+                                  color: clase.nivelObligatorio ? 'var(--primary)' : 'var(--accent)',
+                                  border: `1px solid ${clase.nivelObligatorio ? 'rgba(230,57,70,0.3)' : 'rgba(245,166,35,0.3)'}`,
+                                  borderRadius: '20px', padding: '2px 8px',
+                                  fontSize: '0.68rem', fontWeight: '700'
+                                }}>
+                                  <i className={`fas ${clase.nivelObligatorio ? 'fa-lock' : 'fa-lightbulb'} me-1`} style={{ fontSize: '0.62rem' }} />
+                                  {clase.nivelObligatorio ? 'Requerido' : 'Sugerido'}
+                                </span>
+                              </>
                             );
                           })()}
                         </div>
@@ -688,22 +745,19 @@ export default function GestionClases() {
             </div>
 
             <p className="gc-nivel-modal__hint">
-              Selecciona el nivel mínimo recomendado para esta clase.
+              Selecciona uno o más niveles. La clase quedará disponible para esos niveles y los <strong>superiores</strong> (jerárquico). Si no eliges ninguno, queda abierta a todos.
             </p>
 
             <div className="gc-nivel-modal__list">
-              {NIVELES.map(nivel => {
-                const activo = form.nivelesPermitidos === nivel.value;
+              {NIVELES_SELECCIONABLES.map(nivel => {
+                const activo = form.niveles.includes(nivel.value);
                 return (
                   <button
                     key={nivel.value}
                     type="button"
                     className={`gc-nivel-opcion ${activo ? 'gc-nivel-opcion--activo' : ''}`}
                     style={{ '--niv-color': nivel.color }}
-                    onClick={() => {
-                      setForm({ ...form, nivelesPermitidos: nivel.value });
-                      setMostrarModalNivel(false);
-                    }}
+                    onClick={() => toggleNivel(nivel.value)}
                   >
                     <span className="gc-nivel-opcion__emoji">{nivel.emoji}</span>
                     <span className="gc-nivel-opcion__info">
@@ -715,6 +769,39 @@ export default function GestionClases() {
                 );
               })}
             </div>
+
+            {/* Switch Requerido / Sugerido — solo aplica si hay al menos un nivel */}
+            {form.niveles.length > 0 && (
+              <button
+                type="button"
+                role="switch"
+                aria-checked={form.nivelObligatorio}
+                className={`gc-nivel-switch-row ${form.nivelObligatorio ? 'gc-nivel-switch-row--on' : ''}`}
+                onClick={() => setForm(f => ({ ...f, nivelObligatorio: !f.nivelObligatorio }))}
+              >
+                <span className="gc-nivel-switch-text">
+                  <span className="gc-nivel-switch-title">
+                    {form.nivelObligatorio ? '🔒 Requerido (bloquea)' : '💡 Sugerido (solo advierte)'}
+                  </span>
+                  <span className="gc-nivel-switch-desc">
+                    {form.nivelObligatorio
+                      ? 'Los atletas de menor nivel NO podrán reservar esta clase.'
+                      : 'Los atletas de menor nivel podrán reservar, pero verán una advertencia clara.'}
+                  </span>
+                </span>
+                <span className={`gc-nivel-switch ${form.nivelObligatorio ? 'gc-nivel-switch--on' : ''}`}>
+                  <span className="gc-nivel-switch__knob" />
+                </span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              className="gc-nivel-modal__done"
+              onClick={() => setMostrarModalNivel(false)}
+            >
+              Listo
+            </button>
 
           </div>
         </div>,

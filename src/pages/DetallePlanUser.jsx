@@ -13,6 +13,15 @@ function formatFecha(dateStr) {
   return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+// Lee la respuesta de forma defensiva: si el backend devuelve un cuerpo no-JSON
+// (página de error 500, 401 vacío, timeout de proxy…), NO reventamos con un
+// SyntaxError que el catch acabaría enmascarando como "Error de red". Devolvemos
+// lo que se pueda parsear para poder mostrar el status/mensaje reales.
+async function leerRespuesta(res) {
+  const texto = await res.text().catch(() => '');
+  try { return texto ? JSON.parse(texto) : {}; } catch { return {}; }
+}
+
 // Aviso de la solicitud de pago en recepción. El "plazo" ya NO es un reloj fijo de 24h:
 // es natural, hasta que vence la mensualidad del atleta.
 //   • le quedan > 24h  → solo recordatorio con la fecha de vencimiento (sin prisa).
@@ -330,12 +339,12 @@ export default function DetallePlanUser() {
             returnPath: '/detalle-plan-user'
           })
         });
-        const d = await res.json();
+        const d = await leerRespuesta(res);
         if (res.ok && d.url) {
           window.location.href = d.url; // redirige al checkout seguro de Stripe
           return;
         }
-        alert(d.mensaje || 'No se pudo iniciar el pago en línea.');
+        alert(d.mensaje || `No se pudo iniciar el pago en línea (error ${res.status}).`);
         return;
       }
 
@@ -350,18 +359,20 @@ export default function DetallePlanUser() {
           idPlan: planSeleccionado.idPlan
         })
       });
-      const resData = await res.json();
+      const resData = await leerRespuesta(res);
       if (res.ok) {
         alert(resData.mensaje || 'Cambio solicitado exitosamente');
         setShowBillingModal(false);
         setArchivoComprobante(null);
         await cargarMiPlan(); // refetch: refleja el estado pendiente sin dejar la UI stale
       } else {
-        alert(resData.mensaje || 'Error al solicitar cambio de facturación');
+        alert(resData.mensaje || `Error al solicitar cambio de facturación (error ${res.status}).`);
       }
     } catch (err) {
+      // El catch ya solo se alcanza por un fallo REAL de red (fetch rechazado): el
+      // parseo defensivo de leerRespuesta() evita que un cuerpo no-JSON caiga aquí.
       console.error(err);
-      alert('Error de red al solicitar cambio de facturación');
+      alert('No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.');
     } finally {
       setEnviando(false);
     }

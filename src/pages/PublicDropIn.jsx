@@ -5,6 +5,7 @@ import BotonSeguro from '../components/BotonSeguro';
 import CategoriaBasePicker from '../components/CategoriaBasePicker';
 import '../assets/css/public-dropin.css';
 import AtletifyLoader from '../components/AtletifyLoader';
+import { evaluarNivelClase } from '../utils/nivelClase';
 
 const API_BASE = import.meta.env.VITE_API_URL;;
 
@@ -458,21 +459,8 @@ export default function PublicDropIn() {
                                                             <div className="d-flex gap-2 flex-wrap">
                                                                 {clasesManana.map(c => {
                                                                     const nivelesClase = c.nivelesPermitidos || 'Todos';
-                                                                    let nivelNoPermitido = false;
-                                                                    if (nivelesClase !== 'Todos') {
-                                                                        const jerarquia = { "novato": 1, "principiante": 2, "intermedio": 3, "rx": 4, "avanzado": 4 };
-                                                                        const nivelAtletaVal = jerarquia[form.nivelAtleta.trim().toLowerCase()] || 1;
-                                                                        let nivelClaseVal = 0;
-                                                                        Object.keys(jerarquia).forEach(nivel => {
-                                                                            if (nivelesClase.toLowerCase().includes(nivel)) {
-                                                                                nivelClaseVal = Math.max(nivelClaseVal, jerarquia[nivel]);
-                                                                            }
-                                                                        });
-                                                                        if (nivelClaseVal === 0) nivelClaseVal = 1;
-                                                                        if (nivelAtletaVal < nivelClaseVal) {
-                                                                            nivelNoPermitido = true;
-                                                                        }
-                                                                    }
+                                                                    // Piso jerárquico; solo bloquea si la clase es Requerida (Obligatoria).
+                                                                    const nivelNoPermitido = evaluarNivelClase(form.nivelAtleta, c.nivelesPermitidos, c.nivelObligatorio).bloqueado;
                                                                     return (
                                                                         <button
                                                                             key={c.idClase}
@@ -503,21 +491,8 @@ export default function PublicDropIn() {
                                                             <div className="d-flex gap-2 flex-wrap">
                                                                 {clasesTarde.map(c => {
                                                                     const nivelesClase = c.nivelesPermitidos || 'Todos';
-                                                                    let nivelNoPermitido = false;
-                                                                    if (nivelesClase !== 'Todos') {
-                                                                        const jerarquia = { "novato": 1, "principiante": 2, "intermedio": 3, "rx": 4, "avanzado": 4 };
-                                                                        const nivelAtletaVal = jerarquia[form.nivelAtleta.trim().toLowerCase()] || 1;
-                                                                        let nivelClaseVal = 0;
-                                                                        Object.keys(jerarquia).forEach(nivel => {
-                                                                            if (nivelesClase.toLowerCase().includes(nivel)) {
-                                                                                nivelClaseVal = Math.max(nivelClaseVal, jerarquia[nivel]);
-                                                                            }
-                                                                        });
-                                                                        if (nivelClaseVal === 0) nivelClaseVal = 1;
-                                                                        if (nivelAtletaVal < nivelClaseVal) {
-                                                                            nivelNoPermitido = true;
-                                                                        }
-                                                                    }
+                                                                    // Piso jerárquico; solo bloquea si la clase es Requerida (Obligatoria).
+                                                                    const nivelNoPermitido = evaluarNivelClase(form.nivelAtleta, c.nivelesPermitidos, c.nivelObligatorio).bloqueado;
                                                                     return (
                                                                         <button
                                                                             key={c.idClase}

@@ -134,6 +134,9 @@ export default function RankingManual() {
         modoRanking: wod.modoRanking,
         metricaPrincipal: wod.metricaPrincipal,
         rankingPublicado: publicar, // 👈 Si es true detona la bomba, si es false le pone candado
+        // Publicar/ocultar la pizarra NO es una edición del contenido del WOD:
+        // no debe ensuciar el historial ("Ver detalles") ni la auditoría.
+        omitirHistorial: true,
         bloques: wod.bloques.map(b => ({
           tipoBloque: b.tipoBloque, tipoModalidad: b.tipoModalidad, modalidadEquipo: b.modalidadEquipo,
           capTimeMinutos: b.capTimeMinutos || null,

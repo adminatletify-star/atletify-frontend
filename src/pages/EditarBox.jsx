@@ -123,6 +123,7 @@ export default function EditarBox() {
   const [pinMetodoPago, setPinMetodoPago] = useState('');
   const [errorMetodoPago, setErrorMetodoPago] = useState(null);
   const [stripeSubsCount, setStripeSubsCount] = useState(null); // atletas afectados al desactivar pagos en línea
+  const [stripeEstado, setStripeEstado] = useState(null); // estado REAL de la cuenta Stripe: { conectado, cargosHabilitados, detallesEnviados, nombreNegocio }
   const [activeTab, setActiveTab] = useState('identidad');
 
   // ── Toggle seguro de visitas de regalo (contraseña + auditoría) ──
@@ -167,6 +168,7 @@ export default function EditarBox() {
     const boxIdSeguro = storedBox.idBox || storedBox.IdBox;
     cargarBox(boxIdSeguro);
     cargarConfiguracion(boxIdSeguro);
+    cargarEstadoStripe(boxIdSeguro);
     cargarPin(boxIdSeguro);
   }, [navigate]);
 
@@ -286,6 +288,14 @@ export default function EditarBox() {
         }
       }
     } catch (err) { console.error('Error cargando configuración:', err); }
+  }
+
+  // Consulta a Stripe si la cuenta del box realmente puede cobrar (no basta con que exista el id).
+  async function cargarEstadoStripe(idBox) {
+    try {
+      const res = await fetch(`${API_BASE}/finanzas/estado-cuenta/${idBox}`, { headers: headersGet });
+      if (res.ok) setStripeEstado(await res.json());
+    } catch (err) { console.error('Error consultando estado de Stripe:', err); }
   }
 
   function handleChange(e) {
@@ -878,16 +888,28 @@ export default function EditarBox() {
                         <i className="fab fa-stripe fa-lg me-2"></i>Pagos en Línea (Stripe Connect)
                       </p>
 
-                      {!config.stripeAccountId ? (
-                        <button type="button" onClick={conectarStripe} className="btn btn-sm text-white fw-bold px-3 py-2 mw-100 text-wrap" style={{ background: '#6772E5', border: 'none', borderRadius: '8px' }}>
-                          <i className="fas fa-link me-2"></i>Vincular Banco Mío
-                        </button>
-                      ) : (
+                      {/* La cuenta puede tener id pero NO estar lista para cobrar (onboarding a medias).
+                          Solo mostramos "lista" cuando Stripe confirma cargosHabilitados; si no, dejamos
+                          un botón para crear o COMPLETAR el onboarding. */}
+                      {config.stripeAccountId && stripeEstado?.cargosHabilitados ? (
                         <span className="badge bg-success bg-opacity-25 text-success border border-success p-2 mw-100 text-wrap text-start">
-                          <i className="fas fa-check-circle me-1"></i>Cuenta de Stripe Conectada
+                          <i className="fas fa-check-circle me-1"></i>Cuenta lista para cobrar
                         </span>
+                      ) : (
+                        <button type="button" onClick={conectarStripe} className="btn btn-sm text-white fw-bold px-3 py-2 mw-100 text-wrap" style={{ background: '#6772E5', border: 'none', borderRadius: '8px' }}>
+                          <i className="fas fa-link me-2"></i>
+                          {config.stripeAccountId ? 'Completar configuración de Stripe' : 'Vincular Banco Mío'}
+                        </button>
                       )}
                     </div>
+
+                    {/* Aviso cuando la cuenta existe pero Stripe aún no habilita los cobros. */}
+                    {config.stripeAccountId && stripeEstado && !stripeEstado.cargosHabilitados && (
+                      <div className="alert alert-warning py-2 px-3 mb-3" style={{ fontSize: '0.85rem', borderRadius: '8px' }}>
+                        <i className="fas fa-triangle-exclamation me-2"></i>
+                        Tu cuenta de Stripe está creada pero <strong>aún no puede recibir pagos</strong>: falta terminar el onboarding (nombre del negocio y datos bancarios). Pulsa <strong>"Completar configuración de Stripe"</strong> para finalizarlo. Mientras tanto, los atletas no podrán pagar en línea.
+                      </div>
+                    )}
 
                     <div className="row g-3">
                       <div className="col-12 col-md-6">

@@ -4,6 +4,7 @@ import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import BackButton from '../components/BackButton';
 import AtletifyLoader from '../components/AtletifyLoader';
 import ModalComentariosWod from '../components/ModalComentariosWod';
+import ModalDetallesWod from '../components/ModalDetallesWod';
 import { api } from '../services/api';
 import '../assets/css/CalendarioWods.css';
 
@@ -29,6 +30,9 @@ export default function CalendarioWods() {
   // Capa social: contadores like/dislike/comentarios por WOD + modal de comentarios (modo admin)
   const [contadoresWod, setContadoresWod] = useState({});
   const [comentariosWod, setComentariosWod] = useState(null);
+
+  // Modal "Ver detalles": historial (quién creó/editó) del WOD seleccionado
+  const [detallesWod, setDetallesWod] = useState(null);
 
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));
@@ -366,6 +370,14 @@ export default function CalendarioWods() {
                                       </li>
                                       <li>
                                         <button
+                                          onClick={() => { setDetallesWod(wod); setMenuAbierto(null); }}
+                                          className="dropdown-item"
+                                        >
+                                          <i className="fas fa-circle-info me-2"></i>Ver detalles
+                                        </button>
+                                      </li>
+                                      <li>
+                                        <button
                                           onClick={() => { setComentariosWod(wod); setMenuAbierto(null); }}
                                           className="dropdown-item"
                                           style={{ color: 'var(--accent-cool)' }}
@@ -477,6 +489,14 @@ export default function CalendarioWods() {
               totalComentarios: Math.max(0, ((prev[comentariosWod.idEntrenamiento]?.totalComentarios) || 0) + delta)
             }
           }))}
+        />
+      )}
+
+      {/* Modal "Ver detalles": historial de creación/edición del WOD */}
+      {detallesWod && (
+        <ModalDetallesWod
+          wod={detallesWod}
+          onCerrar={() => setDetallesWod(null)}
         />
       )}
     </div>
