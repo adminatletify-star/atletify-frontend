@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import BotonSeguro from '../BotonSeguro';
+import { formatNivelGamer } from '../NivelGamerPicker';
 import './WolfLanyard.css';
 
 // ── Spring physics constants ───────────────────────────────────────
@@ -224,7 +225,6 @@ export default function WolfLanyard({
                   {lobo.rachaActual >= 3 && <span className="wl-fire-badge"><i className="fas fa-fire"></i></span>}
                 </div>
                 <h2 className="wl-name">{lobo.nombre.toUpperCase()}</h2>
-                {lobo.username && <p className="wl-username">@{lobo.username}</p>}
                 {lobo.apodo && <p className="wl-apodo">"{lobo.apodo}"</p>}
                 <span className={`wl-role-tag ${isCoach ? 'wl-role-coach' : 'wl-role-atleta'}`}>
                   {isCoach ? 'COACH' : 'ATLETA'}
@@ -250,7 +250,7 @@ export default function WolfLanyard({
                   {lobo.categoriaBase?.toUpperCase() || 'NOVATO'}
                 </span>
                 {lobo.nivelGamer && (
-                  <span className="wl-badge wl-badge-level">LVL: {lobo.nivelGamer}</span>
+                  <span className="wl-badge wl-badge-level">LVL: {formatNivelGamer(lobo.nivelGamer)}</span>
                 )}
                 {lobo.estadoDelDia && (
                   <span className="wl-badge wl-badge-estado">{lobo.estadoDelDia}</span>
@@ -380,7 +380,7 @@ export default function WolfLanyard({
                       onClick={() => onSolicitarAmistad(lobo.idUsuario)}
                       textoProcesando={<><i className="fas fa-spinner fa-spin me-2"></i>ENVIANDO...</>}
                     >
-                      <i className="fas fa-paw me-2"></i>AÑADIR A MI MANADA
+                      <i className="fas fa-paw me-2"></i>AÑADIR A MIS AMIGOS
                     </BotonSeguro>
                   </div>
                 )

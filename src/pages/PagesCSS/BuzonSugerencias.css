@@ -152,11 +152,17 @@
   box-shadow: 0 0 16px var(--primary-glow);
 }
 
-.buzon-cat-btn .cat-emoji {
-  font-size: 1rem;
+.buzon-cat-btn .cat-icon {
+  font-size: 0.95rem;
   flex-shrink: 0;
-  line-height: 1;
+  width: 1.15rem;
+  text-align: center;
+  color: var(--primary);
+  opacity: 0.85;
+  transition: var(--transition);
 }
+
+.buzon-cat-btn.active .cat-icon { opacity: 1; }
 
 /* === TEXTAREA === */
 .buzon-textarea {
@@ -873,4 +879,737 @@
 .buzon-lightbox-close:hover {
   background: var(--primary);
   transform: scale(1.1);
+}
+
+/* ============================================
+   SELECTOR DE DESTINATARIO (Dev / Admin)
+   ============================================ */
+.buzon-dest-selector {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+}
+
+@media (min-width: 520px) {
+  .buzon-dest-selector { grid-template-columns: 1fr 1fr; }
+}
+
+.buzon-dest-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  border-top: 3px solid rgba(255, 255, 255, 0.12);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.buzon-dest-card i {
+  font-size: 1.3rem;
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.buzon-dest-card-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--text-primary);
+}
+
+.buzon-dest-card-desc {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.buzon-dest-card.active {
+  border-color: var(--primary);
+  border-top-color: var(--primary);
+  background: rgba(230, 57, 70, 0.1);
+  box-shadow: 0 4px 16px var(--primary-glow);
+}
+
+.buzon-dest-card.active i { color: var(--primary); }
+
+.buzon-dest-card:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) {
+  .buzon-dest-card:not(:disabled):hover {
+    border-color: rgba(230, 57, 70, 0.4);
+    border-top-color: rgba(230, 57, 70, 0.4);
+    color: var(--text-primary);
+  }
+}
+
+.buzon-dest-card:not(:disabled):active { transform: scale(0.98); }
+
+/* Nota (AdminBox enviando al Dev) */
+.buzon-dest-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 1.1rem;
+  border-radius: 10px;
+  background: rgba(52, 152, 219, 0.08);
+  border: 1px solid rgba(52, 152, 219, 0.2);
+  font-size: 0.8rem;
+  color: #4fc3f7;
+  line-height: 1.4;
+}
+
+.buzon-dest-note i { flex-shrink: 0; }
+.buzon-dest-note strong { color: var(--text-primary); }
+
+/* Hint cuando aún no se elige destinatario */
+.buzon-dest-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.1rem;
+  border-radius: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.buzon-dest-hint i { color: var(--primary); }
+
+/* ============================================
+   PESTAÑAS ADMINBOX (Recibidas / Enviar al Dev)
+   ============================================ */
+.buzon-admin-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.buzon-admin-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.buzon-admin-tab i { font-size: 0.9em; }
+
+.buzon-admin-tab.active {
+  border-color: var(--primary);
+  background: rgba(230, 57, 70, 0.1);
+  color: var(--text-primary);
+  box-shadow: 0 4px 16px var(--primary-glow);
+}
+
+@media (hover: hover) {
+  .buzon-admin-tab:hover { color: var(--text-primary); border-color: rgba(230, 57, 70, 0.35); }
+}
+
+.buzon-admin-tab:active { transform: scale(0.97); }
+
+.buzon-admin-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 20px;
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-stats);
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+/* ============================================
+   BADGE DESTINATARIO (historial)
+   ============================================ */
+.buzon-badge-dest {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.64rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+.buzon-badge-dest.dest-dev {
+  background: rgba(155, 89, 182, 0.14);
+  color: #c39bdd;
+  border: 1px solid rgba(155, 89, 182, 0.3);
+}
+
+.buzon-badge-dest.dest-admin {
+  background: rgba(46, 204, 113, 0.12);
+  color: #58d68d;
+  border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+/* Etiqueta del input de respuesta del gestor */
+.buzon-dev-respuesta-label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+
+.buzon-dev-respuesta-label strong { color: var(--text-primary); }
+
+/* Botón confirmar (verde) en el panel de gestión */
+.buzon-dev-action-btn.btn-confirm {
+  border-color: rgba(46, 204, 113, 0.4);
+  color: var(--success);
+  background: rgba(46, 204, 113, 0.1);
+}
+
+@media (hover: hover) {
+  .buzon-dev-action-btn.btn-confirm:hover {
+    border-color: var(--success);
+    background: rgba(46, 204, 113, 0.18);
+  }
+}
+
+/* ============================================
+   PAGINACIÓN (estilo Ejercicios)
+   ============================================ */
+.buzon-pag {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
+}
+
+.buzon-pag-num {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.4rem;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  font-family: var(--font-stats);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+}
+
+.buzon-pag-num.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 700;
+}
+
+.buzon-pag-arrow {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  touch-action: manipulation;
+}
+
+.buzon-pag-arrow:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) {
+  .buzon-pag-num:not(.active):hover,
+  .buzon-pag-arrow:not(:disabled):hover {
+    background: rgba(230, 57, 70, 0.1);
+    border-color: rgba(230, 57, 70, 0.3);
+    color: var(--text-primary);
+  }
+}
+
+.buzon-pag-num:active,
+.buzon-pag-arrow:not(:disabled):active { transform: scale(0.94); }
+
+.buzon-pag-ellipsis {
+  color: var(--text-muted);
+  padding: 0 0.2rem;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 576px) {
+  .buzon-dest-card { padding: 0.85rem 0.9rem; }
+  .buzon-dest-card i { font-size: 1.15rem; }
+  .buzon-dest-card-title { font-size: 0.82rem; }
+  .buzon-dest-card-desc { font-size: 0.68rem; }
+  .buzon-admin-tab { font-size: 0.74rem; padding: 0.6rem 0.7rem; }
+  .buzon-pag-num { min-width: 32px; height: 32px; font-size: 0.76rem; }
+  .buzon-pag-arrow { width: 34px; height: 34px; }
+}
+
+@media (max-width: 380px) {
+  .buzon-dest-card-desc { display: none; }
+  .buzon-admin-tab span { font-size: 0.7rem; }
+}
+
+/* ============================================
+   TIMELINE DE ESTADOS
+   ============================================ */
+.buzon-timeline {
+  display: flex;
+  flex-direction: column;
+  margin: 0.6rem 0 0.35rem;
+}
+
+.buzon-timeline-step {
+  display: flex;
+  gap: 0.6rem;
+  position: relative;
+  padding-bottom: 0.6rem;
+}
+
+.buzon-timeline-step:last-child { padding-bottom: 0; }
+
+/* Línea conectora vertical entre pasos */
+.buzon-timeline-step:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 20px;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+
+.buzon-timeline-dot {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  background: var(--bg-elevated);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.58rem;
+  z-index: 1;
+}
+
+.buzon-timeline-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+  padding-top: 0.02rem;
+}
+
+.buzon-timeline-estado {
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.buzon-timeline-fecha {
+  font-family: var(--font-stats);
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}
+
+.buzon-timeline-nota {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 0.15rem;
+  line-height: 1.4;
+}
+
+/* ============================================
+   BOTONES DE ACCIÓN (gestión) — ícono + texto
+   ============================================ */
+.buzon-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+.buzon-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.buzon-action-btn i { font-size: 0.85em; }
+.buzon-action-btn:active { transform: scale(0.96); }
+
+.buzon-action-btn.act-proceso { border-color: rgba(52, 152, 219, 0.4); color: #4fc3f7; }
+.buzon-action-btn.act-solucionado { border-color: rgba(46, 204, 113, 0.4); color: #2ecc71; }
+.buzon-action-btn.act-noprocede { border-color: rgba(231, 76, 60, 0.4); color: #e74c3c; }
+.buzon-action-btn.act-reabrir { border-color: var(--border); color: var(--text-muted); }
+
+@media (hover: hover) {
+  .buzon-action-btn.act-proceso:hover { background: rgba(52, 152, 219, 0.12); }
+  .buzon-action-btn.act-solucionado:hover { background: rgba(46, 204, 113, 0.12); }
+  .buzon-action-btn.act-noprocede:hover { background: rgba(231, 76, 60, 0.12); }
+  .buzon-action-btn.act-reabrir:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-primary); }
+}
+
+/* ============================================
+   CAJA DE CONFIRMACIÓN
+   ============================================ */
+.buzon-confirm {
+  margin-top: 0.7rem;
+  padding: 0.8rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  animation: buzon-fade-in 0.2s ease;
+}
+
+.buzon-confirm-label {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-bottom: 0.45rem;
+  line-height: 1.4;
+}
+
+.buzon-confirm-label strong { color: var(--text-primary); }
+
+.buzon-confirm-input {
+  width: 100%;
+  padding: 0.55rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-family: var(--font-body);
+  outline: none;
+  transition: var(--transition);
+}
+
+.buzon-confirm-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+.buzon-confirm-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+
+.buzon-confirm-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+.buzon-confirm-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.55rem 1rem;
+  border-radius: 9px;
+  border: none;
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  background: var(--primary);
+  touch-action: manipulation;
+}
+
+.buzon-confirm-ok.ok-en-proceso { background: #3498db; }
+.buzon-confirm-ok.ok-solucionado { background: #2ecc71; }
+.buzon-confirm-ok.ok-no-procede { background: #e74c3c; }
+.buzon-confirm-ok.ok-pendiente { background: #f39c12; }
+.buzon-confirm-ok:active { transform: scale(0.97); }
+
+.buzon-confirm-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+}
+
+.buzon-confirm-cancel:active { transform: scale(0.97); }
+
+@media (hover: hover) {
+  .buzon-confirm-cancel:hover { color: var(--text-primary); border-color: rgba(255, 255, 255, 0.2); }
+}
+
+/* ============================================
+   TARJETA RESALTADA (al venir de una notificación)
+   ============================================ */
+.buzon-historial-card.destacada {
+  border-color: var(--primary);
+  border-left-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow), 0 6px 20px rgba(0, 0, 0, 0.25);
+  animation: buzon-destacada-pulse 1.6s ease 2;
+}
+
+@keyframes buzon-destacada-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px var(--primary-glow), 0 6px 20px rgba(0, 0, 0, 0.25); }
+  50% { box-shadow: 0 0 0 4px var(--primary-glow), 0 6px 26px rgba(230, 57, 70, 0.35); }
+}
+
+/* ============================================
+   FILTROS COMO BOTÓN-TRIGGER (abren modal)
+   ============================================ */
+.buzon-filtro-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 220px;
+  padding: 0.4rem 0.7rem;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.buzon-filtro-icon { color: var(--primary); font-size: 0.8em; flex-shrink: 0; }
+
+.buzon-filtro-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.buzon-filtro-text.activo { color: var(--text-primary); }
+
+.buzon-filtro-arrow { font-size: 0.65em; color: var(--text-muted); flex-shrink: 0; }
+
+@media (hover: hover) {
+  .buzon-filtro-btn:hover { border-color: rgba(230, 57, 70, 0.35); }
+}
+
+.buzon-filtro-btn:active { transform: scale(0.97); }
+
+/* ============================================
+   MODAL SELECTOR (reemplaza <select> nativos)
+   ============================================ */
+.buzon-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: buzon-fade-in 0.2s ease;
+}
+
+.buzon-modal-selector {
+  width: 100%;
+  max-width: 420px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.buzon-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.buzon-modal-head h3 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+}
+
+.buzon-modal-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.buzon-modal-close:active { transform: scale(0.9); }
+
+@media (hover: hover) {
+  .buzon-modal-close:hover { color: var(--primary); background: rgba(230, 57, 70, 0.1); }
+}
+
+.buzon-modal-search {
+  position: relative;
+  padding: 0.85rem 1.1rem 0.5rem;
+}
+
+.buzon-modal-search-icon {
+  position: absolute;
+  left: 1.5rem;
+  top: 50%;
+  transform: translateY(-15%);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+.buzon-modal-search-input {
+  width: 100%;
+  padding: 0.55rem 0.8rem 0.55rem 2.1rem;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+  outline: none;
+  transition: var(--transition);
+}
+
+.buzon-modal-search-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+.buzon-modal-list {
+  overflow-y: auto;
+  padding: 0.4rem 0.6rem 0.7rem;
+  scrollbar-width: thin;
+}
+
+.buzon-modal-opcion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+}
+
+.buzon-modal-opcion.activa {
+  background: rgba(230, 57, 70, 0.1);
+  border-color: rgba(230, 57, 70, 0.3);
+  color: var(--text-primary);
+}
+
+.buzon-modal-opcion.activa i { color: var(--primary); }
+
+@media (hover: hover) {
+  .buzon-modal-opcion:hover { background: rgba(255, 255, 255, 0.04); }
+}
+
+.buzon-modal-opcion:active { transform: scale(0.99); }
+
+.buzon-modal-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+}
+
+.buzon-modal-empty i { font-size: 1.6rem; opacity: 0.35; display: block; margin-bottom: 0.5rem; }
+.buzon-modal-empty span { font-size: 0.82rem; }
+
+@media (max-width: 576px) {
+  .buzon-filtro-btn { font-size: 0.72rem; max-width: 160px; }
+  .buzon-modal-selector { border-radius: 18px; }
 }

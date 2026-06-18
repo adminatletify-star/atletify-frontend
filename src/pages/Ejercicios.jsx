@@ -263,7 +263,7 @@ export default function Ejercicios() {
 
       {/* Footer */}
       <footer className="ej-footer text-center">
-        <p>Entrena con técnica. Entrena como manada.</p>
+        <p>Entrena con técnica. Entrena en comunidad.</p>
       </footer>
 
       {/* ── MODAL DE DETALLE ── */}

@@ -4,15 +4,23 @@ import './NivelGamerPicker.css';
 
 const NIVELES = [
   { valor: 'Cachorro',        icono: 'fas fa-paw',          desc: 'Principiante',  color: '#81c784' },
-  { valor: 'Lobo Alfa',       icono: 'fas fa-wolf-pack-battalion', desc: 'Intermedio', color: '#4fc3f7' },
+  { valor: 'Alfa',            icono: 'fas fa-fire',         desc: 'Intermedio',    color: '#4fc3f7' },
   { valor: 'Beast',           icono: 'fas fa-dragon',       desc: 'Avanzado',      color: '#f5a623' },
   { valor: 'Máquina',         icono: 'fas fa-robot',        desc: 'Competidor',    color: '#e63946' },
   { valor: 'Dios del Olimpo', icono: 'fas fa-crown',        desc: 'Mutante',       color: '#e040fb' },
 ];
 
+// Normaliza valores guardados antiguos para que no muestren lenguaje de lobos
+// y sigan coincidiendo con una opción válida del selector.
+export function formatNivelGamer(valor) {
+  if (valor === 'Lobo Alfa') return 'Alfa';
+  return valor;
+}
+
 export default function NivelGamerPicker({ valor, onCambiar }) {
   const [abierto, setAbierto] = useState(false);
-  const actual = NIVELES.find(n => n.valor === valor) || NIVELES[0];
+  const valorNorm = formatNivelGamer(valor);
+  const actual = NIVELES.find(n => n.valor === valorNorm) || NIVELES[0];
 
   const seleccionar = (v) => {
     setAbierto(false);
@@ -38,13 +46,13 @@ export default function NivelGamerPicker({ valor, onCambiar }) {
             </div>
             <div className="ngp-options">
               {NIVELES.map(n => (
-                <button key={n.valor} type="button" className={`ngp-option${n.valor === valor ? ' ngp-option--activo' : ''}`} style={{ '--ngp-c': n.color, borderColor: n.valor === valor ? `${n.color}80` : undefined, background: n.valor === valor ? `${n.color}14` : undefined }} onClick={() => seleccionar(n.valor)}>
+                <button key={n.valor} type="button" className={`ngp-option${n.valor === valorNorm ? ' ngp-option--activo' : ''}`} style={{ '--ngp-c': n.color, borderColor: n.valor === valorNorm ? `${n.color}80` : undefined, background: n.valor === valorNorm ? `${n.color}14` : undefined }} onClick={() => seleccionar(n.valor)}>
                   <div className="ngp-opt-icon" style={{ background: `${n.color}18`, color: n.color }}><i className={n.icono} /></div>
                   <div className="ngp-opt-info">
-                    <span className="ngp-opt-nombre" style={{ color: n.valor === valor ? n.color : undefined }}>{n.valor}</span>
+                    <span className="ngp-opt-nombre" style={{ color: n.valor === valorNorm ? n.color : undefined }}>{n.valor}</span>
                     <span className="ngp-opt-desc">{n.desc}</span>
                   </div>
-                  {n.valor === valor && <i className="fas fa-check ngp-check" style={{ color: n.color }} />}
+                  {n.valor === valorNorm && <i className="fas fa-check ngp-check" style={{ color: n.color }} />}
                 </button>
               ))}
             </div>

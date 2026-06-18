@@ -110,7 +110,7 @@ export default function Login() {
             <div className="login-form-group">
               <label className="login-label">Correo o Username</label>
               {/* 👇 CAMBIO CLAVE: type="text" para que acepte Usernames sin arroba 👇 */}
-              <input type="text" className="login-input" placeholder="Ej. lobo99 o correo@ejemplo.com" value={correo} onChange={(e) => setCorreo(e.target.value)} required />
+              <input type="text" className="login-input" placeholder="Ej. atleta99 o correo@ejemplo.com" value={correo} onChange={(e) => setCorreo(e.target.value)} required />
             </div>
 
             <div className="login-form-group">

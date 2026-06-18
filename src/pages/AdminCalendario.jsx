@@ -807,7 +807,7 @@ export default function AdminCalendario() {
                       <input
                         type="text"
                         className="ac-input ac-search-input"
-                        placeholder="Buscar lobo..."
+                        placeholder="Buscar atleta..."
                         value={busqueda}
                         onChange={e => setBusqueda(e.target.value)}
                       />
@@ -968,7 +968,7 @@ export default function AdminCalendario() {
                   {/* Top Lobos */}
                   <div className="ac-panel">
                     <h5 className="ac-form-title mb-1" style={{ color: 'var(--accent)' }}>
-                      <i className="fas fa-trophy" /> Top Lobos (Lealtad)
+                      <i className="fas fa-trophy" /> Top Atletas (Lealtad)
                     </h5>
                     <p className="ac-empty-text mb-4">Atletas con 0 faltas y rachas altas.</p>
                     {metricas.topLobos.length === 0 ? (

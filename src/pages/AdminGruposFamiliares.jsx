@@ -133,7 +133,7 @@ export default function AdminGruposFamiliares() {
                 Escuadrones <span>Familiares</span>
               </h1>
               <p className="agf-subtitle">
-                Arma manadas, aplica descuentos progresivos y cobra una sola vez al líder.
+                Arma equipos, aplica descuentos progresivos y cobra una sola vez al líder.
               </p>
             </div>
           </div>
@@ -917,7 +917,7 @@ function ModalSeleccionMiembro({ atletasDisponibles, atletasYaUsados, planes, on
                 className={`agf-modal-tab ${modo === 'existente' ? 'active' : ''}`}
                 onClick={() => setModo('existente')}
               >
-                <i className="fas fa-search" /> Buscar Lobo Existente
+                <i className="fas fa-search" /> Buscar Atleta Existente
               </button>
               <button
                 className={`agf-modal-tab ${modo === 'nuevo' ? 'active' : ''}`}
@@ -985,7 +985,7 @@ function ModalSeleccionMiembro({ atletasDisponibles, atletasYaUsados, planes, on
 
             <div className="agf-atletas-count">
               <i className="fas fa-users" />
-              <span>{atletasFiltradosCompleto.length} {atletasFiltradosCompleto.length === 1 ? 'lobo disponible' : 'lobos disponibles'}</span>
+              <span>{atletasFiltradosCompleto.length} {atletasFiltradosCompleto.length === 1 ? 'atleta disponible' : 'atletas disponibles'}</span>
             </div>
 
             <div className="agf-atletas-list">
@@ -1003,8 +1003,8 @@ function ModalSeleccionMiembro({ atletasDisponibles, atletasYaUsados, planes, on
               ) : (
                 <>
                   {atletasFiltrados.map(a => {
-                    const inicial = (a.nombre || a.correo || 'L').charAt(0).toUpperCase();
-                    const nombreMostrar = a.nombre ? `${a.nombre} ${a.apellidos || ''}` : (a.correo ? a.correo.split('@')[0] : 'Lobo sin nombre');
+                    const inicial = (a.nombre || a.correo || 'A').charAt(0).toUpperCase();
+                    const nombreMostrar = a.nombre ? `${a.nombre} ${a.apellidos || ''}` : (a.correo ? a.correo.split('@')[0] : 'Atleta sin nombre');
                     return (
                       <div
                         key={a.idUsuario}
@@ -1057,7 +1057,7 @@ function ModalSeleccionMiembro({ atletasDisponibles, atletasYaUsados, planes, on
                       style={{ borderRadius: '12px', borderStyle: 'dashed' }}
                       onClick={() => setLimite(prev => prev + 20)}
                     >
-                      <i className="fas fa-chevron-down me-1" /> Cargar más lobos ({atletasFiltradosCompleto.length - limite} restantes)
+                      <i className="fas fa-chevron-down me-1" /> Cargar más atletas ({atletasFiltradosCompleto.length - limite} restantes)
                     </button>
                   )}
                 </>

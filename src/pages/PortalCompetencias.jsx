@@ -987,7 +987,7 @@ export default function PortalCompetencias() {
                               {modoInscripcion === 'crear' && catSeleccionada.esEquipo && (
                                 <div className="portal-form-section">
                                   <h6 className="portal-form-section-title">
-                                    <i className="fas fa-flag me-2"></i>Datos de la Manada
+                                    <i className="fas fa-flag me-2"></i>Datos del Equipo
                                   </h6>
                                   <div className="row g-3">
                                     <div className="col-12 col-md-6">

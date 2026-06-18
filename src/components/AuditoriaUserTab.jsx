@@ -18,12 +18,21 @@ const AccionBadge = ({ accion }) => {
   else if (accion === 'APROBAR_CAMBIO_FACTURACION') { color = '#2ECC71'; icon = 'fa-file-circle-check'; }
   else if (accion === 'RECHAZAR_CAMBIO_FACTURACION') { color = '#e67e22'; icon = 'fa-file-circle-xmark'; }
   else if (accion === 'SOLICITAR_CAMBIO_FACTURACION') { color = '#3498db'; icon = 'fa-file-invoice-dollar'; }
+  else if (accion === 'GESTION_SUGERENCIA') { color = '#9b59b6'; icon = 'fa-comment-dots'; }
+  // Campañas y donativos (deben ir antes de las reglas genéricas APROBAR/ELIMINAR/CREAR)
+  else if (accion.includes('CUENTA_CAMPANIA')) { color = '#16a085'; icon = 'fa-building-columns'; }
+  else if (accion === 'APROBAR_DONATIVO') { color = '#2ECC71'; icon = 'fa-hand-holding-heart'; }
+  else if (accion === 'CORRECCION_DONATIVO') { color = '#e67e22'; icon = 'fa-rotate-left'; }
+  else if (accion.includes('DONATIVO')) { color = '#f5a623'; icon = 'fa-hand-holding-heart'; }
+  else if (accion.includes('CAMPANIA')) { color = '#9b59b6'; icon = 'fa-bullhorn'; }
   else if (accion === 'CREAR_WOD') { color = '#2ECC71'; icon = 'fa-calendar-plus'; }
   else if (accion === 'EDITAR_WOD') { color = '#f5a623'; icon = 'fa-pen'; }
   else if (accion === 'ELIMINAR_WOD') { color = 'var(--primary)'; icon = 'fa-dumbbell'; }
   else if (accion === 'CREAR_CLASE') { color = '#2ECC71'; icon = 'fa-calendar-check'; }
   else if (accion === 'EDITAR_CLASE') { color = '#f5a623'; icon = 'fa-pen-to-square'; }
   else if (accion === 'ELIMINAR_CLASE') { color = 'var(--primary)'; icon = 'fa-calendar-xmark'; }
+  else if (accion === 'CREAR_EXPEDIENTE_MEDICO') { color = '#2ECC71'; icon = 'fa-notes-medical'; }
+  else if (accion === 'ACTUALIZAR_EXPEDIENTE_MEDICO') { color = '#f5a623'; icon = 'fa-file-medical'; }
   else if (accion.includes('DESACTIVAR_VISITAS')) { color = '#e67e22'; icon = 'fa-pause-circle'; }
   else if (accion.includes('ACTIVAR_VISITAS')) { color = '#f5a623'; icon = 'fa-gift'; }
   else if (accion.includes('DESACTIVAR_METODO')) { color = '#e67e22'; icon = 'fa-toggle-off'; }
@@ -148,6 +157,8 @@ export default function AuditoriaUserTab({ boxes }) {
             <option value="CREAR_CLASE">Crear Clase</option>
             <option value="EDITAR_CLASE">Editar Clase</option>
             <option value="ELIMINAR_CLASE">Eliminar Clase</option>
+            <option value="CREAR_EXPEDIENTE_MEDICO">Crear Expediente Médico</option>
+            <option value="ACTUALIZAR_EXPEDIENTE_MEDICO">Actualizar Expediente Médico</option>
             <option value="ACTIVAR_VISITAS_REGALO">Activar Visitas de Regalo</option>
             <option value="DESACTIVAR_VISITAS_REGALO">Pausar Visitas de Regalo</option>
             <option value="ACTIVAR_METODO_PAGO">Activar Método de Pago</option>
@@ -158,6 +169,18 @@ export default function AuditoriaUserTab({ boxes }) {
             <option value="SOLICITAR_CAMBIO_FACTURACION">Solicitar Cambio de Facturación</option>
             <option value="APROBAR_CAMBIO_FACTURACION">Aprobar Cambio de Facturación</option>
             <option value="RECHAZAR_CAMBIO_FACTURACION">Rechazar Cambio de Facturación</option>
+            <option value="GESTION_SUGERENCIA">Gestión de Sugerencia</option>
+            <option value="CREAR_CAMPANIA">Crear Campaña/Anuncio</option>
+            <option value="EDITAR_CAMPANIA">Editar Campaña/Anuncio</option>
+            <option value="ELIMINAR_CAMPANIA">Eliminar Campaña/Anuncio</option>
+            <option value="DONATIVO_MANUAL">Aportación Manual (Campaña)</option>
+            <option value="DONATIVO_STRIPE">Donativo en Línea (Campaña)</option>
+            <option value="APROBAR_DONATIVO">Aprobar Comprobante (Campaña)</option>
+            <option value="CORRECCION_DONATIVO">Comprobante a Corrección (Campaña)</option>
+            <option value="ELIMINAR_DONATIVO">Eliminar Registro (Campaña)</option>
+            <option value="CREAR_CUENTA_CAMPANIA">Crear Cuenta (Campaña)</option>
+            <option value="EDITAR_CUENTA_CAMPANIA">Editar Cuenta (Campaña)</option>
+            <option value="ELIMINAR_CUENTA_CAMPANIA">Eliminar Cuenta (Campaña)</option>
           </select>
         </div>
       </div>

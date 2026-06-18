@@ -6,7 +6,7 @@ import DateWheelPicker from '../components/DateWheelPicker';
 import BackButton from '../components/BackButton';
 import AtletifyLoader from '../components/AtletifyLoader';
 import EstadoDelDiaPicker from '../components/EstadoDelDiaPicker';
-import NivelGamerPicker from '../components/NivelGamerPicker';
+import NivelGamerPicker, { formatNivelGamer } from '../components/NivelGamerPicker';
 import GeneroPicker from '../components/GeneroPicker';
 import ObjetivoPicker from '../components/ObjetivoPicker';
 import TallaPlayeraPicker from '../components/TallaPlayeraPicker';
@@ -517,11 +517,7 @@ export default function MiPerfil() {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
       });
       if (res.ok) {
-        triggerAlert({
-          title: '¡PR Registrado!',
-          message: '¡PR registrado con éxito!',
-          type: 'success'
-        });
+        alert('¡PR registrado con éxito!');
         setFormMarca({ idEjercicio: '', valor: '', unidad: 'lbs' });
         cargarDatosPRs(JSON.parse(localStorage.getItem('box')).idBox, userAuth.id || userAuth.idUsuario);
       }
@@ -723,7 +719,7 @@ export default function MiPerfil() {
       if (res.ok) {
         triggerAlert({
           title: 'Cuenta Eliminada',
-          message: 'Tu cuenta ha sido eliminada permanentemente del sistema de manera exitosa. Agradecemos enormemente tu tiempo en nuestra manada.',
+          message: 'Tu cuenta ha sido eliminada permanentemente del sistema de manera exitosa. Agradecemos enormemente tu tiempo en nuestra comunidad.',
           type: 'success',
           onConfirm: () => {
             localStorage.removeItem('usuario');
@@ -825,7 +821,7 @@ export default function MiPerfil() {
                   {form.foto
                     ? <img src={form.foto} alt="Avatar" />
                     : (form.nombre ? form.nombre.charAt(0).toUpperCase() : 'W')}
-                  <span className="mp-hero-level-badge">LVL: {form.nivelGamer}</span>
+                  <span className="mp-hero-level-badge">LVL: {formatNivelGamer(form.nivelGamer)}</span>
                 </div>
                 <input type="file" id="fotoUpload" accept="image/*" style={{ display: 'none' }} onChange={handleSubirFoto} disabled={form.estatus === 'TemporalmenteInactivo'} />
                 <label htmlFor="fotoUpload" className={`mp-foto-btn ${form.estatus === 'TemporalmenteInactivo' ? 'mp-foto-btn-frozen' : ''}`}>
@@ -1084,7 +1080,7 @@ export default function MiPerfil() {
                         <input className="form-check-input" type="checkbox" role="switch" style={{ width: '40px', height: '20px' }} checked={form.deshabilitarSolicitudes} onChange={e => togglePrivacidad('deshabilitarSolicitudes', e.target.checked)} />
                         <div>
                           <label className="mp-switch-label ms-2 d-block mb-0">No recibir solicitudes de amistad</label>
-                          <small className="text-secondary ms-2 mp-switch-desc">Otros atletas no podrán enviarte solicitudes para añadirte a su manada.</small>
+                          <small className="text-secondary ms-2 mp-switch-desc">Otros atletas no podrán enviarte solicitudes para añadirte a su comunidad.</small>
                         </div>
                       </div>
                     </div>

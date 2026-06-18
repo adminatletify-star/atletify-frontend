@@ -13,16 +13,23 @@ function agruparDigitos(valor) {
 }
 
 /**
- * Administración (alta/edición/baja) de las cuentas de transferencia del box.
- * Autocontenido: se inserta con una sola línea en editar-box (sección financiera).
- * props: idBox (requerido).
+ * Administración (alta/edición/baja) de las cuentas de transferencia.
+ * Autocontenido: se inserta con una sola línea.
+ * props:
+ *  - idBox: gestiona las cuentas del BOX (editar-box).
+ *  - idAnuncio: gestiona las cuentas de una CAMPAÑA (gestion-anuncios). Tiene prioridad si se pasa.
  */
-export default function GestionCuentasTransferencia({ idBox }) {
+export default function GestionCuentasTransferencia({ idBox, idAnuncio }) {
   const [cuentas, setCuentas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [modal, setModal] = useState(null);    // null | { id|null, ...form }
   const [errorForm, setErrorForm] = useState(null);
   const [ayudaAbierta, setAyudaAbierta] = useState(false);
+
+  // Base del endpoint: por campaña o por box.
+  const basePath = idAnuncio
+    ? `${API_BASE_URL_CONST}/anuncios/${idAnuncio}/cuentas-transferencia`
+    : `${API_BASE_URL_CONST}/configuracionbox/${idBox}/cuentas-transferencia`;
 
   const headersAuth = () => ({
     'Content-Type': 'application/json',
@@ -30,10 +37,10 @@ export default function GestionCuentasTransferencia({ idBox }) {
   });
 
   const cargar = useCallback(async () => {
-    if (!idBox) { setCargando(false); return; }
+    if (!idBox && !idAnuncio) { setCargando(false); return; }
     setCargando(true);
     try {
-      const res = await fetch(`${API_BASE_URL_CONST}/configuracionbox/${idBox}/cuentas-transferencia/gestion`, {
+      const res = await fetch(`${basePath}/gestion`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
       });
       if (res.ok) setCuentas(await res.json());
@@ -42,7 +49,7 @@ export default function GestionCuentasTransferencia({ idBox }) {
     } finally {
       setCargando(false);
     }
-  }, [idBox]);
+  }, [idBox, idAnuncio, basePath]);
 
   useEffect(() => { cargar(); }, [cargar]);
 
@@ -91,9 +98,7 @@ export default function GestionCuentasTransferencia({ idBox }) {
     };
 
     const esEdicion = modal.id != null;
-    const url = esEdicion
-      ? `${API_BASE_URL_CONST}/configuracionbox/${idBox}/cuentas-transferencia/${modal.id}`
-      : `${API_BASE_URL_CONST}/configuracionbox/${idBox}/cuentas-transferencia`;
+    const url = esEdicion ? `${basePath}/${modal.id}` : basePath;
 
     try {
       const res = await fetch(url, {
@@ -120,7 +125,7 @@ export default function GestionCuentasTransferencia({ idBox }) {
     );
     if (!ok) return;
     try {
-      const res = await fetch(`${API_BASE_URL_CONST}/configuracionbox/${idBox}/cuentas-transferencia/${c.idCuentaTransferencia}`, {
+      const res = await fetch(`${basePath}/${c.idCuentaTransferencia}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
       });

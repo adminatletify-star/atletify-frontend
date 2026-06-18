@@ -34,9 +34,19 @@ const padMedic = [
   { name: 'cannabis',           label: 'Cannabis' },
 ];
 
+const fmtFechaHora = (iso) => {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('es-MX', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+};
+
 export default function ModalVerExpediente({ atleta, onClose }) {
   const [datos, setDatos] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [historial, setHistorial] = useState([]);
+  const [loadingHist, setLoadingHist] = useState(true);
 
   useEffect(() => {
     const idUsuario = atleta.idUsuario || atleta.IdUsuario;
@@ -44,6 +54,14 @@ export default function ModalVerExpediente({ atleta, onClose }) {
       .then(res => res.json())
       .then(data => { setDatos(data); setLoading(false); })
       .catch(err => { console.error('Error al obtener el expediente:', err); setLoading(false); });
+
+    // Historial de cambios (control de versiones) — el endpoint exige token (datos PII)
+    fetch(`${import.meta.env.VITE_API_URL}/api/ExpedienteMedico/usuario/${idUsuario}/historial`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+    })
+      .then(res => res.ok ? res.json() : [])
+      .then(data => { setHistorial(Array.isArray(data) ? data : []); setLoadingHist(false); })
+      .catch(err => { console.error('Error al obtener el historial:', err); setLoadingHist(false); });
   }, [atleta]);
 
   const padecimientosPositivos = datos ? padMedic.filter(p => datos[p.name] === true) : [];
@@ -252,6 +270,63 @@ export default function ModalVerExpediente({ atleta, onClose }) {
                   {datos.suplementosVitaminas || 'Ninguno'}
                 </div>
               </div>
+
+              {/* HISTORIAL DE CAMBIOS (control de versiones) */}
+              <div className="exp-seccion-titulo">
+                <i className="fas fa-history"></i> Historial de Cambios
+              </div>
+              {loadingHist ? (
+                <div className="d-flex justify-content-center py-3"><AtletifyLoader /></div>
+              ) : historial.length === 0 ? (
+                <div className="exp-sin-condicion">
+                  <i className="fas fa-clock-rotate-left"></i>
+                  <span>Aún no se han registrado cambios en este expediente.</span>
+                </div>
+              ) : (
+                <div className="exp-hist-list">
+                  {historial.map(ev => {
+                    let cambios = [];
+                    try { cambios = ev.cambiosJson ? JSON.parse(ev.cambiosJson) : []; } catch { cambios = []; }
+                    const esCreacion = ev.accion === 'CREACION';
+                    const actor = `${ev.actorNombre || ''} ${ev.actorApellidos || ''}`.trim() || 'Usuario no disponible';
+                    return (
+                      <div key={ev.idHistorial} className={`exp-hist-item ${esCreacion ? 'exp-hist-item--creacion' : ''}`}>
+                        <div className="exp-hist-head">
+                          <span className="exp-hist-accion">
+                            <i className={`fas ${esCreacion ? 'fa-file-circle-plus' : 'fa-pen'}`}></i>
+                            {esCreacion ? 'Expediente creado' : 'Edición'}
+                          </span>
+                          <span className="exp-hist-fecha">
+                            <i className="fas fa-clock"></i> {fmtFechaHora(ev.fechaHora)}
+                          </span>
+                        </div>
+                        <div className="exp-hist-actor">
+                          <i className="fas fa-user-edit"></i> {actor}
+                          {ev.actorRol && <span className="exp-hist-rol">{ev.actorRol}</span>}
+                        </div>
+                        {!esCreacion && (
+                          cambios.length > 0 ? (
+                            <div className="exp-hist-cambios">
+                              {cambios.map((c, i) => (
+                                <div key={i} className="exp-hist-cambio">
+                                  <span className="exp-hist-campo">{c.campo}</span>
+                                  <span className="exp-hist-valores">
+                                    <span className="exp-hist-antes">{c.anterior}</span>
+                                    <i className="fas fa-arrow-right exp-hist-flecha"></i>
+                                    <span className="exp-hist-nuevo">{c.nuevo}</span>
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="exp-hist-cambios-vacio">Sin cambios detallados.</div>
+                          )
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </>
           )}
         </div>

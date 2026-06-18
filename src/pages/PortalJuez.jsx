@@ -388,7 +388,7 @@ export default function PortalJuez() {
                 <input
                   type="text"
                   className="jz-filter-input"
-                  placeholder="Ej. Los Lobos"
+                  placeholder="Ej. Los Atletas"
                   value={filtroEquipo}
                   onChange={e => setFiltroEquipo(e.target.value)}
                 />

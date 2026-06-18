@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 const NAV_ITEMS = [
   { id: 'home',      icon: 'fas fa-home',        label: 'Inicio'  },
   { id: 'wods',      icon: 'fas fa-dumbbell',    label: 'WODs'    },
-  { id: 'comunidad', icon: 'fas fa-users',        label: 'Manada'  },
+  { id: 'comunidad', icon: 'fas fa-users',        label: 'Comunidad'  },
   { id: 'ranking',   icon: 'fas fa-medal',        label: 'Ranking' },
   { id: 'perfil',    icon: 'fas fa-user-circle',  label: 'Perfil'  },
 ];

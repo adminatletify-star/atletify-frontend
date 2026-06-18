@@ -46,7 +46,7 @@ const PAD_MEDIC = [
 const FORM_INICIAL = {
   estatura: '', estadoCivil: '', peso: '', tipoDeSangre: '',
   contactoEmergenciaNombre: '', contactoEmergenciaTelefono: '',
-  alergiasDescripcion: '', correo: '', telefono: '', fechaNacimiento: '',
+  alergiasDescripcion: '', nombre: '', apellidos: '', correo: '', telefono: '', fechaNacimiento: '',
   tieneExperiencia: false, deporteExperiencia: '', tieneDiscapacidad: '',
   hipertension: false, problemasHabla: false, problemasExtremidad: false,
   problemasEspalda: false, lumbalgia: false, cirugiaReciente: false,
@@ -63,7 +63,6 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
   const [loadingDatos, setLoadingDatos] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [form, setForm] = useState(FORM_INICIAL);
-  const [usuarioData, setUsuarioData] = useState(null);
 
   const [modalSangreOpen, setModalSangreOpen] = useState(false);
   const [modalCivilOpen, setModalCivilOpen] = useState(false);
@@ -73,7 +72,6 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
     const fetchDatos = async () => {
       try {
         const u = JSON.parse(localStorage.getItem('usuario'));
-        setUsuarioData(u);
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/ExpedienteMedico/usuario/${idUsuario}`);
         if (res.ok) {
           const data = await res.json();
@@ -84,6 +82,8 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
             contactoEmergenciaNombre: data.contactoEmergenciaNombre || '',
             contactoEmergenciaTelefono: data.contactoEmergenciaTelefono || '',
             alergiasDescripcion: data.alergiasDescripcion || '',
+            nombre: data.nombre || u?.nombre || u?.Nombre || '',
+            apellidos: data.apellidos || u?.apellidos || u?.Apellidos || '',
             correo: data.correo || u?.correo || u?.Correo || '',
             telefono: data.telefono || u?.telefono || u?.Telefono || '',
             fechaNacimiento: data.fechaNacimiento
@@ -149,7 +149,12 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
   };
 
   const togglePad = (name) => {
-    setForm(prev => ({ ...prev, [name]: !prev[name] }));
+    setForm(prev => {
+      const next = { ...prev, [name]: !prev[name] };
+      // Al desmarcar "alergias", limpiamos la descripción para no arrastrar texto obsoleto.
+      if (name === 'alergias' && !next.alergias) next.alergiasDescripcion = '';
+      return next;
+    });
   };
 
   const calcularEdad = (fechaStr) => {
@@ -175,6 +180,8 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
         contactoEmergenciaNombre: form.contactoEmergenciaNombre,
         contactoEmergenciaTelefono: form.contactoEmergenciaTelefono,
         alergiasDescripcion: form.alergiasDescripcion,
+        nombre: form.nombre,
+        apellidos: form.apellidos,
         correo: form.correo,
         telefono: form.telefono,
         fechaNacimiento: form.fechaNacimiento ? new Date(form.fechaNacimiento).toISOString() : null,
@@ -250,20 +257,21 @@ export default function ModalExpedienteMedico({ idUsuario, onCompletado, isPage 
         <p className="em-section-title"><i className="fas fa-user-circle"></i> Datos Personales</p>
         <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: '1fr' }}>
 
-          <div>
-            <label className="etiqueta-campo">Nombre completo</label>
-            <input
-              type="text"
-              className="em-input-readonly"
-              value={`${usuarioData?.nombre || ''} ${usuarioData?.apellidos || ''}`.trim()}
-              disabled
-            />
+          <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))' }}>
+            <div>
+              <label className="etiqueta-campo">Nombre(s) <span style={{ color: 'var(--primary)' }}>*</span></label>
+              <input type="text" required name="nombre" className="entrada-oscura" value={form.nombre} onChange={handleChange} placeholder="Nombre(s)" />
+            </div>
+            <div>
+              <label className="etiqueta-campo">Apellidos <span style={{ color: 'var(--primary)' }}>*</span></label>
+              <input type="text" required name="apellidos" className="entrada-oscura" value={form.apellidos} onChange={handleChange} placeholder="Apellidos" />
+            </div>
           </div>
 
           <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))' }}>
             <div>
-              <label className="etiqueta-campo">Correo <span style={{ color: 'var(--primary)' }}>*</span></label>
-              <input type="email" required name="correo" className="entrada-oscura" value={form.correo} onChange={handleChange} placeholder="ejemplo@correo.com" />
+              <label className="etiqueta-campo">Correo</label>
+              <input type="email" name="correo" className="em-input-readonly" value={form.correo} disabled readOnly placeholder="ejemplo@correo.com" />
             </div>
             <div>
               <label className="etiqueta-campo">Teléfono (10 dígitos) <span style={{ color: 'var(--primary)' }}>*</span></label>

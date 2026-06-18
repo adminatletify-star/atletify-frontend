@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import DarkVeil from '../components/ReactBits/DarkVeil';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import WolfLanyard from '../components/ReactBits/WolfLanyard';
+import { formatNivelGamer } from '../components/NivelGamerPicker';
+import ModalEstadoDelDia from '../components/ModalEstadoDelDia';
 import BotonSeguro from '../components/BotonSeguro';
 import OpcionesPicker from '../components/OpcionesPicker';
 import '../assets/css/user-panel.css';
@@ -342,6 +344,7 @@ export default function UserPanel() {
 
   const [notificaciones, setNotificaciones] = useState([]);
   const [showModalNotis, setShowModalNotis] = useState(false);
+  const [campaniaAbrir, setCampaniaAbrir] = useState(null); // id de campaña a abrir desde la campanita
 
   const [loboSeleccionado, setLoboSeleccionado] = useState(null);
   const [marcasLobo, setMarcasLobo] = useState([]);
@@ -359,6 +362,9 @@ export default function UserPanel() {
   // Visitas de regalo "trae a un amigo" (modal de bienvenida la primera vez)
   const [regaloBienvenida, setRegaloBienvenida] = useState(null);
   const [showModalRegalo, setShowModalRegalo] = useState(false);
+
+  // Modal diario "Estado de Hoy" — aparece una vez al día
+  const [mostrarModalEstadoDia, setMostrarModalEstadoDia] = useState(false);
 
   // 👇 2. CARGAR EL ADN FINANCIERO DESDE C# 👇
   useEffect(() => {
@@ -388,6 +394,12 @@ export default function UserPanel() {
     // 3. Si sobrevivió al cadenero (es Atleta, Coach, etc.), cargamos su Panel
     setUser(u);
     setBox(b);
+
+    // Modal diario "Estado de Hoy": se muestra una vez por día por usuario.
+    const keyEstadoDia = `atletify_estadoDia_${u.idUsuario || u.id}_${getFechaHoyString()}`;
+    if (!localStorage.getItem(keyEstadoDia)) {
+      setMostrarModalEstadoDia(true);
+    }
 
     // Restaurar flag de cancelación voluntaria desde sessionStorage (sobrevive cambio de pestaña)
     const storageKey = `canceloClase_${u.idUsuario || u.id}_${getFechaHoyString()}`;
@@ -566,6 +578,17 @@ export default function UserPanel() {
       setShowModalNotis(false);
       borrarNotificacion(noti.idNotificacion);
       navigate('/mi-perfil#records', { state: { reaccionesMarca: noti.idMarca } });
+    } else if (noti.destino === 'mi-sugerencia') {
+      // Cambio de estado de una sugerencia que envió -> buzón, con la sugerencia resaltada.
+      setShowModalNotis(false);
+      leerNotificacion(noti.idNotificacion);
+      navigate('/buzon-sugerencias', { state: { sugerenciaDestacada: noti.idSugerencia } });
+    } else if (typeof noti.destino === 'string' && noti.destino.startsWith('campania:')) {
+      // Campaña/anuncio o estado de su aportación -> abrir el detalle de esa campaña.
+      const idCamp = parseInt(noti.destino.split(':')[1]);
+      setShowModalNotis(false);
+      leerNotificacion(noti.idNotificacion);
+      if (idCamp) setCampaniaAbrir(idCamp);
     } else if (!noti.leida) {
       leerNotificacion(noti.idNotificacion);
     }
@@ -1344,7 +1367,7 @@ export default function UserPanel() {
         {/* MAIN CONTENT */}
         <div className="container py-4 mb-5 flex-grow-1">
           
-          <AnunciosEngine box={box} user={user} />
+          <AnunciosEngine box={box} user={user} abrirCampania={campaniaAbrir} onConsumirAbrir={() => setCampaniaAbrir(null)} />
 
           {/* 👇 BLOQUEO DE MEMBRESÍA VENCIDA 👇 */}
           {finanzas?.suscripcion?.estatus === 'Vencida' && (
@@ -1354,7 +1377,7 @@ export default function UserPanel() {
                         <i className="fas fa-exclamation-triangle text-danger fs-1 mb-3"></i>
                         <h2 className="text-white fw-bold mb-3" style={{fontFamily: 'var(--font-heading)'}}>MEMBRESÍA VENCIDA</h2>
                         <p className="text-secondary mb-4">
-                          Tu acceso a clases y reservas ha sido suspendido. Por favor, regulariza tu pago para volver a la manada.
+                          Tu acceso a clases y reservas ha sido suspendido. Por favor, regulariza tu pago para volver a la comunidad.
                           {finanzas?.recargo > 0 && (
                             <span className="d-block mt-2 text-danger fw-bold">
                               ⚠️ Se ha aplicado un recargo por pago tardío de ${finanzas.recargo} MXN.
@@ -1605,7 +1628,7 @@ export default function UserPanel() {
                           ))}
                           <span className="up-chip-sep"></span>
                           <button onClick={() => setSoloCompas(!soloCompas)} className={`up-chip ${soloCompas ? 'is-active' : ''}`}>
-                            <i className="fas fa-paw"></i> {soloCompas ? 'Viendo Manada' : 'Compas'}
+                            <i className="fas fa-paw"></i> {soloCompas ? 'Viendo Comunidad' : 'Compas'}
                           </button>
                         </div>
                       </div>
@@ -1647,7 +1670,7 @@ export default function UserPanel() {
                           return (
                             <div className="text-center py-5">
                               <i className="fas fa-ghost fs-1 text-secondary mb-3 opacity-25"></i>
-                              <p className="text-secondary small">Nadie de tu manada ha registrado scores aún.</p>
+                              <p className="text-secondary small">Nadie de tu comunidad ha registrado scores aún.</p>
                             </div>
                           );
                         }
@@ -1687,7 +1710,7 @@ export default function UserPanel() {
                                     <div className="up-rank-meta">
                                       {res.esRx && <span className="up-rank-badge up-rank-badge--rx"><i className="fas fa-fire"></i> RX</span>}
                                       {res.estadoDelDia && <span className="up-rank-badge up-rank-badge--estado">{res.estadoDelDia}</span>}
-                                      {res.nivelGamer && <span className="up-rank-lvl">LVL {res.nivelGamer.toUpperCase()}</span>}
+                                      {res.nivelGamer && <span className="up-rank-lvl">LVL {formatNivelGamer(res.nivelGamer).toUpperCase()}</span>}
                                     </div>
                                     {res.comentarios && <div className="up-rank-comment"><i className="fas fa-comment-alt me-1 opacity-50"></i>{res.comentarios}</div>}
                                   </div>
@@ -1913,7 +1936,7 @@ export default function UserPanel() {
                   </div>
                   <div className="flex-grow-1">
                     <div className="up-mini-label">Comunidad</div>
-                    <div className="up-mini-value">La Manada</div>
+                    <div className="up-mini-value">La Comunidad</div>
                   </div>
                   <i className="fas fa-chevron-right text-secondary small"></i>
                 </div>
@@ -2157,6 +2180,20 @@ export default function UserPanel() {
           onClose={() => setLoboSeleccionado(null)}
           onReaccionar={handleReaccionar}
           onSolicitarAmistad={() => { }}
+        />
+      )}
+
+      {/* MODAL DIARIO "ESTADO DE HOY" */}
+      {mostrarModalEstadoDia && user && (
+        <ModalEstadoDelDia
+          idUsuario={user.idUsuario || user.id}
+          valorActual={user.estadoDelDia || ''}
+          onCerrar={(valor) => {
+            const key = `atletify_estadoDia_${user.idUsuario || user.id}_${getFechaHoyString()}`;
+            localStorage.setItem(key, '1');
+            if (valor) setUser(prev => (prev ? { ...prev, estadoDelDia: valor } : prev));
+            setMostrarModalEstadoDia(false);
+          }}
         />
       )}
 

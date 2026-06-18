@@ -204,7 +204,7 @@ export default function HomeAliado() {
         transition={{ duration: 0.7, delay: 0.2 }}
       >
         <p className="ha-cta-text">
-          "Sin el pack, no hay manada. Sin Wolfpack, no hay Atletify."
+          "Sin el pack, no hay comunidad. Sin Wolfpack, no hay Atletify."
         </p>
         <div className="ha-cta-line" />
       </motion.div>

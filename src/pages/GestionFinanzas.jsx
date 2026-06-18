@@ -12,6 +12,7 @@ import PromocionPicker from '../components/PromocionPicker';
 import MetodoPagoPicker from '../components/MetodoPagoPicker';
 import CategoriaBasePicker from '../components/CategoriaBasePicker';
 import NivelAccesoPicker from '../components/NivelAccesoPicker';
+import SemaforoFiltroPicker from '../components/SemaforoFiltroPicker';
 import { evaluarNivelClase } from '../utils/nivelClase';
 import Swal from 'sweetalert2';
 import '../assets/css/GestionFinanzas.css';
@@ -821,6 +822,22 @@ export default function GestionFinanzas() {
     }
   };
 
+  const OPCIONES_ESTADO_SEMAFORO = [
+    { valor: '',         label: 'Todos los Estados', desc: 'Mostrar todos los atletas',        icono: 'fas fa-layer-group',          color: '#a8b2d1' },
+    { valor: 'Verde',    label: 'Al Día',            desc: 'Suscripción vigente',             icono: 'fas fa-circle-check',         color: '#2ecc71' },
+    { valor: 'Amarillo', label: 'Por Vencer',        desc: 'Próximos a vencer',               icono: 'fas fa-clock',                color: '#f39c12' },
+    { valor: 'Rojo',     label: 'Vencidos (Adeudos)',desc: 'Con adeudo pendiente',            icono: 'fas fa-triangle-exclamation', color: '#e74c3c' },
+    { valor: 'Azul',     label: 'Congelados',        desc: 'Suscripción pausada',             icono: 'fas fa-snowflake',            color: '#3498db' },
+    { valor: 'VIP',      label: 'Pase Libre',        desc: 'Coach / Staff con acceso VIP',    icono: 'fas fa-crown',                color: '#9b59b6' },
+    { valor: 'Gris',     label: 'Cancelados',        desc: 'Suscripción cancelada',           icono: 'fas fa-ban',                  color: '#95a5a6' },
+  ];
+
+  const OPCIONES_ORDEN_SEMAFORO = [
+    { valor: '',          label: 'Orden: Por Defecto', desc: 'Sin ordenar',                     icono: 'fas fa-arrow-down-short-wide', color: '#a8b2d1' },
+    { valor: 'dias_asc',  label: 'Días: Menor a Mayor',desc: 'Primero los más urgentes',        icono: 'fas fa-arrow-down-1-9',        color: '#e63946' },
+    { valor: 'dias_desc', label: 'Días: Mayor a Menor',desc: 'Primero los que tienen más días', icono: 'fas fa-arrow-down-9-1',        color: '#2ecc71' },
+  ];
+
   const semaforoFiltrado = semaforo.filter(s => {
     const term = busquedaSemaforo.toLowerCase();
     const nombreMatch = s.nombre?.toLowerCase().includes(term);
@@ -933,7 +950,7 @@ export default function GestionFinanzas() {
                     </div>
                     <div className="col-12 col-md-6 col-lg-4">
                       <div className="finanzas-card">
-                        <div className="finanzas-card-titulo"><i className="fas fa-users" style={{ color: 'var(--accent-cool)' }}></i> Salud de la Manada</div>
+                        <div className="finanzas-card-titulo"><i className="fas fa-users" style={{ color: 'var(--accent-cool)' }}></i> Salud de la Comunidad</div>
                         <div className="finanzas-salud-row"><span className="finanzas-salud-label" style={{ color: 'var(--success)' }}><i className="fas fa-check-circle"></i>Al Día</span><span className="finanzas-salud-cnt finanzas-salud-cnt--verde">{dashboardData.estadoAtletas.alDia} atletas</span></div>
                         <div className="finanzas-salud-row"><span className="finanzas-salud-label" style={{ color: 'var(--danger)' }}><i className="fas fa-times-circle"></i>Vencidos</span><span className="finanzas-salud-cnt finanzas-salud-cnt--rojo">{dashboardData.estadoAtletas.morosos} atletas</span></div>
                         <div className="finanzas-salud-row"><span className="finanzas-salud-label" style={{ color: 'var(--accent-cool)' }}><i className="fas fa-snowflake"></i>Congelados</span><span className="finanzas-salud-cnt finanzas-salud-cnt--azul">{dashboardData.estadoAtletas.congelados} atletas</span></div>
@@ -971,30 +988,20 @@ export default function GestionFinanzas() {
                       value={busquedaSemaforo}
                       onChange={(e) => setBusquedaSemaforo(e.target.value)}
                     />
-                    <select
-                      className="finanzas-input mb-0 py-1 px-2"
-                      style={{ width: 'auto', fontSize: '0.9rem' }}
-                      value={filtroEstado}
-                      onChange={(e) => setFiltroEstado(e.target.value)}
-                    >
-                      <option value="">Todos los Estados</option>
-                      <option value="Verde">Al Día</option>
-                      <option value="Amarillo">Por Vencer</option>
-                      <option value="Rojo">Vencidos (Adeudos)</option>
-                      <option value="Azul">Congelados</option>
-                      <option value="VIP">Pase Libre</option>
-                      <option value="Gris">Cancelados</option>
-                    </select>
-                    <select
-                      className="finanzas-input mb-0 py-1 px-2"
-                      style={{ width: 'auto', fontSize: '0.9rem' }}
-                      value={ordenSemaforo}
-                      onChange={(e) => setOrdenSemaforo(e.target.value)}
-                    >
-                      <option value="">Orden: Por Defecto</option>
-                      <option value="dias_asc">Días Restantes (Menor a Mayor)</option>
-                      <option value="dias_desc">Días Restantes (Mayor a Menor)</option>
-                    </select>
+                    <SemaforoFiltroPicker
+                      valor={filtroEstado}
+                      onCambiar={setFiltroEstado}
+                      opciones={OPCIONES_ESTADO_SEMAFORO}
+                      titulo="Filtrar por estado"
+                      iconoTitulo="fas fa-traffic-light"
+                    />
+                    <SemaforoFiltroPicker
+                      valor={ordenSemaforo}
+                      onCambiar={setOrdenSemaforo}
+                      opciones={OPCIONES_ORDEN_SEMAFORO}
+                      titulo="Ordenar atletas"
+                      iconoTitulo="fas fa-arrow-down-short-wide"
+                    />
                   </div>
                 </div>
                 {/* Vista móvil: tarjetas */}

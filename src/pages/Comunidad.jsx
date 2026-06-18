@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import WolfLanyard from '../components/ReactBits/WolfLanyard';
+import { formatNivelGamer } from '../components/NivelGamerPicker';
 import '../assets/css/Comunidad.css';
 
 const API_BASE = import.meta.env.VITE_API_URL;;
@@ -181,7 +182,7 @@ export default function Comunidad() {
       </nav>
 
       <section className="com-hero">
-        <h1 className="com-hero-title">LA MANADA</h1>
+        <h1 className="com-hero-title">LA COMUNIDAD</h1>
         <span className="com-hero-line"></span>
         <p className="com-hero-sub">Conoce a tus compañeros de box</p>
       </section>
@@ -241,7 +242,7 @@ export default function Comunidad() {
                   onClick={() => handleAbrirPerfil(atleta)}
                 >
                   <div className="com-card-strip">
-                    <span className="com-card-level">LVL {atleta.nivelGamer}</span>
+                    <span className="com-card-level">LVL {formatNivelGamer(atleta.nivelGamer)}</span>
                     {atleta.rachaActual >= 3 && (
                       <span className="com-card-fire" title={`Racha: ${atleta.rachaActual} días`}>
                         <i className="fas fa-fire"></i>
@@ -261,7 +262,6 @@ export default function Comunidad() {
                     </div>
 
                     <p className="com-card-name">{atleta.nombre}</p>
-                    {atleta.username && <p className="com-card-username">@{atleta.username}</p>}
                     {atleta.apodo && <p className="com-card-apodo">"{atleta.apodo}"</p>}
 
                     <span className={`com-card-role ${atleta.rol === 'Coach' ? 'com-card-role--coach' : 'com-card-role--atleta'}`}>

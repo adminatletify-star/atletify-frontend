@@ -902,7 +902,7 @@ export default function WolfPackPage() {
                 <div className="wp-historia-porque">
                   <p className="wp-historia-porque-q">¿Por qué el nombre?</p>
                   <p className="wp-historia-p">
-                    Porque desde el inicio fuimos, y seguimos siendo, una familia: una manada que se
+                    Porque desde el inicio fuimos, y seguimos siendo, una familia: una comunidad que se
                     apoyó mutuamente, que permaneció unida y de la cual muchos aún forman parte.
                   </p>
                 </div>
@@ -919,7 +919,7 @@ export default function WolfPackPage() {
 
                 <p className="wp-historia-p">
                   En estos 10 años hemos transformado la vida de muchísimas personas. Hemos
-                  celebrado bodas, nacimientos y acompañado cada logro de la manada.
+                  celebrado bodas, nacimientos y acompañado cada logro de la comunidad.
                 </p>
               </motion.div>
             </div>
@@ -961,7 +961,7 @@ export default function WolfPackPage() {
                   como también su aspecto físico. Las competencias son parte importante de esta
                   comunidad y siempre apoyamos el talento de alto rendimiento en disciplinas como
                   halterofilia, natación y atletismo. Cualquier persona puede entrenar con la
-                  manada sin importar edad ni condición física — nuestros entrenadores están 100%
+                  comunidad sin importar edad ni condición física — nuestros entrenadores están 100%
                   capacitados para brindar ayuda a cualquier nivel.
                 </p>
               </motion.div>
@@ -1234,7 +1234,7 @@ export default function WolfPackPage() {
               Eventos & <span>Actividades</span>
             </h2>
             <p className="wp-section-sub mt-3">
-              Más allá del entrenamiento — competencias, causas sociales y momentos que nos unen como manada.
+              Más allá del entrenamiento — competencias, causas sociales y momentos que nos unen como comunidad.
             </p>
           </motion.div>
 

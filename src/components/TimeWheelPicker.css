@@ -409,7 +409,8 @@
 .twp-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  /* Por encima de cualquier modal (gan-modal usa 10500): el picker de hora siempre va al frente. */
+  z-index: 11000;
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);

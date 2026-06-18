@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import './EstadoDelDiaPicker.css';
 
-const ESTADOS = [
+export const ESTADOS = [
   { valor: '😎 Chill',              emoji: '😎', nombre: 'Chill', desc: 'Tranquilo' },
   { valor: '🔥 Con todo el Hype',   emoji: '🔥', nombre: 'Hype', desc: 'Con todo' },
   { valor: '💀 Destruido',          emoji: '💀', nombre: 'Destruido', desc: 'Día difícil' },

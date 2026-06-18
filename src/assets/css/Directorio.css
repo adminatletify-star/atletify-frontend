@@ -1177,3 +1177,182 @@
 .directorio-modal--expediente {
   max-width: 680px;
 }
+
+/* ───────── Historial de cambios (control de versiones) ───────── */
+.exp-hist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-height: 340px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.exp-hist-item {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent, #f5a623);
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+}
+.exp-hist-item--creacion {
+  border-left-color: #2ecc71;
+}
+
+.exp-hist-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+.exp-hist-accion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent, #f5a623);
+}
+.exp-hist-item--creacion .exp-hist-accion { color: #2ecc71; }
+
+.exp-hist-fecha {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  color: var(--text-muted, #8a90a6);
+  white-space: nowrap;
+}
+.exp-hist-fecha i { font-size: 0.68rem; opacity: 0.7; }
+
+.exp-hist-actor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--secondary, #c4c9da);
+  margin-bottom: 0.5rem;
+}
+.exp-hist-actor i { color: var(--primary); font-size: 0.72rem; }
+.exp-hist-rol {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.28);
+  color: #f08090;
+}
+
+.exp-hist-cambios {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border-top: 1px dashed var(--border);
+  padding-top: 0.5rem;
+}
+.exp-hist-cambio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.6rem;
+}
+.exp-hist-campo {
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--secondary, #c4c9da);
+  flex-basis: 100%;
+}
+.exp-hist-valores {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+.exp-hist-antes {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-muted, #8a90a6);
+  text-decoration: line-through;
+  text-decoration-color: rgba(230, 57, 70, 0.6);
+  word-break: break-word;
+}
+.exp-hist-flecha { font-size: 0.62rem; color: var(--text-muted, #8a90a6); }
+.exp-hist-nuevo {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6ee09b;
+  word-break: break-word;
+}
+
+.exp-hist-cambios-vacio {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted, #8a90a6);
+  font-style: italic;
+}
+
+@media (max-width: 576px) {
+  .exp-hist-list { max-height: 300px; }
+  .exp-hist-item { padding: 0.6rem 0.7rem; }
+  .exp-hist-accion { font-size: 0.7rem; }
+  .exp-hist-fecha { font-size: 0.68rem; }
+  .exp-hist-actor { font-size: 0.74rem; }
+  .exp-hist-antes { font-size: 0.76rem; }
+  .exp-hist-nuevo { font-size: 0.78rem; }
+}
+
+/* ───────── Acción "Editar Usuario" en el modal del directorio ───────── */
+.directorio-modal-acciones {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.directorio-btn-editar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.78rem 1.4rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  cursor: pointer;
+  transition: box-shadow 0.18s, transform 0.12s, filter 0.18s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.directorio-btn-editar i { font-size: 0.85rem; }
+.directorio-btn-editar:active { transform: scale(0.97); }
+@media (hover: hover) {
+  .directorio-btn-editar:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 4px 16px var(--primary-glow, rgba(230, 57, 70, 0.45));
+  }
+}
+
+@media (max-width: 576px) {
+  .directorio-btn-editar { font-size: 0.84rem; padding: 0.72rem 1.1rem; }
+}

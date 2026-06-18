@@ -16,6 +16,7 @@ import {
 } from 'recharts';
 import '../assets/css/AdminBoxPanel.css';
 import AtletifyLoader from '../components/AtletifyLoader';
+import AnunciosEngine from '../components/AnunciosEngine';
 
 function getPayCycles(diaCorte) {
   const dCorte = parseInt(diaCorte) || 7;
@@ -51,6 +52,10 @@ export default function AdminBoxPanel() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [box, setBox] = useState(null);
+  const [notificaciones, setNotificaciones] = useState([]);
+  const [notiOpen, setNotiOpen] = useState(false);
+  const [campaniaAbrir, setCampaniaAbrir] = useState(null); // id de campaña a abrir desde la campanita
+  const [sugerenciasPendientes, setSugerenciasPendientes] = useState(0);
   const [atletas, setAtletas] = useState([]);
   const [equipo, setEquipo] = useState([]); // Coaches + AdminBox + Staff del box
   const [loading, setLoading] = useState(true);
@@ -123,6 +128,7 @@ export default function AdminBoxPanel() {
 
     setUser(u);
     setBox(b);
+    cargarNotificaciones(u.idUsuario || u.id || u.IdUsuario);
 
     const isAdminUser = u.rol === 'AdminBox' || u.rol === 'Developer' || u.Rol === 'AdminBox' || u.Rol === 'Developer';
     const isCoachUser = !isAdminUser && (u.rol === 'Coach' || u.Rol === 'Coach');
@@ -132,6 +138,8 @@ export default function AdminBoxPanel() {
         cargarDashboard(b.idBox);
         cargarAtletas(b.idBox);
         cargarValidacionesCount(b.idBox);
+        // Solo el AdminBox gestiona sugerencias del box → contador para la tarjeta del buzón
+        if (u.rol === 'AdminBox' || u.Rol === 'AdminBox') cargarSugerenciasPendientes();
       } else {
         setLoading(false);
       }
@@ -141,6 +149,80 @@ export default function AdminBoxPanel() {
       setLoading(false);
     }
   }, [navigate]);
+
+  // ── Campanita de notificaciones (reusa api/interacciones/notificaciones) ──
+  async function cargarNotificaciones(idUsuario) {
+    if (!idUsuario) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/interacciones/notificaciones/${idUsuario}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) setNotificaciones(await res.json());
+    } catch (err) {
+      console.error('Error al cargar notificaciones:', err);
+    }
+  }
+
+  async function marcarNotiLeida(idNoti) {
+    setNotificaciones(prev => prev.map(n => n.idNotificacion === idNoti ? { ...n, leida: true } : n));
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${import.meta.env.VITE_API_URL}/api/interacciones/notificaciones/${idNoti}/leer`, {
+        method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (err) { /* optimista, sin revertir */ }
+  }
+
+  async function marcarTodasNotisLeidas() {
+    if (!notificaciones.some(n => !n.leida)) return;
+    setNotificaciones(prev => prev.map(n => ({ ...n, leida: true })));
+    try {
+      const token = localStorage.getItem('token');
+      const uid = user?.idUsuario || user?.id || user?.IdUsuario;
+      await fetch(`${import.meta.env.VITE_API_URL}/api/interacciones/notificaciones/usuario/${uid}/leer-todas`, {
+        method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (err) { /* optimista */ }
+  }
+
+  function abrirNotificacion(n) {
+    if (!n.leida) marcarNotiLeida(n.idNotificacion);
+    setNotiOpen(false);
+    if (n.destino === 'buzon-admin') navigate('/buzon-sugerencias');
+    // Comprobante de aportación por revisar → panel de control de esa campaña.
+    else if (typeof n.destino === 'string' && n.destino.startsWith('control-campania:')) {
+      const idA = n.destino.split(':')[1];
+      if (idA) navigate(`/control-campania/${idA}`);
+    }
+    // Nueva campaña/anuncio (coach) → abrir su detalle en el banner de AnunciosEngine.
+    else if (typeof n.destino === 'string' && n.destino.startsWith('campania:')) {
+      const idA = parseInt(n.destino.split(':')[1]);
+      if (idA) setCampaniaAbrir(idA);
+    }
+  }
+
+  function toggleNotiPanel() {
+    const abrir = !notiOpen;
+    setNotiOpen(abrir);
+    if (abrir) marcarTodasNotisLeidas();
+  }
+
+  // Sugerencias "Admin" pendientes del box (el GET ya las acota al box del AdminBox por JWT)
+  async function cargarSugerenciasPendientes() {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/sugerencias`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSugerenciasPendientes(data.pendientes || 0);
+      }
+    } catch (err) {
+      console.error('Error al cargar sugerencias pendientes:', err);
+    }
+  }
 
   async function cargarDashboard(idBox) {
     setDashboardLoading(true);
@@ -387,6 +469,7 @@ export default function AdminBoxPanel() {
   };
 
   const isAdmin = user?.rol === 'AdminBox' || user?.rol === 'Developer';
+  const notisNoLeidas = notificaciones.filter(n => !n.leida).length;
   const isCoach = !isAdmin && (user?.rol === 'Coach' || user?.Rol === 'Coach');
   const atletasActivos = atletas.filter(a => a.activo);
   const atletasInactivos = atletas.filter(a => !a.activo);
@@ -500,10 +583,61 @@ export default function AdminBoxPanel() {
                   </p>
                 </div>
               </div>
-              <Link to="/perfil-admin" className="abp-config-btn mt-1">
-                <i className="fas fa-user-edit"></i>
-                <span className="d-none d-sm-inline">Mi Expediente</span>
-              </Link>
+              <div className="d-flex align-items-center gap-2 mt-1">
+                {/* CAMPANITA DE NOTIFICACIONES */}
+                <div className="abp-notif">
+                  <button
+                    type="button"
+                    className="abp-notif-btn"
+                    onClick={toggleNotiPanel}
+                    aria-label="Notificaciones"
+                  >
+                    <i className={`fas fa-bell ${notisNoLeidas > 0 ? 'fa-shake' : ''}`}></i>
+                    {notisNoLeidas > 0 && (
+                      <span className="abp-notif-badge">{notisNoLeidas > 9 ? '9+' : notisNoLeidas}</span>
+                    )}
+                  </button>
+                  {notiOpen && (
+                    <>
+                      <div className="abp-notif-backdrop" onClick={() => setNotiOpen(false)}></div>
+                      <div className="abp-notif-panel">
+                        <div className="abp-notif-head">
+                          <span><i className="fas fa-bell me-2"></i>Avisos</span>
+                          <button className="abp-notif-close" onClick={() => setNotiOpen(false)} aria-label="Cerrar">
+                            <i className="fas fa-times"></i>
+                          </button>
+                        </div>
+                        <div className="abp-notif-list">
+                          {notificaciones.length === 0 ? (
+                            <div className="abp-notif-empty">
+                              <i className="fas fa-inbox"></i>
+                              <p>Sin avisos por ahora</p>
+                            </div>
+                          ) : (
+                            notificaciones.map(n => (
+                              <button
+                                key={n.idNotificacion}
+                                className={`abp-notif-item ${!n.leida ? 'no-leida' : ''}`}
+                                onClick={() => abrirNotificacion(n)}
+                              >
+                                <span className="abp-notif-item-title">{n.titulo}</span>
+                                <span className="abp-notif-item-msg">{n.mensaje}</span>
+                                <span className="abp-notif-item-fecha">
+                                  {new Date(n.fechaCreacion).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <Link to="/perfil-admin" className="abp-config-btn">
+                  <i className="fas fa-user-edit"></i>
+                  <span className="d-none d-sm-inline">Mi Expediente</span>
+                </Link>
+              </div>
             </div>
 
             {/* QUICK STATS CARD ROW */}
@@ -583,6 +717,9 @@ export default function AdminBoxPanel() {
               </div>
             </div>
           </section>
+
+          {/* CAMPAÑAS Y ANUNCIOS DEL BOX (coaches y admins las ven y pueden aportar) */}
+          {box && user && <AnunciosEngine box={box} user={user} abrirCampania={campaniaAbrir} onConsumirAbrir={() => setCampaniaAbrir(null)} />}
 
           {/* TWO COLUMN GRID */}
           <div className="abp-dashboard-grid mt-2">
@@ -1368,7 +1505,7 @@ export default function AdminBoxPanel() {
                         <div className="abp-card-desc">Descarga respaldos en Excel o JSON</div>
                       </div>
                     </Link>
-                    <Link to="/buzon-sugerencias" className="abp-quick-card">
+                    <Link to="/buzon-sugerencias" className="abp-quick-card" style={{ position: 'relative' }}>
                       <div className="abp-card-icon-wrapper" style={{ '--icon-color': '#34495e' }}>
                         <i className="fas fa-envelope-open-text"></i>
                       </div>
@@ -1376,6 +1513,11 @@ export default function AdminBoxPanel() {
                         <div className="abp-card-title">Buzón de Sugerencias</div>
                         <div className="abp-card-desc">Buzón digital para comentarios de atletas</div>
                       </div>
+                      {sugerenciasPendientes > 0 && (
+                        <span className="abp-quick-badge" title={`${sugerenciasPendientes} sugerencia(s) pendiente(s)`}>
+                          {sugerenciasPendientes > 99 ? '99+' : sugerenciasPendientes}
+                        </span>
+                      )}
                     </Link>
                   </div>
                 </div>

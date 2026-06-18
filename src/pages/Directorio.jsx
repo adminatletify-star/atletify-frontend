@@ -633,6 +633,16 @@ export default function Directorio() {
                 </div>
               </div>
 
+              <div className="directorio-modal-acciones">
+                <button
+                  type="button"
+                  className="directorio-btn-editar"
+                  onClick={() => navigate(`/editar-usuario/${atletaSeleccionado.idUsuario || atletaSeleccionado.IdUsuario}`)}
+                >
+                  <i className="fas fa-user-pen"></i> Editar Usuario
+                </button>
+              </div>
+
             </div>
           </div>
         </div>,

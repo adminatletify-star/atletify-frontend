@@ -106,6 +106,7 @@ import PublicDropIn from './pages/PublicDropIn';
 import BuzonSugerencias from './pages/BuzonSugerencias';
 import GestionReglamento from './pages/GestionReglamento';
 import GestionAnuncios from './pages/GestionAnuncios';
+import ControlCampania from './pages/ControlCampania';
 import ValidacionTransferencias from './pages/ValidacionTransferencias';
 
 // === INTERCEPTOR GLOBAL DE FETCH ===
@@ -448,7 +449,8 @@ function App() {
               {/* --- ZONA DEVELOPER --- */}
               <Route path="/registro-manual" element={<RegistroManual />} />
               <Route path="/seleccion-plan-saas" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach']}><SeleccionPlanSaaS /></ProtectedRoute>} />
-              <Route path="/gestion-anuncios" element={<ProtectedRoute allowedRoles={['AdminBox']}><GestionAnuncios /></ProtectedRoute>} />
+              <Route path="/gestion-anuncios" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><GestionAnuncios /></ProtectedRoute>} />
+              <Route path="/control-campania/:idAnuncio" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><ControlCampania /></ProtectedRoute>} />
               <Route path="/calendario" element={<ProtectedRoute allowedRoles={['Developer']}><PreguntasRespuestasDev /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['Developer']}><Dashboard /></ProtectedRoute>} />
               <Route path="/dashboard/faq" element={<ProtectedRoute allowedRoles={['Developer']}><PreguntasRespuestasDev /></ProtectedRoute>} />

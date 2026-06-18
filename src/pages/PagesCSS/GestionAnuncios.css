@@ -1,105 +1,243 @@
-/* GESTIÓN DE ANUNCIOS Y CAMPAÑAS - SLEEK DARK THEME */
+/* ════════════════════════════════════════════════════════════
+   GESTIÓN DE ANUNCIOS Y CAMPAÑAS — Atletify Design System
+   Prefix: .gan-*  ·  ROJO = anuncios/acciones · DORADO = recaudación
+   ════════════════════════════════════════════════════════════ */
 
 .gan-container {
-  background-color: #050508;
-  color: #ffffff;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding-bottom: 4rem;
+  font-family: var(--font-body), 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Header styling */
-.gan-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  padding-bottom: 1.5rem;
+.gan-content {
+  /* el header sticky ya aporta separación superior */
 }
 
-.gan-title {
-  font-family: var(--font-heading), 'Barlow Condensed', sans-serif;
-  letter-spacing: 1.5px;
-  font-weight: 800;
-  text-shadow: 0 0 20px rgba(230, 57, 70, 0.2);
+/* Botón "Nueva Campaña" del header (ícono + label, solo ícono en móvil) */
+.gan-btn-nueva {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--primary);
+  border: none;
+  color: #fff;
+  font-family: var(--font-heading-alt), 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 0.6rem 1.1rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 0.2s ease, transform 0.12s ease, background 0.2s ease;
 }
-
-.gan-subtitle {
-  color: #a0aec0;
-  font-size: 0.95rem;
-}
+.gan-btn-nueva:active { transform: scale(0.97); }
 
 /* Card list styling */
 .gan-card {
-  background: linear-gradient(135deg, #12121a 0%, #0a0a0e 100%);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
   border-radius: 16px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease, box-shadow 0.25s ease;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   overflow: hidden;
 }
 
-.gan-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(230, 57, 70, 0.3);
-  box-shadow: 0 15px 40px rgba(230, 57, 70, 0.15);
-}
-
 .gan-card.campaign-active {
-  border-color: rgba(245, 166, 35, 0.15);
+  border-top-color: var(--accent);
 }
 
-.gan-card.campaign-active:hover {
-  border-color: rgba(245, 166, 35, 0.45);
-  box-shadow: 0 15px 40px rgba(245, 166, 35, 0.1);
+.gan-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-heading-alt), 'Barlow Condensed', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
 }
 
 .gan-badge-active {
   background: rgba(46, 204, 113, 0.1);
-  color: #2ecc71;
+  color: var(--success);
   border: 1px solid rgba(46, 204, 113, 0.25);
-  font-size: 0.75rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .gan-badge-inactive {
   background: rgba(255, 255, 255, 0.03);
-  color: #a0aec0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 0.75rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: var(--secondary);
+  border: 1px solid var(--border);
+}
+
+/* Botones de acción cuadrados (editar / eliminar) */
+.gan-icon-btn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 0.85rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, transform 0.12s ease;
+}
+.gan-icon-btn:active { transform: scale(0.93); }
+.gan-icon-btn--edit {
+  border: 1px solid rgba(245, 166, 35, 0.45);
+  color: var(--accent);
+}
+.gan-icon-btn--del {
+  border: 1px solid rgba(230, 57, 70, 0.45);
+  color: var(--primary);
 }
 
 .gan-card-body {
-  padding: 1.75rem;
+  padding: 1.5rem;
 }
 
 .gan-card-title {
-  font-family: var(--font-heading), 'Barlow Condensed', sans-serif;
-  font-size: 1.3rem;
+  font-family: var(--font-heading), 'Oswald', sans-serif;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  margin-bottom: 0.6rem;
 }
 
 .gan-card-text {
-  color: #cbd5e0;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  opacity: 0.85;
+  color: var(--secondary);
+  font-size: 0.88rem;
+  line-height: 1.55;
 }
 
 .gan-card-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--border);
   padding-top: 1rem;
-  margin-top: 1.5rem;
+  margin-top: 1.25rem;
 }
 
 .gan-date-info {
   display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.gan-date-info i { width: 1rem; text-align: center; }
+.gan-date-info span:first-child i { color: var(--accent); }
+.gan-date-info span:last-child i { color: var(--primary); }
+
+/* Recuadro de recaudación dentro de la card (dorado) */
+.gan-recaudado-box {
+  background: rgba(245, 166, 35, 0.05);
+  border: 1px solid rgba(245, 166, 35, 0.22);
+  border-radius: 12px;
+  padding: 0.9rem;
+  margin-top: 0.25rem;
+}
+.gan-recaudado-head {
+  display: flex;
   justify-content: space-between;
-  font-size: 0.8rem;
-  color: #718096;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+.gan-recaudado-lbl {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: var(--font-heading-alt), 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.gan-recaudado-monto {
+  font-family: var(--font-stats), 'Rajdhani', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.gan-recaudado-foot {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 0.4rem;
+}
+.gan-recaudado-meta {
+  font-weight: 700;
+  font-family: var(--font-stats), 'Rajdhani', sans-serif;
+  color: var(--secondary);
+}
+
+/* Barra de progreso (track + fill dorado→rojo) */
+.gan-progress {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.gan-progress-fill {
+  height: 100%;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--accent), var(--primary));
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Botón "Aportación Manual" (dorado, dashed) */
+.gan-btn-aportar {
+  width: 100%;
+  background: rgba(245, 166, 35, 0.08);
+  border: 1px dashed rgba(245, 166, 35, 0.5);
+  color: var(--accent);
+  border-radius: 10px;
+  padding: 0.55rem 0.75rem;
+  font-family: var(--font-heading-alt), 'Barlow Condensed', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, transform 0.12s ease;
+}
+.gan-btn-aportar:active { transform: scale(0.97); }
+
+/* Estado vacío */
+.gan-empty {
+  text-align: center;
+  padding: 3.5rem 1rem;
+}
+.gan-empty-icon {
+  font-size: 3.5rem;
+  color: var(--accent);
+  opacity: 0.35;
+  margin-bottom: 1rem;
+}
+.gan-empty-title {
+  font-family: var(--font-heading), 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  font-size: 1.15rem;
+  margin-bottom: 0.5rem;
+}
+.gan-empty-text {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  max-width: 28rem;
+  margin: 0 auto;
 }
 
 /* Modal Overlay & Container */
@@ -120,16 +258,23 @@
 }
 
 .gan-modal-card {
-  background: linear-gradient(135deg, #161622 0%, #0d0d12 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 24px !important;
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border) !important;
+  border-top: 3px solid var(--primary) !important;
+  border-radius: 20px !important;
   width: 100% !important;
   max-width: 700px !important;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(230, 57, 70, 0.08) !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 30px var(--primary-glow) !important;
   overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
   animation: ganModalIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+/* Variante dorada (wizard de aportación / donativos) */
+.gan-modal-card--gold {
+  border-top-color: var(--accent) !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 30px rgba(245, 166, 35, 0.18) !important;
 }
 
 @keyframes ganModalIn {
@@ -144,26 +289,30 @@
 }
 
 .gan-modal-header {
-  padding: 24px 32px !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  padding: 22px 28px !important;
+  border-bottom: 1px solid var(--border) !important;
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
   background: rgba(0, 0, 0, 0.2) !important;
 }
-
-.gan-modal-title {
-  font-family: var(--font-heading), 'Barlow Condensed', sans-serif !important;
-  font-size: 1.4rem !important;
-  font-weight: 800 !important;
-  letter-spacing: 1.5px !important;
-  color: #e63946 !important;
-  text-shadow: 0 0 15px rgba(230, 57, 70, 0.2) !important;
-  margin: 0 !important;
+.gan-modal-header--gold {
+  border-bottom-color: rgba(245, 166, 35, 0.15) !important;
 }
 
+.gan-modal-title {
+  font-family: var(--font-heading), 'Oswald', sans-serif !important;
+  font-size: 1.3rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1.2px !important;
+  color: var(--primary) !important;
+  margin: 0 !important;
+}
+.gan-modal-title--gold { color: var(--accent) !important; }
+
 .gan-modal-body {
-  padding: 32px !important;
+  padding: 28px !important;
   max-height: 75vh !important;
   overflow-y: auto !important;
 }
@@ -193,40 +342,42 @@
   align-items: center !important;
   gap: 8px !important;
   font-family: var(--font-heading-alt), 'Barlow Condensed', sans-serif !important;
-  font-size: 0.85rem !important;
+  font-size: 0.82rem !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
   letter-spacing: 1px !important;
-  color: #e2e8f0 !important;
+  color: var(--text-primary) !important;
   margin-bottom: 10px !important;
 }
 
 .gan-label i {
   font-size: 0.9rem !important;
+  color: var(--primary) !important;
 }
+.gan-label.text-warning i { color: var(--accent) !important; }
 
 .gan-input {
-  background-color: #09090d !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  color: #ffffff !important;
+  background-color: var(--bg-input) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
   border-radius: 12px !important;
-  padding: 14px 20px !important;
+  padding: 14px 18px !important;
   width: 100% !important;
   font-size: 0.95rem !important;
   line-height: 1.5 !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
   color-scheme: dark !important; /* Force native widgets to render in dark mode */
 }
 
 .gan-input:focus {
-  border-color: #e63946 !important;
-  box-shadow: 0 0 15px rgba(230, 57, 70, 0.3) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
   outline: none !important;
-  background-color: #111118 !important;
+  background-color: var(--bg-card) !important;
 }
 
 .gan-input::placeholder {
-  color: rgba(255, 255, 255, 0.25) !important;
+  color: var(--text-muted) !important;
 }
 
 /* Specific styling for the Stripe block */
@@ -289,12 +440,12 @@
 }
 
 .gan-switch-input:checked + .gan-switch-slider {
-  background-color: #e63946 !important;
-  box-shadow: 0 0 12px rgba(230, 57, 70, 0.3) !important;
+  background-color: var(--primary) !important;
+  box-shadow: 0 0 12px var(--primary-glow) !important;
 }
 
 .gan-switch-input:checked + .gan-switch-slider.slider-gold {
-  background-color: #f5a623 !important;
+  background-color: var(--accent) !important;
   box-shadow: 0 0 12px rgba(245, 166, 35, 0.3) !important;
 }
 
@@ -306,71 +457,65 @@
 .gan-btn-close {
   background: none !important;
   border: none !important;
-  color: rgba(255, 255, 255, 0.4) !important;
-  font-size: 1.5rem !important;
+  color: var(--text-muted) !important;
+  font-size: 1.4rem !important;
   cursor: pointer !important;
-  transition: all 0.2s ease !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
+  transition: color 0.2s ease, transform 0.12s ease !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
 }
 
-.gan-btn-close:hover {
-  color: #e63946 !important;
-  transform: scale(1.15) !important;
-}
+.gan-btn-close:active { transform: scale(0.9) !important; }
 
 /* Footer buttons styling */
 .gan-modal-footer {
   display: flex !important;
   justify-content: flex-end !important;
-  gap: 16px !important;
+  gap: 12px !important;
   margin-top: 2rem !important;
   padding-top: 1.5rem !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-top: 1px solid var(--border) !important;
 }
 
 .btn-gan-secondary {
   background: transparent !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  color: #ffffff !important;
-  border-radius: 50px !important;
-  padding: 12px 28px !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
+  border-radius: 10px !important;
+  padding: 12px 26px !important;
+  font-family: var(--font-heading-alt), 'Barlow Condensed', sans-serif !important;
   font-weight: 700 !important;
   font-size: 0.9rem !important;
+  text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
-  transition: all 0.2s ease !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s ease !important;
   cursor: pointer !important;
 }
-
-.btn-gan-secondary:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
-}
+.btn-gan-secondary:active { transform: scale(0.97) !important; }
 
 .btn-gan-primary {
-  background: #e63946 !important;
+  background: var(--primary) !important;
   border: none !important;
   color: #ffffff !important;
-  border-radius: 50px !important;
-  padding: 12px 36px !important;
+  border-radius: 10px !important;
+  padding: 12px 32px !important;
+  font-family: var(--font-heading-alt), 'Barlow Condensed', sans-serif !important;
   font-weight: 700 !important;
   font-size: 0.9rem !important;
+  text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
-  box-shadow: 0 4px 15px rgba(230, 57, 70, 0.3) !important;
-  transition: all 0.25s ease !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
+  transition: box-shadow 0.2s ease, transform 0.12s ease, background 0.2s ease !important;
   cursor: pointer !important;
 }
 
-.btn-gan-primary:hover {
-  background: #ff4d5a !important;
-  box-shadow: 0 6px 20px rgba(230, 57, 70, 0.5) !important;
-  transform: translateY(-2px) !important;
-}
-
-.btn-gan-primary:active {
-  transform: translateY(0) !important;
-}
+.btn-gan-primary:active { transform: scale(0.97) !important; }
 
 /* PREMIUM CUSTOM ATHLETE SELECTOR STYLES */
 .gan-search-wrapper {
@@ -383,7 +528,7 @@
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: #8a8e9a;
+  color: var(--text-muted);
   pointer-events: none;
   font-size: 0.9rem;
 }
@@ -391,19 +536,19 @@
 .gan-search-wrapper input {
   width: 100%;
   padding: 12px 16px 12px 42px !important;
-  background-color: #09090d !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background-color: var(--bg-input) !important;
+  border: 1px solid var(--border) !important;
   border-radius: 12px !important;
-  color: #ffffff !important;
+  color: var(--text-primary) !important;
   font-size: 0.95rem;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .gan-search-wrapper input:focus {
-  border-color: #f5a623 !important;
-  box-shadow: 0 0 15px rgba(245, 166, 35, 0.3) !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.2) !important;
   outline: none !important;
-  background-color: #111118 !important;
+  background-color: var(--bg-card) !important;
 }
 
 .gan-atletas-list {
@@ -444,21 +589,24 @@
   align-items: center;
   gap: 14px;
   padding: 12px 16px;
-  background: rgba(24, 24, 37, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 12px;
   width: 100%;
   text-align: left;
   cursor: pointer;
-  color: #fff;
+  color: var(--text-primary);
   height: auto;
   min-height: 68px;
   flex-shrink: 0;
   box-sizing: border-box;
-  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
   position: relative;
   overflow: hidden;
 }
+.gan-atleta-card:active { transform: scale(0.98); }
 
 .gan-atleta-card::before {
   content: '';
@@ -467,20 +615,14 @@
   top: 0;
   bottom: 0;
   width: 4px;
-  background: linear-gradient(180deg, #f5a623, #e63946);
+  background: linear-gradient(180deg, var(--accent), var(--primary));
   opacity: 0;
   transition: opacity 0.2s ease;
 }
 
-.gan-atleta-card:hover {
-  background: rgba(35, 35, 52, 0.85);
-  border-color: rgba(245, 166, 35, 0.3);
-  transform: translateX(2px);
-}
-
 .gan-atleta-card.selected {
   background: rgba(245, 166, 35, 0.12) !important;
-  border-color: #f5a623 !important;
+  border-color: var(--accent) !important;
   box-shadow: 0 0 15px rgba(245, 166, 35, 0.18);
 }
 
@@ -492,8 +634,8 @@
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2a2a35, #1c1c24);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-elevated));
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -520,7 +662,7 @@
 
 .gan-atleta-nombre {
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 0.95rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -529,28 +671,368 @@
 
 .gan-atleta-correo {
   font-size: 0.78rem;
-  color: #8a8e9a;
+  color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .gan-atleta-chevron {
-  color: #8a8e9a;
+  color: var(--text-muted);
   font-size: 0.85rem;
   opacity: 0.3;
   transition: all 0.18s;
   margin-left: auto;
 }
 
-.gan-atleta-card:hover .gan-atleta-chevron {
-  color: #f5a623;
+.gan-atleta-card.selected .gan-atleta-chevron {
+  color: var(--accent);
   opacity: 1;
-  transform: translateX(2px);
 }
 
-.gan-atleta-card.selected .gan-atleta-chevron {
-  color: #f5a623;
-  opacity: 1;
+/* ════════ AÑADIDOS: pickers fecha/hora, recaudación, secciones, métodos ════════ */
+
+.gan-loading-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+}
+
+/* Botón-input para la hora (abre TimeWheelPicker) y proxy del date picker */
+.gan-hora-btn,
+.gan-input-disabled {
+  display: flex !important;
+  align-items: center !important;
+  text-align: left !important;
+  cursor: pointer !important;
+}
+.gan-hora-btn:disabled,
+.gan-input-disabled {
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+}
+.gan-hora-btn i,
+.gan-input-disabled i { color: var(--accent); }
+
+/* El input del RedGrayDatePicker dentro del modal de campañas */
+.gan-picker-input {
+  background-color: var(--bg-input) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
+  border-radius: 12px !important;
+  padding: 14px 18px !important;
+  width: 100% !important;
+  font-size: 0.95rem !important;
+}
+
+.gan-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+.gan-hint-error { color: #ff6b75; }
+
+/* Bloque de recaudación (meta + leaderboard + stripe + cuentas) */
+.gan-donativos-card {
+  background: rgba(245, 166, 35, 0.04);
+  border: 1px solid rgba(245, 166, 35, 0.18);
+  border-top: 3px solid var(--accent);
+  border-radius: 16px;
+  padding: 22px;
+  margin: 1.5rem 0;
+}
+.gan-donativos-title {
+  font-family: var(--font-heading-alt), 'Barlow Condensed', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+/* Aviso cuando una opción no está disponible (Stripe/transferencias) */
+.gan-stripe-off {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.8rem;
+  color: var(--secondary);
+  line-height: 1.4;
+}
+.gan-stripe-off strong { color: var(--accent); }
+
+/* Badge de comprobantes pendientes en la card */
+.gan-pendientes-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease, background 0.2s ease;
+}
+.gan-pendientes-badge:active { transform: scale(0.96); }
+
+/* Botón "Panel de control" (secundario neutro) */
+.gan-btn-control {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--secondary);
+  border-radius: 10px;
+  padding: 0.55rem 0.75rem;
+  font-family: var(--font-heading-alt), 'Barlow Condensed', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
+}
+.gan-btn-control:active { transform: scale(0.97); }
+
+/* Secciones numeradas del registro manual */
+.gan-seccion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.gan-seccion-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  color: var(--accent);
+  font-weight: 800;
+  font-family: var(--font-stats), 'Rajdhani', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.gan-seccion-titulo {
+  font-family: var(--font-heading-alt), 'Barlow Condensed', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Monto grande con signo y moneda */
+.gan-monto-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.gan-monto-wrapper:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.2);
+}
+.gan-monto-signo,
+.gan-monto-moneda {
+  padding: 14px 16px;
+  font-weight: 800;
+  font-family: var(--font-stats), 'Rajdhani', sans-serif;
+  color: var(--accent);
+  background: rgba(245, 166, 35, 0.06);
+}
+.gan-monto-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--font-stats), 'Rajdhani', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 10px;
+  outline: none;
+}
+
+/* Chips de método de pago (sustituyen al select nativo) */
+.gan-metodos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.gan-metodo-chip {
+  flex: 1 1 0;
+  min-width: 120px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  color: var(--secondary);
+  border-radius: 12px;
+  padding: 14px 12px;
+  font-family: var(--font-heading-alt), 'Barlow Condensed', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+.gan-metodo-chip i { font-size: 1.1rem; }
+.gan-metodo-chip:active { transform: scale(0.96); }
+.gan-metodo-chip.activo {
+  background: rgba(245, 166, 35, 0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 14px rgba(245, 166, 35, 0.18);
+}
+
+/* Wizard de aportación manual (3 pasos) */
+.gan-wizard-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 1.25rem;
+}
+.gan-wizard-step {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+.gan-wizard-step.activo, .gan-wizard-step.hecho { opacity: 1; }
+.gan-wizard-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-family: var(--font-stats), 'Rajdhani', sans-serif;
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  color: var(--secondary);
+  flex-shrink: 0;
+}
+.gan-wizard-step.activo .gan-wizard-dot { background: var(--accent); border-color: var(--accent); color: #1a1a1a; }
+.gan-wizard-step.hecho .gan-wizard-dot { background: rgba(46, 204, 113, 0.18); border-color: var(--success); color: var(--success); }
+.gan-wizard-lbl {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-family: var(--font-heading-alt), 'Barlow Condensed', sans-serif;
+  color: var(--text-primary);
+}
+.gan-wizard-step:not(:last-child)::after {
+  content: '';
+  width: 18px;
+  height: 1px;
+  background: var(--border);
+  margin-left: 4px;
+}
+
+/* Atleta ya elegido (pasos 2 y 3) */
+.gan-atleta-elegido {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(245, 166, 35, 0.08);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  border-radius: 12px;
+}
+.gan-cambiar-btn {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid rgba(245, 166, 35, 0.4);
+  color: var(--accent);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, transform 0.12s ease;
+}
+.gan-cambiar-btn:active { transform: scale(0.95); }
+
+/* ── Hover SOLO con mouse ── */
+@media (hover: hover) {
+  .gan-btn-nueva:hover { box-shadow: 0 4px 16px var(--primary-glow); background: #ff4d5a; }
+  .gan-card:hover { transform: translateY(-4px); box-shadow: 0 15px 40px var(--primary-glow); }
+  .gan-card.campaign-active:hover { box-shadow: 0 15px 40px rgba(245, 166, 35, 0.18); }
+  .gan-icon-btn--edit:hover { background: rgba(245, 166, 35, 0.12); }
+  .gan-icon-btn--del:hover { background: rgba(230, 57, 70, 0.12); }
+  .gan-btn-aportar:hover { background: rgba(245, 166, 35, 0.16); }
+  .gan-btn-control:hover { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.18); }
+  .gan-btn-close:hover { color: var(--primary); transform: scale(1.15); }
+  .btn-gan-primary:hover { background: #ff4d5a; box-shadow: 0 4px 16px var(--primary-glow); }
+  .btn-gan-secondary:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.18); }
+  .gan-picker-input:hover { border-color: rgba(245, 166, 35, 0.35); }
+  .gan-atleta-card:hover { background: var(--bg-elevated); border-color: rgba(245, 166, 35, 0.3); }
+  .gan-atleta-card:hover .gan-atleta-chevron { color: var(--accent); opacity: 1; transform: translateX(2px); }
+  .gan-pendientes-badge:hover { background: rgba(245, 166, 35, 0.2); }
+  .gan-metodo-chip:hover { border-color: rgba(245, 166, 35, 0.4); }
+  .gan-cambiar-btn:hover { background: rgba(245, 166, 35, 0.12); }
+}
+
+/* ── Responsive: tablet ── */
+@media (max-width: 768px) {
+  .gan-card-body { padding: 1.35rem; }
+  .gan-card-title { font-size: 1.15rem; }
+  .gan-donativos-card { padding: 18px; }
+  .gan-monto-input { font-size: 1.45rem; }
+}
+
+/* ── Responsive: móvil ── */
+@media (max-width: 576px) {
+  .gan-btn-nueva { padding: 0.6rem 0.85rem; }
+  .gan-btn-nueva .prd-btn-label { display: none; }
+  .gan-card-body { padding: 1.15rem; }
+  .gan-card-title { font-size: 1.05rem; }
+  .gan-modal-title { font-size: 1.1rem !important; }
+  .gan-modal-header { padding: 18px 20px !important; }
+  .gan-modal-body { padding: 20px !important; }
+  .gan-donativos-card { padding: 14px; }
+  .gan-seccion-titulo { font-size: 0.88rem; }
+  .gan-metodo-chip { min-width: 100px; padding: 12px 8px; font-size: 0.8rem; }
+  .gan-monto-input { font-size: 1.3rem; }
+  .gan-empty-icon { font-size: 3rem; }
+  .gan-empty-title { font-size: 1.05rem; }
+  .btn-gan-primary, .btn-gan-secondary { padding: 11px 20px !important; }
+}
+
+/* ── Responsive: móvil pequeño ── */
+@media (max-width: 380px) {
+  .gan-card-title { font-size: 1rem; }
+  .gan-modal-title { font-size: 1rem !important; }
+  .gan-metodos { gap: 8px; }
+  .gan-metodo-chip { min-width: 0; flex-basis: 100%; flex-direction: row; justify-content: center; }
+  .gan-wizard-lbl { display: none; }
+  .gan-wizard-step:not(:last-child)::after { width: 24px; }
 }
 

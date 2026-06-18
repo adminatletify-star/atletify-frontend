@@ -103,7 +103,7 @@ const OPCIONES_RENOVACION = [
 const TABS = [
   { id: 'identidad', label: 'Identidad', icon: 'fas fa-id-card' },
   { id: 'contacto', label: 'Contacto y Ubicación', icon: 'fas fa-map-marker-alt' },
-  { id: 'politicas', label: 'Leyes de la Manada', icon: 'fas fa-balance-scale' },
+  { id: 'politicas', label: 'Leyes de la Comunidad', icon: 'fas fa-balance-scale' },
   { id: 'horarios', label: 'Horarios y Reservas', icon: 'fas fa-clock' },
   { id: 'finanzas', label: 'Configuración Financiera', icon: 'fas fa-cogs' },
 ];
@@ -626,7 +626,7 @@ export default function EditarBox() {
                     </div>
                     <div className="col-12 col-md-6">
                       <label className="eb-label">Slogan / Lema</label>
-                      <input type="text" name="slogan" className="eb-input" value={form.slogan} onChange={handleChange} placeholder="Ej. Entrena con la manada" />
+                      <input type="text" name="slogan" className="eb-input" value={form.slogan} onChange={handleChange} placeholder="Ej. Entrena con la comunidad" />
                     </div>
                     <div className="col-12">
                       <label className="eb-label">Descripción / Historia del Box</label>
@@ -722,7 +722,7 @@ export default function EditarBox() {
                 <div>
                   <div className="eb-section-title">
                     <i className="fas fa-balance-scale" />
-                    Leyes de la Manada (Políticas)
+                    Leyes de la Comunidad (Políticas)
                   </div>
                   <div className="eb-info-box mb-3">
                     <i className="fas fa-info-circle me-2" />
