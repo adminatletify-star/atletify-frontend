@@ -137,8 +137,8 @@ export default function TiendaBox() {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
-      const data = await res.json();
-      alert(res.ok ? data.mensaje : 'Error al enviar recibo.');
+      const data = await res.json().catch(() => ({}));
+      alert(data.mensaje || (res.ok ? 'Recibo enviado.' : 'No se pudo enviar el recibo.'));
     } catch {
       alert('Error de red');
     }

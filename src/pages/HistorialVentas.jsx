@@ -540,8 +540,13 @@ export default function HistorialVentas() {
   };
 
   const generarListaComprasPDF = () => {
-    // Incluir ventas Pagadas en espera y las ventas Fiadas (que se autorizaron en confianza)
-    const ventasPagadas = ventas.filter(v => v.estatus === 'Pagado (Pendiente Entrega)' || v.estatus === 'Fiado');
+    // Incluir pedidos PAGADOS pendientes de entrega y los FIADOS activos (autorizados en confianza).
+    // OJO: los fiados se guardan con estatus "Pendiente" + metodoPago "Fiado" (NUNCA estatus "Fiado"),
+    // por eso hay que filtrar por metodoPago, no por estatus (antes salían fuera de la lista).
+    const ventasPagadas = ventas.filter(v =>
+      v.estatus === 'Pagado (Pendiente Entrega)' ||
+      (v.metodoPago === 'Fiado' && v.estatus !== 'Completada' && v.estatus !== 'Cancelada')
+    );
     // Agrupar por producto + talla + personalización (nombre): así el admin sabe exacto
     // cuántas piezas de cada talla pedir y cuáles van personalizadas (a bordar/imprimir).
     const grupos = {};
@@ -1266,6 +1271,13 @@ export default function HistorialVentas() {
                                           <td className="hv-detalle-nombre">
                                             {d.producto?.nombre || `Producto #${d.idProducto}`}
                                             {d.producto?.esSobrePedido && <span className="badge bg-warning text-dark ms-2" style={{ fontSize: '0.6rem' }}>Pedido</span>}
+                                            {(d.tallaElegida || d.textoPersonalizacion) && (
+                                              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                                                {d.tallaElegida && <span>Talla {d.tallaElegida}</span>}
+                                                {d.tallaElegida && d.textoPersonalizacion && ' · '}
+                                                {d.textoPersonalizacion && <span style={{ color: 'var(--accent)' }}><i className="fas fa-pen-nib me-1"></i>&ldquo;{d.textoPersonalizacion}&rdquo;</span>}
+                                              </div>
+                                            )}
                                           </td>
                                           <td className="hv-detalle-precio text-end">${parseFloat(d.precioUnitario).toFixed(2)}</td>
                                           <td className="hv-detalle-cell text-center"><span className="hv-detalle-cant">{d.cantidad}</span></td>

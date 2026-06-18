@@ -942,3 +942,61 @@
 }
 
 @keyframes pdvSpin { to { transform: rotate(360deg); } }
+
+/* ── Sobre-pedido en el POS (talla + personalización) ── */
+.pdv-producto-stock--pedido { color: var(--accent); }
+
+.pdv-carrito-variant { color: var(--text-muted); font-weight: 600; }
+.pdv-carrito-pers {
+  margin: 0.1rem 0 0;
+  font-size: 0.72rem;
+  color: var(--accent);
+}
+
+.pdv-modal-precio {
+  font-family: var(--font-stats);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0 0 0.85rem;
+}
+.pdv-tallas-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.4rem;
+}
+.pdv-talla-chip {
+  min-width: 46px;
+  padding: 0.5rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-base);
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.pdv-talla-chip:hover { border-color: var(--primary); color: var(--text-primary); }
+.pdv-talla-chip--activa { background: var(--primary); border-color: var(--primary); color: #fff; }
+.pdv-modal-input {
+  width: 100%;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 0.6rem 0.8rem;
+  outline: none;
+  text-transform: uppercase;
+}
+.pdv-modal-input:focus { border-color: var(--primary); }
+.pdv-modal-hint {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin: 0.35rem 0 0;
+}

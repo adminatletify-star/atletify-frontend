@@ -20,6 +20,11 @@ export default function PuntoDeVenta() {
   const [metodoCobro, setMetodoCobro] = useState('Efectivo');
   const [config, setConfig] = useState(null); // config del box: métodos de pago + compra mínima tarjeta
 
+  // Modal de opciones (talla + personalización) para sobre-pedido
+  const [modalPedido, setModalPedido] = useState(null);
+  const [mpTalla, setMpTalla] = useState('');
+  const [mpTexto, setMpTexto] = useState('');
+
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));
     if (!b) { navigate('/admin-box-panel'); return; }
@@ -64,38 +69,72 @@ export default function PuntoDeVenta() {
 
   useEffect(() => { cargarProductos(); }, [cargarProductos]);
 
+  // Identidad de línea: mismo producto con distinta talla/nombre = líneas distintas.
+  const claveDe = (idProducto, talla, texto) => `${idProducto}|${talla || ''}|${(texto || '').trim().toUpperCase()}`;
+  const requiereOpciones = (p) => p.esSobrePedido && (((p.tallasDisponibles || '').trim()) || p.permitePersonalizacion);
+
+  function nuevaLinea(producto, cantidad, talla, texto, cargoPers) {
+    return {
+      claveLinea: claveDe(producto.idProducto, talla, texto),
+      producto,
+      cantidad,
+      tallaElegida: talla || null,
+      textoPersonalizacion: texto || null,
+      cargoPers: cargoPers || 0
+    };
+  }
+
   function agregarAlCarrito(producto) {
-    if (producto.stockActual <= 0) return;
+    if (!producto.esSobrePedido && producto.stockActual <= 0) return;
+    if (requiereOpciones(producto)) { abrirModalPedido(producto); return; }
+
+    const clave = claveDe(producto.idProducto, '', '');
     setCarrito(prev => {
-      const existe = prev.find(i => i.producto.idProducto === producto.idProducto);
+      const existe = prev.find(i => i.claveLinea === clave);
       if (existe) {
-        if (existe.cantidad >= producto.stockActual) return prev;
-        return prev.map(i =>
-          i.producto.idProducto === producto.idProducto
-            ? { ...i, cantidad: i.cantidad + 1 }
-            : i
-        );
+        if (!producto.esSobrePedido && existe.cantidad >= producto.stockActual) return prev;
+        return prev.map(i => i.claveLinea === clave ? { ...i, cantidad: i.cantidad + 1 } : i);
       }
-      return [...prev, { producto, cantidad: 1 }];
+      return [...prev, nuevaLinea(producto, 1, null, null, 0)];
     });
   }
 
-  function cambiarCantidad(idProducto, valor) {
+  function abrirModalPedido(p) { setModalPedido(p); setMpTalla(''); setMpTexto(''); }
+  function cerrarModalPedido() { setModalPedido(null); setMpTalla(''); setMpTexto(''); }
+
+  function confirmarLineaPedido() {
+    const p = modalPedido;
+    if (!p) return;
+    const tallas = (p.tallasDisponibles || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (tallas.length && !mpTalla) { alert('Elige una talla.'); return; }
+    let texto = mpTexto.trim();
+    if (texto.length > 12) { alert('El nombre admite máximo 12 caracteres.'); return; }
+    if (!p.permitePersonalizacion) texto = '';
+    const cargo = (p.permitePersonalizacion && texto) ? (p.costoPersonalizacion || 0) : 0;
+    const clave = claveDe(p.idProducto, mpTalla, texto);
+    setCarrito(prev => {
+      const existe = prev.find(i => i.claveLinea === clave);
+      if (existe) return prev.map(i => i.claveLinea === clave ? { ...i, cantidad: i.cantidad + 1 } : i);
+      return [...prev, nuevaLinea(p, 1, mpTalla || null, texto || null, cargo)];
+    });
+    cerrarModalPedido();
+  }
+
+  function cambiarCantidad(claveLinea, valor) {
     const num = parseInt(valor);
-    const item = carrito.find(i => i.producto.idProducto === idProducto);
+    const item = carrito.find(i => i.claveLinea === claveLinea);
     if (!item) return;
-    if (isNaN(num) || num < 1) { quitarDelCarrito(idProducto); return; }
-    if (num > item.producto.stockActual) return;
-    setCarrito(prev => prev.map(i =>
-      i.producto.idProducto === idProducto ? { ...i, cantidad: num } : i
-    ));
+    if (isNaN(num) || num < 1) { quitarDelCarrito(claveLinea); return; }
+    if (!item.producto.esSobrePedido && num > item.producto.stockActual) return;
+    setCarrito(prev => prev.map(i => i.claveLinea === claveLinea ? { ...i, cantidad: num } : i));
   }
 
-  function quitarDelCarrito(idProducto) {
-    setCarrito(prev => prev.filter(i => i.producto.idProducto !== idProducto));
+  function quitarDelCarrito(claveLinea) {
+    setCarrito(prev => prev.filter(i => i.claveLinea !== claveLinea));
   }
 
-  const totalVenta = carrito.reduce((acc, i) => acc + i.producto.precioVenta * i.cantidad, 0);
+  const precioLinea = (it) => it.producto.precioVenta + (it.cargoPers || 0);
+  const totalVenta = carrito.reduce((acc, i) => acc + precioLinea(i) * i.cantidad, 0);
 
   // Métodos de pago según la config del box (editar-box).
   //  - visible: el método está ACTIVO en la config → si no, NO se muestra.
@@ -122,7 +161,7 @@ export default function PuntoDeVenta() {
       const payload = {
         idBox: box.idBox,
         apartado: apartadoActual,
-        detalles: carrito.map(i => ({ idProducto: i.producto.idProducto, cantidad: i.cantidad }))
+        detalles: carrito.map(i => ({ idProducto: i.producto.idProducto, cantidad: i.cantidad, tallaElegida: i.tallaElegida || null, textoPersonalizacion: i.textoPersonalizacion || null }))
       };
 
       if (esFiado && idUsuario) {
@@ -236,26 +275,32 @@ export default function PuntoDeVenta() {
                 <>
                   <div className="pdv-carrito-lista">
                     {carrito.map(item => (
-                      <div key={item.producto.idProducto} className="pdv-carrito-item">
+                      <div key={item.claveLinea} className="pdv-carrito-item">
 
                         <div className="pdv-carrito-item-info">
-                          <p className="pdv-carrito-item-nombre">{item.producto.nombre}</p>
+                          <p className="pdv-carrito-item-nombre">
+                            {item.producto.nombre}
+                            {item.tallaElegida && <span className="pdv-carrito-variant"> · {item.tallaElegida}</span>}
+                          </p>
+                          {item.textoPersonalizacion && (
+                            <p className="pdv-carrito-pers"><i className="fas fa-pen-nib"></i> &ldquo;{item.textoPersonalizacion}&rdquo;{item.cargoPers > 0 ? ` +$${item.cargoPers.toFixed(2)}` : ''}</p>
+                          )}
                           <p className="pdv-carrito-item-pu">
-                            ${parseFloat(item.producto.precioVenta).toFixed(2)} c/u
+                            ${precioLinea(item).toFixed(2)} c/u
                           </p>
                         </div>
 
                         <div className="pdv-qty-ctrl">
                           <button
                             className="pdv-qty-btn"
-                            onClick={() => cambiarCantidad(item.producto.idProducto, item.cantidad - 1)}
+                            onClick={() => cambiarCantidad(item.claveLinea, item.cantidad - 1)}
                           >
                             <i className="fas fa-minus"></i>
                           </button>
                           <span className="pdv-qty-num">{item.cantidad}</span>
                           <button
                             className="pdv-qty-btn"
-                            onClick={() => cambiarCantidad(item.producto.idProducto, item.cantidad + 1)}
+                            onClick={() => cambiarCantidad(item.claveLinea, item.cantidad + 1)}
                           >
                             <i className="fas fa-plus"></i>
                           </button>
@@ -263,11 +308,11 @@ export default function PuntoDeVenta() {
 
                         <div className="pdv-carrito-item-right">
                           <p className="pdv-carrito-item-subtotal">
-                            ${(item.producto.precioVenta * item.cantidad).toFixed(2)}
+                            ${(precioLinea(item) * item.cantidad).toFixed(2)}
                           </p>
                           <button
                             className="pdv-quitar-btn"
-                            onClick={() => quitarDelCarrito(item.producto.idProducto)}
+                            onClick={() => quitarDelCarrito(item.claveLinea)}
                             title="Quitar del carrito"
                           >
                             <i className="fas fa-trash-alt"></i>
@@ -347,8 +392,9 @@ export default function PuntoDeVenta() {
             ) : (
               <div className="row g-2 g-md-3">
                 {productos.map(p => {
-                  const sinStock = p.stockActual <= 0;
-                  const enCarrito = carrito.find(i => i.producto.idProducto === p.idProducto);
+                  const sinStock = !p.esSobrePedido && p.stockActual <= 0;
+                  const cantEnCarrito = carrito.filter(i => i.producto.idProducto === p.idProducto).reduce((a, i) => a + i.cantidad, 0);
+                  const enCarrito = cantEnCarrito > 0;
                   const tieneImagen = p.fotoUrl && p.fotoUrl.trim() !== '';
                   return (
                     <div key={p.idProducto} className="col-6 col-md-4 col-xl-3">
@@ -358,7 +404,7 @@ export default function PuntoDeVenta() {
                       >
                         {enCarrito && (
                           <span className="pdv-en-carrito-badge">
-                            {enCarrito.cantidad}
+                            {cantEnCarrito}
                           </span>
                         )}
 
@@ -384,8 +430,8 @@ export default function PuntoDeVenta() {
                         </div>
 
                         <div className="pdv-card-foot">
-                          <span className={`pdv-producto-stock ${sinStock ? 'pdv-producto-stock--out' : 'pdv-producto-stock--ok'}`}>
-                            {sinStock ? 'Sin stock' : `${p.stockActual} uds`}
+                          <span className={`pdv-producto-stock ${p.esSobrePedido ? 'pdv-producto-stock--pedido' : (sinStock ? 'pdv-producto-stock--out' : 'pdv-producto-stock--ok')}`}>
+                            {p.esSobrePedido ? 'Sobre pedido' : (sinStock ? 'Sin stock' : `${p.stockActual} uds`)}
                           </span>
                           {!sinStock && (
                             <span className="pdv-add-hint">
@@ -456,11 +502,15 @@ export default function PuntoDeVenta() {
                 </p>
                 <div className="pdv-cobro-items">
                   {carrito.map(item => (
-                    <div key={item.producto.idProducto} className="pdv-cobro-item">
-                      <p className="pdv-cobro-item-nombre">{item.producto.nombre}</p>
+                    <div key={item.claveLinea} className="pdv-cobro-item">
+                      <p className="pdv-cobro-item-nombre">
+                        {item.producto.nombre}
+                        {item.tallaElegida ? ` · ${item.tallaElegida}` : ''}
+                        {item.textoPersonalizacion ? ` · "${item.textoPersonalizacion}"` : ''}
+                      </p>
                       <span className="pdv-cobro-item-qty">x{item.cantidad}</span>
                       <p className="pdv-cobro-item-precio">
-                        ${(item.producto.precioVenta * item.cantidad).toFixed(2)}
+                        ${(precioLinea(item) * item.cantidad).toFixed(2)}
                       </p>
                     </div>
                   ))}
@@ -523,6 +573,55 @@ export default function PuntoDeVenta() {
                   : <><i className="fas fa-check"></i> Cobrar</>
                 }
               </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Modal de opciones para sobre-pedido (talla + personalización) */}
+      {modalPedido && (
+        <div className="pdv-cobro-overlay" onClick={cerrarModalPedido}>
+          <div className="pdv-cobro-panel" onClick={e => e.stopPropagation()}>
+
+            <div className="pdv-cobro-header">
+              <span className="pdv-cobro-header-icon"><i className="fas fa-store"></i></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p className="pdv-cobro-title">{modalPedido.nombre}</p>
+                <p className="pdv-cobro-subtitle">Sobre pedido · elige las opciones</p>
+              </div>
+              <button className="pdv-cobro-close" onClick={cerrarModalPedido}><i className="fas fa-times"></i></button>
+            </div>
+
+            <div className="pdv-cobro-body">
+              <p className="pdv-modal-precio">${modalPedido.precioVenta.toFixed(2)}</p>
+
+              {(modalPedido.tallasDisponibles || '').trim() && (
+                <div>
+                  <p className="pdv-cobro-section-label"><i className="fas fa-tshirt" style={{ marginRight: '0.4rem' }}></i>Talla *</p>
+                  <div className="pdv-tallas-grid">
+                    {modalPedido.tallasDisponibles.split(',').map(s => s.trim()).filter(Boolean).map(t => (
+                      <button type="button" key={t} className={`pdv-talla-chip ${mpTalla === t ? 'pdv-talla-chip--activa' : ''}`} onClick={() => setMpTalla(t)}>{t}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {modalPedido.permitePersonalizacion && (
+                <div>
+                  <p className="pdv-cobro-section-label">
+                    <i className="fas fa-pen-nib" style={{ marginRight: '0.4rem' }}></i>
+                    ¿Nombre? <span style={{ color: 'var(--accent)' }}>+${(modalPedido.costoPersonalizacion || 0).toFixed(2)}</span>
+                  </p>
+                  <input type="text" className="pdv-modal-input" maxLength={12} value={mpTexto} onChange={e => setMpTexto(e.target.value)} placeholder="Hasta 12 letras (opcional)" />
+                  <p className="pdv-modal-hint">{12 - mpTexto.length} caracteres restantes</p>
+                </div>
+              )}
+            </div>
+
+            <div className="pdv-cobro-footer">
+              <button className="pdv-cobro-btn pdv-cobro-btn--cancel" onClick={cerrarModalPedido}><i className="fas fa-times"></i> Cancelar</button>
+              <button className="pdv-cobro-btn pdv-cobro-btn--confirm" onClick={confirmarLineaPedido}><i className="fas fa-cart-plus"></i> Agregar</button>
             </div>
 
           </div>

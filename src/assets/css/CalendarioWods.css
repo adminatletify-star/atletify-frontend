@@ -369,6 +369,72 @@
   color: var(--accent);
 }
 
+/* === AUTOR DEL WOD (píldora de control interno) === */
+.cw-wod-author {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+}
+
+.cw-author-eyebrow {
+  font-family: var(--font-heading-alt);
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.cw-author-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  max-width: 100%;
+  font-family: var(--font-heading-alt);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 0.12rem 0.42rem;
+  border-radius: 5px;
+  line-height: 1.35;
+}
+
+.cw-author-chip i {
+  font-size: 0.92em;
+  flex-shrink: 0;
+}
+
+.cw-author-chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-author-chip--coach {
+  background: rgba(79, 195, 247, 0.13);
+  border: 1px solid rgba(79, 195, 247, 0.38);
+  color: var(--accent-cool);
+}
+.cw-author-chip--admin {
+  background: rgba(245, 166, 35, 0.13);
+  border: 1px solid rgba(245, 166, 35, 0.38);
+  color: var(--accent);
+}
+.cw-author-chip--dev {
+  background: rgba(145, 83, 198, 0.16);
+  border: 1px solid rgba(145, 83, 198, 0.42);
+  color: #b07fe0;
+}
+.cw-author-chip--otro {
+  background: rgba(168, 178, 209, 0.1);
+  border: 1px solid rgba(168, 178, 209, 0.25);
+  color: var(--secondary);
+}
+
 /* === BOTÓN MODO PIZARRA (dentro de la card) === */
 .cw-pizarra-quick-btn {
   width: 100%;
@@ -556,6 +622,15 @@
   .cw-day-col {
     min-height: 260px;
   }
+  .cw-author-chip { font-size: 0.55rem; padding: 0.1rem 0.38rem; }
+  .cw-author-eyebrow { font-size: 0.5rem; }
+}
+
+@media (max-width: 380px) {
+  /* En móvil pequeño la columna es muy angosta: ocultamos el rótulo "Autor"
+     (el ícono + la píldora ya comunican la autoría; el tooltip lo aclara). */
+  .cw-author-eyebrow { display: none; }
+  .cw-author-chip { font-size: 0.52rem; }
 }
 
 @media (min-width: 576px) and (max-width: 991px) {

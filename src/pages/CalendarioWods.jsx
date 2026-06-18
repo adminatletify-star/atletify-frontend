@@ -13,6 +13,27 @@ const API_BASE = import.meta.env.VITE_API_URL;;
 const fechaLocalStr = (d) =>
   d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 
+// --- AUTOR DEL WOD (píldora de control interno) ---
+// Mapea el rol del backend a una etiqueta corta + clase de color (reusa la
+// convención de chips de rol: Coach=azul, Admin=ámbar, Developer=violeta).
+const ROL_AUTOR = {
+  Coach:     { clase: 'coach', etiqueta: 'Coach' },
+  AdminBox:  { clase: 'admin', etiqueta: 'Admin' },
+  Developer: { clase: 'dev',   etiqueta: 'Dev' },
+};
+const autorMeta = (rol) => ROL_AUTOR[rol] || { clase: 'otro', etiqueta: rol || 'Staff' };
+
+// Nombre corto a mostrar: primer nombre; si falta, username; si falta, el id.
+const autorNombre = (autor) => {
+  const nombre = (autor?.nombre || '').trim();
+  if (nombre) return nombre;
+  if (autor?.username) return autor.username;
+  return `Usuario #${autor?.idUsuario ?? '?'}`;
+};
+
+// Texto visible de la píldora, ej. "Coach Liz" / "Admin Juan".
+const autorTexto = (autor) => `${autorMeta(autor?.rol).etiqueta} ${autorNombre(autor)}`.trim();
+
 export default function CalendarioWods() {
   const navigate = useNavigate();
   const [box, setBox] = useState(null);
@@ -447,6 +468,20 @@ export default function CalendarioWods() {
                                   );
                                 })()}
                               </div>
+
+                              {/* AUTOR DE CREACIÓN (control interno) */}
+                              {wod.autor && (
+                                <div
+                                  className="cw-wod-author"
+                                  title={`Autor del WOD: ${autorTexto(wod.autor)}${wod.autor.username ? ` (@${wod.autor.username})` : ''}`}
+                                >
+                                  <span className="cw-author-eyebrow">Autor</span>
+                                  <span className={`cw-author-chip cw-author-chip--${autorMeta(wod.autor.rol).clase}`}>
+                                    <i className="fas fa-feather-pointed"></i>
+                                    <span className="cw-author-chip-text">{autorTexto(wod.autor)}</span>
+                                  </span>
+                                </div>
+                              )}
 
                               {/* BOTÓN RÁPIDO TV */}
                               <button
