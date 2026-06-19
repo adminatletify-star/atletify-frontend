@@ -34,6 +34,35 @@ const parseNiveles = (str) => {
 // Ordena un array de niveles según la jerarquía (para mostrar y guardar consistente).
 const ordenarNiveles = (arr) => VALORES_NIVEL.filter(v => arr.includes(v));
 
+// ── Cambio rápido de coach (sustitución por día) ──
+// Abreviatura del día como se guarda en Clase.DiasRecurrentes ("L,M,X,J,V").
+const ABREV_DIA = ['D', 'L', 'M', 'X', 'J', 'V', 'S']; // getDay(): 0 = Domingo
+const diaAbrevDe = (date) => ABREV_DIA[date.getDay()];
+const claseCorreEseDia = (diasRecurrentes, date) =>
+  (diasRecurrentes || '').split(',').map(s => s.trim()).includes(diaAbrevDe(date));
+const ymdLocal = (date) =>
+  date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+const parseYmd = (s) => { const [y, m, d] = (s || '').split('-').map(Number); return new Date(y, (m || 1) - 1, d || 1); };
+const fmtFechaCorta = (ymd) => { const [y, m, d] = (ymd || '').split('-'); return `${d}/${m}/${y}`; };
+const DIAS_LEGIBLES = { L: 'Lun', M: 'Mar', X: 'Mié', J: 'Jue', V: 'Vie', S: 'Sáb', D: 'Dom' };
+const diasLegibles = (dias) => (dias || '').split(',').map(s => s.trim()).filter(d => DIAS_LEGIBLES[d]).map(d => DIAS_LEGIBLES[d]).join(', ');
+const DIAS_NOMBRE = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+// Próximo día (incluido hoy) en que la clase se imparte; si no corre en 14 días, hoy.
+const proximoDiaQueCorre = (diasRecurrentes) => {
+  const d = new Date(); d.setHours(0, 0, 0, 0);
+  for (let i = 0; i < 14; i++) { if (claseCorreEseDia(diasRecurrentes, d)) return new Date(d); d.setDate(d.getDate() + 1); }
+  return new Date();
+};
+const normalizarTxt = (s) => (s || '').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+// Filtro por franja horaria (según la hora de inicio de la clase).
+const HORARIOS_FILTRO = [
+  { id: 'todos', label: 'Todo el día', icon: 'fa-clock' },
+  { id: 'manana', label: 'Mañana · antes de 12:00', icon: 'fa-sun' },
+  { id: 'tarde', label: 'Tarde · 12:00 a 18:00', icon: 'fa-cloud-sun' },
+  { id: 'noche', label: 'Noche · 18:00 en adelante', icon: 'fa-moon' },
+];
+
 export default function GestionClases() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -48,6 +77,28 @@ export default function GestionClases() {
   const [mostrarPickerFin, setMostrarPickerFin] = useState(false);
   const [mostrarModalNivel, setMostrarModalNivel] = useState(false);
   const [mostrarModalCoach, setMostrarModalCoach] = useState(false);
+
+  // ── Cambio rápido de coach (sustitución por día) ──
+  const [sustituciones, setSustituciones] = useState([]); // sustituciones programadas del box
+  const [subPagina, setSubPagina] = useState(1);
+  const [swapClase, setSwapClase] = useState(null);       // clase en proceso de sustitución (abre el modal)
+  const [swapModo, setSwapModo] = useState('dia');        // 'dia' | 'rango'
+  const [swapInicio, setSwapInicio] = useState('');
+  const [swapFin, setSwapFin] = useState('');
+  const [swapMotivo, setSwapMotivo] = useState('');
+  const [swapRelevoId, setSwapRelevoId] = useState(null);
+  const [swapGuardando, setSwapGuardando] = useState(false);
+  const [relevos, setRelevos] = useState([]);
+  const [relevosLoading, setRelevosLoading] = useState(false);
+  const [relevoBuscar, setRelevoBuscar] = useState('');
+
+  // ── Filtros de la lista de clases ──
+  const [buscarClase, setBuscarClase] = useState('');
+  const [coachFiltro, setCoachFiltro] = useState('todos');     // 'todos' | 'sin' | <idCoach>
+  const [horarioFiltro, setHorarioFiltro] = useState('todos'); // id de HORARIOS_FILTRO
+  const [modalFiltroCoach, setModalFiltroCoach] = useState(false);
+  const [modalFiltroHorario, setModalFiltroHorario] = useState(false);
+  const [pagClase, setPagClase] = useState(1);
 
   const [diasSeleccionados, setDiasSeleccionados] = useState(['L', 'M', 'X', 'J', 'V']);
   const [form, setForm] = useState({
@@ -95,6 +146,9 @@ export default function GestionClases() {
     if (b) cargarDatos(b.idBox);
   }, [navigate]);
 
+  // Resetear a la página 1 cuando cambia cualquier filtro o buscador.
+  useEffect(() => { setPagClase(1); }, [buscarClase, coachFiltro, horarioFiltro]);
+
   async function cargarDatos(idBox) {
     setLoading(true);
     try {
@@ -109,6 +163,7 @@ export default function GestionClases() {
 
       if (resClases.ok) setClases(await resClases.json());
       if (resCoaches.ok) setCoaches(await resCoaches.json());
+      cargarSustituciones(idBox);
 
       if (resConfig.ok) {
         const cfg = await resConfig.json();
@@ -217,6 +272,71 @@ export default function GestionClases() {
     } catch (error) { console.error(error); }
   };
 
+  // ── Cambio rápido de coach ──
+  async function cargarSustituciones(idBox) {
+    try {
+      const res = await fetch(`${API_BASE}/clases/box/${idBox}/sustituciones`);
+      if (res.ok) { setSustituciones(await res.json()); setSubPagina(1); }
+    } catch (e) { console.error("Error cargando sustituciones", e); }
+  }
+
+  const cargarRelevos = async (idClase, ymd) => {
+    setRelevosLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/clases/${idClase}/relevos-disponibles/${ymd}`);
+      if (res.ok) { const data = await res.json(); setRelevos(data.relevos || []); }
+      else setRelevos([]);
+    } catch { setRelevos([]); }
+    finally { setRelevosLoading(false); }
+  };
+
+  const abrirSwap = (clase) => {
+    const ymd = ymdLocal(proximoDiaQueCorre(clase.diasRecurrentes));
+    setSwapClase(clase);
+    setSwapModo('dia');
+    setSwapInicio(ymd);
+    setSwapFin(ymd);
+    setSwapMotivo('');
+    setSwapRelevoId(null);
+    setRelevoBuscar('');
+    setRelevos([]);
+    cargarRelevos(clase.idClase, ymd);
+  };
+
+  const cerrarSwap = () => { setSwapClase(null); setRelevos([]); };
+
+  const confirmarSwap = async () => {
+    if (!swapClase || !swapRelevoId) { alert("Selecciona un coach de relevo."); return; }
+    if (swapModo === 'dia' && !claseCorreEseDia(swapClase.diasRecurrentes, parseYmd(swapInicio))) {
+      alert("La clase no se imparte ese día. Elige un día en que la clase corra."); return;
+    }
+    setSwapGuardando(true);
+    const payload = {
+      idCoachSustituto: swapRelevoId,
+      fechaInicio: swapInicio,
+      fechaFin: swapModo === 'rango' ? swapFin : null,
+      motivo: swapMotivo.trim() || null
+    };
+    try {
+      const res = await fetch(`${API_BASE}/clases/${swapClase.idClase}/sustitucion`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok) { alert(data?.mensaje || "Sustitución registrada."); cerrarSwap(); cargarSustituciones(box.idBox); }
+      else alert(data?.mensaje || "No se pudo registrar la sustitución.");
+    } catch { alert("Error de conexión."); }
+    finally { setSwapGuardando(false); }
+  };
+
+  const quitarSustitucion = async (idClase, ymd) => {
+    if (!await window.wpConfirm("¿Quitar la sustitución? La clase regresa a su coach titular.")) return;
+    try {
+      const res = await fetch(`${API_BASE}/clases/${idClase}/sustitucion/${ymd}`, { method: 'DELETE' });
+      if (res.ok) cargarSustituciones(box.idBox);
+      else { const d = await res.json().catch(() => null); alert(d?.mensaje || "No se pudo quitar."); }
+    } catch { alert("Error de conexión."); }
+  };
+
   // Resumen para el botón que abre el modal de niveles (multi-selección).
   const nivelesOrdenados = ordenarNiveles(form.niveles);
   const nivelResumen = nivelesOrdenados.length === 0
@@ -228,6 +348,37 @@ export default function GestionClases() {
         color: (NIVELES.find(n => n.value === nivelesOrdenados[0]) || NIVELES[0]).color
       };
   const coachActual = coaches.find(c => c.idUsuario.toString() === form.idCoach) || null;
+
+  // ── Aplicar filtros + paginación a la lista de clases ──
+  const clasesFiltradas = clases.filter(c => {
+    const tokens = normalizarTxt(buscarClase).split(/\s+/).filter(Boolean);
+    if (tokens.length) {
+      const hay = normalizarTxt(`${c.nombre} ${c.descripcion || ''} ${c.nombreCoach || ''}`);
+      if (!tokens.every(t => hay.includes(t))) return false;
+    }
+    if (coachFiltro === 'sin') { if (c.idCoach) return false; }
+    else if (coachFiltro !== 'todos') { if (String(c.idCoach) !== String(coachFiltro)) return false; }
+    if (horarioFiltro !== 'todos') {
+      const h = parseInt((c.horarioInicio || '').substring(0, 2), 10);
+      if (Number.isNaN(h)) return false;
+      if (horarioFiltro === 'manana' && h >= 12) return false;
+      if (horarioFiltro === 'tarde' && (h < 12 || h >= 18)) return false;
+      if (horarioFiltro === 'noche' && h < 18) return false;
+    }
+    return true;
+  });
+
+  const PAGE_SIZE_CLASES = 10;
+  const totalPagClase = Math.max(1, Math.ceil(clasesFiltradas.length / PAGE_SIZE_CLASES));
+  const pagClaseActual = Math.min(pagClase, totalPagClase);
+  const clasesPagina = clasesFiltradas.slice((pagClaseActual - 1) * PAGE_SIZE_CLASES, pagClaseActual * PAGE_SIZE_CLASES);
+
+  const coachFiltroLabel = coachFiltro === 'todos' ? 'Todos los coaches'
+    : coachFiltro === 'sin' ? 'Sin coach asignado'
+    : (coaches.find(c => String(c.idUsuario) === String(coachFiltro))?.nombre ?? 'Coach');
+  const horarioFiltroLabel = (HORARIOS_FILTRO.find(h => h.id === horarioFiltro) || HORARIOS_FILTRO[0]).label;
+  const filtrosActivos = !!buscarClase || coachFiltro !== 'todos' || horarioFiltro !== 'todos';
+  const limpiarFiltros = () => { setBuscarClase(''); setCoachFiltro('todos'); setHorarioFiltro('todos'); };
 
   if (loading) return (
     <div className="gc-loading">
@@ -543,14 +694,125 @@ export default function GestionClases() {
               Horario activo — {box?.nombre}
             </p>
 
+            {/* ── PANEL: SUSTITUCIONES PROGRAMADAS ── */}
+            {sustituciones.length > 0 && (
+              <div className="gc-subs-panel">
+                <div className="gc-subs-panel__head">
+                  <p className="gc-subs-panel__title">
+                    <i className="fas fa-right-left"></i> Sustituciones programadas
+                    <span className="gc-subs-panel__count">{sustituciones.length}</span>
+                  </p>
+                  <p className="gc-subs-panel__sub">
+                    Ese día el relevo cubre la clase y cobra esa sesión; al día siguiente regresa el titular automáticamente.
+                  </p>
+                </div>
+
+                <div className="gc-subs-list">
+                  {sustituciones.slice((subPagina - 1) * 10, subPagina * 10).map(s => {
+                    const ymd = s.fechaExacta.substring(0, 10);
+                    const esHoy = ymd === ymdLocal(new Date());
+                    return (
+                      <div key={s.idExcepcion} className={`gc-subs-item ${esHoy ? 'gc-subs-item--hoy' : ''}`}>
+                        <div className="gc-subs-item__fecha">
+                          <span className="gc-subs-item__dia">{fmtFechaCorta(ymd)}</span>
+                          {esHoy && <span className="gc-subs-item__hoy-tag">Hoy</span>}
+                        </div>
+                        <div className="gc-subs-item__info">
+                          <span className="gc-subs-item__clase">{s.nombreClase} · {s.horarioInicio?.substring(0, 5)}</span>
+                          <span className="gc-subs-item__coaches">
+                            <span className="gc-subs-item__titular">{s.nombreTitular || 'Sin titular'}</span>
+                            <i className="fas fa-arrow-right-long"></i>
+                            <span className="gc-subs-item__relevo">{s.nombreSustituto}</span>
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="gc-subs-item__undo"
+                          title="Quitar — regresa al titular"
+                          onClick={() => quitarSustitucion(s.idClase, ymd)}
+                        >
+                          <i className="fas fa-rotate-left"></i>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {sustituciones.length > 10 && (
+                  <div className="gc-subs-pag">
+                    <button type="button" disabled={subPagina === 1} onClick={() => setSubPagina(p => p - 1)}>
+                      <i className="fas fa-chevron-left"></i>
+                    </button>
+                    <span>{subPagina} / {Math.ceil(sustituciones.length / 10)}</span>
+                    <button type="button" disabled={subPagina >= Math.ceil(sustituciones.length / 10)} onClick={() => setSubPagina(p => p + 1)}>
+                      <i className="fas fa-chevron-right"></i>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {clases.length === 0 ? (
               <div className="tarjeta-panel empty-state">
                 <i className="fas fa-calendar-times"></i>
                 <p>No hay clases programadas</p>
               </div>
             ) : (
-              <div className="d-flex flex-column gap-3">
-                {clases.map(clase => (
+              <>
+                {/* ── TOOLBAR DE FILTROS ── */}
+                <div className="gc-toolbar">
+                  <div className="gc-search">
+                    <i className="fas fa-search gc-search-icon"></i>
+                    <input
+                      type="text"
+                      className="gc-search-input"
+                      placeholder="Buscar clase por nombre…"
+                      value={buscarClase}
+                      onChange={e => setBuscarClase(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className={`gc-filtro-btn ${coachFiltro !== 'todos' ? 'gc-filtro-btn--activo' : ''}`}
+                    onClick={() => setModalFiltroCoach(true)}
+                  >
+                    <i className="fas fa-user-tie gc-filtro-btn__icon"></i>
+                    <span className="gc-filtro-btn__text">{coachFiltroLabel}</span>
+                    <i className="fas fa-chevron-down gc-filtro-btn__arrow"></i>
+                  </button>
+                  <button
+                    type="button"
+                    className={`gc-filtro-btn ${horarioFiltro !== 'todos' ? 'gc-filtro-btn--activo' : ''}`}
+                    onClick={() => setModalFiltroHorario(true)}
+                  >
+                    <i className="fas fa-clock gc-filtro-btn__icon"></i>
+                    <span className="gc-filtro-btn__text">{horarioFiltroLabel}</span>
+                    <i className="fas fa-chevron-down gc-filtro-btn__arrow"></i>
+                  </button>
+                </div>
+
+                <div className="gc-toolbar-meta">
+                  <span className="gc-toolbar-count">
+                    {clasesFiltradas.length === clases.length
+                      ? `${clases.length} ${clases.length === 1 ? 'clase' : 'clases'}`
+                      : `${clasesFiltradas.length} de ${clases.length}`}
+                  </span>
+                  {filtrosActivos && (
+                    <button type="button" className="gc-toolbar-clear" onClick={limpiarFiltros}>
+                      <i className="fas fa-xmark"></i> Limpiar filtros
+                    </button>
+                  )}
+                </div>
+
+                {clasesFiltradas.length === 0 ? (
+                  <div className="tarjeta-panel empty-state">
+                    <i className="fas fa-filter-circle-xmark"></i>
+                    <p>Ninguna clase coincide con los filtros</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="d-flex flex-column gap-3">
+                      {clasesPagina.map(clase => (
                   <div
                     key={clase.idClase}
                     className={`gc-clase-card ${claseEditando === clase.idClase ? 'gc-clase-card--editing' : ''}`}
@@ -630,10 +892,49 @@ export default function GestionClases() {
                           ))}
                         </div>
 
+                        {/* Sustitución activa (cambio rápido de coach) */}
+                        {(() => {
+                          const hoyStr = ymdLocal(new Date());
+                          const subHoy = sustituciones.find(s => s.idClase === clase.idClase && s.fechaExacta.substring(0, 10) === hoyStr);
+                          const futuras = sustituciones.filter(s => s.idClase === clase.idClase && s.fechaExacta.substring(0, 10) > hoyStr).length;
+                          if (!subHoy && futuras === 0) return null;
+                          return (
+                            <div className="gc-sub-row">
+                              {subHoy && (
+                                <span className="gc-sub-badge">
+                                  <i className="fas fa-right-left"></i>
+                                  Hoy cubre: {subHoy.nombreSustituto}
+                                  <button
+                                    type="button"
+                                    className="gc-sub-badge__undo"
+                                    title="Quitar — regresa al titular"
+                                    onClick={() => quitarSustitucion(clase.idClase, subHoy.fechaExacta.substring(0, 10))}
+                                  >
+                                    <i className="fas fa-times"></i>
+                                  </button>
+                                </span>
+                              )}
+                              {futuras > 0 && (
+                                <span className="gc-sub-badge gc-sub-badge--soft">
+                                  <i className="fas fa-calendar-day"></i>
+                                  {futuras} programada{futuras > 1 ? 's' : ''}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
+
                       </div>
 
                       {/* Acciones */}
                       <div className="d-flex flex-column flex-sm-row gap-2 align-items-center flex-shrink-0">
+                        <button
+                          onClick={() => abrirSwap(clase)}
+                          className="gc-action-btn gc-action-btn--swap"
+                          title="Cambio rápido de coach"
+                        >
+                          <i className="fas fa-right-left"></i>
+                        </button>
                         <button
                           onClick={() => cargarParaEditar(clase)}
                           className="gc-action-btn gc-action-btn--edit"
@@ -653,8 +954,23 @@ export default function GestionClases() {
 
                     </div>
                   </div>
-                ))}
-              </div>
+                      ))}
+                    </div>
+
+                    {totalPagClase > 1 && (
+                      <div className="gc-subs-pag gc-clase-pag">
+                        <button type="button" disabled={pagClaseActual === 1} onClick={() => setPagClase(pagClaseActual - 1)}>
+                          <i className="fas fa-chevron-left"></i>
+                        </button>
+                        <span>{pagClaseActual} / {totalPagClase}</span>
+                        <button type="button" disabled={pagClaseActual >= totalPagClase} onClick={() => setPagClase(pagClaseActual + 1)}>
+                          <i className="fas fa-chevron-right"></i>
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
             )}
           </div>
 
@@ -808,6 +1124,237 @@ export default function GestionClases() {
         document.body
       )}
 
+      {/* ── MODAL CAMBIO RÁPIDO DE COACH ── */}
+      {swapClase && createPortal(
+        <div className="gc-swap-overlay" onClick={e => { if (e.target === e.currentTarget) cerrarSwap(); }}>
+          <div className="gc-swap-modal">
+
+            <div className="gc-nivel-modal__header">
+              <div>
+                <p className="gc-nivel-modal__supertitle">Cambio rápido de coach</p>
+                <h2 className="gc-nivel-modal__title">{swapClase.nombre}</h2>
+              </div>
+              <button type="button" className="gc-nivel-modal__close" onClick={cerrarSwap} aria-label="Cerrar">
+                <i className="fas fa-times" />
+              </button>
+            </div>
+
+            <p className="gc-nivel-modal__hint">
+              Titular: <strong>{swapClase.nombreCoach || 'Sin asignar'}</strong> · {swapClase.horarioInicio?.substring(0, 5)}–{swapClase.horarioFin?.substring(0, 5)} · se imparte <strong>{diasLegibles(swapClase.diasRecurrentes) || '—'}</strong>.
+              La sustitución aplica solo a la(s) fecha(s) elegida(s); el titular regresa solo al día siguiente.
+            </p>
+
+            {/* Modo: un día / rango */}
+            <div className="gc-swap-modo">
+              <button type="button" className={`gc-swap-modo-btn ${swapModo === 'dia' ? 'gc-swap-modo-btn--active' : ''}`}
+                onClick={() => { setSwapModo('dia'); setSwapFin(swapInicio); }}>
+                <i className="fas fa-calendar-day"></i> Un día
+              </button>
+              <button type="button" className={`gc-swap-modo-btn ${swapModo === 'rango' ? 'gc-swap-modo-btn--active' : ''}`}
+                onClick={() => setSwapModo('rango')}>
+                <i className="fas fa-calendar-week"></i> Rango
+              </button>
+            </div>
+
+            {/* Fechas */}
+            <div className="gc-swap-fechas">
+              <div className="gc-swap-field">
+                <label className="etiqueta-campo">{swapModo === 'rango' ? 'Desde' : 'Fecha'}</label>
+                <input
+                  type="date"
+                  className="entrada-oscura"
+                  value={swapInicio}
+                  min={ymdLocal(new Date())}
+                  onChange={e => {
+                    const v = e.target.value;
+                    setSwapInicio(v);
+                    if (swapModo === 'dia') setSwapFin(v);
+                    else if (swapFin && v > swapFin) setSwapFin(v);
+                    if (v) cargarRelevos(swapClase.idClase, v);
+                  }}
+                />
+                {swapInicio && (
+                  <span className="gc-swap-diahint">{DIAS_NOMBRE[parseYmd(swapInicio).getDay()]}</span>
+                )}
+              </div>
+              {swapModo === 'rango' && (
+                <div className="gc-swap-field">
+                  <label className="etiqueta-campo">Hasta</label>
+                  <input type="date" className="entrada-oscura" value={swapFin} min={swapInicio}
+                    onChange={e => setSwapFin(e.target.value)} />
+                </div>
+              )}
+            </div>
+
+            {swapModo === 'dia' && swapInicio && !claseCorreEseDia(swapClase.diasRecurrentes, parseYmd(swapInicio)) && (
+              <p className="gc-swap-warn"><i className="fas fa-triangle-exclamation"></i> Esta clase no se imparte ese día — elige un día en que la clase corra.</p>
+            )}
+            {swapModo === 'rango' && (
+              <p className="gc-swap-note"><i className="fas fa-circle-info"></i> Se creará una sustitución por cada día que la clase se imparte dentro del rango.</p>
+            )}
+
+            {/* Buscador de relevo */}
+            <div className="gc-swap-search">
+              <i className="fas fa-search"></i>
+              <input type="text" placeholder="Buscar coach de relevo…" value={relevoBuscar} onChange={e => setRelevoBuscar(e.target.value)} />
+            </div>
+
+            {/* Lista de relevos con disponibilidad */}
+            <div className="gc-relevo-list">
+              {relevosLoading ? (
+                <div className="gc-relevo-loading"><AtletifyLoader /></div>
+              ) : (() => {
+                const lista = relevos.filter(r => normalizarTxt(`${r.nombre} ${r.apellidos || ''}`).includes(normalizarTxt(relevoBuscar)));
+                if (lista.length === 0) return (
+                  <div className="gc-relevo-empty"><i className="fas fa-user-slash"></i><p>No hay coaches de relevo para mostrar.</p></div>
+                );
+                return lista.map(r => {
+                  const activo = swapRelevoId === r.idUsuario;
+                  return (
+                    <button type="button" key={r.idUsuario} className={`gc-relevo ${activo ? 'gc-relevo--activo' : ''}`} onClick={() => setSwapRelevoId(r.idUsuario)}>
+                      <span className="gc-relevo__avatar">{(r.nombre || '?').charAt(0).toUpperCase()}</span>
+                      <span className="gc-relevo__info">
+                        <span className="gc-relevo__nombre">{r.nombre} {r.apellidos || ''}</span>
+                        <span className="gc-relevo__chips">
+                          {r.permiso ? (
+                            <span className="gc-relevo__chip gc-relevo__chip--permiso"><i className="fas fa-triangle-exclamation"></i> {r.permiso}</span>
+                          ) : r.conflicto ? (
+                            <span className="gc-relevo__chip gc-relevo__chip--warn"><i className="fas fa-triangle-exclamation"></i> {r.conflicto}</span>
+                          ) : (
+                            <span className="gc-relevo__chip gc-relevo__chip--ok"><i className="fas fa-circle-check"></i> Disponible</span>
+                          )}
+                          {r.sinContrato && (
+                            <span className="gc-relevo__chip gc-relevo__chip--nocontrato"><i className="fas fa-file-invoice-dollar"></i> Sin contrato de nómina</span>
+                          )}
+                        </span>
+                      </span>
+                      {activo && <i className="fas fa-check-circle gc-relevo__check"></i>}
+                    </button>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Motivo */}
+            <div className="gc-swap-motivo">
+              <label className="etiqueta-campo">Motivo (opcional)</label>
+              <input type="text" className="entrada-oscura" maxLength={120} placeholder="Ej. Enfermedad, imprevisto…" value={swapMotivo} onChange={e => setSwapMotivo(e.target.value)} />
+            </div>
+
+            {(() => {
+              const sel = relevos.find(r => r.idUsuario === swapRelevoId);
+              if (!sel?.sinContrato) return null;
+              return (
+                <p className="gc-swap-note gc-swap-note--warn">
+                  <i className="fas fa-triangle-exclamation"></i>
+                  {sel.nombre} no tiene contrato de nómina activo: la sustitución se registra, pero no se le pagará automáticamente.
+                </p>
+              );
+            })()}
+
+            <button
+              type="button"
+              className="gc-swap-confirm"
+              disabled={!swapRelevoId || swapGuardando || (swapModo === 'dia' && swapInicio && !claseCorreEseDia(swapClase.diasRecurrentes, parseYmd(swapInicio)))}
+              onClick={confirmarSwap}
+            >
+              {swapGuardando ? 'Guardando…' : (<><i className="fas fa-right-left"></i> Confirmar cambio</>)}
+            </button>
+
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── MODAL FILTRO POR COACH ── */}
+      {modalFiltroCoach && (
+        <ModalFiltroGc
+          titulo="Filtrar por coach"
+          supertitulo="Lista de clases"
+          buscable
+          placeholder="Buscar coach…"
+          seleccionado={coachFiltro}
+          opciones={[
+            { id: 'todos', label: 'Todos los coaches', icon: 'fa-users', fijo: true },
+            { id: 'sin', label: 'Sin coach asignado', desc: 'Clases que necesitan coach', icon: 'fa-user-slash', tono: 'warn', fijo: true },
+            ...coaches.map(c => ({ id: String(c.idUsuario), label: c.nombre, avatar: (c.nombre || '?').charAt(0).toUpperCase() })),
+          ]}
+          onSeleccionar={(id) => { setCoachFiltro(id); setModalFiltroCoach(false); }}
+          onCerrar={() => setModalFiltroCoach(false)}
+        />
+      )}
+
+      {/* ── MODAL FILTRO POR HORARIO ── */}
+      {modalFiltroHorario && (
+        <ModalFiltroGc
+          titulo="Filtrar por horario"
+          supertitulo="Lista de clases"
+          seleccionado={horarioFiltro}
+          opciones={HORARIOS_FILTRO.map(h => ({ id: h.id, label: h.label, icon: h.icon }))}
+          onSeleccionar={(id) => { setHorarioFiltro(id); setModalFiltroHorario(false); }}
+          onCerrar={() => setModalFiltroHorario(false)}
+        />
+      )}
+
     </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════
+// MODAL DE FILTRO REUTILIZABLE (centrado, con buscador opcional)
+// ════════════════════════════════════════════════════════
+function ModalFiltroGc({ titulo, supertitulo, opciones, seleccionado, onSeleccionar, onCerrar, buscable = false, placeholder = 'Buscar…' }) {
+  const [buscar, setBuscar] = useState('');
+  const lista = buscable && buscar
+    ? opciones.filter(o => !o.fijo && normalizarTxt(o.label).includes(normalizarTxt(buscar)))
+    : opciones;
+
+  return createPortal(
+    <div className="gc-swap-overlay" onClick={e => { if (e.target === e.currentTarget) onCerrar(); }}>
+      <div className="gc-swap-modal gc-filtro-modal">
+        <div className="gc-nivel-modal__header">
+          <div>
+            <p className="gc-nivel-modal__supertitle">{supertitulo || 'Filtrar'}</p>
+            <h2 className="gc-nivel-modal__title">{titulo}</h2>
+          </div>
+          <button type="button" className="gc-nivel-modal__close" onClick={onCerrar} aria-label="Cerrar">
+            <i className="fas fa-times" />
+          </button>
+        </div>
+
+        {buscable && (
+          <div className="gc-swap-search">
+            <i className="fas fa-search"></i>
+            <input type="text" placeholder={placeholder} value={buscar} onChange={e => setBuscar(e.target.value)} autoFocus />
+          </div>
+        )}
+
+        <div className="gc-filtro-list">
+          {lista.length === 0 ? (
+            <div className="gc-relevo-empty"><i className="fas fa-search"></i><p>Sin resultados.</p></div>
+          ) : lista.map(o => {
+            const activo = String(seleccionado) === String(o.id);
+            return (
+              <button
+                type="button"
+                key={o.id}
+                className={`gc-filtro-opcion ${activo ? 'gc-filtro-opcion--activa' : ''}`}
+                onClick={() => onSeleccionar(o.id)}
+              >
+                <span className={`gc-filtro-opcion__icon ${o.tono ? `gc-filtro-opcion__icon--${o.tono}` : ''}`}>
+                  {o.avatar ? o.avatar : <i className={`fas ${o.icon || 'fa-circle'}`}></i>}
+                </span>
+                <span className="gc-filtro-opcion__info">
+                  <span className="gc-filtro-opcion__nombre">{o.label}</span>
+                  {o.desc && <span className="gc-filtro-opcion__desc">{o.desc}</span>}
+                </span>
+                {activo && <i className="fas fa-check gc-filtro-opcion__check"></i>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }

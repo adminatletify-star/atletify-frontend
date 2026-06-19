@@ -943,9 +943,44 @@ export default function GestionFinanzas() {
                   <div className="row g-4">
                     <div className="col-12 col-lg-4">
                       <div className="finanzas-stat-principal h-100 d-flex flex-column justify-content-center">
-                        <p className="finanzas-stat-label"><i className="fas fa-calendar-check me-1"></i>Ingresos del Mes</p>
-                        <p className="finanzas-stat-valor">${dashboardData.ingresosMes.toFixed(2)}</p>
-                        <p className="finanzas-stat-nota">Facturación total actual</p>
+                        <p className="finanzas-stat-label"><i className="fas fa-id-card me-1"></i>Facturación de Mensualidades</p>
+                        <p className="finanzas-stat-valor finanzas-stat-valor--md mb-1">${(dashboardData.mensualidades?.esperado || 0).toFixed(2)}</p>
+                        <p className="finanzas-stat-nota mb-3">{dashboardData.estadoAtletas?.alDia ?? 0} miembros activos × su plan · esperado/mes</p>
+
+                        {/* Cobrado real de mensualidades este mes + tendencia */}
+                        <div className="finanzas-stat-sub">
+                          <span className="finanzas-stat-sub-label"><i className="fas fa-cash-register"></i> Cobrado este mes</span>
+                          <span className="finanzas-stat-sub-val">
+                            ${(dashboardData.mensualidades?.cobrado || 0).toFixed(2)}
+                            {(() => {
+                              const actual = dashboardData.mensualidades?.cobrado || 0;
+                              const anterior = dashboardData.mensualidades?.cobradoAnterior ?? 0;
+                              const delta = actual - anterior;
+                              const sube = delta > 0.0001, baja = delta < -0.0001;
+                              const pct = anterior > 0 ? Math.round((delta / anterior) * 100) : (actual > 0 ? 100 : 0);
+                              const cls = sube ? 'finanzas-trend--up' : baja ? 'finanzas-trend--down' : 'finanzas-trend--flat';
+                              const icon = sube ? 'fa-arrow-trend-up' : baja ? 'fa-arrow-trend-down' : 'fa-equals';
+                              const txt = anterior > 0 ? `${Math.abs(pct)}%` : (actual > 0 ? 'Nuevo' : '—');
+                              return (
+                                <span className={`finanzas-trend finanzas-trend--sm ${cls}`} title={`Mismo punto del mes pasado: $${anterior.toFixed(2)}`}>
+                                  <i className={`fas ${icon}`}></i> {txt}
+                                </span>
+                              );
+                            })()}
+                          </span>
+                        </div>
+
+                        {/* Otros ingresos de socios (NO tienda) */}
+                        <div className="finanzas-stat-otros">
+                          <div className="finanzas-stat-otro">
+                            <span><i className="fas fa-file-signature"></i> Inscripciones</span>
+                            <strong>${(dashboardData.otrosIngresos?.inscripciones || 0).toFixed(2)}</strong>
+                          </div>
+                          <div className="finanzas-stat-otro">
+                            <span><i className="fas fa-plane-arrival"></i> Drop-ins</span>
+                            <strong>${(dashboardData.otrosIngresos?.dropIns || 0).toFixed(2)}</strong>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     <div className="col-12 col-md-6 col-lg-4">

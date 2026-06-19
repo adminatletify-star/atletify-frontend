@@ -409,6 +409,11 @@ export default function PaseDeLista() {
               <p className="pdl-clase-coach">
                 <i className="fas fa-user-tie opacity-50"></i> {clase.coach}
               </p>
+              {clase.esMiSustitucion && (
+                <span className="pdl-relevo-badge">
+                  <i className="fas fa-right-left"></i> Estás cubriendo a {clase.coachTitular}
+                </span>
+              )}
             </div>
           </div>
 
@@ -701,7 +706,11 @@ export default function PaseDeLista() {
     </>
   );
 
-  const clasesFiltradas = (wodActivo && wodActivo.clasesAsignadas && wodActivo.clasesAsignadas.length > 0)
+  // En el pase de lista el coach debe ver TODAS sus clases del día (titular o relevo), sin
+  // importar a qué WOD esté asignada cada una. El filtro por WOD solo aplica a la vista admin.
+  const usuarioActual = JSON.parse(localStorage.getItem('usuario')) || {};
+  const isCoachActual = (usuarioActual.rol || usuarioActual.Rol) === 'Coach';
+  const clasesFiltradas = (!isCoachActual && wodActivo && wodActivo.clasesAsignadas && wodActivo.clasesAsignadas.length > 0)
     ? clasesDelDia.filter(c => wodActivo.clasesAsignadas.some(ca => ca.idClase === c.idClase))
     : clasesDelDia;
 
