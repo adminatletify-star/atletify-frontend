@@ -44,6 +44,7 @@ export default function RegistroManual() {
   const [loadingPlanes, setLoadingPlanes] = useState(false);
   const [mostrarDatePicker, setMostrarDatePicker] = useState(false);
   const [mostrarModalCobro, setMostrarModalCobro] = useState(false);
+  const procesandoRef = useRef(false); // anti doble-envío síncrono (cubre clic y Enter)
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -186,7 +187,8 @@ export default function RegistroManual() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    if (procesandoRef.current) return;
 
     if (!contrasenaGenerada) {
       showAlert('Primero genera una contraseña genérica para el atleta (sección Credenciales).', 'warning');
@@ -241,6 +243,7 @@ export default function RegistroManual() {
       return showAlert(`Faltan $${(totalACobrar - (m1 + m2)).toFixed(2)}. Ingresa el monto completo.`, 'warning');
     }
 
+    procesandoRef.current = true;
     setLoading(true);
     const boxActual = JSON.parse(localStorage.getItem('box'));
     const correoFinal = formData.correo ? formData.correo : `${formData.username.toLowerCase()}@wolfpack.local`;
@@ -303,6 +306,7 @@ export default function RegistroManual() {
       showAlert('Error de conexión con el servidor.', 'danger');
     } finally {
       setLoading(false);
+      procesandoRef.current = false;
     }
   };
 
@@ -442,7 +446,7 @@ export default function RegistroManual() {
                   </div>
 
                   {/* 👇 EL SWITCH DE FIADO 👇 */}
-                  <div className="form-check form-switch mb-4 p-3 rounded" style={{ backgroundColor: 'rgba(46, 204, 113, 0.1)', border: '1px solid rgba(46, 204, 113, 0.3)' }}>
+                  <div className="form-check form-switch registro-toggle registro-toggle--success mb-4">
                     <input className="form-check-input bg-success border-success ms-1" type="checkbox" id="checkConfianza" name="esDeConfianza" checked={formData.esDeConfianza} onChange={handleChange} />
                     <label className="form-check-label text-success ms-3 fw-bold" htmlFor="checkConfianza">
                       <i className="fas fa-handshake me-2"></i>Atleta de Confianza (Permitir dar fiado en tienda)
@@ -452,7 +456,7 @@ export default function RegistroManual() {
                   <h5 className="registro-section-title mt-4"><i className="fas fa-credit-card me-2"></i>Membresía</h5>
 
                   {/* NUEVO INTERRUPTOR DE EQUIPO DE TRABAJO */}
-                  <div className="form-check form-switch mb-4 p-3 rounded" style={{ backgroundColor: 'rgba(52, 152, 219, 0.1)', border: '1px solid rgba(52, 152, 219, 0.3)' }}>
+                  <div className="form-check form-switch registro-toggle registro-toggle--info mb-4">
                     <input className="form-check-input bg-info border-info ms-1" type="checkbox" id="checkEquipo" checked={esEquipoTrabajo} onChange={(e) => {
                       setEsEquipoTrabajo(e.target.checked);
                       if (e.target.checked) setSuscripcionPermanente(true);
@@ -475,7 +479,7 @@ export default function RegistroManual() {
                   )}
 
                   {esEquipoTrabajo ? (
-                    <div className="form-check form-switch mb-4 p-3 rounded" style={{ backgroundColor: 'rgba(241, 196, 15, 0.1)', border: '1px solid rgba(241, 196, 15, 0.3)' }}>
+                    <div className="form-check form-switch registro-toggle registro-toggle--warning mb-4">
                       <input className="form-check-input bg-warning border-warning ms-1" type="checkbox" id="checkPermanente" checked={suscripcionPermanente} onChange={(e) => setSuscripcionPermanente(e.target.checked)} />
                       <label className="form-check-label text-warning ms-3 fw-bold" htmlFor="checkPermanente">
                         <i className="fas fa-infinity me-2"></i>Suscripción permanente (Exento de pago)
@@ -507,7 +511,7 @@ export default function RegistroManual() {
                   <div className="d-flex justify-content-end">
                     {/* Botón removido - El submit ahora está en el modal de cobro EXCEPTO PARA EL EQUIPO DE TRABAJO */}
                     {esEquipoTrabajo && suscripcionPermanente && (
-                      <BotonSeguro type="submit" className="btn btn-success" disabled={loading} tiempoBloqueo={1500} textoProcesando="Guardando...">
+                      <BotonSeguro type="button" onClick={handleSubmit} className="btn btn-success registro-btn" disabled={loading} tiempoBloqueo={1500} textoProcesando="Guardando...">
                         <i className="fas fa-check me-2"></i>Registrar Miembro del Equipo
                       </BotonSeguro>
                     )}
@@ -690,7 +694,7 @@ export default function RegistroManual() {
 
               <div className="finanzas-modal-btns d-flex gap-2">
                 <button type="button" onClick={() => setMostrarModalCobro(false)} className="finanzas-modal-btn-cancel w-50">Cancelar</button>
-                <BotonSeguro type="submit" className="btn btn-success w-50" disabled={loading} tiempoBloqueo={1500} textoProcesando="Guardando...">
+                <BotonSeguro type="button" onClick={handleSubmit} className="btn btn-success w-50 registro-btn" disabled={loading} tiempoBloqueo={1500} textoProcesando="Guardando...">
                   <i className="fas fa-check me-1"></i>Inscribir Atleta
                 </BotonSeguro>
               </div>

@@ -1,5 +1,8 @@
 /* =============================================
-   REGISTRO MANUAL — Paleta: Arctic Wolf
+   REGISTRO MANUAL — Paleta: Arctic Wolf (rediseño)
+   Inputs redondeados · cards con acento · responsivo
+   Nota: las reglas que compiten con Bootstrap (.form-control, .card)
+   se anclan a .registro-manual-container para ganar especificidad.
    ============================================= */
 
 /* === DATE WHEEL OVERLAY — Centrado en pantalla === */
@@ -15,7 +18,6 @@
   -webkit-backdrop-filter: blur(10px);
   animation: dwp-fade-in 0.2s ease;
   padding: 12px;
-  /* Empujar hacia arriba para que la navbar no lo tape */
   padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
 }
 
@@ -27,23 +29,15 @@
 .dwp-modal {
   width: 100%;
   max-width: 420px;
-  /* Nunca más alto que la pantalla menos la navbar */
   max-height: calc(100dvh - 110px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: linear-gradient(
-    160deg,
-    rgba(22, 22, 32, 0.99) 0%,
-    rgba(12, 12, 18, 1) 100%
-  );
+  background: linear-gradient(160deg, rgba(22, 22, 32, 0.99) 0%, rgba(12, 12, 18, 1) 100%);
   backdrop-filter: blur(30px) saturate(1.6);
   -webkit-backdrop-filter: blur(30px) saturate(1.6);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 28px;
-  box-shadow:
-    0 24px 80px rgba(0, 0, 0, 0.7),
-    0 8px 24px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7), 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.07);
   animation: dwp-pop-in 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
@@ -52,7 +46,6 @@
   to   { transform: scale(1)    translateY(0);    opacity: 1; }
 }
 
-/* El picker hereda el fondo del modal */
 .dwp-modal .date-wheel-picker {
   max-width: 100%;
   border-radius: 0;
@@ -64,48 +57,90 @@
   padding: 16px 20px 20px;
 }
 
-/* Móvil pequeño (ancho o altura): reducir tamaños para que todo quepa sin scroll */
 @media (max-width: 480px), (max-height: 720px) {
-  .dwp-overlay {
-    padding: 8px;
-    padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));
-  }
-
-  .dwp-modal {
-    max-height: calc(100dvh - 100px);
-    border-radius: 22px;
-  }
-
-  .dwp-modal .date-wheel-picker {
-    padding: 12px 14px 16px;
-  }
+  .dwp-overlay { padding: 8px; padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
+  .dwp-modal { max-height: calc(100dvh - 100px); border-radius: 22px; }
+  .dwp-modal .date-wheel-picker { padding: 12px 14px 16px; }
 }
 
-/* Contenedor principal */
+/* === CONTENEDOR PRINCIPAL === */
 .registro-manual-container {
-  background: linear-gradient(135deg, var(--bg-base) 0%, var(--bg-elevated) 100%);
+  background:
+    radial-gradient(1200px 420px at 50% -10%, rgba(230, 57, 70, 0.07), transparent 60%),
+    linear-gradient(135deg, var(--bg-base) 0%, var(--bg-elevated) 100%);
   min-height: 100vh;
   padding: 0;
 }
 
 .registro-manual-container > .container {
-  padding-top: 2rem;
-  padding-bottom: 2rem;
+  padding-top: 1.75rem;
+  padding-bottom: 2.5rem;
 }
 
-/* === CARDS === */
-.registro-card {
-  background: rgba(28, 28, 38, 0.6) !important;
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border-radius: 24px;
+/* === HEADER === */
+.registro-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.8rem 1.25rem 0.8rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  margin-bottom: 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.registro-header-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.registro-header-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  font-size: clamp(1.1rem, 3.4vw, 1.5rem);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  line-height: 1.12;
+}
+
+.registro-header-subtitle {
+  font-family: var(--font-body);
+  color: var(--secondary);
+  margin: 0.12rem 0 0;
+  font-size: clamp(0.72rem, 2vw, 0.9rem);
+}
+
+/* === CARDS (gana a .card de Bootstrap vía contenedor) === */
+.registro-manual-container .registro-card {
+  background: rgba(20, 20, 30, 0.66) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 22px;
   border: 1px solid var(--border) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  border-top: 3px solid var(--primary) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
 }
 
-.registro-card-security {
-  background: rgba(230, 57, 70, 0.04) !important;
+.registro-manual-container .registro-card-security {
+  background: rgba(230, 57, 70, 0.05) !important;
   border: 1px solid rgba(230, 57, 70, 0.18) !important;
+  border-top: 3px solid var(--primary) !important;
 }
 
 /* === LABELS === */
@@ -120,38 +155,54 @@
   display: block;
 }
 
-/* === INPUTS === */
-.registro-input {
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.2) !important;
+/* === INPUTS (más redondeados; gana a .form-control vía contenedor) === */
+.registro-manual-container .registro-input,
+.registro-manual-container select.registro-input,
+.registro-manual-container .registro-fecha-btn {
+  width: 100%;
+  border-radius: 16px;
+  background-color: rgba(0, 0, 0, 0.22) !important;
   border: 1px solid var(--border) !important;
   color: var(--text-primary) !important;
   font-family: var(--font-body);
-  padding: 12px 16px;
-  font-size: 1rem;
+  padding: 13px 18px;
+  font-size: 0.98rem;
   transition: var(--transition);
 }
 
+.registro-manual-container .registro-input:focus,
+.registro-manual-container select.registro-input:focus,
+.registro-manual-container .registro-fecha-btn:focus-visible {
+  background-color: rgba(0, 0, 0, 0.32) !important;
+  border-color: rgba(230, 57, 70, 0.55) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
+  outline: none;
+}
+
+.registro-input::placeholder { color: var(--text-muted) !important; opacity: 1; }
+.registro-input option { background: var(--bg-card); color: var(--text-primary); }
+
+/* Select nativo: flecha personalizada acorde al tema */
+.registro-manual-container select.registro-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A8B2D1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 14px;
+  padding-right: 44px;
+  cursor: pointer;
+}
+
 /* === USERNAME LIVE-CHECK === */
-.registro-username-wrap {
-  position: relative;
-}
-
-.registro-username-input {
-  padding-right: 42px !important;
-}
-
-.registro-username-input.is-valid-username {
-  border-color: rgba(34, 197, 94, 0.6) !important;
-}
-
-.registro-username-input.is-invalid-username {
-  border-color: rgba(239, 68, 68, 0.6) !important;
-}
+.registro-username-wrap { position: relative; }
+.registro-manual-container .registro-username-input { padding-right: 44px !important; }
+.registro-username-input.is-valid-username   { border-color: rgba(34, 197, 94, 0.6) !important; }
+.registro-username-input.is-invalid-username { border-color: rgba(239, 68, 68, 0.6) !important; }
 
 .registro-username-indicator {
   position: absolute;
-  right: 14px;
+  right: 16px;
   top: 50%;
   transform: translateY(-50%);
   font-size: 1rem;
@@ -182,37 +233,6 @@
 .registro-username-hint--warn  { color: #f59e0b; }
 .registro-username-hint--check { color: rgba(255, 255, 255, 0.6); }
 
-/* Responsive: ajustes para móvil */
-@media (max-width: 768px) {
-  .registro-username-hint { font-size: 0.74rem; }
-}
-
-@media (max-width: 576px) {
-  .registro-username-hint { font-size: 0.7rem; }
-  .registro-username-indicator { right: 12px; font-size: 0.9rem; }
-}
-
-@media (max-width: 380px) {
-  .registro-username-hint { font-size: 0.66rem; }
-}
-
-.registro-input:focus {
-  background: rgba(0, 0, 0, 0.3) !important;
-  border-color: rgba(230, 57, 70, 0.5) !important;
-  box-shadow: 0 0 0 3px var(--primary-glow) !important;
-  outline: none;
-}
-
-.registro-input::placeholder {
-  color: var(--text-muted) !important;
-  opacity: 1;
-}
-
-.registro-input option {
-  background: var(--bg-card);
-  color: var(--text-primary);
-}
-
 /* === TÍTULOS DE SECCIÓN === */
 .registro-section-title {
   font-family: var(--font-heading);
@@ -221,75 +241,70 @@
   font-size: 1.05rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 1.25rem;
-}
-
-/* === HEADER === */
-.registro-header {
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  margin: 0 0 1.4rem;
+  padding-bottom: 0.7rem;
   border-bottom: 1px solid var(--border);
-  padding: 0.85rem 1.5rem 0.85rem 0.6rem;
-  position: sticky;
-  top: 0;
-  z-index: 200;
-  margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
 }
 
-.registro-header-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: rgba(230, 57, 70, 0.12);
-  border: 1px solid rgba(230, 57, 70, 0.25);
+.registro-section-title i { font-size: 0.95em; opacity: 0.95; }
+
+/* === FECHA TRIGGER BUTTON === */
+.registro-fecha-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: var(--primary);
-  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
 }
 
-.registro-header-title {
-  font-family: var(--font-heading);
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0;
-  font-size: 1.5rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+.registro-fecha-btn--open {
+  border-color: rgba(230, 57, 70, 0.55) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
 }
 
-.registro-header-subtitle {
-  font-family: var(--font-body);
-  color: var(--secondary);
-  margin-bottom: 0;
-  font-size: 0.9rem;
+.registro-fecha-placeholder { color: var(--text-muted); }
+
+@media (hover: hover) {
+  .registro-fecha-btn:hover {
+    background-color: rgba(0, 0, 0, 0.32) !important;
+    border-color: rgba(230, 57, 70, 0.4) !important;
+  }
+}
+
+/* === TOGGLES / SWITCHES (tarjetas de opción) === */
+.registro-toggle {
+  border-radius: 16px;
+  padding: 0.95rem 1.1rem;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  transition: var(--transition);
+}
+
+.registro-toggle .form-check-label { cursor: pointer; }
+.registro-toggle .form-check-input { cursor: pointer; }
+
+.registro-toggle--success { background: rgba(46, 204, 113, 0.08);  border-color: rgba(46, 204, 113, 0.28); }
+.registro-toggle--info    { background: rgba(52, 152, 219, 0.08);  border-color: rgba(52, 152, 219, 0.28); }
+.registro-toggle--warning { background: rgba(241, 196, 15, 0.08);  border-color: rgba(241, 196, 15, 0.28); }
+
+@media (hover: hover) {
+  .registro-toggle:hover { border-color: rgba(255, 255, 255, 0.16); }
 }
 
 /* === BOTONES === */
 .registro-btn {
-  border-radius: 14px;
-  padding: 12px 24px;
+  border-radius: 14px !important;
+  padding: 12px 22px;
   font-family: var(--font-body);
   font-weight: 600;
   border: none;
   transition: var(--transition);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.registro-btn-submit {
-  background: var(--primary);
-  color: #fff;
-  box-shadow: 0 4px 15px var(--primary-glow);
-}
-
-.registro-btn-submit:hover {
-  background: var(--primary-dark);
-}
+.registro-btn:active { transform: scale(0.98); }
 
 .registro-btn-back {
   width: 45px;
@@ -297,7 +312,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
 }
@@ -309,8 +324,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 24px;
   background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.22);
+  box-shadow: 0 0 30px rgba(230, 57, 70, 0.12);
   margin-bottom: 1rem;
 }
 
@@ -326,14 +343,14 @@
   font-family: var(--font-body);
   color: var(--secondary);
   font-size: 0.875rem;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .registro-password-box {
-  background: rgba(0, 0, 0, 0.3);
-  padding: 1rem;
-  border-radius: 16px;
-  border: 1px solid var(--border);
+  background: rgba(46, 204, 113, 0.07);
+  padding: 1.1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(46, 204, 113, 0.25);
 }
 
 .registro-password-label {
@@ -349,76 +366,37 @@
   font-family: var(--font-stats);
   color: var(--success);
   font-weight: 700;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
+  letter-spacing: 1px;
   margin: 0;
+  word-break: break-all;
 }
 
 /* PIN Input */
 .registro-pin-container {
-  padding: 1rem;
+  padding: 1.1rem;
   background: rgba(0, 0, 0, 0.3);
-  border-radius: 16px;
+  border-radius: 18px;
   border: 1px solid var(--border);
 }
 
-.registro-pin-input {
+.registro-manual-container .registro-pin-input {
   font-family: var(--font-stats);
   font-size: 1.5rem;
   text-align: center;
   letter-spacing: 8px;
   color: var(--text-primary);
-}
-
-/* === FECHA TRIGGER BUTTON === */
-.registro-fecha-btn {
-  display: flex;
-  align-items: center;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.2) !important;
-  border: 1px solid var(--border) !important;
-  color: var(--text-primary) !important;
-  font-family: var(--font-body);
-  padding: 12px 16px;
-  font-size: 1rem;
-  transition: var(--transition);
-  text-align: left;
-  cursor: pointer;
-}
-
-.registro-fecha-btn:hover {
-  background: rgba(0, 0, 0, 0.3) !important;
-  border-color: rgba(230, 57, 70, 0.4) !important;
-}
-
-.registro-fecha-btn--open {
-  border-color: rgba(230, 57, 70, 0.5) !important;
-  box-shadow: 0 0 0 3px var(--primary-glow) !important;
-}
-
-.registro-fecha-placeholder {
-  color: var(--text-muted);
+  border-radius: 14px;
 }
 
 /* === SEPARADORES === */
 .registro-divider {
-  border-color: var(--border);
+  border: none;
+  border-top: 1px solid var(--border);
   margin: 1.5rem 0;
 }
 
-/* === SECCIÓN DE MEMBRESÍA === */
-.registro-total-box {
-  background: rgba(70, 130, 180, 0.05);
-  border: 1px solid rgba(70, 130, 180, 0.2);
-  border-radius: 12px;
-  padding: 12px 16px;
-}
-
-.registro-total-box small {
-  font-family: var(--font-body);
-  font-size: 0.875rem;
-}
-
-/* === MODAL STYLES (Reutilizado de GestionFinanzas) === */
+/* === MODAL DE COBRO (Punto de Venta) === */
 .finanzas-modal-overlay {
   position: fixed;
   inset: 0;
@@ -435,11 +413,14 @@
 .finanzas-modal {
   background: var(--bg-card);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 2rem;
+  border-top: 3px solid var(--success);
+  border-radius: 24px;
+  padding: 1.75rem;
   width: 100%;
-  max-width: 420px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  max-width: 440px;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
   animation: finanzasModalIn 0.22s ease-out;
 }
 
@@ -464,12 +445,11 @@
 
 .finanzas-pdv-total-box {
   background: rgba(0, 0, 0, 0.3) !important;
-  border: 1px solid rgba(46, 204, 113, 0.2) !important;
+  border: 1px solid rgba(46, 204, 113, 0.25) !important;
+  border-radius: 16px !important;
 }
 
-.finanzas-pdv-total-amount {
-  font-family: var(--font-stats);
-}
+.finanzas-pdv-total-amount { font-family: var(--font-stats); }
 
 .etiqueta-campo {
   font-family: var(--font-heading-alt);
@@ -482,21 +462,38 @@
   display: block;
 }
 
-.entrada-oscura {
-  background: rgba(0, 0, 0, 0.2) !important;
+.finanzas-modal .entrada-oscura {
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.22) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: var(--text-primary) !important;
-  border-radius: 8px;
-  padding: 10px 12px;
+  border-radius: 14px;
+  padding: 11px 14px;
   font-family: var(--font-body);
   font-size: 0.95rem;
+  transition: var(--transition);
 }
 
-.entrada-oscura:focus {
-  background: rgba(0, 0, 0, 0.3) !important;
+.finanzas-modal .entrada-oscura:focus {
+  background-color: rgba(0, 0, 0, 0.32) !important;
   border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
   outline: none;
 }
+
+/* Select nativo dentro del modal */
+.finanzas-modal select.entrada-oscura {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A8B2D1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 38px;
+  cursor: pointer;
+}
+
+.entrada-oscura option { background: var(--bg-card); color: var(--text-primary); }
 
 .finanzas-modal-btns {
   display: flex;
@@ -506,16 +503,65 @@
 
 .finanzas-modal-btn-cancel {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--secondary);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 12px 24px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.finanzas-modal-btn-cancel:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
+.finanzas-modal-btn-cancel:active { transform: scale(0.98); }
+
+@media (hover: hover) {
+  .finanzas-modal-btn-cancel:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* ============================================================
+   RESPONSIVE — 768 / 576 / 380
+   ============================================================ */
+@media (max-width: 768px) {
+  .registro-section-title { font-size: 0.98rem; margin-bottom: 1.15rem; }
+  .registro-manual-container .registro-input,
+  .registro-manual-container select.registro-input,
+  .registro-manual-container .registro-fecha-btn { font-size: 0.95rem; padding: 12px 16px; }
+  .registro-security-title { font-size: 1.2rem; }
+}
+
+@media (max-width: 576px) {
+  .registro-manual-container > .container { padding-top: 1.25rem; padding-bottom: 1.75rem; }
+  .registro-header { padding: 0.7rem 1rem 0.7rem 0.5rem; margin-bottom: 1.25rem; }
+  .registro-manual-container .registro-card .card-body { padding: 1.35rem !important; }
+
+  .registro-manual-container .registro-input,
+  .registro-manual-container select.registro-input,
+  .registro-manual-container .registro-fecha-btn,
+  .finanzas-modal .entrada-oscura { border-radius: 14px; }
+
+  .registro-col-mobile { margin-bottom: 1rem !important; }
+
+  .registro-section-title { font-size: 0.92rem; letter-spacing: 0.6px; }
+  .registro-toggle { padding: 0.85rem 0.9rem; border-radius: 14px; }
+  .registro-toggle .form-check-label { font-size: 0.86rem; }
+
+  .registro-security-icon { width: 70px; height: 70px; border-radius: 20px; }
+  .registro-password-value { font-size: 1.4rem; }
+  .finanzas-modal { padding: 1.35rem; border-radius: 20px; }
+}
+
+@media (max-width: 380px) {
+  .registro-manual-container .registro-card .card-body { padding: 1.1rem !important; }
+  .registro-section-title { font-size: 0.86rem; letter-spacing: 0.4px; }
+  .registro-manual-container .registro-input,
+  .registro-manual-container select.registro-input,
+  .registro-manual-container .registro-fecha-btn,
+  .finanzas-modal .entrada-oscura { font-size: 0.9rem; padding: 11px 14px; }
+  .registro-toggle .form-check-label { font-size: 0.82rem; }
+  .registro-security-title { font-size: 1.1rem; }
 }
