@@ -395,10 +395,10 @@ export default function MiPerfil() {
   const handleSubirFoto = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > 10 * 1024 * 1024) {
       triggerAlert({
         title: 'Archivo Muy Grande',
-        message: 'La imagen es muy pesada. El tamaño máximo es 2MB.',
+        message: 'La imagen es muy pesada. El tamaño máximo es 10MB.',
         type: 'error'
       });
       return;
@@ -478,14 +478,12 @@ export default function MiPerfil() {
           if (form.foto) current.foto = form.foto;
           localStorage.setItem('usuario', JSON.stringify(current));
         }
-        triggerAlert({
-          title: '¡Actualizado! 🎮',
-          message: '¡Player Card actualizada con éxito!',
-          type: 'success',
-          // Refrescamos los datos desde el servidor en sitio (sin window.location.reload),
-          // así el usuario se queda en la misma pestaña y posición de scroll.
-          onConfirm: () => fetchExpediente(userAuth.id || userAuth.idUsuario)
-        });
+        // Toast en la esquina superior derecha (GlobalAlertBridge intercepta window.alert),
+        // en vez del modal central. El mensaje contiene "actualizada" → toast verde de éxito.
+        alert('¡Player Card actualizada con éxito!');
+        // Refrescamos los datos desde el servidor en sitio (sin window.location.reload),
+        // así el usuario se queda en la misma pestaña y posición de scroll.
+        fetchExpediente(userAuth.id || userAuth.idUsuario);
       } else {
         triggerAlert({
           title: 'Error de Guardado',

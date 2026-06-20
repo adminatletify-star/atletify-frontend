@@ -752,6 +752,31 @@ const AnunciosEngine = ({ box, user, abrirCampania, onConsumirAbrir }) => {
                   )}
                 </div>
               )}
+
+              {/* Leaderboard final de donadores (la campaña tenía activado mostrar ranking) */}
+              {Array.isArray(agradecimiento.leaderboard) && agradecimiento.leaderboard.length > 1 && (
+                <div className="ae-leader-card ae-thanks-leader">
+                  <h6 className="ae-leader-title"><i className="fas fa-medal"></i>Leaderboard de donadores</h6>
+                  <div className="ae-leader-list">
+                    {agradecimiento.leaderboard.map((item, index) => (
+                      <div key={item.idUsuario ?? index} className={`ae-leader-item ${index === 0 ? 'ae-leader-item--top1' : ''}`}>
+                        <div className="ae-leader-item-left">
+                          <div className="ae-leader-pos">
+                            {index === 0 ? <i className="fas fa-medal ae-leader-medal"></i> : `#${index + 1}`}
+                          </div>
+                          <div className="ae-leader-avatar">
+                            {item.atleta?.foto
+                              ? <img src={item.atleta.foto} alt="" />
+                              : (item.atleta?.nombre || '?').charAt(0).toUpperCase()}
+                          </div>
+                          <div className="ae-leader-nombre">{(item.atleta?.nombre || 'Donante').split(' ')[0]}</div>
+                        </div>
+                        <div className="ae-leader-monto">${Number(item.totalDonado || 0).toFixed(0)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="ae-modal-foot">
               <button type="button" className="ae-btn-donar ae-btn-donar--stripe" onClick={cerrarAgradecimiento}>
