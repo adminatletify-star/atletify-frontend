@@ -1,6 +1,7 @@
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { api, COMPETENCIAS_ENDPOINT } from '../services/api';
+import { sincronizarSuscripcionesPush, desuscribirCuenta } from '../services/push';
 
 const AuthContext = createContext();
 
@@ -145,6 +146,10 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    // Best-effort: que esta cuenta deje de recibir push en este dispositivo.
+    const tokenSaliente = token || localStorage.getItem('token');
+    if (tokenSaliente) desuscribirCuenta(tokenSaliente);
+
     if (usuario) {
       setCuentasGuardadas((prevCuentas) => {
         const idUser = getIdFromUser(usuario);
@@ -231,6 +236,12 @@ export function AuthProvider({ children }) {
   };
 
   const removerCuenta = (cuentaId) => {
+    // Best-effort: desuscribir del push la cuenta que se quita del dispositivo.
+    try {
+      const cuenta = cuentasGuardadas.find(c => getIdFromUser(c.usuario) === cuentaId);
+      if (cuenta?.token) desuscribirCuenta(cuenta.token);
+    } catch { /* noop */ }
+
     setCuentasGuardadas((prevCuentas) => {
       const nuevasCuentas = prevCuentas.filter(c => getIdFromUser(c.usuario) !== cuentaId);
       localStorage.setItem('cuentasGuardadas', JSON.stringify(nuevasCuentas));
@@ -259,6 +270,16 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     refetchBoxes();
   }, [refetchBoxes]);
+
+  // === WEB PUSH: mantener registradas TODAS las cuentas del dispositivo ===
+  // Si el usuario ya activó las notificaciones (permiso concedido + suscripción),
+  // cada vez que inicia sesión, agrega o cambia de cuenta, registramos/actualizamos
+  // el endpoint de este aparato para todas sus cuentas. Best-effort: si las push no
+  // están activas, no hace nada.
+  useEffect(() => {
+    if (!usuario) return;
+    sincronizarSuscripcionesPush();
+  }, [usuario, cuentasGuardadas]);
 
   // === PRESENCIA: heartbeat global ===
   // Mientras haya sesión válida, le avisamos al backend cada 60s que el usuario

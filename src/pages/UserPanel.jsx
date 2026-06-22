@@ -12,6 +12,7 @@ import '../assets/css/visitas-regalo.css';
 import AtletifyLoader from '../components/AtletifyLoader';
 import AnunciosEngine from '../components/AnunciosEngine';
 import NotificacionRow from '../components/NotificacionRow';
+import BotonActivarPush from '../components/BotonActivarPush';
 import EjercicioDetailModal from '../components/EjercicioDetailModal';
 import ModalComentariosWod from '../components/ModalComentariosWod';
 import { evaluarNivelClase } from '../utils/nivelClase';
@@ -368,6 +369,20 @@ export default function UserPanel() {
       })();
     }
   }, [navigate]);
+
+  // Al tocar un push sin pantalla propia, llegamos con ?campanita=1 → abrir la bandeja.
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('campanita') === '1') {
+        setShowModalNotis(true);
+        params.delete('campanita');
+        const nuevaUrl = window.location.pathname +
+          (params.toString() ? `?${params.toString()}` : '') + window.location.hash;
+        window.history.replaceState({}, '', nuevaUrl);
+      }
+    } catch { /* noop */ }
+  }, []);
 
   const cargarNotificaciones = async (idUsuario) => {
     try {
@@ -1271,6 +1286,7 @@ export default function UserPanel() {
             
             {/* DERECHA: Notificaciones, Categoria y Mini Pill */}
             <div className="d-flex align-items-center gap-3">
+              <BotonActivarPush />
               <button
                 className="up-notif-btn position-relative"
                 onClick={abrirBandejaNotis}

@@ -16,6 +16,11 @@ export default defineConfig({
     //    así no interfiere con el flujo normal de desarrollo.
     // ============================================================
     VitePWA({
+      // injectManifest: usamos un Service Worker propio (src/sw.js) para poder añadir
+      // Web Push (eventos 'push' y 'notificationclick') además del precache de Workbox.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       includeAssets: [
@@ -42,28 +47,19 @@ export default defineConfig({
           { src: '/icons/apple-touch-icon.png',  sizes: '180x180', type: 'image/png', purpose: 'any' },
         ],
       },
-      workbox: {
-        // Cachear únicamente assets estáticos del propio build.
+      injectManifest: {
+        // Cachear únicamente assets estáticos del propio build (mismo criterio que antes).
         // NUNCA respuestas del backend ni endpoints /api → evita problemas de privacidad/sesión.
         globPatterns: ['**/*.{js,css,html,svg,ico,woff,woff2,ttf}'],
         // EXCLUIR del precache las carpetas pesadas de imágenes públicas (~175 MB total).
-        // Estas imágenes se siguen cargando con normalidad por el navegador cuando se piden;
-        // simplemente no las metemos al precache del SW para no inflar la primera descarga.
         globIgnores: [
           '**/Coaches/**',
           '**/Box interno/**',
           '**/Grupal/**',
           '**/Lo que ofrece/**',
         ],
-        // Si un usuario navega offline a una ruta SPA, servir index.html.
-        navigateFallback: '/index.html',
-        // Evita interceptar rutas de API por accidente.
-        navigateFallbackDenylist: [/^\/api\//],
         // Limita el tamaño máximo de archivo a precachear (el bundle JS principal pesa ~6 MB).
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB
-        cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true,
       },
       devOptions: {
         // CRÍTICO: en modo `npm run dev` el SW está APAGADO.

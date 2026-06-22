@@ -18,6 +18,7 @@ import '../assets/css/AdminBoxPanel.css';
 import AtletifyLoader from '../components/AtletifyLoader';
 import AnunciosEngine from '../components/AnunciosEngine';
 import NotificacionRow from '../components/NotificacionRow';
+import BotonActivarPush from '../components/BotonActivarPush';
 
 function getPayCycles(diaCorte) {
   const dCorte = parseInt(diaCorte) || 7;
@@ -166,6 +167,20 @@ export default function AdminBoxPanel() {
       setLoading(false);
     }
   }, [navigate]);
+
+  // Al tocar un push sin pantalla propia, llegamos con ?campanita=1 → abrir la campanita.
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('campanita') === '1') {
+        setNotiOpen(true);
+        params.delete('campanita');
+        const nuevaUrl = window.location.pathname +
+          (params.toString() ? `?${params.toString()}` : '') + window.location.hash;
+        window.history.replaceState({}, '', nuevaUrl);
+      }
+    } catch { /* noop */ }
+  }, []);
 
   // ── Campanita de notificaciones (reusa api/interacciones/notificaciones) ──
   async function cargarNotificaciones(idUsuario) {
@@ -621,6 +636,7 @@ export default function AdminBoxPanel() {
                 </div>
               </div>
               <div className="d-flex align-items-center gap-2 mt-1">
+                <BotonActivarPush />
                 {/* CAMPANITA DE NOTIFICACIONES */}
                 <div className="abp-notif">
                   <button
@@ -1212,6 +1228,7 @@ export default function AdminBoxPanel() {
               </div>
             </div>
             <div className="d-flex align-items-center gap-2 mt-1">
+              <BotonActivarPush />
               {/* CAMPANITA DE NOTIFICACIONES */}
               <div className="abp-notif">
                 <button

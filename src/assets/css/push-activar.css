@@ -1,0 +1,57 @@
+/* Botón "Activar avisos" junto a la campanita (Web Push).
+   Sigue el lenguaje visual de Atletify: pill primaria, font-heading-alt,
+   uppercase, feedback táctil inmediato y hover solo con mouse. */
+.push-activar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 40px;
+  padding: 0 0.9rem;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #fff;
+  border: 1px solid var(--primary);
+  font-family: var(--font-heading-alt, inherit);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.push-activar-btn i {
+  font-size: 0.95rem;
+}
+
+.push-activar-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* Feedback inmediato al tocar (en táctil no hay hover). */
+.push-activar-btn:active {
+  transform: scale(0.93);
+}
+
+/* Hover SOLO en dispositivos con mouse (no se queda "pegado" en táctil). */
+@media (hover: hover) {
+  .push-activar-btn:hover:not(:disabled) {
+    box-shadow: 0 4px 16px var(--primary-glow, rgba(230, 57, 70, 0.4));
+  }
+}
+
+/* Móvil: dejar solo el ícono (compacto y tocable). */
+@media (max-width: 576px) {
+  .push-activar-btn {
+    height: 38px;
+    padding: 0 0.72rem;
+  }
+  .push-activar-label {
+    display: none;
+  }
+}
