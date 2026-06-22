@@ -5,8 +5,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  height: 40px;
-  padding: 0 0.9rem;
+  height: 44px;
+  padding: 0 0.95rem;
   border-radius: 10px;
   background: var(--primary);
   color: #fff;
@@ -45,13 +45,31 @@
   }
 }
 
+/* Tablet: reducir ligeramente el texto. */
+@media (max-width: 768px) {
+  .push-activar-btn {
+    font-size: 0.74rem;
+  }
+}
+
 /* Móvil: dejar solo el ícono (compacto y tocable). */
 @media (max-width: 576px) {
   .push-activar-btn {
-    height: 38px;
-    padding: 0 0.72rem;
+    height: 42px;
+    padding: 0 0.75rem;
   }
   .push-activar-label {
     display: none;
+  }
+}
+
+/* Móvil pequeño (iPhone SE). */
+@media (max-width: 380px) {
+  .push-activar-btn {
+    height: 40px;
+    padding: 0 0.65rem;
+  }
+  .push-activar-btn i {
+    font-size: 0.9rem;
   }
 }

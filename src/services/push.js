@@ -49,15 +49,17 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 // POST autenticado con un token específico (sin pasar por el interceptor de fetch).
-function xhrPost(url, token, body) {
+function xhrPost(url, token, body, timeoutMs = 8000) {
   return new Promise((resolve) => {
     try {
       const xhr = new XMLHttpRequest();
+      xhr.timeout = timeoutMs; // que no se cuelgue si la red no responde
       xhr.open('POST', url, true);
       xhr.setRequestHeader('Content-Type', 'application/json');
       if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
       xhr.onload = () => resolve(xhr.status >= 200 && xhr.status < 300);
       xhr.onerror = () => resolve(false);
+      xhr.ontimeout = () => resolve(false);
       xhr.send(JSON.stringify(body || {}));
     } catch {
       resolve(false);

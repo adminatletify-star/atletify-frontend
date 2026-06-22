@@ -116,22 +116,29 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const data = event.notification.data || {};
-  const url = construirUrl(data);
 
   event.waitUntil((async () => {
-    const clientesVentana = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    // Reutilizar una ventana ya abierta: navegarla (así corre el guardia y cambia de cuenta) y enfocarla.
-    for (const client of clientesVentana) {
-      if ('navigate' in client) {
-        try {
-          await client.navigate(url);
-          await client.focus();
-          return;
-        } catch (e) { /* si falla, abrimos una nueva */ }
+    try {
+      const url = construirUrl(data);
+      const clientesVentana = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      // Reutilizar una ventana ya abierta: navegarla (así corre el guardia y cambia de cuenta) y enfocarla.
+      for (const client of clientesVentana) {
+        if ('navigate' in client) {
+          try {
+            await client.navigate(url);
+            await client.focus();
+            return;
+          } catch (e) { /* si falla, abrimos una nueva */ }
+        }
       }
-    }
-    if (self.clients.openWindow) {
-      await self.clients.openWindow(url);
+      if (self.clients.openWindow) {
+        await self.clients.openWindow(url);
+      }
+    } catch (e) {
+      // Último recurso: abrir la app en su raíz.
+      try {
+        if (self.clients.openWindow) await self.clients.openWindow(self.location.origin);
+      } catch (_) { /* noop */ }
     }
   })());
 });
