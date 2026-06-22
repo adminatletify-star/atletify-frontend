@@ -11,6 +11,7 @@ import '../assets/css/user-panel.css';
 import '../assets/css/visitas-regalo.css';
 import AtletifyLoader from '../components/AtletifyLoader';
 import AnunciosEngine from '../components/AnunciosEngine';
+import NotificacionRow from '../components/NotificacionRow';
 import EjercicioDetailModal from '../components/EjercicioDetailModal';
 import ModalComentariosWod from '../components/ModalComentariosWod';
 import { evaluarNivelClase } from '../utils/nivelClase';
@@ -202,105 +203,8 @@ function aplicarReaccionMarcaLocal(resumen, idMarca, emoji) {
   return { ...resumen, [idMarca]: { idMarca, total, conteos, miEmoji: emoji } };
 }
 
-// Icono según el emoji embebido en el título de la notificación
-const iconoNoti = (titulo = '') =>
-  titulo.includes('💬') ? '💬'
-  : titulo.includes('🔥') ? '🔥'
-  : titulo.includes('❤️') ? '❤️'
-  : titulo.includes('👍') ? '👍'
-  : titulo.includes('🤝') ? '🤝'
-  : titulo.includes('💀') ? '💀'
-  : titulo.includes('🔀') ? '🔀'
-  : '🔔';
-
-// Tipo (color de acento) del aviso, según destino o el emoji del título
-const tipoNoti = (noti) => {
-  if (noti.destino === 'solicitud') return 'solicitud';
-  const t = noti.titulo || '';
-  if (t.includes('🤝')) return 'solicitud';        // solicitud aceptada (verde)
-  if (t.includes('💬')) return 'comentario';       // comentario/respuesta (cyan)
-  if (t.includes('❤️')) return 'like';             // like al perfil (rosa)
-  if (t.includes('🔥') || t.includes('👍') || t.includes('💀') || t.includes('🔀')) return 'reaccion'; // reacción a PR/comentario (ámbar)
-  return 'general';                                 // genérica (rojo)
-};
-
-// Fila de notificación con swipe-para-borrar (dedo o cursor, vía pointer events)
-function NotificacionRow({ noti, onAbrir, onBorrar, onResponder }) {
-  const esSolicitud = noti.destino === 'solicitud';
-  const tipo = tipoNoti(noti);
-  const [dx, setDx] = useState(0);
-  const arrastrando = useRef(false);
-  const startX = useRef(0);
-  const movido = useRef(false);
-
-  const onDown = (e) => {
-    arrastrando.current = true;
-    startX.current = e.clientX;
-    movido.current = false;
-    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) { /* noop */ }
-  };
-  const onMove = (e) => {
-    if (!arrastrando.current) return;
-    const d = e.clientX - startX.current;
-    if (Math.abs(d) > 6) movido.current = true;
-    setDx(d);
-  };
-  const onUp = () => {
-    if (!arrastrando.current) return;
-    arrastrando.current = false;
-    if (Math.abs(dx) > 110) {
-      setDx(dx > 0 ? 600 : -600);
-      setTimeout(() => onBorrar(noti.idNotificacion), 160);
-      return;
-    }
-    const huboSwipe = movido.current;
-    setDx(0);
-    // Tap: solo notificaciones "accionables" (no las informativas ni las de solicitud, que traen botones)
-    if (!huboSwipe && !esSolicitud && (noti.idEntrenamiento || noti.destino)) onAbrir(noti);
-  };
-
-  return (
-    <div className="up-noti-swipe">
-      <div className="up-noti-swipe-bg">
-        <i className="fas fa-trash"></i>
-        <i className="fas fa-trash"></i>
-      </div>
-      <div
-        className={`up-noti-row up-noti-row--${tipo} ${noti.leida ? 'up-noti-row--leida' : ''}`}
-        style={{ transform: `translateX(${dx}px)`, transition: arrastrando.current ? 'none' : 'transform 0.2s ease' }}
-        onPointerDown={onDown}
-        onPointerMove={onMove}
-        onPointerUp={onUp}
-        onPointerCancel={onUp}
-      >
-        <div className="up-noti-icon">{iconoNoti(noti.titulo)}</div>
-        <div className="up-noti-text">
-          <div className="up-noti-titulo">{noti.titulo}</div>
-          <div className="up-noti-msg">{noti.Mensaje || noti.mensaje}</div>
-          {(noti.idEntrenamiento || (noti.destino && !esSolicitud)) && (
-            <div className="up-noti-hint"><i className="fas fa-up-right-from-square me-1"></i>Toca para ver</div>
-          )}
-          {esSolicitud && (
-            <div className="up-noti-acciones">
-              <button
-                type="button"
-                className="up-noti-btn up-noti-btn--accept"
-                onPointerDown={e => e.stopPropagation()}
-                onClick={e => { e.stopPropagation(); onResponder(noti, 'Aceptada'); }}
-              ><i className="fas fa-check me-1"></i>Aceptar</button>
-              <button
-                type="button"
-                className="up-noti-btn up-noti-btn--reject"
-                onPointerDown={e => e.stopPropagation()}
-                onClick={e => { e.stopPropagation(); onResponder(noti, 'Rechazada'); }}
-              ><i className="fas fa-times me-1"></i>Rechazar</button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+// La fila de notificación (swipe-para-borrar) ahora es un componente compartido:
+// components/NotificacionRow.jsx (la usan tanto el UserPanel como el AdminBoxPanel).
 
 export default function UserPanel() {
   const navigate = useNavigate();
@@ -394,6 +298,21 @@ export default function UserPanel() {
     // 3. Si sobrevivió al cadenero (es Atleta, Coach, etc.), cargamos su Panel
     setUser(u);
     setBox(b);
+
+    // Refrescar el BOX desde el backend: si un admin le cambió el nombre (u otros datos), el
+    // localStorage queda viejo y el chip mostraría el nombre anterior hasta recargar a mano.
+    // Lo traemos fresco y actualizamos la caché (mismo criterio que el refresco del perfil de abajo).
+    if (b?.idBox) {
+      fetch(`${API_BASE}/box/${b.idBox}`)
+        .then(res => (res.ok ? res.json() : null))
+        .then(fresh => {
+          if (fresh && fresh.idBox) {
+            setBox(fresh);
+            localStorage.setItem('box', JSON.stringify(fresh));
+          }
+        })
+        .catch(() => { /* best-effort: si falla, se queda con el de localStorage */ });
+    }
 
     // Modal diario "Estado de Hoy": se muestra una vez por día por usuario.
     const keyEstadoDia = `atletify_estadoDia_${u.idUsuario || u.id}_${getFechaHoyString()}`;
@@ -583,6 +502,12 @@ export default function UserPanel() {
       setShowModalNotis(false);
       leerNotificacion(noti.idNotificacion);
       navigate('/buzon-sugerencias', { state: { sugerenciaDestacada: noti.idSugerencia } });
+    } else if (typeof noti.destino === 'string' && noti.destino.startsWith('sugerencia-coach:')) {
+      // Sugerencia del administrador (o su reacción a tu respuesta) -> pantalla de sugerencias.
+      const idS = parseInt(noti.destino.split(':')[1]);
+      setShowModalNotis(false);
+      leerNotificacion(noti.idNotificacion);
+      navigate('/mis-sugerencias-coach', { state: { destacada: idS } });
     } else if (typeof noti.destino === 'string' && noti.destino.startsWith('campania:')) {
       // Campaña/anuncio o estado de su aportación -> abrir el detalle de esa campaña.
       const idCamp = parseInt(noti.destino.split(':')[1]);
@@ -1937,6 +1862,20 @@ export default function UserPanel() {
                   <div className="flex-grow-1">
                     <div className="up-mini-label">Comunidad</div>
                     <div className="up-mini-value">La Comunidad</div>
+                  </div>
+                  <i className="fas fa-chevron-right text-secondary small"></i>
+                </div>
+              </div>
+
+              {/* Sugerencias del administrador */}
+              <div className="up-card up-card-clickable" onClick={() => navigate('/mis-sugerencias-coach')}>
+                <div className="up-mini-card">
+                  <div className="up-mini-icon up-mini-icon-info">
+                    <i className="fas fa-lightbulb"></i>
+                  </div>
+                  <div className="flex-grow-1">
+                    <div className="up-mini-label">Sugerencias</div>
+                    <div className="up-mini-value">Consejos de tu administrador</div>
                   </div>
                   <i className="fas fa-chevron-right text-secondary small"></i>
                 </div>

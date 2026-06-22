@@ -12,6 +12,7 @@ const AnunciosEngine = ({ box, user, abrirCampania, onConsumirAbrir }) => {
   const [colaAgradecimientos, setColaAgradecimientos] = useState([]);
   const [iniciandoPago, setIniciandoPago] = useState(false);
   const [montoDonacion, setMontoDonacion] = useState(50); // Por defecto 50 pesos
+  const [ahoraTick, setAhoraTick] = useState(() => Date.now()); // re-render por minuto para la cuenta regresiva del banner
 
   // Aportación por transferencia (con comprobante)
   const [metodoDonar, setMetodoDonar] = useState('stripe'); // 'stripe' | 'transferencia'
@@ -28,6 +29,12 @@ const AnunciosEngine = ({ box, user, abrirCampania, onConsumirAbrir }) => {
       fetchAgradecimientos();
     }
   }, [box, user]);
+
+  // Tick por minuto: mantiene viva la cuenta regresiva ("faltan X h Y min") del banner.
+  useEffect(() => {
+    const id = setInterval(() => setAhoraTick(Date.now()), 60000);
+    return () => clearInterval(id);
+  }, []);
 
   // Campañas finalizadas → modal de agradecimiento (1 vez por usuario por campaña).
   const fetchAgradecimientos = async () => {
@@ -62,9 +69,14 @@ const AnunciosEngine = ({ box, user, abrirCampania, onConsumirAbrir }) => {
 
   // Abrir una campaña concreta cuando llega desde una notificación (campanita).
   useEffect(() => {
-    if (!abrirCampania || anuncios.length === 0) return;
-    const found = anuncios.find(a => (a.idAnuncio || a.IdAnuncio) === Number(abrirCampania));
+    if (!abrirCampania) return;
+    const idNum = Number(abrirCampania);
+    if (!idNum) { onConsumirAbrir?.(); return; }          // id inválido: limpia el pedido y sal
+    // Mientras la lista aún no carga, NO consumimos el pedido: el efecto vuelve a correr al llegar `anuncios`.
+    if (anuncios.length === 0) return;
+    const found = anuncios.find(a => (a.idAnuncio || a.IdAnuncio) === idNum);
     if (found) {
+      // Cierra el popup obligatorio (si estuviera abierto) para que el detalle no quede tapado por él.
       setPopupObligatorio(null);
       abrirDetalle(found);
     }
@@ -275,6 +287,32 @@ const AnunciosEngine = ({ box, user, abrirCampania, onConsumirAbrir }) => {
     return `${inicio.toLocaleDateString('es-MX', optionsShort)} al ${fin.toLocaleDateString('es-MX', optionsLong)}`;
   };
 
+  // Fecha + HORA exacta de término de la campaña (lo que pidió el usuario para el banner).
+  const formatFechaHoraFin = (finStr) => {
+    if (!finStr) return '';
+    const fin = new Date(finStr);
+    if (isNaN(fin.getTime())) return '';
+    return fin.toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Cuenta regresiva legible hasta FechaFin. `ahora` (= ahoraTick) avanza cada minuto y mantiene
+  // el cálculo puro durante el render: la lectura del reloj vive en el intervalo, no aquí.
+  const tiempoRestante = (finStr, ahora) => {
+    if (!finStr) return null;
+    const fin = new Date(finStr).getTime();
+    if (isNaN(fin)) return null;
+    const diff = fin - ahora;
+    if (diff <= 0) return { vencida: true, dias: 0, texto: 'Finalizada' };
+    const dias = Math.floor(diff / 86400000);
+    const horas = Math.floor((diff % 86400000) / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    let texto;
+    if (dias > 0) texto = `Faltan ${dias} ${dias === 1 ? 'día' : 'días'} ${horas} h`;
+    else if (horas > 0) texto = `Faltan ${horas} h ${mins} min`;
+    else texto = `Faltan ${mins} min`;
+    return { vencida: false, dias, horas, mins, texto };
+  };
+
   // Validaciones de UI paramétricas
   if (!anuncios || anuncios.length === 0) return null;
 
@@ -314,40 +352,74 @@ const AnunciosEngine = ({ box, user, abrirCampania, onConsumirAbrir }) => {
           const esDonativo = anuncio.aceptarDonaciones || anuncio.AceptarDonaciones;
           const bPendiente = anuncio.tienePendiente || anuncio.TienePendiente;
           const bCorreccion = anuncio.tieneCorreccion || anuncio.TieneCorreccion;
+          const meta = anuncio.metaDonacion || anuncio.MetaDonacion || 0;
+          const recaudado = anuncio.totalRecaudado || anuncio.TotalRecaudado || 0;
+          const finStr = anuncio.fechaFin || anuncio.FechaFin;
+          const pct = meta > 0 ? Math.min((recaudado / meta) * 100, 100) : 0;
+          const restante = tiempoRestante(finStr, ahoraTick);
           return (
             <div
               key={anuncio.idAnuncio || anuncio.IdAnuncio}
               className={`ae-banner ${esDonativo ? 'ae-banner--donativo' : ''}`}
               onClick={() => abrirDetalle(anuncio)}
             >
-              <div className="ae-banner-left">
-                <div className="ae-banner-icon">
-                  <i className={`fas ${esDonativo ? 'fa-hand-holding-heart' : 'fa-bullhorn'}`}></i>
+              <div className="ae-banner-top">
+                <div className="ae-banner-left">
+                  <div className="ae-banner-icon">
+                    <i className={`fas ${esDonativo ? 'fa-hand-holding-heart' : 'fa-bullhorn'}`}></i>
+                  </div>
+                  <div className="ae-banner-text">
+                    <h6 className="ae-banner-title">{anuncio.titulo || anuncio.Titulo}</h6>
+                    <small className="ae-banner-msg">
+                      {anuncio.mensaje || anuncio.Mensaje}
+                    </small>
+                  </div>
                 </div>
-                <div className="ae-banner-text">
-                  <h6 className="ae-banner-title">{anuncio.titulo || anuncio.Titulo}</h6>
-                  <small className="ae-banner-msg">
-                    {anuncio.mensaje || anuncio.Mensaje}
-                  </small>
+                <div className="ae-banner-right">
+                  {esDonativo && (
+                    <span className="ae-banner-cta">
+                      <i className="fas fa-heart"></i> Apoyar Causa
+                    </span>
+                  )}
+                  {bPendiente && (
+                    <span className="ae-banner-chip ae-banner-chip--pendiente">
+                      <i className="fas fa-hourglass-half"></i> En revisión
+                    </span>
+                  )}
+                  {bCorreccion && (
+                    <span className="ae-banner-chip ae-banner-chip--correccion">
+                      <i className="fas fa-triangle-exclamation"></i> Corregir
+                    </span>
+                  )}
                 </div>
               </div>
-              <div className="ae-banner-right">
-                {esDonativo && (
-                  <span className="ae-banner-cta">
-                    <i className="fas fa-heart"></i> Apoyar Causa
+
+              {/* Barra de progreso de la recaudación (solo campañas de donativo con meta) */}
+              {esDonativo && meta > 0 && (
+                <div className="ae-banner-progress">
+                  <div className="ae-banner-progress-labels">
+                    <span className="ae-banner-progress-recaudado">${recaudado.toFixed(2)}</span>
+                    <span className="ae-banner-progress-meta">Meta ${meta}</span>
+                  </div>
+                  <div className="ae-banner-progress-track">
+                    <div className="ae-banner-progress-fill" role="progressbar" style={{ width: `${pct}%` }}></div>
+                  </div>
+                </div>
+              )}
+
+              {/* Fecha y hora exactas de término + cuenta regresiva en vivo */}
+              {finStr && (
+                <div className="ae-banner-foot">
+                  <span className="ae-banner-foot-fecha">
+                    <i className="far fa-clock"></i> Termina: {formatFechaHoraFin(finStr)}
                   </span>
-                )}
-                {bPendiente && (
-                  <span className="ae-banner-chip ae-banner-chip--pendiente">
-                    <i className="fas fa-hourglass-half"></i> En revisión
-                  </span>
-                )}
-                {bCorreccion && (
-                  <span className="ae-banner-chip ae-banner-chip--correccion">
-                    <i className="fas fa-triangle-exclamation"></i> Corregir
-                  </span>
-                )}
-              </div>
+                  {restante && (
+                    <span className={`ae-banner-foot-restante ${restante.vencida ? 'ae-banner-foot-restante--fin' : (restante.dias === 0 ? 'ae-banner-foot-restante--urgente' : '')}`}>
+                      <i className={`fas ${restante.vencida ? 'fa-flag-checkered' : 'fa-hourglass-half'}`}></i> {restante.texto}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}

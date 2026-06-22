@@ -1,0 +1,474 @@
+/* ============================================
+   SUGERENCIAS A ATLETAS (Coach) — prefijo .sca-
+   Sigue el sistema de diseño GestionClases.
+   ============================================ */
+
+.sca-loading-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+/* === BOTÓN AYUDA "?" EN HEADER === */
+.sca-help-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(230, 57, 70, 0.08);
+  border: 1px solid rgba(230, 57, 70, 0.22);
+  color: var(--primary);
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: var(--transition);
+}
+.sca-help-btn:active { transform: scale(0.92); }
+@media (hover: hover) {
+  .sca-help-btn:hover { background: rgba(230, 57, 70, 0.16); border-color: var(--primary); }
+}
+
+/* === COMPOSICIÓN === */
+.sca-compose {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.sca-compose-title {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+.sca-compose-title i { color: var(--primary); }
+
+/* Selector de atleta (trigger del modal) */
+.sca-atleta-picker {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--bg-input, rgba(255,255,255,0.04));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  margin-bottom: 0.85rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: var(--transition);
+}
+.sca-atleta-picker:active { transform: scale(0.99); }
+@media (hover: hover) {
+  .sca-atleta-picker:hover { border-color: var(--primary); }
+}
+.sca-atleta-picker-icon { color: var(--primary); }
+.sca-atleta-picker-text { flex: 1; text-align: left; color: var(--text-muted); font-size: 0.92rem; }
+.sca-atleta-picker-text--activo { color: var(--text-primary); font-weight: 600; }
+.sca-atleta-picker-arrow { color: var(--text-muted); font-size: 0.8rem; }
+
+.sca-textarea {
+  width: 100%;
+  background: var(--bg-input, rgba(255,255,255,0.04));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  padding: 0.8rem 0.9rem;
+  font-size: 0.95rem;
+  font-family: var(--font-body);
+  resize: vertical;
+  min-height: 80px;
+  transition: var(--transition);
+}
+.sca-textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow, rgba(230,57,70,0.15)); }
+.sca-textarea::placeholder { color: var(--text-muted); }
+
+.sca-cat-row { margin: 0.85rem 0 1.1rem; }
+.sca-cat-label {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+.sca-cat-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.sca-cat-chip {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.34rem 0.8rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: var(--transition);
+}
+.sca-cat-chip:active { transform: scale(0.94); }
+@media (hover: hover) {
+  .sca-cat-chip:hover { border-color: var(--primary); color: var(--text-primary); }
+}
+.sca-cat-chip--activo {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Botón primario */
+.sca-btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-heading-alt);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.72rem 1.3rem;
+  cursor: pointer;
+  width: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: var(--transition);
+}
+.sca-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.sca-btn-primary:active:not(:disabled) { transform: scale(0.97); }
+@media (hover: hover) {
+  .sca-btn-primary:hover:not(:disabled) { box-shadow: 0 4px 16px var(--primary-glow, rgba(230,57,70,0.4)); }
+}
+
+.sca-btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.72rem 1.1rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+@media (hover: hover) { .sca-btn-ghost:hover { color: var(--text-primary); border-color: var(--text-muted); } }
+
+/* === LISTA === */
+.sca-lista-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+.sca-section-title {
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+.sca-section-title i { color: var(--primary); }
+
+.sca-search {
+  position: relative;
+  margin-left: auto;
+  flex: 1;
+  min-width: 200px;
+  max-width: 360px;
+}
+.sca-search-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.sca-search-input {
+  width: 100%;
+  background: var(--bg-input, rgba(255,255,255,0.04));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  padding: 0.6rem 0.9rem 0.6rem 2.3rem;
+  font-size: 0.9rem;
+}
+.sca-search-input:focus { outline: none; border-color: var(--primary); }
+
+.sca-resumen { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.85rem; }
+
+.sca-cards { display: flex; flex-direction: column; gap: 1rem; }
+
+.sca-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.sca-card--flash {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 205, 0, 0.25);
+}
+
+.sca-card-top { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+.sca-atleta { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+.sca-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  object-fit: cover; flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+.sca-avatar--sm { width: 34px; height: 34px; }
+.sca-avatar--ph {
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(230, 57, 70, 0.1); color: var(--primary);
+}
+.sca-atleta-info { display: flex; flex-direction: column; min-width: 0; }
+.sca-atleta-nombre {
+  font-weight: 700; color: var(--text-primary); font-size: 0.92rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sca-atleta-correo {
+  font-size: 0.74rem; color: var(--text-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sca-fecha { font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-stats); }
+.sca-resp-fecha { color: var(--text-muted); font-weight: 600; text-transform: none; letter-spacing: 0; }
+
+/* Badge de estado */
+.sca-badge {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; padding: 0.28rem 0.6rem; border-radius: 999px;
+  flex-shrink: 0; white-space: nowrap;
+}
+.sca-badge--enviada { background: rgba(150,150,150,0.12); color: var(--text-muted); border: 1px solid rgba(150,150,150,0.25); }
+.sca-badge--leida { background: rgba(52,152,219,0.12); color: #3498db; border: 1px solid rgba(52,152,219,0.3); }
+.sca-badge--respondida { background: rgba(46,204,113,0.12); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+
+.sca-cat-tag {
+  display: inline-block;
+  margin-top: 0.6rem;
+  font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  background: rgba(230,57,70,0.08); border: 1px solid rgba(230,57,70,0.22);
+  color: var(--primary); padding: 0.2rem 0.55rem; border-radius: 6px;
+}
+
+/* Burbujas de mensaje */
+.sca-burbuja {
+  position: relative;
+  margin-top: 0.7rem;
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+}
+.sca-burbuja--coach { background: rgba(230,57,70,0.07); border: 1px solid rgba(230,57,70,0.15); }
+.sca-burbuja--atleta { background: rgba(255,255,255,0.04); border: 1px solid var(--border); }
+.sca-msg { margin: 0; color: var(--text-primary); font-size: 0.92rem; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+.sca-resp-label {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;
+  color: var(--text-muted); margin-bottom: 0.35rem;
+}
+.sca-resp-label i { color: #2ecc71; }
+
+.sca-reacc-tag {
+  position: absolute; bottom: -10px; right: 10px;
+  background: var(--bg-base); border: 1px solid var(--border);
+  border-radius: 999px; padding: 0.05rem 0.4rem; font-size: 0.85rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+/* Acciones de edición */
+.sca-acciones { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
+.sca-icon-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; cursor: pointer; font-size: 0.82rem;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  transition: var(--transition);
+}
+.sca-icon-btn:active { transform: scale(0.9); }
+.sca-icon-btn--edit { border: 1px solid var(--accent, #ffcd00); color: var(--accent, #ffcd00); }
+.sca-icon-btn--del { border: 1px solid var(--primary); color: var(--primary); }
+@media (hover: hover) {
+  .sca-icon-btn--edit:hover { background: rgba(255,205,0,0.12); }
+  .sca-icon-btn--del:hover { background: rgba(230,57,70,0.12); }
+}
+
+/* Formulario de respuesta del atleta */
+.sca-reply-form {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+.sca-reply-form .sca-textarea { min-height: 60px; }
+
+/* Respuesta + picker de reacción */
+.sca-respuesta { margin-top: 0.4rem; }
+.sca-reacc-picker {
+  display: flex; gap: 0.3rem; margin-top: 0.7rem; flex-wrap: wrap;
+}
+.sca-reacc-btn {
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 999px; font-size: 1rem; line-height: 1;
+  padding: 0.25rem 0.45rem; cursor: pointer;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
+  filter: grayscale(0.4); opacity: 0.8;
+}
+.sca-reacc-btn:active { transform: scale(0.85); }
+@media (hover: hover) {
+  .sca-reacc-btn:hover { filter: none; opacity: 1; border-color: var(--primary); }
+}
+.sca-reacc-btn--activo {
+  background: rgba(230,57,70,0.14); border-color: var(--primary);
+  filter: none; opacity: 1; transform: scale(1.05);
+}
+
+/* Empty state */
+.sca-empty {
+  text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);
+}
+.sca-empty i { font-size: 2rem; opacity: 0.35; display: block; margin-bottom: 0.6rem; }
+.sca-empty p { font-size: 0.9rem; margin: 0; }
+.sca-empty--sm { padding: 1.5rem 1rem; }
+.sca-empty--sm i { font-size: 1.4rem; }
+
+/* === PAGINACIÓN (estilo Ejercicios) === */
+.sca-pag {
+  display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+.sca-pag-num {
+  min-width: 36px; height: 36px; border-radius: 8px;
+  background: transparent; border: 1px solid rgba(255,255,255,0.08);
+  color: var(--secondary, var(--text-muted)); font-weight: 500; cursor: pointer;
+  touch-action: manipulation; transition: var(--transition);
+}
+.sca-pag-num--activo { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
+@media (hover: hover) {
+  .sca-pag-num:hover:not(.sca-pag-num--activo) { background: rgba(230,57,70,0.1); border-color: rgba(230,57,70,0.3); }
+}
+.sca-pag-arrow {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-primary); cursor: pointer; font-size: 1.1rem; line-height: 1;
+  touch-action: manipulation; transition: var(--transition);
+}
+.sca-pag-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+@media (hover: hover) {
+  .sca-pag-arrow:hover:not(:disabled) { background: rgba(230,57,70,0.1); border-color: rgba(230,57,70,0.3); }
+}
+.sca-pag-ellipsis { color: var(--text-muted); align-self: center; padding: 0 0.2rem; }
+
+/* === MODALES (siempre centrados) === */
+.sca-modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+}
+.sca-modal {
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  border-top: 3px solid var(--primary); border-radius: 20px;
+  width: 100%; max-width: 460px; max-height: 85vh;
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.sca-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.1rem 1.25rem; border-bottom: 1px solid var(--border);
+}
+.sca-modal-header h2 {
+  font-family: var(--font-heading); font-size: 1rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-primary); margin: 0;
+}
+.sca-modal-close {
+  width: 32px; height: 32px; border-radius: 8px; border: none;
+  background: rgba(255,255,255,0.05); color: var(--text-muted); cursor: pointer;
+  touch-action: manipulation;
+}
+@media (hover: hover) { .sca-modal-close:hover { background: rgba(230,57,70,0.12); color: var(--primary); } }
+.sca-modal-body { padding: 1.1rem 1.25rem; overflow-y: auto; }
+.sca-modal-footer {
+  display: flex; gap: 0.6rem; justify-content: flex-end;
+  padding: 0.9rem 1.25rem; border-top: 1px solid var(--border);
+}
+.sca-ayuda p { display: flex; gap: 0.6rem; align-items: flex-start; color: var(--text-primary); font-size: 0.9rem; line-height: 1.5; margin: 0 0 0.85rem; }
+.sca-ayuda p:last-child { margin-bottom: 0; }
+.sca-ayuda i { color: var(--primary); margin-top: 0.18rem; flex-shrink: 0; }
+
+.sca-modal-search {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin: 0.9rem 1.25rem 0.4rem;
+  background: var(--bg-input, rgba(255,255,255,0.04));
+  border: 1px solid var(--border); border-radius: 10px; padding: 0.55rem 0.85rem;
+}
+.sca-modal-search i { color: var(--text-muted); font-size: 0.85rem; }
+.sca-modal-search input { flex: 1; background: transparent; border: none; color: var(--text-primary); font-size: 0.9rem; }
+.sca-modal-search input:focus { outline: none; }
+.sca-modal-list { padding: 0.4rem 0.9rem 1rem; overflow-y: auto; }
+.sca-opt {
+  width: 100%; display: flex; align-items: center; gap: 0.65rem;
+  background: transparent; border: 1px solid transparent; border-radius: 10px;
+  padding: 0.55rem 0.6rem; cursor: pointer; color: var(--text-primary);
+  touch-action: manipulation; transition: var(--transition);
+}
+.sca-opt:active { transform: scale(0.99); }
+@media (hover: hover) { .sca-opt:hover { background: rgba(255,255,255,0.04); } }
+.sca-opt--activa { background: rgba(230,57,70,0.1); border-color: rgba(230,57,70,0.25); }
+.sca-opt-info { flex: 1; min-width: 0; display: flex; flex-direction: column; text-align: left; }
+.sca-opt-nombre { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sca-opt-correo { font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sca-opt-check { color: var(--primary); flex-shrink: 0; }
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+  .sca-compose { padding: 1.1rem; }
+  .sca-compose-title { font-size: 0.88rem; }
+  .sca-msg { font-size: 0.88rem; }
+}
+@media (max-width: 576px) {
+  .sca-compose { padding: 0.9rem; border-radius: 14px; }
+  .sca-search { max-width: none; flex-basis: 100%; margin-left: 0; }
+  .sca-card { padding: 0.85rem 0.9rem; }
+  .sca-msg { font-size: 0.85rem; }
+  .sca-atleta-nombre { font-size: 0.86rem; }
+  .sca-badge { font-size: 0.62rem; padding: 0.22rem 0.5rem; }
+  .sca-modal { max-width: none; border-radius: 18px; }
+  .sca-btn-primary { width: 100%; }
+}
+@media (max-width: 380px) {
+  .sca-compose-title { font-size: 0.8rem; }
+  .sca-msg { font-size: 0.82rem; }
+  .sca-cat-chip { font-size: 0.68rem; padding: 0.3rem 0.65rem; }
+  .sca-reacc-btn { font-size: 0.9rem; }
+}

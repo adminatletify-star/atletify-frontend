@@ -1252,29 +1252,35 @@ details[open] .qv-week-summary {
   position: fixed;
   inset: 0;
   z-index: 1090;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
+/* Modal centrado (igual que el resto de modales del sistema): así no se descuadra en móvil,
+   donde la campanita queda a la izquierda y un dropdown anclado se salía de la pantalla. */
 .abp-notif-panel {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  right: 0;
-  width: min(340px, 88vw);
-  max-height: 70vh;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, 92vw);
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   background: var(--bg-elevated, #1a1a1f);
   border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
   border-top: 3px solid var(--primary, #e63946);
-  border-radius: 16px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
   z-index: 1091;
   overflow: hidden;
   animation: abp-notif-pop 0.18s ease;
 }
 
 @keyframes abp-notif-pop {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 .abp-notif-head {
@@ -1309,6 +1315,10 @@ details[open] .qv-week-summary {
 .abp-notif-list {
   overflow-y: auto;
   scrollbar-width: thin;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.85rem;
 }
 
 .abp-notif-item {

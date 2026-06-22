@@ -49,6 +49,7 @@ import HistorialBoxDetalle from './pages/HistorialBoxDetalle';
 import AdminArchivadasDev from './pages/AdminArchivadasDev';
 import AdminArchivadasDevDetalle from './pages/AdminArchivadasDevDetalle';
 import AdminPreregistros from './pages/AdminPreregistros';
+import AuditoriaBox from './pages/AuditoriaBox';
 import AdminSaaS from './pages/AdminSaaS';
 import PortalCompetencias from './pages/PortalCompetencias';
 import PortalLeaderboard from './pages/PortalLeaderboard';
@@ -104,6 +105,8 @@ import DetallePlanUser from './pages/DetallePlanUser';
 import WolfBeneficios from './pages/WolfBeneficios';
 import PublicDropIn from './pages/PublicDropIn';
 import BuzonSugerencias from './pages/BuzonSugerencias';
+import SugerenciasAtletas from './pages/SugerenciasAtletas';
+import MisSugerencias from './pages/MisSugerencias';
 import GestionReglamento from './pages/GestionReglamento';
 import GestionAnuncios from './pages/GestionAnuncios';
 import ControlCampania from './pages/ControlCampania';
@@ -457,6 +460,7 @@ function App() {
               <Route path="/preguntas-frecuentes" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Atleta', 'Usuario', 'Developer']}><PreguntasFrecuentes /></ProtectedRoute>} />
               <Route path="/admin-saas" element={<ProtectedRoute allowedRoles={['Developer']}><AdminSaaS /></ProtectedRoute>} />
               <Route path="/admin-preregistros" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AdminPreregistros /></ProtectedRoute>} />
+              <Route path="/admin-box/auditoria" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AuditoriaBox /></ProtectedRoute>} />
               <Route path="/crear-box" element={<ProtectedRoute allowedRoles={['Developer']}><CrearBox /></ProtectedRoute>} />
               <Route path="/admin-competencias" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AdminCompetencias /></ProtectedRoute>} />
               <Route path="/admin-competencias/historial" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AdminCompetenciasHistorial /></ProtectedRoute>} />
@@ -476,6 +480,9 @@ function App() {
               <Route path="/resenas-coaches" element={<UserResenas />} />
               <Route path="/calendario-atleta" element={<ProtectedRoute allowedRoles={['Atleta']}><CalendarioAtleta /></ProtectedRoute>} />
               <Route path="/tienda-box" element={<ProtectedRoute allowedRoles={['Atleta']}><TiendaBox /></ProtectedRoute>} />
+              {/* === SUGERENCIAS DEL COACH A ATLETAS === */}
+              <Route path="/sugerencias-atletas" element={<ProtectedRoute allowedRoles={['Coach', 'AdminBox', 'Developer']}><SugerenciasAtletas /></ProtectedRoute>} />
+              <Route path="/mis-sugerencias-coach" element={<ProtectedRoute allowedRoles={['Atleta']}><MisSugerencias /></ProtectedRoute>} />
               {/* === MÓDULO FINANCIERO (SÓLO ADMIN Y DEVELOPER) === */}
               <Route
                 path="/gestion-finanzas"

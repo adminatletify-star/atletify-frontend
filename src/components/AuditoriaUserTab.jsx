@@ -1,5 +1,91 @@
 import { useState, useEffect } from 'react';
 import AtletifyLoader from './AtletifyLoader';
+import OpcionesPicker from './OpcionesPicker';
+
+// Color + ícono por tipo de acción. Compartido entre el badge de la tabla y las opciones del filtro modal.
+function estiloAccion(accion = '') {
+  if (accion === 'ELIMINAR_CUENTA_TRANSFERENCIA') return { color: '#e63946', icono: 'fa-university' };
+  if (accion.includes('CUENTA_TRANSFERENCIA'))     return { color: '#16a085', icono: 'fa-university' };
+  if (accion === 'APROBAR_CAMBIO_FACTURACION')     return { color: '#2ECC71', icono: 'fa-file-circle-check' };
+  if (accion === 'RECHAZAR_CAMBIO_FACTURACION')    return { color: '#e67e22', icono: 'fa-file-circle-xmark' };
+  if (accion === 'SOLICITAR_CAMBIO_FACTURACION')   return { color: '#3498db', icono: 'fa-file-invoice-dollar' };
+  if (accion === 'GESTION_SUGERENCIA')             return { color: '#9b59b6', icono: 'fa-comment-dots' };
+  if (accion.includes('CUENTA_CAMPANIA'))          return { color: '#16a085', icono: 'fa-building-columns' };
+  if (accion === 'APROBAR_DONATIVO')               return { color: '#2ECC71', icono: 'fa-hand-holding-heart' };
+  if (accion === 'CORRECCION_DONATIVO')            return { color: '#e67e22', icono: 'fa-rotate-left' };
+  if (accion.includes('DONATIVO'))                 return { color: '#f5a623', icono: 'fa-hand-holding-heart' };
+  if (accion.includes('CAMPANIA'))                 return { color: '#9b59b6', icono: 'fa-bullhorn' };
+  if (accion === 'CREAR_WOD')                      return { color: '#2ECC71', icono: 'fa-calendar-plus' };
+  if (accion === 'EDITAR_WOD')                     return { color: '#f5a623', icono: 'fa-pen' };
+  if (accion === 'ELIMINAR_WOD')                   return { color: '#e63946', icono: 'fa-dumbbell' };
+  if (accion === 'CREAR_CLASE')                    return { color: '#2ECC71', icono: 'fa-calendar-check' };
+  if (accion === 'EDITAR_CLASE')                   return { color: '#f5a623', icono: 'fa-pen-to-square' };
+  if (accion === 'ELIMINAR_CLASE')                 return { color: '#e63946', icono: 'fa-calendar-xmark' };
+  if (accion === 'CREAR_EXPEDIENTE_MEDICO')        return { color: '#2ECC71', icono: 'fa-notes-medical' };
+  if (accion === 'ACTUALIZAR_EXPEDIENTE_MEDICO')   return { color: '#f5a623', icono: 'fa-file-medical' };
+  if (accion.includes('DESACTIVAR_VISITAS'))       return { color: '#e67e22', icono: 'fa-pause-circle' };
+  if (accion.includes('ACTIVAR_VISITAS'))          return { color: '#f5a623', icono: 'fa-gift' };
+  if (accion.includes('DESACTIVAR_METODO'))        return { color: '#e67e22', icono: 'fa-toggle-off' };
+  if (accion.includes('ACTIVAR_METODO'))           return { color: '#22c55e', icono: 'fa-toggle-on' };
+  if (accion.includes('APROBAR'))                  return { color: '#2ECC71', icono: 'fa-user-check' };
+  if (accion.includes('BANEAR'))                   return { color: '#e63946', icono: 'fa-ban' };
+  if (accion.includes('RECORDAR'))                 return { color: '#f5a623', icono: 'fa-bell' };
+  if (accion.includes('RECHAZAR'))                 return { color: '#e67e22', icono: 'fa-user-times' };
+  if (accion.includes('ALTA'))                     return { color: '#2ECC71', icono: 'fa-user-plus' };
+  if (accion.includes('BAJA') || accion.includes('ELIMINAR')) return { color: '#e63946', icono: 'fa-user-minus' };
+  if (accion.includes('VENTA') || accion.includes('COBRO'))   return { color: '#3498db', icono: 'fa-money-bill-wave' };
+  if (accion.includes('CREAR_TIENDITA'))           return { color: '#f39c12', icono: 'fa-store' };
+  return { color: '#9aa6c4', icono: 'fa-info-circle' };
+}
+
+// Paleta para diferenciar los boxes en el filtro (color por índice).
+const PALETA_BOX = ['#4FC3F7', '#f5a623', '#2ECC71', '#9b59b6', '#FF5D8F', '#16a085', '#e67e22', '#3498db'];
+
+// Opciones del filtro de acción, con color/ícono por tipo (mismo lenguaje visual que el badge de la tabla).
+const ACCIONES = [
+  { valor: '', label: 'Todas las Acciones', color: '#9aa6c4', icono: 'fa-list' },
+  ...[
+    ['ALTA_USUARIO', 'Alta de Usuario'],
+    ['APROBAR_USUARIO', 'Aprobar Solicitud'],
+    ['RECHAZAR_USUARIO', 'Rechazar Solicitud'],
+    ['RECORDAR_RECHAZO', 'Recordatorio de Corrección'],
+    ['BANEAR_USUARIO', 'Banear Usuario'],
+    ['BAJA_USUARIO', 'Baja de Usuario'],
+    ['COBRO_MENSUALIDAD', 'Cobro Mensualidad'],
+    ['VENTA_PRODUCTO', 'Venta de Producto'],
+    ['CREAR_TIENDITA', 'Creación Tiendita'],
+    ['CREAR_WOD', 'Crear WOD'],
+    ['EDITAR_WOD', 'Editar WOD'],
+    ['ELIMINAR_WOD', 'Eliminar WOD'],
+    ['CREAR_CLASE', 'Crear Clase'],
+    ['EDITAR_CLASE', 'Editar Clase'],
+    ['ELIMINAR_CLASE', 'Eliminar Clase'],
+    ['CREAR_EXPEDIENTE_MEDICO', 'Crear Expediente Médico'],
+    ['ACTUALIZAR_EXPEDIENTE_MEDICO', 'Actualizar Expediente Médico'],
+    ['ACTIVAR_VISITAS_REGALO', 'Activar Visitas de Regalo'],
+    ['DESACTIVAR_VISITAS_REGALO', 'Pausar Visitas de Regalo'],
+    ['ACTIVAR_METODO_PAGO', 'Activar Método de Pago'],
+    ['DESACTIVAR_METODO_PAGO', 'Desactivar Método de Pago'],
+    ['CREAR_CUENTA_TRANSFERENCIA', 'Crear Cuenta de Transferencia'],
+    ['EDITAR_CUENTA_TRANSFERENCIA', 'Editar Cuenta de Transferencia'],
+    ['ELIMINAR_CUENTA_TRANSFERENCIA', 'Eliminar Cuenta de Transferencia'],
+    ['SOLICITAR_CAMBIO_FACTURACION', 'Solicitar Cambio de Facturación'],
+    ['APROBAR_CAMBIO_FACTURACION', 'Aprobar Cambio de Facturación'],
+    ['RECHAZAR_CAMBIO_FACTURACION', 'Rechazar Cambio de Facturación'],
+    ['GESTION_SUGERENCIA', 'Gestión de Sugerencia'],
+    ['CREAR_CAMPANIA', 'Crear Campaña/Anuncio'],
+    ['EDITAR_CAMPANIA', 'Editar Campaña/Anuncio'],
+    ['ELIMINAR_CAMPANIA', 'Eliminar Campaña/Anuncio'],
+    ['DONATIVO_MANUAL', 'Aportación Manual (Campaña)'],
+    ['DONATIVO_STRIPE', 'Donativo en Línea (Campaña)'],
+    ['APROBAR_DONATIVO', 'Aprobar Comprobante (Campaña)'],
+    ['CORRECCION_DONATIVO', 'Comprobante a Corrección (Campaña)'],
+    ['ELIMINAR_DONATIVO', 'Eliminar Registro (Campaña)'],
+    ['CREAR_CUENTA_CAMPANIA', 'Crear Cuenta (Campaña)'],
+    ['EDITAR_CUENTA_CAMPANIA', 'Editar Cuenta (Campaña)'],
+    ['ELIMINAR_CUENTA_CAMPANIA', 'Eliminar Cuenta (Campaña)'],
+  ].map(([valor, label]) => ({ valor, label, ...estiloAccion(valor) })),
+];
 
 const formatearFecha = (fechaUtc) => {
   if (!fechaUtc) return 'N/A';
@@ -10,53 +96,18 @@ const formatearFecha = (fechaUtc) => {
 };
 
 const AccionBadge = ({ accion }) => {
-  let color = 'var(--text-muted)';
-  let icon = 'fa-info-circle';
-
-  if (accion === 'ELIMINAR_CUENTA_TRANSFERENCIA') { color = 'var(--primary)'; icon = 'fa-university'; }
-  else if (accion.includes('CUENTA_TRANSFERENCIA')) { color = '#16a085'; icon = 'fa-university'; }
-  else if (accion === 'APROBAR_CAMBIO_FACTURACION') { color = '#2ECC71'; icon = 'fa-file-circle-check'; }
-  else if (accion === 'RECHAZAR_CAMBIO_FACTURACION') { color = '#e67e22'; icon = 'fa-file-circle-xmark'; }
-  else if (accion === 'SOLICITAR_CAMBIO_FACTURACION') { color = '#3498db'; icon = 'fa-file-invoice-dollar'; }
-  else if (accion === 'GESTION_SUGERENCIA') { color = '#9b59b6'; icon = 'fa-comment-dots'; }
-  // Campañas y donativos (deben ir antes de las reglas genéricas APROBAR/ELIMINAR/CREAR)
-  else if (accion.includes('CUENTA_CAMPANIA')) { color = '#16a085'; icon = 'fa-building-columns'; }
-  else if (accion === 'APROBAR_DONATIVO') { color = '#2ECC71'; icon = 'fa-hand-holding-heart'; }
-  else if (accion === 'CORRECCION_DONATIVO') { color = '#e67e22'; icon = 'fa-rotate-left'; }
-  else if (accion.includes('DONATIVO')) { color = '#f5a623'; icon = 'fa-hand-holding-heart'; }
-  else if (accion.includes('CAMPANIA')) { color = '#9b59b6'; icon = 'fa-bullhorn'; }
-  else if (accion === 'CREAR_WOD') { color = '#2ECC71'; icon = 'fa-calendar-plus'; }
-  else if (accion === 'EDITAR_WOD') { color = '#f5a623'; icon = 'fa-pen'; }
-  else if (accion === 'ELIMINAR_WOD') { color = 'var(--primary)'; icon = 'fa-dumbbell'; }
-  else if (accion === 'CREAR_CLASE') { color = '#2ECC71'; icon = 'fa-calendar-check'; }
-  else if (accion === 'EDITAR_CLASE') { color = '#f5a623'; icon = 'fa-pen-to-square'; }
-  else if (accion === 'ELIMINAR_CLASE') { color = 'var(--primary)'; icon = 'fa-calendar-xmark'; }
-  else if (accion === 'CREAR_EXPEDIENTE_MEDICO') { color = '#2ECC71'; icon = 'fa-notes-medical'; }
-  else if (accion === 'ACTUALIZAR_EXPEDIENTE_MEDICO') { color = '#f5a623'; icon = 'fa-file-medical'; }
-  else if (accion.includes('DESACTIVAR_VISITAS')) { color = '#e67e22'; icon = 'fa-pause-circle'; }
-  else if (accion.includes('ACTIVAR_VISITAS')) { color = '#f5a623'; icon = 'fa-gift'; }
-  else if (accion.includes('DESACTIVAR_METODO')) { color = '#e67e22'; icon = 'fa-toggle-off'; }
-  else if (accion.includes('ACTIVAR_METODO')) { color = '#22c55e'; icon = 'fa-toggle-on'; }
-  else if (accion.includes('APROBAR')) { color = '#2ECC71'; icon = 'fa-user-check'; }
-  else if (accion.includes('BANEAR')) { color = 'var(--primary)'; icon = 'fa-ban'; }
-  else if (accion.includes('RECORDAR')) { color = '#f5a623'; icon = 'fa-bell'; }
-  else if (accion.includes('RECHAZAR')) { color = '#e67e22'; icon = 'fa-user-times'; }
-  else if (accion.includes('ALTA')) { color = '#2ECC71'; icon = 'fa-user-plus'; }
-  else if (accion.includes('BAJA') || accion.includes('ELIMINAR')) { color = 'var(--primary)'; icon = 'fa-user-minus'; }
-  else if (accion.includes('VENTA') || accion.includes('COBRO')) { color = '#3498db'; icon = 'fa-money-bill-wave'; }
-  else if (accion.includes('CREAR_TIENDITA')) { color = '#f39c12'; icon = 'fa-store'; }
-
+  const { color, icono } = estiloAccion(accion);
   return (
-    <span style={{ 
-      color: color, 
-      fontWeight: 'bold', 
-      fontSize: '0.85em', 
-      background: `${color}20`, 
-      padding: '4px 8px', 
+    <span style={{
+      color: color,
+      fontWeight: 'bold',
+      fontSize: '0.85em',
+      background: `${color}20`,
+      padding: '4px 8px',
       borderRadius: '4px',
       whiteSpace: 'nowrap'
     }}>
-      <i className={`fas ${icon} me-1`} /> {accion.replaceAll('_', ' ')}
+      <i className={`fas ${icono} me-1`} /> {accion.replaceAll('_', ' ')}
     </span>
   );
 };
@@ -73,7 +124,7 @@ function buildPaginas(pagina, total) {
     }, []);
 }
 
-export default function AuditoriaUserTab({ boxes }) {
+export default function AuditoriaUserTab({ boxes, ocultarFiltroBox = false }) {
   const [logs, setLogs]       = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagina, setPagina]   = useState(1);
@@ -121,67 +172,36 @@ export default function AuditoriaUserTab({ boxes }) {
         Historial de movimientos y acciones realizadas por administradores o coaches (altas, bajas, cobros, etc).
       </p>
 
-      {/* Filtros */}
+      {/* Filtros — selectores modales (no <select> nativo), responsivos */}
       <div className="row g-2 mb-4">
-        <div className="col-12 col-md-6">
-          <select 
-            className="form-select bg-dark text-white border-secondary" 
-            value={filtroBox} 
-            onChange={e => { setFiltroBox(e.target.value); setPagina(1); }}
-          >
-            <option value="">Todos los Boxes</option>
-            {boxes?.map(b => (
-              <option key={b.idBox} value={b.idBox}>{b.nombre}</option>
-            ))}
-          </select>
-        </div>
-        <div className="col-12 col-md-6">
-          <select 
-            className="form-select bg-dark text-white border-secondary" 
-            value={filtroAccion} 
-            onChange={e => { setFiltroAccion(e.target.value); setPagina(1); }}
-          >
-            <option value="">Todas las Acciones</option>
-            <option value="ALTA_USUARIO">Alta de Usuario</option>
-            <option value="APROBAR_USUARIO">Aprobar Solicitud</option>
-            <option value="RECHAZAR_USUARIO">Rechazar Solicitud</option>
-            <option value="RECORDAR_RECHAZO">Recordatorio de Corrección</option>
-            <option value="BANEAR_USUARIO">Banear Usuario</option>
-            <option value="BAJA_USUARIO">Baja de Usuario</option>
-            <option value="COBRO_MENSUALIDAD">Cobro Mensualidad</option>
-            <option value="VENTA_PRODUCTO">Venta de Producto</option>
-            <option value="CREAR_TIENDITA">Creación Tiendita</option>
-            <option value="CREAR_WOD">Crear WOD</option>
-            <option value="EDITAR_WOD">Editar WOD</option>
-            <option value="ELIMINAR_WOD">Eliminar WOD</option>
-            <option value="CREAR_CLASE">Crear Clase</option>
-            <option value="EDITAR_CLASE">Editar Clase</option>
-            <option value="ELIMINAR_CLASE">Eliminar Clase</option>
-            <option value="CREAR_EXPEDIENTE_MEDICO">Crear Expediente Médico</option>
-            <option value="ACTUALIZAR_EXPEDIENTE_MEDICO">Actualizar Expediente Médico</option>
-            <option value="ACTIVAR_VISITAS_REGALO">Activar Visitas de Regalo</option>
-            <option value="DESACTIVAR_VISITAS_REGALO">Pausar Visitas de Regalo</option>
-            <option value="ACTIVAR_METODO_PAGO">Activar Método de Pago</option>
-            <option value="DESACTIVAR_METODO_PAGO">Desactivar Método de Pago</option>
-            <option value="CREAR_CUENTA_TRANSFERENCIA">Crear Cuenta de Transferencia</option>
-            <option value="EDITAR_CUENTA_TRANSFERENCIA">Editar Cuenta de Transferencia</option>
-            <option value="ELIMINAR_CUENTA_TRANSFERENCIA">Eliminar Cuenta de Transferencia</option>
-            <option value="SOLICITAR_CAMBIO_FACTURACION">Solicitar Cambio de Facturación</option>
-            <option value="APROBAR_CAMBIO_FACTURACION">Aprobar Cambio de Facturación</option>
-            <option value="RECHAZAR_CAMBIO_FACTURACION">Rechazar Cambio de Facturación</option>
-            <option value="GESTION_SUGERENCIA">Gestión de Sugerencia</option>
-            <option value="CREAR_CAMPANIA">Crear Campaña/Anuncio</option>
-            <option value="EDITAR_CAMPANIA">Editar Campaña/Anuncio</option>
-            <option value="ELIMINAR_CAMPANIA">Eliminar Campaña/Anuncio</option>
-            <option value="DONATIVO_MANUAL">Aportación Manual (Campaña)</option>
-            <option value="DONATIVO_STRIPE">Donativo en Línea (Campaña)</option>
-            <option value="APROBAR_DONATIVO">Aprobar Comprobante (Campaña)</option>
-            <option value="CORRECCION_DONATIVO">Comprobante a Corrección (Campaña)</option>
-            <option value="ELIMINAR_DONATIVO">Eliminar Registro (Campaña)</option>
-            <option value="CREAR_CUENTA_CAMPANIA">Crear Cuenta (Campaña)</option>
-            <option value="EDITAR_CUENTA_CAMPANIA">Editar Cuenta (Campaña)</option>
-            <option value="ELIMINAR_CUENTA_CAMPANIA">Eliminar Cuenta (Campaña)</option>
-          </select>
+        {!ocultarFiltroBox && (
+          <div className="col-12 col-md-6">
+            <OpcionesPicker
+              valor={filtroBox}
+              onCambiar={v => { setFiltroBox(v); setPagina(1); }}
+              opciones={[
+                { valor: '', label: 'Todos los Boxes', icono: 'fa-layer-group', color: '#9aa6c4' },
+                ...(boxes || []).map((b, i) => ({ valor: String(b.idBox), label: b.nombre, icono: 'fa-warehouse', color: PALETA_BOX[i % PALETA_BOX.length] })),
+              ]}
+              titulo="Filtrar por box"
+              icono="fas fa-warehouse"
+              placeholder="Todos los Boxes"
+              buscador
+              placeholderBuscar="Buscar box..."
+            />
+          </div>
+        )}
+        <div className={ocultarFiltroBox ? 'col-12' : 'col-12 col-md-6'}>
+          <OpcionesPicker
+            valor={filtroAccion}
+            onCambiar={v => { setFiltroAccion(v); setPagina(1); }}
+            opciones={ACCIONES}
+            titulo="Filtrar por acción"
+            icono="fas fa-bolt"
+            placeholder="Todas las Acciones"
+            buscador
+            placeholderBuscar="Buscar acción..."
+          />
         </div>
       </div>
 

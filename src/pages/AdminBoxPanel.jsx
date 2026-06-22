@@ -17,6 +17,7 @@ import {
 import '../assets/css/AdminBoxPanel.css';
 import AtletifyLoader from '../components/AtletifyLoader';
 import AnunciosEngine from '../components/AnunciosEngine';
+import NotificacionRow from '../components/NotificacionRow';
 
 function getPayCycles(diaCorte) {
   const dCorte = parseInt(diaCorte) || 7;
@@ -128,6 +129,22 @@ export default function AdminBoxPanel() {
 
     setUser(u);
     setBox(b);
+
+    // Refrescar el BOX desde el backend: si un admin le cambió el nombre (u otros datos), el
+    // localStorage queda viejo y el nombre se vería desactualizado hasta recargar a mano.
+    // Best-effort: actualiza estado + caché (mismo criterio que el UserPanel).
+    if (b?.idBox) {
+      fetch(`${import.meta.env.VITE_API_URL}/api/box/${b.idBox}`)
+        .then(res => (res.ok ? res.json() : null))
+        .then(fresh => {
+          if (fresh && fresh.idBox) {
+            setBox(fresh);
+            localStorage.setItem('box', JSON.stringify(fresh));
+          }
+        })
+        .catch(() => { /* si falla, se queda con el de localStorage */ });
+    }
+
     cargarNotificaciones(u.idUsuario || u.id || u.IdUsuario);
 
     const isAdminUser = u.rol === 'AdminBox' || u.rol === 'Developer' || u.Rol === 'AdminBox' || u.Rol === 'Developer';
@@ -186,10 +203,30 @@ export default function AdminBoxPanel() {
     } catch (err) { /* optimista */ }
   }
 
+  // Borrar un aviso (swipe en la fila). Optimista + DELETE en el backend.
+  async function borrarNoti(idNoti) {
+    setNotificaciones(prev => prev.filter(n => n.idNotificacion !== idNoti));
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${import.meta.env.VITE_API_URL}/api/interacciones/notificaciones/${idNoti}`, {
+        method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (err) { /* optimista, sin revertir */ }
+  }
+
   function abrirNotificacion(n) {
     if (!n.leida) marcarNotiLeida(n.idNotificacion);
     setNotiOpen(false);
-    if (n.destino === 'buzon-admin') navigate('/buzon-sugerencias');
+    // Respuesta/reacción de un atleta a una sugerencia que envió el coach.
+    if (typeof n.destino === 'string' && n.destino.startsWith('sug-coach-resp:')) {
+      const idS = parseInt(n.destino.split(':')[1]);
+      if (idS) navigate('/sugerencias-atletas', { state: { destacada: idS } });
+    }
+    else if (n.destino === 'buzon-admin') navigate('/buzon-sugerencias');
+    // Transferencia por validar → bandeja de validaciones.
+    else if (n.destino === 'validaciones') navigate('/admin-box/validaciones');
+    // Nueva solicitud de ingreso → gestión de solicitudes.
+    else if (n.destino === 'gestion-solicitudes') navigate('/gestion-solicitudes');
     // Comprobante de aportación por revisar → panel de control de esa campaña.
     else if (typeof n.destino === 'string' && n.destino.startsWith('control-campania:')) {
       const idA = n.destino.split(':')[1];
@@ -614,19 +651,17 @@ export default function AdminBoxPanel() {
                               <p>Sin avisos por ahora</p>
                             </div>
                           ) : (
-                            notificaciones.map(n => (
-                              <button
-                                key={n.idNotificacion}
-                                className={`abp-notif-item ${!n.leida ? 'no-leida' : ''}`}
-                                onClick={() => abrirNotificacion(n)}
-                              >
-                                <span className="abp-notif-item-title">{n.titulo}</span>
-                                <span className="abp-notif-item-msg">{n.mensaje}</span>
-                                <span className="abp-notif-item-fecha">
-                                  {new Date(n.fechaCreacion).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                              </button>
-                            ))
+                            <>
+                              <p className="nr-tip"><i className="fas fa-hand-pointer me-1"></i>Desliza un aviso para borrarlo</p>
+                              {notificaciones.map(n => (
+                                <NotificacionRow
+                                  key={n.idNotificacion}
+                                  noti={n}
+                                  onAbrir={abrirNotificacion}
+                                  onBorrar={borrarNoti}
+                                />
+                              ))}
+                            </>
                           )}
                         </div>
                       </div>
@@ -1037,6 +1072,15 @@ export default function AdminBoxPanel() {
                       <div className="abp-card-desc">Ver perfiles y niveles</div>
                     </div>
                   </Link>
+                  <Link to="/sugerencias-atletas" className="abp-quick-card py-2">
+                    <div className="abp-card-icon-wrapper" style={{ '--icon-color': '#f1c40f' }}>
+                      <i className="fas fa-lightbulb"></i>
+                    </div>
+                    <div className="abp-card-content">
+                      <div className="abp-card-title" style={{ fontSize: '0.8rem' }}>Dar Sugerencias a Atletas</div>
+                      <div className="abp-card-desc">Envía consejos y recibe respuestas</div>
+                    </div>
+                  </Link>
                   <Link to="/perfil-admin" className="abp-quick-card py-2">
                     <div className="abp-card-icon-wrapper" style={{ '--icon-color': '#3498db' }}>
                       <i className="fas fa-id-card"></i>
@@ -1167,12 +1211,61 @@ export default function AdminBoxPanel() {
                 </div>
               </div>
             </div>
-            {isAdmin && (
-              <Link to="/editar-box" className="abp-config-btn mt-1">
-                <i className="fas fa-cog"></i>
-                <span className="d-none d-sm-inline">Configurar Box</span>
-              </Link>
-            )}
+            <div className="d-flex align-items-center gap-2 mt-1">
+              {/* CAMPANITA DE NOTIFICACIONES */}
+              <div className="abp-notif">
+                <button
+                  type="button"
+                  className="abp-notif-btn"
+                  onClick={toggleNotiPanel}
+                  aria-label="Notificaciones"
+                >
+                  <i className={`fas fa-bell ${notisNoLeidas > 0 ? 'fa-shake' : ''}`}></i>
+                  {notisNoLeidas > 0 && (
+                    <span className="abp-notif-badge">{notisNoLeidas > 9 ? '9+' : notisNoLeidas}</span>
+                  )}
+                </button>
+                {notiOpen && (
+                  <>
+                    <div className="abp-notif-backdrop" onClick={() => setNotiOpen(false)}></div>
+                    <div className="abp-notif-panel">
+                      <div className="abp-notif-head">
+                        <span><i className="fas fa-bell me-2"></i>Avisos</span>
+                        <button className="abp-notif-close" onClick={() => setNotiOpen(false)} aria-label="Cerrar">
+                          <i className="fas fa-times"></i>
+                        </button>
+                      </div>
+                      <div className="abp-notif-list">
+                        {notificaciones.length === 0 ? (
+                          <div className="abp-notif-empty">
+                            <i className="fas fa-inbox"></i>
+                            <p>Sin avisos por ahora</p>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="nr-tip"><i className="fas fa-hand-pointer me-1"></i>Desliza un aviso para borrarlo</p>
+                            {notificaciones.map(n => (
+                              <NotificacionRow
+                                key={n.idNotificacion}
+                                noti={n}
+                                onAbrir={abrirNotificacion}
+                                onBorrar={borrarNoti}
+                              />
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+              {isAdmin && (
+                <Link to="/editar-box" className="abp-config-btn">
+                  <i className="fas fa-cog"></i>
+                  <span className="d-none d-sm-inline">Configurar Box</span>
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* ESTADÍSTICAS RÁPIDAS */}
@@ -1518,6 +1611,15 @@ export default function AdminBoxPanel() {
                           {sugerenciasPendientes > 99 ? '99+' : sugerenciasPendientes}
                         </span>
                       )}
+                    </Link>
+                    <Link to="/admin-box/auditoria" className="abp-quick-card">
+                      <div className="abp-card-icon-wrapper" style={{ '--icon-color': '#f39c12' }}>
+                        <i className="fas fa-shield-alt"></i>
+                      </div>
+                      <div className="abp-card-content">
+                        <div className="abp-card-title">Logs de Auditoría</div>
+                        <div className="abp-card-desc">Quién hizo qué en tu box: altas, cobros, cambios…</div>
+                      </div>
                     </Link>
                   </div>
                 </div>
