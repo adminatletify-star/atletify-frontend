@@ -117,12 +117,44 @@ async function registrarTodasLasCuentas(sub) {
 // ---- API pública del módulo ----
 
 // Estado para la UI del botón: 'no-soportado' | 'bloqueado' | 'activado' | 'desactivado'.
+// Versión SÍNCRONA: solo mira el permiso. Úsala únicamente para el render inicial;
+// no garantiza que exista una suscripción real (ver estadoPushAsync).
 export function estadoPush() {
   if (!pushSoportado()) return 'no-soportado';
   const permiso = Notification.permission;
   if (permiso === 'denied') return 'bloqueado';
   if (permiso === 'granted') return 'activado';
   return 'desactivado';
+}
+
+// Igual que estadoPush() pero, cuando el permiso ya está concedido, comprueba que
+// EXISTA una suscripción real. Sin esto, un permiso 'granted' SIN suscripción
+// (tras reinstalar la PWA, expirar/invalidarse la suscripción o fallar un intento
+// previo) reportaría 'activado' y OCULTARÍA el botón, dejando al usuario sin forma
+// de re-suscribirse y sin recibir push. Con esto, el botón reaparece y al pulsarlo
+// se vuelve a crear la suscripción.
+export async function estadoPushAsync() {
+  if (!pushSoportado()) return 'no-soportado';
+  const permiso = Notification.permission;
+  if (permiso === 'denied') return 'bloqueado';
+  if (permiso !== 'granted') return 'desactivado';
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = reg && reg.pushManager ? await reg.pushManager.getSubscription() : null;
+    return sub ? 'activado' : 'desactivado';
+  } catch {
+    return 'desactivado';
+  }
+}
+
+// navigator.serviceWorker.ready NUNCA resuelve si no hay un SW registrado (p. ej. en
+// `npm run dev`, donde el SW está desactivado). Sin timeout, activarPush() se quedaría
+// colgada para siempre y el botón giraría en "Activando…" sin fin ni mensaje de error.
+function swReadyConTimeout(ms = 10000) {
+  return Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise((_, rej) => setTimeout(() => rej(new Error('sw-timeout')), ms)),
+  ]);
 }
 
 // Activa las notificaciones: pide permiso, se suscribe y registra todas las cuentas.
@@ -142,7 +174,7 @@ export async function activarPush() {
 
   let reg;
   try {
-    reg = await navigator.serviceWorker.ready;
+    reg = await swReadyConTimeout();
   } catch {
     return { ok: false, motivo: 'sin-sw' };
   }

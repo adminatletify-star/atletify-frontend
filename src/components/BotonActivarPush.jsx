@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { estadoPush, activarPush } from '../services/push';
+import { estadoPushAsync, activarPush } from '../services/push';
 import '../assets/css/push-activar.css';
 
 // Botón "Activar avisos" que vive junto a la campanita. Pide permiso de
@@ -12,7 +12,10 @@ export default function BotonActivarPush({ className = '' }) {
   const [procesando, setProcesando] = useState(false);
 
   useEffect(() => {
-    setEstado(estadoPush());
+    let vivo = true;
+    // Async: comprueba también que exista una suscripción real, no solo el permiso.
+    estadoPushAsync().then((e) => { if (vivo) setEstado(e); });
+    return () => { vivo = false; };
   }, []);
 
   // No mostrar si no hay soporte (iOS sin PWA instalada) o si ya está activado.
@@ -39,6 +42,8 @@ export default function BotonActivarPush({ className = '' }) {
         // El usuario cerró el aviso de permiso: sin mensaje.
       } else if (r.motivo === 'no-soportado') {
         setEstado('no-soportado');
+      } else if (r.motivo === 'sin-sw') {
+        alert('Las notificaciones solo funcionan en la app instalada o publicada, no en el modo de desarrollo. Abre la versión instalada en tu pantalla de inicio e inténtalo de nuevo.');
       } else {
         alert('No se pudieron activar las notificaciones en este momento. Inténtalo de nuevo más tarde.');
       }
