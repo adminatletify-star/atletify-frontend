@@ -22,7 +22,10 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.js',
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      // false: NO inyectamos el registro mínimo automático. Registramos a mano con
+      // registerSW({immediate:true}) en main.jsx para tener AUTO-RECARGA cuando se
+      // activa una versión nueva (si no, el PWA va "un arranque por detrás" de la web).
+      injectRegister: false,
       includeAssets: [
         'LogosDeAtletify/LogoBlanco.png',
         'icons/apple-touch-icon.png',
