@@ -168,11 +168,25 @@ export default function AdminBoxPanel() {
     }
   }, [navigate]);
 
-  // Al tocar un push sin pantalla propia, llegamos con ?campanita=1 → abrir la campanita.
+  // Al tocar un push sin pantalla propia, llegamos con ?aviso=<json> (aviso accionable:
+  // campaña, etc.) o, como fallback, ?campanita=1 (abrir solo la campanita). Con ?aviso
+  // ejecutamos la MISMA lógica que el clic interno (abrirNotificacion) para abrir el modal.
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('campanita') === '1') {
+      const avisoRaw = params.get('aviso');
+      if (avisoRaw) {
+        try {
+          abrirNotificacion(JSON.parse(avisoRaw));
+        } catch {
+          setNotiOpen(true); // payload corrupto: al menos abre la campanita
+        }
+        params.delete('aviso');
+        params.delete('campanita');
+        const nuevaUrl = window.location.pathname +
+          (params.toString() ? `?${params.toString()}` : '') + window.location.hash;
+        window.history.replaceState({}, '', nuevaUrl);
+      } else if (params.get('campanita') === '1') {
         setNotiOpen(true);
         params.delete('campanita');
         const nuevaUrl = window.location.pathname +

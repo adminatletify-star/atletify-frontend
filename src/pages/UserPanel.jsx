@@ -370,11 +370,26 @@ export default function UserPanel() {
     }
   }, [navigate]);
 
-  // Al tocar un push sin pantalla propia, llegamos con ?campanita=1 → abrir la bandeja.
+  // Al tocar un push sin pantalla propia, llegamos con ?aviso=<json> (un aviso accionable:
+  // campaña, comentario de WOD, etc.) o, como fallback, ?campanita=1 (abrir solo la bandeja).
+  // Con ?aviso ejecutamos la MISMA lógica que el clic interno (abrirAviso) para abrir el
+  // modal correcto, no solo la lista.
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('campanita') === '1') {
+      const avisoRaw = params.get('aviso');
+      if (avisoRaw) {
+        try {
+          abrirAviso(JSON.parse(avisoRaw));
+        } catch {
+          setShowModalNotis(true); // payload corrupto: al menos abre la bandeja
+        }
+        params.delete('aviso');
+        params.delete('campanita');
+        const nuevaUrl = window.location.pathname +
+          (params.toString() ? `?${params.toString()}` : '') + window.location.hash;
+        window.history.replaceState({}, '', nuevaUrl);
+      } else if (params.get('campanita') === '1') {
         setShowModalNotis(true);
         params.delete('campanita');
         const nuevaUrl = window.location.pathname +

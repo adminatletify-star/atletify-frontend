@@ -60,10 +60,10 @@ function rutaDesdeData(data) {
 function construirUrl(data) {
   const origin = self.location.origin;
   let ruta = rutaDesdeData(data);
-  let abrirCampanita = false;
+  let avisoEnPanel = false;
   if (!ruta) {
     ruta = panelDelRol(data.rol);
-    abrirCampanita = true;
+    avisoEnPanel = true;
   }
 
   // Separar el hash (#records) para colocar el query antes de él.
@@ -76,7 +76,30 @@ function construirUrl(data) {
 
   const params = new URLSearchParams();
   if (data.correo) params.set('correo', data.correo);
-  if (abrirCampanita) params.set('campanita', '1');
+
+  if (avisoEnPanel) {
+    // El aviso no tiene pantalla propia: lo abre el PANEL. En vez de solo levantar la
+    // bandeja (?campanita=1), reconstruimos el aviso accionable y lo pasamos en ?aviso=
+    // para que el panel ejecute la MISMA lógica que el clic interno (abrirAviso/
+    // abrirNotificacion): campaña → su modal, comentario de WOD → su modal, etc.
+    // Si no hay nada accionable, caemos al flag genérico (solo abrir la bandeja).
+    const accionable = data.destino || data.idEntrenamiento;
+    if (accionable) {
+      const aviso = {
+        destino: data.destino,
+        idNotificacion: data.idNotificacion,
+        idEntrenamiento: data.idEntrenamiento,
+        idComentario: data.idComentario,
+        idComentarioRaiz: data.idComentarioRaiz,
+        idMarca: data.idMarca,
+        idSugerencia: data.idSugerencia,
+      };
+      params.set('aviso', JSON.stringify(aviso));
+    } else {
+      params.set('campanita', '1');
+    }
+  }
+
   const qs = params.toString();
   return origin + ruta + (qs ? `?${qs}` : '') + hash;
 }
