@@ -48,6 +48,24 @@ function urlBase64ToUint8Array(base64String) {
   return out;
 }
 
+// ¿La suscripción existente fue creada con ESTA misma clave VAPID?
+// Si el navegador no expone la clave (p. ej. Safari/iOS devuelve null), asumimos que
+// sí (true) para no re-suscribir innecesariamente. Solo devolvemos false cuando podemos
+// leerla Y difiere: ese es el caso peligroso (la clave del backend cambió) que provoca
+// que el backend no pueda enviar (403) y que un subscribe() nuevo lance InvalidStateError.
+function mismaClave(sub, claveBytes) {
+  try {
+    const actual = sub?.options?.applicationServerKey;
+    if (!actual) return true; // no se puede leer la clave → no tocar la suscripción
+    const a = new Uint8Array(actual);
+    if (a.length !== claveBytes.length) return false;
+    for (let i = 0; i < a.length; i++) if (a[i] !== claveBytes[i]) return false;
+    return true;
+  } catch {
+    return true;
+  }
+}
+
 // POST autenticado con un token específico (sin pasar por el interceptor de fetch).
 function xhrPost(url, token, body, timeoutMs = 8000) {
   return new Promise((resolve) => {
@@ -180,19 +198,32 @@ export async function activarPush() {
   }
   if (!reg || !reg.pushManager) return { ok: false, motivo: 'sin-sw' };
 
+  const clave = await obtenerClavePublica();
+  if (!clave) return { ok: false, motivo: 'sin-clave' };
+  const claveBytes = urlBase64ToUint8Array(clave);
+  const opciones = { userVisibleOnly: true, applicationServerKey: claveBytes };
+
   let sub;
   try {
     sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      const clave = await obtenerClavePublica();
-      if (!clave) return { ok: false, motivo: 'sin-clave' };
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(clave),
-      });
+    // Si ya hay una suscripción pero fue creada con OTRA clave VAPID, el backend no
+    // podrá enviarle y re-suscribir lanzaría InvalidStateError → la cancelamos.
+    if (sub && !mismaClave(sub, claveBytes)) {
+      try { await sub.unsubscribe(); } catch { /* ignorar */ }
+      sub = null;
     }
-  } catch {
-    return { ok: false, motivo: 'error-suscripcion' };
+    if (!sub) sub = await reg.pushManager.subscribe(opciones);
+  } catch (e) {
+    // Reintento limpio: a veces subscribe() falla por una suscripción residual
+    // incompatible. Cancelamos lo que haya y reintentamos UNA vez.
+    try {
+      const vieja = await reg.pushManager.getSubscription();
+      if (vieja) await vieja.unsubscribe();
+      sub = await reg.pushManager.subscribe(opciones);
+    } catch (e2) {
+      const detalle = `${e2?.name || 'Error'}: ${e2?.message || e2}`.slice(0, 180);
+      return { ok: false, motivo: 'error-suscripcion', detalle };
+    }
   }
 
   await registrarTodasLasCuentas(sub);

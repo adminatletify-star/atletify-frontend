@@ -44,6 +44,10 @@ export default function BotonActivarPush({ className = '' }) {
         setEstado('no-soportado');
       } else if (r.motivo === 'sin-sw') {
         alert('Las notificaciones solo funcionan en la app instalada o publicada, no en el modo de desarrollo. Abre la versión instalada en tu pantalla de inicio e inténtalo de nuevo.');
+      } else if (r.motivo === 'sin-clave') {
+        alert('No se pudo obtener la clave de notificaciones del servidor. Revisa tu conexión e inténtalo de nuevo.');
+      } else if (r.motivo === 'error-suscripcion') {
+        alert('No se pudo crear la suscripción de notificaciones' + (r.detalle ? `: ${r.detalle}` : '. Inténtalo de nuevo.'));
       } else {
         alert('No se pudieron activar las notificaciones en este momento. Inténtalo de nuevo más tarde.');
       }
