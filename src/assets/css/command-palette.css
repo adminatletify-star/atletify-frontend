@@ -1,0 +1,310 @@
+/* ==========================================================================
+   COMMAND PALETTE — Buscador global (Spotlight / Cmd+K)
+   Sigue el sistema de diseño Atletify (GestionClases como referencia):
+   modal SIEMPRE centrado, border-top 3px primary, radius 20px, backdrop blur.
+   ========================================================================== */
+
+.cmdp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 11000;
+  display: flex;
+  align-items: center;          /* centrado en cualquier tamaño (regla del CLAUDE.md) */
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(5, 5, 9, 0.62);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.cmdp-dialog {
+  width: min(640px, 100%);
+  max-height: min(68vh, 560px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Barra de búsqueda ── */
+.cmdp-search {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.95rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.cmdp-search-icon {
+  font-size: 1rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.cmdp-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 1.02rem;
+  font-family: inherit;
+  padding: 0;
+}
+
+.cmdp-input::placeholder {
+  color: var(--text-muted);
+}
+
+.cmdp-esc {
+  flex-shrink: 0;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 0.28rem 0.5rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+/* ── Cuerpo (lista de resultados) ── */
+.cmdp-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.cmdp-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1.1rem 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cmdp-section-head i {
+  margin-right: 0.4rem;
+}
+
+.cmdp-clear {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0.15rem 0.3rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cmdp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem;
+}
+
+.cmdp-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.6rem 0.7rem;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease, transform 0.08s ease;
+}
+
+.cmdp-option.is-active {
+  background: rgba(230, 57, 70, 0.10);
+  box-shadow: inset 0 0 0 1px rgba(230, 57, 70, 0.22);
+}
+
+.cmdp-option:active {
+  transform: scale(0.985);
+}
+
+.cmdp-option-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--primary);
+  font-size: 0.92rem;
+}
+
+.cmdp-option-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.cmdp-option-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmdp-mark {
+  background: rgba(245, 166, 35, 0.28);
+  color: var(--text-primary);
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+.cmdp-option-section {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cmdp-option-enter {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  opacity: 0;
+  transform: rotate(90deg);
+  transition: opacity 0.12s;
+}
+
+.cmdp-option.is-active .cmdp-option-enter {
+  opacity: 0.7;
+}
+
+/* ── Estados vacíos ── */
+.cmdp-empty {
+  text-align: center;
+  padding: 2.4rem 1.2rem 2.8rem;
+}
+
+.cmdp-empty-icon {
+  font-size: 1.9rem;
+  color: var(--text-muted);
+  opacity: 0.35;
+  margin-bottom: 0.8rem;
+}
+
+.cmdp-empty-title {
+  margin: 0 0 0.3rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cmdp-empty-sub {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* ── Pie con atajos ── */
+.cmdp-footer {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 0.6rem 1.1rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.cmdp-footer kbd {
+  display: inline-block;
+  min-width: 1.1rem;
+  text-align: center;
+  font-family: inherit;
+  font-size: 0.66rem;
+  color: var(--secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  padding: 0.1rem 0.3rem;
+  margin-right: 0.18rem;
+}
+
+/* ── Hover SOLO con mouse (en táctil no se queda pegado) ── */
+@media (hover: hover) {
+  .cmdp-option:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .cmdp-esc:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+  }
+  .cmdp-clear:hover {
+    text-decoration: underline;
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE — breakpoints 768 / 576 / 380 (mobile-first reductions)
+   ========================================================================== */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .cmdp-dialog { max-height: 72vh; }
+  .cmdp-input { font-size: 0.96rem; }
+  .cmdp-option-title { font-size: 0.9rem; }
+}
+
+/* Móvil */
+@media (max-width: 576px) {
+  .cmdp-overlay { padding: 0.75rem; }
+  .cmdp-dialog {
+    width: 100%;
+    max-height: 80vh;
+    border-radius: 16px;
+  }
+  .cmdp-search { padding: 0.8rem 0.9rem; gap: 0.55rem; }
+  .cmdp-input { font-size: 0.92rem; }
+  .cmdp-option { gap: 0.65rem; padding: 0.55rem 0.6rem; }
+  .cmdp-option-icon { width: 33px; height: 33px; font-size: 0.85rem; }
+  .cmdp-option-title { font-size: 0.88rem; }
+  .cmdp-footer { gap: 0.8rem; padding: 0.5rem 0.9rem; }
+}
+
+/* Móvil pequeño (iPhone SE) */
+@media (max-width: 380px) {
+  .cmdp-input { font-size: 0.86rem; }
+  .cmdp-option-title { font-size: 0.84rem; }
+  .cmdp-option-section { font-size: 0.62rem; }
+  .cmdp-esc { display: none; }            /* el botón Esc se oculta; queda el atajo y el backdrop */
+  .cmdp-footer { font-size: 0.64rem; }
+}

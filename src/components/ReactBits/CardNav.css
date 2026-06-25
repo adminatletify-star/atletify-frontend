@@ -441,6 +441,45 @@
   pointer-events: none;
 }
 
+/* === Lupa del buscador global (Command Palette) en top bar === */
+.cardnav-search-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  cursor: pointer;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.9rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s, border-color 0.2s, transform 0.12s, color 0.2s;
+}
+
+.cardnav-search-btn:active {
+  transform: scale(0.92);
+}
+
+@media (hover: hover) {
+  .cardnav-search-btn:hover {
+    background: rgba(230, 57, 70, 0.16);
+    border-color: rgba(230, 57, 70, 0.4);
+  }
+}
+
+@media (max-width: 480px) {
+  .cardnav-search-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 0.82rem;
+  }
+}
+
 /* === Box Selector (Developer) === */
 .cardnav-box-select {
   appearance: none;

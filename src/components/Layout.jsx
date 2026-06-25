@@ -8,6 +8,7 @@ import { BOXES_ENDPOINT } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ModalFirmaReglamento from './ModalFirmaReglamento';
 import ModalExpedienteMedico from './ModalExpedienteMedico';
+import CommandPalette from './CommandPalette';
 import { esModuloCore } from '../config/modulosSaaS';
 
 export default function Layout() {
@@ -246,6 +247,11 @@ export default function Layout() {
       <div className={!shouldHideNav ? 'layout-has-nav layout-content' : ''}>
         <Outlet />
       </div>
+
+      {/* Buscador global (Command Palette) — montado UNA sola vez para todo
+          el panel. Se auto-gatea por rol (solo AdminBox / Coach / Developer)
+          y se abre con Ctrl/Cmd+K o con la lupa del CardNav. */}
+      <CommandPalette />
 
       {/* MODAL GLOBAL DE FIRMA DE REGLAMENTO */}
       {statusReglamento?.requiereFirma && statusReglamento?.reglamentoHtml && (

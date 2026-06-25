@@ -266,6 +266,21 @@ const CardNav = ({
 
           <div className="d-flex align-items-center gap-2 cardnav-right">
 
+            {/* Lupa del buscador global (Command Palette) — solo staff.
+                Dispara el evento que escucha <CommandPalette/> montado en Layout. */}
+            {(usuario?.rol === 'AdminBox' || usuario?.rol === 'Coach' || usuario?.rol === 'Developer') && (
+              <button
+                type="button"
+                className="cardnav-search-btn"
+                title="Buscar interfaz (Ctrl/Cmd + K)"
+                aria-label="Buscar interfaz"
+                aria-keyshortcuts="Control+K Meta+K"
+                onClick={() => window.dispatchEvent(new CustomEvent('atletify:open-command-palette'))}
+              >
+                <i className="fas fa-magnifying-glass" aria-hidden="true"></i>
+              </button>
+            )}
+
             {(usuario?.rol === 'Developer') && (
               <BoxPickerModal
                 boxes={listaBoxes}
