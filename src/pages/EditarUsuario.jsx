@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { USUARIOS_ENDPOINT } from '../services/api';
 import BackButton from '../components/BackButton';
-import TallaPlayeraPicker from '../components/TallaPlayeraPicker';
 import CategoriaBasePicker from '../components/CategoriaBasePicker';
 import HorarioClasePicker from '../components/HorarioClasePicker';
-import RolUsuarioPicker from '../components/RolUsuarioPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/EditarUsuario.css';
@@ -20,8 +18,8 @@ export default function EditarUsuario() {
   const rutaRegreso = currentUser?.rol === 'Developer' ? '/dashboard' : '/admin-box-panel';
 
   const [form, setForm] = useState({
-    nombre: '', correo: '', telefono: '',
-    peso: '', tallaPlayera: '', categoriaBase: '', rol: '',
+    nombre: '', apellidos: '', correo: '', telefono: '', foto: '',
+    categoriaBase: '', rol: '',
     idClasePredeterminada: ''
   });
 
@@ -49,10 +47,10 @@ export default function EditarUsuario() {
 
       setForm({
         nombre: dataUsuario.nombre || dataUsuario.Nombre || '',
+        apellidos: dataUsuario.apellidos || dataUsuario.Apellidos || '',
         correo: dataUsuario.correo || dataUsuario.Correo || '',
         telefono: dataUsuario.telefono || dataUsuario.Telefono || '',
-        peso: dataUsuario.peso || dataUsuario.Peso || '',
-        tallaPlayera: dataUsuario.tallaPlayera || dataUsuario.TallaPlayera || '',
+        foto: dataUsuario.foto || dataUsuario.Foto || '',
         categoriaBase: dataUsuario.categoriaBase || dataUsuario.CategoriaBase || '',
         rol: dataUsuario.rol || dataUsuario.Rol || 'Usuario',
         idClasePredeterminada: dataUsuario.idClasePredeterminada || dataUsuario.IdClasePredeterminada || ''
@@ -68,10 +66,13 @@ export default function EditarUsuario() {
   async function handleSubmit(e) {
     e.preventDefault();
 
+    // Información personal (nombre, apellidos, correo, teléfono, foto) es de SOLO
+    // LECTURA en esta pantalla: no se envía para no resobreescribirla (la foto es un
+    // base64 enorme). Solo mandamos lo que el admin puede editar aquí.
     const payload = {
-      ...form,
+      categoriaBase: form.categoriaBase,
+      rol: form.rol,
       idClasePredeterminada: form.idClasePredeterminada ? parseInt(form.idClasePredeterminada) : null,
-      peso: form.peso ? parseFloat(form.peso) : null,
     };
 
     try {
@@ -124,58 +125,43 @@ export default function EditarUsuario() {
       <div className="container px-3" style={{ maxWidth: '640px' }}>
 
         {/* ══════════════════════════════════
-            TARJETA DE IDENTIDAD
-        ══════════════════════════════════ */}
-        <div className="eu-identity">
-          <div className="avatar-inicial" style={{ width: '52px', height: '52px', fontSize: '1.3rem', borderRadius: '14px' }}>
-            {form.nombre?.charAt(0).toUpperCase() || '?'}
-          </div>
-          <div style={{ minWidth: 0 }}>
-            <p className="eu-identity-name text-truncate">{form.nombre || 'Sin nombre'}</p>
-            <p className="eu-identity-email text-truncate">{form.correo || 'Sin correo'}</p>
-          </div>
-        </div>
-
-        {/* ══════════════════════════════════
             FORMULARIO
         ══════════════════════════════════ */}
         <div className="tarjeta-panel p-4">
           <form onSubmit={handleSubmit}>
 
-            {/* SECCIÓN: Información Personal */}
+            {/* SECCIÓN: Información Personal (SOLO LECTURA) */}
             <p className="eu-section-label">
               <i className="fas fa-user"></i>Información Personal
             </p>
 
-            <div className="mb-3">
-              <label className="etiqueta-campo">Nombre Completo</label>
-              <input
-                type="text"
-                className="entrada-oscura"
-                value={form.nombre}
-                onChange={e => setForm({ ...form, nombre: e.target.value })}
-                placeholder="Nombre del atleta"
-              />
-            </div>
-
-            <div className="row g-3 mb-3">
-              <div className="col-12 col-sm-6">
-                <label className="etiqueta-campo">Peso (kg)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  className="entrada-oscura"
-                  value={form.peso}
-                  onChange={e => setForm({ ...form, peso: e.target.value })}
-                  placeholder="Ej. 75.5"
-                />
+            <div className="eu-readonly">
+              <div className="eu-readonly-head">
+                {form.foto
+                  ? <img src={form.foto} alt={form.nombre || 'Atleta'} className="eu-readonly-avatar" />
+                  : <div className="eu-readonly-avatar eu-readonly-avatar--initial">
+                      {form.nombre?.charAt(0).toUpperCase() || '?'}
+                    </div>
+                }
+                <div className="eu-readonly-id">
+                  <p className="eu-readonly-name text-truncate">
+                    {[form.nombre, form.apellidos].filter(Boolean).join(' ') || 'Sin nombre'}
+                  </p>
+                  <span className="eu-readonly-lock">
+                    <i className="fas fa-lock"></i> Solo lectura
+                  </span>
+                </div>
               </div>
-              <div className="col-12 col-sm-6">
-                <label className="etiqueta-campo">Talla de Playera</label>
-                <TallaPlayeraPicker
-                  valor={form.tallaPlayera}
-                  onCambiar={v => setForm({ ...form, tallaPlayera: v })}
-                />
+
+              <div className="eu-readonly-row">
+                <i className="fas fa-envelope eu-readonly-icon"></i>
+                <span className="eu-readonly-label">Correo</span>
+                <span className="eu-readonly-value text-truncate">{form.correo || 'Sin correo'}</span>
+              </div>
+              <div className="eu-readonly-row">
+                <i className="fas fa-phone eu-readonly-icon"></i>
+                <span className="eu-readonly-label">Teléfono</span>
+                <span className="eu-readonly-value">{form.telefono || 'Sin teléfono'}</span>
               </div>
             </div>
 
@@ -212,26 +198,6 @@ export default function EditarUsuario() {
               <span className="eu-help-text">
                 <i className="fas fa-info-circle me-1"></i>
                 Si asignas una clase, el sistema le apartará su lugar automáticamente todos los días.
-              </span>
-            </div>
-
-            <hr className="separador" />
-
-            {/* SECCIÓN: Permisos */}
-            <p className="eu-section-label">
-              <i className="fas fa-shield-alt"></i>Rango y Permisos
-            </p>
-
-            <div className="mb-4">
-              <label className="etiqueta-campo">Rol del Usuario</label>
-              <RolUsuarioPicker
-                valor={form.rol}
-                onCambiar={v => setForm({ ...form, rol: v })}
-                esDeveloper={currentUser?.rol === 'Developer'}
-              />
-              <span className="eu-help-text">
-                <i className="fas fa-info-circle me-1"></i>
-                Al cambiar a <strong style={{ color: 'var(--text-primary)' }}>Coach</strong>, el usuario aparecerá en la sección de Staff para asignarle especialidades.
               </span>
             </div>
 

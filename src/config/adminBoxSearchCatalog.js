@@ -118,6 +118,16 @@ export const ADMIN_BOX_INTERFACES = [
     keywords: ['sugerencias', 'coaching', 'feedback', 'mensajes a atletas', 'recomendaciones', 'consejos'],
     roles: [A, C, D],
   },
+  {
+    id: 'simulador-barra',
+    title: 'Simulador de Barra',
+    path: '/simulador-barra',
+    section: 'Operaciones',
+    icon: 'fa-dumbbell',
+    description: 'Calcula qué discos poner por lado para llegar a un peso objetivo.',
+    keywords: ['simulador', 'barra', 'discos', 'bumpers', 'cargar barra', 'peso por lado', 'calculadora de discos', 'plates', 'collars', 'seguros'],
+    roles: [A, C, D],
+  },
 
   // ──────────────────────── ADMINISTRACIÓN ───────────────────────
   {

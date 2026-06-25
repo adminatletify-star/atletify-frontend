@@ -126,6 +126,7 @@ export default function Layout() {
             { label: 'Directorio Atletas', href: '/directorio' },
             { label: 'Nuevo Atleta', href: '/registro-manual' },
             { label: 'Calendario', href: '/admin-calendario' },
+            { label: 'Simulador de Barra', href: '/simulador-barra' },
           ]
         },
         {
@@ -199,6 +200,7 @@ export default function Layout() {
           { label: 'Panel de Coach', href: '/admin-box-panel' },
           { label: 'Pase de Lista', href: '/pase-de-lista' },
           { label: 'Calendario de WODs', href: '/calendario-wods' },
+          { label: 'Simulador de Barra', href: '/simulador-barra' },
           { label: 'Buzón de Sugerencias', href: '/buzon-sugerencias' },
           { label: 'Preguntas y Respuestas', href: '/preguntas-frecuentes' },
           { label: 'Mi Perfil', href: '/perfil-admin' },

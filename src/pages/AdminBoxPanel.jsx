@@ -1111,6 +1111,15 @@ export default function AdminBoxPanel() {
                       <div className="abp-card-desc">Envía consejos y recibe respuestas</div>
                     </div>
                   </Link>
+                  <Link to="/simulador-barra" className="abp-quick-card py-2">
+                    <div className="abp-card-icon-wrapper" style={{ '--icon-color': '#9b59b6' }}>
+                      <i className="fas fa-dumbbell"></i>
+                    </div>
+                    <div className="abp-card-content">
+                      <div className="abp-card-title" style={{ fontSize: '0.8rem' }}>Simulador de Barra</div>
+                      <div className="abp-card-desc">Calcula los discos por lado</div>
+                    </div>
+                  </Link>
                   <Link to="/perfil-admin" className="abp-quick-card py-2">
                     <div className="abp-card-icon-wrapper" style={{ '--icon-color': '#3498db' }}>
                       <i className="fas fa-id-card"></i>

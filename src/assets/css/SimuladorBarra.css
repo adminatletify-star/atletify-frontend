@@ -127,6 +127,13 @@
   }
 }
 
+/* Grupo de un control (modo/unidad) junto a su botón de ayuda "?" */
+.sb-ctrl-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* Segmented pill (= estilo día-activo de GestionClases) */
 .sb-seg {
   display: flex;
@@ -209,6 +216,14 @@
   display: flex;
   align-items: center;
   gap: 0.45rem;
+}
+
+/* Lado izquierdo de cabecera: título + botón de ayuda "?" */
+.sb-th-left {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
 }
 
 .sb-card-title i {
@@ -544,6 +559,19 @@
 .sb-bloqueo-hint i {
   color: var(--primary);
   font-size: 0.68rem;
+}
+
+/* ── TOGGLE DE SUGERENCIAS ──────────────────────────────────── */
+.sb-sug-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.sb-sug-toggle .sb-switch-row {
+  flex: 1;
+  min-width: 0;
 }
 
 /* ── RESUMEN ─────────────────────────────────────────────────── */

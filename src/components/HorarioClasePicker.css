@@ -5,7 +5,7 @@
 
 /* ── TRIGGER ── */
 .hcp-trigger {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
@@ -19,7 +19,6 @@
   font-weight: 600;
   cursor: pointer;
   transition: border-color 0.18s, background 0.18s, transform 0.18s;
-  white-space: nowrap;
   width: 100%;
   text-align: left;
 }
@@ -37,7 +36,14 @@
   border-style: dashed;
 }
 
-.hcp-trigger-left { display: flex; align-items: center; gap: 0.5rem; }
+.hcp-trigger-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
 
 .hcp-hora-badge {
   display: inline-flex;
@@ -56,7 +62,7 @@
   padding: 0 0.35rem;
 }
 
-.hcp-chevron { font-size: 0.6rem; opacity: 0.6; }
+.hcp-chevron { font-size: 0.6rem; opacity: 0.6; flex-shrink: 0; }
 
 /* ── OVERLAY ── */
 .hcp-overlay {

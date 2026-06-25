@@ -554,7 +554,7 @@ function App() {
 
               {/* Nuevos Módulos del Atleta */}
               <Route path="/mis-resultados" element={<ProtectedRoute allowedRoles={['Usuario', 'Atleta']}><MisResultados /></ProtectedRoute>} />
-              <Route path="/simulador-barra" element={<ProtectedRoute allowedRoles={['Usuario', 'Atleta']}><SimuladorBarraPublico /></ProtectedRoute>} />
+              <Route path="/simulador-barra" element={<ProtectedRoute allowedRoles={['Usuario', 'Atleta', 'AdminBox', 'Coach', 'Developer']}><SimuladorBarraPublico /></ProtectedRoute>} />
               <Route path="/detalle-plan-user" element={<ProtectedRoute allowedRoles={['Atleta', 'Usuario']}><DetallePlanUser /></ProtectedRoute>} />
               <Route path="/mis-deudas" element={<ProtectedRoute allowedRoles={['Atleta', 'Usuario']}><MisFiados /></ProtectedRoute>} />
 

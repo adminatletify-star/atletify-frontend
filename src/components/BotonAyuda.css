@@ -1,0 +1,222 @@
+/* ============================================================
+   BOTÓN DE AYUDA "?" + MODAL EXPLICATIVO
+   Sistema de diseño Atletify · centrado · backdrop blur
+   ============================================================ */
+
+/* ── Botón "?" ─────────────────────────────────────────────── */
+.ayuda-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(79, 195, 247, 0.1);
+  border: 1px solid rgba(79, 195, 247, 0.32);
+  color: var(--accent-cool, #4fc3f7);
+  font-size: 0.6rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .ayuda-btn:hover {
+    background: rgba(79, 195, 247, 0.2);
+    border-color: rgba(79, 195, 247, 0.55);
+    color: #fff;
+  }
+}
+
+.ayuda-btn:active { transform: scale(0.88); }
+
+/* ── Overlay ───────────────────────────────────────────────── */
+.ayuda-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: ayudaFade 0.18s ease;
+}
+
+@keyframes ayudaFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal ─────────────────────────────────────────────────── */
+.ayuda-modal {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 20px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
+  width: 100%;
+  max-width: 460px;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 1.4rem 1.3rem;
+  animation: ayudaPop 0.2s ease;
+}
+
+@keyframes ayudaPop {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ayuda-modal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.ayuda-modal-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.32);
+  color: var(--primary);
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 0.28rem 0.75rem;
+  border-radius: 50px;
+}
+
+.ayuda-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.3rem;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: color 0.18s ease, background 0.18s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .ayuda-modal-close:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+.ayuda-modal-close:active { transform: scale(0.9); }
+
+.ayuda-modal-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 0 0 0.75rem;
+  line-height: 1.2;
+}
+
+.ayuda-modal-body {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  line-height: 1.55;
+}
+
+.ayuda-modal-body p { margin: 0 0 0.7rem; }
+.ayuda-modal-body p:last-child { margin-bottom: 0; }
+
+.ayuda-modal-body ul {
+  list-style: none;
+  margin: 0 0 0.7rem;
+  padding: 0;
+}
+
+.ayuda-modal-body li {
+  position: relative;
+  padding-left: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-muted);
+}
+
+.ayuda-modal-body li::before {
+  content: '›';
+  position: absolute;
+  left: 0;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.ayuda-modal-body strong { color: var(--text-primary); }
+
+.ayuda-modal-body .ayuda-tip {
+  display: block;
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  background: rgba(245, 166, 35, 0.07);
+  border: 1px solid rgba(245, 166, 35, 0.22);
+  border-radius: 10px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.ayuda-modal-ok {
+  width: 100%;
+  margin-top: 1.1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  cursor: pointer;
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .ayuda-modal-ok:hover {
+    background: var(--primary-dark, #c1121f);
+    box-shadow: 0 4px 16px var(--primary-glow, rgba(230, 57, 70, 0.35));
+  }
+}
+
+.ayuda-modal-ok:active { transform: scale(0.98); }
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 576px) {
+  .ayuda-modal {
+    padding: 1.2rem 1.05rem;
+    border-radius: 18px;
+  }
+  .ayuda-modal-title { font-size: 1.02rem; }
+  .ayuda-modal-body  { font-size: 0.85rem; }
+}
+
+@media (max-width: 380px) {
+  .ayuda-modal-title { font-size: 0.95rem; }
+  .ayuda-modal-body  { font-size: 0.82rem; }
+}

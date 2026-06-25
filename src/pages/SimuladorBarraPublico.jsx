@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import TipoBarraPicker from '../components/TipoBarraPicker';
 import BackButton from '../components/BackButton';
+import BotonAyuda from '../components/BotonAyuda';
 import { useAuth } from '../context/AuthContext';
 import '../assets/css/SimuladorBarra.css';
 
@@ -21,11 +22,21 @@ export default function SimuladorBarraPublico() {
   const [modoSimulador, setModoSimulador] = useState('casual');
   const [alternativas, setAlternativas] = useState({ visible: false, objetivoPedido: 0, arriba: null, abajo: null });
   const [discosBloqueados, setDiscosBloqueados] = useState([]);
+  const [sugerenciasActivas, setSugerenciasActivas] = useState(true);
 
   const toggleBloqueo = (peso) => {
     setDiscosBloqueados(prev =>
       prev.includes(peso) ? prev.filter(p => p !== peso) : [...prev, peso]
     );
+  };
+
+  const toggleSugerencias = () => {
+    setSugerenciasActivas(prev => {
+      const siguiente = !prev;
+      // Al desactivarlas, cerrar cualquier sugerencia visible.
+      if (!siguiente) setSugerencia({ visible: false, texto: '', combo: [] });
+      return siguiente;
+    });
   };
 
   const LB_PER_KG = 2.20462;
@@ -222,6 +233,10 @@ export default function SimuladorBarraPublico() {
   };
 
   const evaluarSugerencia = (comboActualOrdenado) => {
+    if (!sugerenciasActivas) {
+      setSugerencia({ visible: false, texto: '', combo: [] });
+      return;
+    }
     if (!comboActualOrdenado.length) {
       setSugerencia({ visible: false, texto: '', combo: [] });
       return;
@@ -271,47 +286,41 @@ export default function SimuladorBarraPublico() {
   };
 
   const calcularCombinacionEficiente = () => {
-    if (modoSimulador === 'pro') {
-      if (!usarSeguros) {
-        window.alert('Error: En modo Pro debes incluir seguros (collars) antes de usar la calculadora.');
-        return;
-      }
-    }
     let objetivo = Number(pesoObjetivo);
     if (!Number.isFinite(objetivo) || objetivo <= 0) {
       window.alert(`Error: Ingresa un peso objetivo válido en ${config.etiqueta}.`);
       return;
     }
-    if (Math.abs((objetivo / config.pasoTotal) - Math.round(objetivo / config.pasoTotal)) > 0.0001) {
-      window.alert(`Error: El peso objetivo debe ser múltiplo de ${config.pasoTotal} ${config.etiqueta}.`);
-      return;
-    }
+
+    // Modo Pro: los seguros son OPCIONALES. Si están incluidos se descuentan
+    // del objetivo; si no, simplemente no se restan (pesoSegurosTotal = 0).
     if (modoSimulador === 'pro') {
       objetivo = objetivo - tipoBarra - pesoSegurosTotal;
       if (objetivo <= 0) {
-        window.alert(`Error: El peso objetivo debe ser mayor que barra (${tipoBarra} ${config.etiqueta}) + seguros (${formatearPeso(pesoSegurosTotal)} ${config.etiqueta}).`);
+        window.alert(`Error: El peso objetivo debe ser mayor que la barra (${tipoBarra} ${config.etiqueta})${usarSeguros ? ` + seguros (${formatearPeso(pesoSegurosTotal)} ${config.etiqueta})` : ''}.`);
         return;
       }
     }
+
     const lado = objetivo / 2;
-    if (Math.abs((lado * 100) - Math.round(lado * 100)) > 0.0001) {
-      window.alert('Error: La carga por lado no quedó en un valor válido para los discos disponibles.');
-      return;
-    }
-    if (lado > config.maxPesoPorLado) {
-      window.alert(`Error: El peso por lado excede el máximo permitido (${config.maxPesoPorLado} ${config.etiqueta}).`);
-      return;
-    }
-    const ordenados = obtenerComboMinimoPorLado(lado);
+    const esMultiplo = Math.abs((objetivo / config.pasoTotal) - Math.round(objetivo / config.pasoTotal)) <= 0.0001;
+    const dentroDeLimite = lado <= config.maxPesoPorLado;
+
+    // Solo intentamos combo exacto si el objetivo es múltiplo del paso y entra
+    // en el límite por lado. En cualquier otro caso (carga inválida) ofrecemos
+    // las dos opciones más cercanas: una más baja y una más alta.
+    const ordenados = (esMultiplo && dentroDeLimite) ? obtenerComboMinimoPorLado(lado) : null;
+
     if (!ordenados) {
       const alts = buscarAlternativas(objetivo);
       if (!alts.arriba && !alts.abajo) {
-        window.alert('No se encontró una combinación válida para ese peso.');
+        window.alert('No se encontró ninguna combinación cercana con los discos disponibles.');
       } else {
         setAlternativas({ visible: true, objetivoPedido: Number(pesoObjetivo), arriba: alts.arriba, abajo: alts.abajo });
       }
       return;
     }
+
     setAlternativas({ visible: false, objetivoPedido: 0, arriba: null, abajo: null });
     actualizarEstado(ordenados, 'automatico');
     setPesoTotalCalculado(Number(pesoObjetivo));
@@ -330,34 +339,56 @@ export default function SimuladorBarraPublico() {
     setDiscosBloqueados([]);
   };
 
+  // Al cambiar de modo el significado del "peso objetivo" cambia (Casual = solo
+  // discos · Pro = total con barra). Limpiamos el estado transitorio de la
+  // calculadora para no mostrar cifras incoherentes (p. ej. el panel de
+  // alternativas con el encabezado en términos del modo anterior). La barra
+  // armada (discosLado) NO se toca: los discos siguen siendo válidos.
+  const cambiarModo = (nuevoModo) => {
+    if (nuevoModo === modoSimulador) return;
+    setModoSimulador(nuevoModo);
+    setPesoObjetivo('');
+    setAlternativas({ visible: false, objetivoPedido: 0, arriba: null, abajo: null });
+    setSugerencia({ visible: false, texto: '', combo: [] });
+  };
+
   const aplicarSugerencia = () => {
     if (!sugerencia.combo.length) return;
     actualizarEstado(sugerencia.combo, 'manual-optimo');
     setSugerencia({ visible: false, texto: '', combo: [] });
   };
 
+  // Busca las dos cargas alcanzables más cercanas al objetivo en discos:
+  // la mayor que sea <= objetivo (abajo) y la menor que sea >= objetivo (arriba).
+  // Parte de los múltiplos de pasoTotal por debajo/encima, así funciona aunque
+  // el objetivo no sea múltiplo (p. ej. barra de 22 lb en modo Pro) o haya
+  // discos bloqueados que impidan el combo exacto.
   const buscarAlternativas = (objetivoDiscos) => {
-    const maxPasos = 50;
+    const paso = config.pasoTotal;
+    const maxPasos = 400;
     let arriba = null;
     let abajo = null;
-    for (let i = 1; i <= maxPasos; i++) {
-      if (!arriba) {
-        const pesoDiscos = objetivoDiscos + config.pasoTotal * i;
-        const ladoCandidate = pesoDiscos / 2;
-        if (ladoCandidate <= config.maxPesoPorLado) {
-          const combo = obtenerComboMinimoPorLado(ladoCandidate);
-          if (combo) arriba = { pesoDiscos, combo };
-        }
-      }
+
+    // Múltiplo de paso estrictamente por debajo y por encima del objetivo.
+    const floorMult = Math.floor((objetivoDiscos - 1e-6) / paso) * paso;
+    const ceilMult = Math.ceil((objetivoDiscos + 1e-6) / paso) * paso;
+
+    for (let i = 0; i < maxPasos && (!arriba || !abajo); i++) {
       if (!abajo) {
-        const pesoDiscos = objetivoDiscos - config.pasoTotal * i;
-        if (pesoDiscos > 0) {
-          const ladoCandidate = pesoDiscos / 2;
-          const combo = obtenerComboMinimoPorLado(ladoCandidate);
+        const pesoDiscos = floorMult - paso * i;
+        // Nunca proponer una carga por debajo que supere el máximo por lado.
+        if (pesoDiscos > 0 && pesoDiscos / 2 <= config.maxPesoPorLado) {
+          const combo = obtenerComboMinimoPorLado(pesoDiscos / 2);
           if (combo) abajo = { pesoDiscos, combo };
         }
       }
-      if (arriba && abajo) break;
+      if (!arriba) {
+        const pesoDiscos = ceilMult + paso * i;
+        if (pesoDiscos / 2 <= config.maxPesoPorLado) {
+          const combo = obtenerComboMinimoPorLado(pesoDiscos / 2);
+          if (combo) arriba = { pesoDiscos, combo };
+        }
+      }
     }
     return { arriba, abajo };
   };
@@ -381,6 +412,13 @@ export default function SimuladorBarraPublico() {
       .map(([peso, cnt]) => `${cnt}×${peso}`)
       .join(' + ');
   };
+
+  // El peso a mostrar en una alternativa debe estar en los MISMOS términos que
+  // el usuario escribió: en Casual el objetivo es solo discos; en Pro es el total.
+  const pesoAlternativaMostrar = (pesoDiscosAlt) =>
+    modoSimulador === 'pro'
+      ? pesoDiscosAlt + tipoBarra + pesoSegurosTotal
+      : pesoDiscosAlt;
 
   const renderBarraUnilateral = () => {
     const discos = [...discosOrdenados].sort((a, b) => a - b);
@@ -483,17 +521,33 @@ export default function SimuladorBarraPublico() {
 
         {/* CONTROLS */}
         <div className="sb-controls mb-4">
-          <div className="sb-seg">
-            <button type="button" className={`sb-seg-btn ${modoSimulador === 'casual' ? 'active' : ''}`} onClick={() => setModoSimulador('casual')}>
-              <i className="fas fa-dumbbell"></i><span className="sb-btn-label"> Casual</span>
-            </button>
-            <button type="button" className={`sb-seg-btn ${modoSimulador === 'pro' ? 'active-gold' : ''}`} onClick={() => setModoSimulador('pro')}>
-              <i className="fas fa-crown"></i><span className="sb-btn-label"> Pro</span>
-            </button>
+          <div className="sb-ctrl-group">
+            <div className="sb-seg">
+              <button type="button" className={`sb-seg-btn ${modoSimulador === 'casual' ? 'active' : ''}`} onClick={() => cambiarModo('casual')}>
+                <i className="fas fa-dumbbell"></i><span className="sb-btn-label"> Casual</span>
+              </button>
+              <button type="button" className={`sb-seg-btn ${modoSimulador === 'pro' ? 'active-gold' : ''}`} onClick={() => cambiarModo('pro')}>
+                <i className="fas fa-crown"></i><span className="sb-btn-label"> Pro</span>
+              </button>
+            </div>
+            <BotonAyuda titulo="Modo Casual y Modo Pro" ariaLabel="¿Qué hace el modo Casual o Pro?">
+              <p>Cambia cómo se interpreta el <strong>peso objetivo</strong> que escribes en la calculadora:</p>
+              <ul>
+                <li><strong>Casual:</strong> el peso que escribes es <strong>solo el de los discos</strong>. No cuenta la barra ni los seguros.</li>
+                <li><strong>Pro:</strong> el peso que escribes es el <strong>total real</strong> que vas a levantar. El simulador te resta la barra (y los seguros si los activaste) y calcula los discos que van por lado.</li>
+              </ul>
+              <span className="ayuda-tip">Usa <strong>Pro</strong> cuando quieras armar, por ejemplo, "100 kg en total" sin sacar cuentas a mano. En Pro los seguros son <strong>opcionales</strong>.</span>
+            </BotonAyuda>
           </div>
-          <div className="sb-seg">
-            <button type="button" className={`sb-seg-btn ${unidad === 'lb' ? 'active' : ''}`} onClick={() => cambiarUnidad('lb')}>Libras</button>
-            <button type="button" className={`sb-seg-btn ${unidad === 'kg' ? 'active' : ''}`} onClick={() => cambiarUnidad('kg')}>Kilos</button>
+          <div className="sb-ctrl-group">
+            <div className="sb-seg">
+              <button type="button" className={`sb-seg-btn ${unidad === 'lb' ? 'active' : ''}`} onClick={() => cambiarUnidad('lb')}>Libras</button>
+              <button type="button" className={`sb-seg-btn ${unidad === 'kg' ? 'active' : ''}`} onClick={() => cambiarUnidad('kg')}>Kilos</button>
+            </div>
+            <BotonAyuda titulo="Unidad: libras o kilos" ariaLabel="¿Qué hace cambiar la unidad?">
+              <p>Cambia todo el simulador entre <strong>libras (lb)</strong> y <strong>kilos (kg)</strong>: las barras, los discos disponibles y el peso objetivo.</p>
+              <span className="ayuda-tip">Al cambiar de unidad se reinicia la barra para evitar mezclar discos de distinto sistema.</span>
+            </BotonAyuda>
           </div>
         </div>
 
@@ -559,7 +613,14 @@ export default function SimuladorBarraPublico() {
             {/* SETTINGS CARD */}
             <div className="sb-card mb-4">
               <div className="sb-card-header">
-                <span className="sb-card-title"><i className="fas fa-sliders-h"></i> Configuración</span>
+                <div className="sb-th-left">
+                  <span className="sb-card-title"><i className="fas fa-sliders-h"></i> Configuración</span>
+                  <BotonAyuda titulo="Tipo de barra y seguros" ariaLabel="¿Para qué sirven la barra y los seguros?">
+                    <p><strong>Tipo de barra:</strong> elige la barra que vas a usar. Su peso se suma al total que ves arriba (por ejemplo, una olímpica de 20 kg / 45 lb).</p>
+                    <p><strong>Seguros (collars):</strong> son las abrazaderas que sujetan los discos. Si los activas, su peso (×2, uno por lado) también se suma al total.</p>
+                    <span className="ayuda-tip">Los seguros son <strong>opcionales</strong>, también en modo Pro. Actívalos solo si quieres que su peso cuente en el cálculo.</span>
+                  </BotonAyuda>
+                </div>
               </div>
               <div className="sb-card-body">
                 <div className="row g-3">
@@ -609,11 +670,22 @@ export default function SimuladorBarraPublico() {
             {/* DISC SELECTOR */}
             <div className="sb-card">
               <div className="sb-card-header">
-                <span className="sb-card-title"><i className="fas fa-circle"></i> Selector de discos</span>
+                <div className="sb-th-left">
+                  <span className="sb-card-title"><i className="fas fa-circle"></i> Selector de discos</span>
+                  <BotonAyuda titulo="Selector de discos" ariaLabel="¿Cómo funciona el selector de discos?">
+                    <ul>
+                      <li><strong>Tocar un disco</strong> lo añade a la barra (se coloca uno en cada lado).</li>
+                      <li><strong>Tocar un disco ya puesto</strong> en la barra lo quita.</li>
+                      <li>El <strong>candado</strong> debajo de cada disco lo bloquea: un disco bloqueado no se usará en la calculadora ni en las sugerencias. Útil si ese disco no lo tienes a la mano.</li>
+                      <li><strong>Quitar</strong> saca el último disco; <strong>Limpiar</strong> vacía la barra.</li>
+                    </ul>
+                    <span className="ayuda-tip">Aquí los discos son ilimitados: puedes armar cualquier carga.</span>
+                  </BotonAyuda>
+                </div>
                 <span className="sb-discs-hint">Ilimitados</span>
               </div>
               <div className="sb-card-body">
-                {esAtleta && discosBloqueados.length > 0 && (
+                {discosBloqueados.length > 0 && (
                   <div className="sb-bloqueo-hint">
                     <i className="fas fa-lock" /> Los discos bloqueados no se usan en la calculadora ni en sugerencias
                   </div>
@@ -643,22 +715,43 @@ export default function SimuladorBarraPublico() {
                             </div>
                           )}
                         </div>
-                        {esAtleta ? (
-                          <button
-                            type="button"
-                            className={`sb-lock-btn${bloqueado ? ' sb-lock-btn--on' : ''}`}
-                            onClick={() => toggleBloqueo(peso)}
-                            title={bloqueado ? 'Desbloquear disco' : 'Bloquear de calculadora'}
-                          >
-                            <i className={`fas fa-${bloqueado ? 'lock' : 'lock-open'}`} />
-                          </button>
-                        ) : (
-                          <span className="sb-disc-avail" style={{ color: 'var(--success)' }}>∞</span>
-                        )}
+                        <button
+                          type="button"
+                          className={`sb-lock-btn${bloqueado ? ' sb-lock-btn--on' : ''}`}
+                          onClick={() => toggleBloqueo(peso)}
+                          title={bloqueado ? 'Desbloquear disco' : 'Bloquear de calculadora'}
+                        >
+                          <i className={`fas fa-${bloqueado ? 'lock' : 'lock-open'}`} />
+                        </button>
                       </div>
                     );
                   })}
                 </div>
+
+                {/* TOGGLE: sugerencias inteligentes ON/OFF */}
+                <div className="sb-sug-toggle">
+                  <div
+                    className="sb-switch-row mb-0"
+                    onClick={toggleSugerencias}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && toggleSugerencias()}
+                  >
+                    <span className="sb-switch-label">
+                      <i className={`fas ${sugerenciasActivas ? 'fa-lightbulb' : 'fa-lightbulb-slash'}`} style={{ color: sugerenciasActivas ? 'var(--accent)' : 'var(--text-muted)' }}></i>
+                      Sugerencias {sugerenciasActivas ? 'activadas' : 'desactivadas'}
+                    </span>
+                    <div className="form-check form-switch mb-0">
+                      <input className="form-check-input" type="checkbox" role="switch" checked={sugerenciasActivas} onChange={toggleSugerencias} onClick={(e) => e.stopPropagation()} />
+                    </div>
+                  </div>
+                  <BotonAyuda titulo="Sugerencias inteligentes" ariaLabel="¿Qué son las sugerencias?">
+                    <p>Cuando armas la barra a mano, el simulador puede detectar si existe una forma <strong>más sencilla de lograr el mismo peso con menos discos</strong> y te la propone en una ventana.</p>
+                    <p>Con este interruptor las <strong>activas o desactivas</strong>. Si te molesta que aparezca el aviso, apágalas y arma la barra a tu manera.</p>
+                    <span className="ayuda-tip">Desactivar las sugerencias no cambia el peso: solo deja de proponerte combinaciones.</span>
+                  </BotonAyuda>
+                </div>
+
                 <div className="sb-summary-strip">
                   <div className="sb-summary-row">
                     <span className="sb-summary-label">Discos por lado</span>
@@ -694,11 +787,21 @@ export default function SimuladorBarraPublico() {
             {/* CALCULATOR */}
             <div className="sb-card mb-4">
               <div className="sb-card-header">
-                <span className="sb-card-title"><i className="fas fa-calculator"></i> Calculadora</span>
+                <div className="sb-th-left">
+                  <span className="sb-card-title"><i className="fas fa-calculator"></i> Calculadora</span>
+                  <BotonAyuda titulo="Calculadora de carga" ariaLabel="¿Cómo funciona la calculadora?">
+                    <p>Escribe el <strong>peso objetivo</strong> y pulsa <strong>Calcular combinación</strong>: el simulador arma la barra usando la <strong>menor cantidad de discos</strong> posible.</p>
+                    <ul>
+                      <li>En <strong>Casual</strong> el objetivo es solo el peso de los discos.</li>
+                      <li>En <strong>Pro</strong> el objetivo es el total (te resta la barra y los seguros si están activados).</li>
+                    </ul>
+                    <span className="ayuda-tip">Si el peso exacto no se puede armar, te ofrece las <strong>dos cargas más cercanas</strong>: una más baja y una más alta, para que elijas con un toque.</span>
+                  </BotonAyuda>
+                </div>
               </div>
               <div className="sb-card-body">
                 <div className="sb-field">
-                  <label className="sb-label">Peso objetivo en discos ({config.etiqueta})</label>
+                  <label className="sb-label">{modoSimulador === 'pro' ? `Peso objetivo total (${config.etiqueta})` : `Peso objetivo en discos (${config.etiqueta})`}</label>
                   <input type="number" className="sb-input" value={pesoObjetivo} min={config.pasoTotal} step={config.pasoTotal}
                     onChange={(e) => { setPesoObjetivo(e.target.value); if (alternativas.visible) setAlternativas({ visible: false, objetivoPedido: 0, arriba: null, abajo: null }); }} />
                 </div>
@@ -721,19 +824,19 @@ export default function SimuladorBarraPublico() {
                     </div>
                     <p className="sb-alt-hint">Pesos más cercanos disponibles:</p>
                     <div className="sb-alt-options">
-                      {alternativas.arriba && (
-                        <button type="button" className="sb-alt-option above" onClick={() => aplicarAlternativa(alternativas.arriba.combo, alternativas.arriba.pesoDiscos)}>
-                          <span className="sb-alt-dir"><i className="fas fa-arrow-up"></i> Más pesado</span>
-                          <span className="sb-alt-peso">{formatearPeso(alternativas.arriba.pesoDiscos + tipoBarra + pesoSegurosTotal)}<span className="sb-alt-unit">{config.etiqueta}</span></span>
-                          <span className="sb-alt-combo">{formatComboLado(alternativas.arriba.combo)} por lado</span>
-                          <span className="sb-alt-cta">Usar este →</span>
-                        </button>
-                      )}
                       {alternativas.abajo && (
                         <button type="button" className="sb-alt-option below" onClick={() => aplicarAlternativa(alternativas.abajo.combo, alternativas.abajo.pesoDiscos)}>
                           <span className="sb-alt-dir"><i className="fas fa-arrow-down"></i> Más ligero</span>
-                          <span className="sb-alt-peso">{formatearPeso(alternativas.abajo.pesoDiscos + tipoBarra + pesoSegurosTotal)}<span className="sb-alt-unit">{config.etiqueta}</span></span>
+                          <span className="sb-alt-peso">{formatearPeso(pesoAlternativaMostrar(alternativas.abajo.pesoDiscos))}<span className="sb-alt-unit">{config.etiqueta}</span></span>
                           <span className="sb-alt-combo">{formatComboLado(alternativas.abajo.combo)} por lado</span>
+                          <span className="sb-alt-cta">Usar este →</span>
+                        </button>
+                      )}
+                      {alternativas.arriba && (
+                        <button type="button" className="sb-alt-option above" onClick={() => aplicarAlternativa(alternativas.arriba.combo, alternativas.arriba.pesoDiscos)}>
+                          <span className="sb-alt-dir"><i className="fas fa-arrow-up"></i> Más pesado</span>
+                          <span className="sb-alt-peso">{formatearPeso(pesoAlternativaMostrar(alternativas.arriba.pesoDiscos))}<span className="sb-alt-unit">{config.etiqueta}</span></span>
+                          <span className="sb-alt-combo">{formatComboLado(alternativas.arriba.combo)} por lado</span>
                           <span className="sb-alt-cta">Usar este →</span>
                         </button>
                       )}
