@@ -62,6 +62,42 @@
   margin-bottom: 0;
 }
 
+/* === LOGO DEL BOX (hero AdminBox) — aro al estilo del avatar del coach === */
+.abp-box-logo-ring {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  padding: 3px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent-cool) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.abp-box-logo-img,
+.abp-box-logo-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 15px;
+  border: 2px solid var(--bg-base);
+}
+
+.abp-box-logo-img {
+  object-fit: cover;
+  background: #1c1c24;
+}
+
+.abp-box-logo-placeholder {
+  background: #252530;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
 .abp-config-btn {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -586,9 +622,10 @@
 /* === RESPONSIVE TABLET (rango intermedio) === */
 @media (max-width: 768px) {
   .abp-hero            { padding: 1.6rem 0 1rem; }
-  .abp-box-title       { letter-spacing: 1.5px; }
+  .abp-box-title       { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: 1.5px; }
   .abp-stat-number     { font-size: 1.6rem; }
   .abp-glass-card      { padding: 1.1rem; }
+  .coach-dashboard .coach-avatar-ring { width: 64px; height: 64px; }
 
   /* Cabecera del gráfico: título completo arriba, controles debajo */
   .abp-card-header {
@@ -600,17 +637,61 @@
 
 /* === RESPONSIVE MOBILE OPTIMIZATIONS === */
 @media (max-width: 576px) {
-  /* Solo la cabecera (logo/título/botón) se apila — NO la fila de stats,
-     para que las tarjetas se acomoden 2 por fila (col-6) */
+  /* Solo la cabecera (identidad + botones) se apila y se centra — NO la fila de
+     stats, para que las tarjetas se acomoden 2 por fila (col-6) */
   .abp-hero > div:not(.abp-stats-row) {
     flex-direction: column;
-    align-items: stretch !important;
+    align-items: center !important;
+    text-align: center;
     gap: 1.2rem !important;
   }
   
   .abp-config-btn {
     align-self: flex-start;
     width: auto;
+  }
+
+  /* Reducir el título del hero para que no domine ni se parta en varias líneas */
+  .abp-box-title { font-size: 1.6rem; letter-spacing: 1px; }
+
+  /* === HERO (coach y AdminBox) → tarjeta de perfil/box centrada y compacta === */
+  .abp-hero-identity {
+    flex-direction: column;
+    align-items: center !important;
+    gap: 0.65rem !important;
+    text-align: center;
+  }
+  .abp-hero-sub { font-size: 0.8rem; }
+  .coach-dashboard .abp-box-title { font-size: 1.45rem; }
+  .coach-dashboard .coach-avatar-ring { width: 60px; height: 60px; }
+  .abp-box-logo-ring { width: 60px; height: 60px; border-radius: 16px; }
+  .abp-box-logo-placeholder { font-size: 1.35rem; }
+  .abp-hero-actions {
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 0 !important;
+  }
+
+  /* Botones de acción del hero (push / campanita / perfil) → trío idéntico:
+     mismo tamaño, misma forma y misma alineación (solo ícono en móvil) */
+  .abp-hero-actions .push-activar-btn,
+  .abp-hero-actions .abp-notif-btn,
+  .abp-hero-actions .abp-config-btn {
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    padding: 0;
+    border-radius: 12px;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .abp-hero-actions .push-activar-btn i,
+  .abp-hero-actions .abp-notif-btn i,
+  .abp-hero-actions .abp-config-btn i {
+    font-size: 1rem;
+    margin: 0;
   }
 
   .abp-stats-row {
@@ -700,6 +781,26 @@
     font-size: 0.7rem;
     line-height: 1.2;
     margin-bottom: 0 !important;
+  }
+}
+
+/* === RESPONSIVE MÓVIL PEQUEÑO (iPhone SE) === */
+@media (max-width: 380px) {
+  .abp-box-title { font-size: 1.35rem; }
+  .abp-stat-number { font-size: 1.25rem; }
+  .coach-dashboard .abp-box-title { font-size: 1.2rem; }
+  .coach-dashboard .coach-avatar-ring { width: 54px; height: 54px; }
+  .coach-dashboard .coach-avatar-placeholder { font-size: 1.4rem; }
+  .abp-box-logo-ring { width: 54px; height: 54px; }
+  .abp-box-logo-placeholder { font-size: 1.2rem; }
+
+  /* Trío de botones del hero un poco más compacto */
+  .abp-hero-actions .push-activar-btn,
+  .abp-hero-actions .abp-notif-btn,
+  .abp-hero-actions .abp-config-btn {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
   }
 }
 

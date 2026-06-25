@@ -622,7 +622,7 @@ export default function AdminBoxPanel() {
           {/* HERO HEADER */}
           <section className="abp-hero">
             <div className="d-flex justify-content-between align-items-start gap-3">
-              <div className="d-flex align-items-center gap-3">
+              <div className="d-flex align-items-center gap-3 abp-hero-identity">
                 <div className="position-relative">
                   <div className="coach-avatar-ring">
                     {user?.foto || user?.Foto ? (
@@ -649,7 +649,7 @@ export default function AdminBoxPanel() {
                   </p>
                 </div>
               </div>
-              <div className="d-flex align-items-center gap-2 mt-1">
+              <div className="d-flex align-items-center gap-2 mt-1 abp-hero-actions">
                 <BotonActivarPush />
                 {/* CAMPANITA DE NOTIFICACIONES */}
                 <div className="abp-notif">
@@ -1223,25 +1223,29 @@ export default function AdminBoxPanel() {
         ══════════════════════════════════ */}
         <section className="abp-hero">
           <div className="d-flex justify-content-between align-items-start gap-3">
-            <div>
-              <span className="abp-role-badge mb-3 d-inline-block shadow-sm">
-                <i className="fas fa-shield-alt me-1"></i>{user?.rol}
-              </span>
-              <div className="d-flex align-items-center gap-3">
-                {box?.logo && (
+            <div className="d-flex align-items-center gap-3 abp-hero-identity">
+              <div className="abp-box-logo-ring">
+                {box?.logo ? (
                   <img
                     src={box.logo}
-                    alt={box?.nombre || 'Logo Box'}
-                    style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '14px', background: '#1c1c24', border: '1px solid rgba(255,255,255,0.1)' }}
+                    alt={box?.nombre || 'Logo del box'}
+                    className="abp-box-logo-img"
                   />
+                ) : (
+                  <div className="abp-box-logo-placeholder">
+                    <i className="fas fa-warehouse"></i>
+                  </div>
                 )}
-                <div>
-                  <h1 className="abp-box-title mb-0" style={{ lineHeight: '1.1' }}>{box?.nombre || 'MI BOX'}</h1>
-                  <p className="abp-hero-sub mb-0 mt-1 opacity-75">Centro de mando y control operativo</p>
-                </div>
+              </div>
+              <div>
+                <span className="abp-role-badge mb-1 d-inline-block shadow-sm">
+                  <i className="fas fa-shield-alt me-1"></i>{user?.rol}
+                </span>
+                <h1 className="abp-box-title mb-0" style={{ lineHeight: '1.1' }}>{box?.nombre || 'MI BOX'}</h1>
+                <p className="abp-hero-sub mb-0 mt-1 opacity-75">Centro de mando y control operativo</p>
               </div>
             </div>
-            <div className="d-flex align-items-center gap-2 mt-1">
+            <div className="d-flex align-items-center gap-2 mt-1 abp-hero-actions">
               <BotonActivarPush />
               {/* CAMPANITA DE NOTIFICACIONES */}
               <div className="abp-notif">
