@@ -4,6 +4,7 @@ import BackButton from '../components/BackButton';
 import { api } from '../services/api';
 import AtletifyLoader from '../components/AtletifyLoader';
 import EjercicioDetailModal from '../components/EjercicioDetailModal';
+import TextoMarquee from '../components/TextoMarquee';
 import '../assets/css/Ejercicios.css';
 
 const CATEGORIAS_BASE = ['Todas'];
@@ -186,7 +187,7 @@ export default function Ejercicios() {
                               <i className={ej.icono} />
                             </div>
                             <div className="ej-card-text">
-                              <h3 className="ej-nombre mb-0">{ej.nombre}</h3>
+                              <h3 className="ej-nombre mb-0"><TextoMarquee text={ej.nombre} /></h3>
                               {ej.subnombre && (
                                 <p className="ej-subnombre">Alt: {ej.subnombre}</p>
                               )}

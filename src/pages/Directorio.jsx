@@ -96,49 +96,57 @@ export default function Directorio() {
         (x.rol === 'Atleta' || x.Rol === 'Atleta' || x.rol === 'Coach')
       );
       setAtletas(atletasDelBox);
+      // La lista se muestra de inmediato: no esperamos a las suscripciones.
+      setLoading(false);
 
-      // Cargar las suscripciones de cada atleta
-      const suscripciones = {};
+      // Las suscripciones solo alimentan la columna y el filtro "Membresía"
+      // (ambos opcionales), así que se cargan en segundo plano sin bloquear la lista.
+      cargarSuscripciones(atletasDelBox, headers);
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+    }
+  }
 
-      for (const atleta of atletasDelBox) {
-        const idUsuario = atleta.idUsuario || atleta.IdUsuario;
-        try {
-          const resSub = await fetch(`${API_BASE}/cobranza/atleta/${idUsuario}`, { headers });
-          if (resSub.ok) {
-            const dataSub = await resSub.json();
-            console.log(`[DEBUG] Usuario ${idUsuario}:`, dataSub); // DEBUG
+  // Carga en segundo plano el plan de cada atleta para la columna/filtro "Membresía".
+  // Best-effort: si una falla, ese atleta queda como "Sin membresía" y la lista sigue funcionando.
+  async function cargarSuscripciones(atletasDelBox, headers) {
+    const suscripciones = {};
 
-            // El backend devuelve:
-            // - nombrePlan: nombre del plan (puede ser "Ninguno" si no hay suscripción)
-            // - membresias: array de membresías con estatus "Activa" o "Congelada"
+    for (const atleta of atletasDelBox) {
+      const idUsuario = atleta.idUsuario || atleta.IdUsuario;
+      try {
+        const resSub = await fetch(`${API_BASE}/cobranza/atleta/${idUsuario}`, { headers });
+        if (resSub.ok) {
+          const dataSub = await resSub.json();
 
-            // Si el backend nos dice que su último plan no es "Ninguno", ese es su plan (aunque esté vencido/pendiente)
-            let nombrePlan = 'Sin membresía';
-            const planDelBackend = dataSub.nombrePlan || dataSub.NombrePlan;
+          // El backend devuelve:
+          // - nombrePlan: nombre del plan (puede ser "Ninguno" si no hay suscripción)
+          // - membresias: array de membresías con estatus "Activa" o "Congelada"
 
-            if (planDelBackend && planDelBackend !== 'Ninguno') {
-              nombrePlan = planDelBackend;
-            }
+          // Si el backend nos dice que su último plan no es "Ninguno", ese es su plan (aunque esté vencido/pendiente)
+          let nombrePlan = 'Sin membresía';
+          const planDelBackend = dataSub.nombrePlan || dataSub.NombrePlan;
 
-            console.log(`[DEBUG] ${idUsuario} → nombrePlan final: "${nombrePlan}"`); // DEBUG
-
-            suscripciones[idUsuario] = {
-              nombrePlan: nombrePlan,
-              estatus: dataSub.suscripcion ? (dataSub.suscripcion.estatus || dataSub.suscripcion.Estatus) : 'Vencida'
-            };
-          } else {
-            console.warn(`[DEBUG] Error ${resSub.status} para usuario ${idUsuario}`);
-            suscripciones[idUsuario] = { nombrePlan: 'Sin membresía', estatus: 'Vencida' };
+          if (planDelBackend && planDelBackend !== 'Ninguno') {
+            nombrePlan = planDelBackend;
           }
-        } catch (err) {
-          console.error(`Error cargando suscripción de ${idUsuario}:`, err);
+
+          suscripciones[idUsuario] = {
+            nombrePlan: nombrePlan,
+            estatus: dataSub.suscripcion ? (dataSub.suscripcion.estatus || dataSub.suscripcion.Estatus) : 'Vencida'
+          };
+        } else {
           suscripciones[idUsuario] = { nombrePlan: 'Sin membresía', estatus: 'Vencida' };
         }
+      } catch (err) {
+        console.error(`Error cargando suscripción de ${idUsuario}:`, err);
+        suscripciones[idUsuario] = { nombrePlan: 'Sin membresía', estatus: 'Vencida' };
       }
-      console.log('[DEBUG] Suscripciones finales:', suscripciones); // DEBUG
-      setSuscripcionesAtletas(suscripciones);
-      setSuscripcionesLoaded(true); // Marcar que los datos están listos
-    } catch (err) { console.error(err); } finally { setLoading(false); }
+    }
+
+    setSuscripcionesAtletas(suscripciones);
+    setSuscripcionesLoaded(true); // Marcar que los datos están listos
   }
 
   useEffect(() => {

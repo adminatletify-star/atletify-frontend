@@ -75,6 +75,7 @@ const ACCIONES = [
     ['GESTION_SUGERENCIA', 'Gestión de Sugerencia'],
     ['CREAR_CAMPANIA', 'Crear Campaña/Anuncio'],
     ['EDITAR_CAMPANIA', 'Editar Campaña/Anuncio'],
+    ['FINALIZAR_CAMPANIA', 'Finalizar Campaña/Anuncio'],
     ['ELIMINAR_CAMPANIA', 'Eliminar Campaña/Anuncio'],
     ['DONATIVO_MANUAL', 'Aportación Manual (Campaña)'],
     ['DONATIVO_STRIPE', 'Donativo en Línea (Campaña)'],

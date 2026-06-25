@@ -65,6 +65,7 @@
 }
 .cc-estado-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
 .cc-estado-chip.on { background: rgba(46, 204, 113, 0.12); color: var(--success, #2ECC71); border: 1px solid rgba(46, 204, 113, 0.3); }
+.cc-estado-chip.prog { background: rgba(245, 166, 35, 0.12); color: var(--accent, #F5A623); border: 1px solid rgba(245, 166, 35, 0.3); }
 .cc-estado-chip.off { background: rgba(255, 255, 255, 0.05); color: var(--text-muted, #6B7280); border: 1px solid var(--border, rgba(255, 255, 255, 0.1)); }
 
 /* ── TABS ── */

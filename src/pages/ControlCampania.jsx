@@ -30,6 +30,14 @@ const ESTADO_BADGE = {
   Correccion: { txt: 'En corrección', cls: 'cc-badge--corr', icon: 'fa-triangle-exclamation' },
 };
 
+// Estatus de vigencia: Activa (verde) · Programada (ámbar) · Finalizada (gris).
+const ccEstadoClase = (control) => {
+  const estatus = control?.estatus || (control?.activo ? 'Activa' : 'Finalizada');
+  if (estatus === 'Activa') return 'on';
+  if (estatus === 'Programada') return 'prog';
+  return 'off';
+};
+
 function buildPaginas(pagina, total) {
   return Array.from({ length: total }, (_, idx) => idx + 1)
     .filter(n => n === 1 || n === total || Math.abs(n - pagina) <= 1)
@@ -157,8 +165,8 @@ export default function ControlCampania() {
           <div className="cc-vigencia">
             <span className="cc-vig-item"><i className="far fa-calendar-alt"></i> {fmtFecha(control?.fechaInicio)} → {fmtFecha(control?.fechaFin)}</span>
             <span className="cc-vig-item"><i className="fas fa-flag-checkered"></i> Creada: {fmtFecha(control?.fechaCreacion)}</span>
-            <span className={`cc-estado-chip ${control?.activo ? 'on' : 'off'}`}>
-              <span className="cc-estado-dot"></span>{control?.activo ? 'Activa' : 'Inactiva'}
+            <span className={`cc-estado-chip ${ccEstadoClase(control)}`}>
+              <span className="cc-estado-dot"></span>{control?.estatus || (control?.activo ? 'Activa' : 'Finalizada')}
             </span>
           </div>
         </div>

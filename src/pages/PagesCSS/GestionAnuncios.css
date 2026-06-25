@@ -77,6 +77,13 @@
   border: 1px solid var(--border);
 }
 
+/* Programada: aún no inicia (ámbar, como modo "en espera") */
+.gan-badge-programada {
+  background: rgba(245, 166, 35, 0.1);
+  color: var(--accent);
+  border: 1px solid rgba(245, 166, 35, 0.28);
+}
+
 /* Botones de acción cuadrados (editar / eliminar) */
 .gan-icon-btn {
   width: 34px;
@@ -805,6 +812,46 @@
 }
 .gan-btn-control:active { transform: scale(0.97); }
 
+/* Botón "Finalizar ahora" (cortar una campaña activa antes de su fin) */
+.gan-btn-finalizar {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(230, 57, 70, 0.06);
+  border: 1px solid rgba(230, 57, 70, 0.4);
+  color: var(--primary);
+  border-radius: 10px;
+  padding: 0.55rem 0.75rem;
+  font-family: var(--font-heading-alt), 'Barlow Condensed', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
+}
+.gan-btn-finalizar:active { transform: scale(0.97); }
+.gan-btn-finalizar:disabled { opacity: 0.6; cursor: default; }
+
+/* Nota informativa de vigencia (reemplaza al antiguo switch "Campaña activa") */
+.gan-vigencia-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.8rem;
+  color: var(--secondary);
+  line-height: 1.45;
+}
+.gan-vigencia-info-icon { color: var(--accent); margin-top: 2px; }
+.gan-vigencia-info strong { color: var(--text-primary); }
+
 /* Secciones numeradas del registro manual */
 .gan-seccion {
   display: flex;
@@ -989,6 +1036,7 @@
   .gan-icon-btn--del:hover { background: rgba(230, 57, 70, 0.12); }
   .gan-btn-aportar:hover { background: rgba(245, 166, 35, 0.16); }
   .gan-btn-control:hover { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.18); }
+  .gan-btn-finalizar:hover { background: rgba(230, 57, 70, 0.14); border-color: rgba(230, 57, 70, 0.6); }
   .gan-btn-close:hover { color: var(--primary); transform: scale(1.15); }
   .btn-gan-primary:hover { background: #ff4d5a; box-shadow: 0 4px 16px var(--primary-glow); }
   .btn-gan-secondary:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.18); }

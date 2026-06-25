@@ -1,0 +1,57 @@
+/* ════════════════════════════════════════════════════════════
+   TEXTO MARQUEE — desliza el texto en bucle SOLO si no cabe.
+   El tag externo (.tmq) recibe además la clase tipográfica del
+   consumidor (ej. .ej-nombre), de ahí toma fuente, color y tamaño.
+   ════════════════════════════════════════════════════════════ */
+
+.tmq {
+  position: relative;
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Medidor: mismo font (heredado), fuera de flujo para no afectar el layout */
+.tmq-measure {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Caso "cabe": texto estático (con elipsis por si acaso) */
+.tmq-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Caso "no cabe": pista con dos copias desplazándose en bucle */
+.tmq-track {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  will-change: transform;
+  animation-name: tmq-scroll;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.tmq-seg {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding-right: var(--tmq-gap, 48px); /* separación entre copias = "respiro" del bucle */
+}
+
+/* La pista mide 2 segmentos idénticos (texto + gap); -50% = un segmento exacto → loop sin saltos */
+@keyframes tmq-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* Accesibilidad: sin animación si el usuario pidió menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .tmq-track { animation: none; transform: none; }
+}

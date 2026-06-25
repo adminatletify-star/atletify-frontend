@@ -780,6 +780,12 @@
 .up-modal-body {
   padding: 1.25rem;
   overflow-y: auto;
+  /* En un flex-column con max-height (.up-modal), el body necesita min-height:0 para poder
+     encogerse por debajo de su contenido y que overflow-y:auto active el scroll; sin esto el
+     contenido desborda el 90vh y .up-modal (overflow:hidden) lo recorta sin dejar scrollear. */
+  flex: 1 1 auto;
+  min-height: 0;
+  overscroll-behavior: contain;
 }
 
 /* ============================================

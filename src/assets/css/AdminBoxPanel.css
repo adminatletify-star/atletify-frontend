@@ -1287,6 +1287,7 @@ details[open] .qv-week-summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
   padding: 0.8rem 1rem;
   border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));
   font-family: var(--font-heading-alt, inherit);
@@ -1319,6 +1320,11 @@ details[open] .qv-week-summary {
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.85rem;
+  /* min-height:0 para que el list pueda encogerse dentro del panel (flex-column, max-height 85vh,
+     overflow:hidden) y overflow-y:auto active el scroll; sin esto el contenido desborda y se recorta. */
+  flex: 1 1 auto;
+  min-height: 0;
+  overscroll-behavior: contain;
 }
 
 .abp-notif-item {

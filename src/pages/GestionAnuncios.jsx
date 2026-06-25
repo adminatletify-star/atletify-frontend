@@ -38,6 +38,16 @@ const fmtFechaHora = (iso) => {
   return d.toLocaleString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 
+// Estatus derivado del backend (Programada / Activa / Finalizada). El estado ya no es manual:
+// lo calcula AnunciosController según las fechas. Fallback por si la API aún no lo manda.
+const BADGE_ESTATUS = {
+  Programada: { cls: 'gan-badge-programada', icon: 'fa-clock', label: 'Programada' },
+  Activa:     { cls: 'gan-badge-active',     icon: 'fa-circle-check', label: 'Activa' },
+  Finalizada: { cls: 'gan-badge-inactive',   icon: 'fa-circle-stop', label: 'Finalizada' },
+};
+const badgeEstatus = (a) =>
+  BADGE_ESTATUS[a.estatus] || (a.activo ? BADGE_ESTATUS.Activa : BADGE_ESTATUS.Finalizada);
+
 const GestionAnuncios = () => {
   const navigate = useNavigate();
   const [anuncios, setAnuncios] = useState([]);
@@ -119,7 +129,7 @@ const GestionAnuncios = () => {
   const resetForm = () => {
     setForm({
       idAnuncio: 0, titulo: '', mensaje: '',
-      aceptarDonacionesStripe: false, metaDonacion: '', mostrarRankingDonadores: false, activo: true
+      aceptarDonacionesStripe: false, metaDonacion: '', mostrarRankingDonadores: false
     });
     setFechaInicio(hoyISO());
     setHoraInicio(ahoraHHMM());
@@ -136,8 +146,7 @@ const GestionAnuncios = () => {
         mensaje: anuncio.mensaje,
         aceptarDonacionesStripe: !!anuncio.aceptarDonacionesStripe,
         metaDonacion: anuncio.metaDonacion || '',
-        mostrarRankingDonadores: !!anuncio.mostrarRankingDonadores,
-        activo: anuncio.activo
+        mostrarRankingDonadores: !!anuncio.mostrarRankingDonadores
       });
       const [fi, ti] = (anuncio.fechaInicio || '').split('T');
       const [ff, tf] = (anuncio.fechaFin || '').split('T');
@@ -204,8 +213,7 @@ const GestionAnuncios = () => {
       fechaFin: combinar(fechaFin, horaFin),
       aceptarDonacionesStripe: stripeDisponible ? form.aceptarDonacionesStripe : false,
       metaDonacion: form.metaDonacion ? parseFloat(form.metaDonacion) : null,
-      mostrarRankingDonadores: form.mostrarRankingDonadores,
-      activo: form.activo
+      mostrarRankingDonadores: form.mostrarRankingDonadores
     };
 
     try {
@@ -242,6 +250,29 @@ const GestionAnuncios = () => {
       }
     } catch (error) {
       globalAlert.showError('Error al eliminar.');
+    }
+  };
+
+  // Corta una campaña activa antes de su fecha de fin: pasa a "Finalizada" y deja de mostrarse.
+  const handleFinalizar = async (anuncio) => {
+    const ok = await window.wpConfirm(
+      `¿Finalizar ahora la campaña "${anuncio.titulo}"? Dejará de mostrarse a los miembros de inmediato y no podrá reactivarse (tendrías que editar sus fechas).`
+    );
+    if (!ok) return;
+    try {
+      const res = await fetch(`${API}/api/anuncios/${anuncio.idAnuncio}/finalizar`, {
+        method: 'POST',
+        headers: authHeaders()
+      });
+      if (res.ok) {
+        globalAlert.showSuccess('Campaña finalizada.');
+        fetchAnuncios();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        globalAlert.showError(err.mensaje || 'No se pudo finalizar la campaña.');
+      }
+    } catch (error) {
+      globalAlert.showError('Error de conexión al finalizar la campaña.');
     }
   };
 
@@ -333,9 +364,9 @@ const GestionAnuncios = () => {
               <div className={`gan-card h-100 ${a.aceptarDonaciones ? 'campaign-active' : ''}`}>
                 <div className="gan-card-body d-flex flex-column h-100">
                   <div className="d-flex justify-content-between align-items-start mb-3 gap-2">
-                    <span className={`gan-badge ${a.activo ? 'gan-badge-active' : 'gan-badge-inactive'}`}>
-                      <i className={`fas ${a.activo ? 'fa-circle-check' : 'fa-circle-pause'}`}></i>
-                      {a.activo ? 'Activo' : 'Inactivo'}
+                    <span className={`gan-badge ${badgeEstatus(a).cls}`}>
+                      <i className={`fas ${badgeEstatus(a).icon}`}></i>
+                      {badgeEstatus(a).label}
                     </span>
                     <div className="d-flex gap-2">
                       <button className="gan-icon-btn gan-icon-btn--edit" onClick={() => handleOpenModal(a)} title="Editar" aria-label="Editar">
@@ -396,6 +427,17 @@ const GestionAnuncios = () => {
                       <button className="gan-btn-control mt-2" onClick={() => navigate(`/control-campania/${a.idAnuncio}`)}>
                         <i className="fas fa-chart-pie me-1"></i> Panel de control
                       </button>
+                    )}
+
+                    {(a.estatus ? a.estatus === 'Activa' : a.activo) && (
+                      <BotonSeguro
+                        type="button"
+                        className="gan-btn-finalizar mt-2"
+                        onClick={() => handleFinalizar(a)}
+                        textoProcesando="Finalizando..."
+                      >
+                        <i className="fas fa-flag-checkered me-1"></i> Finalizar ahora
+                      </BotonSeguro>
                     )}
                   </div>
                 </div>
@@ -536,15 +578,13 @@ const GestionAnuncios = () => {
                 )}
               </div>
 
-              <div className="mb-4 p-3 rounded-3" style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <label className="gan-switch">
-                  <input type="checkbox" className="gan-switch-input" name="activo" checked={form.activo} onChange={handleChange} />
-                  <span className="gan-switch-slider"></span>
-                  <div>
-                    <span className="fw-bold text-white d-block">Campaña Activa</span>
-                    <span className="small text-white-50 d-block mt-0.5">Si está inactiva, no se mostrará a ningún miembro del box.</span>
-                  </div>
-                </label>
+              <div className="gan-vigencia-info mb-4">
+                <i className="fas fa-circle-info gan-vigencia-info-icon"></i>
+                <span>
+                  La campaña se <strong>activa sola</strong> al llegar su fecha y hora de inicio, y se
+                  <strong> finaliza sola</strong> al llegar la de fin. Si el inicio es a futuro, nace como
+                  <strong> Programada</strong> y no se mostrará a nadie hasta entonces.
+                </span>
               </div>
 
               <div className="gan-modal-footer">
