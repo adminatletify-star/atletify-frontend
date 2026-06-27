@@ -838,7 +838,7 @@ export default function MiPerfil() {
                     <i className="fas fa-fire" /> Racha: {rachaVisible} días
                   </span>
                   <span className="mp-hero-badge">{form.estadoDelDia}</span>
-                  {(form.esDeConfianza || deudaReal > 0) && (
+                  {deudaReal > 0 && (
                     <span className="mp-hero-badge mp-hero-badge--deuda">
                       <i className="fas fa-handshake" /> Deuda: ${deudaReal.toFixed(2)}
                     </span>

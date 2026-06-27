@@ -14,12 +14,14 @@ export default function GestionVentasProductos() {
   const [listaApartados, setListaApartados] = useState(['General (Box)']);
   const [apartadoActivo, setApartadoActivo] = useState('General (Box)');
   const [boxGuardado, setBoxGuardado] = useState(null);
+  const [mostrarFiado, setMostrarFiado] = useState(true); // tarjeta Gestión de Fiado: visible si el box ofrece fiados O aún hay deuda pendiente
 
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));
     if (b) {
       setBoxGuardado(b);
       cargarApartadosDesdeBD(b.idBox);
+      cargarVisibilidadFiado(b.idBox);
     }
 
     const guardado = localStorage.getItem('apartadoVentas');
@@ -38,6 +40,26 @@ export default function GestionVentasProductos() {
     } catch(e) {
       console.error("Error al cargar lista de apartados:", e);
     }
+  };
+
+  // Decide si mostrar la tarjeta "Gestión de Fiado": si el box ofrece fiados, o si (aunque estén
+  // desactivados) todavía hay deudas pendientes que cobrar. Al quedar en $0 y desactivados, desaparece.
+  const cargarVisibilidadFiado = async (idBox) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const [resCfg, resFiados] = await Promise.all([
+        fetch(`${import.meta.env.VITE_API_URL}/api/configuracionbox/${idBox}`),
+        fetch(`${VENTAS_ENDPOINT}/fiados/${idBox}`, { headers })
+      ]);
+      const permite = resCfg.ok ? ((await resCfg.json()).permitirFiados !== false) : true;
+      let hayDeuda = false;
+      if (resFiados.ok) {
+        const deudores = await resFiados.json();
+        hayDeuda = Array.isArray(deudores) && deudores.length > 0;
+      }
+      setMostrarFiado(permite || hayDeuda);
+    } catch { setMostrarFiado(true); }
   };
 
   const handleCambioApartado = (valor) => {
@@ -161,7 +183,7 @@ export default function GestionVentasProductos() {
     }
   ];
 
-  if (apartadoActivo !== 'General (Box)') {
+  if (apartadoActivo !== 'General (Box)' || !mostrarFiado) {
     opciones = opciones.filter(o => o.titulo !== 'Gestión de Fiado');
   }
 

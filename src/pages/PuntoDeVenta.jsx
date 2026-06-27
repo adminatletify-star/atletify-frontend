@@ -215,7 +215,7 @@ export default function PuntoDeVenta() {
       }
     }
 
-    const puedeFiar = tienePermiso && (!localStorage.getItem('apartadoVentas') || localStorage.getItem('apartadoVentas') === 'General (Box)');
+    const puedeFiar = tienePermiso && config?.permitirFiados && (!localStorage.getItem('apartadoVentas') || localStorage.getItem('apartadoVentas') === 'General (Box)');
 
   return (
     <div className="pdv-page">
