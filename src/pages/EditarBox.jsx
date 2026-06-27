@@ -17,6 +17,37 @@ const API_BASE = import.meta.env.VITE_API_URL?.endsWith('/api')
   ? import.meta.env.VITE_API_URL
   : `${import.meta.env.VITE_API_URL}/api`;
 
+// Traduce los códigos de "requirements" de Stripe a algo legible para el dueño del box,
+// para que sepa EXACTAMENTE qué le falta capturar (en vez de un aviso genérico).
+const ETIQUETAS_REQUISITO_STRIPE = {
+  'business_profile.url': 'Sitio web o página del negocio',
+  'business_profile.mcc': 'Giro / categoría del negocio',
+  'business_profile.product_description': 'Descripción de lo que vendes',
+  'business_profile.support_phone': 'Teléfono de soporte',
+  'external_account': 'Cuenta bancaria para recibir tus depósitos',
+  'tos_acceptance.date': 'Aceptar los términos de servicio de Stripe',
+  'tos_acceptance.ip': 'Aceptar los términos de servicio de Stripe',
+  'individual.first_name': 'Nombre del titular',
+  'individual.last_name': 'Apellidos del titular',
+  'individual.dob.day': 'Fecha de nacimiento del titular',
+  'individual.address.line1': 'Domicilio del titular',
+  'individual.address.city': 'Ciudad del titular',
+  'individual.address.postal_code': 'Código postal del titular',
+  'individual.phone': 'Teléfono del titular',
+  'individual.email': 'Correo del titular',
+  'individual.id_number': 'RFC / identificación fiscal del titular',
+  'individual.verification.document': 'Documento de identidad (INE/pasaporte) para verificación',
+  'company.tax_id': 'RFC de la empresa',
+  'company.name': 'Razón social de la empresa',
+  'representative.first_name': 'Nombre del representante legal',
+};
+function etiquetaRequisitoStripe(code) {
+  if (!code) return 'Información pendiente';
+  if (ETIQUETAS_REQUISITO_STRIPE[code]) return ETIQUETAS_REQUISITO_STRIPE[code];
+  // Fallback legible: limpia el código crudo (external_account → "external account").
+  return code.replace(/_/g, ' ').replace(/\./g, ' › ');
+}
+
 const initialForm = {
   idBox: '', nombre: '', ubicacion: '', logo: '',
   slogan: '', descripcion: '',
@@ -548,6 +579,29 @@ export default function EditarBox() {
     }
   }
 
+  // Reinicia una cuenta de Stripe atorada/restringida: la desvincula en el backend y, si todo va
+  // bien, arranca de inmediato un onboarding NUEVO y limpio. El backend bloquea el reinicio si hay
+  // cobros automáticos activos ligados a esa cuenta.
+  async function reiniciarStripe() {
+    const idBox = boxLocal?.idBox || boxLocal?.IdBox;
+    if (!window.confirm('Esto DESVINCULARÁ la cuenta de Stripe actual (la atorada) y creará una nueva al volver a registrarte. ¿Continuar?')) return;
+    try {
+      const res = await fetch(`${API_BASE}/finanzas/reset-stripe/${idBox}`, { method: 'POST', headers: headersPost });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.mensaje || 'No se pudo reiniciar la conexión de Stripe.');
+        return;
+      }
+      // Cuenta desvinculada: limpiamos el estado local y lanzamos un onboarding nuevo y limpio.
+      setConfig(prev => ({ ...prev, stripeAccountId: '' }));
+      setStripeEstado(null);
+      alert(data.mensaje || 'Cuenta desvinculada. Iniciaremos un registro nuevo.');
+      await conectarStripe();
+    } catch (err) {
+      alert('Error de conexión al reiniciar Stripe.');
+    }
+  }
+
   if (loading) return (
     <div className="eb-page d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
       <AtletifyLoader />
@@ -906,11 +960,35 @@ export default function EditarBox() {
                       )}
                     </div>
 
-                    {/* Aviso cuando la cuenta existe pero Stripe aún no habilita los cobros. */}
+                    {/* Aviso + diagnóstico real cuando la cuenta existe pero Stripe aún no habilita los cobros. */}
                     {config.stripeAccountId && stripeEstado && !stripeEstado.cargosHabilitados && (
                       <div className="alert alert-warning py-2 px-3 mb-3" style={{ fontSize: '0.85rem', borderRadius: '8px' }}>
                         <i className="fas fa-triangle-exclamation me-2"></i>
-                        Tu cuenta de Stripe está creada pero <strong>aún no puede recibir pagos</strong>: falta terminar el onboarding (nombre del negocio y datos bancarios). Pulsa <strong>"Completar configuración de Stripe"</strong> para finalizarlo. Mientras tanto, los atletas no podrán pagar en línea.
+                        Tu cuenta de Stripe está creada pero <strong>aún no puede recibir pagos</strong>. Mientras tanto, los atletas no podrán pagar en línea. Pulsa <strong>"Completar configuración de Stripe"</strong> (arriba) para terminar el registro.
+                        {(() => {
+                          const reqs = [...new Set([...(stripeEstado.requisitosVencidos || []), ...(stripeEstado.requisitosPendientes || [])])];
+                          const errores = stripeEstado.errores || [];
+                          if (reqs.length === 0 && errores.length === 0) return null;
+                          return (
+                            <>
+                              <div className="mt-2 mb-1 fw-semibold">Stripe necesita que completes:</div>
+                              <ul className="mb-1 ps-3">
+                                {errores.map((e, i) => (
+                                  <li key={`err-${i}`}><strong>{etiquetaRequisitoStripe(e.campo)}:</strong> {e.motivo}</li>
+                                ))}
+                                {reqs.filter(r => !errores.some(e => e.campo === r)).map((r, i) => (
+                                  <li key={`req-${i}`}>{etiquetaRequisitoStripe(r)}</li>
+                                ))}
+                              </ul>
+                            </>
+                          );
+                        })()}
+                        <div className="mt-2 pt-2" style={{ borderTop: '1px dashed rgba(0,0,0,0.12)' }}>
+                          <span style={{ fontSize: '0.78rem', opacity: 0.9 }}>¿La cuenta quedó atorada (datos de prueba o un bucle que nunca termina)?</span>
+                          <button type="button" onClick={reiniciarStripe} className="btn btn-sm btn-outline-danger ms-2">
+                            <i className="fas fa-rotate-left me-1"></i>Reiniciar conexión
+                          </button>
+                        </div>
                       </div>
                     )}
 

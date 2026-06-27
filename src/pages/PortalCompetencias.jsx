@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { COMPETENCIAS_ENDPOINT } from '../services/api';
+import { COMPETENCIAS_ENDPOINT, FINANZAS_ENDPOINT } from '../services/api';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import DateWheelPicker from '../components/DateWheelPicker';
 import AnimatedList from '../components/ReactBits/AnimatedList';
@@ -71,6 +71,8 @@ export default function PortalCompetencias() {
 
   // === ESTADOS PARA FLUJO DE EQUIPO ESTRICTO ===
   const [equipoUnirseInfo, setEquipoUnirseInfo] = useState(null);
+  const [plazaEsperaHasta, setPlazaEsperaHasta] = useState(null); // bloqueo de plaza al unirse (concurrencia ≤5 min)
+  const [reservaTick, setReservaTick] = useState(0); // fuerza re-reservar la plaza (reintentar)
   const [modalRequisitoEquipo, setModalRequisitoEquipo] = useState(null);
   const [buscandoEquipo, setBuscandoEquipo] = useState(false);
 
@@ -98,6 +100,112 @@ export default function PortalCompetencias() {
   useEffect(() => {
     cargarCompetencias();
   }, [id]);
+
+  // Retorno desde Stripe Checkout de inscripción: el SuccessUrl trae ?comp_success=1&codigo=...
+  // (o ?comp_cancel=1). El pago real lo acredita el webhook; aquí solo damos feedback y limpiamos la URL.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('comp_success') === '1') {
+      setMensaje({ tipo: 'success', texto: '¡Pago recibido! Tu inscripción quedó confirmada. Guarda tu código de equipo para consultar el estatus.', codigo: params.get('codigo') || '' });
+      window.history.replaceState({}, '', window.location.pathname);
+      window.scrollTo(0, 0);
+    } else if (params.get('comp_cancel') === '1') {
+      setMensaje({ tipo: 'warning', texto: 'El pago se canceló. Tu equipo quedó registrado pero sin pagar; puedes intentar el pago de nuevo más tarde.', codigo: '' });
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
+  // Pago en línea desde el correo: el botón "Pagar en línea ahora" trae ?codigo=XXX&pagar=1.
+  // Resolvemos el equipo por su código, generamos la sesión de Stripe y redirigimos al checkout.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const codigo = params.get('codigo');
+    if (params.get('pagar') !== '1' || !codigo) return;
+    window.history.replaceState({}, '', window.location.pathname);
+    (async () => {
+      try {
+        setMensaje({ tipo: 'info', texto: 'Generando tu pago en línea…', codigo: '' });
+        const resInfo = await fetch(`${COMPETENCIAS_ENDPOINT}/equipo/info/${codigo}`);
+        const info = await resInfo.json();
+        const idEquipo = info.idEquipoComp || info.IdEquipoComp;
+        if (!resInfo.ok || !idEquipo) {
+          setMensaje({ tipo: 'danger', texto: info.mensaje || 'No se encontró tu equipo.', codigo: '' });
+          return;
+        }
+        const resCk = await fetch(`${FINANZAS_ENDPOINT}/checkout-competencia/${id}/${idEquipo}`, { method: 'POST' });
+        const dataCk = await resCk.json();
+        if (resCk.ok && dataCk.url) { window.location.href = dataCk.url; return; }
+        setMensaje({ tipo: 'danger', texto: dataCk.mensaje || 'No se pudo iniciar el pago en línea.', codigo: '' });
+      } catch {
+        setMensaje({ tipo: 'danger', texto: 'Error al iniciar el pago en línea.', codigo: '' });
+      }
+    })();
+  }, [id]);
+
+  // Deep-link del correo "Invitar a mi equipo": ?codigo=XXX (sin pagar). Abre directo el flujo de unión
+  // con los datos del equipo (ya pagado), saltando la selección de categoría.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const codigo = params.get('codigo');
+    if (!codigo || params.get('pagar') === '1' || params.get('comp_success') === '1' || params.get('comp_cancel') === '1') return;
+    window.history.replaceState({}, '', window.location.pathname);
+    (async () => {
+      try {
+        const res = await fetch(`${COMPETENCIAS_ENDPOINT}/equipo/info/${codigo}`);
+        const data = await res.json();
+        if (!res.ok) { setMensaje({ tipo: 'danger', texto: data.mensaje || 'Código de equipo inválido.', codigo: '' }); return; }
+        const estatus = (data.estatusPago || data.EstatusPago || '').toLowerCase();
+        if (estatus !== 'aprobado' && estatus !== 'pagado') {
+          setMensaje({ tipo: 'warning', texto: 'Este equipo aún no ha completado su pago. Pídele al capitán que pague la inscripción antes de unirte.', codigo: '' });
+          return;
+        }
+        const c = data.categoria || data.Categoria || {};
+        // Sintetizamos la categoría para que el formulario de unión se renderice sin pasar por la selección.
+        setCatSeleccionada({
+          nombre: c.nombre || c.Nombre,
+          esEquipo: c.esEquipo ?? c.EsEquipo ?? true,
+          costo: c.costo || c.Costo || 0,
+          cantidadIntegrantes: c.cantidadIntegrantes || c.CantidadIntegrantes || 0,
+          cupoHombres: c.cupoHombres || c.CupoHombres || 0,
+          cupoMujeres: c.cupoMujeres || c.CupoMujeres || 0,
+          cupoMaster: c.cupoMaster || c.CupoMaster || 0,
+          cupoAvanzado: c.cupoAvanzado || c.CupoAvanzado || 0,
+          cupoIntermedio: c.cupoIntermedio || c.CupoIntermedio || 0,
+          cupoPrincipiante: c.cupoPrincipiante || c.CupoPrincipiante || 0,
+          cupoNovato: c.cupoNovato || c.CupoNovato || 0
+        });
+        setEquipoUnirseInfo(data);
+        setCodigoInvitacion(codigo);
+        setPestaña('inscripcion');
+        setModoInscripcion('unirse');
+        setMensaje({ tipo: 'info', texto: `Te estás uniendo al equipo "${data.nombre || data.Nombre}". Completa tus datos de atleta para terminar.`, codigo: '' });
+        window.scrollTo(0, 0);
+      } catch {
+        setMensaje({ tipo: 'danger', texto: 'No se pudo abrir el registro del equipo.', codigo: '' });
+      }
+    })();
+  }, [id]);
+
+  // Concurrencia: al entrar a "unirse", reservamos la plaza (bloqueo ≤5 min). Si otro compañero ya está
+  // registrándose, guardamos hasta cuándo esperar para mostrar el contador en vez del formulario.
+  useEffect(() => {
+    if (modoInscripcion !== 'unirse' || !codigoInvitacion) { setPlazaEsperaHasta(null); return; }
+    let cancelado = false;
+    (async () => {
+      try {
+        const res = await fetch(`${COMPETENCIAS_ENDPOINT}/equipo/${codigoInvitacion}/reservar-plaza`, { method: 'POST' });
+        const data = await res.json();
+        if (cancelado) return;
+        if (res.ok && data.ok === false) {
+          const segs = data.segundosRestantes || data.SegundosRestantes || 0;
+          setPlazaEsperaHasta(segs > 0 ? new Date(Date.now() + segs * 1000).toISOString() : null);
+        } else {
+          setPlazaEsperaHasta(null);
+        }
+      } catch { if (!cancelado) setPlazaEsperaHasta(null); }
+    })();
+    return () => { cancelado = true; };
+  }, [modoInscripcion, codigoInvitacion, reservaTick]);
 
   const cargarCompetencias = async () => {
     try {
@@ -291,7 +399,7 @@ export default function PortalCompetencias() {
         boxOrigen: formEquipo.boxOrigen,
         capitan: atletaForm,
         montoAbonado: parseFloat(pagoForm.monto) || 0,
-        metodoPago: pagoForm.metodo,
+        metodoPago: pagoForm.metodo === 'EnLinea' ? 'Tarjeta' : pagoForm.metodo,
         comprobanteUrl: urlFinalComprobante
       };
     } else {
@@ -300,7 +408,7 @@ export default function PortalCompetencias() {
         codigoInvitacion: codigoInvitacion,
         atleta: atletaForm,
         montoAbonado: parseFloat(pagoForm.monto) || 0,
-        metodoPago: pagoForm.metodo,
+        metodoPago: pagoForm.metodo === 'EnLinea' ? 'Tarjeta' : pagoForm.metodo,
         comprobanteUrl: urlFinalComprobante
       };
     }
@@ -312,9 +420,25 @@ export default function PortalCompetencias() {
       const data = await res.json();
 
       if (res.ok) {
-        if (data.requiresCheckout && data.sessionUrl) {
-           window.location.href = data.sessionUrl;
-           return;
+        // Pago en línea: el equipo ya quedó creado; ahora generamos la sesión de Stripe Checkout
+        // (sobre la cuenta Connect del box) y redirigimos. El webhook acredita el pago al volver.
+        if (data.requiresCheckout && data.idEquipo) {
+          try {
+            const idComp = compActiva?.idCompetencia || compActiva?.IdCompetencia || id;
+            const resCk = await fetch(`${FINANZAS_ENDPOINT}/checkout-competencia/${idComp}/${data.idEquipo}`, { method: 'POST' });
+            const dataCk = await resCk.json();
+            if (resCk.ok && dataCk.url) {
+              window.location.href = dataCk.url;
+              return;
+            }
+            setMensaje({ tipo: 'danger', texto: dataCk.mensaje || 'No se pudo iniciar el pago en línea. Intenta con otro método o más tarde.' });
+            setEnviando(false);
+            return;
+          } catch (err) {
+            setMensaje({ tipo: 'danger', texto: 'Error al iniciar el pago en línea con Stripe.' });
+            setEnviando(false);
+            return;
+          }
         }
 
         setMensaje({ tipo: 'success', texto: data.mensaje, codigo: data.codigo || '' });
@@ -971,7 +1095,20 @@ export default function PortalCompetencias() {
                             </div>
                           )}
 
-                          {(!catSeleccionada.esEquipo || modoInscripcion === 'crear' || modoInscripcion === 'unirse') && (
+                          {/* Concurrencia: si otro compañero está registrándose, mostramos espera en vez del form. */}
+                          {modoInscripcion === 'unirse' && plazaEsperaHasta && new Date(plazaEsperaHasta) > new Date() && (
+                            <div className="portal-form portal-fade-in text-center py-5">
+                              <i className="fas fa-hourglass-half mb-3" style={{ fontSize: '3rem', color: '#d97706' }}></i>
+                              <h4 className="text-white mb-2">Otro compañero se está registrando</h4>
+                              <p className="text-secondary mb-3">Para no descuadrar el equipo, solo una persona puede registrarse a la vez. Espera un momento e intenta de nuevo.</p>
+                              <CountdownTimer targetDate={plazaEsperaHasta} onExpire={() => setReservaTick(t => t + 1)} />
+                              <div className="mt-4">
+                                <button className="btn btn-outline-secondary px-4 py-2" onClick={() => setReservaTick(t => t + 1)}><i className="fas fa-rotate-right me-2"></i>Reintentar</button>
+                              </div>
+                            </div>
+                          )}
+
+                          {(!catSeleccionada.esEquipo || modoInscripcion === 'crear' || modoInscripcion === 'unirse') && !(modoInscripcion === 'unirse' && plazaEsperaHasta && new Date(plazaEsperaHasta) > new Date()) && (
                             <form onSubmit={enviarInscripcion} className="portal-form portal-fade-in">
 
                               {/* El código ahora se pide antes en el modo 'codigo', pero guardamos un hidden input por si acaso o simplemente mostramos el valor */}
@@ -1087,6 +1224,12 @@ export default function PortalCompetencias() {
                                 </div>
                               </div>
 
+                              {modoInscripcion === 'unirse' ? (
+                                <div className="portal-pago-section">
+                                  <p className="portal-pago-title"><i className="fas fa-check-circle me-2" style={{ color: '#10b981' }}></i>Equipo ya pagado</p>
+                                  <p className="portal-pago-desc">El capitán ya cubrió la inscripción de tu equipo. Solo completa tus datos de atleta y confirma — no necesitas pagar nada.</p>
+                                </div>
+                              ) : (
                               <div className="portal-pago-section">
                                 <p className="portal-pago-title"><i className="fas fa-wallet me-2"></i>Aportación Financiera</p>
                                 <p className="portal-pago-desc">El saldo restante para {catSeleccionada.esEquipo ? 'el equipo' : 'tu registro'} es de <strong>${getCostoFinal()} MXN</strong>. Ingresa el monto que vas a abonar hoy.</p>
@@ -1104,7 +1247,7 @@ export default function PortalCompetencias() {
                                         }} 
                                         disabled={getCostoFinal() <= 0}
                                         opcionesPermitidas={[
-                                          (compActiva.aceptarPagosEnLinea ?? compActiva.AceptarPagosEnLinea ?? true) ? 'EnLinea' : null,
+                                          ((compActiva.aceptarPagosEnLinea ?? compActiva.AceptarPagosEnLinea ?? true) && (compActiva.boxStripeListo ?? compActiva.BoxStripeListo ?? false)) ? 'EnLinea' : null,
                                           (compActiva.aceptarTransferencias ?? compActiva.AceptarTransferencias ?? true) ? 'Transferencia' : null,
                                           (compActiva.aceptarEfectivo ?? compActiva.AceptarEfectivo ?? true) ? 'Efectivo' : null
                                         ].filter(Boolean)} 
@@ -1145,6 +1288,7 @@ export default function PortalCompetencias() {
                                   </div>
                                 )}
                               </div>
+                              )}
 
                               <BotonSeguro type="submit" disabled={enviando} className="portal-submit-btn" tiempoBloqueo={3000}>
                                 <><i className="fas fa-check-circle me-2"></i>Confirmar Inscripción</>
@@ -1473,7 +1617,7 @@ export default function PortalCompetencias() {
                                         setPagoForm(nuevoForm);
                                       }} 
                                       opcionesPermitidas={[
-                                        (compActiva.aceptarPagosEnLinea ?? compActiva.AceptarPagosEnLinea ?? true) ? 'EnLinea' : null,
+                                        ((compActiva.aceptarPagosEnLinea ?? compActiva.AceptarPagosEnLinea ?? true) && (compActiva.boxStripeListo ?? compActiva.BoxStripeListo ?? false)) ? 'EnLinea' : null,
                                         (compActiva.aceptarTransferencias ?? compActiva.AceptarTransferencias ?? true) ? 'Transferencia' : null,
                                         (compActiva.aceptarEfectivo ?? compActiva.AceptarEfectivo ?? true) ? 'Efectivo' : null
                                       ].filter(Boolean)} 
