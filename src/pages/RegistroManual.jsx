@@ -90,21 +90,21 @@ export default function RegistroManual() {
       const headers = { 'Authorization': `Bearer ${token}` };
 
       // Cargar planes
-      const resPlanes = await fetch(`${import.meta.env.VITE_API_URL}/finanzas/planes/${boxActual.idBox}`, { headers });
+      const resPlanes = await fetch(`${import.meta.env.VITE_API_URL}/api/finanzas/planes/${boxActual.idBox}`, { headers });
       if (resPlanes.ok) {
         const planesData = await resPlanes.json();
         setPlanes(planesData.filter(p => p.esVisible !== false));
       }
 
       // Cargar descuentos activos
-      const resDescuentos = await fetch(`${import.meta.env.VITE_API_URL}/finanzas/descuentos/${boxActual.idBox}`, { headers });
+      const resDescuentos = await fetch(`${import.meta.env.VITE_API_URL}/api/finanzas/descuentos/${boxActual.idBox}`, { headers });
       if (resDescuentos.ok) {
         const descuentosData = await resDescuentos.json();
         setDescuentos(descuentosData.filter(d => d.activo));
       }
 
       // Cargar configuración del box para obtener monto de inscripción
-      const resConfig = await fetch(`${import.meta.env.VITE_API_URL}/configuracionbox/${boxActual.idBox}`, { headers });
+      const resConfig = await fetch(`${import.meta.env.VITE_API_URL}/api/configuracionbox/${boxActual.idBox}`, { headers });
       if (resConfig.ok) {
         const configData = await resConfig.json();
         setConfigBox(configData);
@@ -445,13 +445,15 @@ export default function RegistroManual() {
                     </div>
                   </div>
 
-                  {/* 👇 EL SWITCH DE FIADO 👇 */}
-                  <div className="form-check form-switch registro-toggle registro-toggle--success mb-4">
-                    <input className="form-check-input bg-success border-success ms-1" type="checkbox" id="checkConfianza" name="esDeConfianza" checked={formData.esDeConfianza} onChange={handleChange} />
-                    <label className="form-check-label text-success ms-3 fw-bold" htmlFor="checkConfianza">
-                      <i className="fas fa-handshake me-2"></i>Atleta de Confianza (Permitir dar fiado en tienda)
-                    </label>
-                  </div>
+                  {/* 👇 EL SWITCH DE FIADO 👇 (oculto si el box desactivó los fiados) */}
+                  {configBox?.permitirFiados !== false && (
+                    <div className="form-check form-switch registro-toggle registro-toggle--success mb-4">
+                      <input className="form-check-input bg-success border-success ms-1" type="checkbox" id="checkConfianza" name="esDeConfianza" checked={formData.esDeConfianza} onChange={handleChange} />
+                      <label className="form-check-label text-success ms-3 fw-bold" htmlFor="checkConfianza">
+                        <i className="fas fa-handshake me-2"></i>Atleta de Confianza (Permitir dar fiado en tienda)
+                      </label>
+                    </div>
+                  )}
 
                   <h5 className="registro-section-title mt-4"><i className="fas fa-credit-card me-2"></i>Membresía</h5>
 

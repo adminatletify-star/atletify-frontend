@@ -47,6 +47,7 @@ export default function PerfilAtletaAdmin() {
   const [showModalEditar, setShowModalEditar] = useState(false);
   const [formEditar, setFormEditar] = useState({ nuevaFechaVencimiento: '', motivoAjuste: '', nuevoEstatus: '' });
   const [precioEspecial, setPrecioEspecial] = useState(null);
+  const [permitirFiados, setPermitirFiados] = useState(true); // si el box desactivó fiados, se oculta el toggle de confianza
   const [showModalPrecio, setShowModalPrecio] = useState(false);
   const [formPrecio, setFormPrecio] = useState({
     tipoDescuento: 'PrecioFijo',
@@ -87,6 +88,12 @@ export default function PerfilAtletaAdmin() {
           });
         }
       }
+
+      // Config del box: para ocultar el toggle de "confianza" si el box desactivó los fiados.
+      try {
+        const resCfg = await fetch(`${import.meta.env.VITE_API_URL}/api/configuracionbox/${b.idBox}`, { headers: headersGet });
+        if (resCfg.ok) { const c = await resCfg.json(); setPermitirFiados(c.permitirFiados !== false); }
+      } catch { /* si falla, se mantiene el comportamiento actual (fiados permitidos) */ }
     } catch (error) { console.error("Error:", error); } finally { setLoading(false); }
   }, [idUsuario]);
 
@@ -382,10 +389,12 @@ export default function PerfilAtletaAdmin() {
                 <label className="paa-toggle-label" htmlFor="switchPaseLibre"><i className="fas fa-star text-warning me-1"></i>Pase Libre (Staff / Beca)</label>
               </div>
 
-              <div className="paa-toggle-row mb-4">
-                <input className="form-check-input fs-5 m-0 flex-shrink-0" type="checkbox" role="switch" id="switchConfianza" checked={atleta.esDeConfianza || false} onChange={toggleConfianza} />
-                <label className="paa-toggle-label" htmlFor="switchConfianza"><i className="fas fa-handshake text-info me-1"></i>Atleta de Confianza (Fiado)</label>
-              </div>
+              {permitirFiados && (
+                <div className="paa-toggle-row mb-4">
+                  <input className="form-check-input fs-5 m-0 flex-shrink-0" type="checkbox" role="switch" id="switchConfianza" checked={atleta.esDeConfianza || false} onChange={toggleConfianza} />
+                  <label className="paa-toggle-label" htmlFor="switchConfianza"><i className="fas fa-handshake text-info me-1"></i>Atleta de Confianza (Fiado)</label>
+                </div>
+              )}
 
               {/*  PRECIO ESPECIAL  */}
               <div className="mb-3 mt-4 p-3 rounded" style={{ background: 'rgba(155, 89, 182, 0.06)', border: '1px solid rgba(155, 89, 182, 0.25)', borderRadius: '12px' }}>

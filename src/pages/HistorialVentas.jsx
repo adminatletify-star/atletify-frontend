@@ -810,14 +810,16 @@ export default function HistorialVentas() {
                       <span className="hv-stat-hint">Sin cobrar aún</span>
                     </div>
                   </div>
-                  <div className="col-6 col-xl-3">
-                    <div className="hv-stat-card hv-stat-card--blue">
-                      <i className="fas fa-info-circle hv-stat-info-icon" title="Ventas en crédito restando abonos." />
-                      <p className="hv-stat-label">Deuda (Fiados)</p>
-                      <p className="hv-stat-value">${deudaFiado.toFixed(2)}</p>
-                      <span className="hv-stat-hint">Crédito autorizado</span>
+                  {deudaFiado > 0 && (
+                    <div className="col-6 col-xl-3">
+                      <div className="hv-stat-card hv-stat-card--blue">
+                        <i className="fas fa-info-circle hv-stat-info-icon" title="Ventas en crédito restando abonos." />
+                        <p className="hv-stat-label">Deuda (Fiados)</p>
+                        <p className="hv-stat-value">${deudaFiado.toFixed(2)}</p>
+                        <span className="hv-stat-hint">Crédito autorizado</span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <div className="col-6 col-xl-3">
                     <div className="hv-stat-card hv-stat-card--cool">
                       <i className="fas fa-info-circle hv-stat-info-icon" title="Porcentaje del volumen total vendido en modalidad Sobre Pedido." />

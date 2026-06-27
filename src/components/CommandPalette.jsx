@@ -40,14 +40,35 @@ export default function CommandPalette() {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const [recientes, setRecientes] = useState([]);
+  const [permitirFiados, setPermitirFiados] = useState(true); // ocultar "Gestión de Fiado" del buscador si el box los desactivó
 
   const overlayRef = useRef(null);
   const dialogRef = useRef(null);
   const inputRef = useRef(null);
   const listRef = useRef(null);
 
+  // Si el box desactivó los fiados, sacamos "Gestión de Fiado" del buscador (no debe quedar rastro).
+  useEffect(() => {
+    if (!habilitado) return undefined;
+    let cancel = false;
+    try {
+      const idBox = JSON.parse(localStorage.getItem('box') || 'null')?.idBox;
+      if (idBox) {
+        fetch(`${import.meta.env.VITE_API_URL}/api/configuracionbox/${idBox}`)
+          .then(r => (r.ok ? r.json() : null))
+          .then(c => { if (!cancel && c) setPermitirFiados(c.permitirFiados !== false); })
+          .catch(() => {});
+      }
+    } catch { /* noop */ }
+    return () => { cancel = true; };
+  }, [habilitado]);
+
   // Índice Fuse memoizado por rol — no se reconstruye en cada tecla.
-  const interfaces = useMemo(() => getInterfacesParaRol(rol), [rol]);
+  // Si los fiados están desactivados, se excluye la interfaz "Gestión de Fiado".
+  const interfaces = useMemo(
+    () => getInterfacesParaRol(rol).filter(i => i.id !== 'gestion-fiado' || permitirFiados),
+    [rol, permitirFiados],
+  );
   const fuse = useMemo(() => construirIndice(interfaces), [interfaces]);
 
   // ── Apertura / cierre ──────────────────────────────────────────────

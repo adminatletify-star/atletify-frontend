@@ -113,6 +113,21 @@ const ESTADO_INSC_LABEL = {
 };
 // Orden por prioridad: los que requieren atención (pendientes) primero.
 const PRIORIDAD_INSC = { Pendiente: 0, ExentoReciente: 1, Pagada: 2, Exenta: 3, NoAplica: 4 };
+
+// Meses (es) para los widgets de configuración del ciclo de inscripción.
+const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MESES_ES_ABBR = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+// Calcula, desde la config del box (mesCobro, cicloAnio, mesesExencion), el próximo cobro masivo y la
+// lista de meses de exención (los N meses previos al corte). Todo dinámico, refleja Editar Box.
+const infoCicloInscripcion = (d) => {
+  if (!d) return { proximoCobro: '—', mesesExencion: '—', numExencion: 0 };
+  const mesCobro = d.mesCobro || 1;
+  const proximoCobro = `${MESES_ES[(mesCobro - 1 + 12) % 12]} ${(d.cicloAnio || 0) + 1}`;
+  const n = d.mesesExencion || 0;
+  const meses = [];
+  for (let i = 1; i <= n; i++) meses.unshift(MESES_ES_ABBR[((mesCobro - 1 - i) % 12 + 12) % 12]);
+  return { proximoCobro, mesesExencion: meses.length ? meses.join(' · ') : 'Sin exención', numExencion: n };
+};
 const PAGE_SIZE_INSC = 10;
 const labelInsc = (estado) => ESTADO_INSC_LABEL[estado] || estado;
 // Etiqueta corta del estado de mensualidad (contexto en la pestaña Anualidad).
@@ -304,6 +319,7 @@ export default function GestionFinanzas() {
   const [loadingInsc, setLoadingInsc] = useState(false);
   const [busquedaInsc, setBusquedaInsc] = useState('');
   const [filtroEstadoInsc, setFiltroEstadoInsc] = useState('Todos');
+  const [cfgInfo, setCfgInfo] = useState(null); // qué widget de config tiene su "?" abierto ('cobro' | 'exencion')
   const [paginaInsc, setPaginaInsc] = useState(1);
 
   const cargarDatos = useCallback(async (idBox) => {
@@ -699,23 +715,32 @@ export default function GestionFinanzas() {
   const abrirPuntoDePago = async () => {
     if (!planSeleccionado) return alert('Selecciona un plan para renovar');
 
-    // V4: Llamar a la calculadora antes de abrir el cobro
+    const b = JSON.parse(localStorage.getItem('box'));
+    const token = localStorage.getItem('token');
+    setAtletaConAutoCobro(false);
+
+    // Las dos consultas son INDEPENDIENTES → en PARALELO. Antes eran dos await secuenciales y la
+    // espera total era la suma de ambas; ahora es solo la más lenta de las dos.
+    const pCalc = fetch(
+      `${import.meta.env.VITE_API_URL}/api/precioespecial/calcular/${atletaARenovar.idUsuario}/box/${b.idBox}/plan/${planSeleccionado}?metodoPago=Recepción`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    ).catch(() => null);
+    const pAtleta = fetch(
+      `${import.meta.env.VITE_API_URL}/api/cobranza/atleta/${atletaARenovar.idUsuario}`,
+      { headers: headersGet }
+    ).catch(() => null);
+    const [res, resR] = await Promise.all([pCalc, pAtleta]);
+
+    // Calculadora → pre-llena el formulario (incluye el estado de inscripción para el aviso)
     try {
-      const b = JSON.parse(localStorage.getItem('box'));
-      const token = localStorage.getItem('token');
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/precioespecial/calcular/${atletaARenovar.idUsuario}/box/${b.idBox}/plan/${planSeleccionado}?metodoPago=Recepción`,
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
-      if (res.ok) {
+      if (res && res.ok) {
         const calculo = await res.json();
-        // Pre-llenar el formulario con los datos de la calculadora
         setFormCobro(prev => ({
           ...prev,
           cobrarInscripcion: calculo.debeInscripcion,
           montoInscripcion: String(calculo.montoInscripcion || 0),
           monto1: String(calculo.totalConInscripcion || 0),
-          _calculo: calculo // Guardamos el cálculo completo para usarlo en el desglose
+          _calculo: calculo
         }));
       }
     } catch (e) {
@@ -724,10 +749,8 @@ export default function GestionFinanzas() {
 
     // ¿El atleta tiene cobro automático con tarjeta (Stripe) activo? Para advertir que se cancelará
     // al cobrar en recepción (anti doble-cobro).
-    setAtletaConAutoCobro(false);
     try {
-      const resR = await fetch(`${import.meta.env.VITE_API_URL}/api/cobranza/atleta/${atletaARenovar.idUsuario}`, { headers: headersGet });
-      if (resR.ok) {
+      if (resR && resR.ok) {
         const dr = await resR.json();
         setAtletaConAutoCobro(!!(dr.suscripcion?.stripeSubscriptionId && dr.suscripcion?.autoRenovacion));
       }
@@ -1050,7 +1073,7 @@ export default function GestionFinanzas() {
                           <div className="finanzas-atleta-nombre">
                             {s.nombre}
                             {(s.rol === 'Coach' || s.rol === 'Staff' || s.rol === 'AdminBox') && <span className="badge bg-secondary ms-2" style={{ fontSize: '0.6rem' }}><i className="fas fa-user-shield"></i> Staff</span>}
-                            {s.esDeConfianza && <span className="badge bg-info text-dark ms-2" style={{ fontSize: '0.6rem' }}><i className="fas fa-handshake"></i> Confianza</span>}
+                            {s.esDeConfianza && box?.permitirFiados !== false && <span className="badge bg-info text-dark ms-2" style={{ fontSize: '0.6rem' }}><i className="fas fa-handshake"></i> Confianza</span>}
                           </div>
                           <div className="finanzas-atleta-tel"><i className="fas fa-phone me-1"></i>{s.telefono || 'Sin número'}</div>
                           <div className="small mt-1" style={{ color: 'var(--secondary)' }}>{s.plan}</div>
@@ -1090,7 +1113,7 @@ export default function GestionFinanzas() {
                       {semaforoFiltrado.length === 0 ? <tr><td colSpan="4"><div className="finanzas-empty"><p>No hay atletas que coincidan.</p></div></td></tr> : (
                         semaforoFiltrado.map(s => (
                           <tr key={s.idUsuario}>
-                            <td><div className="finanzas-atleta-nombre">{s.nombre} {(s.rol === 'Coach' || s.rol === 'Staff' || s.rol === 'AdminBox') && <span className="badge bg-secondary ms-2" style={{ fontSize: '0.65rem' }} title="Equipo de trabajo"><i className="fas fa-user-shield"></i> Staff</span>} {s.esDeConfianza && <span className="badge bg-info text-dark ms-2" style={{ fontSize: '0.65rem' }} title="Atleta de Confianza (Fiado)"><i className="fas fa-handshake"></i> Confianza</span>}</div><div className="finanzas-atleta-tel"><i className="fas fa-phone me-1"></i>{s.telefono || 'Sin número'}</div></td>
+                            <td><div className="finanzas-atleta-nombre">{s.nombre} {(s.rol === 'Coach' || s.rol === 'Staff' || s.rol === 'AdminBox') && <span className="badge bg-secondary ms-2" style={{ fontSize: '0.65rem' }} title="Equipo de trabajo"><i className="fas fa-user-shield"></i> Staff</span>} {s.esDeConfianza && box?.permitirFiados !== false && <span className="badge bg-info text-dark ms-2" style={{ fontSize: '0.65rem' }} title="Atleta de Confianza (Fiado)"><i className="fas fa-handshake"></i> Confianza</span>}</div><div className="finanzas-atleta-tel"><i className="fas fa-phone me-1"></i>{s.telefono || 'Sin número'}</div></td>
                             <td style={{ color: 'var(--secondary)' }}>
                               {s.plan}
                               {s.grupoFamiliar && <div className="text-warning mt-1" style={{fontSize:'0.75rem'}}><i className="fas fa-users me-1"></i>{s.grupoFamiliar}{s.esLiderGrupo && <span className="badge ms-1" style={{ background: 'var(--primary)', fontSize: '0.6rem', verticalAlign: 'middle' }}>LÍDER</span>}</div>}
@@ -1594,6 +1617,43 @@ export default function GestionFinanzas() {
                   <div className="text-center py-5"><AtletifyLoader /></div>
                 ) : (
                   <>
+                    {/* Widgets de configuración del ciclo (dinámicos desde Editar Box) */}
+                    {inscData && (() => {
+                      const cfg = infoCicloInscripcion(inscData);
+                      return (
+                        <div className="finanzas-insc-config">
+                          <div className="finanzas-insc-cfg">
+                            <i className="fas fa-calendar-check finanzas-insc-cfg-ic"></i>
+                            <div className="finanzas-insc-cfg-body">
+                              <span className="finanzas-insc-cfg-lbl">Próximo cobro masivo</span>
+                              <span className="finanzas-insc-cfg-val">{cfg.proximoCobro}</span>
+                            </div>
+                            <button type="button" className="finanzas-insc-cfg-q" onClick={() => setCfgInfo(cfgInfo === 'cobro' ? null : 'cobro')} aria-label="Qué es esto"><i className="fas fa-question"></i></button>
+                            {cfgInfo === 'cobro' && (
+                              <div className="finanzas-insc-cfg-pop">
+                                <i className="fas fa-info-circle me-1"></i>
+                                Es el siguiente cobro masivo de inscripción anual: a partir de <strong>{cfg.proximoCobro}</strong> los atletas activos no exentos deberán renovar su inscripción. Se calcula desde el mes de corte configurado en <strong>Editar Box</strong>.
+                              </div>
+                            )}
+                          </div>
+                          <div className="finanzas-insc-cfg">
+                            <i className="fas fa-hourglass-half finanzas-insc-cfg-ic"></i>
+                            <div className="finanzas-insc-cfg-body">
+                              <span className="finanzas-insc-cfg-lbl">Meses de exención</span>
+                              <span className="finanzas-insc-cfg-val">{cfg.mesesExencion}</span>
+                            </div>
+                            <button type="button" className="finanzas-insc-cfg-q" onClick={() => setCfgInfo(cfgInfo === 'exencion' ? null : 'exencion')} aria-label="Qué es esto"><i className="fas fa-question"></i></button>
+                            {cfgInfo === 'exencion' && (
+                              <div className="finanzas-insc-cfg-pop">
+                                <i className="fas fa-info-circle me-1"></i>
+                                Si un atleta se inscribe y paga su inscripción en estos meses (<strong>{cfg.mesesExencion}</strong>), no se le volverá a cobrar hasta el próximo cobro masivo (<strong>{cfg.proximoCobro}</strong>). Evita cobrarle dos veces a quien acaba de entrar. Configurable en <strong>Editar Box</strong>.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     {/* Resumen de conteos */}
                     {inscData?.resumen && (
                       <div className="finanzas-insc-resumen">
@@ -1644,7 +1704,10 @@ export default function GestionFinanzas() {
                               {a.estado === 'Pendiente' && a.monto != null && <div className="small mt-1 text-danger"><i className="fas fa-exclamation-circle me-1"></i>Debe ${Number(a.monto).toFixed(0)}</div>}
                               {a.estado !== 'Pagada' && a.estado !== 'Pendiente' && a.motivo && <div className="small mt-1" style={{ color: 'var(--text-muted)' }}>{a.motivo}</div>}
                             </div>
-                            <span className={`finanzas-insc-badge ${getBadgeInsc(a.estado)}`}>{labelInsc(a.estado)}</span>
+                            <div className="d-flex flex-column align-items-end gap-1">
+                              <span className={`finanzas-insc-badge ${getBadgeInsc(a.estado)}`}>{labelInsc(a.estado)}</span>
+                              {a.exencionReciente && <span className="finanzas-insc-tag-exencion" title="Pagó su inscripción en los meses de exención; sigue cubierto hasta el próximo cobro masivo.">Exención</span>}
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -1667,7 +1730,8 @@ export default function GestionFinanzas() {
                               </td>
                               <td>
                                 <span className={`finanzas-insc-badge ${getBadgeInsc(a.estado)}`}>{labelInsc(a.estado)}</span>
-                                {a.motivo && a.estado !== 'Pagada' && <div className="text-secondary mt-1" style={{ fontSize: '0.72rem' }}>{a.motivo}</div>}
+                                {a.exencionReciente && <span className="finanzas-insc-tag-exencion ms-1" title="Pagó su inscripción en los meses de exención; sigue cubierto hasta el próximo cobro masivo.">Exención</span>}
+                                {a.motivo && (a.estado !== 'Pagada' || a.exencionReciente) && <div className="text-secondary mt-1" style={{ fontSize: '0.72rem' }}>{a.motivo}</div>}
                               </td>
                               <td style={{ color: 'var(--text-muted)' }}>{a.fechaPago ? <span title={a.fechaAprox ? 'Fecha aproximada: pago previo a la tabla de inscripciones (sin recibo exacto en el sistema)' : undefined}>{a.fechaAprox ? '~ ' : ''}{new Date(a.fechaPago).toLocaleDateString()}</span> : '—'}</td>
                               <td className="text-end">{a.monto != null ? <span className={a.estado === 'Pendiente' ? 'text-danger fw-bold' : 'text-success fw-bold'}>${Number(a.monto).toFixed(2)}</span> : <span className="text-secondary">—</span>}</td>
@@ -1874,6 +1938,26 @@ export default function GestionFinanzas() {
                 <label className="etiqueta-campo">Aplicar Promoción</label>
                 <PromocionPicker descuentos={descuentosActivos} valor={formCobro.idDescuento} onCambiar={v => setFormCobro({ ...formCobro, idDescuento: v })} />
               </div>
+
+              {/* Aviso de estado de inscripción del atleta — mismo motor (EvaluarAsync) que la pestaña Anualidad */}
+              {calculoSemaforo && !calculoSemaforo.exentoInscripcion && (
+                calculoSemaforo.inscripcionVigente ? (
+                  <div className="finanzas-insc-aviso finanzas-insc-aviso--ok">
+                    <i className="fas fa-circle-check"></i>
+                    <span><strong>Inscripción al día.</strong> {calculoSemaforo.inscripcionRazon} No hace falta volver a cobrarla este ciclo.</span>
+                  </div>
+                ) : calculoSemaforo.debeInscripcion ? (
+                  <div className="finanzas-insc-aviso finanzas-insc-aviso--warn">
+                    <i className="fas fa-triangle-exclamation"></i>
+                    <span><strong>Debe su inscripción anual</strong> (ciclo {calculoSemaforo.inscripcionCicloAnio}). Déjala activada para cobrarla.</span>
+                  </div>
+                ) : (
+                  <div className="finanzas-insc-aviso finanzas-insc-aviso--info">
+                    <i className="fas fa-circle-info"></i>
+                    <span>{calculoSemaforo.inscripcionRazon || 'Sin inscripción pendiente este ciclo.'}</span>
+                  </div>
+                )
+              )}
 
               <div className="form-check form-switch mb-2">
                 <input className="form-check-input bg-warning border-warning" type="checkbox" id="checkInsc" checked={formCobro.cobrarInscripcion} onChange={e => setFormCobro({ ...formCobro, cobrarInscripcion: e.target.checked })} />

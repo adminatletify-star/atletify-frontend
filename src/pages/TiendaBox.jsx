@@ -364,7 +364,7 @@ export default function TiendaBox() {
               {metodosTienda['Efectivo en Recepción'] && <option value="Efectivo en Recepción">Efectivo en Recepción</option>}
               {metodosTienda['Tarjeta en Recepción'] && totalCarrito >= minTarjeta && <option value="Tarjeta en Recepción">Tarjeta en Recepción (Mín. ${minTarjeta})</option>}
               {metodosTienda['Transferencia'] && totalCarrito >= minTarjeta && <option value="Transferencia">Transferencia (Mín. ${minTarjeta})</option>}
-              {usuario?.esDeConfianza && <option value="Fiar (Anotar en mi cuenta)">Fiar (Anotar a mi Deuda)</option>}
+              {usuario?.esDeConfianza && cfgBox?.permitirFiados && <option value="Fiar (Anotar en mi cuenta)">Fiar (Anotar a mi Deuda)</option>}
             </select>
             {(metodosTienda['Tarjeta en Recepción'] || metodosTienda['Transferencia']) && totalCarrito < minTarjeta && (
               <p className="tb-cart-min-warn">
@@ -425,8 +425,8 @@ export default function TiendaBox() {
 
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1rem' }}>
 
-        {/* Banner atleta de confianza */}
-        {usuario?.esDeConfianza && (
+        {/* Banner atleta de confianza (solo si el box ofrece fiados) */}
+        {usuario?.esDeConfianza && cfgBox?.permitirFiados && (
           <div className="tb-trust-banner">
             <i className="fas fa-handshake" />
             <div>

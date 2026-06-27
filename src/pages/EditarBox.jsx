@@ -51,6 +51,7 @@ const initialConfig = {
   aceptarTransferencias: true,
   aceptarEfectivo: true,
   aceptarTarjetaRecepcion: true,
+  permitirFiados: true,
   recargoMontoFijo: 0,
   aplicarGraciaSoloConCobroAutomatico: true,
   regalarVisitasAmigo: false,
@@ -273,6 +274,7 @@ export default function EditarBox() {
           aceptarTransferencias: data.aceptarTransferencias ?? true,
           aceptarEfectivo: data.aceptarEfectivo ?? true,
           aceptarTarjetaRecepcion: data.aceptarTarjetaRecepcion ?? true,
+          permitirFiados: data.permitirFiados ?? true,
           recargoMontoFijo: data.recargoMontoFijo ?? 0,
           aplicarGraciaSoloConCobroAutomatico: data.aplicarGraciaSoloConCobroAutomatico ?? true,
           regalarVisitasAmigo: data.regalarVisitasAmigo ?? false,
@@ -471,6 +473,7 @@ export default function EditarBox() {
           aceptarTransferencias: config.aceptarTransferencias,
           aceptarEfectivo: config.aceptarEfectivo,
           aceptarTarjetaRecepcion: config.aceptarTarjetaRecepcion,
+          permitirFiados: config.permitirFiados,
           recargoMontoFijo: parseFloat(config.recargoMontoFijo) || 0,
           aplicarGraciaSoloConCobroAutomatico: config.aplicarGraciaSoloConCobroAutomatico,
           regalarVisitasAmigo: config.regalarVisitasAmigo,
@@ -1163,6 +1166,28 @@ export default function EditarBox() {
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  {/* ── FIADOS (CRÉDITO EN TIENDA) ── */}
+                  <div className="mb-4 p-3 rounded" style={{ background: 'rgba(245,166,35,0.06)', border: '1px solid rgba(245,166,35,0.22)' }}>
+                    <p className="fw-bold mb-3" style={{ color: 'var(--accent)', fontFamily: 'var(--font-heading)', fontSize: '0.9rem' }}>
+                      <i className="fas fa-handshake me-2"></i>Fiados (crédito en tienda)
+                    </p>
+                    <div className="form-check form-switch">
+                      <input className="form-check-input" type="checkbox" id="switchFiados" name="permitirFiados" checked={config.permitirFiados} onChange={handleConfigChange} style={{ width: '2.5rem', height: '1.3rem' }} />
+                      <label className="form-check-label ms-2" htmlFor="switchFiados" style={{ fontSize: '0.85rem' }}>
+                        Permitir fiados a atletas de confianza
+                      </label>
+                    </div>
+                    <small className="text-secondary d-block mt-2" style={{ fontSize: '0.7rem' }}>
+                      {config.permitirFiados
+                        ? 'Un atleta marcado como "de confianza" puede pedir productos sobre pedido y pagarlos después. La cobranza vive en Gestión de Fiado.'
+                        : 'Fiados desactivados: nadie podrá pedir a crédito (ni en recepción ni en la tienda del atleta) y se oculta la opción de "Fiar". Las deudas que ya existan siguen visibles y cobrables hasta liquidarse.'}
+                    </small>
+                    <p className="mb-0 mt-2 d-flex align-items-center gap-1" style={{ fontSize: '0.72rem', color: 'var(--accent)', fontWeight: 600 }}>
+                      <i className="fas fa-floppy-disk"></i>
+                      Para aplicar el cambio necesitas <strong className="ms-1">Guardar la configuración</strong> abajo.
+                    </p>
                   </div>
 
                   {/* ── DÍAS DE CORTE ── */}

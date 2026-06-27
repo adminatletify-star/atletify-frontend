@@ -919,7 +919,7 @@
 /* Resumen de conteos */
 .finanzas-insc-resumen {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); /* 5 tarjetas (incl. Vigentes) en una fila en desktop, envuelve en móvil */
   gap: 0.7rem;
   margin: 1rem 0;
 }
@@ -1019,6 +1019,78 @@
 .finanzas-insc-badge--pendiente { color: var(--danger);      background: rgba(231,76,60,0.1);    border-color: rgba(231,76,60,0.28); }
 .finanzas-insc-badge--naplica   { color: var(--text-muted);  background: rgba(168,178,209,0.06); border-color: var(--border); }
 
+/* Etiqueta "Exención": el atleta pagó su inscripción en los meses de exención (cuenta como Pagada). */
+.finanzas-insc-tag-exencion {
+  display: inline-block;
+  font-family: var(--font-heading-alt);
+  font-size: 0.56rem; letter-spacing: 0.4px; text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(245,166,35,0.10);
+  border: 1px solid rgba(245,166,35,0.28);
+  border-radius: 6px;
+  padding: 0.1rem 0.42rem;
+  white-space: nowrap;
+}
+
+/* Widgets de configuración del ciclo (próximo cobro / meses de exención) con botón "?" */
+.finanzas-insc-config { display: flex; flex-wrap: wrap; gap: 0.7rem; margin: 0.25rem 0 1rem; }
+.finanzas-insc-cfg {
+  position: relative;
+  display: flex; align-items: center; gap: 0.6rem;
+  flex: 1 1 240px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+  padding: 0.6rem 0.8rem;
+}
+.finanzas-insc-cfg-ic { color: var(--accent); font-size: 1rem; flex-shrink: 0; }
+.finanzas-insc-cfg-body { display: flex; flex-direction: column; line-height: 1.15; flex: 1; min-width: 0; }
+.finanzas-insc-cfg-lbl {
+  font-family: var(--font-heading-alt);
+  font-size: 0.58rem; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-muted);
+}
+.finanzas-insc-cfg-val { font-family: var(--font-stats); font-size: 0.92rem; color: var(--text-primary); font-weight: 600; }
+.finanzas-insc-cfg-q {
+  flex-shrink: 0;
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1px solid var(--accent);
+  background: rgba(245,166,35,0.10); color: var(--accent);
+  font-size: 0.66rem; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background 0.15s;
+}
+.finanzas-insc-cfg-q:hover { background: rgba(245,166,35,0.22); }
+.finanzas-insc-cfg-pop {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 30;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border); border-top: 3px solid var(--accent);
+  border-radius: 12px; padding: 0.7rem 0.85rem;
+  font-size: 0.78rem; line-height: 1.42; color: var(--text-secondary);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+.finanzas-insc-cfg-pop strong { color: var(--accent); }
+
+/* Aviso de estado de inscripción en el modal de cobro (Punto de Venta) */
+.finanzas-insc-aviso {
+  display: flex; align-items: flex-start; gap: 0.55rem;
+  font-size: 0.8rem; line-height: 1.35;
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 0.6rem 0.75rem; margin-bottom: 0.75rem;
+}
+.finanzas-insc-aviso i { margin-top: 2px; flex-shrink: 0; }
+.finanzas-insc-aviso strong { color: inherit; }
+.finanzas-insc-aviso--ok   { color: var(--success);     background: rgba(46,204,113,0.08); border-color: rgba(46,204,113,0.30); }
+.finanzas-insc-aviso--warn { color: var(--accent);      background: rgba(245,166,35,0.08); border-color: rgba(245,166,35,0.30); }
+.finanzas-insc-aviso--info { color: var(--accent-cool); background: rgba(79,195,247,0.08); border-color: rgba(79,195,247,0.30); }
+
+/* Móvil: widgets de config en una sola columna */
+@media (max-width: 576px) {
+  .finanzas-insc-cfg { flex: 1 1 100%; }
+  .finanzas-insc-cfg-val { font-size: 0.85rem; }
+  .finanzas-insc-cfg-pop { font-size: 0.72rem; }
+}
+
 /* Paginación (10 por página) */
 .finanzas-insc-pag {
   display: flex;
@@ -1053,7 +1125,7 @@
   .finanzas-insc-stat-num { font-size: 1.4rem; }
 }
 @media (max-width: 576px) {
-  .finanzas-insc-resumen { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .finanzas-insc-resumen { grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)); gap: 0.5rem; }
   .finanzas-insc-stat { padding: 0.7rem 0.4rem; border-radius: 12px; }
   .finanzas-insc-stat-num { font-size: 1.25rem; }
   .finanzas-insc-stat-lbl { font-size: 0.58rem; }
