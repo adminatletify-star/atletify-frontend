@@ -116,6 +116,23 @@ export default function AdminCompetencias() {
     } catch (err) { alert('Error de conexión.'); }
   };
 
+  // Developer: cobra los atletas excedentes de una competencia finalizada (a la tarjeta retenida del
+  // organizador) y la archiva. Cuenta solo atletas con pago aprobado.
+  const cobrarExcedentes = async (idComp, nombreComp) => {
+    if (!await window.wpConfirm(`¿Cobrar los atletas EXCEDENTES de "${nombreComp}"? Se cobrará a la tarjeta retenida del organizador y la competencia quedará archivada (solo lectura).`)) return;
+    try {
+      const token = localStorage.getItem('token');
+      const base = COMPETENCIAS_ENDPOINT.replace(/\/competencias$/, '');
+      const res = await fetch(`${base}/developer/competencias/${idComp}/cobrar-excedentes`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      alert(data.mensaje || (res.ok ? 'Cobro procesado.' : 'No se pudo cobrar el excedente.'));
+      if (res.ok) cargarCompetencias(box.idBox || box.IdBox);
+    } catch (err) { alert('Error de conexión al cobrar excedentes.'); }
+  };
+
   const guardarCategoria = async (e) => {
     e.preventDefault(); setProcesando(true);
     const url = editandoCat ? `${COMPETENCIAS_ENDPOINT}/categorias/${editandoCat}` : `${COMPETENCIAS_ENDPOINT}/${compSeleccionada.idCompetencia || compSeleccionada.IdCompetencia}/categorias`;
@@ -763,6 +780,16 @@ export default function AdminCompetencias() {
                         onClick={() => eliminarCompetencia(comp.idCompetencia || comp.IdCompetencia, comp.nombre)}
                       >
                         <i className="fas fa-trash" style={{ fontSize: '0.7rem' }}></i>
+                      </BotonSeguro>
+                    )}
+                    {user?.rol === 'Developer' && comp.estatus === 'Historial' && comp.saaS_Estatus !== 'Archivada_SoloLectura' && comp.saaS_Estatus !== 'Configurando' && (
+                      <BotonSeguro
+                        className="btn btn-sm btn-outline-warning ms-1"
+                        title="Cobrar atletas excedentes a la tarjeta retenida del organizador y archivar"
+                        textoProcesando="Cobrando..."
+                        onClick={() => cobrarExcedentes(comp.idCompetencia || comp.IdCompetencia, comp.nombre)}
+                      >
+                        <i className="fas fa-coins me-1" style={{ fontSize: '0.7rem' }}></i>Excedentes
                       </BotonSeguro>
                     )}
                   </div>
