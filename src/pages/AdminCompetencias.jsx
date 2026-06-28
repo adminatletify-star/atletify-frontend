@@ -133,6 +133,22 @@ export default function AdminCompetencias() {
     } catch (err) { alert('Error de conexión al cobrar excedentes.'); }
   };
 
+  // Developer: aprueba un pago MANUAL del módulo (transferencia/efectivo que el box reportó) -> activa.
+  const aprobarPagoModulo = async (idComp, nombreComp) => {
+    if (!await window.wpConfirm(`¿Aprobar el pago manual del módulo de "${nombreComp}"? Se activará la competencia.`)) return;
+    try {
+      const token = localStorage.getItem('token');
+      const base = COMPETENCIAS_ENDPOINT.replace(/\/competencias$/, '');
+      const res = await fetch(`${base}/developer/competencias/${idComp}/aprobar-pago-modulo`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      alert(data.mensaje || (res.ok ? 'Pago aprobado.' : 'No se pudo aprobar.'));
+      if (res.ok) cargarCompetencias(box.idBox || box.IdBox);
+    } catch (err) { alert('Error de conexión al aprobar el pago del módulo.'); }
+  };
+
   const guardarCategoria = async (e) => {
     e.preventDefault(); setProcesando(true);
     const url = editandoCat ? `${COMPETENCIAS_ENDPOINT}/categorias/${editandoCat}` : `${COMPETENCIAS_ENDPOINT}/${compSeleccionada.idCompetencia || compSeleccionada.IdCompetencia}/categorias`;
@@ -806,6 +822,17 @@ export default function AdminCompetencias() {
                       >
                         <i className="fas fa-credit-card me-2"></i>Contratar Evento
                       </button>
+                    </div>
+                  ) : comp.saaS_Estatus === 'PendientePagoManual' ? (
+                    <div className="p-4 text-center bg-dark border-top border-secondary border-opacity-50">
+                      <i className="fas fa-clock fs-1 text-info mb-3"></i>
+                      <h5 className="text-white mb-2">Pago manual en revisión</h5>
+                      <p className="text-secondary small mb-3">{user?.rol === 'Developer' ? 'El box reportó un pago manual del módulo. Apruébalo para activar la competencia.' : 'Registramos tu pago manual. En cuanto Atletify lo confirme, se activará tu competencia.'}</p>
+                      {user?.rol === 'Developer' && (
+                        <button className="btn btn-success fw-bold px-4 rounded-pill" onClick={() => aprobarPagoModulo(comp.idCompetencia || comp.IdCompetencia, comp.nombre)}>
+                          <i className="fas fa-check-circle me-2"></i>Aprobar pago del módulo
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <>

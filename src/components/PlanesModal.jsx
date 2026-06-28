@@ -32,7 +32,7 @@ export default function PlanesModal({ isOpen, onClose, idCompetencia, onSuccess 
     }
   };
 
-  const handlePagar = async () => {
+  const handlePagar = async (metodoPago = null) => {
     if (modo === 'planes' && !idPlanSeleccionado) return alert("Selecciona un plan");
     if (modo === 'token' && !tokenString) return alert("Ingresa el token");
 
@@ -42,7 +42,8 @@ export default function PlanesModal({ isOpen, onClose, idCompetencia, onSuccess 
         IdPlanSaaS: modo === 'planes' ? idPlanSeleccionado : null,
         TokenString: modo === 'token' ? tokenString : null,
         SuccessUrl: window.location.href,
-        CancelUrl: window.location.href
+        CancelUrl: window.location.href,
+        MetodoPago: metodoPago // null = pago en línea (Stripe); "Transferencia"/"Efectivo" = manual
       };
 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/competencias/${idCompetencia}/contratar`, {
@@ -53,9 +54,14 @@ export default function PlanesModal({ isOpen, onClose, idCompetencia, onSuccess 
         },
         body: JSON.stringify(payload)
       });
-      
+
       const data = await res.json();
-      if (res.ok && data.url) {
+      if (res.ok && data.manual) {
+        // Pago manual: queda pendiente de aprobación del developer.
+        alert(data.mensaje || "Registramos tu pago manual. Se activará cuando Atletify lo apruebe.");
+        onSuccess();
+        onClose();
+      } else if (res.ok && data.url) {
         if (data.url === window.location.href) {
           // Fue un pago con token o precio 0
           alert(data.mensaje || "Competencia activada con éxito.");
@@ -152,9 +158,16 @@ export default function PlanesModal({ isOpen, onClose, idCompetencia, onSuccess 
           </div>
           <div className="modal-footer border-top border-secondary border-opacity-25 d-flex justify-content-between">
             <button className="btn btn-outline-secondary" onClick={onClose} disabled={procesando}>Cancelar</button>
-            <BotonSeguro className="btn btn-warning fw-bold text-dark px-4" onClick={handlePagar} textoProcesando="Procesando...">
-              {modo === 'planes' ? <><i className="fab fa-stripe me-2"></i>Pagar y Activar</> : <><i className="fas fa-check-circle me-2"></i>Canjear Token</>}
-            </BotonSeguro>
+            <div className="d-flex gap-2 flex-wrap justify-content-end">
+              {modo === 'planes' && (
+                <BotonSeguro className="btn btn-outline-warning fw-bold px-3" onClick={() => handlePagar('Transferencia')} textoProcesando="Procesando...">
+                  <i className="fas fa-university me-2"></i>Pagar por transferencia
+                </BotonSeguro>
+              )}
+              <BotonSeguro className="btn btn-warning fw-bold text-dark px-4" onClick={() => handlePagar(null)} textoProcesando="Procesando...">
+                {modo === 'planes' ? <><i className="fab fa-stripe me-2"></i>Pagar y Activar</> : <><i className="fas fa-check-circle me-2"></i>Canjear Token</>}
+              </BotonSeguro>
+            </div>
           </div>
         </div>
       </div>
