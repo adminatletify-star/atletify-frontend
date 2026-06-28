@@ -82,7 +82,9 @@ export default function GestionHeatsPanel({ idCompetencia, categorias = [], comp
     try { await fetch(`${HEATS_COMP_ENDPOINT}/heat/${idHeat}`, { method: 'DELETE' }); cargar(); } catch { /* ignore */ }
   };
 
-  const fmtHora = (iso) => { if (!iso) return '--'; try { return new Date(iso).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }); } catch { return iso; } };
+  // Reloj-de-pared: si la fecha viene SIN zona, la tratamos como UTC para mostrar la hora tal cual se capturó.
+  const aUTC = (s) => (/[zZ]$|[+-]\d{2}:?\d{2}$/.test(s) ? s : s + 'Z');
+  const fmtHora = (iso) => { if (!iso) return '--'; try { return new Date(aUTC(iso)).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }); } catch { return iso; } };
 
   return (
     <div className="cd-tab-fade">
