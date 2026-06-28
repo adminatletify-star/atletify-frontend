@@ -50,6 +50,7 @@ export default function CompetenciaDetalle() {
   const [reglamento, setReglamento] = useState('');
   const [anuncios, setAnuncios] = useState('');
   const [fechas, setFechas] = useState({ inicioIns: '', finIns: '', inicioComp: '', finComp: '', horaInicioComp: '08:00', horaFinComp: '18:00' });
+  const [zonaOffset, setZonaOffset] = useState(-6); // zona horaria del evento (offset UTC); solo afecta el auto-status
 
   // Rol del usuario logueado
   const userRol = JSON.parse(localStorage.getItem('usuario') || '{}')?.rol || '';
@@ -284,6 +285,7 @@ export default function CompetenciaDetalle() {
           horaInicioComp: _fi && !_fi.startsWith('2099') ? _horaDe(_fi, '08:00') : '08:00',
           horaFinComp: _ff && !_ff.startsWith('2099') ? _horaDe(_ff, '18:00') : '18:00',
         });
+        setZonaOffset(encontrada.zonaHorariaOffset ?? -6);
 
         try {
           const gastosGuardados = encontrada.registroGastos || encontrada.RegistroGastos;
@@ -1127,6 +1129,18 @@ export default function CompetenciaDetalle() {
     } catch (err) {
       alert("Error de conexión al guardar el calendario.");
     }
+  };
+
+  // Zona horaria del evento (solo afecta el auto-status "En Vivo"/"Historial"; el display de horas es independiente).
+  const guardarZona = async (offset) => {
+    setZonaOffset(offset);
+    try {
+      await fetch(`${COMPETENCIAS_ENDPOINT}/${id}/zona-horaria`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offset }),
+      });
+    } catch { /* el cambio local ya aplicó; se reintenta al recargar */ }
   };
 
   // Funciones de la Tabla de Estándares
@@ -1977,6 +1991,16 @@ export default function CompetenciaDetalle() {
                           <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.6rem' }}>
                             <i className="fas fa-circle-info me-1"></i>Evento de 1 día: pon la <b>misma fecha</b> en Día 1 y Fin, y define la hora de inicio/fin. El evento queda "En Vivo" desde la hora de inicio y pasa a histórico al pasar la hora de fin.
                           </p>
+                          <div className="mb-3" style={{ maxWidth: '340px' }}>
+                            <label className="cd-label">Zona horaria del evento</label>
+                            <select className="cd-input" value={zonaOffset} onChange={(e) => guardarZona(Number(e.target.value))}>
+                              <option value={-5}>Sureste — Cancún / Q. Roo (UTC-5)</option>
+                              <option value={-6}>Centro — CDMX / GDL / MTY (UTC-6)</option>
+                              <option value={-7}>Pacífico — BCS / Sonora / Sinaloa (UTC-7)</option>
+                              <option value={-8}>Noroeste — Tijuana (UTC-8)</option>
+                            </select>
+                            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>Define cuándo el evento pasa solo a "En Vivo" e histórico. Las horas se muestran tal cual se capturan.</p>
+                          </div>
                           <div className="d-flex gap-3">
                             <div className="flex-grow-1">
                               <label className="cd-label">
