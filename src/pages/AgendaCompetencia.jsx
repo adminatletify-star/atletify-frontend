@@ -25,7 +25,7 @@ export default function AgendaCompetencia() {
   // Tiempo real: refresca al instante cuando entra/aprueba un score o cambia un heat.
   useCompetenciaLive(id, { onScore: cargar, onHeat: cargar });
 
-  const fmtHora = (iso) => { if (!iso) return '--'; try { return new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }); } catch { return iso; } };
+  const fmtHora = (iso) => { if (!iso) return '--'; try { return new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }); } catch { return iso; } };
   const cls = (e) => e === 'EnCurso' ? 'ag-en-curso' : e === 'Finalizado' ? 'ag-finalizado' : 'ag-programado';
 
   if (cargando) return <div style={{ minHeight: '60vh', display: 'grid', placeItems: 'center' }}><AtletifyLoader /></div>;

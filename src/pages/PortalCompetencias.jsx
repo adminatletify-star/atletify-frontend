@@ -739,7 +739,7 @@ export default function PortalCompetencias() {
               {pasadas.map(p => (
                 <Link key={p.idCompetencia} to={`/leaderboard/${p.idCompetencia}`} style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.04)', color: '#fff', textDecoration: 'none', minWidth: '180px' }}>
                   <span style={{ fontWeight: 700 }}>{p.nombre}</span>
-                  <span style={{ fontSize: '.78rem', opacity: .7 }}>{p.fechaFin ? new Date(p.fechaFin).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}</span>
+                  <span style={{ fontSize: '.78rem', opacity: .7 }}>{p.fechaFin ? new Date(p.fechaFin).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : ''}</span>
                   <span style={{ fontSize: '.8rem', color: '#e63946', fontWeight: 700, marginTop: '2px' }}><i className="fas fa-trophy me-1"></i>Ver resultados</span>
                 </Link>
               ))}
@@ -774,9 +774,9 @@ export default function PortalCompetencias() {
                   <h1 className="portal-comp-title">{compActiva.nombre}</h1>
                   <p className="portal-comp-dates">
                     <i className="fas fa-calendar-alt"></i>
-                    {new Date(compActiva.fechaInicio).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })}
+                    {new Date(compActiva.fechaInicio).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' })}
                     <span className="portal-dates-sep">—</span>
-                    {new Date(compActiva.fechaFin).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })}
+                    {new Date(compActiva.fechaFin).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' })}
                   </p>
                   {compActiva.categorias?.length > 0 && (
                     <div className="portal-hero-quick-stats">

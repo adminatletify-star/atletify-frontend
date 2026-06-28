@@ -95,7 +95,7 @@ export default function PortalJuez() {
     return Array.from(m.values());
   }, [agenda]);
 
-  const fmtHora = (iso) => { if (!iso) return 'Sin horario asignado'; try { return new Date(iso).toLocaleString('es-MX', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
+  const fmtHora = (iso) => { if (!iso) return 'Sin horario asignado'; try { return new Date(iso).toLocaleString('es-MX', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }); } catch { return ''; } };
   const estadoBadge = (e) => e === 'EnCurso' ? { t: 'EN CURSO', c: '#15a34a' } : e === 'Finalizado' ? { t: 'FINALIZADO', c: '#6b7280' } : { t: 'PROGRAMADO', c: '#3b82f6' };
   const scoreBadge = (s) => s === 'Aprobado' ? { t: 'Aprobado', c: '#15a34a' } : s === 'Pendiente' ? { t: 'Enviado · en revisión', c: '#f5b942' } : { t: 'Pendiente de calificar', c: '#e63946' };
 

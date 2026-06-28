@@ -783,9 +783,9 @@ export default function AdminCompetencias() {
                       )}
                       <p className="acomp-comp-fechas">
                         <i className="fas fa-calendar me-1"></i>
-                        {new Date(comp.fechaInicio).getFullYear() >= 2099 
-                          ? "Fechas por definir" 
-                          : `${new Date(comp.fechaInicio).toLocaleDateString()} — ${new Date(comp.fechaFin).toLocaleDateString()}`}
+                        {new Date(comp.fechaInicio).getFullYear() >= 2099
+                          ? "Fechas por definir"
+                          : `${new Date(comp.fechaInicio).toLocaleDateString('es-MX', { timeZone: 'UTC' })} — ${new Date(comp.fechaFin).toLocaleDateString('es-MX', { timeZone: 'UTC' })}`}
                       </p>
                     </div>
                     {comp.saaS_Estatus === 'Configurando' ? (

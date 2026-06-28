@@ -19,14 +19,16 @@ export default function GestionHeatsPanel({ idCompetencia, categorias = [], comp
     const iniRaw = competencia?.fechaInicio || competencia?.FechaInicio;
     const finRaw = competencia?.fechaFin || competencia?.FechaFin || iniRaw;
     if (!iniRaw) return [];
-    const ini = new Date(iniRaw); const fin = new Date(finRaw);
-    if (isNaN(ini)) return [];
-    const dias = []; const d = new Date(ini.getFullYear(), ini.getMonth(), ini.getDate());
-    const end = isNaN(fin) ? new Date(d) : new Date(fin.getFullYear(), fin.getMonth(), fin.getDate());
-    let guard = 0;
+    // En UTC para coincidir con el reloj-de-pared guardado (las horas del evento se guardan UTC-naive).
+    const iniStr = String(iniRaw).split('T')[0];
+    const finStr = String(finRaw || iniRaw).split('T')[0];
+    const d = new Date(`${iniStr}T00:00:00Z`);
+    const end = new Date(`${finStr}T00:00:00Z`);
+    if (isNaN(d) || isNaN(end)) return [];
+    const dias = []; let guard = 0;
     while (d <= end && guard < 31) {
-      dias.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
-      d.setDate(d.getDate() + 1); guard++;
+      dias.push(d.toISOString().slice(0, 10));
+      d.setUTCDate(d.getUTCDate() + 1); guard++;
     }
     return dias;
   }, [competencia]);
@@ -80,7 +82,7 @@ export default function GestionHeatsPanel({ idCompetencia, categorias = [], comp
     try { await fetch(`${HEATS_COMP_ENDPOINT}/heat/${idHeat}`, { method: 'DELETE' }); cargar(); } catch { /* ignore */ }
   };
 
-  const fmtHora = (iso) => { if (!iso) return '--'; try { return new Date(iso).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return iso; } };
+  const fmtHora = (iso) => { if (!iso) return '--'; try { return new Date(iso).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }); } catch { return iso; } };
 
   return (
     <div className="cd-tab-fade">
@@ -107,10 +109,10 @@ export default function GestionHeatsPanel({ idCompetencia, categorias = [], comp
           {diasEvento.length > 1 && (
             <div className="col-md-2"><label className="cd-label">Día del evento</label>
               <select className="cd-input" value={cfg.dia} onChange={e => setCfg({ ...cfg, dia: e.target.value })}>
-                {diasEvento.map(d => <option key={d} value={d}>{new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { weekday: 'short', day: '2-digit', month: 'short' })}</option>)}
+                {diasEvento.map(d => <option key={d} value={d}>{new Date(d + 'T00:00:00Z').toLocaleDateString('es-MX', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' })}</option>)}
               </select></div>
           )}
-          <div className="col-md-2"><label className="cd-label">Hora de inicio {diasEvento.length === 1 ? `(${new Date(diasEvento[0] + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })})` : ''}</label>
+          <div className="col-md-2"><label className="cd-label">Hora de inicio {diasEvento.length === 1 ? `(${new Date(diasEvento[0] + 'T00:00:00Z').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', timeZone: 'UTC' })})` : ''}</label>
             <input type="time" className="cd-input" value={cfg.hora} onChange={e => setCfg({ ...cfg, hora: e.target.value })} disabled={diasEvento.length === 0} /></div>
           {diasEvento.length === 0 && (
             <div className="col-12"><p className="cd-section-sub" style={{ color: 'var(--primary)', margin: 0 }}><i className="fas fa-triangle-exclamation me-1"></i>Define primero las fechas del evento (pestaña Portal Público); de ahí se toma la fecha de los heats.</p></div>
