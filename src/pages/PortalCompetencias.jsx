@@ -49,6 +49,31 @@ const CountdownTimer = ({ targetDate, onExpire }) => {
   );
 };
 
+// Cuenta regresiva larga (días/horas/min/seg) para fechas de inscripción que pueden estar a días.
+const CuentaRegresiva = ({ targetDate }) => {
+  const calc = () => {
+    const diff = +new Date(targetDate) - +new Date();
+    if (diff <= 0) return null;
+    return {
+      dias: Math.floor(diff / 86400000),
+      horas: Math.floor((diff / 3600000) % 24),
+      minutos: Math.floor((diff / 60000) % 60),
+      segundos: Math.floor((diff / 1000) % 60),
+    };
+  };
+  const [t, setT] = useState(calc());
+  useEffect(() => {
+    const timer = setInterval(() => setT(calc()), 1000);
+    return () => clearInterval(timer);
+  }, [targetDate]);
+  if (!t) return null;
+  return (
+    <strong style={{ fontFamily: 'monospace', letterSpacing: '0.5px', marginLeft: '6px' }}>
+      {t.dias > 0 ? `${t.dias}d ` : ''}{String(t.horas).padStart(2, '0')}:{String(t.minutos).padStart(2, '0')}:{String(t.segundos).padStart(2, '0')}
+    </strong>
+  );
+};
+
 export default function PortalCompetencias() {
   const { id } = useParams();
   const [competencias, setCompetencias] = useState([]);
@@ -638,6 +663,7 @@ export default function PortalCompetencias() {
 
   let inscripcionesAbiertas = true;
   let mensajeFechas = "";
+  let fechaContador = null;
 
   if (compActiva) {
     const inicioInsStr = compActiva.fechaInicioInscripcion || compActiva.FechaInicioInscripcion;
@@ -649,9 +675,9 @@ export default function PortalCompetencias() {
       const finIns = new Date(finInsStr); finIns.setHours(23, 59, 59, 999);
 
       if (hoy >= inicioIns && hoy <= finIns) {
-        inscripcionesAbiertas = true; mensajeFechas = `Inscripciones Abiertas hasta el ${finIns.toLocaleDateString()}`;
+        inscripcionesAbiertas = true; mensajeFechas = 'Inscripciones abiertas — cierran en'; fechaContador = finIns;
       } else if (hoy < inicioIns) {
-        inscripcionesAbiertas = false; mensajeFechas = `Las inscripciones abren el ${inicioIns.toLocaleDateString()}`;
+        inscripcionesAbiertas = false; mensajeFechas = 'Las inscripciones abren en'; fechaContador = inicioIns;
       } else {
         inscripcionesAbiertas = false; mensajeFechas = `Las inscripciones cerraron el ${finIns.toLocaleDateString()}`;
       }
@@ -1005,7 +1031,7 @@ export default function PortalCompetencias() {
                   {mensajeFechas && (
                     <div className={`portal-fechas-banner ${inscripcionesAbiertas ? 'open' : 'closed'}`}>
                       <i className={`fas ${inscripcionesAbiertas ? 'fa-calendar-check' : 'fa-lock'}`}></i>
-                      <span>{mensajeFechas}</span>
+                      <span>{mensajeFechas}{fechaContador && <CuentaRegresiva targetDate={fechaContador} />}</span>
                     </div>
                   )}
 

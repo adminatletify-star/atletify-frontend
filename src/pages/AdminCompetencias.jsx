@@ -293,7 +293,11 @@ export default function AdminCompetencias() {
   // ===================================================================================
   // PANTALLA DE BLOQUEO (PAYWALL) PARA ADMINBOX CUANDO EL MÓDULO ESTÁ APAGADO
   // ===================================================================================
-  if (box && (box.moduloCompetenciasActivo === false || box.ModuloCompetenciasActivo === false) && user?.rol !== 'Developer') {
+  // Tiene competencias si el flag legacy está activo (compra por evento) O si el plan lo incluye
+  // (Premium): box.modulos lo inyecta el login desde ModuloService. Así un box Premium no ve el paywall.
+  const tieneCompetencias = box?.moduloCompetenciasActivo === true || box?.ModuloCompetenciasActivo === true
+    || (box?.modulos || box?.Modulos || []).includes('competencias');
+  if (box && !tieneCompetencias && user?.rol !== 'Developer') {
     let planes = [];
     if (configPublica?.planesCompetenciaJson) {
       try { planes = JSON.parse(configPublica.planesCompetenciaJson); } catch (e) {}
