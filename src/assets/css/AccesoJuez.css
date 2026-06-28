@@ -1,0 +1,44 @@
+.aj-wrap { min-height: 70vh; display: grid; place-items: center; padding: 24px; }
+.aj-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card-bg, #15171c);
+  border: 1px solid var(--border, #2a2d35);
+  border-radius: 16px;
+  padding: 32px 28px;
+  text-align: center;
+  color: var(--text-primary, #fff);
+}
+.aj-icon { font-size: 2.4rem; color: var(--primary, #e63946); margin-bottom: 12px; }
+.aj-title { font-size: 1.4rem; font-weight: 800; margin: 0 0 6px; }
+.aj-sub { font-size: 0.9rem; color: var(--text-muted, #9aa0aa); margin: 0 0 20px; }
+.aj-error {
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.4);
+  color: #ff6b75;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+.aj-form { display: flex; flex-direction: column; gap: 10px; }
+.aj-input {
+  background: var(--input-bg, #1d2026);
+  border: 1px solid var(--border, #2a2d35);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--text-primary, #fff);
+  font-size: 1rem;
+}
+.aj-input:focus { outline: none; border-color: var(--primary, #e63946); }
+.aj-btn {
+  background: var(--primary, #e63946);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.aj-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.aj-link { display: inline-block; margin-top: 16px; color: var(--text-muted, #9aa0aa); font-size: 0.85rem; }

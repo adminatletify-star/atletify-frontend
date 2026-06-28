@@ -7,12 +7,14 @@ import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import CompDetalleSideMenu from '../components/CompDetalleSideMenu';
-import TipoCalificacionPicker from '../components/TipoCalificacionPicker';
+import ConstructorWodComp from '../components/ConstructorWodComp';
 import TimeWheelPicker from '../components/TimeWheelPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import PlanesModal from '../components/PlanesModal';
-import GestionJuecesPanel from '../components/GestionJuecesPanel';
+import GestionJuecesCompPanel from '../components/GestionJuecesCompPanel';
 import GestionStaffCompePanel from '../components/GestionStaffCompePanel';
+import GestionHeatsPanel from '../components/GestionHeatsPanel';
+import PanelVerificacionScores from '../components/PanelVerificacionScores';
 import AtletifyLoader from '../components/AtletifyLoader';
 import '../assets/css/CompetenciaDetalle.css';
 
@@ -62,8 +64,7 @@ export default function CompetenciaDetalle() {
   // WODs y Auditoría
   const [wods, setWods] = useState([]);
   const [cargandoWods, setCargandoWods] = useState(false);
-  const [procesandoWod, setProcesandoWod] = useState(false);
-  const [formWod, setFormWod] = useState({ nombre: '', descripcion: '', tipoCalificacion: 'For Time' });
+  const [constructorWod, setConstructorWod] = useState({ abierto: false, idWod: null });
   const [scoresAuditoria, setScoresAuditoria] = useState([]);
   const [cargandoAuditoria, setCargandoAuditoria] = useState(false);
   const [filtroAuditoria, setFiltroAuditoria] = useState({ busqueda: '', estatus: 'Todos', idWod: 'Todos' });
@@ -997,25 +998,7 @@ export default function CompetenciaDetalle() {
     }
   };
 
-  const guardarWod = async (e) => {
-    e.preventDefault();
-    setProcesandoWod(true);
-    try {
-      const res = await fetch(`${COMPETENCIAS_ENDPOINT}/${id}/wods`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formWod)
-      });
-      if (res.ok) {
-        setFormWod({ nombre: '', descripcion: '', tipoCalificacion: 'For Time' });
-        cargarWods();
-      }
-    } catch (err) {
-      alert("Error de conexión.");
-    } finally {
-      setProcesandoWod(false);
-    }
-  };
+  // (El alta/edición/clonado de WODs vive ahora en ConstructorWodComp)
 
   const eliminarWod = async (idWod) => {
     if (!await window.wpConfirm("¿Seguro que deseas eliminar este entrenamiento?")) return;
@@ -2821,6 +2804,10 @@ export default function CompetenciaDetalle() {
         {/* TAB: LOGÍSTICA DE ARENA (HEATS MULTI-WOD) */}
         {/* ========================================================= */}
         {tabActiva === 'heats' && (
+          <GestionHeatsPanel idCompetencia={id} categorias={comp?.categorias || comp?.Categorias || []} />
+        )}
+        {/* Generador de heats viejo (blob JSON) — reemplazado por GestionHeatsPanel; oculto, pendiente de borrar. */}
+        {false && (
           <div className="cd-tab-fade">
             <div className="cd-section-header">
               <div>
@@ -3274,6 +3261,7 @@ export default function CompetenciaDetalle() {
         {/* ========================================================= */}
         {/* TAB: AUDITORÍA DE SCORES */}
         {/* ========================================================= */}
+        {tabActiva === 'auditoria' && <PanelVerificacionScores idCompetencia={id} />}
         {tabActiva === 'auditoria' && (() => {
           const scoresFiltrados = scoresAuditoria.filter(score => {
             const equipoInfo = roster.flatMap(c => c.equipos || c.Equipos || []).find(e => (e.idEquipoComp || e.IdEquipoComp) === score.idEquipoComp);
@@ -3576,52 +3564,15 @@ export default function CompetenciaDetalle() {
               </div>
             </div>
 
-            {/* Formulario agregar WOD */}
+            {/* Abrir el constructor de WOD rico */}
             <div className="cd-card cd-card--info mb-5">
-              <div className="cd-card-header cd-card-header--info">
-                <span className="cd-card-titulo cd-card-titulo--info">
-                  <i className="fas fa-plus-circle"></i>Agregar Entrenamiento
+              <div className="cd-card-body-lg d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <span className="cd-section-sub" style={{ margin: 0 }}>
+                  Cada WOD define su tipo de score, movimientos, pesos por género, time cap, desempate y checklist de jueceo.
                 </span>
-              </div>
-              <div className="cd-card-body-lg">
-                <form onSubmit={guardarWod}>
-                  <div className="row g-3">
-                    <div className="col-md-3">
-                      <label className="cd-label">Nombre del WOD</label>
-                      <input
-                        type="text"
-                        className="cd-input"
-                        placeholder="Ej: WOD 1A"
-                        required
-                        value={formWod.nombre}
-                        onChange={e => setFormWod({ ...formWod, nombre: e.target.value })}
-                      />
-                    </div>
-                    <div className="col-md-3">
-                      <label className="cd-label">Tipo de Calificación</label>
-                      <TipoCalificacionPicker
-                        valor={formWod.tipoCalificacion}
-                        onCambiar={v => setFormWod({ ...formWod, tipoCalificacion: v })}
-                      />
-                    </div>
-                    <div className="col-md-6">
-                      <label className="cd-label">Descripción (Opcional)</label>
-                      <textarea
-                        className="cd-textarea"
-                        rows="2"
-                        placeholder="Ej: AMRAP 10 Min..."
-                        value={formWod.descripcion}
-                        onChange={e => setFormWod({ ...formWod, descripcion: e.target.value })}
-                      ></textarea>
-                    </div>
-                    <div className="col-12 text-end mt-2">
-                      <BotonSeguro type="submit" className="cd-btn cd-btn--info-solid" disabled={procesandoWod} textoProcesando="GUARDANDO...">
-                        <i className="fas fa-dumbbell"></i>
-                        CREAR WOD
-                      </BotonSeguro>
-                    </div>
-                  </div>
-                </form>
+                <button className="cd-btn cd-btn--info-solid" onClick={() => setConstructorWod({ abierto: true, idWod: null })}>
+                  <i className="fas fa-plus"></i> Diseñar WOD
+                </button>
               </div>
             </div>
 
@@ -3650,14 +3601,23 @@ export default function CompetenciaDetalle() {
                         <div className={`cd-wod-tip cd-wod-tip--${tipoCls}`}></div>
                         <div className="d-flex justify-content-between align-items-start mb-2">
                           <h5 className="cd-wod-nombre">{wod.nombre || wod.Nombre}</h5>
-                          <BotonSeguro
-                            onClick={() => eliminarWod(idWod)}
-                            className="cd-btn cd-btn--ghost"
-                            title="Eliminar WOD"
-                            textoProcesando=""
-                          >
-                            <i className="fas fa-trash"></i>
-                          </BotonSeguro>
+                          <div className="d-flex gap-2">
+                            <button
+                              className="cd-btn cd-btn--ghost"
+                              title="Editar WOD"
+                              onClick={() => setConstructorWod({ abierto: true, idWod })}
+                            >
+                              <i className="fas fa-pen"></i>
+                            </button>
+                            <BotonSeguro
+                              onClick={() => eliminarWod(idWod)}
+                              className="cd-btn cd-btn--ghost"
+                              title="Eliminar WOD"
+                              textoProcesando=""
+                            >
+                              <i className="fas fa-trash"></i>
+                            </BotonSeguro>
+                          </div>
                         </div>
                         <div className={`cd-tipo-badge cd-tipo-badge--${tipoCls}`}>
                           <i className={`fas ${getTipoIcon(tipo)}`}></i>
@@ -3670,6 +3630,17 @@ export default function CompetenciaDetalle() {
                 })}
               </div>
             )}
+
+            {constructorWod.abierto && (
+              <ConstructorWodComp
+                idCompetencia={id}
+                categorias={comp?.categorias || comp?.Categorias || []}
+                idWodEditar={constructorWod.idWod}
+                onCerrar={() => setConstructorWod({ abierto: false, idWod: null })}
+                onGuardado={cargarWods}
+                onClonado={(nuevoId) => setConstructorWod({ abierto: true, idWod: nuevoId })}
+              />
+            )}
           </div>
         )}
 
@@ -3677,7 +3648,7 @@ export default function CompetenciaDetalle() {
         {/* TAB: JUECES */}
         {/* ========================================================= */}
         {tabActiva === 'jueces' && (
-          <GestionJuecesPanel idCompetencia={id} />
+          <GestionJuecesCompPanel idCompetencia={id} />
         )}
 
         {/* ========================================================= */}

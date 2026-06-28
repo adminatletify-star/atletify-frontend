@@ -771,12 +771,11 @@ export default function PortalCompetencias() {
                     <Link to={`/leaderboard/${compActiva.idCompetencia || compActiva.IdCompetencia}`} className="portal-btn-secondary">
                       <i className="fas fa-trophy"></i>Leaderboard
                     </Link>
-                  </div>
-                  <div className="portal-hero-staff-row">
-                    <Link to={`/juez/${compActiva.idCompetencia || compActiva.IdCompetencia}`} className="portal-juez-link">
-                      <i className="fas fa-stopwatch"></i>Staff / Jueces
+                    <Link to={`/agenda/${compActiva.idCompetencia || compActiva.IdCompetencia}`} className="portal-btn-secondary">
+                      <i className="fas fa-clock"></i>Agenda
                     </Link>
                   </div>
+                  {/* Acceso de juez movido a /juez/acceso (magic-link + PIN); ya no se expone aquí. */}
                 </div>
 
 

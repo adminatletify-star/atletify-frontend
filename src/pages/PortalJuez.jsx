@@ -6,6 +6,7 @@ import BotonSeguro from '../components/BotonSeguro';
 import TimeInputMMSS from '../components/TimeInputMMSS';
 import '../assets/css/PortalJuez.css';
 import AtletifyLoader from '../components/AtletifyLoader';
+import ModalCapturaScore from '../components/ModalCapturaScore';
 
 export default function PortalJuez() {
   const { id } = useParams(); // ID de la competencia
@@ -29,16 +30,29 @@ export default function PortalJuez() {
   // ──── Score State ────
   const [scoresTemporales, setScoresTemporales] = useState({});
   const [procesandoEq, setProcesandoEq] = useState(null);
+  const [capturaEquipo, setCapturaEquipo] = useState(null); // equipo en captura profesional (modal)
 
   // ══════════════════════════════════════════
   // 1. AL MONTAR: checar si hay sesión previa
   // ══════════════════════════════════════════
   useEffect(() => {
+    // 1) Sesión NUEVA por token (JuezComp, magic-link/PIN).
+    const sesion = localStorage.getItem('juezSesion');
+    if (sesion) {
+      try {
+        const s = JSON.parse(sesion);
+        if (String(s.idCompetencia) === String(id) && s.token) {
+          setJuezUser({ rol: 'Juez', nombre: s.nombre, id: s.idJuezComp, idCompetenciaAsignada: s.idCompetencia, token: s.token });
+          setNombreJuez(s.nombre || '');
+          return;
+        }
+      } catch (e) { /* sesión corrupta, ignorar */ }
+    }
+    // 2) Fallback legacy: Usuario rol="Juez" con JWT.
     const stored = localStorage.getItem('usuario');
     if (stored) {
       try {
         const userObj = JSON.parse(stored);
-        // Validar: ¿Es juez de ESTA competencia estrictamente?
         if (userObj.rol === 'Juez' && String(userObj.idCompetenciaAsignada) === String(id)) {
           setJuezUser(userObj);
           setNombreJuez(userObj.nombre || userObj.username || '');
@@ -79,10 +93,11 @@ export default function PortalJuez() {
   // 4. CERRAR SESIÓN DEL JUEZ
   // ══════════════════════════════════════════
   const handleJuezLogout = () => {
+    localStorage.removeItem('juezSesion');
     localStorage.removeItem('usuario');
     localStorage.removeItem('token');
     setJuezUser(null);
-    navigate('/login');
+    navigate('/juez/acceso');
   };
 
   // ══════════════════════════════════════════
@@ -131,9 +146,11 @@ export default function PortalJuez() {
 
     setProcesandoEq(idEquipo);
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (juezUser?.token) headers['X-Juez-Token'] = juezUser.token; // auth del juez por token propio
       const res = await fetch(`${COMPETENCIAS_ENDPOINT}/wods/${idWodSeleccionado}/scores`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           idEquipoComp: idEquipo,
           resultado: resultado,
@@ -222,8 +239,8 @@ export default function PortalJuez() {
             <h2 style={{ color: '#fff', marginBottom: '0.5rem' }}>Acceso Denegado</h2>
             <p style={{ color: 'var(--secondary)' }}>Debes iniciar sesión con una cuenta de Juez asignada a esta competencia.</p>
             <div className="d-flex flex-column gap-3 mt-4">
-              <Link to="/login" className="jz-login-btn text-decoration-none">
-                <i className="fas fa-sign-in-alt"></i>Ir al Login Principal
+              <Link to="/juez/acceso" className="jz-login-btn text-decoration-none">
+                <i className="fas fa-sign-in-alt"></i>Ir al acceso de juez
               </Link>
               <Link to={`/competencias`} className="jz-login-back-link justify-content-center">
                 <i className="fas fa-arrow-left"></i>Ver Portal Público
@@ -242,9 +259,22 @@ export default function PortalJuez() {
   const equiposAprobadosBase = categoriaActual?.equipos?.filter(eq => (eq.estatusPago || eq.EstatusPago) === 'Aprobado') ||
     categoriaActual?.Equipos?.filter(eq => (eq.estatusPago || eq.EstatusPago) === 'Aprobado') || [];
 
+  // ¿El juez ya tiene asignaciones de heats? (los heats reales llegan en la fase de heats/carriles).
+  // Si NO tiene, ve todos los WODs/equipos para no quedar bloqueado.
+  // Solo el juez LEGACY (Usuario, sin token) se filtra por heatsConfig (que guarda ids de Usuario).
+  // El juez nuevo (JuezComp, con token) ve todo hasta que los heats reales (otra fase) usen su id.
+  let juezTieneAsignaciones = false;
+  if (juezUser?.rol === 'Juez' && !juezUser.token) {
+    try {
+      const cfg = JSON.parse(comp.heatsConfig || comp.HeatsConfig || "{}");
+      const idJ = juezUser.id || juezUser.idUsuario || juezUser.IdUsuario;
+      cfg.wods?.forEach(w => w.lista?.forEach(h => h.participantes?.forEach(p => { if (p.idJuez == idJ) juezTieneAsignaciones = true; })));
+    } catch (e) { /* ignore */ }
+  }
+
   // Filtrado 1: Solo mostrar los que le tocan a este Juez en este WOD
   let equiposAprobados = equiposAprobadosBase;
-  if (juezUser?.rol === 'Juez' && idWodSeleccionado) {
+  if (juezUser?.rol === 'Juez' && idWodSeleccionado && juezTieneAsignaciones) {
     equiposAprobados = equiposAprobadosBase.filter(eq => {
       let asignado = false;
       try {
@@ -275,7 +305,7 @@ export default function PortalJuez() {
   let wodsPermitidos = wods;
   let categoriasPermitidas = comp.categorias || comp.Categorias || [];
 
-  if (juezUser?.rol === 'Juez') {
+  if (juezUser?.rol === 'Juez' && juezTieneAsignaciones) {
     const wodsSet = new Set();
     const catSet = new Set();
     try {
@@ -427,7 +457,12 @@ export default function PortalJuez() {
                           </span>
                         </div>
 
-                        {/* SCORE INPUT */}
+                        {/* CAPTURA PROFESIONAL: hoja auto-generada por tipo + firma del atleta */}
+                        <button className="jz-btn-submit" style={{ width: '100%', marginBottom: '10px' }} onClick={() => setCapturaEquipo(eq)}>
+                          <i className="fas fa-clipboard-check"></i> Calificar (pro)
+                        </button>
+
+                        {/* SCORE INPUT (captura rápida en línea) */}
                         <div className="jz-score-input-group">
                           {(() => {
                             const wodActual = wods.find(w => (w.idWodComp || w.IdWodComp) == idWodSeleccionado);
@@ -501,6 +536,17 @@ export default function PortalJuez() {
         )}
 
       </div>
+
+      {capturaEquipo && (
+        <ModalCapturaScore
+          idWod={idWodSeleccionado}
+          equipo={capturaEquipo}
+          nombreJuez={nombreJuez}
+          juezToken={juezUser?.token}
+          onCerrar={() => setCapturaEquipo(null)}
+          onGuardado={() => setCapturaEquipo(null)}
+        />
+      )}
     </div>
   );
 }

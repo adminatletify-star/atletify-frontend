@@ -688,5 +688,7 @@ export const BOXES_ENDPOINT = `${API_BASE_URL}/box`;
 export const PRODUCTOS_ENDPOINT = `${API_BASE_URL_CONST}/productos`;
 export const VENTAS_ENDPOINT = `${API_BASE_URL_CONST}/ventas`;
 export const COMPETENCIAS_ENDPOINT = `${API_BASE_URL_CONST}/competencias`;
+export const JUECES_COMP_ENDPOINT = `${API_BASE_URL_CONST}/jueces-comp`;
+export const HEATS_COMP_ENDPOINT = `${API_BASE_URL_CONST}/heats-comp`;
 export const FINANZAS_ENDPOINT = `${API_BASE_URL_CONST}/finanzas`;
 

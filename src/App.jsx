@@ -91,6 +91,8 @@ import AtletasBox from './pages/AtletasBox';
 import AdminRoster from './pages/AdminRoster';
 import CompetenciaDetalle from './pages/CompetenciaDetalle';
 import PortalJuez from './pages/PortalJuez';
+import AccesoJuez from './pages/AccesoJuez';
+import AgendaCompetencia from './pages/AgendaCompetencia';
 import SobreNosotros from './pages/SobreNosotros';
 import ListaCompetencias from './pages/ListaCompetencias';
 import SimuladorBarraPublico from './pages/SimuladorBarraPublico';
@@ -137,9 +139,11 @@ window.fetch = async function () {
     }
   }
 
-  // 1. Inyectar el Token JWT si existe
+  // 1. Inyectar el Token JWT si existe (excepto en el acceso del juez, que es anónimo: un JWT ajeno
+  //    o vencido provocaría un 401 que expulsaría al juez).
+  const esAccesoJuez = typeof resource === 'string' && resource.includes('/jueces-comp/acceso');
   const token = localStorage.getItem('token');
-  if (token) {
+  if (token && !esAccesoJuez) {
     if (!config) config = {};
     if (!config.headers) config.headers = {};
 
@@ -184,7 +188,7 @@ window.fetch = async function () {
     // 2. El token que falló es TODAVÍA el token activo (no es un 401 residual de otra cuenta)
     const tokenStillCurrent = !currentToken || !requestToken || requestToken === `Bearer ${currentToken}`;
 
-    if (tokenStillCurrent && !window.location.pathname.startsWith('/login')) {
+    if (tokenStillCurrent && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/juez')) {
       console.error("CADENERO FETCH: Token inválido o expirado. Cerrando sesión activa...");
       localStorage.removeItem('usuario');
       localStorage.removeItem('token');
@@ -433,6 +437,8 @@ function App() {
             <Route path="/registrar-admin-box" element={<RegistrarAdminBox />} />
             <Route path="/portal-competencias/:id" element={<PortalCompetencias />} />
             <Route path="/leaderboard/:id" element={<PortalLeaderboard />} />
+            <Route path="/agenda/:id" element={<AgendaCompetencia />} />
+            <Route path="/juez/acceso" element={<AccesoJuez />} />
             <Route path="/juez/:id" element={<PortalJuez />} />
             <Route path="/atleta/:compId" element={<PortalAtleta />} />
             <Route path="/atleta" element={<PortalAtleta />} />
