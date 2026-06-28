@@ -737,7 +737,18 @@ export default function AdminCompetencias() {
                     {comp.saaS_Estatus === 'Configurando' ? (
                       <span className="badge bg-warning text-dark"><i className="fas fa-lock me-1"></i>Pago Pendiente</span>
                     ) : (
-                      <EstatusPickerModal estatus={comp.estatus} onCambiar={(nuevoEstatus) => cambiarEstatus(comp.idCompetencia || comp.IdCompetencia, nuevoEstatus)} />
+                      // El estatus es AUTOMÁTICO según las fechas: badge de solo lectura (ya no se cambia a mano).
+                      <span
+                        className={`badge ${
+                          comp.estatus === 'Inscripciones' ? 'bg-info' :
+                          comp.estatus === 'Activa' ? 'bg-success' :
+                          comp.estatus === 'Historial' ? 'bg-secondary' :
+                          comp.estatus === 'Archivada' ? 'bg-dark' : 'bg-light text-dark'
+                        }`}
+                        title="El estatus se actualiza automáticamente según las fechas de inscripción y del evento"
+                      >
+                        {comp.estatus === 'Activa' ? 'En Vivo' : (comp.estatus || 'Borrador')}
+                      </span>
                     )}
                     {user?.rol === 'Developer' && (
                       <BotonSeguro
