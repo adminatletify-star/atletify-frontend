@@ -73,6 +73,7 @@ export default function PortalCompetencias() {
   const [equipoUnirseInfo, setEquipoUnirseInfo] = useState(null);
   const [plazaEsperaHasta, setPlazaEsperaHasta] = useState(null); // bloqueo de plaza al unirse (concurrencia ≤5 min)
   const [reservaTick, setReservaTick] = useState(0); // fuerza re-reservar la plaza (reintentar)
+  const [pagoCanceladoCodigo, setPagoCanceladoCodigo] = useState(''); // si el pago en línea se canceló/rechazó, para reintentar
   const [modalRequisitoEquipo, setModalRequisitoEquipo] = useState(null);
   const [buscandoEquipo, setBuscandoEquipo] = useState(false);
 
@@ -101,8 +102,29 @@ export default function PortalCompetencias() {
     cargarCompetencias();
   }, [id]);
 
-  // Retorno desde Stripe Checkout de inscripción: el SuccessUrl trae ?comp_success=1&codigo=...
-  // (o ?comp_cancel=1). El pago real lo acredita el webhook; aquí solo damos feedback y limpiamos la URL.
+  // Genera la sesión de Stripe para un equipo (por su código) y redirige al checkout. Reutilizado por el
+  // botón "Pagar en línea ahora" del correo y por el botón de reintento si el pago se canceló/rechazó.
+  const iniciarPagoPorCodigo = async (codigo) => {
+    try {
+      setMensaje({ tipo: 'info', texto: 'Generando tu pago en línea…', codigo: '' });
+      const resInfo = await fetch(`${COMPETENCIAS_ENDPOINT}/equipo/info/${codigo}`);
+      const info = await resInfo.json();
+      const idEquipo = info.idEquipoComp || info.IdEquipoComp;
+      if (!resInfo.ok || !idEquipo) {
+        setMensaje({ tipo: 'danger', texto: info.mensaje || 'No se encontró tu equipo.', codigo: '' });
+        return;
+      }
+      const resCk = await fetch(`${FINANZAS_ENDPOINT}/checkout-competencia/${id}/${idEquipo}`, { method: 'POST' });
+      const dataCk = await resCk.json();
+      if (resCk.ok && dataCk.url) { window.location.href = dataCk.url; return; }
+      setMensaje({ tipo: 'danger', texto: dataCk.mensaje || 'No se pudo iniciar el pago en línea.', codigo: '' });
+    } catch {
+      setMensaje({ tipo: 'danger', texto: 'Error al iniciar el pago en línea.', codigo: '' });
+    }
+  };
+
+  // Retorno desde Stripe Checkout: SuccessUrl trae ?comp_success=1&codigo=...; CancelUrl ?comp_cancel=1&codigo=...
+  // (cancelado o tarjeta rechazada). El pago real lo acredita el webhook; aquí damos feedback y limpiamos la URL.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('comp_success') === '1') {
@@ -110,36 +132,20 @@ export default function PortalCompetencias() {
       window.history.replaceState({}, '', window.location.pathname);
       window.scrollTo(0, 0);
     } else if (params.get('comp_cancel') === '1') {
-      setMensaje({ tipo: 'warning', texto: 'El pago se canceló. Tu equipo quedó registrado pero sin pagar; puedes intentar el pago de nuevo más tarde.', codigo: '' });
+      setPagoCanceladoCodigo(params.get('codigo') || '');
+      setMensaje({ tipo: 'warning', texto: 'Tu pago NO se completó (lo cancelaste o la tarjeta fue rechazada). Tu equipo quedó registrado pero SIN pagar, así que su lugar no está asegurado. Puedes reintentar el pago en el aviso de arriba.', codigo: '' });
       window.history.replaceState({}, '', window.location.pathname);
+      window.scrollTo(0, 0);
     }
   }, []);
 
   // Pago en línea desde el correo: el botón "Pagar en línea ahora" trae ?codigo=XXX&pagar=1.
-  // Resolvemos el equipo por su código, generamos la sesión de Stripe y redirigimos al checkout.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const codigo = params.get('codigo');
     if (params.get('pagar') !== '1' || !codigo) return;
     window.history.replaceState({}, '', window.location.pathname);
-    (async () => {
-      try {
-        setMensaje({ tipo: 'info', texto: 'Generando tu pago en línea…', codigo: '' });
-        const resInfo = await fetch(`${COMPETENCIAS_ENDPOINT}/equipo/info/${codigo}`);
-        const info = await resInfo.json();
-        const idEquipo = info.idEquipoComp || info.IdEquipoComp;
-        if (!resInfo.ok || !idEquipo) {
-          setMensaje({ tipo: 'danger', texto: info.mensaje || 'No se encontró tu equipo.', codigo: '' });
-          return;
-        }
-        const resCk = await fetch(`${FINANZAS_ENDPOINT}/checkout-competencia/${id}/${idEquipo}`, { method: 'POST' });
-        const dataCk = await resCk.json();
-        if (resCk.ok && dataCk.url) { window.location.href = dataCk.url; return; }
-        setMensaje({ tipo: 'danger', texto: dataCk.mensaje || 'No se pudo iniciar el pago en línea.', codigo: '' });
-      } catch {
-        setMensaje({ tipo: 'danger', texto: 'Error al iniciar el pago en línea.', codigo: '' });
-      }
-    })();
+    iniciarPagoPorCodigo(codigo);
   }, [id]);
 
   // Deep-link del correo "Invitar a mi equipo": ?codigo=XXX (sin pagar). Abre directo el flujo de unión
@@ -661,6 +667,16 @@ export default function PortalCompetencias() {
 
   return (
     <div className="portal-comp">
+
+      {pagoCanceladoCodigo && (
+        <div className="portal-alert portal-alert-warning" style={{ margin: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+          <span><i className="fas fa-triangle-exclamation me-2"></i>Tu pago no se completó. El lugar de tu equipo no está asegurado hasta que pagues.</span>
+          <span className="d-flex gap-2">
+            <button className="btn btn-success btn-sm" onClick={() => iniciarPagoPorCodigo(pagoCanceladoCodigo)}><i className="fas fa-credit-card me-1"></i>Reintentar pago</button>
+            <button className="btn btn-outline-secondary btn-sm" onClick={() => setPagoCanceladoCodigo('')}>Cerrar</button>
+          </span>
+        </div>
+      )}
 
       {/* ══════ NAV ══════ */}
       <nav className="portal-nav">
