@@ -297,8 +297,16 @@ export default function PortalCompetencias() {
       const res = await fetch(`${COMPETENCIAS_ENDPOINT}/equipo/info/${codigoInvitacion}`);
       const data = await res.json();
       if (res.ok) {
+        // No se puede unir a un equipo con deuda / pendiente de aprobación (evita que entren a equipos
+        // que nunca terminaron de pagar). El pago es por el TOTAL; solo equipos aprobados aceptan miembros.
+        const estatus = (data.estatusPago || data.EstatusPago || '').toLowerCase();
+        if (estatus !== 'aprobado' && estatus !== 'pagado') {
+          setMensaje({ tipo: 'warning', texto: 'Ese equipo aún no ha completado su pago. No puedes unirte hasta que el capitán pague la inscripción completa y sea aprobada.', codigo: '' });
+          setBuscandoEquipo(false);
+          return;
+        }
         setEquipoUnirseInfo(data);
-        
+
         const c = data.categoria || data.Categoria;
         const a = data.atletas || data.Atletas || [];
         
@@ -1232,7 +1240,7 @@ export default function PortalCompetencias() {
                               ) : (
                               <div className="portal-pago-section">
                                 <p className="portal-pago-title"><i className="fas fa-wallet me-2"></i>Aportación Financiera</p>
-                                <p className="portal-pago-desc">El saldo restante para {catSeleccionada.esEquipo ? 'el equipo' : 'tu registro'} es de <strong>${getCostoFinal()} MXN</strong>. Ingresa el monto que vas a abonar hoy.</p>
+                                <p className="portal-pago-desc">{catSeleccionada.esEquipo ? 'Pagarás el total de la inscripción del equipo' : 'Pagarás el total de tu inscripción'} — el pago es por el monto completo, sin abonos parciales.</p>
                                   <div className="row g-3">
                                     <div className="col-12 col-md-6">
                                       <label className="portal-label">Método de Pago</label>
@@ -1254,29 +1262,9 @@ export default function PortalCompetencias() {
                                       />
                                     </div>
                                     <div className="col-12 col-md-6">
-                                      <label className="portal-label">Monto a abonar ($)</label>
-                                      <input 
-                                        type="number" 
-                                        min={pagoForm.metodo === 'EnLinea' ? getCostoFinal() : (compActiva.montoMinimoAporte ?? compActiva.MontoMinimoAporte ?? 0)} 
-                                        max={getCostoFinal()} 
-                                        step="0.01" 
-                                        className="portal-pago-monto" 
-                                        placeholder={getCostoFinal() <= 0 ? "0" : "Ej. 200"} 
-                                        required 
-                                        disabled={getCostoFinal() <= 0 || pagoForm.metodo === 'EnLinea'} 
-                                        value={getCostoFinal() <= 0 ? 0 : pagoForm.monto} 
-                                        onChange={e => {
-                                          let val = parseFloat(e.target.value);
-                                          if (val > getCostoFinal()) val = getCostoFinal();
-                                          setPagoForm({ ...pagoForm, monto: val.toString() });
-                                        }} 
-                                      />
-                                      {pagoForm.metodo === 'EnLinea' && (
-                                        <small className="text-info mt-1 d-block"><i className="fas fa-info-circle me-1"></i>Pago en línea requiere liquidar el total.</small>
-                                      )}
-                                      {pagoForm.metodo !== 'EnLinea' && (compActiva.montoMinimoAporte > 0 || compActiva.MontoMinimoAporte > 0) && (
-                                        <small className="text-warning mt-1 d-block"><i className="fas fa-exclamation-triangle me-1"></i>Anticipo mínimo: ${(compActiva.montoMinimoAporte ?? compActiva.MontoMinimoAporte)}</small>
-                                      )}
+                                      <label className="portal-label">Total a pagar</label>
+                                      <div className="portal-pago-monto d-flex align-items-center justify-content-center fw-bold" style={{ fontSize: '1.4rem', color: '#10b981' }}>${getCostoFinal()} MXN</div>
+                                      <small className="text-secondary mt-1 d-block"><i className="fas fa-info-circle me-1"></i>{pagoForm.metodo === 'EnLinea' ? 'Pagas ahora con tarjeta.' : 'Se cobra el total al confirmar tu pago en recepción.'}</small>
                                     </div>
                                   </div>
                                 {pagoForm.metodo === 'Transferencia' && (

@@ -195,7 +195,7 @@ export default function CompetenciaDetalle() {
   }, [id]);
 
   useEffect(() => {
-    if (tabActiva === 'roster' || tabActiva === 'dashboard') cargarRoster();
+    if (tabActiva === 'roster' || tabActiva === 'dashboard' || tabActiva === 'inscritos') cargarRoster();
     if (tabActiva === 'wods' || tabActiva === 'heats') cargarWods();
     if (tabActiva === 'auditoria') {
       cargarAuditoria();
@@ -1187,6 +1187,7 @@ export default function CompetenciaDetalle() {
   // UI CONFIG MENU
   const menuItems = [
     { id: 'dashboard', label: 'Resumen', icon: 'fa-chart-line' },
+    { id: 'inscritos', label: 'Atletas Inscritos', icon: 'fa-users' },
     { id: 'portal', label: 'Portal Público', icon: 'fa-globe' },
     { id: 'inventario-comp', label: 'Inventario Competencia', icon: 'fa-warehouse' },
     { id: 'heats', label: 'Logística Heats', icon: 'fa-stopwatch' },
@@ -1521,7 +1522,7 @@ export default function CompetenciaDetalle() {
                       <>
                         <div className="cd-kpi-valor">{pagosPendientes}</div>
                         <p className="cd-kpi-desc mb-3">Pagos pendientes de revisar</p>
-                        <button onClick={() => setTabActiva('roster')} className="cd-btn cd-btn--warning-solid cd-btn--sm w-100">
+                        <button onClick={() => navigate(`/admin-competencias/roster/${id}`)} className="cd-btn cd-btn--warning-solid cd-btn--sm w-100">
                           IR A REVISAR
                         </button>
                       </>
@@ -1784,6 +1785,69 @@ export default function CompetenciaDetalle() {
             </div>
           );
         })()}
+
+        {/* ========================================================= */}
+        {/* TAB: ATLETAS INSCRITOS */}
+        {/* ========================================================= */}
+        {tabActiva === 'inscritos' && (
+          <div style={{ padding: '8px 4px' }}>
+            <h3 style={{ fontFamily: 'var(--font-heading)', marginBottom: '4px' }}><i className="fas fa-users me-2"></i>Atletas Inscritos</h3>
+            <p className="text-secondary" style={{ fontSize: '0.9rem' }}>Revisa los datos que enviaron los atletas (incluye correo y teléfono por si hay que corregir algo).</p>
+            {(!roster || roster.length === 0) ? (
+              <p className="text-secondary mt-3">Aún no hay categorías ni atletas inscritos.</p>
+            ) : (
+              roster.map(cat => {
+                const atletas = (cat.equipos || []).flatMap(eq => (eq.atletas || []).map(a => ({ ...a, _equipo: eq.nombre, _estatus: eq.estatusPago })));
+                return (
+                  <div key={cat.idCategoriaComp} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '14px 16px', marginBottom: '16px' }}>
+                    <h4 style={{ color: '#0f172a', fontWeight: 700, fontSize: '1.05rem', marginBottom: '10px' }}>
+                      {cat.categoriaNombre}
+                      <span className="badge bg-secondary ms-2">{atletas.length} {atletas.length === 1 ? 'atleta' : 'atletas'}</span>
+                    </h4>
+                    {atletas.length === 0 ? (
+                      <p className="text-secondary mb-0" style={{ fontSize: '0.88rem' }}>Sin atletas inscritos todavía.</p>
+                    ) : (
+                      <div className="table-responsive">
+                        <table className="table table-sm align-middle mb-0" style={{ fontSize: '0.85rem' }}>
+                          <thead style={{ color: '#64748b' }}>
+                            <tr>
+                              {cat.esEquipo && <th>Equipo</th>}
+                              <th>Atleta</th>
+                              <th>Correo</th>
+                              <th>Teléfono</th>
+                              <th>Género</th>
+                              <th>Nivel</th>
+                              <th>Nac.</th>
+                              <th>Talla</th>
+                              <th>Sangre</th>
+                              <th>Estatus</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {atletas.map((a, i) => (
+                              <tr key={a.idAtletaComp || i}>
+                                {cat.esEquipo && <td>{a._equipo}</td>}
+                                <td style={{ fontWeight: 600, color: '#0f172a' }}>{a.nombreCompleto} {a.apellidos}</td>
+                                <td style={{ wordBreak: 'break-all' }}>{a.correo || '—'}</td>
+                                <td>{a.telefono || '—'}</td>
+                                <td>{a.genero || '—'}</td>
+                                <td>{a.nivelHabilidad || '—'}</td>
+                                <td>{a.fechaNacimiento ? new Date(a.fechaNacimiento).toLocaleDateString('es-MX') : '—'}</td>
+                                <td>{a.tallaPlayera || '—'}</td>
+                                <td>{a.tipoSangre || '—'}</td>
+                                <td><span className={`badge ${a._estatus === 'Aprobado' ? 'bg-success' : 'bg-warning text-dark'}`}>{a._estatus || 'Pendiente'}</span></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
 
         {/* ========================================================= */}
         {/* TAB: PORTAL PÚBLICO */}

@@ -296,8 +296,8 @@ export default function AdminRosterFinanzas() {
             const pagado = (eq.pagos || []).filter(p => p.estatus === 'Aprobado').reduce((s, p) => s + p.montoAbonado, 0);
             const deuda = Math.max(0, cat.costo - pagado);
             const matchBusqueda = busqueda.trim() === '' ||
-              eq.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-              (eq.atletas || []).some(a => a.nombreCompleto.toLowerCase().includes(busqueda.toLowerCase()));
+              (eq.nombre || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+              (eq.atletas || []).some(a => (a.nombreCompleto || '').toLowerCase().includes(busqueda.toLowerCase()));
             const matchEstatus =
               filtroEstatus === 'todos' ||
               (filtroEstatus === 'pagados' && deuda === 0) ||
@@ -478,11 +478,9 @@ export default function AdminRosterFinanzas() {
                                       <i className="fas fa-check-circle"></i> Dar Visto Bueno
                                     </BotonSeguro>
                                   )}
-                                  {deuda > 0 && (
-                                    <BotonSeguro onClick={() => registrarPagoFisico(eq.idEquipoComp, deuda)} className="arf-btn-cobrar" textoProcesando="Registrando...">
-                                      <i className="fas fa-cash-register"></i> Cobrar en Caja
-                                    </BotonSeguro>
-                                  )}
+                                  {/* Modelo sin abonos: el pago es por el TOTAL. Para cobrar/aprobar en
+                                      recepción, el admin aprueba el pago pendiente del equipo (botón Aprobar
+                                      en la lista de pagos) — eso deja el equipo "Aprobado" y envía el token. */}
                                 </div>
                               </div>
 
