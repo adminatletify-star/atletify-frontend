@@ -1870,8 +1870,10 @@ export default function CompetenciaDetalle() {
           const minApertura = hoyStr;
           const minCierre = sumarDias(fechas.inicioIns, 1);
           const maxApertura = fechas.finIns ? sumarDias(fechas.finIns, -1) : '';
-          const minDia1 = sumarDias(fechas.finIns, 1);
+          const minDia1 = fechas.finIns || ''; // el Día 1 puede ser el MISMO día del cierre de inscripciones
           const minFin = fechas.inicioComp || '';
+          // El límite de ediciones bloquea SOLO el día del evento; inscripciones, horario y zona quedan libres.
+          const diaBloqueado = !esDeveloper && (comp?.vecesFechasEditadas >= 2);
           
           // Si por alguna razón la competencia no tiene días guardados en BD (ej. se creó antes de la actualización), dejamos al menos 3 o 30 días para no bloquearlos.
           let maxDiasPermitidos = comp?.diasPlanSaaS;
@@ -1893,15 +1895,15 @@ export default function CompetenciaDetalle() {
                   </span>
                 </div>
                 <div className="cd-card-body-lg">
-                  {/* Avisos de límite de ediciones — solo para AdminBox */}
+                  {/* Avisos de límite — aplica SOLO al DÍA del evento (inscripciones/horario/zona son libres) */}
                   {!esDeveloper && comp?.vecesFechasEditadas >= 2 ? (
                     <div className="alert-locked-dates mb-4" style={{ background: 'rgba(220, 53, 69, 0.1)', border: '1px solid rgba(220, 53, 69, 0.3)', borderRadius: '0.8rem', padding: '1.2rem', color: '#f2f2f2' }}>
                       <div className="d-flex align-items-center gap-3 mb-2">
                         <i className="fas fa-lock text-danger" style={{ fontSize: '1.5rem' }}></i>
-                        <h4 style={{ margin: 0, fontWeight: 700 }}>Modificación de Fechas Bloqueada</h4>
+                        <h4 style={{ margin: 0, fontWeight: 700 }}>Día del evento bloqueado</h4>
                       </div>
-                      <p style={{ margin: 0, color: '#adb5bd', fontSize: '0.9rem' }}>Has alcanzado el límite máximo de ediciones de fecha. Por seguridad, si necesitas realizar cambios, contacta al soporte de Atletify.</p>
-                      
+                      <p style={{ margin: 0, color: '#adb5bd', fontSize: '0.9rem' }}>Alcanzaste el máximo de cambios del <b>día del evento</b>. El <b>horario</b>, la <b>zona horaria</b> y las <b>fechas de inscripción</b> los puedes seguir ajustando libremente. Para mover el día, contacta al soporte de Atletify.</p>
+
                       <div className="d-flex gap-4 mt-3 flex-wrap">
                         {contactoSoporte.correo && (
                           <a href={`mailto:${contactoSoporte.correo}`} style={{ color: 'var(--primary)', textDecoration: 'none' }}>
@@ -1918,42 +1920,12 @@ export default function CompetenciaDetalle() {
                   ) : !esDeveloper && comp?.vecesFechasEditadas === 1 ? (
                     <div className="alert-warning-dates mb-4" style={{ background: 'rgba(255, 193, 7, 0.1)', border: '1px solid rgba(255, 193, 7, 0.3)', borderRadius: '0.8rem', padding: '1rem', color: '#ffc107', fontSize: '0.9rem' }}>
                       <i className="fas fa-exclamation-triangle me-2"></i>
-                      <strong>Atención:</strong> Esta es tu última oportunidad para cambiar las fechas. Después de guardar, el calendario se bloqueará permanentemente.
+                      <strong>Atención:</strong> Te queda <b>1 cambio</b> del día del evento. El horario, la zona horaria y las inscripciones no tienen límite.
                     </div>
                   ) : null}
 
-                  {/* Formulario de fechas — bloqueado para AdminBox con 2+ ediciones, siempre abierto para Developer */}
-                  {(!esDeveloper && comp?.vecesFechasEditadas >= 2) ? (
-                    <div className="row g-4">
-                      <div className="col-md-6">
-                        <p className="cd-label" style={{ marginBottom: '0.85rem', color: 'var(--accent-cool)' }}>Inscripciones</p>
-                        <div className="d-flex gap-3">
-                          <div className="flex-grow-1">
-                            <label className="cd-label">Apertura</label>
-                            <div className="form-control" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid #333', color: '#999' }}>{fechas.inicioIns || '--'}</div>
-                          </div>
-                          <div className="flex-grow-1">
-                            <label className="cd-label">Cierre</label>
-                            <div className="form-control" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid #333', color: '#999' }}>{fechas.finIns || '--'}</div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="col-md-6">
-                        <p className="cd-label" style={{ marginBottom: '0.85rem', color: 'var(--primary)' }}>Competencia</p>
-                        <div className="d-flex gap-3">
-                          <div className="flex-grow-1">
-                            <label className="cd-label">Día 1</label>
-                            <div className="form-control" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid #333', color: '#999' }}>{fechas.inicioComp || '--'}</div>
-                          </div>
-                          <div className="flex-grow-1">
-                            <label className="cd-label">Fin</label>
-                            <div className="form-control" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid #333', color: '#999' }}>{fechas.finComp || '--'}</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <form onSubmit={guardarFechas}>
+                  {/* El DÍA del evento se limita (máx 2 cambios); inscripciones, horario y zona son libres. */}
+                  <form onSubmit={guardarFechas}>
                       <div className="row g-4">
                         <div className="col-md-6">
                           <p className="cd-label" style={{ marginBottom: '0.85rem', color: 'var(--accent-cool)' }}>Inscripciones</p>
@@ -2007,7 +1979,12 @@ export default function CompetenciaDetalle() {
                                 Día 1
                                 {(!fechas.inicioIns || !fechas.finIns) && <span className="ms-1 text-warning" title="Define primero las fechas de inscripción"><i className="fas fa-lock"></i></span>}
                               </label>
-                              {(fechas.inicioIns && fechas.finIns) ? (
+                              {diaBloqueado ? (
+                                <>
+                                  <div className="form-control" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid #333', color: '#999' }} title="El día del evento ya no se puede cambiar (límite alcanzado)">{fechas.inicioComp || '--'}</div>
+                                  <input type="time" className="cd-input mt-2" value={fechas.horaInicioComp} onChange={(e) => setFechas({ ...fechas, horaInicioComp: e.target.value })} title="Hora de inicio del evento (libre)" />
+                                </>
+                              ) : (fechas.inicioIns && fechas.finIns) ? (
                                 <>
                                   <RedGrayDatePicker
                                     required
@@ -2028,7 +2005,12 @@ export default function CompetenciaDetalle() {
                                 Fin
                                 {!fechas.inicioComp && <span className="ms-1 text-warning" title="Define primero el Día 1"><i className="fas fa-lock"></i></span>}
                               </label>
-                              {fechas.inicioComp ? (
+                              {diaBloqueado ? (
+                                <>
+                                  <div className="form-control" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid #333', color: '#999' }} title="El día del evento ya no se puede cambiar (límite alcanzado)">{fechas.finComp || '--'}</div>
+                                  <input type="time" className="cd-input mt-2" value={fechas.horaFinComp} onChange={(e) => setFechas({ ...fechas, horaFinComp: e.target.value })} title="Hora de fin del evento (libre)" />
+                                </>
+                              ) : fechas.inicioComp ? (
                                 <>
                                   <RedGrayDatePicker
                                     required
@@ -2054,7 +2036,6 @@ export default function CompetenciaDetalle() {
                         </div>
                       </div>
                     </form>
-                  )}
                 </div>
               </div>
 
