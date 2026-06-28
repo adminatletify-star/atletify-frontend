@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { COMPETENCIAS_ENDPOINT } from '../services/api';
 import AtletifyLoader from './AtletifyLoader';
+import ModalCapturaScore from './ModalCapturaScore';
 import { useCompetenciaLive } from '../hooks/useCompetenciaLive';
 
 // Verificación profesional de scores en AdminBox: de qué WOD, qué dato, tiebreak, criterios, firma,
-// y aprobar/revertir. Se refresca EN VIVO cuando un juez manda un score (SignalR).
+// FILTROS (atleta/WOD/estatus), CORREGIR el score (hoja por tipo) y aprobar/revertir. En vivo (SignalR).
 export default function PanelVerificacionScores({ idCompetencia }) {
   const [scores, setScores] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [filtro, setFiltro] = useState('Pendiente'); // Pendiente | Todos
+  const [filtros, setFiltros] = useState({ busqueda: '', idWod: 'Todos', estatus: 'Pendiente' }); // Pendiente | Aprobado | Todos
   const [firmaVista, setFirmaVista] = useState(null); // { url }
+  const [corregir, setCorregir] = useState(null);     // score que el admin está corrigiendo
 
   const cargar = async () => {
     try { const r = await fetch(`${COMPETENCIAS_ENDPOINT}/${idCompetencia}/scores-auditoria`); if (r.ok) setScores(await r.json()); } catch { /* ignore */ } finally { setCargando(false); }
@@ -24,25 +26,60 @@ export default function PanelVerificacionScores({ idCompetencia }) {
     try { const r = await fetch(`${COMPETENCIAS_ENDPOINT}/wods/scores/${id}/firma`); if (r.ok) { const d = await r.json(); setFirmaVista({ url: d.firmaAtletaUrl }); } } catch { /* ignore */ }
   };
 
-  const visibles = scores.filter(s => filtro === 'Todos' || s.estatus === 'Pendiente');
+  const wodsUnicos = useMemo(() => {
+    const m = new Map();
+    scores.forEach(s => { if (!m.has(s.idWodComp)) m.set(s.idWodComp, s.wodNombre); });
+    return Array.from(m, ([id, nombre]) => ({ id, nombre }));
+  }, [scores]);
+
+  const visibles = scores.filter(s => {
+    if (filtros.estatus !== 'Todos' && s.estatus !== filtros.estatus) return false;
+    if (filtros.idWod !== 'Todos' && String(s.idWodComp) !== String(filtros.idWod)) return false;
+    if (filtros.busqueda.trim() && !(s.equipoNombre || '').toLowerCase().includes(filtros.busqueda.toLowerCase())) return false;
+    return true;
+  });
+
   const fmt = (iso) => { try { return new Date(iso).toLocaleString('es-MX', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' }); } catch { return ''; } };
   const criterios = (json) => { try { return JSON.parse(json || '[]'); } catch { return []; } };
+  const conUnidad = (s) => `${s.noTermino ? `CAP ${s.repsAlCap ?? ''}` : s.resultado}${s.tipoScore === 'Carga' && s.unidadPeso ? ' ' + s.unidadPeso : ''}`;
 
   return (
     <div className="cd-tab-fade" style={{ marginBottom: '24px' }}>
       <div className="cd-section-header" style={{ borderBottom: '1px solid var(--border)', marginBottom: '1rem' }}>
         <div>
           <h2 className="cd-section-h">Verificación de <span>scores</span></h2>
-          <p className="cd-section-sub">Revisa y aprueba lo que mandan los jueces. Se actualiza en vivo.</p>
+          <p className="cd-section-sub">Revisa, corrige y aprueba lo que mandan los jueces. Se actualiza en vivo.</p>
         </div>
-        <div className="d-flex gap-2">
-          <button className={`cd-btn ${filtro === 'Pendiente' ? 'cd-btn--info-solid' : 'cd-btn--ghost'}`} onClick={() => setFiltro('Pendiente')}>Pendientes</button>
-          <button className={`cd-btn ${filtro === 'Todos' ? 'cd-btn--info-solid' : 'cd-btn--ghost'}`} onClick={() => setFiltro('Todos')}>Todos</button>
-        </div>
+        <button className="cd-btn cd-btn--info cd-btn--sm" onClick={cargar}><i className="fas fa-sync-alt"></i> Refrescar</button>
       </div>
 
+      {/* FILTROS (atleta / WOD / estatus) */}
+      <div className="cd-card mb-3"><div className="cd-card-body">
+        <div className="row g-3">
+          <div className="col-md-5">
+            <label className="cd-label">Buscar equipo / atleta</label>
+            <input type="text" className="cd-input" placeholder="Buscar por nombre..." value={filtros.busqueda} onChange={e => setFiltros({ ...filtros, busqueda: e.target.value })} />
+          </div>
+          <div className="col-md-4">
+            <label className="cd-label">WOD</label>
+            <select className="cd-select" value={filtros.idWod} onChange={e => setFiltros({ ...filtros, idWod: e.target.value })}>
+              <option value="Todos">Todos los WODs</option>
+              {wodsUnicos.map(w => <option key={w.id} value={w.id}>{w.nombre}</option>)}
+            </select>
+          </div>
+          <div className="col-md-3">
+            <label className="cd-label">Estatus</label>
+            <select className="cd-select" value={filtros.estatus} onChange={e => setFiltros({ ...filtros, estatus: e.target.value })}>
+              <option value="Pendiente">Pendientes</option>
+              <option value="Aprobado">Aprobados</option>
+              <option value="Todos">Todos</option>
+            </select>
+          </div>
+        </div>
+      </div></div>
+
       {cargando ? <div className="cd-empty"><AtletifyLoader /></div> : visibles.length === 0 ? (
-        <div className="cd-empty"><i className="fas fa-clipboard-check"></i><p>No hay scores {filtro === 'Pendiente' ? 'pendientes' : ''} por verificar.</p></div>
+        <div className="cd-empty"><i className="fas fa-clipboard-check"></i><p>No hay scores que coincidan con los filtros.</p></div>
       ) : (
         <div className="d-flex flex-column gap-2">
           {visibles.map(s => {
@@ -57,7 +94,7 @@ export default function PanelVerificacionScores({ idCompetencia }) {
                   <span className="cd-tipo-badge" style={{ background: s.estatus === 'Aprobado' ? 'rgba(21,163,74,.15)' : 'rgba(245,185,66,.15)', color: s.estatus === 'Aprobado' ? '#15a34a' : '#f5b942' }}>{s.estatus}</span>
                 </div>
                 <div className="d-flex align-items-center flex-wrap gap-3" style={{ marginTop: '8px' }}>
-                  <span style={{ fontSize: '1.15rem', fontWeight: 800 }}>{s.noTermino ? `CAP ${s.repsAlCap ?? ''}` : s.resultado}</span>
+                  <span style={{ fontSize: '1.15rem', fontWeight: 800 }}>{conUnidad(s)}</span>
                   {s.tiebreak ? <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>tiebreak: {s.tiebreak}</span> : null}
                   {crits.length > 0 && (
                     <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
@@ -68,6 +105,7 @@ export default function PanelVerificacionScores({ idCompetencia }) {
                     ? <button className="cd-btn cd-btn--ghost" onClick={() => verFirma(s.idPuntuacion)}><i className="fas fa-signature"></i> Ver firma</button>
                     : <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}><i className="fas fa-pen-slash"></i> sin firma</span>}
                   <div className="d-flex gap-2 ms-auto">
+                    <button className="cd-btn cd-btn--ghost" onClick={() => setCorregir(s)} title="Corregir el score (vuelve a Pendiente)"><i className="fas fa-edit"></i> Corregir</button>
                     {s.estatus !== 'Aprobado'
                       ? <button className="cd-btn cd-btn--info-solid" onClick={() => cambiar(s.idPuntuacion, 'Aprobado')}><i className="fas fa-check"></i> Aprobar</button>
                       : <button className="cd-btn cd-btn--ghost" onClick={() => cambiar(s.idPuntuacion, 'Pendiente')}><i className="fas fa-undo"></i> Revertir</button>}
@@ -81,12 +119,23 @@ export default function PanelVerificacionScores({ idCompetencia }) {
 
       {firmaVista && (
         <div onClick={() => setFirmaVista(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.8)', zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '12px', padding: '16px', maxWidth: '420px', width: '100%' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '12px', padding: '16px', maxWidth: '480px', width: '100%' }}>
             <p style={{ margin: '0 0 8px', color: '#111', fontWeight: 700, textAlign: 'center' }}>Firma del atleta</p>
             {firmaVista.url ? <img src={firmaVista.url} alt="firma del atleta" style={{ width: '100%' }} /> : <p style={{ color: '#888', textAlign: 'center' }}>Sin firma.</p>}
             <button className="cd-btn cd-btn--ghost" style={{ marginTop: '10px', width: '100%' }} onClick={() => setFirmaVista(null)}>Cerrar</button>
           </div>
         </div>
+      )}
+
+      {/* CORREGIR: reusa la hoja por tipo (con unidad y firma). Admin = sin token de juez (va por su sesión). */}
+      {corregir && (
+        <ModalCapturaScore
+          idWod={corregir.idWodComp}
+          equipo={{ idEquipoComp: corregir.idEquipoComp, nombre: corregir.equipoNombre }}
+          nombreJuez="Corrección Admin"
+          onCerrar={() => setCorregir(null)}
+          onGuardado={() => { setCorregir(null); cargar(); }}
+        />
       )}
     </div>
   );

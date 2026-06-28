@@ -27,6 +27,7 @@ export default function ConstructorWodComp({ idCompetencia, categorias = [], idW
 
   const [form, setForm] = useState({
     nombre: '', descripcion: '', tipoScore: 'ForTime', idCategoriaComp: '',
+    unidadPeso: 'kg',
     timeCapMinutos: 0, permiteCapReps: false,
     tiebreakActivo: false, tiebreakTipo: 'Tiempo', tiebreakDescripcion: '',
     usaChecklist: false,
@@ -54,6 +55,7 @@ export default function ConstructorWodComp({ idCompetencia, categorias = [], idW
               nombre: d.nombre || '',
               descripcion: d.descripcion || '',
               tipoScore: d.tipoScore || 'ForTime',
+              unidadPeso: d.unidadPeso || 'kg',
               idCategoriaComp: d.idCategoriaComp ?? '',
               timeCapMinutos: d.timeCapMinutos || 0,
               permiteCapReps: !!d.permiteCapReps,
@@ -89,6 +91,7 @@ export default function ConstructorWodComp({ idCompetencia, categorias = [], idW
   // WOD sintetizado desde el form actual para previsualizar la hoja del juez en vivo.
   const previewWod = useMemo(() => ({
     tipoScore: form.tipoScore,
+    unidadPeso: form.unidadPeso,
     timeCapMinutos: Number(form.timeCapMinutos) || 0,
     permiteCapReps: form.permiteCapReps,
     tiebreakActivo: form.tiebreakActivo,
@@ -111,6 +114,7 @@ export default function ConstructorWodComp({ idCompetencia, categorias = [], idW
     nombre: form.nombre.trim(),
     descripcion: form.descripcion,
     tipoScore: form.tipoScore,
+    unidadPeso: form.unidadPeso,
     orden: 0,
     idCategoriaComp: form.idCategoriaComp === '' ? null : Number(form.idCategoriaComp),
     timeCapMinutos: Number(form.timeCapMinutos) || 0,
@@ -227,6 +231,19 @@ export default function ConstructorWodComp({ idCompetencia, categorias = [], idW
                 ))}
               </div>
               <p className="cw-tipo-desc">{tipoActual.desc}</p>
+              {form.tipoScore === 'Carga' && (
+                <div className="cw-mt">
+                  <label className="cw-label">Unidad de peso del WOD <span className="cw-hint">— se fija una vez; los jueces NO la cambian</span></label>
+                  <div className="cw-tipos">
+                    {['kg', 'lb'].map(u => (
+                      <button key={u} type="button" className={`cw-tipo${form.unidadPeso === u ? ' cw-tipo--activo' : ''}`} onClick={() => setForm({ ...form, unidadPeso: u })}>
+                        <i className="fas fa-weight-hanging"></i>
+                        <span>{u === 'kg' ? 'Kilos (kg)' : 'Libras (lb)'}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="cw-grid2">

@@ -126,7 +126,7 @@ export default function PortalLeaderboard() {
                               <span className="lb-secret-badge"><i className="fas fa-lock"></i>TOP SECRET</span>
                             ) : cell && cell.resultado !== '--' ? (
                               <div>
-                                <div className="lb-wod-score">{cell.resultado}</div>
+                                <div className="lb-wod-score">{cell.resultado}{w.tipoScore === 'Carga' && w.unidadPeso ? ` ${w.unidadPeso}` : ''}</div>
                                 <div className="lb-wod-rank">{cell.posicion}º · {cell.puntos} pts</div>
                               </div>
                             ) : <span className="lb-wod-empty">—</span>}

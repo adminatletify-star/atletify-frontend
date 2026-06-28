@@ -52,6 +52,11 @@ export default function ModalCapturaScore({ idWod, equipo, nombreJuez, juezToken
     } catch { setError('Error de conexión.'); } finally { setGuardando(false); }
   };
 
+  // Score que el atleta firma (se le muestra grande en el pad para que no firme a ciegas).
+  const resumenScore = valor && valor.resultado
+    ? `${valor.resultado}${wod?.tipoScore === 'Carga' ? ' ' + (wod?.unidadPeso || 'kg') : ''}`
+    : '';
+
   return createPortal(
     <div className="mcs-overlay" onClick={onCerrar}>
       <div className="mcs-modal" onClick={e => e.stopPropagation()}>
@@ -78,7 +83,12 @@ export default function ModalCapturaScore({ idWod, equipo, nombreJuez, juezToken
         </div>
       </div>
       {mostrarFirma && (
-        <FirmaAtletaPad onCerrar={() => setMostrarFirma(false)} onConfirmar={(b64) => { setFirma(b64); setMostrarFirma(false); }} />
+        <FirmaAtletaPad
+          resumen={resumenScore}
+          contexto={`${equipo.nombre || equipo.Nombre} · ${wod?.nombre || ''}`}
+          onCerrar={() => setMostrarFirma(false)}
+          onConfirmar={(b64) => { setFirma(b64); setMostrarFirma(false); }}
+        />
       )}
     </div>,
     document.body

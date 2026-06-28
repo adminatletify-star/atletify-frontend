@@ -1,17 +1,37 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { COMPETENCIAS_ENDPOINT, JUECES_COMP_ENDPOINT, HEATS_COMP_ENDPOINT } from '../services/api';
 import AtletifyLoader from './AtletifyLoader';
 
 const ESTADOS = ['Programado', 'EnCurso', 'Finalizado'];
 
 // Constructor de heats (entidad real): genera heats con horario + carriles, y asigna un juez por carril.
-export default function GestionHeatsPanel({ idCompetencia, categorias = [] }) {
+// La FECHA se toma del EVENTO (competencia.fechaInicio..fechaFin); el admin solo elige el DÍA (si hay rango) y la HORA.
+export default function GestionHeatsPanel({ idCompetencia, categorias = [], competencia = null }) {
   const [wods, setWods] = useState([]);
   const [jueces, setJueces] = useState([]);
   const [heats, setHeats] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [generando, setGenerando] = useState(false);
-  const [cfg, setCfg] = useState({ idWodComp: '', idCategoriaComp: '', numeroCarriles: 5, duracionMinutos: 12, transicionMinutos: 3, horaInicio: '' });
+  const [cfg, setCfg] = useState({ idWodComp: '', idCategoriaComp: '', numeroCarriles: 5, duracionMinutos: 12, transicionMinutos: 3, dia: '', hora: '08:00' });
+
+  // Días del evento (de fechaInicio a fechaFin). El admin elige uno; la fecha ya NO se teclea a mano.
+  const diasEvento = useMemo(() => {
+    const iniRaw = competencia?.fechaInicio || competencia?.FechaInicio;
+    const finRaw = competencia?.fechaFin || competencia?.FechaFin || iniRaw;
+    if (!iniRaw) return [];
+    const ini = new Date(iniRaw); const fin = new Date(finRaw);
+    if (isNaN(ini)) return [];
+    const dias = []; const d = new Date(ini.getFullYear(), ini.getMonth(), ini.getDate());
+    const end = isNaN(fin) ? new Date(d) : new Date(fin.getFullYear(), fin.getMonth(), fin.getDate());
+    let guard = 0;
+    while (d <= end && guard < 31) {
+      dias.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+      d.setDate(d.getDate() + 1); guard++;
+    }
+    return dias;
+  }, [competencia]);
+
+  useEffect(() => { if (diasEvento.length && !cfg.dia) setCfg(c => ({ ...c, dia: diasEvento[0] })); }, [diasEvento]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cargar = async () => {
     setCargando(true);
@@ -38,7 +58,8 @@ export default function GestionHeatsPanel({ idCompetencia, categorias = [] }) {
         numeroCarriles: Number(cfg.numeroCarriles) || 1,
         duracionMinutos: Number(cfg.duracionMinutos) || 0,
         transicionMinutos: Number(cfg.transicionMinutos) || 0,
-        horaInicio: cfg.horaInicio || null,
+        // La fecha sale del evento (cfg.dia ∈ días del evento) + la hora elegida.
+        horaInicio: (cfg.dia && cfg.hora) ? `${cfg.dia}T${cfg.hora}:00` : null,
         limpiarExistentes: true,
       };
       const res = await fetch(`${HEATS_COMP_ENDPOINT}/${idCompetencia}/generar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -83,7 +104,17 @@ export default function GestionHeatsPanel({ idCompetencia, categorias = [] }) {
           <div className="col-md-2"><label className="cd-label">Carriles</label><input type="number" min="1" className="cd-input" value={cfg.numeroCarriles} onChange={e => setCfg({ ...cfg, numeroCarriles: e.target.value })} /></div>
           <div className="col-md-2"><label className="cd-label">Duración (min)</label><input type="number" min="1" className="cd-input" value={cfg.duracionMinutos} onChange={e => setCfg({ ...cfg, duracionMinutos: e.target.value })} /></div>
           <div className="col-md-2"><label className="cd-label">Transición (min)</label><input type="number" min="0" className="cd-input" value={cfg.transicionMinutos} onChange={e => setCfg({ ...cfg, transicionMinutos: e.target.value })} /></div>
-          <div className="col-md-4"><label className="cd-label">Hora de inicio</label><input type="datetime-local" className="cd-input" value={cfg.horaInicio} onChange={e => setCfg({ ...cfg, horaInicio: e.target.value })} /></div>
+          {diasEvento.length > 1 && (
+            <div className="col-md-2"><label className="cd-label">Día del evento</label>
+              <select className="cd-input" value={cfg.dia} onChange={e => setCfg({ ...cfg, dia: e.target.value })}>
+                {diasEvento.map(d => <option key={d} value={d}>{new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { weekday: 'short', day: '2-digit', month: 'short' })}</option>)}
+              </select></div>
+          )}
+          <div className="col-md-2"><label className="cd-label">Hora de inicio {diasEvento.length === 1 ? `(${new Date(diasEvento[0] + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })})` : ''}</label>
+            <input type="time" className="cd-input" value={cfg.hora} onChange={e => setCfg({ ...cfg, hora: e.target.value })} disabled={diasEvento.length === 0} /></div>
+          {diasEvento.length === 0 && (
+            <div className="col-12"><p className="cd-section-sub" style={{ color: 'var(--primary)', margin: 0 }}><i className="fas fa-triangle-exclamation me-1"></i>Define primero las fechas del evento (pestaña Portal Público); de ahí se toma la fecha de los heats.</p></div>
+          )}
           <div className="col-12 text-end mt-2">
             <button className="cd-btn cd-btn--info-solid" onClick={generar} disabled={generando}><i className="fas fa-bolt"></i> {generando ? 'Generando...' : 'Generar heats'}</button>
           </div>

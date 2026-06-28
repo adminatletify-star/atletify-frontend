@@ -149,6 +149,23 @@ export default function AdminCompetencias() {
     } catch (err) { alert('Error de conexión al aprobar el pago del módulo.'); }
   };
 
+  // Developer: fuerza el estatus a mano para pruebas (queda "fijo", la auto-transición por fechas lo respeta).
+  // Enviar 'Auto' suelta el control y deja que las fechas vuelvan a mandar.
+  const cambiarEstatusDev = async (idComp, nuevoEstatus, nombreComp) => {
+    if (nuevoEstatus !== 'Auto' && !await window.wpConfirm(`¿Forzar el estatus de "${nombreComp}" a "${nuevoEstatus}"? Quedará FIJO (no cambiará solo por fechas) hasta que elijas "Automático".`)) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${COMPETENCIAS_ENDPOINT}/${idComp}/estatus`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(nuevoEstatus),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) cargarCompetencias(box.idBox || box.IdBox);
+      else alert(data.mensaje || 'No se pudo cambiar el estatus.');
+    } catch { alert('Error de conexión al cambiar el estatus.'); }
+  };
+
   const guardarCategoria = async (e) => {
     e.preventDefault(); setProcesando(true);
     const url = editandoCat ? `${COMPETENCIAS_ENDPOINT}/categorias/${editandoCat}` : `${COMPETENCIAS_ENDPOINT}/${compSeleccionada.idCompetencia || compSeleccionada.IdCompetencia}/categorias`;
@@ -773,6 +790,15 @@ export default function AdminCompetencias() {
                     </div>
                     {comp.saaS_Estatus === 'Configurando' ? (
                       <span className="badge bg-warning text-dark"><i className="fas fa-lock me-1"></i>Pago Pendiente</span>
+                    ) : user?.rol === 'Developer' ? (
+                      // Developer: puede forzar cualquier estatus para pruebas; "Automático" suelta el control.
+                      <EstatusPickerModal
+                        estatus={comp.estatus || 'Borrador'}
+                        manualFijo={comp.estadoManualFijo}
+                        todasLasOpciones
+                        incluirAuto
+                        onCambiar={(v) => cambiarEstatusDev(comp.idCompetencia || comp.IdCompetencia, v, comp.nombre)}
+                      />
                     ) : (
                       // El estatus es AUTOMÁTICO según las fechas: badge de solo lectura (ya no se cambia a mano).
                       <span

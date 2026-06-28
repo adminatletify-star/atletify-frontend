@@ -77,6 +77,7 @@ const CuentaRegresiva = ({ targetDate }) => {
 export default function PortalCompetencias() {
   const { id } = useParams();
   const [competencias, setCompetencias] = useState([]);
+  const [pasadas, setPasadas] = useState([]); // competencias finalizadas (Historial) para consultar su leaderboard
   const [loading, setLoading] = useState(true);
   const [compActiva, setCompActiva] = useState(null);
   const [pestaña, setPestaña] = useState('info');
@@ -252,6 +253,11 @@ export default function PortalCompetencias() {
         }
       }
     } catch (error) { console.error(error); } finally { setLoading(false); }
+    // Historial público (opcional): para consultar el leaderboard de eventos ya finalizados.
+    try {
+      const rh = await fetch(`${COMPETENCIAS_ENDPOINT}/publicas-historial`);
+      if (rh.ok) setPasadas(await rh.json());
+    } catch { /* el historial es opcional, no bloquea el portal */ }
   };
 
   const getCategoryLevelString = (cat) => {
@@ -714,12 +720,33 @@ export default function PortalCompetencias() {
               <span className="portal-nav-title">Atletify System</span>
             </Link>
           </div>
-          <Link to={`/atleta/${compActiva.idCompetencia || compActiva.IdCompetencia}`} className="portal-nav-atleta-btn">
-            <i className="fas fa-running"></i>
-            <span>Soy Atleta</span>
-          </Link>
+          {compActiva && (
+            <Link to={`/atleta/${compActiva.idCompetencia || compActiva.IdCompetencia}`} className="portal-nav-atleta-btn">
+              <i className="fas fa-running"></i>
+              <span>Soy Atleta</span>
+            </Link>
+          )}
         </div>
       </nav>
+
+      {pasadas.length > 0 && (
+        <section style={{ borderTop: '1px solid rgba(255,255,255,.08)', background: 'rgba(0,0,0,.25)' }}>
+          <div className="container px-3 px-md-4" style={{ paddingTop: '16px', paddingBottom: '16px' }}>
+            <h3 style={{ color: '#fff', fontSize: '1rem', margin: '0 0 10px', opacity: .9 }}>
+              <i className="fas fa-clock-rotate-left me-2"></i>Resultados de ediciones pasadas
+            </h3>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {pasadas.map(p => (
+                <Link key={p.idCompetencia} to={`/leaderboard/${p.idCompetencia}`} style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.04)', color: '#fff', textDecoration: 'none', minWidth: '180px' }}>
+                  <span style={{ fontWeight: 700 }}>{p.nombre}</span>
+                  <span style={{ fontSize: '.78rem', opacity: .7 }}>{p.fechaFin ? new Date(p.fechaFin).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}</span>
+                  <span style={{ fontSize: '.8rem', color: '#e63946', fontWeight: 700, marginTop: '2px' }}><i className="fas fa-trophy me-1"></i>Ver resultados</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {competencias.length === 0 ? (
         <div className="portal-empty portal-fade-in">

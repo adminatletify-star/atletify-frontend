@@ -10,7 +10,12 @@ const OPCIONES_BASE = [
   { valor: 'Historial',     label: 'Historial',     icono: 'fas fa-history',          color: 'secondary' },
 ];
 
-export default function EstatusPickerModal({ estatus, onCambiar }) {
+// Opción especial: suelta el control manual y deja que las fechas vuelvan a mandar el estatus.
+const OP_AUTO = { valor: 'Auto', label: 'Automático (por fechas)', icono: 'fas fa-wand-magic-sparkles', color: 'info' };
+
+// `todasLasOpciones` + `incluirAuto` + `manualFijo` los usa el Developer para forzar cualquier estatus en
+// pruebas (y luego soltarlo con "Automático"). Sin esas props, el picker se comporta como antes.
+export default function EstatusPickerModal({ estatus, onCambiar, todasLasOpciones = false, incluirAuto = false, manualFijo = false }) {
   const [abierto, setAbierto] = useState(false);
 
   const opcionActual = OPCIONES_BASE.find(o => o.valor === estatus) || OPCIONES_BASE[0];
@@ -18,9 +23,12 @@ export default function EstatusPickerModal({ estatus, onCambiar }) {
   // Estado "cerrado": solo puede moverse entre Historial y Archivada
   const esCerrado = ['Historial', 'Archivada'].includes(estatus);
 
-  const opcionesMostradas = esCerrado
-    ? OPCIONES_BASE.filter(o => ['Historial', 'Archivada'].includes(o.valor))
-    : OPCIONES_BASE.filter(o => o.valor !== 'Archivada' && o.valor !== 'Historial' && o.valor !== 'Finalizada');
+  const baseMostradas = todasLasOpciones
+    ? OPCIONES_BASE
+    : (esCerrado
+        ? OPCIONES_BASE.filter(o => ['Historial', 'Archivada'].includes(o.valor))
+        : OPCIONES_BASE.filter(o => o.valor !== 'Archivada' && o.valor !== 'Historial' && o.valor !== 'Finalizada'));
+  const opcionesMostradas = incluirAuto ? [OP_AUTO, ...baseMostradas] : baseMostradas;
 
   const seleccionar = (valor) => {
     setAbierto(false);
@@ -36,6 +44,7 @@ export default function EstatusPickerModal({ estatus, onCambiar }) {
       >
         <span className="epm-dot"></span>
         <span className="epm-label">{opcionActual.label.toUpperCase()}</span>
+        {manualFijo && <i className="fas fa-lock epm-chevron" title="Estatus fijado a mano: no cambia por fechas"></i>}
         <i className="fas fa-chevron-down epm-chevron"></i>
       </button>
 

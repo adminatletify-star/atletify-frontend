@@ -48,6 +48,7 @@ const derivarRepsPorRonda = (movimientos = []) => {
 
 export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = false, onChange }) {
   const tipoScore = wod?.tipoScore || 'ForTime';
+  const unidadPeso = wod?.unidadPeso === 'lb' ? 'lb' : 'kg'; // estándar fijo del WOD (Carga); el juez no lo cambia
   const cap = Number(wod?.timeCapMinutos) || 0;
   const hayCap = cap > 0;
   const permiteCapReps = !!wod?.permiteCapReps && hayCap && tipoScore === 'ForTime';
@@ -63,7 +64,6 @@ export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = fa
     amrapRepsPorRonda: derivarRepsPorRonda(wod?.movimientos),
     amrapParciales: '',
     peso: '',
-    unidad: 'kg',
     puntos: '',
     rrRondas: '',
     rrReps: '',
@@ -129,7 +129,7 @@ export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = fa
       else { resultado = String(total); e.valorNumerico = total; }
     } else if (tipoScore === 'Carga') {
       const p = toNum(st.peso);
-      e.peso = p; e.unidad = st.unidad;
+      e.peso = p; e.unidad = unidadPeso;
       if (p === null || p <= 0) { valido = false; }
       else if (p > 5000) { valido = false; adv.push('Peso irreal (>5000), verifica.'); }
       else { resultado = String(p); e.valorNumerico = p; }
@@ -255,21 +255,12 @@ export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = fa
             </>
           )}
 
-          {/* ── CARGA / RM ── */}
+          {/* ── CARGA / RM ── (la unidad la fijó el AdminBox al crear el WOD; el juez NO la cambia) */}
           {tipoScore === 'Carga' && (
-            <div className="pj-grid2">
-              <label className="pj-field">
-                <span className="pj-label">Mejor levantamiento</span>
-                <input inputMode="decimal" className="pj-input" disabled={dis} placeholder="Ej: 102.5" value={st.peso} onChange={(e) => set('peso', e.target.value)} />
-              </label>
-              <label className="pj-field">
-                <span className="pj-label">Unidad</span>
-                <select className="pj-input" disabled={dis} value={st.unidad} onChange={(e) => set('unidad', e.target.value)}>
-                  <option value="kg">kg</option>
-                  <option value="lb">lb</option>
-                </select>
-              </label>
-            </div>
+            <label className="pj-field">
+              <span className="pj-label">Mejor levantamiento — en <b>{unidadPeso}</b> (unidad fija del WOD)</span>
+              <input inputMode="decimal" className="pj-input" disabled={dis} placeholder={`Ej: 102.5 ${unidadPeso}`} value={st.peso} onChange={(e) => set('peso', e.target.value)} />
+            </label>
           )}
 
           {/* ── RONDAS + REPS ── */}
@@ -339,7 +330,7 @@ export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = fa
       <div className="pj-foot">
         <div className="pj-result">
           <span className="pj-result-label">Resultado</span>
-          <span className="pj-result-val">{valor.dnf ? 'DNF' : (valor.resultado ?? '—')}</span>
+          <span className="pj-result-val">{valor.dnf ? 'DNF' : (valor.resultado != null ? `${valor.resultado}${tipoScore === 'Carga' ? ' ' + unidadPeso : ''}` : '—')}</span>
         </div>
         {valor.advertencias.map((a, i) => <div key={i} className="pj-warn"><i className="fas fa-triangle-exclamation"></i> {a}</div>)}
       </div>

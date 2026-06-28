@@ -49,7 +49,7 @@ export default function CompetenciaDetalle() {
   // Portal Público y Fechas
   const [reglamento, setReglamento] = useState('');
   const [anuncios, setAnuncios] = useState('');
-  const [fechas, setFechas] = useState({ inicioIns: '', finIns: '', inicioComp: '', finComp: '' });
+  const [fechas, setFechas] = useState({ inicioIns: '', finIns: '', inicioComp: '', finComp: '', horaInicioComp: '08:00', horaFinComp: '18:00' });
 
   // Rol del usuario logueado
   const userRol = JSON.parse(localStorage.getItem('usuario') || '{}')?.rol || '';
@@ -68,7 +68,7 @@ export default function CompetenciaDetalle() {
   const [scoresAuditoria, setScoresAuditoria] = useState([]);
   const [cargandoAuditoria, setCargandoAuditoria] = useState(false);
   const [filtroAuditoria, setFiltroAuditoria] = useState({ busqueda: '', estatus: 'Todos', idWod: 'Todos' });
-  const [vistaAuditoria, setVistaAuditoria] = useState('scores'); // 'scores' o 'leaderboard'
+  const [vistaAuditoria, setVistaAuditoria] = useState('leaderboard'); // el desglose de scores+firma vive ahora en PanelVerificacionScores (arriba)
   const [idCatActivaLeaderboard, setIdCatActivaLeaderboard] = useState('');
 
 
@@ -273,11 +273,16 @@ export default function CompetenciaDetalle() {
           setInventarioComp({ materiales: [], prestamosManuales: [] });
         }
 
+        const _fi = encontrada.fechaInicio || encontrada.FechaInicio || '';
+        const _ff = encontrada.fechaFin || encontrada.FechaFin || '';
+        const _horaDe = (s, def) => { const t = (s || '').split('T')[1]; return t ? t.slice(0, 5) : def; };
         setFechas({
           inicioIns: encontrada.fechaInicioInscripcion || encontrada.FechaInicioInscripcion ? (encontrada.fechaInicioInscripcion || encontrada.FechaInicioInscripcion).split('T')[0] : '',
           finIns: encontrada.fechaFinInscripcion || encontrada.FechaFinInscripcion ? (encontrada.fechaFinInscripcion || encontrada.FechaFinInscripcion).split('T')[0] : '',
-          inicioComp: (encontrada.fechaInicio || encontrada.FechaInicio)?.startsWith('2099') ? '' : ((encontrada.fechaInicio || encontrada.FechaInicio) ? (encontrada.fechaInicio || encontrada.FechaInicio).split('T')[0] : ''),
-          finComp: (encontrada.fechaFin || encontrada.FechaFin)?.startsWith('2099') ? '' : ((encontrada.fechaFin || encontrada.FechaFin) ? (encontrada.fechaFin || encontrada.FechaFin).split('T')[0] : '')
+          inicioComp: _fi.startsWith('2099') ? '' : (_fi ? _fi.split('T')[0] : ''),
+          finComp: _ff.startsWith('2099') ? '' : (_ff ? _ff.split('T')[0] : ''),
+          horaInicioComp: _fi && !_fi.startsWith('2099') ? _horaDe(_fi, '08:00') : '08:00',
+          horaFinComp: _ff && !_ff.startsWith('2099') ? _horaDe(_ff, '18:00') : '18:00',
         });
 
         try {
@@ -1070,17 +1075,13 @@ export default function CompetenciaDetalle() {
       }
     }
 
-    // 2. Validar que la competencia empiece al menos 1 día después del cierre de inscripciones
+    // 2. El Día 1 no puede ser ANTES del cierre de inscripciones. El MISMO día sí se permite
+    //    (p.ej. cierras inscripciones en la mañana y compites en la tarde) — antes forzaba +1 día y confundía.
     if (fechas.finIns && fechas.inicioComp) {
-      const fechaFinIns = new Date(fechas.finIns);
-      const fechaInicioC = new Date(fechas.inicioComp);
-      // Solo tomamos en cuenta los días sin importar la hora
-      fechaFinIns.setHours(0, 0, 0, 0);
-      fechaInicioC.setHours(0, 0, 0, 0);
-
-      const diferenciaDias = (fechaInicioC - fechaFinIns) / (1000 * 60 * 60 * 24);
-      if (diferenciaDias < 1) {
-        return alert("El Día 1 de la competencia debe ser mínimo 1 día después del cierre de inscripciones.");
+      const fechaFinIns = new Date(fechas.finIns); fechaFinIns.setHours(0, 0, 0, 0);
+      const fechaInicioC = new Date(fechas.inicioComp); fechaInicioC.setHours(0, 0, 0, 0);
+      if (fechaInicioC < fechaFinIns) {
+        return alert("El Día 1 de la competencia no puede ser antes del cierre de inscripciones.");
       }
     }
 
@@ -1111,8 +1112,9 @@ export default function CompetenciaDetalle() {
         body: JSON.stringify({
           fechaInicioInscripcion: fechas.inicioIns || null,
           fechaFinInscripcion: fechas.finIns || null,
-          fechaInicio: fechas.inicioComp,
-          fechaFin: fechas.finComp
+          // El evento lleva HORA real: combinamos fecha + hora (auto-status y heats la usan).
+          fechaInicio: fechas.inicioComp ? `${fechas.inicioComp}T${fechas.horaInicioComp || '08:00'}:00` : null,
+          fechaFin: fechas.finComp ? `${fechas.finComp}T${fechas.horaFinComp || '18:00'}:00` : null
         })
       });
       if (res.ok) {
@@ -1971,7 +1973,10 @@ export default function CompetenciaDetalle() {
                           </div>
                         </div>
                         <div className="col-md-6">
-                          <p className="cd-label" style={{ marginBottom: '0.85rem', color: 'var(--primary)' }}>Competencia</p>
+                          <p className="cd-label" style={{ marginBottom: '0.35rem', color: 'var(--primary)' }}>Competencia</p>
+                          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.6rem' }}>
+                            <i className="fas fa-circle-info me-1"></i>Evento de 1 día: pon la <b>misma fecha</b> en Día 1 y Fin, y define la hora de inicio/fin. El evento queda "En Vivo" desde la hora de inicio y pasa a histórico al pasar la hora de fin.
+                          </p>
                           <div className="d-flex gap-3">
                             <div className="flex-grow-1">
                               <label className="cd-label">
@@ -1979,12 +1984,15 @@ export default function CompetenciaDetalle() {
                                 {(!fechas.inicioIns || !fechas.finIns) && <span className="ms-1 text-warning" title="Define primero las fechas de inscripción"><i className="fas fa-lock"></i></span>}
                               </label>
                               {(fechas.inicioIns && fechas.finIns) ? (
-                                <RedGrayDatePicker 
-                                  required 
-                                  value={fechas.inicioComp} 
-                                  min={minDia1}
-                                  onChange={(next) => setFechas({ ...fechas, inicioComp: next })} 
-                                />
+                                <>
+                                  <RedGrayDatePicker
+                                    required
+                                    value={fechas.inicioComp}
+                                    min={minDia1}
+                                    onChange={(next) => setFechas({ ...fechas, inicioComp: next })}
+                                  />
+                                  <input type="time" className="cd-input mt-2" value={fechas.horaInicioComp} onChange={(e) => setFechas({ ...fechas, horaInicioComp: e.target.value })} title="Hora de inicio del evento" />
+                                </>
                               ) : (
                                 <div className="form-control" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,193,7,0.3)', color: '#888', cursor: 'not-allowed' }}>
                                   <i className="fas fa-lock me-2 text-warning opacity-50"></i><span className="opacity-50">Primero inscripciones</span>
@@ -1997,13 +2005,16 @@ export default function CompetenciaDetalle() {
                                 {!fechas.inicioComp && <span className="ms-1 text-warning" title="Define primero el Día 1"><i className="fas fa-lock"></i></span>}
                               </label>
                               {fechas.inicioComp ? (
-                                <RedGrayDatePicker 
-                                  required 
-                                  value={fechas.finComp} 
-                                  min={minFin}
-                                  max={maxFin}
-                                  onChange={(next) => setFechas({ ...fechas, finComp: next })} 
-                                />
+                                <>
+                                  <RedGrayDatePicker
+                                    required
+                                    value={fechas.finComp}
+                                    min={minFin}
+                                    max={maxFin}
+                                    onChange={(next) => setFechas({ ...fechas, finComp: next })}
+                                  />
+                                  <input type="time" className="cd-input mt-2" value={fechas.horaFinComp} onChange={(e) => setFechas({ ...fechas, horaFinComp: e.target.value })} title="Hora de fin del evento" />
+                                </>
                               ) : (
                                 <div className="form-control" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,193,7,0.3)', color: '#888', cursor: 'not-allowed' }}>
                                   <i className="fas fa-lock me-2 text-warning opacity-50"></i><span className="opacity-50">Primero Día 1</span>
@@ -2804,7 +2815,7 @@ export default function CompetenciaDetalle() {
         {/* TAB: LOGÍSTICA DE ARENA (HEATS MULTI-WOD) */}
         {/* ========================================================= */}
         {tabActiva === 'heats' && (
-          <GestionHeatsPanel idCompetencia={id} categorias={comp?.categorias || comp?.Categorias || []} />
+          <GestionHeatsPanel idCompetencia={id} categorias={comp?.categorias || comp?.Categorias || []} competencia={comp} />
         )}
         {/* Generador de heats viejo (blob JSON) — reemplazado por GestionHeatsPanel; oculto, pendiente de borrar. */}
         {false && (
@@ -3296,26 +3307,10 @@ export default function CompetenciaDetalle() {
                   </button>
                 </div>
               </div>
-              {/* Botones de Vista */}
-              <div className="d-flex gap-2 mb-4">
-                <button 
-                  className={`cd-btn ${vistaAuditoria === 'scores' ? 'cd-btn--primary' : 'cd-btn--outline'}`}
-                  onClick={() => setVistaAuditoria('scores')}
-                >
-                  <i className="fas fa-list"></i> Desglose de Scores
-                </button>
-                <button 
-                  className={`cd-btn ${vistaAuditoria === 'leaderboard' ? 'cd-btn--primary' : 'cd-btn--outline'}`}
-                  onClick={() => {
-                    setVistaAuditoria('leaderboard');
-                    if (!idCatActivaLeaderboard && comp.categorias?.length > 0) {
-                      setIdCatActivaLeaderboard(comp.categorias[0].idCategoriaComp || comp.categorias[0].IdCategoriaComp);
-                    }
-                  }}
-                >
-                  <i className="fas fa-trophy"></i> Leaderboard Admin (Sin Censura)
-                </button>
-              </div>
+              <p className="cd-section-sub mb-3">
+                <i className="fas fa-info-circle me-1"></i>
+                El desglose de scores con <b>firma del atleta</b> y aprobación está arriba, en <b>Verificación de scores</b>. Aquí abajo ves el podio real (sin censura) por categoría.
+              </p>
 
               {vistaAuditoria === 'leaderboard' ? (
                 <div className="cd-card">
