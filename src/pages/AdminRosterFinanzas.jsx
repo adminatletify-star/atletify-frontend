@@ -43,6 +43,43 @@ export default function AdminRosterFinanzas() {
     finally { if (!silent) setLoading(false); }
   };
 
+  // ALTA MANUAL DE EQUIPO (el admin registra un equipo ya aprobado, incluso con inscripciones cerradas)
+  const DEFAULT_ALTA = {
+    idCategoriaComp: '', nombreEquipo: '', boxOrigen: '', metodoPago: 'Efectivo',
+    cap: { nombreCompleto: '', apellidos: '', correo: '', telefono: '', genero: 'Masculino', nivelHabilidad: 'Intermedio', fechaNacimiento: '', tipoSangre: 'O+', tallaPlayera: 'M' }
+  };
+  const [mostrarAltaEquipo, setMostrarAltaEquipo] = useState(false);
+  const [altaForm, setAltaForm] = useState(DEFAULT_ALTA);
+  const [guardandoAlta, setGuardandoAlta] = useState(false);
+
+  const guardarAltaEquipo = async () => {
+    if (!altaForm.idCategoriaComp || !altaForm.nombreEquipo.trim() || !altaForm.cap.nombreCompleto.trim()) {
+      alert('Completa la categoría, el nombre del equipo y el nombre del capitán.'); return;
+    }
+    setGuardandoAlta(true);
+    try {
+      const payload = {
+        idCategoriaComp: parseInt(altaForm.idCategoriaComp),
+        nombreEquipo: altaForm.nombreEquipo,
+        boxOrigen: altaForm.boxOrigen,
+        metodoPago: altaForm.metodoPago,
+        capitan: { ...altaForm.cap, fechaNacimiento: altaForm.cap.fechaNacimiento || '2000-01-01' },
+        montoAbonado: 0, comprobanteUrl: ''
+      };
+      const res = await fetch(`${COMPETENCIAS_ENDPOINT}/inscripcion-manual`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Equipo dado de alta y aprobado. Código: ${data.codigo}`);
+        setMostrarAltaEquipo(false); setAltaForm(DEFAULT_ALTA); cargarRoster(true);
+      } else {
+        alert(data.mensaje || 'No se pudo dar de alta el equipo.');
+      }
+    } catch (e) { alert('Error de conexión al dar de alta el equipo.'); }
+    finally { setGuardandoAlta(false); }
+  };
+
   // CÁLCULOS DEL DASHBOARD FINANCIERO
   const stats = useMemo(() => {
     let totalEfectivo = 0, totalTransferencia = 0, totalTarjeta = 0;
@@ -220,6 +257,49 @@ export default function AdminRosterFinanzas() {
       </header>
 
       <div className="container-xl px-3 px-md-4">
+
+        <div className="d-flex justify-content-end mb-3">
+          <button className="btn btn-success btn-sm" onClick={() => setMostrarAltaEquipo(true)}>
+            <i className="fas fa-user-plus me-2"></i>Dar de alta equipo
+          </button>
+        </div>
+
+        {mostrarAltaEquipo && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1060, padding: '16px' }} onClick={(e) => { if (e.target === e.currentTarget) setMostrarAltaEquipo(false); }}>
+            <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', maxWidth: '600px', width: '100%', maxHeight: '92vh', overflowY: 'auto', color: '#0f172a' }}>
+              <h4 style={{ marginBottom: '4px', fontWeight: 700 }}><i className="fas fa-user-plus me-2" style={{ color: '#10b981' }}></i>Alta manual de equipo</h4>
+              <p style={{ fontSize: '0.85rem', color: '#64748b' }}>El equipo queda <strong>aprobado al instante</strong> con el pago manual que registres. Funciona aunque las inscripciones estén cerradas.</p>
+              <div className="row g-2">
+                <div className="col-12 col-md-6">
+                  <label className="form-label small mb-1">Categoría *</label>
+                  <select className="form-select form-select-sm" value={altaForm.idCategoriaComp} onChange={e => setAltaForm({ ...altaForm, idCategoriaComp: e.target.value })}>
+                    <option value="">Selecciona…</option>
+                    {rosterData.map(c => <option key={c.idCategoriaComp} value={c.idCategoriaComp}>{c.categoriaNombre} (${c.costo})</option>)}
+                  </select>
+                </div>
+                <div className="col-12 col-md-6">
+                  <label className="form-label small mb-1">Nombre del equipo *</label>
+                  <input className="form-control form-control-sm" value={altaForm.nombreEquipo} onChange={e => setAltaForm({ ...altaForm, nombreEquipo: e.target.value })} />
+                </div>
+                <div className="col-12"><hr className="my-2" /><strong style={{ fontSize: '0.9rem' }}>Datos del capitán</strong></div>
+                <div className="col-12 col-md-6"><label className="form-label small mb-1">Nombre(s) *</label><input className="form-control form-control-sm" value={altaForm.cap.nombreCompleto} onChange={e => setAltaForm({ ...altaForm, cap: { ...altaForm.cap, nombreCompleto: e.target.value } })} /></div>
+                <div className="col-12 col-md-6"><label className="form-label small mb-1">Apellidos</label><input className="form-control form-control-sm" value={altaForm.cap.apellidos} onChange={e => setAltaForm({ ...altaForm, cap: { ...altaForm.cap, apellidos: e.target.value } })} /></div>
+                <div className="col-12 col-md-6"><label className="form-label small mb-1">Correo</label><input type="email" className="form-control form-control-sm" value={altaForm.cap.correo} onChange={e => setAltaForm({ ...altaForm, cap: { ...altaForm.cap, correo: e.target.value } })} /></div>
+                <div className="col-12 col-md-6"><label className="form-label small mb-1">Teléfono</label><input className="form-control form-control-sm" value={altaForm.cap.telefono} onChange={e => setAltaForm({ ...altaForm, cap: { ...altaForm.cap, telefono: e.target.value } })} /></div>
+                <div className="col-6 col-md-4"><label className="form-label small mb-1">Género</label><select className="form-select form-select-sm" value={altaForm.cap.genero} onChange={e => setAltaForm({ ...altaForm, cap: { ...altaForm.cap, genero: e.target.value } })}><option>Masculino</option><option>Femenino</option></select></div>
+                <div className="col-6 col-md-4"><label className="form-label small mb-1">Nivel</label><select className="form-select form-select-sm" value={altaForm.cap.nivelHabilidad} onChange={e => setAltaForm({ ...altaForm, cap: { ...altaForm.cap, nivelHabilidad: e.target.value } })}><option>Novato</option><option>Principiante</option><option>Intermedio</option><option>Avanzado</option><option>Master</option></select></div>
+                <div className="col-12 col-md-4"><label className="form-label small mb-1">Fecha de nacimiento</label><input type="date" className="form-control form-control-sm" value={altaForm.cap.fechaNacimiento} onChange={e => setAltaForm({ ...altaForm, cap: { ...altaForm.cap, fechaNacimiento: e.target.value } })} /></div>
+                <div className="col-6 col-md-4"><label className="form-label small mb-1">Talla</label><select className="form-select form-select-sm" value={altaForm.cap.tallaPlayera} onChange={e => setAltaForm({ ...altaForm, cap: { ...altaForm.cap, tallaPlayera: e.target.value } })}><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option></select></div>
+                <div className="col-6 col-md-4"><label className="form-label small mb-1">T. Sangre</label><select className="form-select form-select-sm" value={altaForm.cap.tipoSangre} onChange={e => setAltaForm({ ...altaForm, cap: { ...altaForm.cap, tipoSangre: e.target.value } })}><option>O+</option><option>O-</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option></select></div>
+                <div className="col-12 col-md-4"><label className="form-label small mb-1">Método de pago *</label><select className="form-select form-select-sm" value={altaForm.metodoPago} onChange={e => setAltaForm({ ...altaForm, metodoPago: e.target.value })}><option>Efectivo</option><option>Transferencia</option></select></div>
+              </div>
+              <div className="d-flex justify-content-end gap-2 mt-3">
+                <button className="btn btn-outline-secondary btn-sm" onClick={() => setMostrarAltaEquipo(false)} disabled={guardandoAlta}>Cancelar</button>
+                <button className="btn btn-success btn-sm" onClick={guardarAltaEquipo} disabled={guardandoAlta}>{guardandoAlta ? 'Guardando…' : 'Dar de alta y aprobar'}</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ══════════════════════════════════
             DASHBOARD FINANCIERO
