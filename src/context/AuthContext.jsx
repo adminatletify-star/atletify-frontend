@@ -2,6 +2,7 @@ import { createContext, useState, useContext, useEffect, useCallback } from 'rea
 import { jwtDecode } from 'jwt-decode';
 import { api, COMPETENCIAS_ENDPOINT } from '../services/api';
 import { sincronizarSuscripcionesPush, desuscribirCuenta } from '../services/push';
+import { hidratarCatalogoModulos, refrescarEntitlements } from '../config/modulosSaaS';
 
 const AuthContext = createContext();
 
@@ -270,6 +271,19 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     refetchBoxes();
   }, [refetchBoxes]);
+
+  // === ENTITLEMENTS (gating por plan SaaS) ===
+  // Catálogo canónico del backend (una vez) + módulos EFECTIVOS del box logueado.
+  // El login solo deja un snapshot de box.modulos; aquí lo refrescamos contra
+  // /entitlements/me y disparamos 'box-actualizado' para que useModulos re-evalúe
+  // sin recargar (corrige el refresco roto que nunca se invocaba).
+  useEffect(() => { hidratarCatalogoModulos(); }, []);
+
+  useEffect(() => {
+    const tkn = token || localStorage.getItem('token');
+    if (!usuario || !isTokenValid(tkn)) return;
+    refrescarEntitlements();
+  }, [usuario, boxActivo, token]);
 
   // === WEB PUSH: mantener registradas TODAS las cuentas del dispositivo ===
   // Si el usuario ya activó las notificaciones (permiso concedido + suscripción),
