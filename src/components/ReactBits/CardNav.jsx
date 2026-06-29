@@ -25,7 +25,7 @@ const CardNav = ({
   const location = useLocation();
   const navigate = useNavigate();
   const clickTimeout = useRef(null);
-  const { usuario, boxActivo, cambiarBox, cuentasGuardadas, prepararCambioCuenta, listaBoxes } = useAuth();
+  const { usuario, boxActivo, auditarBox, cuentasGuardadas, prepararCambioCuenta, listaBoxes } = useAuth();
 
   const getHomeRoute = () => {
     if (!usuario) return '/';
@@ -287,18 +287,7 @@ const CardNav = ({
               <BoxPickerModal
                 boxes={listaBoxes}
                 boxSeleccionado={boxActivo}
-                onChange={(boxId) => {
-                  if (boxId === null) return;
-                  const boxSel = listaBoxes.find(b => b.idBox === boxId);
-                  if (boxSel) {
-                    localStorage.setItem('box', JSON.stringify({
-                      idBox: boxSel.idBox || boxSel.IdBox,
-                      nombre: boxSel.nombre || boxSel.Nombre
-                    }));
-                    cambiarBox(boxId);
-                    window.location.reload();
-                  }
-                }}
+                onChange={(boxId) => auditarBox(boxId)}
               />
             )}
 

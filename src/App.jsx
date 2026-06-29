@@ -17,6 +17,7 @@ import PoliticaCookies from './pages/PoliticaCookies';
 import TiendaBox from './pages/TiendaBox';
 import CookieBanner from './components/CookieBanner';
 import ImpersonationBanner from './components/ImpersonationBanner';
+import BoxScopeGuard from './components/BoxScopeGuard';
 import CrearBox from './pages/CrearBox';
 import Dashboard from './pages/Dashboard';
 import CompletarRegistro from './pages/CompletarRegistro';
@@ -533,7 +534,7 @@ function App() {
               <Route path="/preguntas-frecuentes" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Atleta', 'Usuario', 'Developer']}><PreguntasFrecuentes /></ProtectedRoute>} />
               <Route path="/admin-saas" element={<ProtectedRoute allowedRoles={['Developer']}><AdminSaaS /></ProtectedRoute>} />
               <Route path="/admin-preregistros" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AdminPreregistros /></ProtectedRoute>} />
-              <Route path="/admin-box/auditoria" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AuditoriaBox /></ProtectedRoute>} />
+              <Route path="/admin-box/auditoria" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><BoxScopeGuard><AuditoriaBox /></BoxScopeGuard></ProtectedRoute>} />
               <Route path="/crear-box" element={<ProtectedRoute allowedRoles={['Developer']}><CrearBox /></ProtectedRoute>} />
               <Route path="/admin-competencias" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AdminCompetencias /></ProtectedRoute>} />
               <Route path="/admin-competencias/historial" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AdminCompetenciasHistorial /></ProtectedRoute>} />
@@ -549,7 +550,7 @@ function App() {
               <Route path="/admin-roster" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><AdminRoster /></ProtectedRoute>} />
               {/* /juez/:id ahora vive como ruta pública sin navbar — PortalJuez maneja su propia auth */}
               <Route path="/ranking-manual/:idEntrenamiento" element={<RankingManual />} />
-              <Route path="/comunidad" element={<Comunidad />} />
+              <Route path="/comunidad" element={<BoxScopeGuard><Comunidad /></BoxScopeGuard>} />
               <Route path="/resenas-coaches" element={<UserResenas />} />
               <Route path="/calendario-atleta" element={<ProtectedRoute allowedRoles={['Atleta']}><CalendarioAtleta /></ProtectedRoute>} />
               <Route path="/tienda-box" element={<ProtectedRoute allowedRoles={['Atleta']}><TiendaBox /></ProtectedRoute>} />
@@ -585,16 +586,16 @@ function App() {
                 }
               />
               {/* Operaciones Diarias Box */}
-              <Route path="/pase-de-lista" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><PaseDeLista /></ProtectedRoute>} />
+              <Route path="/pase-de-lista" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><BoxScopeGuard><PaseDeLista /></BoxScopeGuard></ProtectedRoute>} />
               <Route path="/admin-calendario" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><AdminCalendario /></ProtectedRoute>} />
               <Route path="/calendario-wods" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><CalendarioWods /></ProtectedRoute>} />
               <Route path="/creador-wods" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><CreadorWods /></ProtectedRoute>} />
               <Route path="/editar-wod/:id" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><EditarWod /></ProtectedRoute>} />
               <Route path="/wods-guardados" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><ModuloGate modulo="wod-plantillas"><WodsGuardados /></ModuloGate></ProtectedRoute>} />
               <Route path="/admin-box/validaciones" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><ValidacionTransferencias /></ProtectedRoute>} />
-              <Route path="/directorio" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><Directorio /></ProtectedRoute>} />
+              <Route path="/directorio" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><BoxScopeGuard><Directorio /></BoxScopeGuard></ProtectedRoute>} />
               <Route path="/gestion-solicitudes" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><GestionSolicitudesAtletas /></ProtectedRoute>} />
-              <Route path="/gestion-clases" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><GestionClases /></ProtectedRoute>} />
+              <Route path="/gestion-clases" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><BoxScopeGuard><GestionClases /></BoxScopeGuard></ProtectedRoute>} />
               <Route path="/diccionario-ejercicios" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><DiccionarioEjercicios /></ProtectedRoute>} />
               <Route path="/admin-ejercicios" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><AdminEjercicios /></ProtectedRoute>} />
               {/* DEV PANEL */}
@@ -603,7 +604,7 @@ function App() {
               <Route path="/admin-archivadas/:idBox" element={<ProtectedRoute allowedRoles={['Developer']}><AdminArchivadasDevDetalle /></ProtectedRoute>} />
               <Route path="/editar-box" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><EditarBox /></ProtectedRoute>} />
               <Route path="/admin-competencias/panel/:id" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><CompetenciaDetalle /></ProtectedRoute>} />
-              <Route path="/atletas-box" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><AtletasBox /></ProtectedRoute>} />
+              <Route path="/atletas-box" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><BoxScopeGuard><AtletasBox /></BoxScopeGuard></ProtectedRoute>} />
               {/* Nuevos Módulos de Tienda y Almacén */}
               <Route path="/gestion-ventas-productos" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><GestionVentasProductos /></ProtectedRoute>} />
               <Route path="/punto-de-venta" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><PuntoDeVenta /></ProtectedRoute>} />

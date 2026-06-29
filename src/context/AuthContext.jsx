@@ -352,6 +352,26 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Rediseño Developer: elegir un box para AUDITAR (contexto transitorio, sin box propio).
+  // Escribe el box en localStorage y actualiza boxActivo SIN reload — el Layout enriquece el
+  // box desde el server al cambiar boxActivo. boxId null = "sin box" (limpia el contexto).
+  const auditarBox = (boxId) => {
+    if (boxId === null || boxId === undefined) {
+      localStorage.removeItem('box');
+      cambiarBox(null);
+      return;
+    }
+    const boxSel = (listaBoxes || []).find(b => (b.idBox || b.IdBox) === boxId);
+    // Dejar localStorage 'box' SIEMPRE coherente con boxActivo (al menos el id), aunque el box
+    // aún no esté en listaBoxes (lista cargando). Evita que las páginas lean un box obsoleto.
+    localStorage.setItem('box', JSON.stringify(
+      boxSel
+        ? { idBox: boxSel.idBox || boxSel.IdBox, nombre: boxSel.nombre || boxSel.Nombre }
+        : { idBox: boxId }
+    ));
+    cambiarBox(boxId);
+  };
+
   // Actualiza campos del usuario activo en memoria (estado React) + localStorage,
   // y sincroniza esos mismos campos dentro de cuentasGuardadas. Úsalo cuando el
   // usuario edita su perfil (foto, nombre, etc.) para que el navbar y el selector
@@ -483,6 +503,7 @@ export function AuthProvider({ children }) {
       listaBoxes,
       refetchBoxes,
       cambiarBox,
+      auditarBox,
       cambiarCuenta,
       prepararCambioCuenta,
       getIdFromUser,
