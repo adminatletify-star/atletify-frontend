@@ -532,7 +532,6 @@ function App() {
               <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['Developer']}><Dashboard /></ProtectedRoute>} />
               <Route path="/dashboard/faq" element={<ProtectedRoute allowedRoles={['Developer']}><PreguntasRespuestasDev /></ProtectedRoute>} />
               <Route path="/preguntas-frecuentes" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Atleta', 'Usuario', 'Developer']}><PreguntasFrecuentes /></ProtectedRoute>} />
-              <Route path="/admin-saas" element={<ProtectedRoute allowedRoles={['Developer']}><AdminSaaS /></ProtectedRoute>} />
               <Route path="/admin-preregistros" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AdminPreregistros /></ProtectedRoute>} />
               <Route path="/admin-box/auditoria" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><BoxScopeGuard><AuditoriaBox /></BoxScopeGuard></ProtectedRoute>} />
               <Route path="/crear-box" element={<ProtectedRoute allowedRoles={['Developer']}><CrearBox /></ProtectedRoute>} />
@@ -543,7 +542,7 @@ function App() {
               <Route path="/admin-box-panel" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><AdminBoxPanel /></ProtectedRoute>} />
               <Route path="/admin-box/grupos-familiares" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><ModuloGate modulo="grupos-familiares"><AdminGruposFamiliares /></ModuloGate></ProtectedRoute>} />
               <Route path="/exportar-bd-box" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><ModuloGate modulo="exportaciones"><ExportarBDBox /></ModuloGate></ProtectedRoute>} />
-              <Route path="/mi-suscripcion" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Developer']}><MiSuscripcion /></ProtectedRoute>} />
+              <Route path="/mi-suscripcion" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach']}><MiSuscripcion /></ProtectedRoute>} />
               <Route path="/gestion-staff" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><GestionStaff /></ProtectedRoute>} />
               <Route path="/editar-usuario/:id" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox', 'Coach']}><EditarUsuario /></ProtectedRoute>} />
               <Route path="/crear-clase" element={<ProtectedRoute allowedRoles={['AdminBox', 'Developer']}><CrearClaseAdminBox /></ProtectedRoute>} />
