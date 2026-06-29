@@ -16,6 +16,7 @@ import TerminosCondiciones from './pages/TerminosCondiciones';
 import PoliticaCookies from './pages/PoliticaCookies';
 import TiendaBox from './pages/TiendaBox';
 import CookieBanner from './components/CookieBanner';
+import ImpersonationBanner from './components/ImpersonationBanner';
 import CrearBox from './pages/CrearBox';
 import Dashboard from './pages/Dashboard';
 import CompletarRegistro from './pages/CompletarRegistro';
@@ -117,6 +118,9 @@ import ValidacionTransferencias from './pages/ValidacionTransferencias';
 // === INTERCEPTOR GLOBAL DE FETCH ===
 // Esto permite atrapar los errores del backend y, además, inyectar el token JWT.
 const originalFetch = window.fetch;
+// F3-S2: evita repetir el aviso de "solo lectura" en cada 403 (p. ej. el heartbeat de fondo).
+// Se resetea solo: cada impersonación entra con un reload completo de la app.
+let avisoImpersonacionMostrado = false;
 window.fetch = async function () {
   let [resource, config] = arguments;
 
@@ -188,6 +192,34 @@ window.fetch = async function () {
     // 2. El token que falló es TODAVÍA el token activo (no es un 401 residual de otra cuenta)
     const tokenStillCurrent = !currentToken || !requestToken || requestToken === `Bearer ${currentToken}`;
 
+    // F3-S2: si la sesión de impersonación expiró (401), RESTAURAR al Developer en vez de
+    // desloguear. La sesión del dev quedó en 'impersonacion_dev'.
+    const impDevRaw = localStorage.getItem('impersonacion_dev');
+    if (impDevRaw && tokenStillCurrent && !window.location.pathname.startsWith('/login')) {
+      let restaurado = false;
+      try {
+        const dev = JSON.parse(impDevRaw);
+        if (dev?.token && dev?.usuario) {
+          localStorage.setItem('usuario', JSON.stringify(dev.usuario));
+          localStorage.setItem('token', dev.token);
+          if (dev.boxData) localStorage.setItem('box', dev.boxData); else localStorage.removeItem('box');
+          if (dev.boxActivo) localStorage.setItem('boxActivo', dev.boxActivo); else localStorage.removeItem('boxActivo');
+          restaurado = true;
+        }
+      } catch (_) { /* slot corrupto */ }
+      localStorage.removeItem('impersonacion_dev');
+      if (restaurado) {
+        window.location.href = '/dashboard';
+      } else {
+        // Slot inválido: cerrar sesión limpia en vez de dejar estado corrupto.
+        localStorage.removeItem('usuario');
+        localStorage.removeItem('token');
+        localStorage.removeItem('boxActivo');
+        window.location.href = '/login';
+      }
+      return response;
+    }
+
     if (tokenStillCurrent && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/juez')) {
       console.error("CADENERO FETCH: Token inválido o expirado. Cerrando sesión activa...");
       localStorage.removeItem('usuario');
@@ -195,6 +227,19 @@ window.fetch = async function () {
       localStorage.removeItem('boxActivo');
       window.location.href = '/login';
     }
+    return response;
+  }
+
+  // 3.5 F3-S2: en modo impersonación (solo lectura) el backend responde 403 a las mutaciones.
+  // Avisamos una vez (no en cada 403 de fondo) para que el Developer entienda por qué falló.
+  if (response.status === 403 && !avisoImpersonacionMostrado) {
+    try {
+      const tkn = localStorage.getItem('token');
+      if (tkn && jwtDecode(tkn)?.imp_ro === '1') {
+        avisoImpersonacionMostrado = true;
+        alert('Estás en modo impersonación (solo lectura). Sal de la impersonación para poder hacer cambios.');
+      }
+    } catch (_) { /* token ilegible */ }
     return response;
   }
 
@@ -322,10 +367,15 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
       const boxData = JSON.parse(storedBoxStr);
       const estatusSaaS = boxData.estatusSaaS;
 
+      // F3-S2: durante una impersonación NO expulsamos por box suspendido/archivado (el
+      // Developer puede estar entrando justo para auditar ese box; es solo lectura).
+      let impersonando = false;
+      try { impersonando = jwtDecode(storedToken)?.imp === '1'; } catch { /* token ilegible */ }
+
       // F3: Suspendido/Archivado = acceso deshabilitado para TODOS los roles del box.
       // El backend ya bloquea el login y revoca las sesiones (TokenVersion); esto es solo
       // UX para no dejar pantallas rotas si el estado cambió con la sesión ya abierta.
-      if (estatusSaaS === 'Suspendido' || estatusSaaS === 'Archivado') {
+      if (!impersonando && (estatusSaaS === 'Suspendido' || estatusSaaS === 'Archivado')) {
         console.error(`CADENERO SAAS: Box ${estatusSaaS}. Cerrando sesión.`);
         localStorage.removeItem('usuario');
         localStorage.removeItem('token');
@@ -420,6 +470,7 @@ function App() {
       <PwaInstallProvider>
       <Router>
         <MaintenanceGuard>
+          <ImpersonationBanner />
           <OfflineIndicator />
           <CookieBanner />
           <Routes>

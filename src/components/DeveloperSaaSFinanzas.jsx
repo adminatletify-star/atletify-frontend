@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis
 import AtletifyLoader from '../components/AtletifyLoader';
 import ModalAdminBox from './ModalAdminBox';
 import ModalModulosBox from './ModalModulosBox';
+import { useAuth } from '../context/AuthContext';
 import '../assets/css/DeveloperSaaSFinanzas.css';
 
 const PAGE_SIZE = 10;
@@ -74,6 +75,8 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
   const [bitacora, setBitacora] = useState([]);
   const [bitacoraLoading, setBitacoraLoading] = useState(false);
 
+  const { impersonar } = useAuth();
+
   const authHeader = () => ({
     Authorization: `Bearer ${localStorage.getItem('token')}`
   });
@@ -131,6 +134,24 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
       await cargarBitacora();
     } catch (e) { window.alert(`Error: ${e.message}`); }
     finally { setF3Busy(false); }
+  };
+
+  // Entrar como (impersonación de SOLO LECTURA por correo). Recarga la app como el suplantado.
+  const entrarComo = async () => {
+    const correo = f3Correo.trim();
+    if (!correo) { window.alert('Ingresa el correo de la cuenta.'); return; }
+    if (!window.confirm(`¿Entrar como ${correo} en modo SOLO LECTURA? Tu sesión de Developer se restaurará al salir o al expirar.`)) return;
+    setF3Busy(true);
+    try {
+      const data = await postDeveloper('impersonar-por-correo', { correo, motivo: f3CuentaMotivo.trim() || null });
+      if (!data?.token || !data?.usuario?.id) throw new Error('Respuesta de impersonación inválida del servidor.');
+      impersonar(data.token, data.usuario);
+      const rol = data.usuario?.rol;
+      window.location.href = (rol === 'AdminBox' || rol === 'Coach') ? '/admin-box-panel' : '/user-panel';
+    } catch (e) {
+      window.alert(`Error: ${e.message}`);
+      setF3Busy(false);
+    }
   };
 
   const cargarData = async () => {
@@ -774,8 +795,11 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
               <button type="button" className="dsf-add-btn" disabled={f3Busy} onClick={() => accionCuentaF3('cerrar-sesiones-por-correo')}>
                 <i className="fas fa-right-from-bracket"></i><span className="dsf-add-btn-label">Cerrar sesiones</span>
               </button>
+              <button type="button" className="dsf-add-btn" disabled={f3Busy} onClick={entrarComo}>
+                <i className="fas fa-user-secret"></i><span className="dsf-add-btn-label">Entrar como</span>
+              </button>
             </div>
-            <p className="dsf-hint">Banear, forzar reset y cerrar sesiones revocan al instante los tokens vivos de la cuenta.</p>
+            <p className="dsf-hint">Banear, forzar reset y cerrar sesiones revocan al instante los tokens vivos de la cuenta. "Entrar como" abre la app en modo solo lectura.</p>
           </div>
         </div>
 

@@ -377,6 +377,93 @@ export function AuthProvider({ children }) {
     });
   };
 
+  // === IMPERSONACIÓN (F3 / SLICE 2) ===
+  // Guarda la sesión del Developer en un slot APARTE (NO en cuentasGuardadas) y activa la
+  // sesión del usuario suplantado con el token de impersonación (solo lectura, corto).
+  const impersonar = (impToken, suplantadoUsuario) => {
+    const devSesion = {
+      usuario,
+      token: token || localStorage.getItem('token'),
+      boxData: localStorage.getItem('box'),
+      boxActivo: localStorage.getItem('boxActivo'),
+    };
+    localStorage.setItem('impersonacion_dev', JSON.stringify(devSesion));
+
+    setUsuario(suplantadoUsuario);
+    setToken(impToken);
+    localStorage.setItem('usuario', JSON.stringify(suplantadoUsuario));
+    localStorage.setItem('token', impToken);
+    localStorage.removeItem('box'); // se repuebla con /entitlements/me del suplantado
+    if (suplantadoUsuario?.idBoxPredeterminado) {
+      setBoxActivo(suplantadoUsuario.idBoxPredeterminado);
+      localStorage.setItem('boxActivo', JSON.stringify(suplantadoUsuario.idBoxPredeterminado));
+    } else {
+      setBoxActivo(null);
+      localStorage.removeItem('boxActivo');
+    }
+  };
+
+  const salirImpersonacion = async () => {
+    const raw = localStorage.getItem('impersonacion_dev');
+
+    // A quién impersonábamos (para auditar el fin) ANTES de restaurar la sesión del dev.
+    let suplantadoId = 0;
+    try {
+      const u = JSON.parse(localStorage.getItem('usuario') || 'null');
+      suplantadoId = u?.id || u?.idUsuario || u?.IdUsuario || 0;
+    } catch { /* noop */ }
+
+    if (!raw) { logout(); return; }
+    let dev;
+    try { dev = JSON.parse(raw); } catch { logout(); return; }
+
+    const devToken = dev?.token;
+    // Si la sesión guardada del dev no es válida (sin token o sin usuario), cerrar sesión
+    // LIMPIA en vez de dejar al dev "logueado" sin token (todo daría 401 y el fin iría con
+    // 'Bearer null'). Esto pasa, p.ej., si su token fue revocado mientras impersonaba.
+    if (!devToken || !dev?.usuario) {
+      localStorage.removeItem('impersonacion_dev');
+      logout();
+      return;
+    }
+
+    setUsuario(dev.usuario);
+    setToken(devToken);
+    localStorage.setItem('usuario', JSON.stringify(dev.usuario));
+    localStorage.setItem('token', devToken);
+    if (dev.boxData) localStorage.setItem('box', dev.boxData); else localStorage.removeItem('box');
+    if (dev.boxActivo) {
+      localStorage.setItem('boxActivo', dev.boxActivo);
+      try { setBoxActivo(JSON.parse(dev.boxActivo)); } catch { setBoxActivo(null); }
+    } else {
+      localStorage.removeItem('boxActivo');
+      setBoxActivo(null);
+    }
+    localStorage.removeItem('impersonacion_dev');
+
+    // Auditar el FIN con el token del Developer (best-effort).
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/developer/impersonar/fin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${devToken}` },
+        body: JSON.stringify({ idUsuario: suplantadoId || 0 }),
+      });
+    } catch { /* best-effort */ }
+  };
+
+  // Estado de impersonación derivado del CLAIM del token (NO de usuario.rol).
+  const impersonacion = (() => {
+    const tkn = token || localStorage.getItem('token');
+    if (!tkn) return null;
+    try {
+      const d = jwtDecode(tkn);
+      if (d?.imp === '1' || d?.imp === 1 || d?.imp === true) {
+        return { actorNombre: d.imp_actor_nombre || 'Developer', actorId: d.imp_actor, exp: d.exp };
+      }
+    } catch { /* token ilegible */ }
+    return null;
+  })();
+
   const isAuthenticated = !!usuario;
   const isDeveloper = usuario?.rol === 'Developer';
   const isCoach = usuario?.rol === 'Coach';
@@ -398,6 +485,10 @@ export function AuthProvider({ children }) {
       logout,
       actualizarUsuario,
       removerCuenta,
+      impersonar,
+      salirImpersonacion,
+      impersonacion,
+      isImpersonando: !!impersonacion,
       isAuthenticated,
       isDeveloper,
       isCoach,
