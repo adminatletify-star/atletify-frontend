@@ -45,6 +45,10 @@ export default function CompetenciaDetalle() {
     montoMinimoAporte: 0
   });
   const [guardandoConfig, setGuardandoConfig] = useState(false);
+  // F2.6: calculadora de ganancias (Tipo B) dentro de la config de pagos
+  const [calcModo, setCalcModo] = useState('individual'); // 'individual' | 'equipo'
+  const [calcPrecio, setCalcPrecio] = useState('');
+  const [calcIntegrantes, setCalcIntegrantes] = useState(2);
 
   // Portal Público y Fechas
   const [reglamento, setReglamento] = useState('');
@@ -1609,10 +1613,10 @@ export default function CompetenciaDetalle() {
                 </div>
               </div>
 
-              {/* B2C CONFIGURACIÓN FINANCIERA */}
+              {/* CONFIGURACIÓN DE COBRO DE INSCRIPCIONES */}
               <div className="cd-section-header mt-4" style={{ marginBottom: '1rem' }}>
                 <span className="cd-card-titulo cd-card-titulo--info">
-                  <i className="fas fa-cog"></i>Configuración de Pagos B2C
+                  <i className="fas fa-cog"></i>Cobro de Inscripciones
                 </span>
                 <BotonSeguro onClick={guardarConfiguracionFinanciera} disabled={guardandoConfig} className="cd-btn cd-btn--primary cd-btn--sm" textoProcesando="Guardando...">
                   Guardar Configuración
@@ -1636,25 +1640,33 @@ export default function CompetenciaDetalle() {
                                onChange={(e) => setConfigFinanciera({...configFinanciera, aceptarPagosEnLinea: e.target.checked})} />
                       </label>
 
-                      <label className="cd-switch-row" htmlFor="swTransferencias">
-                        <div>
-                          <p className="cd-switch-label">Transferencias / Depósitos</p>
-                          <p className="cd-switch-hint">Requiere validación manual del comprobante.</p>
-                        </div>
-                        <input className="cd-switch-input form-check-input" type="checkbox" role="switch" id="swTransferencias"
-                               checked={configFinanciera.aceptarTransferencias}
-                               onChange={(e) => setConfigFinanciera({...configFinanciera, aceptarTransferencias: e.target.checked})} />
-                      </label>
+                      {/* F2: en Tipo B (WodReps) las inscripciones son 100% en línea → se ocultan estos métodos */}
+                      {(comp?.modeloCobro || comp?.ModeloCobro) !== 'Comision' && (
+                        <>
+                          <label className="cd-switch-row" htmlFor="swTransferencias">
+                            <div>
+                              <p className="cd-switch-label">Transferencias / Depósitos</p>
+                              <p className="cd-switch-hint">Requiere validación manual del comprobante.</p>
+                            </div>
+                            <input className="cd-switch-input form-check-input" type="checkbox" role="switch" id="swTransferencias"
+                                   checked={configFinanciera.aceptarTransferencias}
+                                   onChange={(e) => setConfigFinanciera({...configFinanciera, aceptarTransferencias: e.target.checked})} />
+                          </label>
 
-                      <label className="cd-switch-row" htmlFor="swEfectivo">
-                        <div>
-                          <p className="cd-switch-label">Efectivo</p>
-                          <p className="cd-switch-hint">Los atletas pagan físicamente en la recepción del box.</p>
-                        </div>
-                        <input className="cd-switch-input form-check-input" type="checkbox" role="switch" id="swEfectivo"
-                               checked={configFinanciera.aceptarEfectivo}
-                               onChange={(e) => setConfigFinanciera({...configFinanciera, aceptarEfectivo: e.target.checked})} />
-                      </label>
+                          <label className="cd-switch-row" htmlFor="swEfectivo">
+                            <div>
+                              <p className="cd-switch-label">Efectivo</p>
+                              <p className="cd-switch-hint">Los atletas pagan físicamente en la recepción del box.</p>
+                            </div>
+                            <input className="cd-switch-input form-check-input" type="checkbox" role="switch" id="swEfectivo"
+                                   checked={configFinanciera.aceptarEfectivo}
+                                   onChange={(e) => setConfigFinanciera({...configFinanciera, aceptarEfectivo: e.target.checked})} />
+                          </label>
+                        </>
+                      )}
+                      {(comp?.modeloCobro || comp?.ModeloCobro) === 'Comision' && (
+                        <p className="cd-switch-hint mt-2"><i className="fas fa-infinity me-1" />Tipo WodReps: inscripciones <strong>solo en línea</strong> (atletas ilimitados).</p>
+                      )}
                     </div>
 
                     <div className="col-12 col-md-6">
@@ -1681,20 +1693,65 @@ export default function CompetenciaDetalle() {
                         <i className="fas fa-info-circle me-1" />No se puede cambiar si ya hay equipos inscritos.
                       </small>
 
-                      <label className="cd-label mb-2 d-block">Apartado Mínimo Obligatorio (Efectivo/Transferencia)</label>
-                      <div className="cd-prefix-group mb-1">
-                        <span className="cd-prefix">$</span>
-                        <input type="number" className="cd-input"
-                               value={configFinanciera.montoMinimoAporte}
-                               onFocus={e => e.target.select()}
-                               onBlur={e => { if (e.target.value === '') setConfigFinanciera({...configFinanciera, montoMinimoAporte: 0}); }}
-                               onChange={(e) => { if (e.target.value.length <= 6) setConfigFinanciera({...configFinanciera, montoMinimoAporte: e.target.value}); }}
-                               min="0" max={999999} step="50" placeholder="0.00" />
-                      </div>
-                      <small style={{ color: 'var(--text-muted)', fontSize: '0.7rem', display: 'block' }}>
-                        <i className="fas fa-lightbulb me-1" />Los pagos con tarjeta siempre requieren el total del equipo para minimizar comisiones de Stripe.
-                      </small>
+                      {(comp?.modeloCobro || comp?.ModeloCobro) !== 'Comision' && (<>
+                        <label className="cd-label mb-2 d-block">Apartado Mínimo Obligatorio (Efectivo/Transferencia)</label>
+                        <div className="cd-prefix-group mb-1">
+                          <span className="cd-prefix">$</span>
+                          <input type="number" className="cd-input"
+                                 value={configFinanciera.montoMinimoAporte}
+                                 onFocus={e => e.target.select()}
+                                 onBlur={e => { if (e.target.value === '') setConfigFinanciera({...configFinanciera, montoMinimoAporte: 0}); }}
+                                 onChange={(e) => { if (e.target.value.length <= 6) setConfigFinanciera({...configFinanciera, montoMinimoAporte: e.target.value}); }}
+                                 min="0" max={999999} step="50" placeholder="0.00" />
+                        </div>
+                        <small style={{ color: 'var(--text-muted)', fontSize: '0.7rem', display: 'block' }}>
+                          <i className="fas fa-lightbulb me-1" />Los pagos con tarjeta siempre requieren el total del equipo para minimizar comisiones de Stripe.
+                        </small>
+                      </>)}
                     </div>
+
+                    {/* F2.6: Calculadora de ganancias — solo Tipo B (WodReps), siempre a la mano */}
+                    {(comp?.modeloCobro || comp?.ModeloCobro) === 'Comision' && (() => {
+                      const tarifa = Number(comp?.comisionPorAtletaSnapshot ?? comp?.ComisionPorAtletaSnapshot ?? 10);
+                      const precio = parseFloat(calcPrecio) || 0;
+                      const n = calcModo === 'equipo' ? Math.max(1, parseInt(calcIntegrantes) || 1) : 1;
+                      const comisionAtletify = tarifa * n;
+                      const stripeAprox = precio > 0 ? (precio * 0.041 + 3) : 0;
+                      const netoAtletaAbsorbe = Math.max(0, precio - comisionAtletify);
+                      const netoBoxAbsorbe = Math.max(0, precio - comisionAtletify - stripeAprox);
+                      return (
+                        <div className="col-12">
+                          <p className="cd-sublabel-header"><i className="fas fa-calculator" style={{ color: 'var(--success)' }} />Calculadora de ganancias</p>
+                          <p className="cd-switch-hint mb-2">Comisión de la plataforma: <strong>${tarifa} MXN por atleta</strong> inscrito.</p>
+                          <div className="d-flex gap-2 mb-2 flex-wrap">
+                            <button type="button" className={`cd-btn cd-btn--sm ${calcModo === 'individual' ? 'cd-btn--primary' : ''}`} onClick={() => setCalcModo('individual')}>Individual</button>
+                            <button type="button" className={`cd-btn cd-btn--sm ${calcModo === 'equipo' ? 'cd-btn--primary' : ''}`} onClick={() => setCalcModo('equipo')}>Por equipo</button>
+                          </div>
+                          <div className="row g-2">
+                            <div className="col-12 col-sm-6">
+                              <label className="cd-label mb-1 d-block">{calcModo === 'equipo' ? '¿Cuánto cobras por equipo?' : '¿Cuánto cobras por atleta?'}</label>
+                              <div className="cd-prefix-group"><span className="cd-prefix">$</span>
+                                <input type="number" min="0" className="cd-input" value={calcPrecio} onChange={e => setCalcPrecio(e.target.value)} placeholder="0.00" />
+                              </div>
+                            </div>
+                            {calcModo === 'equipo' && (
+                              <div className="col-12 col-sm-6">
+                                <label className="cd-label mb-1 d-block">Integrantes por equipo</label>
+                                <input type="number" min="1" className="cd-input" value={calcIntegrantes} onChange={e => setCalcIntegrantes(e.target.value)} />
+                              </div>
+                            )}
+                          </div>
+                          {precio > 0 && (
+                            <div className="small mt-2" style={{ color: 'var(--text-primary)' }}>
+                              <div>Comisión Atletify: <strong>−${comisionAtletify.toFixed(2)}</strong>{calcModo === 'equipo' ? ` (${n} × $${tarifa})` : ''}</div>
+                              <div>Si el <strong>atleta</strong> absorbe la comisión bancaria → recibes ≈ <strong>${netoAtletaAbsorbe.toFixed(2)}</strong></div>
+                              <div>Si <strong>tú</strong> absorbes la comisión bancaria → recibes ≈ <strong>${netoBoxAbsorbe.toFixed(2)}</strong></div>
+                              <div className="text-muted mt-1" style={{ fontSize: '10px' }}>* Comisión bancaria estimada (≈4.1% + $3); el cálculo exacto se aplica al cobrar.</div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
