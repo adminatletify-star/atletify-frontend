@@ -1,0 +1,291 @@
+/* ============================================
+   WOD DE HOY — Panel de coach/admin
+   Tarjeta autocontenida; usa la paleta Arctic Wolf (global.css).
+   Foco en CONTRASTE: títulos en --text-primary, instrucciones en --secondary.
+   ============================================ */
+
+.wdd-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Cabecera ── */
+.wdd-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.1rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
+  border-bottom: 1px solid var(--border);
+}
+
+.wdd-head-title { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+
+.wdd-eyebrow {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.wdd-eyebrow i { color: var(--primary); }
+
+.wdd-date {
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.2rem 0.7rem;
+}
+
+.wdd-head-actions { display: flex; align-items: center; gap: 0.5rem; }
+
+.wdd-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border-radius: 12px;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.wdd-btn--ghost { background: transparent; color: var(--secondary); }
+.wdd-btn--ghost:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+.wdd-btn--primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.wdd-btn--primary:hover { background: var(--primary-dark); }
+
+/* ── Cuerpo ── */
+.wdd-body { padding: 1rem 1.1rem 1.2rem; }
+
+.wdd-loading { display: flex; justify-content: center; padding: 2.5rem 0; }
+
+.wdd-empty { text-align: center; padding: 2.2rem 1rem; }
+.wdd-empty i { font-size: 2.2rem; color: var(--secondary); opacity: 0.55; margin-bottom: 0.6rem; }
+.wdd-empty-title { font-family: var(--font-heading); color: var(--text-primary); font-weight: 700; margin: 0 0 0.25rem; }
+.wdd-empty-sub { color: var(--secondary); font-size: 0.85rem; margin: 0; }
+
+/* ── Tabs entre WODs del día ── */
+.wdd-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+.wdd-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--secondary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.wdd-tab:hover { color: var(--text-primary); background: var(--bg-card-hover); }
+.wdd-tab--active { color: var(--text-primary); background: var(--bg-card-hover); border-width: 1.5px; }
+.wdd-tab-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── WOD seleccionado ── */
+.wdd-wod-title-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.65rem; }
+.wdd-wod-icon { font-size: 1.05rem; }
+.wdd-wod-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+.wdd-autor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  color: var(--secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.15rem 0.6rem;
+}
+
+.wdd-sinscore-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent-cool);
+  background: rgba(79, 195, 247, 0.12);
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  border-radius: 20px;
+  padding: 0.15rem 0.6rem;
+}
+
+.wdd-bloque-rondas {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--primary);
+  background: var(--primary-glow);
+  border-radius: 6px;
+  padding: 0.1rem 0.45rem;
+}
+
+/* Complex dentro del WOD */
+.wdd-complex {
+  list-style: none;
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  background: rgba(79, 195, 247, 0.05);
+  border-radius: 10px;
+  padding: 0.5rem 0.6rem;
+  margin: 0.4rem 0;
+}
+.wdd-complex-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--accent-cool);
+  margin-bottom: 0.25rem;
+}
+.wdd-complex-title strong { color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; }
+.wdd-complex-esquema { color: var(--secondary); font-size: 0.74rem; }
+.wdd-complex-list { padding-left: 0.5rem; border-left: 2px solid rgba(79, 195, 247, 0.3); }
+
+.wdd-clases { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.85rem; }
+.wdd-clase-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-cool);
+  background: rgba(79, 195, 247, 0.08);
+  border: 1px solid rgba(79, 195, 247, 0.25);
+  border-radius: 8px;
+  padding: 0.2rem 0.55rem;
+}
+
+/* ── Bloques / secciones ── */
+.wdd-bloque {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+  margin-bottom: 0.7rem;
+}
+.wdd-bloque-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.45rem; }
+.wdd-bloque-tags { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.wdd-bloque-tipo {
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+}
+.wdd-bloque-mod {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  background: rgba(245, 166, 35, 0.1);
+  border-radius: 6px;
+  padding: 0.1rem 0.45rem;
+}
+.wdd-bloque-tc {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--secondary);
+  white-space: nowrap;
+}
+.wdd-bloque-desc {
+  /* Instrucciones legibles (NO --text-muted) */
+  color: var(--secondary);
+  font-size: 0.86rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  margin: 0 0 0.5rem;
+}
+
+.wdd-ej-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+.wdd-ej-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.32rem 0;
+  border-top: 1px solid var(--border);
+  font-size: 0.86rem;
+}
+.wdd-ej-item:first-child { border-top: none; }
+.wdd-ej-reps {
+  font-family: var(--font-stats);
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 2.6rem;
+}
+.wdd-ej-name { color: var(--text-primary); font-weight: 500; flex: 1; }
+.wdd-ej-peso { color: var(--accent); font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
+
+/* ── Barra social ── */
+.wdd-social {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
+}
+.wdd-social-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--secondary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.wdd-social-btn:hover { color: var(--text-primary); background: var(--bg-card-hover); }
+.wdd-social-btn--like.wdd-social-btn--like { color: var(--success); border-color: rgba(46, 204, 113, 0.4); background: rgba(46, 204, 113, 0.08); }
+.wdd-social-btn--dislike.wdd-social-btn--dislike { color: var(--primary); border-color: rgba(230, 57, 70, 0.4); background: var(--primary-glow); }
+.wdd-social-btn--comments { color: var(--accent-cool); }
+.wdd-adaptar { color: var(--accent); border-color: rgba(245, 166, 35, 0.4); background: rgba(245, 166, 35, 0.08); }
+.wdd-adaptar:hover { color: #111; background: var(--accent); }
+.ms-auto { margin-left: auto; }
+
+@media (max-width: 575.98px) {
+  .wdd-btn-label { display: none; }
+  .wdd-wod-title { font-size: 1.1rem; }
+  .wdd-social { gap: 0.4rem; }
+  .wdd-adaptar { width: 100%; justify-content: center; margin-left: 0; margin-top: 0.25rem; }
+}

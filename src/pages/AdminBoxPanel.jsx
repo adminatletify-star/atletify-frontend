@@ -19,6 +19,7 @@ import AtletifyLoader from '../components/AtletifyLoader';
 import AnunciosEngine from '../components/AnunciosEngine';
 import NotificacionRow from '../components/NotificacionRow';
 import BotonActivarPush from '../components/BotonActivarPush';
+import WodDelDiaPanel from '../components/WodDelDiaPanel';
 
 function getPayCycles(diaCorte) {
   const dCorte = parseInt(diaCorte) || 7;
@@ -791,7 +792,11 @@ export default function AdminBoxPanel() {
             
             {/* MAIN COLUMN (LEFT) */}
             <div className="abp-main-col">
-              
+
+              {/* WOD DE HOY — el coach también es comunidad: ve todos los WODs del día,
+                  switchea entre ellos, comenta/reacciona y adapta el ajeno clonándolo. */}
+              {box && <div className="mb-4"><WodDelDiaPanel box={box} /></div>}
+
               {/* MIS CLASES DE HOY */}
               <section className="abp-glass-card mb-4" style={{ borderLeft: '4px solid var(--accent-cool)' }}>
                 <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary">
@@ -1407,6 +1412,10 @@ export default function AdminBoxPanel() {
 
           {/* COLUMNA PRINCIPAL (IZQUIERDA) */}
           <div className="abp-main-col">
+
+            {/* WOD DE HOY — admins también son comunidad: ven los WODs del día,
+                comentan/reaccionan y pueden adaptar uno clonándolo. */}
+            {box && <div className="mb-4"><WodDelDiaPanel box={box} /></div>}
 
             {/* GRID DE ACCESOS RÁPIDOS CATEGORIZADOS */}
             <section className="abp-section mb-4">

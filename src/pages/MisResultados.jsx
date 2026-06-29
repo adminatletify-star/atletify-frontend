@@ -491,6 +491,7 @@ export default function MisResultados() {
                     <h6 className="mr-bloque-tipo">
                       {bloque.tipoBloque}
                       <span className="mr-bloque-modalidad">({bloque.tipoModalidad})</span>
+                      {bloque.rondas ? <span className="mr-bloque-modalidad"> · {bloque.rondas} rondas</span> : null}
                     </h6>
                     {bloque.capTimeMinutos && (
                       <span className="mr-bloque-cap">TC: {bloque.capTimeMinutos}</span>

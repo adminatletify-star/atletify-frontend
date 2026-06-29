@@ -363,16 +363,22 @@ export default function PaseDeLista() {
 
   const handleScoreObjChange = (idAsistencia, metrica, valor) => {
     let finalValor = valor;
-    const mLower = metrica.toLowerCase();
-    if (mLower.includes('ronda')) {
-      finalValor = valor.replace(/[^0-9]/g, '');
-      if (parseInt(finalValor) > 50) finalValor = '50';
-    } else if (mLower.includes('rep')) {
-      finalValor = valor.replace(/[^0-9]/g, '');
-      if (parseInt(finalValor) > 100) finalValor = '100';
-    } else if (mLower.includes('peso')) {
-      finalValor = valor.replace(/[^0-9.]/g, '');
-      if (parseFloat(finalValor) > 500) finalValor = '500';
+    // La normalización numérica por nombre (rondas/reps/peso) solo aplica a las métricas
+    // del sistema (modo Auto). En modo Manual las métricas las define el coach y son texto
+    // libre: no se recortan (ej. "30 lb DB", "saltos dobles", "9:40 c/35lb").
+    const esAuto = wodActivo?.modoRanking === 'Auto';
+    if (esAuto) {
+      const mLower = metrica.toLowerCase();
+      if (mLower.includes('ronda')) {
+        finalValor = valor.replace(/[^0-9]/g, '');
+        if (parseInt(finalValor) > 50) finalValor = '50';
+      } else if (mLower.includes('rep')) {
+        finalValor = valor.replace(/[^0-9]/g, '');
+        if (parseInt(finalValor) > 100) finalValor = '100';
+      } else if (mLower.includes('peso')) {
+        finalValor = valor.replace(/[^0-9.]/g, '');
+        if (parseFloat(finalValor) > 500) finalValor = '500';
+      }
     }
     setAsistentes(prev => prev.map(a => a.idAsistencia === idAsistencia ? { ...a, scoreObj: { ...a.scoreObj, [metrica]: finalValor } } : a));
   };
@@ -592,6 +598,18 @@ export default function PaseDeLista() {
 
                       if (!wodActivo) return null;
 
+                      // 🧘 DÍA SIN MÉTRICA: descarga / cardio / pierna libre. Solo se pasa lista.
+                      if (wodActivo.requiereScore === false) {
+                        return (
+                          <div className="pdl-bloqueado p-3 rounded-4 bg-black bg-opacity-25 border border-info border-opacity-25 mt-3 d-flex align-items-center gap-3">
+                            <i className="fas fa-mug-hot text-info fs-4"></i>
+                            <p className="text-secondary small m-0">
+                              Este WOD <strong className="text-white">no requiere score</strong>: con marcar asistencia basta. Queda guardado en su historial.
+                            </p>
+                          </div>
+                        );
+                      }
+
                       // 🛡️ BLOQUEO ESTRICTO BASADO EN LA ELECCIÓN REAL DEL ATLETA
                       const esOpenGym = a.idWodElegido === null;
                       const esOtroWod = a.idWodElegido !== null && a.idWodElegido !== wodActivo.idEntrenamiento;
@@ -635,8 +653,12 @@ export default function PaseDeLista() {
 
                               const mLower = metrica.toLowerCase();
                               const isMainMetric = metrica === plantillaBase[0];
-                              const esTiempo = mLower.includes('time') || mLower.includes('tiempo') ||
-                                (isMainMetric && tipoMedida && (tipoMedida.toLowerCase().includes('time') || tipoMedida.toLowerCase().includes('tiempo')));
+                              // Solo la métrica PRINCIPAL puede ser cronómetro. Las métricas extra
+                              // son siempre texto libre (las define el coach y no están normalizadas),
+                              // aunque su nombre contenga "tiempo".
+                              const esTiempo = isMainMetric && (
+                                mLower.includes('time') || mLower.includes('tiempo') ||
+                                (tipoMedida && (tipoMedida.toLowerCase().includes('time') || tipoMedida.toLowerCase().includes('tiempo'))));
 
                               return (
                                 <div key={metrica} className="col-12 col-md-6 col-lg-4">
@@ -759,7 +781,12 @@ export default function PaseDeLista() {
                 />
 
                 <div className="d-flex flex-wrap gap-2 mt-3 align-items-center">
-                  {wodActivo.modoRanking === 'Auto' ? (
+                  {wodActivo.requiereScore === false ? (
+                    <span className="pdl-badge-sinscore">
+                      <i className="fas fa-mug-hot"></i>
+                      Sin score · solo asistencia
+                    </span>
+                  ) : wodActivo.modoRanking === 'Auto' ? (
                     <span className="pdl-badge-auto">
                       <i className="fas fa-robot"></i>
                       Automático ({wodActivo.metricaPrincipal})
@@ -770,7 +797,7 @@ export default function PaseDeLista() {
                       Ranking Manual
                     </span>
                   )}
-                  {wodActivo.modoRanking === 'Manual' && (
+                  {wodActivo.requiereScore !== false && wodActivo.modoRanking === 'Manual' && (
                     <button
                       onClick={() => navigate(`/ranking-manual/${wodActivo.idEntrenamiento}`)}
                       className="pdl-jueceo-btn"
@@ -782,26 +809,30 @@ export default function PaseDeLista() {
 
                 <p className="pdl-metricas-count">
                   <i className="fas fa-clipboard-list me-2 opacity-50"></i>
-                  {plantillaBase.length} {plantillaBase.length === 1 ? 'métrica' : 'métricas'} a evaluar por atleta
+                  {wodActivo.requiereScore === false
+                    ? 'Este WOD no requiere score: con marcar asistencia basta.'
+                    : `${plantillaBase.length} ${plantillaBase.length === 1 ? 'métrica' : 'métricas'} a evaluar por atleta`}
                 </p>
               </div>
 
-              {/* Input de nueva métrica */}
-              <div className="col-12 col-lg-5">
-                <div className="d-flex gap-2 align-items-center w-100">
-                  <input
-                    type="text"
-                    className="pdl-nueva-metrica-input"
-                    placeholder="Nueva métrica..."
-                    value={nuevaMetrica}
-                    onChange={(e) => setNuevaMetrica(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && agregarMetricaATodos()}
-                  />
-                  <button onClick={agregarMetricaATodos} className="pdl-agregar-metrica-btn">
-                    <i className="fas fa-plus me-1"></i>Agregar
-                  </button>
+              {/* Input de nueva métrica (no aplica en WODs sin score) */}
+              {wodActivo.requiereScore !== false && (
+                <div className="col-12 col-lg-5">
+                  <div className="d-flex gap-2 align-items-center w-100">
+                    <input
+                      type="text"
+                      className="pdl-nueva-metrica-input"
+                      placeholder="Nueva métrica..."
+                      value={nuevaMetrica}
+                      onChange={(e) => setNuevaMetrica(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && agregarMetricaATodos()}
+                    />
+                    <button onClick={agregarMetricaATodos} className="pdl-agregar-metrica-btn">
+                      <i className="fas fa-plus me-1"></i>Agregar
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
             </div>
           </div>
@@ -983,8 +1014,10 @@ export default function PaseDeLista() {
 
                   const mLower = metrica.toLowerCase();
                   const isMainMetric = metrica === plantillaBase[0];
-                  const esTiempo = mLower.includes('time') || mLower.includes('tiempo') ||
-                    (isMainMetric && tipoMedida && (tipoMedida.toLowerCase().includes('time') || tipoMedida.toLowerCase().includes('tiempo')));
+                  // Solo la métrica PRINCIPAL puede ser cronómetro; las extras son texto libre.
+                  const esTiempo = isMainMetric && (
+                    mLower.includes('time') || mLower.includes('tiempo') ||
+                    (tipoMedida && (tipoMedida.toLowerCase().includes('time') || tipoMedida.toLowerCase().includes('tiempo'))));
 
                   return (
                     <div key={metrica} className="col-12">

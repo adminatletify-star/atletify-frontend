@@ -90,30 +90,44 @@ export default function RankingManual() {
 
     setGuardando(true);
     try {
-      const box = JSON.parse(localStorage.getItem('box'));
+      const esAlfabetico = wod?.estiloPublicacionManual === 'Alfabetico';
 
       // 1. Guardar la posición de cada atleta en su Score JSON
       const promesasScores = atletas.map(a => {
         let oldScore = {};
         try { oldScore = JSON.parse(a.resultadoWod); } catch (e) { }
 
-        const pos = parseInt(a.posicionAsignada);
-
-        // 👈 REPARACIÓN 1: Generamos el texto visible para la Pizarra Pública
-        let textoVisible = isNaN(pos) ? '--' : `LUGAR ${pos}`;
-
-        // (Opcional) Si quieres que se vea la métrica principal junto al lugar:
-        if (!isNaN(pos) && metricasBase.length > 0 && oldScore[metricasBase[0]]) {
-          textoVisible = `LUGAR ${pos} (${oldScore[metricasBase[0]]})`;
+        let newScore;
+        if (esAlfabetico) {
+          // Publicación rápida: no hay posiciones; se muestran las métricas capturadas tal cual,
+          // y el leaderboard ordena por nombre (tipoMedida "ALFABETICO").
+          const metricsTxt = metricasBase
+            .map(m => a.scoreObj?.[m])
+            .filter(v => v != null && String(v).trim() !== '')
+            .join(' · ');
+          newScore = {
+            ...oldScore,
+            valorOrdenamiento: 0,
+            tipoMedida: "ALFABETICO",
+            textoDisplay: metricsTxt || '✓',
+            nombreWod: wod.titulo
+          };
+        } else {
+          const pos = parseInt(a.posicionAsignada);
+          // 👈 REPARACIÓN 1: Generamos el texto visible para la Pizarra Pública
+          let textoVisible = isNaN(pos) ? '--' : `LUGAR ${pos}`;
+          // (Opcional) Si quieres que se vea la métrica principal junto al lugar:
+          if (!isNaN(pos) && metricasBase.length > 0 && oldScore[metricasBase[0]]) {
+            textoVisible = `LUGAR ${pos} (${oldScore[metricasBase[0]]})`;
+          }
+          newScore = {
+            ...oldScore,
+            valorOrdenamiento: isNaN(pos) ? 9999 : pos,
+            tipoMedida: "MANUAL_TIME",
+            textoDisplay: textoVisible,
+            nombreWod: wod.titulo
+          };
         }
-
-        const newScore = {
-          ...oldScore,
-          valorOrdenamiento: isNaN(pos) ? 9999 : pos,
-          tipoMedida: "MANUAL_TIME",
-          textoDisplay: textoVisible,
-          nombreWod: wod.titulo
-        };
 
         return fetch(`${API_BASE}/asistencias/score/${a.idAsistencia}`, {
           method: 'PUT',
@@ -123,33 +137,16 @@ export default function RankingManual() {
       });
       await Promise.all(promesasScores);
 
-      // 👈 REPARACIÓN 2: SIEMPRE actualizamos el WOD (Para poner o quitar el candado)
-      const payloadWod = {
-        idBox: box.idBox,
-        titulo: wod.titulo,
-        fechaProgramada: wod.fechaProgramada.split('T')[0] + "T12:00:00Z",
-        estaPublicado: wod.estaPublicado,
-        notasAdicionales: wod.notasAdicionales || "",
-        clasesIds: wod.clasesIds || [],
-        modoRanking: wod.modoRanking,
-        metricaPrincipal: wod.metricaPrincipal,
-        rankingPublicado: publicar, // 👈 Si es true detona la bomba, si es false le pone candado
-        // Publicar/ocultar la pizarra NO es una edición del contenido del WOD:
-        // no debe ensuciar el historial ("Ver detalles") ni la auditoría.
-        omitirHistorial: true,
-        bloques: wod.bloques.map(b => ({
-          tipoBloque: b.tipoBloque, tipoModalidad: b.tipoModalidad, modalidadEquipo: b.modalidadEquipo,
-          capTimeMinutos: b.capTimeMinutos || null,
-          minutosExtraCap: b.minutosExtraCap ? parseInt(b.minutosExtraCap) : null,
-          descripcionLibre: b.descripcionLibre || "", plantillaJueceo: b.plantillaJueceo || "[]",
-          ejercicios: b.ejercicios.map(ej => ({
-            idEjercicio: parseInt(ej.idEjercicio), esquemaRepeticiones: ej.esquemaRepeticiones || "", pesoSugerido: ej.pesoSugerido || ""
-          }))
-        }))
-      };
-
-      const resWod = await fetch(`${API_BASE}/entrenamientos/${wod.idEntrenamiento}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadWod)
+      // Publicar/ocultar la pizarra es solo un toggle de estado del WOD: usamos el PATCH
+      // dedicado (el mismo que usa AdminPizarra) en vez de reenviar el WOD completo.
+      // Reenviar el WOD entero rompía la publicación: los ejercicios viajaban con
+      // idEjercicio (hoy null, la fuente es idEjercicioDiccionario) y el backend lanzaba
+      // "Cada ejercicio del WOD debe tener un ejercicio global" → 500 y la pizarra nunca
+      // se desbloqueaba. El PATCH no toca bloques/ejercicios, así que es seguro y atómico.
+      const resWod = await fetch(`${API_BASE}/entrenamientos/${wod.idEntrenamiento}/ranking-publicado`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ publicado: publicar })
       });
 
       if (!resWod.ok) throw new Error("Error al actualizar estado del WOD");
@@ -204,11 +201,18 @@ export default function RankingManual() {
           <i className="fas fa-radiation rm-banner__icon mt-1"></i>
           <div>
             <p className="rm-banner__title">Scores en Cuarentena</p>
-            <p className="rm-banner__text">
-              Los atletas listados abajo han terminado el WOD pero sus resultados están ocultos.
-              Analiza sus métricas, asígnales una posición (1, 2, 3…) y presiona Publicar.&nbsp;
-              <em>Puedes repetir números en empates. Los que dejes en blanco van al fondo.</em>
-            </p>
+            {wod?.estiloPublicacionManual === 'Alfabetico' ? (
+              <p className="rm-banner__text">
+                Este WOD se publica <strong>sin ordenar</strong>: los resultados capturados se mostrarán
+                tal cual, ordenados por nombre del atleta. Solo presiona <em>Publicar</em>.
+              </p>
+            ) : (
+              <p className="rm-banner__text">
+                Los atletas listados abajo han terminado el WOD pero sus resultados están ocultos.
+                Analiza sus métricas, asígnales una posición (1, 2, 3…) y presiona Publicar.&nbsp;
+                <em>Puedes repetir números en empates. Los que dejes en blanco van al fondo.</em>
+              </p>
+            )}
           </div>
         </div>
 
@@ -271,9 +275,11 @@ export default function RankingManual() {
                         <i className="fas fa-clipboard-check me-1"></i>{m}
                       </th>
                     ))}
-                    <th className="text-center rm-th-pos pe-4">
-                      <i className="fas fa-medal me-1"></i>Posición
-                    </th>
+                    {wod?.estiloPublicacionManual !== 'Alfabetico' && (
+                      <th className="text-center rm-th-pos pe-4">
+                        <i className="fas fa-medal me-1"></i>Posición
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -293,16 +299,18 @@ export default function RankingManual() {
                           <span className="rm-score-metric">{a.scoreObj[m] || '—'}</span>
                         </td>
                       ))}
-                      {/* 👈 EL CAMPO DONDE LIZ INGRESA EL LUGAR (1, 2, 3...) */}
-                      <td className="text-center pe-4">
-                        <input
-                          type="number" min="1"
-                          className="rm-position-input"
-                          value={a.posicionAsignada}
-                          onChange={(e) => handlePosicionChange(a.idAsistencia, e.target.value)}
-                          placeholder="#"
-                        />
-                      </td>
+                      {/* 👈 EL CAMPO DONDE LIZ INGRESA EL LUGAR (1, 2, 3...) — oculto en modo alfabético */}
+                      {wod?.estiloPublicacionManual !== 'Alfabetico' && (
+                        <td className="text-center pe-4">
+                          <input
+                            type="number" min="1"
+                            className="rm-position-input"
+                            value={a.posicionAsignada}
+                            onChange={(e) => handlePosicionChange(a.idAsistencia, e.target.value)}
+                            placeholder="#"
+                          />
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -322,7 +330,7 @@ export default function RankingManual() {
           <button onClick={() => handleGuardarYPublicar(true)} disabled={guardando} className="rm-btn-publish">
             {guardando
               ? <><span className="spinner-border spinner-border-sm"></span> Procesando...</>
-              : <><i className="fas fa-rocket"></i> Publicar Pizarra Oficial</>}
+              : <><i className="fas fa-rocket"></i> {wod?.estiloPublicacionManual === 'Alfabetico' ? 'Publicar resultados' : 'Publicar Pizarra Oficial'}</>}
           </button>
         </div>
       </div>

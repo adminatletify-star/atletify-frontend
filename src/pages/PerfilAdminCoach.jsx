@@ -11,6 +11,7 @@ import TipoSangrePicker from '../components/TipoSangrePicker';
 import BotonSeguro from '../components/BotonSeguro';
 import PasswordRulesHint from '../components/PasswordRulesHint';
 import ImageCropperModal from '../components/ImageCropperModal';
+import MarcasPersonalesPanel from '../components/MarcasPersonalesPanel';
 import usePasswordStrength from '../hooks/usePasswordStrength';
 import '../assets/css/MiPerfil.css';
 
@@ -433,6 +434,12 @@ export default function PerfilAdminCoach() {
                   </form>
                 </div>
               </div>
+
+              {/* — MIS MARCAS / PRs (el coach/admin también sube sus récords) — */}
+              <MarcasPersonalesPanel
+                idUsuario={userAuth?.id || userAuth?.idUsuario}
+                idBox={JSON.parse(localStorage.getItem('box') || 'null')?.idBox}
+              />
             </div>
 
             {/* Columna derecha — seguridad */}

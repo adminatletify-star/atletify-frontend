@@ -223,7 +223,8 @@
 }
 .wg-preview-desc {
   font-size: 0.8rem;
-  color: var(--text-muted);
+  /* Instrucciones del bloque: color legible (--secondary) en vez de --text-muted. */
+  color: var(--secondary);
   margin: 0.3rem 0;
   white-space: pre-wrap;
 }

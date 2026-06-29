@@ -739,3 +739,101 @@
   .crw-footer-actions { width: 100%; justify-content: flex-end; }
   .crw-plmodal { padding: 1.2rem; border-radius: 18px; }
 }
+
+/* ============================================
+   F2 — Sin-score toggles, rondas, COMPLEX
+   ============================================ */
+
+/* Grupo de chips para toggles (sin-score, estilo publicación, asignación) */
+.crw-score-toggle,
+.crw-asignar-toggle { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+/* Botón "Complex" / "Biblioteca" (variante del add-ejercicio) */
+.crw-add-complex-btn {
+  background: rgba(79, 195, 247, 0.12) !important;
+  border-color: rgba(79, 195, 247, 0.35) !important;
+  color: var(--accent-cool) !important;
+}
+
+/* Tarjeta de un COMPLEX dentro de la sección */
+.crw-complex-card {
+  border: 1px solid rgba(79, 195, 247, 0.35);
+  background: rgba(79, 195, 247, 0.05);
+  border-radius: 14px;
+  padding: 0.85rem;
+  margin-bottom: 0.85rem;
+}
+.crw-complex-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+.crw-complex-badge {
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  font-size: 0.72rem;
+  color: var(--accent-cool);
+  background: rgba(79, 195, 247, 0.12);
+  border-radius: 6px;
+  padding: 0.15rem 0.5rem;
+  white-space: nowrap;
+}
+.crw-complex-nombre, .crw-complex-esquema {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+}
+.crw-complex-nombre { flex: 1 1 140px; }
+.crw-complex-esquema { flex: 1 1 120px; }
+.crw-complex-nombre::placeholder, .crw-complex-esquema::placeholder { color: var(--text-muted); }
+.crw-complex-guardar {
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.4);
+  color: var(--accent);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+}
+.crw-complex-guardar:hover { background: var(--accent); color: #111; }
+.crw-complex-hint { color: var(--secondary); font-size: 0.74rem; margin: 0 0 0.5rem; }
+.crw-add-mov-complex {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent-cool);
+  background: transparent;
+  border: 1px dashed rgba(79, 195, 247, 0.4);
+  border-radius: 8px;
+  padding: 0.35rem 0.7rem;
+  margin-top: 0.35rem;
+  cursor: pointer;
+}
+.crw-add-mov-complex:hover { background: rgba(79, 195, 247, 0.1); }
+
+/* Selector de complex de la biblioteca */
+.crw-complex-biblioteca {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.6rem;
+  background: var(--bg-elevated);
+}
+.crw-complex-biblio-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  text-align: left;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.crw-complex-biblio-item:hover { border-color: var(--accent-cool); background: var(--bg-card-hover); }
+.crw-complex-biblio-nombre { font-weight: 700; color: var(--text-primary); font-size: 0.85rem; }
+.crw-complex-biblio-detalle { color: var(--secondary); font-size: 0.76rem; }

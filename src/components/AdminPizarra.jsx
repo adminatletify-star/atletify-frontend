@@ -132,6 +132,11 @@ export default function AdminPizarra({ box }) {
       return res.claseHora === filtroCategoria;
     });
 
+    // Publicación alfabética: no hay ranking. Numeración simple por orden (ya viene por nombre del backend).
+    if (wodActual.estiloPublicacionManual === 'Alfabetico') {
+      return filtrados.map((res, i) => ({ ...res, posicion: i + 1, sinRanking: true }));
+    }
+
     // Asignar posición con empates: mismo valorOrdenamiento + misma modalidad RX = misma posición
     let currentRank = 0;
     let lastValor = null;
@@ -402,7 +407,8 @@ export default function AdminPizarra({ box }) {
                         return (
                           <tr key={`${res.idUsuario}-${res.idClase}`} className="ap-tr">
                             <td className="ap-td-pos">
-                              {pos === 1 ? <i className="fas fa-medal ap-medal-gold"></i> :
+                              {res.sinRanking ? <span className="ap-pos-num">{pos}</span> :
+                                pos === 1 ? <i className="fas fa-medal ap-medal-gold"></i> :
                                 pos === 2 ? <i className="fas fa-medal ap-medal-silver"></i> :
                                   pos === 3 ? <i className="fas fa-medal ap-medal-bronze"></i> :
                                     <span className="ap-pos-num">{pos}</span>}

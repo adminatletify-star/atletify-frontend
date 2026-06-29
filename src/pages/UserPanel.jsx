@@ -15,6 +15,7 @@ import NotificacionRow from '../components/NotificacionRow';
 import BotonActivarPush from '../components/BotonActivarPush';
 import EjercicioDetailModal from '../components/EjercicioDetailModal';
 import ModalComentariosWod from '../components/ModalComentariosWod';
+import WodsPersonalesAtleta from '../components/WodsPersonalesAtleta';
 import { evaluarNivelClase } from '../utils/nivelClase';
 import { formatear12 } from '../components/HoraPicker';
 import ModalCompararPRs from '../components/ModalCompararPRs';
@@ -1450,6 +1451,11 @@ export default function UserPanel() {
                                   <i className="fas fa-dumbbell up-wod-icon"></i>
                                 )}
                                 <span className="up-wod-title">{wod.titulo}</span>
+                                {wod.requiereScore === false && (
+                                  <span className="up-sinscore-badge">
+                                    <i className="fas fa-mug-hot me-1"></i>Sin score · solo asistencia
+                                  </span>
+                                )}
                               </div>
 
                               {wod.bloques?.map(bloque => (
@@ -1458,6 +1464,9 @@ export default function UserPanel() {
                                     <div className="d-flex align-items-center gap-2 flex-wrap">
                                       <span className="up-bloque-tipo">{bloque.tipoBloque}</span>
                                       <span className="up-bloque-mod">{bloque.tipoModalidad}</span>
+                                      {bloque.rondas ? (
+                                        <span className="up-bloque-rondas"><i className="fas fa-repeat me-1"></i>{bloque.rondas} rondas</span>
+                                      ) : null}
                                     </div>
                                     {bloque.capTimeMinutos && (
                                       <span className="up-bloque-tc">
@@ -1537,6 +1546,9 @@ export default function UserPanel() {
                   )}
                 </div>
               </div>
+
+              {/* WODs PARA TI — rutinas personalizadas asignadas a este atleta */}
+              <WodsPersonalesAtleta idUsuario={user?.idUsuario || user?.id} />
 
               {/* PIZARRA */}
               {getWodsVisibles().length > 0 && (() => {

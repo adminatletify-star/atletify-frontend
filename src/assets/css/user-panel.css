@@ -1173,9 +1173,80 @@
   flex-shrink: 0;
 }
 .up-bloque-body { padding: 0.75rem 0.9rem; }
+
+/* Badge "sin score" (día de descarga/cardio) en la tarjeta del WOD del atleta */
+.up-sinscore-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--accent-cool, #4FC3F7);
+  background: rgba(79, 195, 247, 0.12);
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  border-radius: 20px;
+  padding: 0.12rem 0.6rem;
+  margin-left: 0.5rem;
+}
+.up-bloque-rondas {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--primary, #E63946);
+  background: var(--primary-glow, rgba(230,57,70,0.25));
+  border-radius: 6px;
+  padding: 0.1rem 0.45rem;
+}
+
+/* Captura de WODs personales (WodsPersonalesAtleta) */
+.wpa-captura {
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border, rgba(255,255,255,0.06));
+}
+.wpa-input {
+  width: 100%;
+  background: var(--bg-input, #1A1A24);
+  border: 1px solid var(--border, rgba(255,255,255,0.06));
+  border-radius: 8px;
+  color: var(--text-primary, #F0F0F5);
+  padding: 0.45rem 0.6rem;
+  font-size: 0.9rem;
+}
+.wpa-input::placeholder { color: var(--text-muted, #6B7280); }
+.wpa-btn {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--secondary, #A8B2D1);
+  background: var(--bg-input, #1A1A24);
+  border: 1px solid var(--border, rgba(255,255,255,0.06));
+  border-radius: 10px;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+}
+.wpa-btn--primary { color: #fff; background: var(--primary, #E63946); border-color: var(--primary, #E63946); }
+.wpa-btn--primary:hover { background: var(--primary-dark, #B82D38); }
+.wpa-rx {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--secondary, #A8B2D1);
+  background: var(--bg-input, #1A1A24);
+  border: 1px solid var(--border, rgba(255,255,255,0.06));
+  border-radius: 8px;
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+}
+.wpa-rx--on { color: var(--accent, #F5A623); border-color: rgba(245,166,35,0.5); background: rgba(245,166,35,0.1); }
 .up-bloque-desc {
   font-size: 0.84rem;
-  color: var(--text-muted);
+  /* Antes --text-muted (#6B7280): casi invisible sobre el fondo oscuro.
+     --secondary (#A8B2D1) es el color legible que ya usan las instrucciones
+     de ejercicios y los WODs de competencia. */
+  color: var(--secondary);
   white-space: pre-wrap;
   line-height: 1.65;
   margin-bottom: 0.7rem;

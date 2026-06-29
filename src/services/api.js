@@ -136,6 +136,34 @@ export const api = {
     return handleResponse(response);
   },
 
+  // === Biblioteca de complex reutilizables del box ===
+  obtenerComplexGuardados: async (idBox) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/complex-guardados/box/${idBox}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
+  crearComplexGuardado: async (datos) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/complex-guardados`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(datos)
+    });
+    return handleResponse(response);
+  },
+
+  eliminarComplexGuardado: async (id) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/complex-guardados/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
   // === Capa social del WOD (like/dislike, comentarios, reacciones) ===
   reaccionarWod: async (idEntrenamiento, tipo) => {
     const token = localStorage.getItem('token');
