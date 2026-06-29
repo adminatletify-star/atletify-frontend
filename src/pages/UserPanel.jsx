@@ -1883,7 +1883,7 @@ export default function UserPanel() {
               </div>
 
               {/* Atletify Games */}
-              <div className="up-card up-card-clickable" onClick={() => navigate('/portal-competencias')}>
+              <div className="up-card up-card-clickable" onClick={() => navigate('/competencias')}>
                 <div className="up-card-header">
                   <h6 className="up-card-title">
                     <i className="fas fa-trophy text-warning me-2"></i>Atletify Games
@@ -1892,7 +1892,7 @@ export default function UserPanel() {
                 </div>
                 <div className="px-4 pb-4 pt-3">
                   <p className="text-secondary small mb-3" style={{ fontFamily: 'var(--font-body)' }}>Leaderboard en vivo. Entra a la arena y compite.</p>
-                  <button onClick={(e) => { e.stopPropagation(); navigate('/portal-competencias'); }} className="up-btn up-btn-accent up-btn-sm up-btn-block">
+                  <button onClick={(e) => { e.stopPropagation(); navigate('/competencias'); }} className="up-btn up-btn-accent up-btn-sm up-btn-block">
                     ENTRAR A LA ARENA
                   </button>
                 </div>
