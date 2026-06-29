@@ -719,7 +719,7 @@ export default function AdminCompetencias() {
           {(user?.rol === 'Developer' || user?.rol === 'AdminBox') && (
             <button
               className={`acomp-btn-nueva ${mostrarFormComp ? 'acomp-btn-nueva--cancelar' : ''}`}
-              onClick={() => { setTipoNuevaComp('Paquete'); setPlanSeleccionado(null); setPrecioCalc(''); setMostrarFormComp(!mostrarFormComp); }}
+              onClick={() => { setTipoNuevaComp('Paquete'); setPlanSeleccionado(null); setMostrarFormComp(!mostrarFormComp); }}
             >
               <i className={`fas ${mostrarFormComp ? 'fa-times' : 'fa-plus'}`}></i>
               <span className="d-none d-sm-inline">{mostrarFormComp ? 'Cancelar' : 'Nueva'}</span>

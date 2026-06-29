@@ -380,7 +380,7 @@ export function AuthProvider({ children }) {
   // === IMPERSONACIÓN (F3 / SLICE 2) ===
   // Guarda la sesión del Developer en un slot APARTE (NO en cuentasGuardadas) y activa la
   // sesión del usuario suplantado con el token de impersonación (solo lectura, corto).
-  const impersonar = (impToken, suplantadoUsuario) => {
+  const impersonar = (impToken, suplantadoUsuario, box) => {
     const devSesion = {
       usuario,
       token: token || localStorage.getItem('token'),
@@ -393,7 +393,9 @@ export function AuthProvider({ children }) {
     setToken(impToken);
     localStorage.setItem('usuario', JSON.stringify(suplantadoUsuario));
     localStorage.setItem('token', impToken);
-    localStorage.removeItem('box'); // se repuebla con /entitlements/me del suplantado
+    // Contexto del box del suplantado (igual que un login normal), para que las páginas que
+    // leen localStorage 'box' (idBox, módulos, comunidad, etc.) carguen sus datos.
+    if (box) localStorage.setItem('box', JSON.stringify(box)); else localStorage.removeItem('box');
     if (suplantadoUsuario?.idBoxPredeterminado) {
       setBoxActivo(suplantadoUsuario.idBoxPredeterminado);
       localStorage.setItem('boxActivo', JSON.stringify(suplantadoUsuario.idBoxPredeterminado));
@@ -449,6 +451,10 @@ export function AuthProvider({ children }) {
         body: JSON.stringify({ idUsuario: suplantadoId || 0 }),
       });
     } catch { /* best-effort */ }
+
+    // Volver al panel del Developer (Centro de Control vive en /dashboard) con un reload limpio,
+    // así la app se re-inicializa por completo como Developer.
+    window.location.href = '/dashboard';
   };
 
   // Estado de impersonación derivado del CLAIM del token (NO de usuario.rol).

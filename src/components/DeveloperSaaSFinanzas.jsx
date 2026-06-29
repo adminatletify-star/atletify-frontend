@@ -145,7 +145,7 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
     try {
       const data = await postDeveloper('impersonar-por-correo', { correo, motivo: f3CuentaMotivo.trim() || null });
       if (!data?.token || !data?.usuario?.id) throw new Error('Respuesta de impersonación inválida del servidor.');
-      impersonar(data.token, data.usuario);
+      impersonar(data.token, data.usuario, data.box);
       const rol = data.usuario?.rol;
       window.location.href = (rol === 'AdminBox' || rol === 'Coach') ? '/admin-box-panel' : '/user-panel';
     } catch (e) {
