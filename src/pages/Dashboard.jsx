@@ -993,20 +993,20 @@ export default function Dashboard() {
                     <div className="col-12 col-lg-6">
                       <div className="cfg-card cfg-card--accent">
                         <div className="cfg-card-head">
-                          <div className="cfg-card-title"><i className="fas fa-trophy"></i> Planes SaaS</div>
+                          <div className="cfg-card-title"><i className="fas fa-trophy"></i> Paquetes de Competencia (Tipo A)</div>
                           <button type="button" className="cfg-add-btn"
                             onClick={() => {
                               const newPlan = { id: Date.now(), nombre: '', precio: 0, dias: 1, atletasIncluidos: 50, precioAtletaExtra: 0 };
                               setConfiguracion(prev => ({ ...prev, planesCompetenciaArray: [...(prev.planesCompetenciaArray || []), newPlan] }));
                             }}>
-                            <i className="fas fa-plus"></i> <span className="cfg-add-btn-label">Añadir Plan</span>
+                            <i className="fas fa-plus"></i> <span className="cfg-add-btn-label">Añadir Paquete</span>
                           </button>
                         </div>
 
                         {(!configuracion.planesCompetenciaArray || configuracion.planesCompetenciaArray.length === 0) && (
                           <div className="empty-state" style={{ padding: '1.5rem' }}>
                             <i className="fas fa-trophy"></i>
-                            <p>No hay planes configurados.</p>
+                            <p>No hay paquetes de competencia configurados.</p>
                           </div>
                         )}
 

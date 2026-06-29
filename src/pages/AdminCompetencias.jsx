@@ -20,7 +20,7 @@ export default function AdminCompetencias() {
   const [procesando, setProcesando] = useState(false);
 
   const [mostrarFormComp, setMostrarFormComp] = useState(false);
-  const [formComp, setFormComp] = useState({ nombre: '', fechaInicio: '', fechaFin: '' });
+  // formComp eliminado en F2.4 (la creación usa nombreCompetenciaExpress + comprarPlanYCrear).
 
   const [compSeleccionada, setCompSeleccionada] = useState(null);
   const [compParaPagar, setCompParaPagar] = useState(null);
@@ -62,17 +62,20 @@ export default function AdminCompetencias() {
     const u = JSON.parse(localStorage.getItem('usuario'));
     if (!b || (u?.rol !== 'AdminBox' && u?.rol !== 'Developer')) { navigate('/login'); return; }
     setUser(u);
-    setBox(b); 
+    setBox(b);
+
+    // F2.4: cargar SIEMPRE la config pública (trae los paquetes de competencia y la comisión por atleta)
+    // para que el formulario "Por paquete" liste los paquetes también para Developer / módulo activo.
+    fetch(`${import.meta.env.VITE_API_URL}/api/homepublic/configuracion`)
+      .then(res => res.json())
+      .then(data => setConfigPublica(data))
+      .catch(err => console.error('Error fetching public config', err));
 
     // Revisar si el módulo está inactivo (tanto camelCase como PascalCase)
     const isModuloInactivo = (b.moduloCompetenciasActivo === false || b.ModuloCompetenciasActivo === false);
 
     if (isModuloInactivo && u.rol !== 'Developer') {
       setLoading(false);
-      fetch(`${import.meta.env.VITE_API_URL}/api/homepublic/configuracion`)
-        .then(res => res.json())
-        .then(data => setConfigPublica(data))
-        .catch(err => console.error('Error fetching public config', err));
     } else {
       cargarCompetencias(b.idBox);
     }
@@ -85,22 +88,8 @@ export default function AdminCompetencias() {
     } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
-  const crearCompetencia = async (e) => {
-    e.preventDefault(); setProcesando(true);
-    try {
-      const payload = { nombre: formComp.nombre, idBox: box.idBox || box.IdBox };
-      // Solo enviar fechas si el usuario las puso
-      if (formComp.fechaInicio) payload.fechaInicio = formComp.fechaInicio;
-      if (formComp.fechaFin) payload.fechaFin = formComp.fechaFin;
-      const res = await fetch(COMPETENCIAS_ENDPOINT, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        setFormComp({ nombre: '', fechaInicio: '', fechaFin: '' });
-        setMostrarFormComp(false); cargarCompetencias(box.idBox || box.IdBox);
-      } else { const err = await res.json(); alert(`Error: ${err.mensaje}`); }
-    } catch (err) { alert('Error de conexión.'); } finally { setProcesando(false); }
-  };
+  // F2.4: crearCompetencia (POST /competencias, Developer-only y roto para AdminBox) ELIMINADO.
+  // Toda la creación va ahora por comprarPlanYCrear (comprar-plan-crear) con selector Tipo A/B.
 
   const eliminarCompetencia = async (idComp, nombreComp) => {
     if (!await window.wpConfirm(`¿Seguro que quieres ELIMINAR en cascada la competencia "${nombreComp}"? Se borrarán todas sus categorías, inscripciones, pagos y scores. Esta acción NO se puede deshacer.`)) return;
