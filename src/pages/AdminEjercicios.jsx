@@ -127,6 +127,7 @@ const FORM_INIT = {
   equipamiento: 'Libre',
   metricaPrincipal: 'Repeticiones',
   esLevantamientoOlimpico: false,
+  esSkill: false,
   categoriaRecomendada: 'Todos',
   instruccion: '',
   videoUrl: '',
@@ -244,6 +245,7 @@ export default function AdminEjercicios() {
       equipamiento: ej.equipamiento || 'Libre',
       metricaPrincipal: ej.metricaPrincipal || 'Repeticiones',
       esLevantamientoOlimpico: Boolean(ej.esLevantamientoOlimpico),
+      esSkill: Boolean(ej.esSkill),
       categoriaRecomendada: ej.categoriaRecomendada || 'Todos',
       subnombre: ej.subnombre || '',
       videoUrl: ej.videoUrl || '',
@@ -415,6 +417,18 @@ export default function AdminEjercicios() {
                     <span>
                       <strong>Levantamiento Olímpico o de Fuerza</strong>
                       <small>Guarda PR en el perfil del atleta.</small>
+                    </span>
+                  </label>
+
+                  <label className="ae-olimpico-switch">
+                    <input
+                      type="checkbox"
+                      checked={form.esSkill}
+                      onChange={e => setForm(f => ({ ...f, esSkill: e.target.checked }))}
+                    />
+                    <span>
+                      <strong>Es una Skill</strong>
+                      <small>Movimiento avanzado (muscle up, rope climb…). El atleta marca si lo domina.</small>
                     </span>
                   </label>
 

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import BotonSeguro from '../BotonSeguro';
 import { formatNivelGamer } from '../NivelGamerPicker';
+import FotoModal from '../FotoModal';
 import './WolfLanyard.css';
 
 // ── Spring physics constants ───────────────────────────────────────
@@ -13,6 +14,7 @@ const CORD_BASE  = 64;    // altura base de la cuerda (px)
 export default function WolfLanyard({
   lobo,
   marcas = [],
+  skills = [],
   cargandoMarcas = false,
   miId,
   reaccionesResumen = {},
@@ -42,6 +44,7 @@ export default function WolfLanyard({
   /* ── Render state (x, y, velocidad x para tilt) ── */
   const [rs, setRs]       = useState({ x: 0, y: 0, vx: 0 });
   const [isDrag, setIsDrag] = useState(false);
+  const [fotoGrande, setFotoGrande] = useState(false); // lightbox de la foto
 
   /* ── Tick de física (spring mass-damper) ── */
   const tick = useCallback((time) => {
@@ -218,7 +221,15 @@ export default function WolfLanyard({
               <div className="wl-avatar-section">
                 <div className={`wl-avatar ${isCoach ? 'wl-avatar-coach' : 'wl-avatar-atleta'}`}>
                   {lobo.foto
-                    ? <img src={lobo.foto} alt={lobo.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                    ? <img
+                        src={lobo.foto}
+                        alt={lobo.nombre}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit', cursor: 'zoom-in' }}
+                        onMouseDown={stopDrag}
+                        onTouchStart={stopDrag}
+                        onClick={(e) => { e.stopPropagation(); setFotoGrande(true); }}
+                        title="Ver foto en grande"
+                      />
                     : (lobo.apodo ? lobo.apodo.charAt(0).toUpperCase() : lobo.nombre.charAt(0).toUpperCase())
                   }
                   {isCoach && <span className="wl-crown"><i className="fas fa-crown"></i></span>}
@@ -320,6 +331,23 @@ export default function WolfLanyard({
                 )}
               </div>
 
+              {/* Skills */}
+              {skills.length > 0 && (
+                <div className="wl-section">
+                  <div className="wl-section-title">
+                    <i className="fas fa-star"></i> SKILLS
+                    <span className="wl-section-count">{skills.length}</span>
+                  </div>
+                  <div className="wl-skills-grid">
+                    {skills.map(sk => (
+                      <span key={sk.id} className="wl-skill-chip">
+                        <i className={sk.icono || 'fas fa-star'}></i>{sk.nombre}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* ADN Deportivo */}
               {(lobo.movimientoFavorito || lobo.movimientoOdiado) && (
                 <div className="wl-section">
@@ -390,6 +418,8 @@ export default function WolfLanyard({
           </div>{/* end card */}
         </div>{/* end draggable */}
       </div>
+
+      <FotoModal src={fotoGrande ? lobo.foto : null} alt={lobo.nombre} onCerrar={() => setFotoGrande(false)} />
     </div>
   );
 }

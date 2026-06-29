@@ -348,6 +348,17 @@ export default function CreadorWods() {
     }
   };
 
+  const borrarComplexGuardado = async (id, e) => {
+    e?.stopPropagation?.();
+    if (!await window.wpConfirm('¿Eliminar este complex de la biblioteca?')) return;
+    try {
+      await api.eliminarComplexGuardado(id);
+      if (box) cargarComplexGuardados(box.idBox);
+    } catch (err) {
+      alert(err.message || 'No se pudo eliminar el complex.');
+    }
+  };
+
   // --- MAGIA DE LA PLANTILLA DE JUECEO ---
   const agregarMetrica = (bIndex) => {
     const nuevos = [...bloques];
@@ -1059,19 +1070,29 @@ export default function CreadorWods() {
                       {complexGuardados.length === 0 ? (
                         <small className="crw-empty-text fst-italic">No tienes complex guardados todavía.</small>
                       ) : complexGuardados.map(c => (
-                        <button
-                          type="button"
-                          key={c.idComplexGuardado}
-                          className="crw-complex-biblio-item"
-                          onClick={() => insertarComplexGuardado(bIndex, c)}
-                        >
-                          <span className="crw-complex-biblio-nombre">
-                            <i className="fas fa-layer-group me-1"></i>{c.nombre}{c.esquemaRepeticiones ? ` · ${c.esquemaRepeticiones}` : ''}
-                          </span>
-                          <span className="crw-complex-biblio-detalle">
-                            {(c.ejercicios || []).map(e => `${e.esquemaRepeticiones || ''} ${e.nombre}`.trim()).join(' + ')}
-                          </span>
-                        </button>
+                        <div key={c.idComplexGuardado} className="crw-complex-biblio-item">
+                          <button
+                            type="button"
+                            className="crw-complex-biblio-insertar"
+                            onClick={() => insertarComplexGuardado(bIndex, c)}
+                            title="Insertar este complex en la sección"
+                          >
+                            <span className="crw-complex-biblio-nombre">
+                              <i className="fas fa-layer-group me-1"></i>{c.nombre}{c.esquemaRepeticiones ? ` · ${c.esquemaRepeticiones}` : ''}
+                            </span>
+                            <span className="crw-complex-biblio-detalle">
+                              {(c.ejercicios || []).map(e => `${e.esquemaRepeticiones || ''} ${e.nombre}`.trim()).join(' + ')}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            className="crw-complex-biblio-del"
+                            onClick={(e) => borrarComplexGuardado(c.idComplexGuardado, e)}
+                            title="Eliminar de la biblioteca"
+                          >
+                            <i className="fas fa-trash"></i>
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}

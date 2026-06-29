@@ -65,7 +65,8 @@ export default function AdminPizarra({ box }) {
   // WODs de la fecha seleccionada
   const wodsDelDia = useMemo(() => {
     if (!fechaSel) return [];
-    return todosLosWods.filter(w => (w.fechaProgramada || '').startsWith(fechaSel));
+    // Los WODs personales no tienen pizarra de clase.
+    return todosLosWods.filter(w => (w.fechaProgramada || '').startsWith(fechaSel) && !w.esPersonal);
   }, [todosLosWods, fechaSel]);
 
   // WOD activo: si el seleccionado existe en la lista de hoy, úsalo; si no,

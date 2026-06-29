@@ -164,6 +164,27 @@ export const api = {
     return handleResponse(response);
   },
 
+  // === Skills (movimientos avanzados que el atleta domina) ===
+  obtenerSkillsDisponibles: async () => {
+    const response = await fetch(`${API_BASE_URL}/skills/disponibles`);
+    return handleResponse(response);
+  },
+
+  obtenerSkillsUsuario: async (idUsuario) => {
+    const response = await fetch(`${API_BASE_URL}/skills/usuario/${idUsuario}`);
+    return handleResponse(response);
+  },
+
+  setSkillsUsuario: async (idUsuario, idsSkills) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/skills/usuario/${idUsuario}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ idsSkills })
+    });
+    return handleResponse(response);
+  },
+
   // === Capa social del WOD (like/dislike, comentarios, reacciones) ===
   reaccionarWod: async (idEntrenamiento, tipo) => {
     const token = localStorage.getItem('token');

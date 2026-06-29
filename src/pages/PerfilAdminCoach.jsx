@@ -12,6 +12,7 @@ import BotonSeguro from '../components/BotonSeguro';
 import PasswordRulesHint from '../components/PasswordRulesHint';
 import ImageCropperModal from '../components/ImageCropperModal';
 import MarcasPersonalesPanel from '../components/MarcasPersonalesPanel';
+import SkillsAtletaPanel from '../components/SkillsAtletaPanel';
 import usePasswordStrength from '../hooks/usePasswordStrength';
 import '../assets/css/MiPerfil.css';
 
@@ -440,6 +441,9 @@ export default function PerfilAdminCoach() {
                 idUsuario={userAuth?.id || userAuth?.idUsuario}
                 idBox={JSON.parse(localStorage.getItem('box') || 'null')?.idBox}
               />
+
+              {/* — MIS SKILLS — */}
+              <SkillsAtletaPanel idUsuario={userAuth?.id || userAuth?.idUsuario} />
             </div>
 
             {/* Columna derecha — seguridad */}

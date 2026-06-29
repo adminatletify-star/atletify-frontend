@@ -1654,3 +1654,34 @@ button.mp-hero-badge--likes:active { transform: scale(0.94); }
 }
 
 
+
+/* ── Skills del atleta (checkboxes tipo chip) ── */
+.skill-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.skill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--bg-input, #1A1A24);
+  border: 1px solid var(--border, rgba(255,255,255,0.06));
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  color: var(--secondary, #A8B2D1);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  user-select: none;
+}
+.skill-chip:hover { border-color: var(--accent-cool, #4FC3F7); }
+.skill-chip i:first-child { color: var(--accent-cool, #4FC3F7); }
+.skill-chip--on {
+  color: #111;
+  background: var(--accent, #F5A623);
+  border-color: var(--accent, #F5A623);
+}
+.skill-chip--on i:first-child { color: #111; }
+.skill-chip-check { font-size: 0.75rem; }

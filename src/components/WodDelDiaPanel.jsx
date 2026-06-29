@@ -72,6 +72,7 @@ export default function WodDelDiaPanel({ box }) {
   const [idSel, setIdSel] = useState(null);
   const [social, setSocial] = useState({}); // { [idEntrenamiento]: {likes, dislikes, miReaccion, totalComentarios} }
   const [comentariosWod, setComentariosWod] = useState(null);
+  const [personales, setPersonales] = useState([]); // rutinas personalizadas del día (sección aparte)
 
   const idBox = box?.idBox;
 
@@ -86,7 +87,10 @@ export default function WodDelDiaPanel({ box }) {
       if (res.ok) {
         const all = await res.json();
         const hoy = fechaHoyLocal();
-        const delDia = all.filter(w => (w.fechaProgramada || '').includes(hoy) && w.estaPublicado);
+        const publicadosHoy = all.filter(w => (w.fechaProgramada || '').includes(hoy) && w.estaPublicado);
+        // Los WODs personales NO van al feed de clases: se muestran en su sección aparte.
+        const delDia = publicadosHoy.filter(w => !w.esPersonal);
+        setPersonales(publicadosHoy.filter(w => w.esPersonal));
         setWods(delDia);
         setIdSel(prev => delDia.some(w => w.idEntrenamiento === prev)
           ? prev
@@ -148,6 +152,9 @@ export default function WodDelDiaPanel({ box }) {
           </span>
         </div>
         <div className="wdd-head-actions">
+          <button className="wdd-btn wdd-btn--ghost" onClick={() => navigate('/comunidad')} title="Ir a la comunidad del box">
+            <i className="fas fa-users"></i><span className="wdd-btn-label">Comunidad</span>
+          </button>
           <button className="wdd-btn wdd-btn--ghost" onClick={() => navigate('/calendario-wods')} title="Ir al calendario de WODs">
             <i className="far fa-calendar-alt"></i><span className="wdd-btn-label">Calendario</span>
           </button>
@@ -268,6 +275,32 @@ export default function WodDelDiaPanel({ box }) {
               </article>
             )}
           </>
+        )}
+
+        {/* Sección aislada: rutinas personalizadas del día (solo staff las ve aquí) */}
+        {!loading && personales.length > 0 && (
+          <div className="wdd-personales">
+            <p className="wdd-personales-title">
+              <i className="fas fa-user-check"></i> Rutinas personalizadas de hoy
+              <span className="wdd-personales-count">{personales.length}</span>
+            </p>
+            {personales.map(p => (
+              <div key={p.idEntrenamiento} className="wdd-personal-row">
+                <div className="wdd-personal-info">
+                  <span className="wdd-personal-nombre">{p.titulo}</span>
+                  <span className="wdd-personal-atletas">
+                    <i className="fas fa-users"></i>
+                    {(p.atletasAsignados || []).length > 0
+                      ? (p.atletasAsignados || []).map(a => a.usuario?.apodo || a.usuario?.nombre || 'Atleta').join(', ')
+                      : 'Sin atletas'}
+                  </span>
+                </div>
+                <button className="wdd-social-btn wdd-adaptar" onClick={() => navigate(`/editar-wod/${p.idEntrenamiento}`)} title="Ver / editar / clonar">
+                  <i className="fas fa-pen"></i><span>Ver</span>
+                </button>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 

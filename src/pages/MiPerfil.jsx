@@ -5,6 +5,7 @@ import { USUARIOS_ENDPOINT, VENTAS_ENDPOINT } from '../services/api';
 import DateWheelPicker from '../components/DateWheelPicker';
 import BackButton from '../components/BackButton';
 import AtletifyLoader from '../components/AtletifyLoader';
+import SkillsAtletaPanel from '../components/SkillsAtletaPanel';
 import EstadoDelDiaPicker from '../components/EstadoDelDiaPicker';
 import NivelGamerPicker, { formatNivelGamer } from '../components/NivelGamerPicker';
 import GeneroPicker from '../components/GeneroPicker';
@@ -1101,6 +1102,8 @@ export default function MiPerfil() {
           {/* ══ PANEL: RÉCORDS ══ */}
           {tabActiva === 'records' && (
           <div id="mp-panel-records" role="tabpanel" aria-labelledby="mp-tab-records" className="mp-tab-panel">
+            {/* Skills que domina el atleta */}
+            <SkillsAtletaPanel idUsuario={userAuth?.id || userAuth?.idUsuario} />
             <div className={`mp-card ${form.estatus === 'TemporalmenteInactivo' ? 'mp-form-frozen' : ''}`}>
               <div className="mp-card-body-lg">
 

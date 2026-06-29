@@ -681,7 +681,9 @@ export default function UserPanel() {
       const resWods = await fetch(`${API_BASE}/entrenamientos/box/${idBox}`);
       if (resWods.ok) {
         const todosWods = await resWods.json();
-        const wodsDelDia = todosWods.filter(w => w.fechaProgramada?.includes(hoyStr) && w.estaPublicado);
+        // Los WODs personales (esPersonal) NO van al feed general del box: solo aparecen
+        // en "WODs para ti" para los atletas asignados.
+        const wodsDelDia = todosWods.filter(w => w.fechaProgramada?.includes(hoyStr) && w.estaPublicado && !w.esPersonal);
         setWodsHoy(wodsDelDia);
         cargarSocialWods(wodsDelDia);
       }

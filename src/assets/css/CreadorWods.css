@@ -823,17 +823,38 @@
 }
 .crw-complex-biblio-item {
   display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: var(--transition);
+}
+.crw-complex-biblio-item:hover { border-color: var(--accent-cool); }
+.crw-complex-biblio-insertar {
+  flex: 1;
+  display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.1rem;
   text-align: left;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: transparent;
+  border: none;
   padding: 0.5rem 0.7rem;
   cursor: pointer;
-  transition: var(--transition);
+  min-width: 0;
 }
-.crw-complex-biblio-item:hover { border-color: var(--accent-cool); background: var(--bg-card-hover); }
+.crw-complex-biblio-insertar:hover { background: var(--bg-card-hover); }
 .crw-complex-biblio-nombre { font-weight: 700; color: var(--text-primary); font-size: 0.85rem; }
 .crw-complex-biblio-detalle { color: var(--secondary); font-size: 0.76rem; }
+.crw-complex-biblio-del {
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--border);
+  color: var(--primary);
+  padding: 0 0.7rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.crw-complex-biblio-del:hover { background: var(--primary-glow); }

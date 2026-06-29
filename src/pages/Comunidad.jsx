@@ -39,6 +39,7 @@ export default function Comunidad() {
 
   // 👇 NUEVO: Estados para los PRs del lobo que estamos viendo
   const [marcasLobo, setMarcasLobo] = useState([]);
+  const [skillsLobo, setSkillsLobo] = useState([]);
   const [cargandoMarcas, setCargandoMarcas] = useState(false);
 
   // Like al perfil del atleta abierto + resumen de reacciones por PR (🔥×3)
@@ -68,6 +69,7 @@ export default function Comunidad() {
   const handleAbrirPerfil = async (atleta) => {
     setLoboSeleccionado(atleta);
     setMarcasLobo([]);
+    setSkillsLobo([]);
     setReaccionesResumen({});
     setPerfilLikes({ totalLikes: 0, yaLeDiLike: false });
     setEstadoAmistad('ninguna');
@@ -75,16 +77,18 @@ export default function Comunidad() {
     const token = localStorage.getItem('token');
     const auth = { 'Authorization': `Bearer ${token}` };
     try {
-      const [resPRs, resLikes, resResumen, resEstado] = await Promise.all([
+      const [resPRs, resLikes, resResumen, resEstado, resSkills] = await Promise.all([
         fetch(`${API_BASE}/marcaspersonales/usuario/${atleta.idUsuario}`),
         fetch(`${API_BASE}/interacciones/like-perfil/${atleta.idUsuario}/estado`, { headers: auth }),
         fetch(`${API_BASE}/interacciones/usuario/${atleta.idUsuario}/reacciones-resumen`, { headers: auth }),
         fetch(`${API_BASE}/amistades/estado/${miId}/${atleta.idUsuario}`, { headers: auth }),
+        fetch(`${API_BASE}/skills/usuario/${atleta.idUsuario}`),
       ]);
       if (resPRs.ok) {
         const data = await resPRs.json();
         setMarcasLobo(data.recordsMaximos || data || []);
       }
+      if (resSkills.ok) setSkillsLobo(await resSkills.json());
       if (resLikes.ok) setPerfilLikes(await resLikes.json());
       if (resResumen.ok) {
         const arr = await resResumen.json();
@@ -295,6 +299,7 @@ export default function Comunidad() {
         <WolfLanyard
           lobo={loboSeleccionado}
           marcas={marcasLobo}
+          skills={skillsLobo}
           cargandoMarcas={cargandoMarcas}
           miId={miId}
           reaccionesResumen={reaccionesResumen}

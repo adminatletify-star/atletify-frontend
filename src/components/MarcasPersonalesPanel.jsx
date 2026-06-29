@@ -12,6 +12,9 @@ export default function MarcasPersonalesPanel({ idUsuario, idBox }) {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ idEjercicio: '', valor: '', unidad: 'lbs' });
   const [guardando, setGuardando] = useState(false);
+  const [prCalc, setPrCalc] = useState(''); // idMarca para la calculadora de %
+
+  const PORCENTAJES = [95, 90, 85, 80, 75, 70, 65, 60];
 
   const cargar = useCallback(async () => {
     if (!idUsuario) return;
@@ -129,6 +132,43 @@ export default function MarcasPersonalesPanel({ idUsuario, idBox }) {
                 </span>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Calculadora de porcentajes sobre un PR */}
+        {records.length > 0 && (
+          <div style={{ marginTop: '1.25rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+            <h5 className="mp-section-title mp-section-title--physical">
+              <i className="fas fa-percent"></i> Calculadora de %
+            </h5>
+            <select
+              className="mp-input"
+              value={prCalc}
+              onChange={e => setPrCalc(e.target.value)}
+              style={{ marginBottom: '0.75rem' }}
+            >
+              <option value="">Elige un récord...</option>
+              {records.map(pr => (
+                <option key={pr.idMarca} value={pr.idMarca}>{pr.nombreEjercicio} — {pr.valor} {pr.unidad}</option>
+              ))}
+            </select>
+            {(() => {
+              const pr = records.find(r => String(r.idMarca) === String(prCalc));
+              if (!pr) return null;
+              return (
+                <div style={{ display: 'grid', gap: '0.5rem', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))' }}>
+                  {PORCENTAJES.map(p => (
+                    <div key={p} style={{ background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.5rem', textAlign: 'center' }}>
+                      <div style={{ color: 'var(--accent-cool)', fontSize: '0.72rem', fontWeight: 700 }}>{p}%</div>
+                      <div style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-stats)', fontWeight: 700, fontSize: '1.05rem' }}>
+                        {(pr.valor * p / 100).toFixed(1)}
+                      </div>
+                      <div style={{ color: 'var(--secondary)', fontSize: '0.65rem' }}>{pr.unidad}</div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>

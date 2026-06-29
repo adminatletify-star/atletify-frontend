@@ -89,7 +89,8 @@ export default function PaseDeLista() {
 
       if (resWods.ok) {
         const wods = await resWods.json();
-        const wodsHoy = wods.filter(w => w.fechaProgramada.includes(fechaStr));
+        // Los WODs personales no entran al pase de lista de clases (su score es aparte).
+        const wodsHoy = wods.filter(w => w.fechaProgramada.includes(fechaStr) && !w.esPersonal);
         setWodsDelDia(wodsHoy);
 
         if (wodsHoy.length > 0) {
