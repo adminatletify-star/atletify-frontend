@@ -313,14 +313,30 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/user-panel" replace />;
   }
 
-  // 👇 CADENERO SAAS B2B (PAYWALL PARA ADMINS)
+  // 👇 CADENERO SAAS B2B
+  // Se excluye al Developer a propósito: debe poder entrar a /admin-saas y auditar/operar
+  // boxes Suspendido/Archivado sin que esta guardia lo expulse (el backend lo blinda igual).
   const storedBoxStr = localStorage.getItem('box');
-  if (storedBoxStr && (storedUser.rol === 'AdminBox' || storedUser.rol === 'Coach')) {
+  if (storedBoxStr && storedUser.rol !== 'Developer') {
     try {
       const boxData = JSON.parse(storedBoxStr);
-      // Si están vencidos o pendientes, se bloquea su navegación al panel
-      if (window.location.pathname !== '/seleccion-plan-saas' &&
-        (boxData.estatusSaaS === 'Pendiente' || boxData.estatusSaaS === 'Vencido')) {
+      const estatusSaaS = boxData.estatusSaaS;
+
+      // F3: Suspendido/Archivado = acceso deshabilitado para TODOS los roles del box.
+      // El backend ya bloquea el login y revoca las sesiones (TokenVersion); esto es solo
+      // UX para no dejar pantallas rotas si el estado cambió con la sesión ya abierta.
+      if (estatusSaaS === 'Suspendido' || estatusSaaS === 'Archivado') {
+        console.error(`CADENERO SAAS: Box ${estatusSaaS}. Cerrando sesión.`);
+        localStorage.removeItem('usuario');
+        localStorage.removeItem('token');
+        localStorage.removeItem('boxActivo');
+        return <Navigate to="/login" replace />;
+      }
+
+      // Paywall por morosidad: solo AdminBox/Coach, solo Pendiente/Vencido.
+      if ((storedUser.rol === 'AdminBox' || storedUser.rol === 'Coach') &&
+        window.location.pathname !== '/seleccion-plan-saas' &&
+        (estatusSaaS === 'Pendiente' || estatusSaaS === 'Vencido')) {
         console.error("CADENERO SAAS: Box bloqueado por falta de pago. Redirigiendo a Paywall.");
         return <Navigate to="/seleccion-plan-saas" replace />;
       }

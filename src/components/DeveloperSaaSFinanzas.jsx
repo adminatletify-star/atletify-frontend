@@ -17,9 +17,23 @@ const ESTATUS = [
   { value: 'Pendiente',  label: 'Pendiente',  color: 'var(--accent)',      icon: 'fa-hourglass-half', desc: 'Aún sin activar la suscripción' },
   { value: 'Activo',     label: 'Activo',      color: 'var(--success)',     icon: 'fa-circle-check',   desc: 'Servicio operativo y al día' },
   { value: 'Gracia',     label: 'En Gracia',   color: 'var(--accent-cool)', icon: 'fa-clock',          desc: 'Periodo de cortesía antes de suspender' },
-  { value: 'Suspendido', label: 'Suspendido',  color: 'var(--primary)',     icon: 'fa-ban',            desc: 'Acceso bloqueado por falta de pago' },
+  { value: 'Vencido',    label: 'Vencido',     color: 'var(--danger)',      icon: 'fa-circle-xmark',   desc: 'Suscripción vencida (morosidad)' },
+  { value: 'Suspendido', label: 'Suspendido',  color: 'var(--primary)',     icon: 'fa-ban',            desc: 'Acceso bloqueado por el Developer' },
+  { value: 'Archivado',  label: 'Archivado',   color: '#6B7280',            icon: 'fa-box-archive',    desc: 'Box archivado (bloqueo recuperable)' },
 ];
 const getEstatusMeta = (value) => ESTATUS.find(e => e.value === value) || ESTATUS[0];
+// El selector "crudo" de estado (box-saas) NO ofrece Suspendido/Archivado: esos van por las
+// acciones AUDITADAS del Centro de Control (que registran motivo y cierran sesiones).
+const ESTATUS_PICKER = ESTATUS.filter(e => e.value !== 'Suspendido' && e.value !== 'Archivado');
+
+// Las fechas vienen como timestamp "naive" (UTC sin zona). Se interpretan como UTC y se
+// muestran en hora local; si ya traen zona, se respetan.
+const fmtFecha = (s) => {
+  if (!s) return '—';
+  const iso = /[zZ]|[+-]\d{2}:?\d{2}$/.test(s) ? s : `${s}Z`;
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? s : d.toLocaleString('es-MX');
+};
 
 const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
   const [boxes, setBoxes] = useState([]);
@@ -51,9 +65,73 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
   // ── Modal de módulos por box (override del plan) ──
   const [modulosPicker, setModulosPicker] = useState(null); // el objeto box completo
 
+  // ── Centro de Control (F3): acciones auditadas + bitácora ──
+  const [f3BoxId, setF3BoxId] = useState('');
+  const [f3BoxMotivo, setF3BoxMotivo] = useState('');
+  const [f3Correo, setF3Correo] = useState('');
+  const [f3CuentaMotivo, setF3CuentaMotivo] = useState('');
+  const [f3Busy, setF3Busy] = useState(false);
+  const [bitacora, setBitacora] = useState([]);
+  const [bitacoraLoading, setBitacoraLoading] = useState(false);
+
   const authHeader = () => ({
     Authorization: `Bearer ${localStorage.getItem('token')}`
   });
+
+  const postDeveloper = async (path, body) => {
+    const base = import.meta.env.VITE_API_URL;
+    const res = await fetch(`${base}/api/developer/${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
+      body: JSON.stringify(body || {})
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.mensaje || data.detalle || 'La acción no se pudo completar.');
+    return data;
+  };
+
+  const cargarBitacora = async () => {
+    setBitacoraLoading(true);
+    try {
+      const base = import.meta.env.VITE_API_URL;
+      const res = await fetch(`${base}/api/developer/auditoria?take=100`, { headers: authHeader() });
+      if (res.ok) setBitacora(await res.json());
+    } catch { /* noop */ }
+    finally { setBitacoraLoading(false); }
+  };
+
+  // Acciones de box: suspender / reactivar / archivar (suspender y archivar exigen motivo).
+  const accionBoxF3 = async (accion) => {
+    if (!f3BoxId) { window.alert('Selecciona un box primero.'); return; }
+    const exigeMotivo = accion === 'suspender' || accion === 'archivar';
+    if (exigeMotivo && !f3BoxMotivo.trim()) { window.alert('El motivo es obligatorio para suspender o archivar.'); return; }
+    setF3Busy(true);
+    try {
+      const data = await postDeveloper(`box/${f3BoxId}/${accion}`, { motivo: f3BoxMotivo.trim() || null });
+      window.alert(data.mensaje || 'Listo.');
+      setF3BoxMotivo('');
+      await cargarData();
+      await cargarBitacora();
+      onDataChanged?.();
+    } catch (e) { window.alert(`Error: ${e.message}`); }
+    finally { setF3Busy(false); }
+  };
+
+  // Acciones de cuenta por correo: banear / desbanear / forzar-reset / cerrar-sesiones.
+  const accionCuentaF3 = async (accion) => {
+    const correo = f3Correo.trim();
+    if (!correo) { window.alert('Ingresa el correo de la cuenta.'); return; }
+    const exigeMotivo = accion !== 'desbanear-por-correo';
+    if (exigeMotivo && !f3CuentaMotivo.trim()) { window.alert('El motivo es obligatorio.'); return; }
+    setF3Busy(true);
+    try {
+      const data = await postDeveloper(`usuarios/${accion}`, { correo, motivo: f3CuentaMotivo.trim() || null });
+      window.alert(data.mensaje || 'Listo.');
+      setF3CuentaMotivo('');
+      await cargarBitacora();
+    } catch (e) { window.alert(`Error: ${e.message}`); }
+    finally { setF3Busy(false); }
+  };
 
   const cargarData = async () => {
     try {
@@ -83,7 +161,7 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
     }
   };
 
-  useEffect(() => { cargarData(); }, []);
+  useEffect(() => { cargarData(); cargarBitacora(); }, []);
 
   const eliminarBox = async () => {
     if (!confirmDelete) return;
@@ -617,6 +695,132 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
         )}
       </div>
 
+      {/* ── Panel: Centro de Control del Developer (F3) — acciones AUDITADAS ── */}
+      <div className="dsf-panel">
+        <div className="dsf-panel-head">
+          <h3 className="dsf-panel-title dsf-panel-title--lock">
+            <i className="fas fa-shield-halved"></i> Centro de Control (Acciones Auditadas)
+          </h3>
+        </div>
+
+        <div className="row g-3 g-md-4">
+          {/* Acciones de box */}
+          <div className="col-12 col-lg-6">
+            <div className="dsf-field">
+              <label className="dsf-field-label">Box</label>
+              <select className="dsf-input" value={f3BoxId} onChange={(e) => setF3BoxId(e.target.value)}>
+                <option value="">Selecciona un box…</option>
+                {boxes.map(b => (
+                  <option key={b.idBox} value={b.idBox}>{b.nombre} — {getEstatusMeta(b.estatusSaaS).label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="dsf-field">
+              <label className="dsf-field-label">Motivo (obligatorio para suspender/archivar)</label>
+              <input
+                type="text"
+                className="dsf-input"
+                placeholder="Ej. Falta de pago de 2 meses"
+                value={f3BoxMotivo}
+                onChange={(e) => setF3BoxMotivo(e.target.value)}
+              />
+            </div>
+            <div className="dsf-card-actions">
+              <button type="button" className="dsf-add-btn" disabled={f3Busy} onClick={() => accionBoxF3('suspender')}>
+                <i className="fas fa-ban"></i><span className="dsf-add-btn-label">Suspender</span>
+              </button>
+              <button type="button" className="dsf-add-btn" disabled={f3Busy} onClick={() => accionBoxF3('reactivar')}>
+                <i className="fas fa-circle-check"></i><span className="dsf-add-btn-label">Reactivar</span>
+              </button>
+              <button type="button" className="dsf-add-btn" disabled={f3Busy} onClick={() => accionBoxF3('archivar')}>
+                <i className="fas fa-box-archive"></i><span className="dsf-add-btn-label">Archivar</span>
+              </button>
+            </div>
+            <p className="dsf-hint">Suspender/Archivar bloquean el acceso del box y cierran las sesiones vivas de sus usuarios.</p>
+          </div>
+
+          {/* Acciones de cuenta */}
+          <div className="col-12 col-lg-6">
+            <div className="dsf-field">
+              <label className="dsf-field-label">Correo de la cuenta</label>
+              <input
+                type="email"
+                className="dsf-input"
+                placeholder="correo@ejemplo.com"
+                value={f3Correo}
+                onChange={(e) => setF3Correo(e.target.value)}
+              />
+            </div>
+            <div className="dsf-field">
+              <label className="dsf-field-label">Motivo</label>
+              <input
+                type="text"
+                className="dsf-input"
+                placeholder="Ej. Abuso reportado"
+                value={f3CuentaMotivo}
+                onChange={(e) => setF3CuentaMotivo(e.target.value)}
+              />
+            </div>
+            <div className="dsf-card-actions">
+              <button type="button" className="dsf-add-btn" disabled={f3Busy} onClick={() => accionCuentaF3('banear-por-correo')}>
+                <i className="fas fa-user-slash"></i><span className="dsf-add-btn-label">Banear</span>
+              </button>
+              <button type="button" className="dsf-add-btn" disabled={f3Busy} onClick={() => accionCuentaF3('desbanear-por-correo')}>
+                <i className="fas fa-user-check"></i><span className="dsf-add-btn-label">Desbanear</span>
+              </button>
+              <button type="button" className="dsf-add-btn" disabled={f3Busy} onClick={() => accionCuentaF3('forzar-reset-por-correo')}>
+                <i className="fas fa-key"></i><span className="dsf-add-btn-label">Forzar reset</span>
+              </button>
+              <button type="button" className="dsf-add-btn" disabled={f3Busy} onClick={() => accionCuentaF3('cerrar-sesiones-por-correo')}>
+                <i className="fas fa-right-from-bracket"></i><span className="dsf-add-btn-label">Cerrar sesiones</span>
+              </button>
+            </div>
+            <p className="dsf-hint">Banear, forzar reset y cerrar sesiones revocan al instante los tokens vivos de la cuenta.</p>
+          </div>
+        </div>
+
+        {/* Visor de bitácora */}
+        <div className="dsf-panel-head" style={{ marginTop: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 className="dsf-panel-title"><i className="fas fa-clipboard-list"></i> Bitácora de acciones</h3>
+          <button type="button" className="dsf-icon-btn" title="Refrescar bitácora" onClick={cargarBitacora} disabled={bitacoraLoading}>
+            <i className="fas fa-rotate-right"></i>
+          </button>
+        </div>
+
+        {bitacoraLoading ? (
+          <div className="dsf-empty"><i className="fas fa-spinner fa-spin"></i><p>Cargando bitácora…</p></div>
+        ) : bitacora.length === 0 ? (
+          <div className="dsf-empty"><i className="fas fa-clipboard"></i><p>Sin acciones registradas todavía.</p></div>
+        ) : (
+          <div className="dsf-table-wrap">
+            <table className="dsf-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Actor</th>
+                  <th>Acción</th>
+                  <th>Entidad</th>
+                  <th>Motivo</th>
+                  <th>IP</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bitacora.map(l => (
+                  <tr key={l.idLog}>
+                    <td>{fmtFecha(l.fechaHora)}</td>
+                    <td><div className="dsf-box-name">{l.nombreActor || '—'}</div></td>
+                    <td><span className="dsf-pill">{l.accion}</span></td>
+                    <td>{l.tipoEntidad ? `${l.tipoEntidad} ${l.idEntidad || ''}`.trim() : '—'}</td>
+                    <td>{l.motivo || '—'}</td>
+                    <td>{l.ip || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       {/* ════ MODAL: MÓDULOS DEL BOX (override del plan) ════ */}
       {modulosPicker && (
         <ModalModulosBox
@@ -711,7 +915,7 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
               </button>
             </div>
             <div className="dsf-pick-list">
-              {ESTATUS.map(e => {
+              {ESTATUS_PICKER.map(e => {
                 const activo = estatusPicker.actual === e.value;
                 return (
                   <button
