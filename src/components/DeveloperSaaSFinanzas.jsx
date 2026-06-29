@@ -5,6 +5,7 @@ import AtletifyLoader from '../components/AtletifyLoader';
 import ModalAdminBox from './ModalAdminBox';
 import ModalModulosBox from './ModalModulosBox';
 import { useAuth } from '../context/AuthContext';
+import { getCatalogoModulos } from '../config/modulosSaaS';
 import '../assets/css/DeveloperSaaSFinanzas.css';
 
 const PAGE_SIZE = 10;
@@ -40,6 +41,7 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
   const [boxes, setBoxes] = useState([]);
   const [planes, setPlanes] = useState([]);
   const [comisiones, setComisiones] = useState(null); // F2.6: ingresos por comisión (competencias Tipo B)
+  const [metricas, setMetricas] = useState(null);     // F3-S3: métricas SaaS calculadas en el backend
   const [loading, setLoading] = useState(true);
 
   // ── Buscador + paginación de cajas ──
@@ -175,6 +177,12 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
         const resCom = await fetch(`${base}/api/developer/ingresos-comision`, { headers: authHeader() });
         if (resCom.ok) setComisiones(await resCom.json());
       } catch { /* noop */ }
+
+      // F3-S3: métricas SaaS server-side (MRR correcto + churn + uso por módulo). Best-effort.
+      try {
+        const resMet = await fetch(`${base}/api/developer/metricas-saas`, { headers: authHeader() });
+        if (resMet.ok) setMetricas(await resMet.json());
+      } catch { /* noop */ }
     } catch (e) {
       console.error(e);
     } finally {
@@ -298,33 +306,40 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
     </div>
   );
 
-  // ── Métricas ──
-  const boxesActivos = boxes.filter(b => b.estatusSaaS === 'Activo' || b.activo);
-  let mrr = 0;
-
+  // ── Métricas (fuente preferida: backend /metricas-saas; fallback local) ──
+  // Fallback local YA corregido para respetar precioEspecialSaaS (igual que el backend),
+  // por si el endpoint falla. La fuente buena es `metricas`.
+  // El fallback DEBE espejar al backend: solo cuenta EstatusSaaS === 'Activo'. El flag legacy
+  // 'b.activo' NO entra (un box Suspendido puede tener activo=true e inflaría el MRR).
+  const esActivo = (b) => b.estatusSaaS === 'Activo';
+  let mrrLocal = 0;
   const ingresosPorPlanMap = {};
   planes.forEach(p => ingresosPorPlanMap[p.nombre] = 0);
-
   boxes.forEach(b => {
-    if (b.estatusSaaS === 'Activo' || b.activo) {
+    if (esActivo(b)) {
       const plan = planes.find(p => p.idPlan === b.idPlanSaaS);
       if (plan) {
-        mrr += plan.precio;
-        if (ingresosPorPlanMap[plan.nombre] !== undefined) {
-          ingresosPorPlanMap[plan.nombre] += plan.precio;
-        }
+        const precio = (b.precioEspecialSaaS ?? plan.precio);
+        mrrLocal += precio;
+        if (ingresosPorPlanMap[plan.nombre] !== undefined) ingresosPorPlanMap[plan.nombre] += precio;
       }
     }
   });
+  const boxesActivosLocal = boxes.filter(esActivo).length;
+  const totalUsuariosLocal = boxes.reduce((acc, curr) => acc + curr.totalAtletas + curr.totalCoaches + curr.totalAdmins, 0);
 
-  const arr = mrr * 12;
-  const totalUsuarios = boxes.reduce((acc, curr) => acc + curr.totalAtletas + curr.totalCoaches + curr.totalAdmins, 0);
+  const mrr = metricas?.mrr ?? mrrLocal;
+  const arr = metricas?.arr ?? (mrrLocal * 12);
+  const numBoxesActivos = metricas?.boxesActivos ?? boxesActivosLocal;
+  const totalUsuarios = metricas?.totalUsuarios ?? totalUsuariosLocal;
 
-  const chartDataPlanes = planes.map(p => ({
-    nombre: p.nombre,
-    ingresos: ingresosPorPlanMap[p.nombre],
-    boxes: boxes.filter(b => b.idPlanSaaS === p.idPlan).length
-  })).filter(p => p.ingresos > 0 || p.boxes > 0);
+  const chartDataPlanes = (metricas?.ingresosPorPlan?.length)
+    ? metricas.ingresosPorPlan
+    : planes.map(p => ({
+        nombre: p.nombre,
+        ingresos: ingresosPorPlanMap[p.nombre],
+        boxes: boxes.filter(b => esActivo(b) && b.idPlanSaaS === p.idPlan).length
+      })).filter(p => p.ingresos > 0 || p.boxes > 0);
 
   const COLORS = ['#4FC3F7', '#F5A623', '#E63946', '#9b59b6', '#2ECC71'];
   const tooltipStyle = { backgroundColor: '#1C1C26', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#F0F0F5' };
@@ -332,9 +347,22 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
   const KPIS = [
     { label: 'MRR (Mensual)', value: formatearDinero(mrr), color: 'var(--success)', icon: 'fa-money-bill-wave' },
     { label: 'ARR (Anual)', value: formatearDinero(arr), color: 'var(--accent-cool)', icon: 'fa-calendar-alt' },
-    { label: 'Boxes Activos', value: boxesActivos.length, color: '#9b59b6', icon: 'fa-boxes' },
+    { label: 'Boxes Activos', value: numBoxesActivos, color: '#9b59b6', icon: 'fa-boxes' },
     { label: 'Usuarios (Red)', value: totalUsuarios, color: 'var(--primary)', icon: 'fa-users' },
   ];
+
+  // F3-S3: churn (estados del servicio) + módulos más usados (solo si el backend respondió).
+  const churn = metricas?.churn || null;
+  const ESTADOS_CHURN = churn ? [
+    { k: 'Activos', v: churn.activo, c: 'var(--success)' },
+    { k: 'Gracia', v: churn.gracia, c: 'var(--accent-cool)' },
+    { k: 'Vencidos', v: churn.vencido, c: 'var(--danger)' },
+    { k: 'Suspendidos', v: churn.suspendido, c: 'var(--primary)' },
+    { k: 'Archivados', v: churn.archivado, c: '#6B7280' },
+    { k: 'Pendientes', v: churn.pendiente, c: 'var(--accent)' },
+  ] : [];
+  const usoModulos = Array.isArray(metricas?.usoPorModulo) ? metricas.usoPorModulo : [];
+  const nombreModulo = (clave) => getCatalogoModulos()[clave]?.nombre || clave;
 
   // ── Filtrado de planes dentro del modal selector ──
   const planesFiltrados = (() => {
@@ -435,6 +463,54 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
           </div>
         </div>
       </div>
+
+      {/* ── Panel: Salud del SaaS (churn + uso por módulo) — F3-S3 ── */}
+      {(churn || usoModulos.length > 0) && (
+        <div className="dsf-panel">
+          <div className="dsf-panel-head">
+            <h3 className="dsf-panel-title"><i className="fas fa-heart-pulse"></i> Salud del SaaS</h3>
+          </div>
+          {metricas?.boxesActivosSinPlan > 0 && (
+            <div className="dsf-danger-note" style={{ marginBottom: 12 }}>
+              <i className="fas fa-triangle-exclamation"></i>
+              <span><strong>{metricas.boxesActivosSinPlan}</strong> box(es) Activo(s) sin plan ni precio especial — no facturan (contribuyen $0 al MRR). Revisa su configuración.</span>
+            </div>
+          )}
+          <div className="row g-3 g-md-4">
+            {churn && (
+              <div className="col-12 col-lg-6">
+                <label className="dsf-field-label">Estados del servicio (churn)</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 8 }}>
+                  {ESTADOS_CHURN.map(e => (
+                    <div key={e.k} className="dsf-kpi" style={{ '--k': e.c, padding: '10px 12px' }}>
+                      <div className="dsf-kpi-label">{e.k}</div>
+                      <div className="dsf-kpi-value" style={{ fontSize: 22 }}>{e.v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {usoModulos.length > 0 && (
+              <div className="col-12 col-lg-6">
+                <label className="dsf-field-label">Uso por módulo (boxes activos)</label>
+                <div className="dsf-table-wrap" style={{ marginTop: 8 }}>
+                  <table className="dsf-table">
+                    <thead><tr><th>Módulo</th><th style={{ textAlign: 'right' }}>Boxes</th></tr></thead>
+                    <tbody>
+                      {usoModulos.map(m => (
+                        <tr key={m.clave}>
+                          <td>{nombreModulo(m.clave)}</td>
+                          <td style={{ textAlign: 'right' }}><strong>{m.boxes}</strong></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Panel: Comisiones de Competencias (Tipo B / WodReps) ── */}
       <div className="dsf-panel">
