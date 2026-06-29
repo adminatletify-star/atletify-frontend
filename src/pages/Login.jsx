@@ -1,9 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import Particles from '../components/ReactBits/Particles';
 import { useAuth } from '../context/AuthContext';
 import BackButton from '../components/BackButton';
 import '../assets/css/LoginPage.css';
+
+// Si no hay Client ID configurado, no mostramos el botón de Google (el login por
+// contraseña funciona igual). El valor es público y se inyecta por variable de entorno.
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 export default function Login() {
   const location = useLocation();
@@ -20,6 +25,58 @@ export default function Login() {
 
   const { login, logout, usuario } = useAuth();
 
+  // Lógica compartida tras un login exitoso (por contraseña o por Google): guarda el box,
+  // mete la sesión en el contexto (login() mantiene cuentasGuardadas/localStorage/box) y
+  // redirige por rol. Es EXACTAMENTE el flujo que ya existía para el login normal.
+  const procesarSesion = (result) => {
+    const userObj = result.usuario || result;
+    const token = result.token;
+
+    const boxObj = result.box || userObj.box || result.boxInfo;
+    if (boxObj) {
+      localStorage.setItem('box', JSON.stringify(boxObj));
+    } else {
+      localStorage.removeItem('box');
+    }
+
+    login(userObj, token);
+
+    if (!userObj.aceptoTerminos) {
+      navigate('/terminos', { state: { requiereAceptacion: true } });
+      return;
+    }
+
+    // Si venía con redirect específico (ej. desde un correo a /gestion-solicitudes o /corregir-solicitud),
+    // y el rol del usuario está permitido en esa ruta, respetamos ese destino.
+    if (redirectAfter) {
+      navigate(redirectAfter, { replace: true });
+      return;
+    }
+
+    // Redirección inteligente
+    switch (userObj.rol) {
+      case 'Developer': navigate('/dashboard'); break;
+      case 'AdminBox':
+      case 'Coach': navigate('/admin-box-panel'); break;
+      case 'Usuario': {
+        // Si su solicitud fue rechazada, va directo a corregirla. Si no, a la sala de espera.
+        const rechazado = userObj.estadoSolicitud === 'Rechazado' || userObj.estatus === 'Rechazado';
+        navigate(rechazado ? '/corregir-solicitud' : '/sala-espera');
+        break;
+      }
+      case 'Juez':
+        if (userObj.idCompetenciaAsignada) {
+          navigate(`/juez/${userObj.idCompetenciaAsignada}`);
+        } else {
+          alert("Error: Juez sin competencia asignada.");
+          logout();
+          navigate('/');
+        }
+        break;
+      default: navigate('/user-panel'); break;
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -33,57 +90,47 @@ export default function Login() {
       const result = await response.json(); // 👈 Leemos el JSON siempre
 
       if (response.ok) {
-        const userObj = result.usuario || result;
-        const token = result.token;
-
-        const boxObj = result.box || userObj.box || result.boxInfo;
-        if (boxObj) {
-          localStorage.setItem('box', JSON.stringify(boxObj));
-        } else {
-          localStorage.removeItem('box');
-        }
-        
-        login(userObj, token);
-
-        if (!userObj.aceptoTerminos) {
-          navigate('/terminos', { state: { requiereAceptacion: true } });
-          return;
-        }
-
-        // Si venía con redirect específico (ej. desde un correo a /gestion-solicitudes o /corregir-solicitud),
-        // y el rol del usuario está permitido en esa ruta, respetamos ese destino.
-        if (redirectAfter) {
-          navigate(redirectAfter, { replace: true });
-          return;
-        }
-
-        // Redirección inteligente
-        switch (userObj.rol) {
-          case 'Developer': navigate('/dashboard'); break;
-          case 'AdminBox':
-          case 'Coach': navigate('/admin-box-panel'); break;
-          case 'Usuario': {
-            // Si su solicitud fue rechazada, va directo a corregirla. Si no, a la sala de espera.
-            const rechazado = userObj.estadoSolicitud === 'Rechazado' || userObj.estatus === 'Rechazado';
-            navigate(rechazado ? '/corregir-solicitud' : '/sala-espera');
-            break;
-          }
-          case 'Juez':
-            if (userObj.idCompetenciaAsignada) {
-              navigate(`/juez/${userObj.idCompetenciaAsignada}`);
-            } else {
-              alert("Error: Juez sin competencia asignada.");
-              logout();
-              navigate('/');
-            }
-            break;
-          default: navigate('/user-panel'); break;
-        }
+        procesarSesion(result);
       } else {
         alert(result.mensaje || "Credenciales incorrectas"); // 👈 Mostramos el motivo real
       }
     } catch (error) {
       alert("Error de conexión con el servidor.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // "Continuar con Google": el componente <GoogleLogin> nos entrega un id_token
+  // (credential). Lo mandamos al backend, que lo verifica y responde EXACTAMENTE igual
+  // que /login. Si el correo aún no tiene cuenta (404), lo mandamos al registro normal.
+  const handleGoogleSuccess = async (credentialResponse) => {
+    const idToken = credentialResponse?.credential;
+    if (!idToken) {
+      alert('No se recibió la credencial de Google. Intenta de nuevo.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        procesarSesion(result);
+      } else if (response.status === 404 && result.necesitaRegistro) {
+        // FASE B (registro con Google) aún no existe; por ahora va al registro normal.
+        alert(result.mensaje || 'Aún no tienes una cuenta en Atletify. Regístrate primero.');
+        navigate('/registro');
+      } else {
+        alert(result.mensaje || 'No se pudo iniciar sesión con Google.');
+      }
+    } catch (error) {
+      alert('Error de conexión con el servidor.');
     } finally {
       setLoading(false);
     }
@@ -132,6 +179,28 @@ export default function Login() {
               {loading ? 'Verificando...' : 'Entrar'}
             </button>
           </form>
+
+          {GOOGLE_CLIENT_ID && (
+            <div className="login-google-section">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1rem 0' }}>
+                <span style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.15)' }} />
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>o</span>
+                <span style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.15)' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => alert('No se pudo conectar con Google. Intenta de nuevo.')}
+                  theme="filled_black"
+                  size="large"
+                  text="continue_with"
+                  shape="pill"
+                  locale="es"
+                  width="280"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="login-footer">
             <p className="login-footer-text">¿No tienes cuenta?</p>

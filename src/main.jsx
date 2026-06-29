@@ -1,9 +1,15 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App.jsx'
 import GlobalAlertBridge from './components/GlobalAlertBridge.jsx';
 import { Analytics } from '@vercel/analytics/react';
+
+// Client ID público de Google (mismo valor en local y prod; en Vercel se inyecta como
+// variable de entorno). Si falta, el provider sigue renderizando la app y solo el botón
+// de Google queda inactivo (el login por contraseña no se ve afectado).
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 // === PWA: auto-actualización ===
 // Registra el service worker. En modo autoUpdate, registerSW recarga la app SOLA en
@@ -34,7 +40,9 @@ import './assets/css/componentes.css';
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <GlobalAlertBridge />
-    <App />
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <App />
+    </GoogleOAuthProvider>
     <Analytics />
   </StrictMode>,
 )
