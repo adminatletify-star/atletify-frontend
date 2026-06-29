@@ -6,6 +6,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from "../../context/AuthContext";
 import './CardNav.css';
 import BoxPickerModal from '../BoxPickerModal';
+import AccountMenu from '../AccountMenu';
 import { esRutaConBox } from '../../config/boxScopedRoutes';
 
 const CardNav = ({
@@ -17,6 +18,7 @@ const CardNav = ({
   const [openSections, setOpenSections] = useState({});
   const [isMobileNav, setIsMobileNav] = useState(() => window.innerWidth <= 1200);
   const [showSelectBoxModal, setShowSelectBoxModal] = useState(false);
+  const [showCuentas, setShowCuentas] = useState(false); // D4: dropdown del avatar (switcher de cuentas)
   const navRef = useRef(null);
   const cardsRef = useRef([]);
   const linksWrapRefs = useRef([]);
@@ -25,7 +27,7 @@ const CardNav = ({
   const location = useLocation();
   const navigate = useNavigate();
   const clickTimeout = useRef(null);
-  const { usuario, boxActivo, auditarBox, cuentasGuardadas, prepararCambioCuenta, listaBoxes } = useAuth();
+  const { usuario, boxActivo, auditarBox, listaBoxes } = useAuth();
 
   const getHomeRoute = () => {
     if (!usuario) return '/';
@@ -291,22 +293,25 @@ const CardNav = ({
               />
             )}
 
-            {/* Avatar del usuario — siempre visible en el top bar */}
+            {/* Avatar del usuario — abre el menú de CUENTA (switcher + perfil + logout), no la navegación */}
             {usuario && (
-              <button
-                type="button"
-                className="cardnav-avatar-btn"
-                onClick={toggleMenu}
-                title={`${usuario.nombre || 'Mi cuenta'} · ${usuario.rol}`}
-              >
-                {usuario.foto ? (
-                  <img src={usuario.foto} alt={usuario.nombre} className="cardnav-avatar-img" />
-                ) : (
-                  <span className="cardnav-avatar-initial">
-                    {(usuario.nombre || 'U').charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </button>
+              <>
+                <button
+                  type="button"
+                  className="cardnav-avatar-btn"
+                  onClick={() => { setShowCuentas(v => !v); if (isExpanded) closeMenu(); }}
+                  title={`${usuario.nombre || 'Mi cuenta'} · ${usuario.rol}`}
+                >
+                  {usuario.foto ? (
+                    <img src={usuario.foto} alt={usuario.nombre} className="cardnav-avatar-img" />
+                  ) : (
+                    <span className="cardnav-avatar-initial">
+                      {(usuario.nombre || 'U').charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </button>
+                <AccountMenu open={showCuentas} onClose={() => setShowCuentas(false)} onLogout={onButtonClick} />
+              </>
             )}
           </div>
         </div>
@@ -338,168 +343,7 @@ const CardNav = ({
           ))}
 
           <div className="card-nav-content-footer d-flex flex-column gap-2" ref={setCardRef((items || []).length)}>
-            {/* Compact Account Switcher */}
-            {cuentasGuardadas && cuentasGuardadas.length > 0 && (() => {
-              const currentId = usuario?.idUsuario || usuario?.IdUsuario || usuario?.id || usuario?.Id;
-
-              // Paleta de colores únicos (igual que Google/Slack) basada en el nombre
-              const COLORS = [
-                ['#6C63FF', '#8B5CF6'], ['#dc3545', '#ff6b6b'],
-                ['#0ea5e9', '#38bdf8'], ['#10b981', '#34d399'],
-                ['#f59e0b', '#fbbf24'], ['#ec4899', '#f472b6'],
-                ['#14b8a6', '#2dd4bf'], ['#8b5cf6', '#a78bfa'],
-              ];
-              const getColor = (name = '') => {
-                let hash = 0;
-                for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-                return COLORS[Math.abs(hash) % COLORS.length];
-              };
-
-              const getRoleLabel = (rol) => {
-                const map = { Developer: 'Dev', AdminBox: 'Admin', Coach: 'Coach', Atleta: 'Atleta', Usuario: 'Nuevo', Juez: 'Juez' };
-                return map[rol] || rol;
-              };
-
-              return (
-                <div style={{ padding: '6px 0 2px' }}>
-                  <p style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>Cuentas</p>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', flexWrap: 'wrap' }}>
-                    {cuentasGuardadas.map((c, i) => {
-                      const cId = c.usuario?.idUsuario || c.usuario?.IdUsuario || c.usuario?.id || c.usuario?.Id;
-                      const isActiva = String(cId) === String(currentId);
-                      const foto = c.usuario?.fotoPerfilUrl || c.usuario?.foto;
-                      const [colorA, colorB] = getColor(c.usuario?.nombre || '');
-                      const inicial = c.usuario?.nombre?.charAt(0)?.toUpperCase() || '?';
-                      const nombre = c.usuario?.nombre || 'Usuario';
-                      const apellido = c.usuario?.apellidos?.split(' ')[0] || '';
-                      const rol = getRoleLabel(c.usuario?.rol);
-
-                      return (
-                        <button
-                          key={cId || i}
-                          type="button"
-                          className="border-0 p-0"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (!isActiva) {
-                              // prepararCambioCuenta solo escribe en localStorage sin disparar
-                              // setUsuario/setToken/setBoxActivo, evitando el re-render cascade
-                              // que congela la UI antes de que el navegador procese la navegación.
-                              const ok = prepararCambioCuenta(c);
-                              if (ok) {
-                                if (navRef.current) gsap.set(navRef.current, { height: 60, overflow: 'hidden' });
-                                if (cardsRef.current.length) gsap.set(cardsRef.current, { y: 50, opacity: 0 });
-                                setIsHamburgerOpen(false);
-                                setIsExpanded(false);
-
-                                const rol = c.usuario?.rol;
-                                const idCompe = c.usuario?.idCompetenciaAsignada;
-                                let route = '/user-panel';
-                                if (rol === 'Developer') route = '/dashboard';
-                                else if (rol === 'AdminBox') route = '/admin-box-panel';
-                                else if (rol === 'Coach') route = '/admin-box-panel';
-                                else if (rol === 'Atleta') route = '/user-panel';
-                                else if (rol === 'Usuario') route = '/sala-espera';
-                                else if (rol === 'Juez' && idCompe) route = `/juez/${idCompe}`;
-
-                                if (window.location.pathname === route) {
-                                  window.location.reload();
-                                } else {
-                                  window.location.href = route;
-                                }
-                              }
-                            }
-                          }}
-                          style={{
-                            background: 'none', cursor: isActiva ? 'default' : 'pointer',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center',
-                            gap: '4px', opacity: isActiva ? 1 : 0.6,
-                            transition: 'opacity 0.2s, transform 0.2s',
-                            transform: isActiva ? 'scale(1.05)' : 'scale(1)',
-                            width: '46px',
-                          }}
-                          onMouseEnter={e => { if (!isActiva) { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.08)'; } }}
-                          onMouseLeave={e => { if (!isActiva) { e.currentTarget.style.opacity = '0.6'; e.currentTarget.style.transform = 'scale(1)'; } }}
-                        >
-                          {/* Avatar circle */}
-                          <div style={{
-                            width: '38px', height: '38px', borderRadius: '50%',
-                            overflow: 'hidden', flexShrink: 0,
-                            border: isActiva ? `2.5px solid ${colorA}` : '2.5px solid rgba(255,255,255,0.1)',
-                            boxShadow: isActiva ? `0 0 10px ${colorA}55` : 'none',
-                            position: 'relative',
-                          }}>
-                            {foto ? (
-                              <img src={foto} alt={nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                              <div style={{
-                                width: '100%', height: '100%',
-                                background: `linear-gradient(135deg, ${colorA}, ${colorB})`,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                color: '#fff', fontSize: '1rem', fontWeight: 800,
-                                fontFamily: 'Inter, sans-serif',
-                              }}>
-                                {inicial}
-                              </div>
-                            )}
-                            {/* Dot indicador activo */}
-                            {isActiva && (
-                              <span style={{
-                                position: 'absolute', bottom: '1px', right: '1px',
-                                width: '9px', height: '9px', borderRadius: '50%',
-                                background: '#22c55e', border: '1.5px solid #0a0a0a',
-                              }} />
-                            )}
-                          </div>
-                          {/* Nombre corto */}
-                          <span style={{
-                            fontSize: '0.55rem', color: isActiva ? '#fff' : 'rgba(255,255,255,0.5)',
-                            fontWeight: isActiva ? 700 : 400, textAlign: 'center',
-                            lineHeight: 1.2, maxWidth: '46px',
-                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                          }}>
-                            {nombre}
-                          </span>
-                          {/* Badge de rol */}
-                          <span style={{
-                            fontSize: '0.48rem', padding: '1px 4px', borderRadius: '4px',
-                            background: isActiva ? colorA : 'rgba(255,255,255,0.08)',
-                            color: isActiva ? '#fff' : 'rgba(255,255,255,0.4)',
-                            fontWeight: 600, lineHeight: 1.4,
-                          }}>
-                            {rol}
-                          </span>
-                        </button>
-                      );
-                    })}
-                    {cuentasGuardadas.length < 5 && (
-                      <Link
-                        to="/login?addAccount=true"
-                        onClick={closeMenu}
-                        title="Añadir cuenta"
-                        style={{
-                          display: 'flex', flexDirection: 'column', alignItems: 'center',
-                          gap: '4px', textDecoration: 'none', width: '46px',
-                        }}
-                      >
-                        <div style={{
-                          width: '38px', height: '38px', borderRadius: '50%',
-                          border: '2px dashed rgba(255,255,255,0.2)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: '#666', fontSize: '0.85rem', transition: 'all 0.2s',
-                        }}
-                          onMouseEnter={e => { e.currentTarget.style.borderColor = '#4FC3F7'; e.currentTarget.style.color = '#4FC3F7'; }}
-                          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = '#666'; }}
-                        >
-                          <i className="fas fa-plus" />
-                        </div>
-                        <span style={{ fontSize: '0.5rem', color: 'rgba(255,255,255,0.3)' }}>Añadir</span>
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
+            {/* Switcher de cuentas: movido al dropdown del avatar (AccountMenu, D4). */}
 
 
             <button
