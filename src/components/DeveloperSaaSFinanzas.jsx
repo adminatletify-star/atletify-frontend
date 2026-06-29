@@ -24,6 +24,7 @@ const getEstatusMeta = (value) => ESTATUS.find(e => e.value === value) || ESTATU
 const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
   const [boxes, setBoxes] = useState([]);
   const [planes, setPlanes] = useState([]);
+  const [comisiones, setComisiones] = useState(null); // F2.6: ingresos por comisión (competencias Tipo B)
   const [loading, setLoading] = useState(true);
 
   // ── Buscador + paginación de cajas ──
@@ -69,6 +70,12 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
 
       setBoxes(dataBoxes);
       setPlanes(dataPlanes);
+
+      // F2.6: ingresos por comisión (Tipo B). Best-effort: si falla, no rompe el panel.
+      try {
+        const resCom = await fetch(`${base}/api/developer/ingresos-comision`, { headers: authHeader() });
+        if (resCom.ok) setComisiones(await resCom.json());
+      } catch { /* noop */ }
     } catch (e) {
       console.error(e);
     } finally {
@@ -328,6 +335,73 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Panel: Comisiones de Competencias (Tipo B / WodReps) ── */}
+      <div className="dsf-panel">
+        <div className="dsf-panel-head">
+          <h3 className="dsf-panel-title"><i className="fas fa-trophy"></i> Comisiones de Competencias (Tipo B)</h3>
+        </div>
+
+        <div className="row g-3 mb-3">
+          <div className="col-6 col-lg-4">
+            <div className="dsf-kpi" style={{ '--k': 'var(--success)' }}>
+              <div className="dsf-kpi-head">
+                <span className="dsf-kpi-icon"><i className="fas fa-coins"></i></span>
+                <span className="dsf-kpi-label">Total histórico</span>
+              </div>
+              <div className="dsf-kpi-value">{formatearDinero(comisiones?.totalGlobal)}</div>
+            </div>
+          </div>
+          <div className="col-6 col-lg-4">
+            <div className="dsf-kpi" style={{ '--k': 'var(--accent-cool)' }}>
+              <div className="dsf-kpi-head">
+                <span className="dsf-kpi-icon"><i className="fas fa-calendar-day"></i></span>
+                <span className="dsf-kpi-label">Este mes</span>
+              </div>
+              <div className="dsf-kpi-value">{formatearDinero(comisiones?.totalMes)}</div>
+            </div>
+          </div>
+          <div className="col-12 col-lg-4">
+            <div className="dsf-kpi" style={{ '--k': '#9b59b6' }}>
+              <div className="dsf-kpi-head">
+                <span className="dsf-kpi-icon"><i className="fas fa-users"></i></span>
+                <span className="dsf-kpi-label">Atletas cobrados</span>
+              </div>
+              <div className="dsf-kpi-value">{comisiones?.totalAtletas || 0}</div>
+            </div>
+          </div>
+        </div>
+
+        {(comisiones?.porCompetencia?.length > 0) ? (
+          <div className="dsf-table-wrap">
+            <table className="dsf-table">
+              <thead>
+                <tr>
+                  <th>Competencia</th>
+                  <th style={{ textAlign: 'center' }}>Atletas</th>
+                  <th style={{ textAlign: 'center' }}>Equipos</th>
+                  <th style={{ textAlign: 'right' }}>Comisión</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comisiones.porCompetencia.map(c => (
+                  <tr key={c.idCompetencia}>
+                    <td><div className="dsf-box-name">{c.nombreCompetencia || `Competencia #${c.idCompetencia}`}</div></td>
+                    <td style={{ textAlign: 'center' }}>{c.atletas}</td>
+                    <td style={{ textAlign: 'center' }}>{c.equipos}</td>
+                    <td style={{ textAlign: 'right' }}><strong>{formatearDinero(c.monto)}</strong></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="dsf-empty">
+            <i className="fas fa-coins"></i>
+            <p>Aún no hay comisiones de competencias Tipo B. Aparecerán aquí cuando se paguen inscripciones en línea.</p>
+          </div>
+        )}
       </div>
 
       {/* ── Panel: Control de Permisos ── */}
