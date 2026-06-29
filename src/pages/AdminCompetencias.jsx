@@ -53,6 +53,9 @@ export default function AdminCompetencias() {
   const [planSeleccionado, setPlanSeleccionado] = useState(null);
   const [nombreCompetenciaExpress, setNombreCompetenciaExpress] = useState('');
   const [creandoExpress, setCreandoExpress] = useState(false);
+  // F2.4: tipo de cobro de la NUEVA competencia + input del calculador (Tipo B)
+  const [tipoNuevaComp, setTipoNuevaComp] = useState('Paquete'); // 'Paquete' (Tipo A) | 'Comision' (Tipo B / WodReps)
+  const [precioCalc, setPrecioCalc] = useState('');
 
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));
@@ -301,40 +304,49 @@ export default function AdminCompetencias() {
 
   const comprarPlanYCrear = async (e) => {
     e.preventDefault();
-    if (!planSeleccionado || !nombreCompetenciaExpress) return;
+    const esComision = tipoNuevaComp === 'Comision';
+    if (!nombreCompetenciaExpress) return;
+    if (!esComision && !planSeleccionado) {
+      alert('Selecciona un paquete o elige "Atletas ilimitados (comisión)".');
+      return;
+    }
     setCreandoExpress(true);
     try {
       const token = localStorage.getItem('token');
-      const payload = {
-        nombreCompetencia: nombreCompetenciaExpress,
-        planNombre: planSeleccionado.nombre,
-        diasPlan: planSeleccionado.dias,
-        atletasIncluidos: planSeleccionado.atletasIncluidos,
-        precioAtletaExtra: planSeleccionado.precioAtletaExtra
-      };
-      
+      const payload = esComision
+        ? { nombreCompetencia: nombreCompetenciaExpress, modeloCobro: 'Comision' }
+        : {
+            nombreCompetencia: nombreCompetenciaExpress,
+            planNombre: planSeleccionado.nombre,
+            diasPlan: planSeleccionado.dias,
+            atletasIncluidos: planSeleccionado.atletasIncluidos,
+            precioAtletaExtra: planSeleccionado.precioAtletaExtra,
+            modeloCobro: 'Paquete'
+          };
+
       const res = await fetch(`${COMPETENCIAS_ENDPOINT}/comprar-plan-crear`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(payload)
       });
-      
+
       if (res.ok) {
-        // Update local box state
         const updatedBox = { ...box, moduloCompetenciasActivo: true, ModuloCompetenciasActivo: true };
         setBox(updatedBox);
         localStorage.setItem('box', JSON.stringify(updatedBox));
-        
-        alert("¡Plan activado! Se ha creado tu competencia con éxito.");
+
+        alert('¡Competencia creada con éxito!');
         setPlanSeleccionado(null);
         setNombreCompetenciaExpress('');
+        setPrecioCalc('');
+        setMostrarFormComp(false);
         cargarCompetencias(box.idBox || box.IdBox);
       } else {
         const err = await res.json();
-        alert(`Error al activar el plan: ${err.mensaje}`);
+        alert(`Error: ${err.mensaje}`);
       }
     } catch (err) {
-      alert("Error de conexión al activar el plan.");
+      alert('Error de conexión.');
     } finally {
       setCreandoExpress(false);
     }
@@ -347,7 +359,9 @@ export default function AdminCompetencias() {
   // (Premium): box.modulos lo inyecta el login desde ModuloService. Así un box Premium no ve el paywall.
   const tieneCompetencias = box?.moduloCompetenciasActivo === true || box?.ModuloCompetenciasActivo === true
     || (box?.modulos || box?.Modulos || []).includes('competencias');
-  if (box && !tieneCompetencias && user?.rol !== 'Developer') {
+  // F2.4: paywall por flag legacy DEPRECADO (competencias es add-on por evento, abierto a todos).
+  // Se desactiva la condición; el bloque queda como dead-code a limpiar en una pasada posterior.
+  if (false && box && !tieneCompetencias && user?.rol !== 'Developer') {
     let planes = [];
     if (configPublica?.planesCompetenciaJson) {
       try { planes = JSON.parse(configPublica.planesCompetenciaJson); } catch (e) {}
@@ -705,10 +719,10 @@ export default function AdminCompetencias() {
           <Link to="/admin-competencias/historial" className="acomp-btn-cancel-sm text-decoration-none">
             <i className="fas fa-archive"></i> <span className="d-none d-sm-inline">Historial</span>
           </Link>
-          {user?.rol === 'Developer' && (
+          {(user?.rol === 'Developer' || user?.rol === 'AdminBox') && (
             <button
               className={`acomp-btn-nueva ${mostrarFormComp ? 'acomp-btn-nueva--cancelar' : ''}`}
-              onClick={() => setMostrarFormComp(!mostrarFormComp)}
+              onClick={() => { setTipoNuevaComp('Paquete'); setPlanSeleccionado(null); setPrecioCalc(''); setMostrarFormComp(!mostrarFormComp); }}
             >
               <i className={`fas ${mostrarFormComp ? 'fa-times' : 'fa-plus'}`}></i>
               <span className="d-none d-sm-inline">{mostrarFormComp ? 'Cancelar' : 'Nueva'}</span>
@@ -720,44 +734,109 @@ export default function AdminCompetencias() {
       <div className="container-xl px-3 px-md-4 pb-5">
 
         {/* ── FORM NUEVA COMPETENCIA ── */}
-        {mostrarFormComp && (
+        {mostrarFormComp && (() => {
+          // F2.4: creación unificada con selector Tipo A (Paquete) / Tipo B (Comisión / WodReps).
+          let planesComp = [];
+          if (configPublica?.planesCompetenciaJson) {
+            try { planesComp = JSON.parse(configPublica.planesCompetenciaJson); } catch (e) { planesComp = []; }
+          }
+          const tarifaComision = Number(configPublica?.comisionPorAtletaWodReps ?? 10);
+          const esB = tipoNuevaComp === 'Comision';
+          const precioNum = parseFloat(precioCalc) || 0;
+          const stripeAprox = precioNum > 0 ? (precioNum * 0.041 + 3) : 0; // estimado ≈4.1% + $3
+          const netoAtletaAbsorbe = Math.max(0, precioNum - tarifaComision);
+          const netoBoxAbsorbe = Math.max(0, precioNum - tarifaComision - stripeAprox);
+          return (
           <div className="acomp-form-card mb-4">
             <div className="acomp-form-header">
               <p className="acomp-form-titulo"><i className="fas fa-plus-circle"></i> Nueva Competencia</p>
             </div>
             <div className="acomp-form-body">
-              <form onSubmit={crearCompetencia}>
-                <div className="row g-3">
-                  <div className="col-12 col-md-6">
-                    <label className="acomp-label">Nombre del evento</label>
-                    <input
-                      type="text"
-                      className="acomp-input"
-                      placeholder="Ej. WolfPack Open 2026"
-                      required
-                      value={formComp.nombre}
-                      onChange={e => setFormComp({ ...formComp, nombre: e.target.value })}
-                    />
-                  </div>
-                  <div className="col-6 col-md-3">
-                    <label className="acomp-label">Fecha inicio <span className="text-muted">(opcional)</span></label>
-                    <RedGrayDatePicker value={formComp.fechaInicio} onChange={value => setFormComp({ ...formComp, fechaInicio: value })} />
-                  </div>
-                  <div className="col-6 col-md-3">
-                    <label className="acomp-label">Fecha fin <span className="text-muted">(opcional)</span></label>
-                    <RedGrayDatePicker value={formComp.fechaFin} onChange={value => setFormComp({ ...formComp, fechaFin: value })} />
-                  </div>
+              {/* Selector de tipo de cobro */}
+              <div className="d-flex gap-2 mb-4 flex-wrap">
+                <button type="button"
+                  className={esB ? 'acomp-btn-cancel-sm' : 'acomp-btn-nueva'}
+                  onClick={() => setTipoNuevaComp('Paquete')}>
+                  <i className="fas fa-box"></i> Por paquete
+                </button>
+                <button type="button"
+                  className={!esB ? 'acomp-btn-cancel-sm' : 'acomp-btn-nueva'}
+                  onClick={() => setTipoNuevaComp('Comision')}>
+                  <i className="fas fa-infinity"></i> Atletas ilimitados (comisión)
+                </button>
+              </div>
+
+              <form onSubmit={comprarPlanYCrear}>
+                <div className="mb-3">
+                  <label className="acomp-label">Nombre del evento</label>
+                  <input
+                    type="text"
+                    className="acomp-input"
+                    placeholder="Ej. WolfPack Open 2026"
+                    required
+                    value={nombreCompetenciaExpress}
+                    onChange={e => setNombreCompetenciaExpress(e.target.value)}
+                  />
                 </div>
-                <div className="d-flex justify-content-end gap-2 mt-4">
+
+                {!esB ? (
+                  <div className="mb-3">
+                    <label className="acomp-label">Paquete</label>
+                    {planesComp.length === 0 ? (
+                      <p className="text-muted small mb-0">No hay paquetes configurados por la plataforma. Usa "Atletas ilimitados (comisión)" o pide que configuren los paquetes.</p>
+                    ) : (
+                      <div className="row g-2">
+                        {planesComp.map((p, i) => (
+                          <div key={i} className="col-12 col-sm-6 col-lg-4">
+                            <button
+                              type="button"
+                              className={`acomp-plan-card w-100 ${planSeleccionado?.nombre === p.nombre ? 'acomp-plan-card--featured' : ''}`}
+                              onClick={() => setPlanSeleccionado(p)}
+                            >
+                              <p className="acomp-plan-nombre mb-1">{p.nombre}</p>
+                              <div><span className="acomp-plan-precio">${p.precio}</span> <span className="acomp-plan-precio-currency">MXN</span></div>
+                              <p className="small mb-0 mt-1">{p.atletasIncluidos} atletas · {p.dias} {p.dias === 1 ? 'día' : 'días'}</p>
+                              <p className="small mb-0">+${p.precioAtletaExtra}/atleta extra</p>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mb-3 p-3 rounded-3" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)' }}>
+                    <p className="acomp-label mb-1"><i className="fas fa-infinity"></i> Modo comisión (WodReps)</p>
+                    <p className="small mb-3" style={{ color: 'var(--secondary)' }}>
+                      Atletas <strong>ilimitados</strong> e inscripciones <strong>100% en línea</strong>. La plataforma cobra
+                      <strong> ${tarifaComision} MXN por atleta</strong> inscrito. No pagas nada por crear la competencia.
+                    </p>
+                    <label className="acomp-label">Calculadora — ¿cuánto cobras de inscripción por atleta?</label>
+                    <input
+                      type="number" min="0" className="acomp-input mb-2" placeholder="Ej. 350"
+                      value={precioCalc} onChange={e => setPrecioCalc(e.target.value)}
+                    />
+                    {precioNum > 0 && (
+                      <div className="small" style={{ color: 'var(--text-primary)' }}>
+                        <div>Comisión plataforma: <strong>−${tarifaComision.toFixed(2)}</strong> por atleta</div>
+                        <div>Si el <strong>atleta</strong> absorbe la comisión bancaria → recibes ≈ <strong>${netoAtletaAbsorbe.toFixed(2)}</strong> por atleta</div>
+                        <div>Si <strong>tú</strong> absorbes la comisión bancaria → recibes ≈ <strong>${netoBoxAbsorbe.toFixed(2)}</strong> por atleta</div>
+                        <div className="text-muted mt-1" style={{ fontSize: '10px' }}>* Comisión bancaria estimada (≈4.1% + $3); el cálculo exacto se aplica al cobrar. Quién la absorbe se configura en tu Stripe.</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="d-flex justify-content-end gap-2 mt-3">
                   <button type="button" className="acomp-btn-cancel-sm" onClick={() => setMostrarFormComp(false)}>Cancelar</button>
-                  <BotonSeguro type="submit" disabled={procesando} className="acomp-btn-submit" textoProcesando="Creando...">
-                    <i className="fas fa-plus"></i> Crear
+                  <BotonSeguro type="submit" disabled={creandoExpress || (!esB && !planSeleccionado)} className="acomp-btn-submit" textoProcesando="Creando...">
+                    <i className="fas fa-bolt"></i> {esB ? 'Crear competencia (gratis)' : 'Crear con paquete'}
                   </BotonSeguro>
                 </div>
               </form>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* ── LISTA ── */}
         {competencias.filter(c => c.estatus !== 'Archivada' && c.estatus !== 'Historial').length === 0 ? (
