@@ -116,7 +116,46 @@ export default function Layout() {
   const navItemsRaw = useMemo(() => {
     if (!user) return [];
 
-    if (user.rol === 'AdminBox' || user.rol === 'Developer') {
+    // DEVELOPER: menú propio de centro de auditoría/soporte. NO es el de AdminBox.
+    // Card 1 "Centro de Control" + Card 3 "Sistema" son globales (no requieren box).
+    // Card 2 "Auditar un Box" son rutas con scope: requieren elegir un box en el navbar
+    // (ver boxScopedRoutes + el bloqueo en CardNav).
+    if (user.rol === 'Developer') {
+      return [
+        {
+          label: 'Centro de Control', icon: 'fa-shield-halved', bgColor: '#1C1C26', textColor: '#fff',
+          links: [
+            { label: 'Panel Developer', href: '/dashboard' },
+            { label: 'Control SaaS y Planes', href: '/admin-saas' },
+            { label: 'Crear Box', href: '/crear-box' },
+            { label: 'Pre-registros', href: '/admin-preregistros' },
+            { label: 'Boxes Archivados', href: '/admin-archivadas' },
+            { label: 'Gestión Competencias', href: '/admin-competencias' },
+          ]
+        },
+        {
+          label: 'Auditar un Box', icon: 'fa-magnifying-glass-chart', bgColor: '#1f1015', textColor: '#fff',
+          links: [
+            { label: 'Atletas del Box', href: '/atletas-box' },
+            { label: 'Gestión de Clases', href: '/gestion-clases' },
+            { label: 'Pase de Lista', href: '/pase-de-lista' },
+            { label: 'Directorio', href: '/directorio' },
+            { label: 'Auditoría del Box', href: '/admin-box/auditoria' },
+          ]
+        },
+        {
+          label: 'Sistema', icon: 'fa-cogs', bgColor: '#1C1C26', textColor: '#fff',
+          links: [
+            { label: 'Diccionario de Ejercicios', href: '/admin-ejercicios' },
+            { label: 'Preguntas y Respuestas', href: '/preguntas-frecuentes' },
+            { label: 'Buzón de Sugerencias', href: '/buzon-sugerencias' },
+            { label: 'Mi Perfil', href: '/perfil-admin' },
+          ]
+        }
+      ];
+    }
+
+    if (user.rol === 'AdminBox') {
       return [
         {
           label: 'Operaciones', icon: 'fa-clipboard-check', bgColor: '#1C1C26', textColor: '#fff',

@@ -6,6 +6,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from "../../context/AuthContext";
 import './CardNav.css';
 import BoxPickerModal from '../BoxPickerModal';
+import { esRutaConBox } from '../../config/boxScopedRoutes';
 
 const CardNav = ({
   logo, logoAlt = 'Logo', items, className = '', ease = 'power3.out',
@@ -194,8 +195,9 @@ const CardNav = ({
   };
 
   const handleNavLinkClick = (href, event) => {
-    // Developer sin box seleccionado: bloquear navegación y pedir que elija uno.
-    if (usuario?.rol === 'Developer' && !boxActivo) {
+    // Developer sin box: SOLO bloquear rutas con scope de box (Auditar un Box). Las rutas
+    // globales (Panel Developer, SaaS, Crear Box, etc.) navegan libremente.
+    if (usuario?.rol === 'Developer' && !boxActivo && esRutaConBox(href)) {
       event.preventDefault();
       setShowSelectBoxModal(true);
       return;
