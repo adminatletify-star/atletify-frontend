@@ -88,6 +88,25 @@ export default function AdminCompetencias() {
     } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
+  // F2 FIX (pago): al volver de Stripe, avisar el resultado del pago del módulo (Tipo A en línea).
+  // Si se canceló, NO se creó NADA (la competencia ahora se materializa en el webhook tras pagar).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('modulo_cancelado') === '1') {
+      alert('Pago incompleto: tu competencia NO se creó. Para crearla debes completar el pago en Stripe.');
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (params.get('modulo_pagado') === '1') {
+      alert('¡Pago recibido! Tu competencia se está activando; puede tardar unos segundos en aparecer.');
+      window.history.replaceState({}, '', window.location.pathname);
+      // El webhook es asíncrono: refrescar la lista un par de veces.
+      const leerIdBox = () => { try { const b = JSON.parse(localStorage.getItem('box') || '{}'); return b.idBox || b.IdBox; } catch { return null; } };
+      const t1 = setTimeout(() => { const id = leerIdBox(); if (id) cargarCompetencias(id); }, 3500);
+      const t2 = setTimeout(() => { const id = leerIdBox(); if (id) cargarCompetencias(id); }, 9000);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // F2.4: crearCompetencia (POST /competencias, Developer-only y roto para AdminBox) ELIMINADO.
   // Toda la creación va ahora por comprarPlanYCrear (comprar-plan-crear) con selector Tipo A/B.
 
