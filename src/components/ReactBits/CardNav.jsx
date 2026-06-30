@@ -10,8 +10,8 @@ import AccountMenu from '../AccountMenu';
 import { esRutaConBox } from '../../config/boxScopedRoutes';
 
 const CardNav = ({
-  logo, logoAlt = 'Logo', items, className = '', ease = 'power3.out',
-  baseColor = '#fff', menuColor, buttonBgColor, buttonTextColor, onButtonClick
+  logoAlt = 'Logo', items, className = '', ease = 'power3.out',
+  baseColor = '#fff', menuColor, onButtonClick
 }) => {
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -37,8 +37,13 @@ const CardNav = ({
     return '/';
   };
 
-  // Mantiene el ref sincronizado con el estado
-  useEffect(() => { isExpandedRef.current = isExpanded; }, [isExpanded]);
+  // Sincroniza el ref con el estado ANTES del paint (useLayoutEffect) y declarado
+  // ANTES que el efecto que reconstruye el timeline: así, en un commit donde cambian
+  // a la vez isExpanded e items, el ref ya quedó actualizado cuando el rebuild lo lee.
+  // Antes era un useEffect post-paint → el ref quedaba un commit atrasado y
+  // desincronizaba el navbar (contenedor expandido por GSAP pero sin la clase .open,
+  // es decir contenedor visible sin las rutas, hasta recargar la página).
+  useLayoutEffect(() => { isExpandedRef.current = isExpanded; }, [isExpanded]);
 
   // Ref que siempre apunta a closeMenu actualizado (evita stale closure)
   const closeMenuRef = useRef(null);
@@ -155,13 +160,16 @@ const CardNav = ({
   };
 
   useLayoutEffect(() => {
+    // isExpandedRef se espeja en cada render (ver arriba), así que aquí refleja el
+    // estado REAL de isExpanded en este commit — no uno atrasado.
     const wasOpen = isExpandedRef.current;
     const tl = createTimeline(wasOpen);
     tlRef.current = tl;
-    // Si estaba abierto cuando items cambió (ej. auth cargó tarde), restauramos el estado abierto
-    if (wasOpen && tl) {
-      tl.progress(1).pause();
-    }
+    // Forzamos el timeline a coincidir EXACTAMENTE con el estado de React: abierto →
+    // progress(1), cerrado → progress(0). Antes solo se restauraba el caso "abierto";
+    // si el estado real y el visual de GSAP quedaban en desacuerdo, el nav aparecía
+    // expandido sin la clase .open (contenedor sin rutas) y solo se arreglaba recargando.
+    if (tl) tl.progress(wasOpen ? 1 : 0).pause();
     return () => { tl?.kill(); tlRef.current = null; };
   }, [ease, items]);
 
@@ -342,20 +350,6 @@ const CardNav = ({
             </div>
           ))}
 
-          <div className="card-nav-content-footer d-flex flex-column gap-2" ref={setCardRef((items || []).length)}>
-            {/* Switcher de cuentas: movido al dropdown del avatar (AccountMenu, D4). */}
-
-
-            <button
-              type="button"
-              onClick={onButtonClick}
-              className="card-nav-cta-button card-nav-cta-inside w-100"
-              style={{ backgroundColor: buttonBgColor, color: buttonTextColor, fontWeight: 'bold' }}
-            >
-              <i className="fas fa-sign-out-alt me-2"></i>
-              {logo ? 'Cerrar Sesión Activa' : 'Ingresar'}
-            </button>
-          </div>
         </div>
       </nav>
 

@@ -90,8 +90,9 @@ export default function OpcionesPicker({ valor, onCambiar, opciones = [], titulo
                     <button
                       key={op.valor}
                       type="button"
-                      className={`opk-option${activo ? ' opk-option--activo' : ''}`}
-                      onClick={() => seleccionar(op.valor)}
+                      disabled={op.disabled}
+                      className={`opk-option${activo ? ' opk-option--activo' : ''}${op.disabled ? ' opk-option--disabled' : ''}`}
+                      onClick={() => { if (!op.disabled) seleccionar(op.valor); }}
                     >
                       {(op.color || op.icono) && (
                         <span

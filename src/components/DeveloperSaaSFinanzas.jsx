@@ -14,6 +14,91 @@ const PAGE_SIZE = 10;
 const normalizar = (txt = '') =>
   txt.toString().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 
+// Igual que normalizar pero además elimina TODOS los espacios: búsqueda tolerante a
+// espacios y acentos (p. ej. "banear usuario" o "banearusuario" encuentran "BANEAR_USUARIO").
+const normalizarFuerte = (txt = '') => normalizar(txt).replace(/\s+/g, '');
+
+// Acción en MAYÚSCULAS_SNAKE_CASE → legible ("SUSPENDER_BOX" → "SUSPENDER BOX").
+const humanizarAccion = (a = '') => a.replace(/_/g, ' ');
+
+// Números de página visibles con elipsis (1 … n-1 n) — compartido por ambas paginaciones.
+const construirNumeros = (cur, max) => {
+  const nums = [];
+  if (max <= 7) { for (let i = 1; i <= max; i++) nums.push(i); return nums; }
+  nums.push(1);
+  if (cur > 3) nums.push('…');
+  for (let i = Math.max(2, cur - 1); i <= Math.min(max - 1, cur + 1); i++) nums.push(i);
+  if (cur < max - 2) nums.push('…');
+  nums.push(max);
+  return nums;
+};
+
+// Modal selector/filtro reutilizable para listas de strings (acción, entidad, …).
+// Sigue el sistema de diseño: centrado, border-top primary, buscador interno tolerante a acentos.
+const ModalFiltroPick = ({ supertitle, titulo, opciones, valor, labelTodas = 'Todas', icono = 'fa-tag', humanize, onSelect, onCerrar }) => {
+  const [buscar, setBuscar] = useState('');
+  const q = normalizar(buscar);
+  const filtradas = q ? opciones.filter(o => normalizar(humanize ? humanize(o) : o).includes(q)) : opciones;
+  return createPortal(
+    <div className="dsf-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onCerrar(); }}>
+      <div className="dsf-modal">
+        <div className="dsf-modal-header">
+          <div>
+            <p className="dsf-modal-supertitle">{supertitle}</p>
+            <h3 className="dsf-modal-title">{titulo}</h3>
+          </div>
+          <button type="button" className="dsf-modal-close" onClick={onCerrar}>
+            <i className="fas fa-times"></i>
+          </button>
+        </div>
+        <div className="dsf-modal-search">
+          <i className="fas fa-search dsf-modal-search-icon"></i>
+          <input
+            type="text"
+            className="dsf-modal-search-input"
+            placeholder="Buscar…"
+            value={buscar}
+            onChange={(e) => setBuscar(e.target.value)}
+            autoFocus
+          />
+        </div>
+        <div className="dsf-pick-list">
+          {!buscar && (
+            <button
+              type="button"
+              className={`dsf-pick-opt ${!valor ? 'dsf-pick-opt--active' : ''}`}
+              style={{ '--oc': 'var(--accent-cool)' }}
+              onClick={() => { onSelect(''); onCerrar(); }}
+            >
+              <span className="dsf-pick-dot"><i className="fas fa-layer-group"></i></span>
+              <div className="dsf-pick-info"><span className="dsf-pick-name">{labelTodas}</span></div>
+              {!valor && <i className="fas fa-check dsf-pick-check"></i>}
+            </button>
+          )}
+          {filtradas.length === 0 ? (
+            <div className="dsf-pick-empty">No hay coincidencias.</div>
+          ) : filtradas.map(o => {
+            const activo = valor === o;
+            return (
+              <button
+                key={o}
+                type="button"
+                className={`dsf-pick-opt ${activo ? 'dsf-pick-opt--active' : ''}`}
+                style={{ '--oc': 'var(--accent-cool)' }}
+                onClick={() => { onSelect(o); onCerrar(); }}
+              >
+                <span className="dsf-pick-dot"><i className={`fas ${icono}`}></i></span>
+                <div className="dsf-pick-info"><span className="dsf-pick-name">{humanize ? humanize(o) : o}</span></div>
+                {activo && <i className="fas fa-check dsf-pick-check"></i>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>, document.body
+  );
+};
+
 // Metadatos visuales de cada estado del servicio SaaS
 const ESTATUS = [
   { value: 'Pendiente',  label: 'Pendiente',  color: 'var(--accent)',      icon: 'fa-hourglass-half', desc: 'Aún sin activar la suscripción' },
@@ -74,8 +159,18 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
   const [f3Correo, setF3Correo] = useState('');
   const [f3CuentaMotivo, setF3CuentaMotivo] = useState('');
   const [f3Busy, setF3Busy] = useState(false);
+  const [f3BoxPicker, setF3BoxPicker] = useState(false);  // modal selector de box (reemplaza el <select>)
+  const [f3BoxBuscar, setF3BoxBuscar] = useState('');
   const [bitacora, setBitacora] = useState([]);
   const [bitacoraLoading, setBitacoraLoading] = useState(false);
+
+  // ── Buscador + filtros modales + paginación de la bitácora ──
+  const [bitaBuscar, setBitaBuscar]   = useState('');
+  const [bitaAccion, setBitaAccion]   = useState('');  // '' = todas
+  const [bitaEntidad, setBitaEntidad] = useState('');  // '' = todas
+  const [bitaPagina, setBitaPagina]   = useState(1);
+  const [bitaFiltroAccion, setBitaFiltroAccion]   = useState(false);  // modal abierto
+  const [bitaFiltroEntidad, setBitaFiltroEntidad] = useState(false);
 
   const { impersonar } = useAuth();
 
@@ -372,19 +467,46 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
   })();
 
   // Construye los números de página visibles (con elipsis)
-  const numerosPagina = () => {
-    const nums = [];
-    const max = totalPaginas;
-    const cur = paginaSegura;
-    const push = (n) => nums.push(n);
-    if (max <= 7) { for (let i = 1; i <= max; i++) push(i); return nums; }
-    push(1);
-    if (cur > 3) push('…');
-    for (let i = Math.max(2, cur - 1); i <= Math.min(max - 1, cur + 1); i++) push(i);
-    if (cur < max - 2) push('…');
-    push(max);
-    return nums;
-  };
+  const numerosPagina = () => construirNumeros(paginaSegura, totalPaginas);
+
+  // ── Centro de Control: box seleccionado + lista filtrada del selector modal ──
+  const f3BoxSel = boxes.find(b => String(b.idBox) === String(f3BoxId)) || null;
+  const f3BoxesFiltrados = (() => {
+    const q = normalizar(f3BoxBuscar);
+    if (!q) return boxes;
+    return boxes.filter(b =>
+      normalizar(`${b.nombre} ${b.ubicacion || ''} ${getEstatusMeta(b.estatusSaaS).label}`).includes(q)
+    );
+  })();
+
+  // ── Bitácora: valores únicos para los filtros + lista filtrada (acción/entidad/buscador) ──
+  const accionesBita  = [...new Set(bitacora.map(l => l.accion).filter(Boolean))].sort();
+  const entidadesBita = [...new Set(bitacora.map(l => l.tipoEntidad).filter(Boolean))].sort();
+
+  const bitacoraFiltrada = (() => {
+    const q = normalizarFuerte(bitaBuscar);
+    return bitacora.filter(l => {
+      if (bitaAccion && l.accion !== bitaAccion) return false;
+      if (bitaEntidad && l.tipoEntidad !== bitaEntidad) return false;
+      if (!q) return true;
+      const hay = [l.nombreActor, l.accion, l.tipoEntidad, l.idEntidad, l.motivo, l.ip, fmtFecha(l.fechaHora)]
+        .map(normalizarFuerte).join(' ');
+      return hay.includes(q);
+    });
+  })();
+
+  const bitaTotalPaginas = Math.max(1, Math.ceil(bitacoraFiltrada.length / PAGE_SIZE));
+  const bitaPaginaSegura = Math.min(bitaPagina, bitaTotalPaginas);
+  const bitaItems  = bitacoraFiltrada.slice((bitaPaginaSegura - 1) * PAGE_SIZE, bitaPaginaSegura * PAGE_SIZE);
+  const bitaDesde  = bitacoraFiltrada.length === 0 ? 0 : (bitaPaginaSegura - 1) * PAGE_SIZE + 1;
+  const bitaHasta  = Math.min(bitaPaginaSegura * PAGE_SIZE, bitacoraFiltrada.length);
+  const hayFiltrosBita = !!(bitaBuscar || bitaAccion || bitaEntidad);
+
+  // Resetea a la página 1 al cambiar buscador o cualquier filtro de la bitácora
+  const setBitaBuscarReset  = (v) => { setBitaBuscar(v);  setBitaPagina(1); };
+  const setBitaAccionReset  = (v) => { setBitaAccion(v);  setBitaPagina(1); };
+  const setBitaEntidadReset = (v) => { setBitaEntidad(v); setBitaPagina(1); };
+  const limpiarFiltrosBita  = () => { setBitaBuscar(''); setBitaAccion(''); setBitaEntidad(''); setBitaPagina(1); };
 
   return (
     <section className="dash-section pt-0 dsf-root">
@@ -805,12 +927,16 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
           <div className="col-12 col-lg-6">
             <div className="dsf-field">
               <label className="dsf-field-label">Box</label>
-              <select className="dsf-input" value={f3BoxId} onChange={(e) => setF3BoxId(e.target.value)}>
-                <option value="">Selecciona un box…</option>
-                {boxes.map(b => (
-                  <option key={b.idBox} value={b.idBox}>{b.nombre} — {getEstatusMeta(b.estatusSaaS).label}</option>
-                ))}
-              </select>
+              <button
+                type="button"
+                className="dsf-picker-btn"
+                onClick={() => { setF3BoxBuscar(''); setF3BoxPicker(true); }}
+              >
+                <span className={`dsf-picker-label ${f3BoxSel ? '' : 'dsf-picker-label--vacio'}`}>
+                  {f3BoxSel ? `${f3BoxSel.nombre} — ${getEstatusMeta(f3BoxSel.estatusSaaS).label}` : 'Selecciona un box…'}
+                </span>
+                <i className="fas fa-chevron-down dsf-picker-arrow"></i>
+              </button>
             </div>
             <div className="dsf-field">
               <label className="dsf-field-label">Motivo (obligatorio para suspender/archivar)</label>
@@ -822,7 +948,7 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
                 onChange={(e) => setF3BoxMotivo(e.target.value)}
               />
             </div>
-            <div className="dsf-card-actions">
+            <div className="dsf-card-actions dsf-card-actions--wrap">
               <button type="button" className="dsf-add-btn" disabled={f3Busy} onClick={() => accionBoxF3('suspender')}>
                 <i className="fas fa-ban"></i><span className="dsf-add-btn-label">Suspender</span>
               </button>
@@ -858,7 +984,7 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
                 onChange={(e) => setF3CuentaMotivo(e.target.value)}
               />
             </div>
-            <div className="dsf-card-actions">
+            <div className="dsf-card-actions dsf-card-actions--wrap">
               <button type="button" className="dsf-add-btn" disabled={f3Busy} onClick={() => accionCuentaF3('banear-por-correo')}>
                 <i className="fas fa-user-slash"></i><span className="dsf-add-btn-label">Banear</span>
               </button>
@@ -880,44 +1006,143 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
         </div>
 
         {/* Visor de bitácora */}
-        <div className="dsf-panel-head" style={{ marginTop: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="dsf-panel-head dsf-bita-head">
           <h3 className="dsf-panel-title"><i className="fas fa-clipboard-list"></i> Bitácora de acciones</h3>
-          <button type="button" className="dsf-icon-btn" title="Refrescar bitácora" onClick={cargarBitacora} disabled={bitacoraLoading}>
+          <button type="button" className="dsf-icon-btn dsf-icon-btn--ghost" title="Refrescar bitácora" onClick={cargarBitacora} disabled={bitacoraLoading}>
             <i className="fas fa-rotate-right"></i>
           </button>
         </div>
+
+        {/* Buscador (tolerante a espacios/acentos) + filtros modales */}
+        <div className="dsf-bita-toolbar">
+          <div className="dsf-search dsf-bita-search">
+            <i className="fas fa-search dsf-search-icon"></i>
+            <input
+              type="text"
+              className="dsf-search-input"
+              placeholder="Buscar acción, actor, motivo, IP…"
+              value={bitaBuscar}
+              onChange={(e) => setBitaBuscarReset(e.target.value)}
+            />
+          </div>
+          <button type="button" className="dsf-filtro-btn" onClick={() => setBitaFiltroAccion(true)}>
+            <i className="fas fa-filter dsf-filtro-btn-icon"></i>
+            <span className={`dsf-filtro-btn-text ${bitaAccion ? 'dsf-filtro-btn-text--activo' : ''}`}>
+              {bitaAccion ? humanizarAccion(bitaAccion) : 'Acción'}
+            </span>
+            <i className="fas fa-chevron-down dsf-filtro-arrow"></i>
+          </button>
+          <button type="button" className="dsf-filtro-btn" onClick={() => setBitaFiltroEntidad(true)}>
+            <i className="fas fa-cube dsf-filtro-btn-icon"></i>
+            <span className={`dsf-filtro-btn-text ${bitaEntidad ? 'dsf-filtro-btn-text--activo' : ''}`}>
+              {bitaEntidad || 'Entidad'}
+            </span>
+            <i className="fas fa-chevron-down dsf-filtro-arrow"></i>
+          </button>
+          {hayFiltrosBita && (
+            <button type="button" className="dsf-filtro-clear" onClick={limpiarFiltrosBita} title="Limpiar filtros">
+              <i className="fas fa-times"></i>
+            </button>
+          )}
+        </div>
+
+        {!bitacoraLoading && bitacora.length > 0 && (
+          <div className="dsf-summary">
+            Mostrando <strong>{bitaDesde}–{bitaHasta}</strong> de <strong>{bitacoraFiltrada.length}</strong> {bitacoraFiltrada.length === 1 ? 'acción' : 'acciones'}
+          </div>
+        )}
 
         {bitacoraLoading ? (
           <div className="dsf-empty"><i className="fas fa-spinner fa-spin"></i><p>Cargando bitácora…</p></div>
         ) : bitacora.length === 0 ? (
           <div className="dsf-empty"><i className="fas fa-clipboard"></i><p>Sin acciones registradas todavía.</p></div>
+        ) : bitacoraFiltrada.length === 0 ? (
+          <div className="dsf-empty"><i className="fas fa-filter-circle-xmark"></i><p>Ninguna acción coincide con tu búsqueda o filtros.</p></div>
         ) : (
-          <div className="dsf-table-wrap">
-            <table className="dsf-table">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Actor</th>
-                  <th>Acción</th>
-                  <th>Entidad</th>
-                  <th>Motivo</th>
-                  <th>IP</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bitacora.map(l => (
-                  <tr key={l.idLog}>
-                    <td>{fmtFecha(l.fechaHora)}</td>
-                    <td><div className="dsf-box-name">{l.nombreActor || '—'}</div></td>
-                    <td><span className="dsf-pill">{l.accion}</span></td>
-                    <td>{l.tipoEntidad ? `${l.tipoEntidad} ${l.idEntidad || ''}`.trim() : '—'}</td>
-                    <td>{l.motivo || '—'}</td>
-                    <td>{l.ip || '—'}</td>
+          <>
+            {/* ── Desktop (≥1200px): tabla ── */}
+            <div className="dsf-table-wrap d-none d-xl-block">
+              <table className="dsf-table">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Actor</th>
+                    <th>Acción</th>
+                    <th>Entidad</th>
+                    <th>Motivo</th>
+                    <th>IP</th>
                   </tr>
+                </thead>
+                <tbody>
+                  {bitaItems.map(l => (
+                    <tr key={l.idLog}>
+                      <td>{fmtFecha(l.fechaHora)}</td>
+                      <td><div className="dsf-box-name">{l.nombreActor || '—'}</div></td>
+                      <td><span className="dsf-pill dsf-pill--accion">{humanizarAccion(l.accion)}</span></td>
+                      <td>{l.tipoEntidad ? `${l.tipoEntidad} ${l.idEntidad || ''}`.trim() : '—'}</td>
+                      <td>{l.motivo || '—'}</td>
+                      <td>{l.ip || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ── Móvil / tablet (<1200px): tarjetas ── */}
+            <div className="dsf-bita-cards d-xl-none">
+              {bitaItems.map(l => (
+                <div key={l.idLog} className="dsf-bita-card">
+                  <div className="dsf-bita-card-head">
+                    <span className="dsf-pill dsf-pill--accion">{humanizarAccion(l.accion)}</span>
+                    <span className="dsf-bita-fecha">{fmtFecha(l.fechaHora)}</span>
+                  </div>
+                  <div className="dsf-bita-rows">
+                    <div className="dsf-bita-row">
+                      <span className="dsf-bita-k">Actor</span>
+                      <span className="dsf-bita-v">{l.nombreActor || '—'}</span>
+                    </div>
+                    <div className="dsf-bita-row">
+                      <span className="dsf-bita-k">Entidad</span>
+                      <span className="dsf-bita-v">{l.tipoEntidad ? `${l.tipoEntidad} ${l.idEntidad || ''}`.trim() : '—'}</span>
+                    </div>
+                    {l.motivo && (
+                      <div className="dsf-bita-row">
+                        <span className="dsf-bita-k">Motivo</span>
+                        <span className="dsf-bita-v">{l.motivo}</span>
+                      </div>
+                    )}
+                    <div className="dsf-bita-row">
+                      <span className="dsf-bita-k">IP</span>
+                      <span className="dsf-bita-v">{l.ip || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Paginación ── */}
+            {bitaTotalPaginas > 1 && (
+              <div className="dsf-pag">
+                <button className="dsf-pag-btn" disabled={bitaPaginaSegura === 1} onClick={() => setBitaPagina(p => Math.max(1, p - 1))}>
+                  <i className="fas fa-chevron-left"></i>
+                </button>
+                {construirNumeros(bitaPaginaSegura, bitaTotalPaginas).map((n, i) => n === '…' ? (
+                  <span key={`be-${i}`} className="dsf-pag-ellipsis">…</span>
+                ) : (
+                  <button
+                    key={n}
+                    className={`dsf-pag-btn ${n === bitaPaginaSegura ? 'dsf-pag-btn--active' : ''}`}
+                    onClick={() => setBitaPagina(n)}
+                  >
+                    {n}
+                  </button>
                 ))}
-              </tbody>
-            </table>
-          </div>
+                <button className="dsf-pag-btn" disabled={bitaPaginaSegura === bitaTotalPaginas} onClick={() => setBitaPagina(p => Math.min(bitaTotalPaginas, p + 1))}>
+                  <i className="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -1037,6 +1262,87 @@ const DeveloperSaaSFinanzas = ({ onDataChanged }) => {
             </div>
           </div>
         </div>, document.body
+      )}
+
+      {/* ════ MODAL: SELECCIONAR BOX (Centro de Control) ════ */}
+      {f3BoxPicker && createPortal(
+        <div className="dsf-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setF3BoxPicker(false); }}>
+          <div className="dsf-modal">
+            <div className="dsf-modal-header">
+              <div>
+                <p className="dsf-modal-supertitle">Centro de Control</p>
+                <h3 className="dsf-modal-title">Selecciona un box</h3>
+              </div>
+              <button type="button" className="dsf-modal-close" onClick={() => setF3BoxPicker(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="dsf-modal-search">
+              <i className="fas fa-search dsf-modal-search-icon"></i>
+              <input
+                type="text"
+                className="dsf-modal-search-input"
+                placeholder="Buscar box, ubicación o estado…"
+                value={f3BoxBuscar}
+                onChange={(e) => setF3BoxBuscar(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="dsf-pick-list">
+              {f3BoxesFiltrados.length === 0 ? (
+                <div className="dsf-pick-empty">Ningún box coincide.</div>
+              ) : f3BoxesFiltrados.map(b => {
+                const est = getEstatusMeta(b.estatusSaaS);
+                const activo = String(b.idBox) === String(f3BoxId);
+                return (
+                  <button
+                    key={b.idBox}
+                    type="button"
+                    className={`dsf-pick-opt ${activo ? 'dsf-pick-opt--active' : ''}`}
+                    style={{ '--oc': est.color }}
+                    onClick={() => { setF3BoxId(String(b.idBox)); setF3BoxPicker(false); }}
+                  >
+                    <span className="dsf-pick-dot"><i className={`fas ${est.icon}`}></i></span>
+                    <div className="dsf-pick-info">
+                      <span className="dsf-pick-name">{b.nombre}</span>
+                      <span className="dsf-pick-desc">{est.label}{b.ubicacion ? ` · ${b.ubicacion}` : ''}</span>
+                    </div>
+                    {activo && <i className="fas fa-check dsf-pick-check"></i>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>, document.body
+      )}
+
+      {/* ════ MODAL: FILTRO POR ACCIÓN (bitácora) ════ */}
+      {bitaFiltroAccion && (
+        <ModalFiltroPick
+          supertitle="Filtrar bitácora"
+          titulo="Acción"
+          opciones={accionesBita}
+          valor={bitaAccion}
+          labelTodas="Todas las acciones"
+          icono="fa-bolt"
+          humanize={humanizarAccion}
+          onSelect={setBitaAccionReset}
+          onCerrar={() => setBitaFiltroAccion(false)}
+        />
+      )}
+
+      {/* ════ MODAL: FILTRO POR ENTIDAD (bitácora) ════ */}
+      {bitaFiltroEntidad && (
+        <ModalFiltroPick
+          supertitle="Filtrar bitácora"
+          titulo="Entidad"
+          opciones={entidadesBita}
+          valor={bitaEntidad}
+          labelTodas="Todas las entidades"
+          icono="fa-cube"
+          onSelect={setBitaEntidadReset}
+          onCerrar={() => setBitaFiltroEntidad(false)}
+        />
       )}
 
       {/* ── Confirmar eliminación de box ── */}

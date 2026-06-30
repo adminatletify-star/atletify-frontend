@@ -9,6 +9,7 @@ import TimeWheelPicker from '../components/TimeWheelPicker';
 import MesPicker from '../components/MesPicker';
 import OpcionesPicker from '../components/OpcionesPicker';
 import GestionCuentasTransferencia from '../components/GestionCuentasTransferencia';
+import { comprimirArchivoImagen } from '../utils/comprimirImagen';
 import '../assets/css/EditarBox.css';
 
 // El backend expone todo bajo /api. VITE_API_URL viene SIN /api, así que lo
@@ -436,14 +437,14 @@ export default function EditarBox() {
     });
   }
 
-  function handleImageUpload(e) {
+  async function handleImageUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setForm(prev => ({ ...prev, logo: event.target?.result || '' }));
-    };
-    reader.readAsDataURL(file);
+    // Comprimir antes de guardar: un logo sin comprimir podía pesar varios MB y
+    // hacía que GET /api/box tardara ~1 min, agotando el pool de conexiones (500).
+    // WebP conserva transparencia; cae a PNG si el navegador no lo soporta en canvas.
+    const logoComprimido = await comprimirArchivoImagen(file, { maxLado: 400, calidad: 0.85, tipo: 'image/webp' });
+    setForm(prev => ({ ...prev, logo: logoComprimido }));
   }
 
   async function handleSubmit(e) {

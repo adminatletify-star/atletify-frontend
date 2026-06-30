@@ -319,6 +319,18 @@
   white-space: nowrap;
 }
 
+/* Pill de acción auditada (rojo de marca) — usado en la bitácora */
+.dsf-pill--accion {
+  background: rgba(230, 57, 70, 0.08);
+  border-color: rgba(230, 57, 70, 0.22);
+  color: var(--primary);
+  font-family: var(--font-heading-alt);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  white-space: normal;
+}
+
 /* ════════════════════════════════════════════════════════════
    BOTÓN-TRIGGER (plan / estado) — abre modal selector
    ════════════════════════════════════════════════════════════ */
@@ -515,6 +527,19 @@
   box-shadow: 0 0 10px var(--primary-glow);
 }
 
+.dsf-icon-btn--ghost {
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.dsf-icon-btn--ghost:hover {
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dsf-icon-btn--ghost:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* ════════════════════════════════════════════════════════════
    TARJETAS MÓVIL DE PERMISOS
    ════════════════════════════════════════════════════════════ */
@@ -573,6 +598,7 @@
 
 .dsf-card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.55rem;
   margin-top: 1rem;
 }
@@ -585,6 +611,10 @@
 }
 
 .dsf-card-actions .dsf-icon-btn { width: 42px; height: 42px; }
+
+/* Grupos con muchas acciones (Centro de Control): los botones conservan un ancho
+   mínimo legible y bajan de línea en vez de aplastarse en una sola fila. */
+.dsf-card-actions--wrap .dsf-add-btn { flex: 1 1 auto; min-width: 138px; }
 
 /* === EMPTY === */
 .dsf-empty {
@@ -601,6 +631,150 @@
 }
 
 .dsf-empty p { margin: 0; font-size: 0.9rem; }
+
+/* ════════════════════════════════════════════════════════════
+   BITÁCORA — encabezado + toolbar (buscador + filtros modales)
+   ════════════════════════════════════════════════════════════ */
+.dsf-bita-head {
+  margin-top: 0.5rem;
+  justify-content: space-between;
+}
+
+.dsf-bita-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem 0;
+}
+
+.dsf-bita-search { flex: 1 1 220px; min-width: 0; }
+
+/* Botón-trigger de filtro (abre el modal de selección) */
+.dsf-filtro-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dsf-filtro-btn-icon { color: var(--text-muted); font-size: 0.8rem; flex-shrink: 0; }
+
+.dsf-filtro-btn-text {
+  font-family: var(--font-heading-alt);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+}
+
+.dsf-filtro-btn-text--activo { color: var(--accent-cool); }
+
+.dsf-filtro-arrow { font-size: 0.65rem; color: var(--text-muted); flex-shrink: 0; }
+
+.dsf-filtro-clear {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: rgba(230, 57, 70, 0.08);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .dsf-filtro-btn:hover {
+    border-color: rgba(168, 178, 209, 0.4);
+    background: rgba(168, 178, 209, 0.05);
+  }
+  .dsf-filtro-clear:hover {
+    background: rgba(230, 57, 70, 0.16);
+    border-color: var(--primary);
+  }
+}
+
+.dsf-filtro-btn:active { transform: scale(0.97); }
+.dsf-filtro-clear:active { transform: scale(0.93); }
+
+/* ════════════════════════════════════════════════════════════
+   BITÁCORA — tarjetas móvil (<1200px)
+   ════════════════════════════════════════════════════════════ */
+.dsf-bita-cards { padding: 0.85rem 1.25rem 1.25rem; }
+
+.dsf-bita-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-left: 3px solid rgba(230, 57, 70, 0.4);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.dsf-bita-card + .dsf-bita-card { margin-top: 0.7rem; }
+
+.dsf-bita-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.7rem;
+}
+
+.dsf-bita-fecha {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.dsf-bita-rows { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.dsf-bita-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dsf-bita-k {
+  font-family: var(--font-heading-alt);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.dsf-bita-v {
+  font-size: 0.84rem;
+  color: var(--text-primary);
+  text-align: right;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
 
 /* ════════════════════════════════════════════════════════════
    PAGINACIÓN
@@ -1029,6 +1203,12 @@
   .dsf-pick-list { padding: 0.7rem 1rem 1rem; }
   .dsf-modal-search { padding: 0.7rem 1rem; }
   .dsf-modal-search-icon { left: 1.5rem; }
+  /* Bitácora: el buscador toma toda la 1ª fila; los filtros comparten la 2ª */
+  .dsf-bita-toolbar { padding: 0.85rem 1rem 0; gap: 0.5rem; }
+  .dsf-bita-search { flex-basis: 100%; }
+  .dsf-filtro-btn { flex: 1 1 auto; justify-content: center; }
+  .dsf-filtro-btn-text { max-width: none; }
+  .dsf-bita-cards { padding: 0.7rem 0.85rem 1rem; }
 }
 
 /* Móvil pequeño ≤ 380px */

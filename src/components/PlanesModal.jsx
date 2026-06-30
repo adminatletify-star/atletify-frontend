@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import BotonSeguro from './BotonSeguro';
+import AtletifyLoader from './AtletifyLoader';
+import './PlanesModal.css';
 
 export default function PlanesModal({ isOpen, onClose, idCompetencia, onSuccess }) {
   const [planes, setPlanes] = useState([]);
@@ -82,95 +85,86 @@ export default function PlanesModal({ isOpen, onClose, idCompetencia, onSuccess 
 
   if (!isOpen) return null;
 
-  return (
-    <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1060 }} tabIndex="-1">
-      <div className="modal-dialog modal-dialog-centered modal-lg">
-        <div className="modal-content text-light border-warning" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border) !important' }}>
-          <div className="modal-header border-bottom border-secondary border-opacity-25">
-            <h5 className="modal-title text-warning" style={{ fontFamily: 'var(--font-heading)' }}>
-              <i className="fas fa-rocket me-2"></i>Activa tu Competencia
-            </h5>
-            <button type="button" className="btn-close btn-close-white" onClick={onClose} disabled={procesando}></button>
-          </div>
-          <div className="modal-body p-4">
-            
-            <ul className="nav nav-pills mb-4 justify-content-center gap-2">
-              <li className="nav-item">
-                <button className={`nav-link ${modo === 'planes' ? 'active bg-warning text-dark fw-bold' : 'text-light'}`} onClick={() => setModo('planes')}>
-                  <i className="fas fa-list-ul me-2"></i>Seleccionar Plan
-                </button>
-              </li>
-              <li className="nav-item">
-                <button className={`nav-link ${modo === 'token' ? 'active bg-warning text-dark fw-bold' : 'text-light'}`} onClick={() => setModo('token')}>
-                  <i className="fas fa-gift me-2"></i>Tengo un Token
-                </button>
-              </li>
-            </ul>
+  return createPortal(
+    <div className="pm-overlay" onClick={() => { if (!procesando) onClose(); }}>
+      <div className="pm-panel" onClick={e => e.stopPropagation()}>
+        <div className="pm-head">
+          <h3 className="pm-title"><i className="fas fa-rocket"></i>Activa tu Competencia</h3>
+          <button type="button" className="pm-close" onClick={onClose} disabled={procesando}><i className="fas fa-times"></i></button>
+        </div>
 
-            {modo === 'planes' && (
-              <div>
-                <p className="text-center text-secondary mb-4">Selecciona el plan que mejor se adapte a tu evento. Paga seguro a través de Stripe.</p>
-                {loading ? (
-                  <div className="text-center py-4"><div className="spinner-border text-warning"></div></div>
-                ) : planes.length === 0 ? (
-                  <div className="text-center py-4 text-muted">No hay planes disponibles en este momento.</div>
-                ) : (
-                  <div className="row g-3">
-                    {planes.map(plan => (
-                      <div key={plan.idPlanSaaS} className="col-12 col-md-6">
-                        <div 
-                          className={`p-3 border rounded cursor-pointer ${idPlanSeleccionado === plan.idPlanSaaS ? 'border-warning bg-warning bg-opacity-10' : 'border-secondary'}`}
-                          onClick={() => setIdPlanSeleccionado(plan.idPlanSaaS)}
-                          style={{ cursor: 'pointer' }}
-                        >
-                          <div className="d-flex justify-content-between align-items-center mb-2">
-                            <h5 className="mb-0 text-white fw-bold">{plan.nombre}</h5>
-                            <h5 className="mb-0 text-success fw-bold">${plan.precio}</h5>
-                          </div>
-                          <p className="small text-secondary mb-2">{plan.descripcion}</p>
-                          <ul className="list-unstyled small mb-0 text-light">
-                            <li><i className="fas fa-check text-warning me-2"></i>Hasta {plan.limiteAtletas} atletas</li>
-                            <li><i className="fas fa-check text-warning me-2"></i>Excedente: ${plan.costoPorAtletaExtra} c/u</li>
-                          </ul>
-                        </div>
+        <div className="pm-body">
+          <div className="pm-tabs">
+            <button className={`pm-tab ${modo === 'planes' ? 'pm-tab--activo' : ''}`} onClick={() => setModo('planes')}>
+              <i className="fas fa-list-ul"></i>Seleccionar Plan
+            </button>
+            <button className={`pm-tab ${modo === 'token' ? 'pm-tab--activo' : ''}`} onClick={() => setModo('token')}>
+              <i className="fas fa-gift"></i>Tengo un Token
+            </button>
+          </div>
+
+          {modo === 'planes' && (
+            <div>
+              <p className="pm-intro">Selecciona el plan que mejor se adapte a tu evento. Paga seguro a través de Stripe.</p>
+              {loading ? (
+                <div className="pm-loader"><AtletifyLoader /></div>
+              ) : planes.length === 0 ? (
+                <div className="pm-empty">No hay planes disponibles en este momento.</div>
+              ) : (
+                <div className="pm-planes">
+                  {planes.map(plan => (
+                    <button
+                      type="button"
+                      key={plan.idPlanSaaS}
+                      className={`pm-plan ${idPlanSeleccionado === plan.idPlanSaaS ? 'pm-plan--sel' : ''}`}
+                      onClick={() => setIdPlanSeleccionado(plan.idPlanSaaS)}
+                    >
+                      <div className="pm-plan-top">
+                        <h5 className="pm-plan-nombre">{plan.nombre}</h5>
+                        <span className="pm-plan-precio">${plan.precio}</span>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {modo === 'token' && (
-              <div className="text-center py-3">
-                <i className="fas fa-ticket-alt fs-1 text-secondary mb-3"></i>
-                <p className="text-light">Ingresa el código de regalo proporcionado por Atletify.</p>
-                <input 
-                  type="text" 
-                  className="form-control bg-dark text-light border-secondary text-center fs-4 letter-spacing-2 mx-auto" 
-                  style={{ maxWidth: '300px' }}
-                  placeholder="XXXX-XXXX"
-                  value={tokenString}
-                  onChange={(e) => setTokenString(e.target.value.toUpperCase())}
-                />
-              </div>
-            )}
-
-          </div>
-          <div className="modal-footer border-top border-secondary border-opacity-25 d-flex justify-content-between">
-            <button className="btn btn-outline-secondary" onClick={onClose} disabled={procesando}>Cancelar</button>
-            <div className="d-flex gap-2 flex-wrap justify-content-end">
-              {modo === 'planes' && (
-                <BotonSeguro className="btn btn-outline-warning fw-bold px-3" onClick={() => handlePagar('Transferencia')} textoProcesando="Procesando...">
-                  <i className="fas fa-university me-2"></i>Pagar por transferencia
-                </BotonSeguro>
+                      {plan.descripcion && <p className="pm-plan-desc">{plan.descripcion}</p>}
+                      <ul className="pm-plan-feats">
+                        <li className="pm-plan-feat"><i className="fas fa-check"></i>Hasta {plan.limiteAtletas} atletas</li>
+                        <li className="pm-plan-feat"><i className="fas fa-check"></i>Excedente: ${plan.costoPorAtletaExtra} c/u</li>
+                      </ul>
+                    </button>
+                  ))}
+                </div>
               )}
-              <BotonSeguro className="btn btn-warning fw-bold text-dark px-4" onClick={() => handlePagar(null)} textoProcesando="Procesando...">
-                {modo === 'planes' ? <><i className="fab fa-stripe me-2"></i>Pagar y Activar</> : <><i className="fas fa-check-circle me-2"></i>Canjear Token</>}
-              </BotonSeguro>
             </div>
+          )}
+
+          {modo === 'token' && (
+            <div className="pm-token">
+              <i className="fas fa-ticket-alt pm-token-icon"></i>
+              <p className="pm-token-text">Ingresa el código de regalo proporcionado por Atletify.</p>
+              <input
+                type="text"
+                className="pm-token-input"
+                placeholder="XXXX-XXXX"
+                value={tokenString}
+                onChange={(e) => setTokenString(e.target.value.toUpperCase())}
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="pm-foot">
+          <button className="pm-btn pm-btn--ghost" onClick={onClose} disabled={procesando}>Cancelar</button>
+          <div className="pm-foot-actions">
+            {modo === 'planes' && (
+              <BotonSeguro className="pm-btn pm-btn--outline-accent" onClick={() => handlePagar('Transferencia')} textoProcesando="Procesando...">
+                <i className="fas fa-building-columns"></i>Pagar por transferencia
+              </BotonSeguro>
+            )}
+            <BotonSeguro className="pm-btn pm-btn--accent" onClick={() => handlePagar(null)} textoProcesando="Procesando...">
+              {modo === 'planes' ? <><i className="fab fa-stripe"></i>Pagar y Activar</> : <><i className="fas fa-check-circle"></i>Canjear Token</>}
+            </BotonSeguro>
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

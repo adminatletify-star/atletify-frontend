@@ -8,6 +8,7 @@ import EstatusPickerModal from '../components/EstatusPickerModal';
 import FormatoCategoriaPicker from '../components/FormatoCategoriaPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import PlanesModal from '../components/PlanesModal';
+import '../assets/css/GestionClases.css';
 import '../assets/css/AdminCompetencias.css';
 
 export default function AdminCompetencias() {
@@ -722,28 +723,26 @@ export default function AdminCompetencias() {
   return (
     <div className="acomp-container">
 
-      {/* ── HEADER ── */}
-      <header className="acomp-nav" style={{ marginBottom: '2rem' }}>
-        <div className="acomp-nav-left">
+      {/* ── HEADER (patrón gc-header obligatorio) ── */}
+      <header className="gc-header">
+        <div className="d-flex align-items-center gap-2 gap-md-3">
           <BackButton to="/admin-box-panel" />
-          <div className="acomp-nav-icono d-none d-sm-flex">
-            <i className="fas fa-trophy"></i>
+          <h1 className="gc-header-title">Admin <span>Competencias</span></h1>
+          <div className="acomp-header-actions ms-auto">
+            <Link to="/admin-competencias/historial" className="acomp-btn-secondary text-decoration-none">
+              <i className="fas fa-archive"></i>
+              <span className="acomp-btn-label">Historial</span>
+            </Link>
+            {(user?.rol === 'Developer' || user?.rol === 'AdminBox') && (
+              <button
+                className={`acomp-btn-nueva ${mostrarFormComp ? 'acomp-btn-nueva--cancelar' : ''}`}
+                onClick={() => { setTipoNuevaComp('Paquete'); setPlanSeleccionado(null); setMostrarFormComp(!mostrarFormComp); }}
+              >
+                <i className={`fas ${mostrarFormComp ? 'fa-times' : 'fa-plus'}`}></i>
+                <span className="acomp-btn-label">{mostrarFormComp ? 'Cancelar' : 'Nueva'}</span>
+              </button>
+            )}
           </div>
-          <p className="acomp-nav-titulo">Admin <span>Competencias</span></p>
-        </div>
-        <div className="d-flex align-items-center gap-2">
-          <Link to="/admin-competencias/historial" className="acomp-btn-cancel-sm text-decoration-none">
-            <i className="fas fa-archive"></i> <span className="d-none d-sm-inline">Historial</span>
-          </Link>
-          {(user?.rol === 'Developer' || user?.rol === 'AdminBox') && (
-            <button
-              className={`acomp-btn-nueva ${mostrarFormComp ? 'acomp-btn-nueva--cancelar' : ''}`}
-              onClick={() => { setTipoNuevaComp('Paquete'); setPlanSeleccionado(null); setMostrarFormComp(!mostrarFormComp); }}
-            >
-              <i className={`fas ${mostrarFormComp ? 'fa-times' : 'fa-plus'}`}></i>
-              <span className="d-none d-sm-inline">{mostrarFormComp ? 'Cancelar' : 'Nueva'}</span>
-            </button>
-          )}
         </div>
       </header>
 
@@ -778,7 +777,7 @@ export default function AdminCompetencias() {
                 </button>
               </div>
 
-              <form onSubmit={comprarPlanYCrear}>
+              <form onSubmit={(e) => e.preventDefault()}>
                 <div className="mb-3">
                   <label className="acomp-label">Nombre del evento</label>
                   <input
@@ -796,7 +795,7 @@ export default function AdminCompetencias() {
                     <div className="mb-3">
                       <label className="acomp-label">Paquete</label>
                       {planesComp.length === 0 ? (
-                        <p className="text-muted small mb-0">No hay paquetes configurados por la plataforma. Usa "Atletas ilimitados (comisión)" o pide que configuren los paquetes.</p>
+                        <p className="acomp-hint mb-0">No hay paquetes configurados por la plataforma. Usa "Atletas ilimitados (comisión)" o pide que configuren los paquetes.</p>
                       ) : (
                         <div className="row g-2">
                           {planesComp.map((p, i) => (
@@ -808,8 +807,8 @@ export default function AdminCompetencias() {
                               >
                                 <p className="acomp-plan-nombre mb-1">{p.nombre}</p>
                                 <div><span className="acomp-plan-precio">${p.precio}</span> <span className="acomp-plan-precio-currency">MXN</span></div>
-                                <p className="small mb-0 mt-1">{p.atletasIncluidos} atletas · {p.dias} {p.dias === 1 ? 'día' : 'días'}</p>
-                                <p className="small mb-0">+${p.precioAtletaExtra}/atleta extra</p>
+                                <p className="acomp-plan-meta mb-0 mt-1">{p.atletasIncluidos} atletas · {p.dias} {p.dias === 1 ? 'día' : 'días'}</p>
+                                <p className="acomp-plan-meta mb-0">+${p.precioAtletaExtra}/atleta extra</p>
                               </button>
                             </div>
                           ))}
@@ -833,7 +832,7 @@ export default function AdminCompetencias() {
                             </button>
                           ))}
                         </div>
-                        <p className="text-muted small mb-0 mt-1">
+                        <p className="acomp-hint mb-0 mt-2">
                           {metodoPagoModulo === 'Tarjeta'
                             ? 'Te llevaremos a Stripe para pagar el paquete; la competencia se activa al confirmarse el pago.'
                             : 'La competencia quedará pendiente hasta que el equipo de Atletify apruebe tu pago.'}
@@ -854,7 +853,7 @@ export default function AdminCompetencias() {
 
                 <div className="d-flex justify-content-end gap-2 mt-3">
                   <button type="button" className="acomp-btn-cancel-sm" onClick={() => setMostrarFormComp(false)}>Cancelar</button>
-                  <BotonSeguro type="submit" disabled={creandoExpress || (!esB && !planSeleccionado)} className="acomp-btn-submit" textoProcesando="Procesando...">
+                  <BotonSeguro type="button" onClick={comprarPlanYCrear} disabled={creandoExpress || (!esB && !planSeleccionado)} className="acomp-btn-submit" textoProcesando="Procesando...">
                     <i className="fas fa-bolt"></i> {esB ? 'Crear competencia (gratis)' : (metodoPagoModulo === 'Tarjeta' ? 'Pagar y crear' : 'Crear (pago pendiente)')}
                   </BotonSeguro>
                 </div>
@@ -880,7 +879,7 @@ export default function AdminCompetencias() {
                   <div className="acomp-comp-header">
                     <div className="min-w-0">
                       {comp.saaS_Estatus === 'Configurando' ? (
-                        <div className="acomp-comp-nombre text-muted">{comp.nombre}</div>
+                        <div className="acomp-comp-nombre acomp-comp-nombre--locked">{comp.nombre}</div>
                       ) : (
                         <Link to={`/admin-competencias/panel/${comp.idCompetencia || comp.IdCompetencia}`} className="acomp-comp-nombre">
                           {comp.nombre} <i className="fas fa-external-link-alt"></i>
@@ -894,7 +893,7 @@ export default function AdminCompetencias() {
                       </p>
                     </div>
                     {comp.saaS_Estatus === 'Configurando' ? (
-                      <span className="badge bg-warning text-dark"><i className="fas fa-lock me-1"></i>Pago Pendiente</span>
+                      <span className="acomp-badge acomp-badge--pendiente"><i className="fas fa-lock"></i>Pago Pendiente</span>
                     ) : user?.rol === 'Developer' ? (
                       // Developer: puede forzar cualquier estatus para pruebas; "Automático" suelta el control.
                       <EstatusPickerModal
@@ -907,15 +906,17 @@ export default function AdminCompetencias() {
                     ) : (
                       // El estatus es AUTOMÁTICO según las fechas: badge de solo lectura (ya no se cambia a mano).
                       <span
-                        className={`badge ${
-                          comp.estatus === 'Inscripciones' ? 'bg-info' :
-                          comp.estatus === 'Activa' ? 'bg-success' :
-                          comp.estatus === 'Historial' ? 'bg-secondary' :
-                          comp.estatus === 'Archivada' ? 'bg-dark' : 'bg-light text-dark'
+                        className={`acomp-badge acomp-badge--${
+                          comp.estatus === 'Inscripciones' ? 'inscripciones' :
+                          comp.estatus === 'Activa' ? 'activa' :
+                          comp.estatus === 'Historial' ? 'historial' :
+                          comp.estatus === 'Archivada' ? 'archivada' : 'borrador'
                         }`}
                         title="El estatus se actualiza automáticamente según las fechas de inscripción y del evento"
                       >
-                        {comp.estatus === 'Activa' ? 'En Vivo' : (comp.estatus || 'Borrador')}
+                        {comp.estatus === 'Activa'
+                          ? <><i className="fas fa-circle acomp-badge-dot"></i>En Vivo</>
+                          : (comp.estatus || 'Borrador')}
                       </span>
                     )}
                     {user?.rol === 'Developer' && (
@@ -943,26 +944,27 @@ export default function AdminCompetencias() {
 
                   {/* B2B SaaS Stripe Payment Lock */}
                   {comp.saaS_Estatus === 'Configurando' ? (
-                    <div className="p-4 text-center bg-dark border-top border-secondary border-opacity-50">
-                      <i className="fas fa-file-contract fs-1 text-warning mb-3"></i>
-                      <h5 className="text-white mb-2">Módulo Inactivo</h5>
-                      <p className="text-secondary small mb-3">Para abrir inscripciones y gestionar este evento, es necesario activar el paquete base.</p>
-                      <button 
-                        className="btn btn-warning fw-bold px-4 rounded-pill"
+                    <div className="acomp-lock acomp-lock--warning">
+                      <i className="fas fa-file-contract acomp-lock-icon"></i>
+                      <h5 className="acomp-lock-title">Módulo Inactivo</h5>
+                      <p className="acomp-lock-desc">Para abrir inscripciones y gestionar este evento, es necesario activar el paquete base.</p>
+                      <BotonSeguro
+                        className="acomp-btn-nueva acomp-btn-nueva--accent"
+                        textoProcesando="Abriendo..."
                         onClick={() => setCompParaPagar(comp)}
                       >
-                        <i className="fas fa-credit-card me-2"></i>Contratar Evento
-                      </button>
+                        <i className="fas fa-credit-card"></i> Contratar Evento
+                      </BotonSeguro>
                     </div>
                   ) : comp.saaS_Estatus === 'PendientePagoManual' ? (
-                    <div className="p-4 text-center bg-dark border-top border-secondary border-opacity-50">
-                      <i className="fas fa-clock fs-1 text-info mb-3"></i>
-                      <h5 className="text-white mb-2">Pago manual en revisión</h5>
-                      <p className="text-secondary small mb-3">{user?.rol === 'Developer' ? 'El box reportó un pago manual del módulo. Apruébalo para activar la competencia.' : 'Registramos tu pago manual. En cuanto Atletify lo confirme, se activará tu competencia.'}</p>
+                    <div className="acomp-lock acomp-lock--info">
+                      <i className="fas fa-clock acomp-lock-icon"></i>
+                      <h5 className="acomp-lock-title">Pago manual en revisión</h5>
+                      <p className="acomp-lock-desc">{user?.rol === 'Developer' ? 'El box reportó un pago manual del módulo. Apruébalo para activar la competencia.' : 'Registramos tu pago manual. En cuanto Atletify lo confirme, se activará tu competencia.'}</p>
                       {user?.rol === 'Developer' && (
-                        <button className="btn btn-success fw-bold px-4 rounded-pill" onClick={() => aprobarPagoModulo(comp.idCompetencia || comp.IdCompetencia, comp.nombre)}>
-                          <i className="fas fa-check-circle me-2"></i>Aprobar pago del módulo
-                        </button>
+                        <BotonSeguro className="acomp-btn-nueva acomp-btn-nueva--success" textoProcesando="Aprobando..." onClick={() => aprobarPagoModulo(comp.idCompetencia || comp.IdCompetencia, comp.nombre)}>
+                          <i className="fas fa-check-circle"></i> Aprobar pago del módulo
+                        </BotonSeguro>
                       )}
                     </div>
                   ) : (
@@ -986,22 +988,25 @@ export default function AdminCompetencias() {
                       </button>
                     </div>
 
-                    {/* Tabla categorías */}
-                    <div className="acomp-cat-tabla-wrapper">
-                      {!(comp.categorias || comp.Categorias) || (comp.categorias || comp.Categorias).length === 0 ? (
+                    {/* Categorías: tabla en ≥768px, tarjetas en móvil */}
+                    {!(comp.categorias || comp.Categorias) || (comp.categorias || comp.Categorias).length === 0 ? (
+                      <div className="acomp-cat-tabla-wrapper">
                         <div className="acomp-cat-empty">
                           <i className="fas fa-list-alt"></i>
                           <p>Sin categorías definidas</p>
                         </div>
-                      ) : (
-                        <div className="table-responsive">
+                      </div>
+                    ) : (
+                      <>
+                        {/* Tabla (desktop) */}
+                        <div className="acomp-cat-tabla-wrapper d-none d-md-block">
                           <table className="acomp-cat-tabla">
                             <thead>
                               <tr>
                                 <th>Categoría</th>
-                                <th className="text-center">$</th>
+                                <th className="text-center">Costo</th>
                                 <th className="text-center">Cupo</th>
-                                <th className="text-end pe-3"></th>
+                                <th className="text-end pe-3">Acciones</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1018,9 +1023,11 @@ export default function AdminCompetencias() {
                                     <td className="text-center"><span className="acomp-cat-costo">${cat.costo || cat.Costo}</span></td>
                                     <td className="text-center"><span className="acomp-cat-cupo">{cat.cupoMaximo || cat.CupoMaximo}</span></td>
                                     <td className="text-end pe-3">
-                                      <button className="acomp-btn-tabla-edit me-1" onClick={() => { setCategoriaDetalle(cat); setMostrarDetalles(true); }} title="Ver Detalles"><i className="fas fa-eye text-info"></i></button>
-                                      <button className="acomp-btn-tabla-edit" onClick={() => iniciarEdicionCategoria(comp, cat)} title="Editar"><i className="fas fa-edit"></i></button>
-                                      <BotonSeguro className="acomp-btn-tabla-delete" onClick={() => eliminarCategoria(idCat)} title="Eliminar" textoProcesando=""><i className="fas fa-trash"></i></BotonSeguro>
+                                      <div className="acomp-cat-acciones">
+                                        <button className="acomp-btn-accion acomp-btn-accion--ver" onClick={() => { setCategoriaDetalle(cat); setMostrarDetalles(true); }} title="Ver detalles"><i className="fas fa-eye"></i></button>
+                                        <button className="acomp-btn-accion acomp-btn-accion--editar" onClick={() => iniciarEdicionCategoria(comp, cat)} title="Editar"><i className="fas fa-edit"></i></button>
+                                        <BotonSeguro className="acomp-btn-accion acomp-btn-accion--eliminar" onClick={() => eliminarCategoria(idCat)} title="Eliminar" textoProcesando=""><i className="fas fa-trash"></i></BotonSeguro>
+                                      </div>
                                     </td>
                                   </tr>
                                 );
@@ -1028,8 +1035,42 @@ export default function AdminCompetencias() {
                             </tbody>
                           </table>
                         </div>
-                      )}
-                    </div>
+
+                        {/* Tarjetas (móvil) */}
+                        <div className="acomp-cat-cards d-md-none">
+                          {(comp.categorias || comp.Categorias).map(cat => {
+                            const idCat = cat.idCategoriaComp || cat.IdCategoriaComp;
+                            return (
+                              <div key={idCat} className="acomp-cat-card">
+                                <div className="acomp-cat-card-top">
+                                  <div className="min-w-0">
+                                    <div className="acomp-cat-nombre-text">{cat.nombre || cat.Nombre}</div>
+                                    <div className="acomp-cat-tipo-text">
+                                      {(cat.esEquipo || cat.EsEquipo) ? `Equipo · ${cat.cantidadIntegrantes || cat.CantidadIntegrantes} pers.` : 'Individual'}
+                                    </div>
+                                  </div>
+                                  <div className="acomp-cat-acciones">
+                                    <button className="acomp-btn-accion acomp-btn-accion--ver" onClick={() => { setCategoriaDetalle(cat); setMostrarDetalles(true); }} title="Ver detalles"><i className="fas fa-eye"></i></button>
+                                    <button className="acomp-btn-accion acomp-btn-accion--editar" onClick={() => iniciarEdicionCategoria(comp, cat)} title="Editar"><i className="fas fa-edit"></i></button>
+                                    <BotonSeguro className="acomp-btn-accion acomp-btn-accion--eliminar" onClick={() => eliminarCategoria(idCat)} title="Eliminar" textoProcesando=""><i className="fas fa-trash"></i></BotonSeguro>
+                                  </div>
+                                </div>
+                                <div className="acomp-cat-card-stats">
+                                  <div className="acomp-cat-card-stat">
+                                    <span className="acomp-cat-card-stat-label">Costo</span>
+                                    <span className="acomp-cat-costo">${cat.costo || cat.Costo}</span>
+                                  </div>
+                                  <div className="acomp-cat-card-stat">
+                                    <span className="acomp-cat-card-stat-label">Cupo</span>
+                                    <span className="acomp-cat-cupo">{cat.cupoMaximo || cat.CupoMaximo}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
                   </div>
                     </>
                   )}

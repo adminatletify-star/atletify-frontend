@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { api, COMPETENCIAS_ENDPOINT } from '../services/api';
 import EjercicioPicker from './EjercicioPicker';
+import OpcionesPicker from './OpcionesPicker';
 import PlantillaJueceo from './PlantillaJueceo';
 import './ConstructorWodComp.css';
 
@@ -210,13 +211,14 @@ export default function ConstructorWodComp({ idCompetencia, categorias = [], idW
               </div>
               <div className="cw-field">
                 <label className="cw-label">Categoría</label>
-                <select className="cw-input" value={form.idCategoriaComp} onChange={e => setForm({ ...form, idCategoriaComp: e.target.value })}>
-                  <option value="">Todas las categorías</option>
-                  {categorias.map(c => {
-                    const cid = c.idCategoriaComp || c.IdCategoriaComp;
-                    return <option key={cid} value={cid}>{c.nombre || c.Nombre}</option>;
-                  })}
-                </select>
+                <OpcionesPicker
+                  valor={form.idCategoriaComp}
+                  onCambiar={(v) => setForm({ ...form, idCategoriaComp: v })}
+                  titulo="Categoría del WOD"
+                  icono="fas fa-layer-group"
+                  placeholder="Todas las categorías"
+                  opciones={[{ valor: '', label: 'Todas las categorías' }, ...categorias.map(c => ({ valor: String(c.idCategoriaComp || c.IdCategoriaComp), label: c.nombre || c.Nombre }))]}
+                />
               </div>
             </div>
 
@@ -282,16 +284,26 @@ export default function ConstructorWodComp({ idCompetencia, categorias = [], idW
                     <button type="button" className="cw-del" onClick={() => delMov(i)} title="Quitar movimiento"><i className="fas fa-trash"></i></button>
                   </div>
                   <div className="cw-mov-grid">
-                    <div className="cw-mov-ej">
+                    <div className="cw-mov-ej cw-mov-field">
+                      <label className="cw-mov-flabel">Movimiento</label>
                       {m.modo === 'biblioteca' ? (
                         <EjercicioPicker ejercicios={ejercicios} valor={m.idEjercicioDiccionario} onCambiar={(idv) => setMov(i, 'idEjercicioDiccionario', idv)} />
                       ) : (
                         <input className="cw-input" placeholder="Nombre del movimiento" value={m.nombreCustom} onChange={e => setMov(i, 'nombreCustom', e.target.value)} />
                       )}
                     </div>
-                    <input className="cw-input" placeholder="Reps (21-15-9, 400m...)" value={m.esquemaReps} onChange={e => setMov(i, 'esquemaReps', e.target.value)} />
-                    <input className="cw-input" placeholder="Peso ♂" value={m.pesoHombre} onChange={e => setMov(i, 'pesoHombre', e.target.value)} />
-                    <input className="cw-input" placeholder="Peso ♀" value={m.pesoMujer} onChange={e => setMov(i, 'pesoMujer', e.target.value)} />
+                    <div className="cw-mov-field cw-mov-field--reps">
+                      <label className="cw-mov-flabel">Reps / Distancia</label>
+                      <input className="cw-input" placeholder="21-15-9, 400m..." value={m.esquemaReps} onChange={e => setMov(i, 'esquemaReps', e.target.value)} />
+                    </div>
+                    <div className="cw-mov-field">
+                      <label className="cw-mov-flabel">Peso ♂</label>
+                      <input className="cw-input" placeholder="43 kg" value={m.pesoHombre} onChange={e => setMov(i, 'pesoHombre', e.target.value)} />
+                    </div>
+                    <div className="cw-mov-field">
+                      <label className="cw-mov-flabel">Peso ♀</label>
+                      <input className="cw-input" placeholder="30 kg" value={m.pesoMujer} onChange={e => setMov(i, 'pesoMujer', e.target.value)} />
+                    </div>
                   </div>
                   <input className="cw-input cw-mov-notas" placeholder="Notas / estándar del movimiento (opcional)" value={m.notas} onChange={e => setMov(i, 'notas', e.target.value)} />
                 </div>
@@ -308,10 +320,13 @@ export default function ConstructorWodComp({ idCompetencia, categorias = [], idW
                 <div className="cw-grid2 cw-mt">
                   <div className="cw-field">
                     <label className="cw-label">Tipo de desempate</label>
-                    <select className="cw-input" value={form.tiebreakTipo} onChange={e => setForm({ ...form, tiebreakTipo: e.target.value })}>
-                      <option value="Tiempo">Tiempo (menor gana)</option>
-                      <option value="Reps">Reps (mayor gana)</option>
-                    </select>
+                    <OpcionesPicker
+                      valor={form.tiebreakTipo}
+                      onCambiar={(v) => setForm({ ...form, tiebreakTipo: v })}
+                      titulo="Tipo de desempate"
+                      icono="fas fa-flag-checkered"
+                      opciones={[{ valor: 'Tiempo', label: 'Tiempo (menor gana)' }, { valor: 'Reps', label: 'Reps (mayor gana)' }]}
+                    />
                   </div>
                   <div className="cw-field">
                     <label className="cw-label">¿Dónde se toma?</label>

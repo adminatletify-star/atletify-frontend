@@ -9,6 +9,7 @@ import RedGrayDatePicker from '../components/RedGrayDatePicker';
 import CompDetalleSideMenu from '../components/CompDetalleSideMenu';
 import ConstructorWodComp from '../components/ConstructorWodComp';
 import TimeWheelPicker from '../components/TimeWheelPicker';
+import HoraEventoPicker from '../components/HoraEventoPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import PlanesModal from '../components/PlanesModal';
 import GestionJuecesCompPanel from '../components/GestionJuecesCompPanel';
@@ -16,6 +17,8 @@ import GestionStaffCompePanel from '../components/GestionStaffCompePanel';
 import GestionHeatsPanel from '../components/GestionHeatsPanel';
 import PanelVerificacionScores from '../components/PanelVerificacionScores';
 import AtletifyLoader from '../components/AtletifyLoader';
+import OpcionesPicker from '../components/OpcionesPicker';
+import ListaPaginada from '../components/ListaPaginada';
 import '../assets/css/CompetenciaDetalle.css';
 
 export default function CompetenciaDetalle() {
@@ -1373,16 +1376,16 @@ export default function CompetenciaDetalle() {
       <div className="cd-content">
 
         {comp.saaS_Estatus === 'Configurando' ? (
-          <div className="d-flex flex-column align-items-center justify-content-center h-100 text-center p-5">
-            <i className="fas fa-lock fs-1 text-warning mb-4"></i>
-            <h2 className="text-white mb-3">Módulo Inactivo</h2>
-            <p className="text-secondary mb-4" style={{ maxWidth: '500px' }}>
+          <div className="cd-lock">
+            <div className="cd-lock-icon"><i className="fas fa-lock"></i></div>
+            <h2 className="cd-lock-title">Módulo <span>Inactivo</span></h2>
+            <p className="cd-lock-desc">
               Para poder visualizar y gestionar los detalles de esta competencia, necesitas contratar un plan base o ingresar un token de activación.
             </p>
-            <button className="btn btn-warning fw-bold px-4 rounded-pill" onClick={() => setMostrarPlanes(true)}>
-              <i className="fas fa-credit-card me-2"></i>Contratar Evento
-            </button>
-            <PlanesModal 
+            <BotonSeguro className="cd-btn cd-btn--warning-solid" textoProcesando="Abriendo..." onClick={() => setMostrarPlanes(true)}>
+              <i className="fas fa-credit-card"></i>Contratar Evento
+            </BotonSeguro>
+            <PlanesModal
               isOpen={mostrarPlanes} 
               onClose={() => setMostrarPlanes(false)} 
               idCompetencia={comp.idCompetencia || comp.IdCompetencia} 
@@ -1810,28 +1813,48 @@ export default function CompetenciaDetalle() {
                           <p>Nadie ha solicitado esta talla.</p>
                         </div>
                       ) : (
-                        <table className="cd-talla-table">
-                          <thead>
-                            <tr>
-                              <th>Atleta</th>
-                              <th>Categoría / Rol</th>
-                              <th>Equipo</th>
-                            </tr>
-                          </thead>
-                          <tbody>
+                        <>
+                          {/* Tabla (≥576px) */}
+                          <table className="cd-talla-table d-none d-sm-table">
+                            <thead>
+                              <tr>
+                                <th>Atleta</th>
+                                <th>Categoría / Rol</th>
+                                <th>Equipo</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {modalTallaVisible.lista.map((item, idx) => (
+                                <tr key={idx}>
+                                  <td>{item.nombre}</td>
+                                  <td>
+                                    <span className={`cd-talla-badge ${item.categoria === 'Juez / Staff' ? 'cd-talla-badge--staff' : 'cd-talla-badge--atleta'}`}>
+                                      {item.categoria}
+                                    </span>
+                                  </td>
+                                  <td style={{ color: 'var(--text-muted)' }}>{item.equipo}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+
+                          {/* Tarjetas (móvil <576px) */}
+                          <div className="cd-talla-cards d-sm-none">
                             {modalTallaVisible.lista.map((item, idx) => (
-                              <tr key={idx}>
-                                <td>{item.nombre}</td>
-                                <td>
+                              <div key={idx} className="cd-talla-card-row">
+                                <div className="cd-talla-card-nombre">{item.nombre}</div>
+                                <div className="cd-talla-card-meta">
                                   <span className={`cd-talla-badge ${item.categoria === 'Juez / Staff' ? 'cd-talla-badge--staff' : 'cd-talla-badge--atleta'}`}>
                                     {item.categoria}
                                   </span>
-                                </td>
-                                <td style={{ color: 'var(--text-muted)' }}>{item.equipo}</td>
-                              </tr>
+                                  {item.equipo && (
+                                    <span className="cd-talla-card-equipo"><i className="fas fa-users"></i>{item.equipo}</span>
+                                  )}
+                                </div>
+                              </div>
                             ))}
-                          </tbody>
-                        </table>
+                          </div>
+                        </>
                       )}
                     </div>
                   </div>
@@ -1846,58 +1869,100 @@ export default function CompetenciaDetalle() {
         {/* TAB: ATLETAS INSCRITOS */}
         {/* ========================================================= */}
         {tabActiva === 'inscritos' && (
-          <div style={{ padding: '8px 4px' }}>
-            <h3 style={{ fontFamily: 'var(--font-heading)', marginBottom: '4px' }}><i className="fas fa-users me-2"></i>Atletas Inscritos</h3>
-            <p className="text-secondary" style={{ fontSize: '0.9rem' }}>Revisa los datos que enviaron los atletas (incluye correo y teléfono por si hay que corregir algo).</p>
+          <div className="cd-tab-fade">
+            <div className="cd-section-header">
+              <div>
+                <h2 className="cd-section-h">Atletas <span>Inscritos</span></h2>
+                <p className="cd-section-sub">Revisa los datos que enviaron los atletas (incluye correo y teléfono por si hay que corregir algo).</p>
+              </div>
+            </div>
             {(!roster || roster.length === 0) ? (
-              <p className="text-secondary mt-3">Aún no hay categorías ni atletas inscritos.</p>
+              <div className="cd-empty">
+                <i className="fas fa-users"></i>
+                <p>Aún no hay categorías ni atletas inscritos.</p>
+              </div>
             ) : (
               roster.map(cat => {
                 const atletas = (cat.equipos || []).flatMap(eq => (eq.atletas || []).map(a => ({ ...a, _equipo: eq.nombre, _estatus: eq.estatusPago })));
                 return (
-                  <div key={cat.idCategoriaComp} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '14px 16px', marginBottom: '16px' }}>
-                    <h4 style={{ color: '#0f172a', fontWeight: 700, fontSize: '1.05rem', marginBottom: '10px' }}>
-                      {cat.categoriaNombre}
-                      <span className="badge bg-secondary ms-2">{atletas.length} {atletas.length === 1 ? 'atleta' : 'atletas'}</span>
-                    </h4>
-                    {atletas.length === 0 ? (
-                      <p className="text-secondary mb-0" style={{ fontSize: '0.88rem' }}>Sin atletas inscritos todavía.</p>
-                    ) : (
-                      <div className="table-responsive">
-                        <table className="table table-sm align-middle mb-0" style={{ fontSize: '0.85rem' }}>
-                          <thead style={{ color: '#64748b' }}>
-                            <tr>
-                              {cat.esEquipo && <th>Equipo</th>}
-                              <th>Atleta</th>
-                              <th>Correo</th>
-                              <th>Teléfono</th>
-                              <th>Género</th>
-                              <th>Nivel</th>
-                              <th>Nac.</th>
-                              <th>Talla</th>
-                              <th>Sangre</th>
-                              <th>Estatus</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {atletas.map((a, i) => (
-                              <tr key={a.idAtletaComp || i}>
-                                {cat.esEquipo && <td>{a._equipo}</td>}
-                                <td style={{ fontWeight: 600, color: '#0f172a' }}>{a.nombreCompleto} {a.apellidos}</td>
-                                <td style={{ wordBreak: 'break-all' }}>{a.correo || '—'}</td>
-                                <td>{a.telefono || '—'}</td>
-                                <td>{a.genero || '—'}</td>
-                                <td>{a.nivelHabilidad || '—'}</td>
-                                <td>{a.fechaNacimiento ? new Date(a.fechaNacimiento).toLocaleDateString('es-MX') : '—'}</td>
-                                <td>{a.tallaPlayera || '—'}</td>
-                                <td>{a.tipoSangre || '—'}</td>
-                                <td><span className={`badge ${a._estatus === 'Aprobado' ? 'bg-success' : 'bg-warning text-dark'}`}>{a._estatus || 'Pendiente'}</span></td>
-                              </tr>
+                  <div key={cat.idCategoriaComp} className="cd-card mb-4">
+                    <div className="cd-card-header">
+                      <span className="cd-card-titulo cd-card-titulo--white">
+                        <i className="fas fa-layer-group"></i>{cat.categoriaNombre}
+                      </span>
+                      <span className="cd-badge cd-badge--secondary">{atletas.length} {atletas.length === 1 ? 'atleta' : 'atletas'}</span>
+                    </div>
+                    <div className="cd-card-body">
+                      {atletas.length === 0 ? (
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>Sin atletas inscritos todavía.</p>
+                      ) : (
+                        <ListaPaginada items={atletas} pageSize={20}>
+                          {(pag) => (
+                          <>
+                          {/* Tabla (desktop ≥768px) */}
+                          <div className="cd-table-wrap d-none d-md-block" style={{ overflowX: 'auto' }}>
+                            <table className="cd-table">
+                              <thead>
+                                <tr>
+                                  {cat.esEquipo && <th>Equipo</th>}
+                                  <th>Atleta</th>
+                                  <th>Correo</th>
+                                  <th>Teléfono</th>
+                                  <th>Género</th>
+                                  <th>Nivel</th>
+                                  <th>Nac.</th>
+                                  <th>Talla</th>
+                                  <th>Sangre</th>
+                                  <th>Estatus</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {pag.map((a, i) => (
+                                  <tr key={a.idAtletaComp || i}>
+                                    {cat.esEquipo && <td>{a._equipo}</td>}
+                                    <td style={{ fontWeight: 600 }}>{a.nombreCompleto} {a.apellidos}</td>
+                                    <td style={{ wordBreak: 'break-all', whiteSpace: 'normal' }}>{a.correo || '—'}</td>
+                                    <td>{a.telefono || '—'}</td>
+                                    <td>{a.genero || '—'}</td>
+                                    <td>{a.nivelHabilidad || '—'}</td>
+                                    <td>{a.fechaNacimiento ? new Date(a.fechaNacimiento).toLocaleDateString('es-MX') : '—'}</td>
+                                    <td>{a.tallaPlayera || '—'}</td>
+                                    <td>{a.tipoSangre || '—'}</td>
+                                    <td><span className={`cd-badge ${a._estatus === 'Aprobado' ? 'cd-badge--success' : 'cd-badge--warning'}`}>{a._estatus || 'Pendiente'}</span></td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          {/* Tarjetas (móvil <768px) */}
+                          <div className="cd-inscrito-cards d-md-none">
+                            {pag.map((a, i) => (
+                              <div key={a.idAtletaComp || i} className="cd-inscrito-card">
+                                <div className="cd-inscrito-card-top">
+                                  <span className="cd-inscrito-nombre">{a.nombreCompleto} {a.apellidos}</span>
+                                  <span className={`cd-badge ${a._estatus === 'Aprobado' ? 'cd-badge--success' : 'cd-badge--warning'}`}>{a._estatus || 'Pendiente'}</span>
+                                </div>
+                                {cat.esEquipo && a._equipo && (
+                                  <div className="cd-inscrito-equipo"><i className="fas fa-users"></i>{a._equipo}</div>
+                                )}
+                                <div className="cd-inscrito-grid">
+                                  <div className="cd-inscrito-field cd-inscrito-field--full"><span className="cd-inscrito-lbl">Correo</span><span className="cd-inscrito-val" style={{ wordBreak: 'break-all' }}>{a.correo || '—'}</span></div>
+                                  <div className="cd-inscrito-field"><span className="cd-inscrito-lbl">Teléfono</span><span className="cd-inscrito-val">{a.telefono || '—'}</span></div>
+                                  <div className="cd-inscrito-field"><span className="cd-inscrito-lbl">Género</span><span className="cd-inscrito-val">{a.genero || '—'}</span></div>
+                                  <div className="cd-inscrito-field"><span className="cd-inscrito-lbl">Nivel</span><span className="cd-inscrito-val">{a.nivelHabilidad || '—'}</span></div>
+                                  <div className="cd-inscrito-field"><span className="cd-inscrito-lbl">Nacimiento</span><span className="cd-inscrito-val">{a.fechaNacimiento ? new Date(a.fechaNacimiento).toLocaleDateString('es-MX') : '—'}</span></div>
+                                  <div className="cd-inscrito-field"><span className="cd-inscrito-lbl">Talla</span><span className="cd-inscrito-val">{a.tallaPlayera || '—'}</span></div>
+                                  <div className="cd-inscrito-field"><span className="cd-inscrito-lbl">Sangre</span><span className="cd-inscrito-val">{a.tipoSangre || '—'}</span></div>
+                                </div>
+                              </div>
                             ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
+                          </div>
+                          </>
+                          )}
+                        </ListaPaginada>
+                      )}
+                    </div>
                   </div>
                 );
               })
@@ -1954,12 +2019,12 @@ export default function CompetenciaDetalle() {
                 <div className="cd-card-body-lg">
                   {/* Avisos de límite — aplica SOLO al DÍA del evento (inscripciones/horario/zona son libres) */}
                   {!esDeveloper && comp?.vecesFechasEditadas >= 2 ? (
-                    <div className="alert-locked-dates mb-4" style={{ background: 'rgba(220, 53, 69, 0.1)', border: '1px solid rgba(220, 53, 69, 0.3)', borderRadius: '0.8rem', padding: '1.2rem', color: '#f2f2f2' }}>
+                    <div className="alert-locked-dates mb-4" style={{ background: 'rgba(230, 57, 70, 0.1)', border: '1px solid rgba(230, 57, 70, 0.3)', borderRadius: '0.8rem', padding: '1.2rem', color: 'var(--text-primary)' }}>
                       <div className="d-flex align-items-center gap-3 mb-2">
                         <i className="fas fa-lock text-danger" style={{ fontSize: '1.5rem' }}></i>
                         <h4 style={{ margin: 0, fontWeight: 700 }}>Día del evento bloqueado</h4>
                       </div>
-                      <p style={{ margin: 0, color: '#adb5bd', fontSize: '0.9rem' }}>Alcanzaste el máximo de cambios del <b>día del evento</b>. El <b>horario</b>, la <b>zona horaria</b> y las <b>fechas de inscripción</b> los puedes seguir ajustando libremente. Para mover el día, contacta al soporte de Atletify.</p>
+                      <p style={{ margin: 0, color: 'var(--secondary)', fontSize: '0.9rem' }}>Alcanzaste el máximo de cambios del <b>día del evento</b>. El <b>horario</b>, la <b>zona horaria</b> y las <b>fechas de inscripción</b> los puedes seguir ajustando libremente. Para mover el día, contacta al soporte de Atletify.</p>
 
                       <div className="d-flex gap-4 mt-3 flex-wrap">
                         {contactoSoporte.correo && (
@@ -1975,14 +2040,14 @@ export default function CompetenciaDetalle() {
                       </div>
                     </div>
                   ) : !esDeveloper && comp?.vecesFechasEditadas === 1 ? (
-                    <div className="alert-warning-dates mb-4" style={{ background: 'rgba(255, 193, 7, 0.1)', border: '1px solid rgba(255, 193, 7, 0.3)', borderRadius: '0.8rem', padding: '1rem', color: '#ffc107', fontSize: '0.9rem' }}>
+                    <div className="alert-warning-dates mb-4" style={{ background: 'rgba(245, 166, 35, 0.1)', border: '1px solid rgba(245, 166, 35, 0.3)', borderRadius: '0.8rem', padding: '1rem', color: 'var(--accent)', fontSize: '0.9rem' }}>
                       <i className="fas fa-exclamation-triangle me-2"></i>
                       <strong>Atención:</strong> Te queda <b>1 cambio</b> del día del evento. El horario, la zona horaria y las inscripciones no tienen límite.
                     </div>
                   ) : null}
 
                   {/* El DÍA del evento se limita (máx 2 cambios); inscripciones, horario y zona son libres. */}
-                  <form onSubmit={guardarFechas}>
+                  <form onSubmit={(e) => e.preventDefault()}>
                       <div className="row g-4">
                         <div className="col-md-6">
                           <p className="cd-label" style={{ marginBottom: '0.85rem', color: 'var(--accent-cool)' }}>Inscripciones</p>
@@ -1999,7 +2064,7 @@ export default function CompetenciaDetalle() {
                             <div className="flex-grow-1">
                               <label className="cd-label">
                                 Cierre
-                                {!fechas.inicioIns && <span className="ms-1 text-warning" title="Define primero la apertura"><i className="fas fa-lock"></i></span>}
+                                {!fechas.inicioIns && <span className="ms-1" style={{ color: 'var(--accent)' }} title="Define primero la apertura"><i className="fas fa-lock"></i></span>}
                               </label>
                               {fechas.inicioIns ? (
                                 <RedGrayDatePicker 
@@ -2008,8 +2073,8 @@ export default function CompetenciaDetalle() {
                                   onChange={(next) => setFechas({ ...fechas, finIns: next })} 
                                 />
                               ) : (
-                                <div className="form-control" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,193,7,0.3)', color: '#888', cursor: 'not-allowed' }}>
-                                  <i className="fas fa-lock me-2 text-warning opacity-50"></i><span className="opacity-50">Primero apertura</span>
+                                <div className="cd-input-locked">
+                                  <i className="fas fa-lock"></i><span className="opacity-50">Primero apertura</span>
                                 </div>
                               )}
                             </div>
@@ -2022,24 +2087,30 @@ export default function CompetenciaDetalle() {
                           </p>
                           <div className="mb-3" style={{ maxWidth: '340px' }}>
                             <label className="cd-label">Zona horaria del evento</label>
-                            <select className="cd-input" value={zonaOffset} onChange={(e) => guardarZona(Number(e.target.value))}>
-                              <option value={-5}>Sureste — Cancún / Q. Roo (UTC-5)</option>
-                              <option value={-6}>Centro — CDMX / GDL / MTY (UTC-6)</option>
-                              <option value={-7}>Pacífico — BCS / Sonora / Sinaloa (UTC-7)</option>
-                              <option value={-8}>Noroeste — Tijuana (UTC-8)</option>
-                            </select>
+                            <OpcionesPicker
+                              valor={zonaOffset}
+                              onCambiar={(v) => guardarZona(Number(v))}
+                              titulo="Zona horaria del evento"
+                              icono="fas fa-clock"
+                              opciones={[
+                                { valor: -5, label: 'Sureste — Cancún / Q. Roo (UTC-5)' },
+                                { valor: -6, label: 'Centro — CDMX / GDL / MTY (UTC-6)' },
+                                { valor: -7, label: 'Pacífico — BCS / Sonora / Sinaloa (UTC-7)' },
+                                { valor: -8, label: 'Noroeste — Tijuana (UTC-8)' },
+                              ]}
+                            />
                             <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>Define cuándo el evento pasa solo a "En Vivo" e histórico. Las horas se muestran tal cual se capturan.</p>
                           </div>
                           <div className="d-flex gap-3">
                             <div className="flex-grow-1">
                               <label className="cd-label">
                                 Día 1
-                                {(!fechas.inicioIns || !fechas.finIns) && <span className="ms-1 text-warning" title="Define primero las fechas de inscripción"><i className="fas fa-lock"></i></span>}
+                                {(!fechas.inicioIns || !fechas.finIns) && <span className="ms-1" style={{ color: 'var(--accent)' }} title="Define primero las fechas de inscripción"><i className="fas fa-lock"></i></span>}
                               </label>
                               {diaBloqueado ? (
                                 <>
-                                  <div className="form-control" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid #333', color: '#999' }} title="El día del evento ya no se puede cambiar (límite alcanzado)">{fechas.inicioComp || '--'}</div>
-                                  <input type="time" className="cd-input mt-2" value={fechas.horaInicioComp} onChange={(e) => setFechas({ ...fechas, horaInicioComp: e.target.value })} title="Hora de inicio del evento (libre)" />
+                                  <div className="cd-input-locked" title="El día del evento ya no se puede cambiar (límite alcanzado)">{fechas.inicioComp || '--'}</div>
+                                  <HoraEventoPicker value={fechas.horaInicioComp} onChange={(t) => setFechas({ ...fechas, horaInicioComp: t })} titulo="Hora de inicio del evento" />
                                 </>
                               ) : (fechas.inicioIns && fechas.finIns) ? (
                                 <>
@@ -2049,23 +2120,23 @@ export default function CompetenciaDetalle() {
                                     min={minDia1}
                                     onChange={(next) => setFechas({ ...fechas, inicioComp: next })}
                                   />
-                                  <input type="time" className="cd-input mt-2" value={fechas.horaInicioComp} onChange={(e) => setFechas({ ...fechas, horaInicioComp: e.target.value })} title="Hora de inicio del evento" />
+                                  <HoraEventoPicker value={fechas.horaInicioComp} onChange={(t) => setFechas({ ...fechas, horaInicioComp: t })} titulo="Hora de inicio del evento" />
                                 </>
                               ) : (
-                                <div className="form-control" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,193,7,0.3)', color: '#888', cursor: 'not-allowed' }}>
-                                  <i className="fas fa-lock me-2 text-warning opacity-50"></i><span className="opacity-50">Primero inscripciones</span>
+                                <div className="cd-input-locked">
+                                  <i className="fas fa-lock"></i><span className="opacity-50">Primero inscripciones</span>
                                 </div>
                               )}
                             </div>
                             <div className="flex-grow-1">
                               <label className="cd-label">
                                 Fin
-                                {!fechas.inicioComp && <span className="ms-1 text-warning" title="Define primero el Día 1"><i className="fas fa-lock"></i></span>}
+                                {!fechas.inicioComp && <span className="ms-1" style={{ color: 'var(--accent)' }} title="Define primero el Día 1"><i className="fas fa-lock"></i></span>}
                               </label>
                               {diaBloqueado ? (
                                 <>
-                                  <div className="form-control" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid #333', color: '#999' }} title="El día del evento ya no se puede cambiar (límite alcanzado)">{fechas.finComp || '--'}</div>
-                                  <input type="time" className="cd-input mt-2" value={fechas.horaFinComp} onChange={(e) => setFechas({ ...fechas, horaFinComp: e.target.value })} title="Hora de fin del evento (libre)" />
+                                  <div className="cd-input-locked" title="El día del evento ya no se puede cambiar (límite alcanzado)">{fechas.finComp || '--'}</div>
+                                  <HoraEventoPicker value={fechas.horaFinComp} onChange={(t) => setFechas({ ...fechas, horaFinComp: t })} titulo="Hora de fin del evento" />
                                 </>
                               ) : fechas.inicioComp ? (
                                 <>
@@ -2076,18 +2147,18 @@ export default function CompetenciaDetalle() {
                                     max={maxFin}
                                     onChange={(next) => setFechas({ ...fechas, finComp: next })}
                                   />
-                                  <input type="time" className="cd-input mt-2" value={fechas.horaFinComp} onChange={(e) => setFechas({ ...fechas, horaFinComp: e.target.value })} title="Hora de fin del evento" />
+                                  <HoraEventoPicker value={fechas.horaFinComp} onChange={(t) => setFechas({ ...fechas, horaFinComp: t })} titulo="Hora de fin del evento" />
                                 </>
                               ) : (
-                                <div className="form-control" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,193,7,0.3)', color: '#888', cursor: 'not-allowed' }}>
-                                  <i className="fas fa-lock me-2 text-warning opacity-50"></i><span className="opacity-50">Primero Día 1</span>
+                                <div className="cd-input-locked">
+                                  <i className="fas fa-lock"></i><span className="opacity-50">Primero Día 1</span>
                                 </div>
                               )}
                             </div>
                           </div>
                         </div>
                         <div className="col-12 text-end">
-                          <BotonSeguro type="submit" className="cd-btn cd-btn--info-solid" textoProcesando="Guardando...">
+                          <BotonSeguro type="button" onClick={guardarFechas} className="cd-btn cd-btn--info-solid" textoProcesando="Guardando...">
                             <i className="fas fa-calendar-check"></i>GUARDAR CALENDARIO
                           </BotonSeguro>
                         </div>
@@ -2139,8 +2210,8 @@ export default function CompetenciaDetalle() {
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
                     fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
-                    letterSpacing: '0.5px', color: 'rgba(34,197,94,0.85)',
-                    background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)',
+                    letterSpacing: '0.5px', color: 'rgba(46,204,113,0.85)',
+                    background: 'rgba(46,204,113,0.08)', border: '1px solid rgba(46,204,113,0.2)',
                     borderRadius: '20px', padding: '0.3rem 0.75rem'
                   }}
                 >
@@ -2296,37 +2367,18 @@ export default function CompetenciaDetalle() {
               </div>
               <div className="cd-card-body">
                 <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-3 mb-3">
-                  <div className="d-flex align-items-center gap-1 flex-shrink-0">
-                    {[
-                      { key: 'todos', label: 'Todos', icon: 'fa-layer-group' },
-                      { key: 'box', label: 'Herramientas del box', icon: 'fa-toolbox' },
-                      { key: 'externo', label: 'No existente en el box', icon: 'fa-truck-loading' },
-                    ].map(({ key, label, icon }) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => setFiltroTipoInventario(key)}
-                        style={{
-                          display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-                          padding: '0.3rem 0.7rem', borderRadius: '20px', cursor: 'pointer',
-                          fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
-                          letterSpacing: '0.4px', whiteSpace: 'nowrap',
-                          transition: 'all 0.15s ease',
-                          border: filtroTipoInventario === key
-                            ? (key === 'box' ? '1px solid rgba(79,195,247,0.5)' : key === 'externo' ? '1px solid rgba(230,57,70,0.5)' : '1px solid var(--primary)')
-                            : '1px solid var(--border)',
-                          background: filtroTipoInventario === key
-                            ? (key === 'box' ? 'rgba(79,195,247,0.12)' : key === 'externo' ? 'rgba(230,57,70,0.12)' : 'rgba(230,57,70,0.1)')
-                            : 'transparent',
-                          color: filtroTipoInventario === key
-                            ? (key === 'box' ? 'rgba(79,195,247,0.95)' : key === 'externo' ? 'rgba(230,57,70,0.95)' : 'var(--primary)')
-                            : 'var(--text-muted)',
-                        }}
-                      >
-                        <i className={`fas ${icon}`} style={{ fontSize: '0.65rem' }}></i>
-                        {label}
-                      </button>
-                    ))}
+                  <div className="cd-inv-filtro">
+                    <OpcionesPicker
+                      valor={filtroTipoInventario}
+                      onCambiar={setFiltroTipoInventario}
+                      titulo="Filtrar material"
+                      icono="fas fa-filter"
+                      opciones={[
+                        { valor: 'todos', label: 'Todos', icono: 'fa-layer-group' },
+                        { valor: 'box', label: 'Herramientas del box', icono: 'fa-toolbox', color: '#4FC3F7' },
+                        { valor: 'externo', label: 'No existente en el box', icono: 'fa-truck-loading', color: '#E63946' },
+                      ]}
+                    />
                   </div>
                   <div style={{ position: 'relative', flex: 1, minWidth: 0, width: '100%' }}>
                     <i
@@ -2377,7 +2429,10 @@ export default function CompetenciaDetalle() {
                   </div>
                 ) : (
                   <div className="d-flex flex-column gap-3">
-                    {materialesFiltrados.map(material => {
+                    <ListaPaginada items={materialesFiltrados} pageSize={20} resetKey={`${filtroTipoInventario}|${busquedaInventario}`}>
+                      {(pag) => (
+                    <div className="d-flex flex-column gap-3">
+                    {pag.map(material => {
                       const idMaterial = material.idCompetenciaInventarioMaterial ?? material.id;
                       const prestamosMaterial = Array.isArray(material.prestamos) ? material.prestamos : [];
                       const prestado = getPrestadoMaterial(material);
@@ -2447,25 +2502,25 @@ export default function CompetenciaDetalle() {
                                 {esBox && (
                                   <div className="d-flex align-items-center gap-3 flex-wrap mt-1" style={{ fontSize: '0.78rem' }}>
                                     <span style={{ color: 'var(--text-muted)' }}>
-                                      <span style={{ fontWeight: 700, color: 'var(--text-secondary)', marginRight: '0.25rem' }}>Disponible:</span>
+                                      <span style={{ fontWeight: 700, color: 'var(--secondary)', marginRight: '0.25rem' }}>Disponible:</span>
                                       <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{material.disponible}</span>
                                     </span>
                                     <span style={{ color: 'var(--border)' }}>|</span>
                                     <span style={{ color: 'var(--text-muted)' }}>
-                                      <span style={{ fontWeight: 700, color: 'var(--text-secondary)', marginRight: '0.25rem' }}>Requerido:</span>
+                                      <span style={{ fontWeight: 700, color: 'var(--secondary)', marginRight: '0.25rem' }}>Requerido:</span>
                                       <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{material.requerido}</span>
                                     </span>
                                     <span style={{ color: 'var(--border)' }}>|</span>
                                     <span style={{ color: 'var(--text-muted)' }}>
-                                      <span style={{ fontWeight: 700, color: 'var(--text-secondary)', marginRight: '0.25rem' }}>Prestado:</span>
+                                      <span style={{ fontWeight: 700, color: 'var(--secondary)', marginRight: '0.25rem' }}>Prestado:</span>
                                       <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{prestado}</span>
                                     </span>
                                     {faltanteActual > 0 && (
                                       <>
                                         <span style={{ color: 'var(--border)' }}>|</span>
                                         <span>
-                                          <span style={{ fontWeight: 700, color: 'rgba(251,191,36,0.9)', marginRight: '0.25rem' }}>Faltante:</span>
-                                          <span style={{ color: 'rgba(251,191,36,1)', fontWeight: 800 }}>{faltanteActual}</span>
+                                          <span style={{ fontWeight: 700, color: 'rgba(245,166,35,0.9)', marginRight: '0.25rem' }}>Faltante:</span>
+                                          <span style={{ color: 'rgba(245,166,35,1)', fontWeight: 800 }}>{faltanteActual}</span>
                                         </span>
                                       </>
                                     )}
@@ -2476,8 +2531,8 @@ export default function CompetenciaDetalle() {
                                 <div className="d-flex align-items-center gap-2 flex-wrap mt-1">
                                   {material.medidaTexto && (
                                     <span style={{
-                                      fontSize: '0.72rem', fontWeight: 700, color: 'rgba(34,197,94,0.85)',
-                                      background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)',
+                                      fontSize: '0.72rem', fontWeight: 700, color: 'rgba(46,204,113,0.85)',
+                                      background: 'rgba(46,204,113,0.08)', border: '1px solid rgba(46,204,113,0.2)',
                                       borderRadius: '6px', padding: '0.1rem 0.5rem',
                                     }}>
                                       <i className="fas fa-weight-hanging me-1"></i>
@@ -2515,10 +2570,10 @@ export default function CompetenciaDetalle() {
                               {esBox && (
                                 <div className="row g-2 mb-3">
                                   {[
-                                    { label: 'Disponible', value: material.disponible, icon: 'fa-boxes-stacked', color: 'rgba(34,197,94,0.8)' },
+                                    { label: 'Disponible', value: material.disponible, icon: 'fa-boxes-stacked', color: 'rgba(46,204,113,0.8)' },
                                     { label: 'Requerido', value: material.requerido, icon: 'fa-bullseye', color: 'rgba(79,195,247,0.8)' },
-                                    { label: 'Prestado', value: prestado, icon: 'fa-handshake', color: 'rgba(251,191,36,0.8)' },
-                                    { label: 'Faltante', value: faltanteActual, icon: 'fa-triangle-exclamation', color: faltanteActual > 0 ? 'rgba(251,191,36,1)' : 'rgba(34,197,94,0.6)' },
+                                    { label: 'Prestado', value: prestado, icon: 'fa-handshake', color: 'rgba(245,166,35,0.8)' },
+                                    { label: 'Faltante', value: faltanteActual, icon: 'fa-triangle-exclamation', color: faltanteActual > 0 ? 'rgba(245,166,35,1)' : 'rgba(46,204,113,0.6)' },
                                   ].map(({ label, value, icon, color }) => (
                                     <div key={label} className="col-6 col-sm-3">
                                       <div style={{
@@ -2567,8 +2622,8 @@ export default function CompetenciaDetalle() {
                                     {minRequeridoEdit > 1 && (
                                       <div style={{
                                         display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-                                        fontSize: '0.72rem', color: 'rgba(251,191,36,0.85)',
-                                        background: 'rgba(251,191,36,0.07)', border: '1px solid rgba(251,191,36,0.2)',
+                                        fontSize: '0.72rem', color: 'rgba(245,166,35,0.85)',
+                                        background: 'rgba(245,166,35,0.07)', border: '1px solid rgba(245,166,35,0.2)',
                                         borderRadius: '8px', padding: '0.3rem 0.6rem', width: 'fit-content',
                                       }}>
                                         <i className="fas fa-lock" style={{ fontSize: '0.6rem' }}></i>
@@ -2597,11 +2652,11 @@ export default function CompetenciaDetalle() {
                                 <div
                                   style={{
                                     borderRadius: '12px', padding: '0.9rem',
-                                    background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.2)',
+                                    background: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.2)',
                                     marginBottom: '1rem',
                                   }}
                                 >
-                                  <p style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', color: 'rgba(251,191,36,0.8)', marginBottom: '0.75rem' }}>
+                                  <p style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', color: 'rgba(245,166,35,0.8)', marginBottom: '0.75rem' }}>
                                     <i className="fas fa-handshake me-1"></i>Nuevo préstamo
                                   </p>
                                   <div className="row g-2">
@@ -2649,8 +2704,8 @@ export default function CompetenciaDetalle() {
                                           key={p.id}
                                           style={{
                                             borderRadius: '12px', overflow: 'hidden',
-                                            background: devuelto ? 'rgba(34,197,94,0.04)' : 'rgba(251,191,36,0.05)',
-                                            border: devuelto ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(251,191,36,0.2)',
+                                            background: devuelto ? 'rgba(46,204,113,0.04)' : 'rgba(245,166,35,0.05)',
+                                            border: devuelto ? '1px solid rgba(46,204,113,0.2)' : '1px solid rgba(245,166,35,0.2)',
                                           }}
                                         >
                                           {/* Datos — grid sin columna lateral de acciones */}
@@ -2675,7 +2730,7 @@ export default function CompetenciaDetalle() {
                                               <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', color: 'var(--text-muted)', marginBottom: '0.1rem' }}>
                                                 <i className="fas fa-note-sticky me-1"></i>Notas
                                               </div>
-                                              <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', wordBreak: 'break-word' }}>
+                                              <div style={{ color: 'var(--secondary)', fontSize: '0.82rem', wordBreak: 'break-word' }}>
                                                 {p.notas || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Sin notas</span>}
                                               </div>
                                             </div>
@@ -2683,13 +2738,13 @@ export default function CompetenciaDetalle() {
                                               <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', color: 'var(--text-muted)', marginBottom: '0.1rem' }}>
                                                 <i className="fas fa-calendar me-1"></i>Fecha préstamo
                                               </div>
-                                              <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+                                              <div style={{ color: 'var(--secondary)', fontSize: '0.82rem' }}>
                                                 {formatFechaPrestamo(p.fecha)}
                                               </div>
                                             </div>
                                             {p.fechaDevolucion && (
                                               <div className="col-12" style={{ marginTop: '0.1rem' }}>
-                                                <span style={{ fontSize: '0.72rem', color: 'rgba(34,197,94,0.85)' }}>
+                                                <span style={{ fontSize: '0.72rem', color: 'rgba(46,204,113,0.85)' }}>
                                                   <i className="fas fa-rotate-left me-1"></i>
                                                   <strong>Devuelto:</strong> {formatFechaPrestamo(p.fechaDevolucion)}
                                                 </span>
@@ -2698,11 +2753,11 @@ export default function CompetenciaDetalle() {
                                           </div>
                                           {/* Footer de estado — siempre en su propia fila */}
                                           <div style={{
-                                            borderTop: devuelto ? '1px solid rgba(34,197,94,0.15)' : '1px solid rgba(251,191,36,0.15)',
+                                            borderTop: devuelto ? '1px solid rgba(46,204,113,0.15)' : '1px solid rgba(245,166,35,0.15)',
                                             padding: '0.5rem 0.9rem',
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                             flexWrap: 'wrap', gap: '0.4rem',
-                                            background: devuelto ? 'rgba(34,197,94,0.04)' : 'rgba(251,191,36,0.04)',
+                                            background: devuelto ? 'rgba(46,204,113,0.04)' : 'rgba(245,166,35,0.04)',
                                           }}>
                                             {devuelto ? (
                                               <span className="cd-badge cd-badge--success">
@@ -2734,6 +2789,9 @@ export default function CompetenciaDetalle() {
                         </div>
                       );
                     })}
+                    </div>
+                      )}
+                    </ListaPaginada>
 
                     {/* ── SECCIÓN: PRÉSTAMOS EXTERNOS (No existentes en el box) ── */}
                     {prestamosManualesFiltrados.length > 0 && (
@@ -2781,8 +2839,8 @@ export default function CompetenciaDetalle() {
                                   key={p.id}
                                   style={{
                                     borderRadius: '12px', overflow: 'hidden',
-                                    background: devuelto ? 'rgba(34,197,94,0.05)' : 'rgba(230,57,70,0.08)',
-                                    border: devuelto ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(230,57,70,0.3)',
+                                    background: devuelto ? 'rgba(46,204,113,0.05)' : 'rgba(230,57,70,0.08)',
+                                    border: devuelto ? '1px solid rgba(46,204,113,0.2)' : '1px solid rgba(230,57,70,0.3)',
                                   }}
                                 >
                                   {/* Datos — grid completo sin columna lateral */}
@@ -2815,7 +2873,7 @@ export default function CompetenciaDetalle() {
                                       <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', color: 'var(--text-muted)', marginBottom: '0.1rem' }}>
                                         <i className="fas fa-note-sticky me-1"></i>Notas
                                       </div>
-                                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', wordBreak: 'break-word' }}>
+                                      <div style={{ color: 'var(--secondary)', fontSize: '0.82rem', wordBreak: 'break-word' }}>
                                         {p.notas || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Sin notas</span>}
                                       </div>
                                     </div>
@@ -2824,7 +2882,7 @@ export default function CompetenciaDetalle() {
                                         <i className="fas fa-calendar me-1"></i>
                                         <strong>Fecha préstamo:</strong> {formatFechaPrestamo(p.fecha)}
                                         {p.fechaDevolucion && (
-                                          <span style={{ marginLeft: '0.6rem', color: 'rgba(34,197,94,0.85)' }}>
+                                          <span style={{ marginLeft: '0.6rem', color: 'rgba(46,204,113,0.85)' }}>
                                             <i className="fas fa-rotate-left me-1"></i>
                                             <strong>Devuelto:</strong> {formatFechaPrestamo(p.fechaDevolucion)}
                                           </span>
@@ -2834,11 +2892,11 @@ export default function CompetenciaDetalle() {
                                   </div>
                                   {/* Footer de estado — fila propia, nunca se sobrepone */}
                                   <div style={{
-                                    borderTop: devuelto ? '1px solid rgba(34,197,94,0.15)' : '1px solid rgba(230,57,70,0.2)',
+                                    borderTop: devuelto ? '1px solid rgba(46,204,113,0.15)' : '1px solid rgba(230,57,70,0.2)',
                                     padding: '0.5rem 0.9rem',
                                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                     flexWrap: 'wrap', gap: '0.4rem',
-                                    background: devuelto ? 'rgba(34,197,94,0.04)' : 'rgba(230,57,70,0.05)',
+                                    background: devuelto ? 'rgba(46,204,113,0.04)' : 'rgba(230,57,70,0.05)',
                                   }}>
                                     {devuelto ? (
                                       <span className="cd-badge cd-badge--success">
@@ -2909,18 +2967,19 @@ export default function CompetenciaDetalle() {
                 <div className="row g-3 align-items-end">
                   <div className="col-md-4">
                     <label className="cd-label">Selecciona el WOD a armar</label>
-                    <select
-                      className="cd-select"
-                      value={panelConfigWod.idWodSeleccionado}
-                      onChange={e => setPanelConfigWod({ ...panelConfigWod, idWodSeleccionado: e.target.value })}
-                    >
-                      <option value="">-- Elige WOD --</option>
-                      {wods.map(w => (
-                        <option key={w.idWodComp || w.IdWodComp} value={w.idWodComp || w.IdWodComp}>
-                          {w.nombre || w.Nombre} ({w.tipoCalificacion || w.TipoCalificacion})
-                        </option>
-                      ))}
-                    </select>
+                    <OpcionesPicker
+                      valor={panelConfigWod.idWodSeleccionado}
+                      onCambiar={(v) => setPanelConfigWod({ ...panelConfigWod, idWodSeleccionado: v })}
+                      titulo="Selecciona el WOD a armar"
+                      icono="fas fa-dumbbell"
+                      placeholder="-- Elige WOD --"
+                      buscador
+                      placeholderBuscar="Buscar WOD..."
+                      opciones={wods.map(w => ({
+                        valor: String(w.idWodComp || w.IdWodComp),
+                        label: `${w.nombre || w.Nombre} (${w.tipoCalificacion || w.TipoCalificacion})`
+                      }))}
+                    />
                   </div>
                   <div className="col-md-8">
                     <div className="cd-card cd-card--black" style={{ padding: '0.85rem 1rem' }}>
@@ -3126,13 +3185,31 @@ export default function CompetenciaDetalle() {
                                               </span>
                                             </td>
                                             <td>
-                                              <select 
-                                                className="cd-select cd-select--sm" 
-                                                value={participante.idJuez || ''}
-                                                onChange={(e) => {
-                                                  const newIdJuez = e.target.value;
-                                                  const newNombreJuez = e.target.options[e.target.selectedIndex].text;
-                                                  
+                                              <OpcionesPicker
+                                                valor={participante.idJuez || ''}
+                                                titulo="Asignar juez"
+                                                icono="fas fa-user-shield"
+                                                placeholder="Sin Asignar"
+                                                buscador
+                                                placeholderBuscar="Buscar juez..."
+                                                opciones={[
+                                                  { valor: '', label: 'Sin Asignar' },
+                                                  ...juecesComp.map(j => {
+                                                    const juezId = j.id || j.idUsuario || j.IdUsuario;
+                                                    const juezNombre = j.nombreCompleto || j.NombreCompleto || `${j.nombre} ${j.apellidos || ''}`.trim();
+                                                    // Filtro Anti-clones: ¿Este juez ya está asignado a OTRO carril en ESTE MISMO heat?
+                                                    const yaAsignadoAqui = heat.participantes.some((p, indexP) =>
+                                                      indexP !== i && p.idJuez && p.idJuez.toString() === juezId.toString()
+                                                    );
+                                                    return { valor: String(juezId), label: yaAsignadoAqui ? `${juezNombre} (Ocupado)` : juezNombre, disabled: yaAsignadoAqui };
+                                                  })
+                                                ]}
+                                                onCambiar={(newIdJuez) => {
+                                                  let newNombreJuez = '';
+                                                  if (newIdJuez) {
+                                                    const jSel = juecesComp.find(j => String(j.id || j.idUsuario || j.IdUsuario) === String(newIdJuez));
+                                                    newNombreJuez = jSel ? (jSel.nombreCompleto || jSel.NombreCompleto || `${jSel.nombre} ${jSel.apellidos || ''}`.trim()) : '';
+                                                  }
                                                   setConfiguracionHeats(prev => {
                                                     const newWods = [...(prev.wods || [])];
                                                     const wodTarget = newWods.find(w => w.idWod === wod.idWod);
@@ -3146,26 +3223,7 @@ export default function CompetenciaDetalle() {
                                                     return { ...prev, wods: newWods };
                                                   });
                                                 }}
-                                              >
-                                                <option value="">Sin Asignar</option>
-                                                {juecesComp.map(j => {
-                                                  const juezId = j.id || j.idUsuario || j.IdUsuario;
-                                                  const juezNombre = j.nombreCompleto || j.NombreCompleto || `${j.nombre} ${j.apellidos || ''}`.trim();
-                                                  // Filtro Anti-clones: ¿Este juez ya está asignado a OTRO carril en ESTE MISMO heat?
-                                                  const yaAsignadoAqui = heat.participantes.some((p, indexP) => 
-                                                    indexP !== i && p.idJuez && p.idJuez.toString() === juezId.toString()
-                                                  );
-                                                  return (
-                                                    <option 
-                                                      key={juezId} 
-                                                      value={juezId}
-                                                      disabled={yaAsignadoAqui}
-                                                    >
-                                                      {juezNombre} {yaAsignadoAqui ? '(Ocupado)' : ''}
-                                                    </option>
-                                                  );
-                                                })}
-                                              </select>
+                                              />
                                             </td>
                                             <td style={{ textAlign: 'right', paddingRight: '1rem' }}>
                                               <button
@@ -3259,72 +3317,123 @@ export default function CompetenciaDetalle() {
                     />
                   </div>
                 ) : (
-                  <div className="cd-table-wrap" style={{ borderRadius: 0, border: 'none' }}>
-                    <div style={{ overflowX: 'auto' }}>
-                      <table className="cd-table">
-                        <thead>
-                          <tr>
-                            <th style={{ textAlign: 'left', paddingLeft: '1rem' }}>Skill / Movimiento</th>
-                            {['Novato', 'Principiante', 'Intermedio', 'Avanzado', 'Master'].map(nivel => (
-                              <th key={nivel} style={{ textAlign: 'center', minWidth: '150px' }}>
-                                {nivel}<br />
-                                <div className="d-flex justify-content-center gap-4 mt-1">
-                                  <span style={{ color: 'var(--primary)', fontSize: '10px' }}>HOMBRES</span>
-                                  <span style={{ color: 'var(--accent-cool)', fontSize: '10px' }}>MUJERES</span>
-                                </div>
-                              </th>
-                            ))}
-                            <th style={{ textAlign: 'right', paddingRight: '1rem' }}>Acción</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {tablaEstandares.map((fila, index) => (
-                            <tr key={index}>
-                              <td style={{ paddingLeft: '1rem' }}>
-                                <input
-                                  type="text"
-                                  className="cd-input cd-input-sm"
-                                  placeholder="Ej. Dead Lift"
-                                  value={fila.movimiento}
-                                  onChange={e => actualizarFilaEstandar(index, 'movimiento', e.target.value)}
-                                />
-                              </td>
-                              {['Novato', 'Principiante', 'Intermedio', 'Avanzado', 'Master'].map(nivel => {
-                                const req = fila.requisitos?.[nivel];
-                                const valH = typeof req === 'object' && req !== null ? req.h : (req || '');
-                                const valM = typeof req === 'object' && req !== null ? req.m : (req || '');
-                                return (
-                                  <td key={nivel} className="cd-estandar-cell">
-                                    <div className="d-flex gap-1 justify-content-center">
-                                      <input
-                                        type="text"
-                                        className="cd-input cd-input-sm cd-input--center cd-input--info w-50"
-                                        placeholder="H"
-                                        value={valH}
-                                        onChange={e => actualizarRequisito(index, nivel, 'h', e.target.value)}
-                                      />
-                                      <input
-                                        type="text"
-                                        className="cd-input cd-input-sm cd-input--center cd-input--warning w-50"
-                                        placeholder="M"
-                                        value={valM}
-                                        onChange={e => actualizarRequisito(index, nivel, 'm', e.target.value)}
-                                      />
-                                    </div>
-                                  </td>
-                                );
-                              })}
-                              <td style={{ textAlign: 'right', paddingRight: '1rem' }}>
-                                <button onClick={() => quitarFilaEstandar(index)} className="cd-btn cd-btn--ghost">
-                                  <i className="fas fa-trash"></i>
-                                </button>
-                              </td>
+                  <>
+                    {/* Tabla (desktop ≥1200px) */}
+                    <div className="cd-table-wrap d-none d-xl-block" style={{ borderRadius: 0, border: 'none' }}>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table className="cd-table">
+                          <thead>
+                            <tr>
+                              <th style={{ textAlign: 'left', paddingLeft: '1rem' }}>Skill / Movimiento</th>
+                              {['Novato', 'Principiante', 'Intermedio', 'Avanzado', 'Master'].map(nivel => (
+                                <th key={nivel} style={{ textAlign: 'center', minWidth: '150px' }}>
+                                  {nivel}<br />
+                                  <div className="d-flex justify-content-center gap-4 mt-1">
+                                    <span style={{ color: 'var(--accent-cool)', fontSize: '10px' }}>HOMBRES</span>
+                                    <span style={{ color: 'var(--accent)', fontSize: '10px' }}>MUJERES</span>
+                                  </div>
+                                </th>
+                              ))}
+                              <th style={{ textAlign: 'right', paddingRight: '1rem' }}>Acción</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {tablaEstandares.map((fila, index) => (
+                              <tr key={index}>
+                                <td style={{ paddingLeft: '1rem' }}>
+                                  <input
+                                    type="text"
+                                    className="cd-input cd-input-sm"
+                                    placeholder="Ej. Dead Lift"
+                                    value={fila.movimiento}
+                                    onChange={e => actualizarFilaEstandar(index, 'movimiento', e.target.value)}
+                                  />
+                                </td>
+                                {['Novato', 'Principiante', 'Intermedio', 'Avanzado', 'Master'].map(nivel => {
+                                  const req = fila.requisitos?.[nivel];
+                                  const valH = typeof req === 'object' && req !== null ? req.h : (req || '');
+                                  const valM = typeof req === 'object' && req !== null ? req.m : (req || '');
+                                  return (
+                                    <td key={nivel} className="cd-estandar-cell">
+                                      <div className="d-flex gap-1 justify-content-center">
+                                        <input
+                                          type="text"
+                                          className="cd-input cd-input-sm cd-input--center cd-input--info w-50"
+                                          placeholder="H"
+                                          value={valH}
+                                          onChange={e => actualizarRequisito(index, nivel, 'h', e.target.value)}
+                                        />
+                                        <input
+                                          type="text"
+                                          className="cd-input cd-input-sm cd-input--center cd-input--warning w-50"
+                                          placeholder="M"
+                                          value={valM}
+                                          onChange={e => actualizarRequisito(index, nivel, 'm', e.target.value)}
+                                        />
+                                      </div>
+                                    </td>
+                                  );
+                                })}
+                                <td style={{ textAlign: 'right', paddingRight: '1rem' }}>
+                                  <button onClick={() => quitarFilaEstandar(index)} className="cd-btn cd-btn--ghost">
+                                    <i className="fas fa-trash"></i>
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
+
+                    {/* Tarjetas por movimiento (tablet / móvil <1200px) */}
+                    <div className="cd-estandar-cards d-xl-none">
+                      {tablaEstandares.map((fila, index) => (
+                        <div key={index} className="cd-estandar-card">
+                          <div className="cd-estandar-card-head">
+                            <input
+                              type="text"
+                              className="cd-input cd-input-sm"
+                              placeholder="Ej. Dead Lift"
+                              value={fila.movimiento}
+                              onChange={e => actualizarFilaEstandar(index, 'movimiento', e.target.value)}
+                            />
+                            <button onClick={() => quitarFilaEstandar(index)} className="cd-btn cd-btn--ghost" title="Quitar movimiento">
+                              <i className="fas fa-trash"></i>
+                            </button>
+                          </div>
+                          <div className="cd-estandar-card-niveles">
+                            {['Novato', 'Principiante', 'Intermedio', 'Avanzado', 'Master'].map(nivel => {
+                              const req = fila.requisitos?.[nivel];
+                              const valH = typeof req === 'object' && req !== null ? req.h : (req || '');
+                              const valM = typeof req === 'object' && req !== null ? req.m : (req || '');
+                              return (
+                                <div key={nivel} className="cd-estandar-nivel">
+                                  <span className="cd-estandar-nivel-lbl">{nivel}</span>
+                                  <div className="cd-estandar-nivel-inputs">
+                                    <input
+                                      type="text"
+                                      className="cd-input cd-input-sm cd-input--center cd-input--info"
+                                      placeholder="Hombres"
+                                      value={valH}
+                                      onChange={e => actualizarRequisito(index, nivel, 'h', e.target.value)}
+                                    />
+                                    <input
+                                      type="text"
+                                      className="cd-input cd-input-sm cd-input--center cd-input--warning"
+                                      placeholder="Mujeres"
+                                      value={valM}
+                                      onChange={e => actualizarRequisito(index, nivel, 'm', e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -3376,7 +3485,7 @@ export default function CompetenciaDetalle() {
 
               {vistaAuditoria === 'leaderboard' ? (
                 <div className="cd-card">
-                  <div className="cd-card-header d-flex justify-content-between align-items-center flex-wrap gap-2" style={{ backgroundColor: 'var(--bg-card-header)' }}>
+                  <div className="cd-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <span className="cd-card-titulo cd-card-titulo--info">
                       <i className="fas fa-chess-king"></i>Posiciones Reales
                     </span>
@@ -3393,6 +3502,13 @@ export default function CompetenciaDetalle() {
                     </div>
                   </div>
                   <div className="cd-card-body p-0">
+                    {adminLeaderboardCalculado.length === 0 ? (
+                      <div className="cd-empty" style={{ padding: '2.5rem 1rem' }}>
+                        <i className="fas fa-trophy"></i><p>Sin equipos aprobados en esta categoría</p>
+                      </div>
+                    ) : (
+                    <ListaPaginada items={adminLeaderboardCalculado} pageSize={20} resetKey={idCatActivaLeaderboard}>
+                      {(pag, { inicio }) => (
                     <div className="cd-table-wrap cd-table-scrollable" style={{ borderRadius: 0, border: 'none' }}>
                       <table className="cd-table">
                         <thead>
@@ -3407,16 +3523,20 @@ export default function CompetenciaDetalle() {
                           </tr>
                         </thead>
                         <tbody>
-                          {adminLeaderboardCalculado.length === 0 ? (
-                            <tr><td colSpan={wods.length + 2} className="text-center p-4">Sin equipos aprobados en esta categoría</td></tr>
-                          ) : (
-                            adminLeaderboardCalculado.map((eq, index) => {
+                          {pag.map((eq, i) => {
+                              const index = inicio + i;
                               const idEq = eq.idEquipoComp || eq.IdEquipoComp;
                               return (
                                 <tr key={idEq}>
                                   <td style={{ paddingLeft: '1rem' }}>
                                     <div className="d-flex align-items-center gap-3">
-                                      <span className={`badge ${index === 0 ? 'bg-warning text-dark' : index === 1 ? 'bg-secondary' : index === 2 ? 'bg-danger' : 'bg-dark border'}`} style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', borderRadius: '50%' }}>
+                                      <span style={{
+                                        width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: '1rem', borderRadius: '50%', fontFamily: 'var(--font-stats)', fontWeight: 700,
+                                        background: index === 0 ? 'rgba(245,166,35,0.18)' : index === 1 ? 'rgba(168,178,209,0.16)' : index === 2 ? 'rgba(230,57,70,0.16)' : 'rgba(0,0,0,0.35)',
+                                        color: index === 0 ? 'var(--accent)' : index === 1 ? 'var(--secondary)' : index === 2 ? 'var(--primary)' : 'var(--text-muted)',
+                                        border: `1px solid ${index === 0 ? 'rgba(245,166,35,0.45)' : index === 1 ? 'rgba(168,178,209,0.4)' : index === 2 ? 'rgba(230,57,70,0.45)' : 'var(--border)'}`
+                                      }}>
                                         {index + 1}
                                       </span>
                                       <div>
@@ -3447,11 +3567,13 @@ export default function CompetenciaDetalle() {
                                   })}
                                 </tr>
                               );
-                            })
-                          )}
+                          })}
                         </tbody>
                       </table>
                     </div>
+                      )}
+                    </ListaPaginada>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -3476,30 +3598,32 @@ export default function CompetenciaDetalle() {
                     </div>
                     <div className="col-md-4">
                       <label className="cd-label">WOD</label>
-                      <select
-                        className="cd-select"
-                        value={filtroAuditoria.idWod}
-                        onChange={e => setFiltroAuditoria({ ...filtroAuditoria, idWod: e.target.value })}
-                      >
-                        <option value="Todos">Todos los WODs</option>
-                        {wods.map(w => (
-                          <option key={w.idWodComp || w.IdWodComp} value={w.idWodComp || w.IdWodComp}>
-                            {w.nombre || w.Nombre}
-                          </option>
-                        ))}
-                      </select>
+                      <OpcionesPicker
+                        valor={filtroAuditoria.idWod}
+                        onCambiar={(v) => setFiltroAuditoria({ ...filtroAuditoria, idWod: v })}
+                        titulo="Filtrar por WOD"
+                        icono="fas fa-dumbbell"
+                        buscador
+                        placeholderBuscar="Buscar WOD..."
+                        opciones={[
+                          { valor: 'Todos', label: 'Todos los WODs' },
+                          ...wods.map(w => ({ valor: String(w.idWodComp || w.IdWodComp), label: w.nombre || w.Nombre }))
+                        ]}
+                      />
                     </div>
                     <div className="col-md-3">
                       <label className="cd-label">Estatus</label>
-                      <select
-                        className="cd-select"
-                        value={filtroAuditoria.estatus}
-                        onChange={e => setFiltroAuditoria({ ...filtroAuditoria, estatus: e.target.value })}
-                      >
-                        <option value="Todos">Todos</option>
-                        <option value="Pendiente">Pendientes</option>
-                        <option value="Aprobado">Aprobados</option>
-                      </select>
+                      <OpcionesPicker
+                        valor={filtroAuditoria.estatus}
+                        onCambiar={(v) => setFiltroAuditoria({ ...filtroAuditoria, estatus: v })}
+                        titulo="Filtrar por estatus"
+                        icono="fas fa-filter"
+                        opciones={[
+                          { valor: 'Todos', label: 'Todos' },
+                          { valor: 'Pendiente', label: 'Pendientes' },
+                          { valor: 'Aprobado', label: 'Aprobados' },
+                        ]}
+                      />
                     </div>
                   </div>
                 </div>
@@ -3646,8 +3770,10 @@ export default function CompetenciaDetalle() {
                 <p>Aún no has diseñado ningún WOD para este evento.</p>
               </div>
             ) : (
-              <div className="row g-4">
-                {wods.map(wod => {
+              <ListaPaginada items={wods} pageSize={20}>
+                {(pag) => (
+                <div className="row g-4">
+                {pag.map(wod => {
                   const idWod = wod.idWodComp || wod.IdWodComp;
                   const tipo = wod.tipoCalificacion || wod.TipoCalificacion;
                   const tipoCls = getTipoBadgeClass(tipo);
@@ -3685,7 +3811,9 @@ export default function CompetenciaDetalle() {
                     </div>
                   );
                 })}
-              </div>
+                </div>
+                )}
+              </ListaPaginada>
             )}
 
             {constructorWod.abierto && (

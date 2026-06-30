@@ -248,16 +248,27 @@ export default function Layout() {
     ];
   }, [user?.idUsuario, user?.rol]); // Solo depende del rol del usuario, box no se usa aquí
 
+  // Firma ESTABLE de los módulos del box. El refresco del box contra el servidor
+  // (más abajo) hace setBox({ ...b, ...data }) y crea un objeto box NUEVO aunque los
+  // módulos no cambien. Si navItems dependiera del objeto `box`, esa referencia nueva
+  // recalcularía el menú → CardNav reconstruiría su timeline GSAP → freeze del navbar.
+  // Dependiendo de esta clave (string), navItems solo cambia si cambian los módulos.
+  const modulosKey = useMemo(
+    () => (Array.isArray(box?.modulos) ? box.modulos.slice().sort().join(',') : ''),
+    [box]
+  );
+
   // Filtra los links por módulo del plan SaaS del box. Developer ve todo; las
-  // claves CORE siempre pasan. Solo recalcula al cambiar el box (no por navegación).
+  // claves CORE siempre pasan. Solo recalcula al cambiar los módulos (no por navegación
+  // ni por un refresco del box que no toca los módulos).
   const navItems = useMemo(() => {
-    const modulosBox = Array.isArray(box?.modulos) ? box.modulos : [];
+    const modulosBox = modulosKey ? modulosKey.split(',') : [];
     const tiene = (clave) =>
       !clave || user?.rol === 'Developer' || esModuloCore(clave) || modulosBox.includes(clave);
     return navItemsRaw
       .map(g => ({ ...g, links: (g.links || []).filter(l => tiene(l.modulo)) }))
       .filter(g => g.links.length > 0);
-  }, [navItemsRaw, box, user?.rol]);
+  }, [navItemsRaw, modulosKey, user?.rol]);
 
   // Ruta de inicio según rol (para el tab Inicio del MobileNavBar)
   const homeRoute = useMemo(() => {

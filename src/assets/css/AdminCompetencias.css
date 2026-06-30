@@ -92,28 +92,75 @@
   color: var(--text-primary);
 }
 
-/* === BOTÓN NUEVA COMPETENCIA === */
+/* === BOTÓN NUEVA COMPETENCIA (primario del sistema de diseño) === */
 .acomp-btn-nueva {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 1rem;
-  border-radius: 20px;
-  border: none;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
   background: var(--primary);
   color: #fff;
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 0.82rem;
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: background 0.18s;
+  transition: background 0.18s, box-shadow 0.18s, transform 0.12s, color 0.18s;
   flex-shrink: 0;
   white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.acomp-btn-nueva:hover { background: var(--primary-dark); }
-.acomp-btn-nueva--cancelar { background: rgba(255, 255, 255, 0.07); border: 1px solid var(--border); color: var(--secondary); }
-.acomp-btn-nueva--cancelar:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-primary); }
+@media (hover: hover) {
+  .acomp-btn-nueva:hover { background: var(--primary-dark); box-shadow: 0 4px 16px var(--primary-glow); }
+}
+.acomp-btn-nueva:active { transform: scale(0.96); }
+
+.acomp-btn-nueva--cancelar { background: rgba(255, 255, 255, 0.06); border-color: var(--border); color: var(--secondary); }
+@media (hover: hover) {
+  .acomp-btn-nueva--cancelar:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-primary); box-shadow: none; }
+}
+
+.acomp-btn-nueva--accent  { background: var(--accent);  color: #1a1205; }
+@media (hover: hover) { .acomp-btn-nueva--accent:hover  { background: #ffb733; box-shadow: 0 4px 16px rgba(245, 166, 35, 0.35); } }
+.acomp-btn-nueva--success { background: var(--success); color: #06210f; }
+@media (hover: hover) { .acomp-btn-nueva--success:hover { background: #34d97a; box-shadow: 0 4px 16px rgba(46, 204, 113, 0.3); } }
+
+/* Botón secundario (Historial) — outline gris del sistema */
+.acomp-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--secondary);
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.18s;
+  flex-shrink: 0;
+  white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) {
+  .acomp-btn-secondary:hover { border-color: var(--border-hover); color: var(--text-primary); }
+}
+.acomp-btn-secondary:active { transform: scale(0.96); }
+
+/* Acciones del header + label que se oculta en móvil (≤576px) */
+.acomp-header-actions { display: inline-flex; align-items: center; gap: 0.5rem; }
 
 /* === FORM CREAR COMPETENCIA === */
 .acomp-form-card {
@@ -186,39 +233,53 @@
 .acomp-btn-submit {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.55rem 1.5rem;
-  border-radius: 20px;
-  border: none;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.4rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
   background: var(--primary);
   color: #fff;
-  font-family: var(--font-body);
+  font-family: var(--font-heading-alt);
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: background 0.18s;
+  transition: background 0.18s, box-shadow 0.18s, transform 0.12s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.acomp-btn-submit:hover { background: var(--primary-dark); }
-.acomp-btn-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+@media (hover: hover) {
+  .acomp-btn-submit:hover { background: var(--primary-dark); box-shadow: 0 4px 16px var(--primary-glow); }
+}
+.acomp-btn-submit:active { transform: scale(0.97); }
+.acomp-btn-submit:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
 
 .acomp-btn-cancel-sm {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
-  padding: 0.55rem 1rem;
-  border-radius: 20px;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--secondary);
   font-family: var(--font-body);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.18s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.acomp-btn-cancel-sm:hover { border-color: var(--border-hover); color: var(--text-primary); }
+@media (hover: hover) {
+  .acomp-btn-cancel-sm:hover { border-color: var(--border-hover); color: var(--text-primary); }
+}
+.acomp-btn-cancel-sm:active { transform: scale(0.97); }
 
 /* === EMPTY STATE === */
 .acomp-empty {
@@ -262,25 +323,26 @@
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--secondary);
-  opacity: 0.3;
+  height: 3px;
+  background: var(--primary);
+  opacity: 0.85;
   transition: opacity 0.25s;
   z-index: 1;
 }
 
-.acomp-comp-card:hover {
-  border-color: var(--border-hover);
-  box-shadow: 0 8px 36px rgba(0, 0, 0, 0.5);
+@media (hover: hover) {
+  .acomp-comp-card:hover {
+    border-color: var(--border-hover);
+    box-shadow: 0 8px 36px rgba(0, 0, 0, 0.5);
+  }
+  .acomp-comp-card:hover::before { opacity: 1; }
 }
 
-.acomp-comp-card:hover::before { opacity: 1; }
-
 /* Accent lines por estatus */
-.acomp-comp-card--success::before { background: var(--success); opacity: 0.8; }
-.acomp-comp-card--danger::before  { background: var(--primary); opacity: 0.9; }
-.acomp-comp-card--info::before    { background: var(--accent-cool); opacity: 0.8; }
-.acomp-comp-card--secondary::before { background: var(--secondary); opacity: 0.3; }
+.acomp-comp-card--success::before   { background: var(--success);     opacity: 0.9; }
+.acomp-comp-card--danger::before    { background: var(--primary);     opacity: 0.95; }
+.acomp-comp-card--info::before      { background: var(--accent-cool); opacity: 0.9; }
+.acomp-comp-card--secondary::before { background: var(--secondary);   opacity: 0.55; }
 
 /* Header de la tarjeta */
 .acomp-comp-header {
@@ -306,8 +368,13 @@
   margin-bottom: 0.25rem;
 }
 
-.acomp-comp-nombre:hover { color: var(--primary); }
+@media (hover: hover) {
+  .acomp-comp-nombre:hover { color: var(--primary); }
+}
 .acomp-comp-nombre i { font-size: 0.65rem; opacity: 0.45; }
+
+/* Competencia bloqueada (pago pendiente): legible pero sin enlace */
+.acomp-comp-nombre--locked { color: var(--secondary); cursor: default; }
 
 .acomp-comp-fechas {
   font-family: var(--font-body);
@@ -390,12 +457,16 @@
 
 .acomp-cat-toolbar-titulo {
   font-family: var(--font-heading-alt);
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
+  letter-spacing: 1px;
+  color: var(--secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
+.acomp-cat-toolbar-titulo i { color: var(--primary); }
 
 .acomp-btn-add-cat {
   display: inline-flex;
@@ -563,14 +634,15 @@
 
 .acomp-cat-tabla thead th {
   font-family: var(--font-heading-alt);
-  font-size: 0.65rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
-  padding: 0.55rem 0.85rem;
+  letter-spacing: 0.7px;
+  color: var(--secondary);
+  padding: 0.6rem 0.85rem;
   border-bottom: 1px solid var(--border);
   text-align: left;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .acomp-cat-tabla tbody tr { transition: background 0.15s; }
@@ -585,18 +657,88 @@
 }
 .acomp-cat-tabla tbody tr:last-child td { border-bottom: none; }
 
-.acomp-cat-nombre-text { font-weight: 600; font-size: 0.82rem; }
-.acomp-cat-tipo-text   { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.1rem; }
-.acomp-cat-costo       { font-family: var(--font-stats); font-weight: 700; color: var(--success); }
-.acomp-cat-cupo        { font-family: var(--font-stats); font-weight: 700; color: var(--text-primary); }
+.acomp-cat-nombre-text { font-weight: 600; font-size: 0.86rem; color: var(--text-primary); }
+.acomp-cat-tipo-text   { font-size: 0.72rem; color: var(--secondary); margin-top: 0.1rem; }
+.acomp-cat-costo       { font-family: var(--font-stats); font-weight: 700; font-size: 1rem; color: var(--success); }
+.acomp-cat-cupo        { font-family: var(--font-stats); font-weight: 700; font-size: 1rem; color: var(--text-primary); }
 
-.acomp-btn-tabla-edit   { background: none; border: none; color: var(--accent); cursor: pointer; padding: 0.2rem 0.35rem; transition: opacity 0.18s; font-size: 0.82rem; }
-.acomp-btn-tabla-delete { background: none; border: none; color: var(--danger); cursor: pointer; padding: 0.2rem 0.35rem; transition: opacity 0.18s; font-size: 0.82rem; }
-.acomp-btn-tabla-edit:hover, .acomp-btn-tabla-delete:hover { opacity: 0.65; }
+/* Botones de acción cuadrados (ver / editar / eliminar) — patrón del sistema */
+.acomp-cat-acciones { display: inline-flex; align-items: center; gap: 0.35rem; justify-content: flex-end; }
 
-.acomp-cat-empty { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); }
-.acomp-cat-empty i { display: block; font-size: 2rem; opacity: 0.2; margin-bottom: 0.5rem; }
-.acomp-cat-empty p { font-family: var(--font-body); font-size: 0.82rem; margin: 0; }
+.acomp-btn-accion {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 0.82rem;
+  transition: all 0.18s, transform 0.12s;
+  flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+}
+.acomp-btn-accion:active { transform: scale(0.92); }
+
+.acomp-btn-accion--ver     { color: var(--accent-cool); border-color: rgba(79, 195, 247, 0.3); }
+.acomp-btn-accion--editar  { color: var(--accent);      border-color: rgba(245, 166, 35, 0.4); }
+.acomp-btn-accion--eliminar{ color: var(--primary);     border-color: rgba(230, 57, 70, 0.4); }
+@media (hover: hover) {
+  .acomp-btn-accion--ver:hover      { background: rgba(79, 195, 247, 0.12); border-color: var(--accent-cool); }
+  .acomp-btn-accion--editar:hover   { background: rgba(245, 166, 35, 0.12); border-color: var(--accent); }
+  .acomp-btn-accion--eliminar:hover { background: rgba(230, 57, 70, 0.12);  border-color: var(--primary); }
+}
+
+.acomp-cat-empty { text-align: center; padding: 2.5rem 1rem; color: var(--secondary); }
+.acomp-cat-empty i { display: block; font-size: 2rem; opacity: 0.35; margin-bottom: 0.5rem; color: var(--secondary); }
+.acomp-cat-empty p { font-family: var(--font-body); font-size: 0.85rem; margin: 0; }
+
+/* === TARJETAS DE CATEGORÍA (móvil <768px) === */
+.acomp-cat-cards { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.acomp-cat-card {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 0.9rem;
+}
+
+.acomp-cat-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 0.7rem;
+}
+
+.acomp-cat-card-stats {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.acomp-cat-card-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+}
+
+.acomp-cat-card-stat-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--secondary);
+}
 
 /* =============================================
    VISTA ROSTER — Cuarto de Guerra
@@ -1846,16 +1988,140 @@
   to { transform: rotate(360deg); }
 }
 
-/* === RESPONSIVE IMPROVEMENTS === */
-@media (max-width: 575.98px) {
-  .acomp-nav { padding: 0.7rem 1rem; }
-  .acomp-form-body { padding: 1rem; }
-  .acomp-comp-header { padding: 0.9rem 1rem; }
-  .acomp-cat-section { padding: 0.9rem 1rem; }
+/* =============================================
+   BADGES DE ESTATUS — alto contraste (texto = color del estado)
+   ============================================= */
+.acomp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 8px;
+  font-family: var(--font-heading-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border: 1px solid;
+  line-height: 1;
+}
+
+.acomp-badge-dot { font-size: 0.5rem; animation: acomp-pulse 1.4s ease-in-out infinite; }
+@keyframes acomp-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.acomp-badge--borrador      { background: rgba(168, 178, 209, 0.12); border-color: rgba(168, 178, 209, 0.32); color: var(--secondary); }
+.acomp-badge--inscripciones { background: rgba(79, 195, 247, 0.14);  border-color: rgba(79, 195, 247, 0.4);   color: var(--accent-cool); }
+.acomp-badge--activa        { background: rgba(46, 204, 113, 0.14);  border-color: rgba(46, 204, 113, 0.4);   color: var(--success); }
+.acomp-badge--finalizada,
+.acomp-badge--historial     { background: rgba(168, 178, 209, 0.1);  border-color: rgba(168, 178, 209, 0.25); color: var(--secondary); }
+.acomp-badge--archivada     { background: rgba(0, 0, 0, 0.35);       border-color: var(--border);             color: var(--secondary); }
+.acomp-badge--pendiente     { background: rgba(245, 166, 35, 0.14);  border-color: rgba(245, 166, 35, 0.42);  color: var(--accent); }
+
+/* === LABEL OCULTABLE EN BOTONES (≤576px) === */
+.acomp-btn-label { display: inline; }
+
+/* === HINTS / TEXTO SECUNDARIO LEGIBLE === */
+.acomp-hint {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--secondary);
+}
+
+.acomp-plan-meta {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--secondary);
+}
+
+/* === PANEL DE BLOQUEO (módulo inactivo / pago en revisión) === */
+.acomp-lock {
+  padding: 1.75rem 1.25rem;
+  text-align: center;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.acomp-lock--warning { background: rgba(245, 166, 35, 0.05); border-top-color: rgba(245, 166, 35, 0.25); }
+.acomp-lock--info    { background: rgba(79, 195, 247, 0.05); border-top-color: rgba(79, 195, 247, 0.22); }
+
+.acomp-lock-icon { font-size: 2.4rem; margin-bottom: 0.25rem; }
+.acomp-lock--warning .acomp-lock-icon { color: var(--accent); }
+.acomp-lock--info .acomp-lock-icon    { color: var(--accent-cool); }
+
+.acomp-lock-title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.acomp-lock-desc {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--secondary);
+  max-width: 420px;
+  margin: 0 0 0.5rem;
+}
+
+/* =============================================
+   RESPONSIVE — breakpoints 768 / 576 / 380 (mobile-first)
+   ============================================= */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .acomp-form-body { padding: 1.1rem 1.25rem; }
+  .acomp-comp-header { padding: 1rem 1.1rem; }
+  .acomp-cat-section { padding: 1rem 1.1rem; }
+  .acomp-comp-nombre { font-size: 0.95rem; }
+  .acomp-wiz-title { font-size: 1.05rem; }
   .acomp-equipo-body { padding: 0.85rem; }
   .acomp-equipo-header { padding: 0.75rem 0.9rem; }
   .acomp-cat-roster-header { padding: 0.85rem 1rem; }
-  .acomp-roster-searchbar { padding: 0.7rem 1rem; gap: 0.5rem; }
-  .acomp-cat-filtro-strip { padding: 0.65rem 1rem; }
-  .acomp-stats-bar { padding: 0.5rem 1rem; }
+}
+
+/* Móvil */
+@media (max-width: 576px) {
+  .acomp-form-body { padding: 1rem; }
+  .acomp-form-header { padding: 0.85rem 1rem; }
+  .acomp-comp-header { padding: 0.85rem 0.9rem; gap: 0.5rem; flex-wrap: wrap; }
+  .acomp-cat-section { padding: 0.85rem 0.9rem; }
+  .acomp-roster-strip { padding: 0.55rem 0.9rem; }
+  .acomp-comp-nombre { font-size: 0.9rem; }
+  .acomp-comp-fechas { font-size: 0.74rem; }
+
+  /* Botones del header: solo ícono */
+  .acomp-btn-label { display: none; }
+  .acomp-btn-nueva,
+  .acomp-btn-secondary { padding: 0.6rem 0.78rem; }
+
+  .acomp-wiz-body { padding: 1.15rem; }
+  .acomp-wiz-header { padding: 1rem 1.15rem 0.85rem; }
+  .acomp-wiz-footer { padding: 0.85rem 1.15rem; }
+  .acomp-wiz-title { font-size: 1rem; }
+  .acomp-wiz-steps { padding: 0.7rem 1.15rem; }
+
+  .acomp-badge { font-size: 0.64rem; padding: 0.26rem 0.6rem; }
+  .acomp-lock { padding: 1.4rem 1rem; }
+  .acomp-lock-icon { font-size: 2.1rem; }
+}
+
+/* Móvil pequeño (iPhone SE) */
+@media (max-width: 380px) {
+  .acomp-form-body { padding: 0.85rem; }
+  .acomp-comp-header { padding: 0.75rem 0.8rem; }
+  .acomp-cat-section { padding: 0.75rem 0.8rem; }
+  .acomp-comp-nombre { font-size: 0.85rem; }
+  .acomp-cat-card-stats { flex-direction: column; gap: 0.4rem; }
+  .acomp-btn-accion { width: 32px; height: 32px; }
+  .acomp-wiz-sexo-input { font-size: 1.35rem; }
 }

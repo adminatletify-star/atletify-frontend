@@ -674,7 +674,16 @@
   min-width: 0;
 }
 
-.dgr-user-cell .avatar-inicial { flex-shrink: 0; }
+.dgr-user-cell .avatar-inicial { flex-shrink: 0; overflow: hidden; }
+
+/* Foto de perfil dentro del avatar (tabla desktop y card móvil) */
+.dgr-user-cell .avatar-inicial img,
+.dash-uc-top .avatar-inicial img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
 
 .dgr-user-cell > div:last-child { min-width: 0; }
 
@@ -745,6 +754,7 @@
   width: 42px;
   height: 42px;
   font-size: 1rem;
+  overflow: hidden;
 }
 
 .dash-uc-id {

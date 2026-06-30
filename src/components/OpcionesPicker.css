@@ -188,6 +188,15 @@
   background: rgba(230, 57, 70, 0.1);
   border-color: rgba(230, 57, 70, 0.5);
 }
+.opk-option--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.opk-option--disabled:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: transparent;
+  transform: none;
+}
 /* Chip de ícono coloreado por opción (color/ícono opcionales en cada opción) */
 .opk-opt-icon {
   flex-shrink: 0;

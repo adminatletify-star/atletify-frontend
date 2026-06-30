@@ -12,8 +12,9 @@
 }
 
 .cw-modal {
-  background: var(--card-bg, #15171c);
+  background: var(--bg-elevated, #15171c);
   border: 1px solid var(--border, #2a2d35);
+  border-top: 3px solid var(--primary, #e63946);
   border-radius: 16px;
   width: 100%;
   max-width: 880px;
@@ -167,8 +168,21 @@
   cursor: pointer;
 }
 .cw-modo-btn--on { border-color: var(--primary, #e63946); color: #fff; background: rgba(230, 57, 70, 0.12); }
-.cw-mov-grid { display: grid; grid-template-columns: 2fr 1.2fr 0.85fr 0.85fr; gap: 8px; }
-.cw-mov-notas { font-size: 0.85rem; }
+.cw-mov-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: end;
+}
+.cw-mov-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.cw-mov-flabel {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #9aa0aa);
+}
+.cw-mov-notas { font-size: 0.85rem; margin-top: 2px; }
 
 .cw-del { background: transparent; border: none; color: var(--text-muted, #9aa0aa); cursor: pointer; }
 .cw-del:hover { color: #ff6b75; }
@@ -200,8 +214,20 @@
 .cw-btn--ghost { background: transparent; border: 1px solid var(--border, #3a3d45); color: var(--text-primary, #fff); }
 .cw-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-@media (max-width: 700px) {
+/* Tablet: el WOD-card aprieta los pesos; dale más aire al movimiento */
+@media (max-width: 900px) {
+  .cw-mov-grid { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+@media (max-width: 768px) {
   .cw-grid2 { grid-template-columns: 1fr; }
   .cw-tipos { grid-template-columns: repeat(3, 1fr); }
+  /* Movimientos: Movimiento y Reps a todo el ancho; los dos pesos lado a lado */
   .cw-mov-grid { grid-template-columns: 1fr 1fr; }
+  .cw-mov-ej,
+  .cw-mov-field--reps { grid-column: 1 / -1; }
+}
+
+@media (max-width: 420px) {
+  .cw-tipos { grid-template-columns: repeat(2, 1fr); }
 }

@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { COMPETENCIAS_ENDPOINT } from '../services/api';
 import AtletifyLoader from './AtletifyLoader';
+import OpcionesPicker from './OpcionesPicker';
+import ListaPaginada from './ListaPaginada';
 import ModalCapturaScore from './ModalCapturaScore';
 import { useCompetenciaLive } from '../hooks/useCompetenciaLive';
 
@@ -62,18 +64,25 @@ export default function PanelVerificacionScores({ idCompetencia }) {
           </div>
           <div className="col-md-4">
             <label className="cd-label">WOD</label>
-            <select className="cd-select" value={filtros.idWod} onChange={e => setFiltros({ ...filtros, idWod: e.target.value })}>
-              <option value="Todos">Todos los WODs</option>
-              {wodsUnicos.map(w => <option key={w.id} value={w.id}>{w.nombre}</option>)}
-            </select>
+            <OpcionesPicker
+              valor={filtros.idWod}
+              onCambiar={(v) => setFiltros({ ...filtros, idWod: v })}
+              titulo="Filtrar por WOD"
+              icono="fas fa-dumbbell"
+              buscador
+              placeholderBuscar="Buscar WOD..."
+              opciones={[{ valor: 'Todos', label: 'Todos los WODs' }, ...wodsUnicos.map(w => ({ valor: String(w.id), label: w.nombre }))]}
+            />
           </div>
           <div className="col-md-3">
             <label className="cd-label">Estatus</label>
-            <select className="cd-select" value={filtros.estatus} onChange={e => setFiltros({ ...filtros, estatus: e.target.value })}>
-              <option value="Pendiente">Pendientes</option>
-              <option value="Aprobado">Aprobados</option>
-              <option value="Todos">Todos</option>
-            </select>
+            <OpcionesPicker
+              valor={filtros.estatus}
+              onCambiar={(v) => setFiltros({ ...filtros, estatus: v })}
+              titulo="Filtrar por estatus"
+              icono="fas fa-filter"
+              opciones={[{ valor: 'Pendiente', label: 'Pendientes' }, { valor: 'Aprobado', label: 'Aprobados' }, { valor: 'Todos', label: 'Todos' }]}
+            />
           </div>
         </div>
       </div></div>
@@ -81,8 +90,10 @@ export default function PanelVerificacionScores({ idCompetencia }) {
       {cargando ? <div className="cd-empty"><AtletifyLoader /></div> : visibles.length === 0 ? (
         <div className="cd-empty"><i className="fas fa-clipboard-check"></i><p>No hay scores que coincidan con los filtros.</p></div>
       ) : (
-        <div className="d-flex flex-column gap-2">
-          {visibles.map(s => {
+        <ListaPaginada items={visibles} pageSize={20} resetKey={`${filtros.busqueda}|${filtros.idWod}|${filtros.estatus}`}>
+          {(pag) => (
+          <div className="d-flex flex-column gap-2">
+          {pag.map(s => {
             const crits = criterios(s.criteriosJson);
             return (
               <div key={s.idPuntuacion} className="cd-card" style={{ padding: '12px 14px' }}>
@@ -91,7 +102,7 @@ export default function PanelVerificacionScores({ idCompetencia }) {
                     <strong>{s.equipoNombre}</strong> · <span style={{ color: 'var(--text-muted)' }}>{s.wodNombre}</span>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{s.tipoScore} · juez: {s.nombreJuez || '—'} · {fmt(s.fechaEnvio)}</div>
                   </div>
-                  <span className="cd-tipo-badge" style={{ background: s.estatus === 'Aprobado' ? 'rgba(21,163,74,.15)' : 'rgba(245,185,66,.15)', color: s.estatus === 'Aprobado' ? '#15a34a' : '#f5b942' }}>{s.estatus}</span>
+                  <span className={`cd-badge ${s.estatus === 'Aprobado' ? 'cd-badge--success' : 'cd-badge--warning'}`}>{s.estatus}</span>
                 </div>
                 <div className="d-flex align-items-center flex-wrap gap-3" style={{ marginTop: '8px' }}>
                   <span style={{ fontSize: '1.15rem', fontWeight: 800 }}>{conUnidad(s)}</span>
@@ -114,15 +125,23 @@ export default function PanelVerificacionScores({ idCompetencia }) {
               </div>
             );
           })}
-        </div>
+          </div>
+          )}
+        </ListaPaginada>
       )}
 
       {firmaVista && (
-        <div onClick={() => setFirmaVista(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.8)', zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '12px', padding: '16px', maxWidth: '480px', width: '100%' }}>
-            <p style={{ margin: '0 0 8px', color: '#111', fontWeight: 700, textAlign: 'center' }}>Firma del atleta</p>
-            {firmaVista.url ? <img src={firmaVista.url} alt="firma del atleta" style={{ width: '100%' }} /> : <p style={{ color: '#888', textAlign: 'center' }}>Sin firma.</p>}
-            <button className="cd-btn cd-btn--ghost" style={{ marginTop: '10px', width: '100%' }} onClick={() => setFirmaVista(null)}>Cerrar</button>
+        <div className="opk-overlay" onClick={() => setFirmaVista(null)}>
+          <div className="opk-panel" style={{ maxWidth: '480px' }} onClick={e => e.stopPropagation()}>
+            <div className="opk-header">
+              <span className="opk-title"><i className="fas fa-signature" /> Firma del atleta</span>
+              <button className="opk-close" onClick={() => setFirmaVista(null)}><i className="fas fa-times" /></button>
+            </div>
+            <div style={{ padding: '1rem 1.25rem 1.25rem' }}>
+              {firmaVista.url
+                ? <img src={firmaVista.url} alt="firma del atleta" style={{ width: '100%', background: '#fff', borderRadius: '10px', border: '1px solid var(--border)' }} />
+                : <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>Sin firma.</p>}
+            </div>
           </div>
         </div>
       )}

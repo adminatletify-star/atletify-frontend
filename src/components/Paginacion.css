@@ -1,0 +1,90 @@
+/* =============================================
+   PAGINACIÓN — estilo canónico (igual que Ejercicios .ej-pag-*)
+   Namespace: pag-*
+   ============================================= */
+.pag-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.pag-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--secondary, #A8B2D1);
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.pag-btn:hover:not(:disabled) {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: rgba(230, 57, 70, 0.35);
+  color: var(--primary, #E63946);
+}
+.pag-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.pag-numeros {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pag-num {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.5rem;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--secondary, #A8B2D1);
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.pag-num:hover {
+  background: rgba(230, 57, 70, 0.1);
+  border-color: rgba(230, 57, 70, 0.3);
+  color: var(--text-primary, #F0F0F5);
+}
+.pag-num.activo {
+  background: var(--primary, #E63946);
+  border-color: var(--primary, #E63946);
+  color: #fff;
+  font-weight: 700;
+}
+
+.pag-dots {
+  color: var(--text-muted, #6B7280);
+  font-size: 0.85rem;
+  padding: 0 0.2rem;
+  user-select: none;
+}
+
+/* Resumen "Mostrando X–Y de Z" (va encima de la lista) */
+.pag-resumen {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.76rem;
+  color: var(--text-muted, #6B7280);
+  margin: 0 0 0.85rem;
+  text-align: right;
+}
+
+@media (max-width: 576px) {
+  .pag-btn { width: 34px; height: 34px; font-size: 0.75rem; }
+  .pag-num { min-width: 32px; height: 32px; font-size: 0.76rem; }
+  .pag-pagination { gap: 0.35rem; margin-top: 1.5rem; }
+  .pag-resumen { text-align: left; }
+}

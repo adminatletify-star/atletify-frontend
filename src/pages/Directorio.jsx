@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, Link } from 'react-router-dom';
-import { USUARIOS_ENDPOINT } from '../services/api';
 import BackButton from '../components/BackButton';
 import AnimatedList from '../components/ReactBits/AnimatedList';
 import FiltroHorarioPicker from '../components/FiltroHorarioPicker';
@@ -39,6 +38,7 @@ export default function Directorio() {
   const [atletaSeleccionado, setAtletaSeleccionado] = useState(null);
   const [modalExpedienteAbierto, setModalExpedienteAbierto] = useState(false);
   const [estadoPagoModal, setEstadoPagoModal] = useState(null);
+  const [fotoModal, setFotoModal] = useState(null); // Foto base64 cargada al abrir el expediente (no viene en la lista)
   const [clasesDelBox, setClasesDelBox] = useState([]);
   const [filtroClase, setFiltroClase] = useState('');
 
@@ -53,7 +53,6 @@ export default function Directorio() {
   // ── DATOS PARA MEMBRESÍAS ──
   const [planesDelBox, setPlanesDelBox] = useState([]);
   const [suscripcionesAtletas, setSuscripcionesAtletas] = useState({});
-  const [suscripcionesLoaded, setSuscripcionesLoaded] = useState(false);
 
   const [columnasVisibles, setColumnasVisibles] = useState({
     telefono: true,
@@ -88,75 +87,49 @@ export default function Directorio() {
       const token = localStorage.getItem('token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-      const res = await fetch(USUARIOS_ENDPOINT, { headers });
+      // Endpoint ligero por box: solo los campos que la lista/filtros/modal usan, SIN la
+      // foto base64, y con el plan de membresía ya resuelto en la misma respuesta (sin N+1).
+      const res = await fetch(`${API_BASE}/usuarios/box/${idBox}/directorio`, { headers });
       const data = await res.json();
-      const todos = Array.isArray(data) ? data : (data.data || []);
-      const atletasDelBox = todos.filter(x =>
-        (x.idBoxPredeterminado === idBox || x.IdBoxPredeterminado === idBox) &&
-        (x.rol === 'Atleta' || x.Rol === 'Atleta' || x.rol === 'Coach')
-      );
-      setAtletas(atletasDelBox);
-      // La lista se muestra de inmediato: no esperamos a las suscripciones.
-      setLoading(false);
+      const lista = Array.isArray(data) ? data : [];
+      setAtletas(lista);
 
-      // Las suscripciones solo alimentan la columna y el filtro "Membresía"
-      // (ambos opcionales), así que se cargan en segundo plano sin bloquear la lista.
-      cargarSuscripciones(atletasDelBox, headers);
+      // La membresía ya viene en cada atleta: armamos el mapa que usan la columna y el
+      // filtro "Membresía" sin pegarle al backend una vez por atleta.
+      const suscripciones = {};
+      for (const a of lista) {
+        const idUsuario = a.idUsuario || a.IdUsuario;
+        const plan = a.nombrePlan && a.nombrePlan !== 'Ninguno' ? a.nombrePlan : 'Sin membresía';
+        suscripciones[idUsuario] = { nombrePlan: plan, estatus: a.estatusMembresia || 'Vencida' };
+      }
+      setSuscripcionesAtletas(suscripciones);
+      setLoading(false);
     } catch (err) {
       console.error(err);
       setLoading(false);
     }
   }
 
-  // Carga en segundo plano el plan de cada atleta para la columna/filtro "Membresía".
-  // Best-effort: si una falla, ese atleta queda como "Sin membresía" y la lista sigue funcionando.
-  async function cargarSuscripciones(atletasDelBox, headers) {
-    const suscripciones = {};
-
-    for (const atleta of atletasDelBox) {
-      const idUsuario = atleta.idUsuario || atleta.IdUsuario;
-      try {
-        const resSub = await fetch(`${API_BASE}/cobranza/atleta/${idUsuario}`, { headers });
-        if (resSub.ok) {
-          const dataSub = await resSub.json();
-
-          // El backend devuelve:
-          // - nombrePlan: nombre del plan (puede ser "Ninguno" si no hay suscripción)
-          // - membresias: array de membresías con estatus "Activa" o "Congelada"
-
-          // Si el backend nos dice que su último plan no es "Ninguno", ese es su plan (aunque esté vencido/pendiente)
-          let nombrePlan = 'Sin membresía';
-          const planDelBackend = dataSub.nombrePlan || dataSub.NombrePlan;
-
-          if (planDelBackend && planDelBackend !== 'Ninguno') {
-            nombrePlan = planDelBackend;
-          }
-
-          suscripciones[idUsuario] = {
-            nombrePlan: nombrePlan,
-            estatus: dataSub.suscripcion ? (dataSub.suscripcion.estatus || dataSub.suscripcion.Estatus) : 'Vencida'
-          };
-        } else {
-          suscripciones[idUsuario] = { nombrePlan: 'Sin membresía', estatus: 'Vencida' };
-        }
-      } catch (err) {
-        console.error(`Error cargando suscripción de ${idUsuario}:`, err);
-        suscripciones[idUsuario] = { nombrePlan: 'Sin membresía', estatus: 'Vencida' };
-      }
-    }
-
-    setSuscripcionesAtletas(suscripciones);
-    setSuscripcionesLoaded(true); // Marcar que los datos están listos
-  }
-
   useEffect(() => {
     if (atletaSeleccionado) {
       setEstadoPagoModal(null);
+      setFotoModal(null);
       const idUsuario = atletaSeleccionado.idUsuario || atletaSeleccionado.IdUsuario;
       fetch(`${API_BASE}/usuarios/${idUsuario}/estado-mensualidad`)
         .then(res => res.json())
         .then(data => setEstadoPagoModal(data))
         .catch(err => console.error(err));
+
+      // Foto perezosa: la lista ya no trae la imagen base64 (por velocidad). La cargamos
+      // solo al abrir el expediente, y únicamente si el atleta tiene foto registrada.
+      if (atletaSeleccionado.tieneFoto) {
+        const token = localStorage.getItem('token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        fetch(`${API_BASE}/usuarios/${idUsuario}/perfil-publico`, { headers })
+          .then(res => res.ok ? res.json() : null)
+          .then(data => { if (data?.foto) setFotoModal(data.foto); })
+          .catch(err => console.error(err));
+      }
     }
   }, [atletaSeleccionado]);
 
@@ -464,6 +437,7 @@ export default function Directorio() {
               items={atletasFiltrados}
               keyExtractor={(atleta) => atleta.idUsuario || atleta.IdUsuario}
               staggerDelay={0.04}
+              animateOnChange={false}
               className="atleta-lista"
               renderItem={(a) => (
                 <div className="atleta-card" onClick={() => setAtletaSeleccionado(a)} style={{ cursor: 'pointer' }} title="Clic para abrir Expediente Completo">
@@ -556,8 +530,8 @@ export default function Directorio() {
 
             <div className="directorio-modal-header">
               <div className="directorio-modal-avatar">
-                {(atletaSeleccionado.foto || atletaSeleccionado.Foto)
-                  ? <img src={atletaSeleccionado.foto || atletaSeleccionado.Foto} alt={atletaSeleccionado.nombre || atletaSeleccionado.Nombre} className="atleta-avatar-img" />
+                {(fotoModal || atletaSeleccionado.foto || atletaSeleccionado.Foto)
+                  ? <img src={fotoModal || atletaSeleccionado.foto || atletaSeleccionado.Foto} alt={atletaSeleccionado.nombre || atletaSeleccionado.Nombre} className="atleta-avatar-img" />
                   : (atletaSeleccionado.nombre || atletaSeleccionado.Nombre || '?').charAt(0).toUpperCase()
                 }
               </div>
@@ -660,7 +634,7 @@ export default function Directorio() {
       {/* MODAL EXPEDIENTE MÉDICO COMPLETO */}
       {modalExpedienteAbierto && atletaSeleccionado && (
         <ModalVerExpediente
-          atleta={atletaSeleccionado}
+          atleta={{ ...atletaSeleccionado, foto: fotoModal || atletaSeleccionado.foto || atletaSeleccionado.Foto }}
           onClose={() => setModalExpedienteAbierto(false)}
         />
       )}

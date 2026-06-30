@@ -758,7 +758,12 @@ export default function Dashboard() {
                         <tr key={u.idUsuario}>
                           <td>
                             <div className="dgr-user-cell">
-                              <div className="avatar-inicial">{u.nombre?.charAt(0).toUpperCase()}</div>
+                              <div className="avatar-inicial">
+                                {u.foto
+                                  ? <img src={u.foto} alt={u.nombre} />
+                                  : u.nombre?.charAt(0).toUpperCase()
+                                }
+                              </div>
                               <div>
                                 <div className="dgr-user-name">{u.nombre}</div>
                                 <div className="dgr-user-email">{u.correo}</div>
@@ -797,7 +802,12 @@ export default function Dashboard() {
                 {usuariosPaginados.map(u => (
                   <div key={u.idUsuario} className="dash-user-card">
                     <div className="dash-uc-top">
-                      <div className="avatar-inicial">{u.nombre?.charAt(0).toUpperCase()}</div>
+                      <div className="avatar-inicial">
+                        {u.foto
+                          ? <img src={u.foto} alt={u.nombre} />
+                          : u.nombre?.charAt(0).toUpperCase()
+                        }
+                      </div>
                       <div className="dash-uc-id">
                         <div className="dash-uc-name">{u.nombre || 'Sin nombre'}</div>
                         <div className="dash-uc-email">{u.correo}</div>

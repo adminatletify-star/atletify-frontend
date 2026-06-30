@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { API_BASE_URL_CONST } from '../services/api';
 import BotonSeguro from './BotonSeguro';
 import TallaPlayeraPicker from './TallaPlayeraPicker';
+import TipoSangrePicker from './TipoSangrePicker';
+import RedGrayDatePicker from './RedGrayDatePicker';
+import ListaPaginada from './ListaPaginada';
 import AtletifyLoader from './AtletifyLoader';
 import { createPortal } from 'react-dom';
 
@@ -159,7 +162,7 @@ export default function GestionStaffCompePanel({ idCompetencia, colorTheme = 'pr
       {Object.keys(tallasResumen).length > 0 && (
         <div className="cd-card mb-4" style={{ background: 'rgba(0,0,0,0.2)' }}>
           <div className="cd-card-header">
-            <h5 className="cd-card-titulo cd-card-titulo--white"><i className="fas fa-tshirt me-2 text-info"></i>Resumen de Tallas para Imprenta</h5>
+            <h5 className="cd-card-titulo cd-card-titulo--white"><i className="fas fa-tshirt me-2" style={{ color: 'var(--accent-cool)' }}></i>Resumen de Tallas para Imprenta</h5>
           </div>
           <div className="cd-card-body d-flex flex-wrap gap-3">
             {Object.entries(tallasResumen).map(([talla, count]) => (
@@ -180,8 +183,10 @@ export default function GestionStaffCompePanel({ idCompetencia, colorTheme = 'pr
           <p>No hay personal de staff registrado aún.</p>
         </div>
       ) : (
-        <div className="row g-4">
-          {staffList.map(s => (
+        <ListaPaginada items={staffList} pageSize={20}>
+          {(pag) => (
+          <div className="row g-4">
+          {pag.map(s => (
             <div key={s.id} className="col-md-6 col-lg-4">
               <div className="cd-wod-card">
                 <div className="cd-wod-tip cd-wod-tip--amrap"></div>
@@ -226,7 +231,9 @@ export default function GestionStaffCompePanel({ idCompetencia, colorTheme = 'pr
               </div>
             </div>
           ))}
-        </div>
+          </div>
+          )}
+        </ListaPaginada>
       )}
 
       {/* Modal Tareas */}
@@ -234,7 +241,7 @@ export default function GestionStaffCompePanel({ idCompetencia, colorTheme = 'pr
         <div className="cd-herramienta-modal-overlay" onClick={() => setModalTareasAbierto(false)}>
           <div className="cd-herramienta-modal" style={{ maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
             <div className="cd-herramienta-modal-head mb-3">
-              <h3 className="cd-herramienta-modal-title"><i className="fas fa-tasks text-warning me-2"></i>Tareas de {staffAEditar?.nombre}</h3>
+              <h3 className="cd-herramienta-modal-title"><i className="fas fa-tasks me-2" style={{ color: 'var(--accent)' }}></i>Tareas de {staffAEditar?.nombre}</h3>
             </div>
             <div className="px-3 pb-3">
               <div className="d-flex gap-2 mb-4">
@@ -272,14 +279,14 @@ export default function GestionStaffCompePanel({ idCompetencia, colorTheme = 'pr
           <div className="cd-herramienta-modal" style={{ maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div className="cd-herramienta-modal-head mb-4">
               <h3 className="cd-herramienta-modal-title" style={{ fontSize: '1.25rem' }}>
-                <i className="fas fa-id-card text-info me-2"></i>Información de Staff
+                <i className="fas fa-id-card me-2" style={{ color: 'var(--accent-cool)' }}></i>Información de Staff
               </h3>
               <button type="button" className="cd-btn cd-btn--ghost" onClick={() => setModalVerAbierto(false)}><i className="fas fa-times"></i></button>
             </div>
             
             <div className="row g-4">
               <div className="col-12">
-                <h6 className="border-bottom pb-2 text-primary"><i className="fas fa-user me-2"></i>Datos Personales</h6>
+                <h6 className="cd-card-titulo cd-card-titulo--info pb-2" style={{ borderBottom: '1px solid var(--border)' }}><i className="fas fa-user"></i>Datos Personales</h6>
                 <div className="row mt-2">
                   <div className="col-sm-6 mb-2"><strong>Nombre:</strong> {staffVer.nombre} {staffVer.apellidos}</div>
                   <div className="col-sm-6 mb-2"><strong>Teléfono:</strong> {staffVer.telefono || 'N/A'}</div>
@@ -289,7 +296,7 @@ export default function GestionStaffCompePanel({ idCompetencia, colorTheme = 'pr
               </div>
 
               <div className="col-12">
-                <h6 className="border-bottom pb-2 text-danger"><i className="fas fa-heartbeat me-2"></i>Datos Médicos y Emergencia</h6>
+                <h6 className="cd-card-titulo cd-card-titulo--danger pb-2" style={{ borderBottom: '1px solid var(--border)' }}><i className="fas fa-heartbeat"></i>Datos Médicos y Emergencia</h6>
                 <div className="row mt-2">
                   <div className="col-sm-6 mb-2"><strong>Tipo de Sangre:</strong> {staffVer.tipoDeSangre || 'N/A'}</div>
                   <div className="col-sm-6 mb-2"><strong>Discapacidad:</strong> {staffVer.tieneDiscapacidad || 'N/A'}</div>
@@ -314,24 +321,22 @@ export default function GestionStaffCompePanel({ idCompetencia, colorTheme = 'pr
         <div className="cd-herramienta-modal-overlay" onClick={() => setModalEditarAbierto(false)}>
           <div className="cd-herramienta-modal" style={{ maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div className="cd-herramienta-modal-head mb-3">
-              <h3 className="cd-herramienta-modal-title"><i className="fas fa-pencil-alt text-info me-2"></i>Editar Staff</h3>
+              <h3 className="cd-herramienta-modal-title"><i className="fas fa-pencil-alt me-2" style={{ color: 'var(--accent-cool)' }}></i>Editar Staff</h3>
               <button type="button" className="cd-btn cd-btn--ghost" onClick={() => setModalEditarAbierto(false)}><i className="fas fa-times"></i></button>
             </div>
-            <form onSubmit={handleEditarStaff}>
+            <form onSubmit={(e) => e.preventDefault()}>
               <div className="row g-3 mb-4">
                 <div className="col-md-6"><label className="cd-label">Nombre(s) *</label><input type="text" className="cd-input" required value={formEditar.nombre} onChange={e => setFormEditar({...formEditar, nombre: e.target.value})} /></div>
                 <div className="col-md-6"><label className="cd-label">Apellidos *</label><input type="text" className="cd-input" required value={formEditar.apellidos} onChange={e => setFormEditar({...formEditar, apellidos: e.target.value})} /></div>
                 <div className="col-md-6"><label className="cd-label">Teléfono *</label><input type="text" className="cd-input" required value={formEditar.telefono} onChange={e => setFormEditar({...formEditar, telefono: e.target.value.replace(/[^0-9]/g, '')})} maxLength="10" /></div>
-                <div className="col-md-6"><label className="cd-label">Fecha de Nacimiento *</label><input type="date" className="cd-input" required value={formEditar.fechaNacimiento} onChange={e => setFormEditar({...formEditar, fechaNacimiento: e.target.value})} /></div>
+                <div className="col-md-6"><label className="cd-label">Fecha de Nacimiento *</label><RedGrayDatePicker value={formEditar.fechaNacimiento} onChange={v => setFormEditar({...formEditar, fechaNacimiento: v})} /></div>
                 <div className="col-md-6"><label className="cd-label">Talla de Playera *</label><TallaPlayeraPicker valor={formEditar.tallaPlayera} onCambiar={v => setFormEditar({...formEditar, tallaPlayera: v})} /></div>
               </div>
-              <h6 className="mt-4 mb-3 border-bottom pb-2 text-danger"><i className="fas fa-heartbeat me-2"></i>Datos Médicos y Emergencia</h6>
+              <h6 className="cd-card-titulo cd-card-titulo--danger mt-4 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border)' }}><i className="fas fa-heartbeat"></i>Datos Médicos y Emergencia</h6>
               <div className="row g-3 mb-4">
                 <div className="col-md-6">
                   <label className="cd-label">Tipo de Sangre *</label>
-                  <select className="cd-input" required value={formEditar.tipoDeSangre} onChange={e => setFormEditar({...formEditar, tipoDeSangre: e.target.value})}>
-                    <option value="">Seleccionar...</option><option value="O+">O+</option><option value="O-">O-</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option>
-                  </select>
+                  <TipoSangrePicker valor={formEditar.tipoDeSangre} onCambiar={v => setFormEditar({...formEditar, tipoDeSangre: v})} />
                 </div>
                 <div className="col-md-6"><label className="cd-label">Discapacidad *</label><input type="text" className="cd-input" required value={formEditar.tieneDiscapacidad} onChange={e => setFormEditar({...formEditar, tieneDiscapacidad: e.target.value})} /></div>
                 <div className="col-md-6"><label className="cd-label">Alergias *</label><input type="text" className="cd-input" required value={formEditar.alergias} onChange={e => setFormEditar({...formEditar, alergias: e.target.value})} /></div>
@@ -341,7 +346,7 @@ export default function GestionStaffCompePanel({ idCompetencia, colorTheme = 'pr
               </div>
               <div className="d-flex justify-content-end gap-3 mt-4">
                 <button type="button" onClick={() => setModalEditarAbierto(false)} className="cd-btn cd-btn--outline">Cancelar</button>
-                <BotonSeguro type="submit" className="cd-btn cd-btn--info-solid fw-bold" disabled={procesando} textoProcesando="Actualizando...">Actualizar Staff</BotonSeguro>
+                <BotonSeguro type="button" onClick={handleEditarStaff} className="cd-btn cd-btn--info-solid fw-bold" disabled={procesando} textoProcesando="Actualizando...">Actualizar Staff</BotonSeguro>
               </div>
             </form>
           </div>
@@ -354,24 +359,22 @@ export default function GestionStaffCompePanel({ idCompetencia, colorTheme = 'pr
         <div className="cd-herramienta-modal-overlay" onClick={() => setModalAbierto(false)}>
           <div className="cd-herramienta-modal" style={{ maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div className="cd-herramienta-modal-head mb-3">
-              <h3 className="cd-herramienta-modal-title"><i className={`fas fa-user-plus text-${colorTheme} me-2`}></i>Registrar Staff Operativo</h3>
+              <h3 className="cd-herramienta-modal-title"><i className="fas fa-user-plus me-2" style={{ color: 'var(--primary)' }}></i>Registrar Staff Operativo</h3>
               <button type="button" className="cd-btn cd-btn--ghost" onClick={() => setModalAbierto(false)}><i className="fas fa-times"></i></button>
             </div>
-            <form onSubmit={agregarStaff}>
+            <form onSubmit={(e) => e.preventDefault()}>
               <div className="row g-3 mb-4">
                 <div className="col-md-6"><label className="cd-label">Nombre(s) *</label><input type="text" className="cd-input" required value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})} /></div>
                 <div className="col-md-6"><label className="cd-label">Apellidos *</label><input type="text" className="cd-input" required value={form.apellidos} onChange={e => setForm({...form, apellidos: e.target.value})} /></div>
                 <div className="col-md-6"><label className="cd-label">Teléfono *</label><input type="text" className="cd-input" required value={form.telefono} onChange={e => setForm({...form, telefono: e.target.value.replace(/[^0-9]/g, '')})} maxLength="10" /></div>
-                <div className="col-md-6"><label className="cd-label">Fecha de Nacimiento *</label><input type="date" className="cd-input" required value={form.fechaNacimiento} onChange={e => setForm({...form, fechaNacimiento: e.target.value})} /></div>
+                <div className="col-md-6"><label className="cd-label">Fecha de Nacimiento *</label><RedGrayDatePicker value={form.fechaNacimiento} onChange={v => setForm({...form, fechaNacimiento: v})} /></div>
                 <div className="col-md-6"><label className="cd-label">Talla de Playera *</label><TallaPlayeraPicker valor={form.tallaPlayera} onCambiar={v => setForm({...form, tallaPlayera: v})} /></div>
               </div>
-              <h6 className="mt-4 mb-3 border-bottom pb-2 text-danger"><i className="fas fa-heartbeat me-2"></i>Datos Médicos y Emergencia</h6>
+              <h6 className="cd-card-titulo cd-card-titulo--danger mt-4 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border)' }}><i className="fas fa-heartbeat"></i>Datos Médicos y Emergencia</h6>
               <div className="row g-3 mb-4">
                 <div className="col-md-6">
                   <label className="cd-label">Tipo de Sangre *</label>
-                  <select className="cd-input" required value={form.tipoDeSangre} onChange={e => setForm({...form, tipoDeSangre: e.target.value})}>
-                    <option value="">Seleccionar...</option><option value="O+">O+</option><option value="O-">O-</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option>
-                  </select>
+                  <TipoSangrePicker valor={form.tipoDeSangre} onCambiar={v => setForm({...form, tipoDeSangre: v})} />
                 </div>
                 <div className="col-md-6"><label className="cd-label">Discapacidad *</label><input type="text" className="cd-input" required value={form.tieneDiscapacidad} onChange={e => setForm({...form, tieneDiscapacidad: e.target.value})} placeholder="Ej: Ninguna" /></div>
                 <div className="col-md-6"><label className="cd-label">Alergias *</label><input type="text" className="cd-input" required value={form.alergias} onChange={e => setForm({...form, alergias: e.target.value})} placeholder="Ej: Ninguna" /></div>
@@ -381,7 +384,7 @@ export default function GestionStaffCompePanel({ idCompetencia, colorTheme = 'pr
               </div>
               <div className="d-flex justify-content-end gap-3 mt-4">
                 <button type="button" onClick={() => setModalAbierto(false)} className="cd-btn cd-btn--outline">Cancelar</button>
-                <BotonSeguro type="submit" className={`cd-btn cd-btn--${colorTheme}-solid fw-bold`} disabled={procesando} textoProcesando="Guardando...">Guardar Staff</BotonSeguro>
+                <BotonSeguro type="button" onClick={agregarStaff} className={`cd-btn cd-btn--${colorTheme}-solid fw-bold`} disabled={procesando} textoProcesando="Guardando...">Guardar Staff</BotonSeguro>
               </div>
             </form>
           </div>

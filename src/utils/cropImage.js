@@ -16,11 +16,18 @@ export async function getCroppedImg(imageSrc, pixelCrop) {
     return null
   }
 
-  // set canvas size to match the bounding box
-  canvas.width = pixelCrop.width
-  canvas.height = pixelCrop.height
+  // Acotar la salida a MAX_LADO px (manteniendo proporción). Sin esto, un recorte
+  // de una foto de cámara se guardaba a resolución completa y pesaba varios MB en
+  // base64; ~512 px basta para un avatar nítido y deja la foto en ~30–60 KB.
+  const MAX_LADO = 512
+  const escala = Math.min(1, MAX_LADO / Math.max(pixelCrop.width, pixelCrop.height))
+  const w = Math.round(pixelCrop.width * escala)
+  const h = Math.round(pixelCrop.height * escala)
 
-  // draw image to canvas
+  canvas.width = w
+  canvas.height = h
+
+  // draw image to canvas (recorta la región seleccionada y la escala a w×h)
   ctx.drawImage(
     image,
     pixelCrop.x,
@@ -29,10 +36,10 @@ export async function getCroppedImg(imageSrc, pixelCrop) {
     pixelCrop.height,
     0,
     0,
-    pixelCrop.width,
-    pixelCrop.height
+    w,
+    h
   )
 
   // Return as Base64 string
-  return canvas.toDataURL('image/jpeg', 0.9)
+  return canvas.toDataURL('image/jpeg', 0.85)
 }

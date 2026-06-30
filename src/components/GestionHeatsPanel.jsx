@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { COMPETENCIAS_ENDPOINT, JUECES_COMP_ENDPOINT, HEATS_COMP_ENDPOINT } from '../services/api';
 import AtletifyLoader from './AtletifyLoader';
+import OpcionesPicker from './OpcionesPicker';
+import ListaPaginada from './ListaPaginada';
 
 const ESTADOS = ['Programado', 'EnCurso', 'Finalizado'];
 
@@ -96,23 +98,37 @@ export default function GestionHeatsPanel({ idCompetencia, categorias = [], comp
       <div className="cd-card cd-card--info mb-5"><div className="cd-card-body-lg">
         <div className="row g-3">
           <div className="col-md-3"><label className="cd-label">WOD</label>
-            <select className="cd-input" value={cfg.idWodComp} onChange={e => setCfg({ ...cfg, idWodComp: e.target.value })}>
-              <option value="">-- WOD --</option>
-              {wods.map(w => <option key={w.idWodComp || w.IdWodComp} value={w.idWodComp || w.IdWodComp}>{w.nombre || w.Nombre}</option>)}
-            </select></div>
+            <OpcionesPicker
+              valor={cfg.idWodComp}
+              onCambiar={(v) => setCfg({ ...cfg, idWodComp: v })}
+              titulo="Selecciona el WOD"
+              icono="fas fa-dumbbell"
+              placeholder="-- WOD --"
+              buscador
+              placeholderBuscar="Buscar WOD..."
+              opciones={wods.map(w => ({ valor: String(w.idWodComp || w.IdWodComp), label: w.nombre || w.Nombre }))}
+            /></div>
           <div className="col-md-3"><label className="cd-label">Categoría</label>
-            <select className="cd-input" value={cfg.idCategoriaComp} onChange={e => setCfg({ ...cfg, idCategoriaComp: e.target.value })}>
-              <option value="">Todas</option>
-              {categorias.map(c => <option key={c.idCategoriaComp || c.IdCategoriaComp} value={c.idCategoriaComp || c.IdCategoriaComp}>{c.nombre || c.Nombre}</option>)}
-            </select></div>
+            <OpcionesPicker
+              valor={cfg.idCategoriaComp}
+              onCambiar={(v) => setCfg({ ...cfg, idCategoriaComp: v })}
+              titulo="Selecciona la categoría"
+              icono="fas fa-layer-group"
+              placeholder="Todas"
+              opciones={[{ valor: '', label: 'Todas' }, ...categorias.map(c => ({ valor: String(c.idCategoriaComp || c.IdCategoriaComp), label: c.nombre || c.Nombre }))]}
+            /></div>
           <div className="col-md-2"><label className="cd-label">Carriles</label><input type="number" min="1" className="cd-input" value={cfg.numeroCarriles} onChange={e => setCfg({ ...cfg, numeroCarriles: e.target.value })} /></div>
           <div className="col-md-2"><label className="cd-label">Duración (min)</label><input type="number" min="1" className="cd-input" value={cfg.duracionMinutos} onChange={e => setCfg({ ...cfg, duracionMinutos: e.target.value })} /></div>
           <div className="col-md-2"><label className="cd-label">Transición (min)</label><input type="number" min="0" className="cd-input" value={cfg.transicionMinutos} onChange={e => setCfg({ ...cfg, transicionMinutos: e.target.value })} /></div>
           {diasEvento.length > 1 && (
             <div className="col-md-2"><label className="cd-label">Día del evento</label>
-              <select className="cd-input" value={cfg.dia} onChange={e => setCfg({ ...cfg, dia: e.target.value })}>
-                {diasEvento.map(d => <option key={d} value={d}>{new Date(d + 'T00:00:00Z').toLocaleDateString('es-MX', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' })}</option>)}
-              </select></div>
+              <OpcionesPicker
+                valor={cfg.dia}
+                onCambiar={(v) => setCfg({ ...cfg, dia: v })}
+                titulo="Día del evento"
+                icono="fas fa-calendar-day"
+                opciones={diasEvento.map(d => ({ valor: d, label: new Date(d + 'T00:00:00Z').toLocaleDateString('es-MX', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' }) }))}
+              /></div>
           )}
           <div className="col-md-2"><label className="cd-label">Hora de inicio {diasEvento.length === 1 ? `(${new Date(diasEvento[0] + 'T00:00:00Z').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', timeZone: 'UTC' })})` : ''}</label>
             <input type="time" className="cd-input" value={cfg.hora} onChange={e => setCfg({ ...cfg, hora: e.target.value })} disabled={diasEvento.length === 0} /></div>
@@ -130,8 +146,10 @@ export default function GestionHeatsPanel({ idCompetencia, categorias = [], comp
       ) : heats.length === 0 ? (
         <div className="cd-empty"><i className="fas fa-stopwatch"></i><p>Aún no hay heats generados.</p></div>
       ) : (
-        <div className="d-flex flex-column gap-3">
-          {heats.map(h => (
+        <ListaPaginada items={heats} pageSize={20}>
+          {(pag) => (
+          <div className="d-flex flex-column gap-3">
+          {pag.map(h => (
             <div key={h.idHeat} className="cd-card" style={{ padding: '14px' }}>
               <div className="d-flex justify-content-between align-items-center flex-wrap gap-2" style={{ marginBottom: '10px' }}>
                 <div>
@@ -139,9 +157,15 @@ export default function GestionHeatsPanel({ idCompetencia, categorias = [], comp
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}><i className="far fa-clock"></i> {fmtHora(h.horaInicio)} · {h.duracionMinutos} min</div>
                 </div>
                 <div className="d-flex gap-2 align-items-center">
-                  <select className="cd-input" style={{ width: 'auto', padding: '4px 8px' }} value={h.estado} onChange={e => cambiarEstado(h.idHeat, e.target.value)}>
-                    {ESTADOS.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <div style={{ width: '160px' }}>
+                    <OpcionesPicker
+                      valor={h.estado}
+                      onCambiar={(v) => cambiarEstado(h.idHeat, v)}
+                      titulo="Estado del heat"
+                      icono="fas fa-flag"
+                      opciones={ESTADOS.map(s => ({ valor: s, label: s }))}
+                    />
+                  </div>
                   <button className="cd-btn cd-btn--ghost" onClick={() => borrarHeat(h.idHeat)} title="Borrar heat"><i className="fas fa-trash"></i></button>
                 </div>
               </div>
@@ -149,18 +173,26 @@ export default function GestionHeatsPanel({ idCompetencia, categorias = [], comp
                 {h.carriles.map(c => (
                   <div key={c.idCarril} className="col-md-6 col-lg-4">
                     <div style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '8px' }}>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>Carril {c.numero} — {c.equipo || '(vacío)'}</div>
-                      <select className="cd-input" style={{ marginTop: '6px', fontSize: '0.82rem' }} value={c.idJuezComp || ''} onChange={e => asignarJuez(c.idCarril, e.target.value)}>
-                        <option value="">— Juez —</option>
-                        {jueces.map(j => <option key={j.idJuezComp} value={j.idJuezComp}>{j.nombre} {j.apellidos}</option>)}
-                      </select>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>Carril {c.numero} — {c.equipo || '(vacío)'}</div>
+                      <OpcionesPicker
+                        valor={c.idJuezComp || ''}
+                        onCambiar={(v) => asignarJuez(c.idCarril, v)}
+                        titulo="Asignar juez"
+                        icono="fas fa-user-shield"
+                        placeholder="— Juez —"
+                        buscador
+                        placeholderBuscar="Buscar juez..."
+                        opciones={[{ valor: '', label: '— Sin juez —' }, ...jueces.map(j => ({ valor: String(j.idJuezComp), label: `${j.nombre} ${j.apellidos || ''}`.trim() }))]}
+                      />
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           ))}
-        </div>
+          </div>
+          )}
+        </ListaPaginada>
       )}
     </div>
   );
