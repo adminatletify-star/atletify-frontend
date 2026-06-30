@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import AtletifyLoader from '../components/AtletifyLoader';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
@@ -12,6 +12,17 @@ import '../assets/css/AdminFinanzasGlobales.css';
 const API_BASE = `${import.meta.env.VITE_API_URL}/api/finanzas-globales`;
 
 const PAGE_SIZE = 10;
+
+// Metadatos visuales de cada fuente de ingreso (ícono + color) — usados por el
+// desglose "Ingresos por Fuente" y el donut, para que ambos compartan color.
+const FUENTE_META = {
+  'Mensualidades': { icon: 'fa-id-card',       color: '#2ecc71' },
+  'Inscripciones': { icon: 'fa-user-plus',     color: '#1abc9c' },
+  'Tienda':        { icon: 'fa-shopping-bag',  color: '#f5a623' },
+  'Drop-Ins':      { icon: 'fa-plane-arrival', color: '#9b59b6' },
+  'Competencias':  { icon: 'fa-trophy',        color: '#4fc3f7' },
+  'Otros':         { icon: 'fa-ellipsis',      color: '#95a5a6' },
+};
 
 // Categorías de egreso (reemplazan el <select> nativo por un picker modal)
 const CATEGORIAS_EGRESO = [
@@ -87,6 +98,65 @@ function CategoriaPickerModal({ valor, onSelect, onCerrar }) {
       </div>
     </div>,
     document.body
+  );
+}
+
+/* ── Botón (?) con explicación del widget ──
+   Popover renderizado por portal en <body> con posición fija calculada desde el botón:
+   así nunca se recorta dentro de las tarjetas (clave en tablet/móvil). Click para abrir,
+   se cierra al tocar fuera o al hacer scroll. */
+function InfoTip({ titulo, children }) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState(null);
+  const btnRef = useRef(null);
+  const popRef = useRef(null);
+
+  const toggle = (e) => {
+    // El (?) puede vivir dentro de un <Link> (ej. "Atletas al Día"): evitamos que el clic
+    // navegue o burbujee a la tarjeta.
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    if (open) { setOpen(false); return; }
+    const r = btnRef.current.getBoundingClientRect();
+    const ancho = Math.min(264, window.innerWidth - 24);
+    let left = r.right - ancho;                                  // alinea el borde derecho con el botón
+    if (left < 12) left = 12;                                    // no salir por la izquierda
+    if (left + ancho > window.innerWidth - 12) left = window.innerWidth - 12 - ancho;
+    setPos({ top: r.bottom + 7, left, ancho });
+    setOpen(true);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const cerrar = (e) => {
+      if (btnRef.current?.contains(e.target) || popRef.current?.contains(e.target)) return;
+      setOpen(false);
+    };
+    const cerrarYa = () => setOpen(false);
+    document.addEventListener('mousedown', cerrar);
+    document.addEventListener('touchstart', cerrar);
+    window.addEventListener('scroll', cerrarYa, true);
+    window.addEventListener('resize', cerrarYa);
+    return () => {
+      document.removeEventListener('mousedown', cerrar);
+      document.removeEventListener('touchstart', cerrar);
+      window.removeEventListener('scroll', cerrarYa, true);
+      window.removeEventListener('resize', cerrarYa);
+    };
+  }, [open]);
+
+  return (
+    <>
+      <button type="button" ref={btnRef} className="fg-info-btn" aria-label="¿Qué es esto?" aria-expanded={open} onClick={toggle}>
+        <i className="fas fa-question" />
+      </button>
+      {open && pos && createPortal(
+        <div ref={popRef} className="fg-info-pop" role="tooltip" style={{ top: pos.top, left: pos.left, width: pos.ancho }}>
+          {titulo && <strong className="fg-info-pop-title">{titulo}</strong>}
+          <span className="fg-info-pop-text">{children}</span>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }
 
@@ -196,24 +266,29 @@ export default function AdminFinanzasGlobales() {
 
   const cargarDatos = async (idBox, fInicio, fFin) => {
     setLoading(true);
+    const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+    const qs = `?fechaInicio=${encodeURIComponent(fInicio)}&fechaFin=${encodeURIComponent(fFin)}`;
+
+    // 1) El RESUMEN es lo único que bloquea el loader: el dashboard se pinta en cuanto llega.
     try {
-      const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
-      const qs = `?fechaInicio=${encodeURIComponent(fInicio)}&fechaFin=${encodeURIComponent(fFin)}`;
-      const [resResumen, resEgresos, resIngresos, resDashboard] = await Promise.all([
-        fetch(`${API_BASE}/resumen/${idBox}${qs}`, { headers }),
-        fetch(`${API_BASE}/egresos/${idBox}${qs}`, { headers }),
-        fetch(`${API_BASE}/ingresos/${idBox}${qs}`, { headers }),
-        fetch(`${import.meta.env.VITE_API_URL}/api/finanzas/dashboard/${idBox}`, { headers })
-      ]);
-      if (resResumen.ok) setResumen(await resResumen.json());
-      if (resEgresos.ok) setEgresos(await resEgresos.json());
-      if (resIngresos.ok) setIngresos(await resIngresos.json());
-      if (resDashboard.ok) setDashboardData(await resDashboard.json());
+      const r = await fetch(`${API_BASE}/resumen/${idBox}${qs}`, { headers });
+      if (r.ok) setResumen(await r.json());
     } catch (error) {
-      console.error('Error al cargar finanzas globales', error);
+      console.error('Error al cargar el resumen de finanzas', error);
     } finally {
       setLoading(false);
     }
+
+    // 2) Lo demás carga en SEGUNDO PLANO, sin frenar el primer render:
+    //    - listas de ingresos/egresos (para sus pestañas y el PDF)
+    //    - "atletas al día": viene del semáforo, cuyo cálculo es pesado (recorre atleta por
+    //      atleta), así que NUNCA debe bloquear el dashboard de finanzas globales.
+    fetch(`${API_BASE}/ingresos/${idBox}${qs}`, { headers })
+      .then(r => (r.ok ? r.json() : null)).then(d => { if (d) setIngresos(d); }).catch(() => {});
+    fetch(`${API_BASE}/egresos/${idBox}${qs}`, { headers })
+      .then(r => (r.ok ? r.json() : null)).then(d => { if (d) setEgresos(d); }).catch(() => {});
+    fetch(`${import.meta.env.VITE_API_URL}/api/finanzas/dashboard/${idBox}`, { headers })
+      .then(r => (r.ok ? r.json() : null)).then(d => { if (d) setDashboardData(d); }).catch(() => {});
   };
 
   const registrarEgreso = async (e) => {
@@ -272,7 +347,11 @@ export default function AdminFinanzasGlobales() {
   const COLORS = ['#4fc3f7', '#2ecc71', '#f1c40f', '#e74c3c', '#9b59b6', '#e67e22', '#1abc9c'];
   
   const getBadgeClass = (categoria) => {
-    const normalize = (categoria || '').toLowerCase().replace(" ", "-");
+    // normaliza TODA la cadena (no solo el primer espacio) y limpia caracteres no alfanuméricos
+    const normalize = (categoria || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
     return `fg-badge badge-${normalize}`;
   };
 
@@ -354,7 +433,10 @@ export default function AdminFinanzasGlobales() {
     doc.text("EGRESOS TOTALES", 14 + cardW + 4 + (cardW/2), cursorY + 6, { align: 'center' });
     doc.setFontSize(12);
     doc.setTextColor(231, 76, 60);
-    doc.text(formatearDinero(resumen?.totalEgresos), 14 + cardW + 4 + (cardW/2), cursorY + 14, { align: 'center' });
+    // Egresos totales = operativos (nómina, servicios…) + costo de mercancía vendida (COGS),
+    // para que el Balance del PDF cuadre con Ingresos − Egresos.
+    const egresosTotalesPdf = (resumen?.totalEgresos || 0) + (resumen?.totalCostoMercancia || 0);
+    doc.text(formatearDinero(egresosTotalesPdf), 14 + cardW + 4 + (cardW/2), cursorY + 14, { align: 'center' });
 
     // Balance
     doc.setFillColor(245, 250, 255);
@@ -367,7 +449,17 @@ export default function AdminFinanzasGlobales() {
     doc.setTextColor(41, 128, 185);
     doc.text(formatearDinero(resumen?.balanceGeneral), 14 + (cardW * 2) + 8 + (cardW/2), cursorY + 14, { align: 'center' });
 
-    cursorY += cardH + 12;
+    cursorY += cardH + 6;
+
+    // Desglose de los egresos: cuánto fue operativo y cuánto costo de mercancía (COGS).
+    doc.setFontSize(7.5);
+    doc.setTextColor(120, 120, 120);
+    doc.text(
+      `Egresos operativos: ${formatearDinero(resumen?.totalEgresos)}   |   Costo de mercancía vendida (COGS): ${formatearDinero(resumen?.totalCostoMercancia)}`,
+      14, cursorY
+    );
+
+    cursorY += 8;
 
     // ==========================================
     // 3. TABLAS DE HISTORIAL
@@ -457,6 +549,10 @@ export default function AdminFinanzasGlobales() {
   const egresosPagina = egresos.slice((pagEgresos - 1) * PAGE_SIZE, pagEgresos * PAGE_SIZE);
   const categoriaSel = CATEGORIAS_EGRESO.find(c => c.value === formEgreso.categoria) || CATEGORIAS_EGRESO[0];
 
+  // Desglose de ingresos por fuente (mensualidades, tienda, drop-ins, etc.) para los widgets.
+  const fuentes = resumen?.ingresosPorFuente || resumen?.ingresosPorCategoria || [];
+  const totalFuentes = fuentes.reduce((s, f) => s + (f.total || 0), 0);
+
   return (
     <div className="fg-page">
 
@@ -518,49 +614,147 @@ export default function AdminFinanzasGlobales() {
             {/* ══ TAB DASHBOARD ══ */}
             {pestaña === 'dashboard' && resumen && (
               <>
-                <div className="fg-kpi-grid">
+                {/* KPIs principales (4) */}
+                <div className="fg-kpi-grid fg-kpi-grid--main">
                   <div className="fg-kpi fg-kpi--ingresos">
-                    <div className="fg-kpi-title"><i className="fas fa-arrow-up"></i> Ingresos Totales</div>
+                    <div className="fg-kpi-head">
+                      <span className="fg-kpi-title"><i className="fas fa-arrow-up"></i> Ingresos Totales</span>
+                      <InfoTip titulo="Ingresos Totales">Todo el dinero que <b>entró</b> en el periodo: mensualidades, inscripciones, ventas de tienda cobradas, drop-ins y competencias.</InfoTip>
+                    </div>
                     <div className="fg-kpi-value fg-kpi-value--ingresos">{formatearDinero(resumen.totalIngresos)}</div>
                   </div>
                   <div className="fg-kpi fg-kpi--egresos">
-                    <div className="fg-kpi-title"><i className="fas fa-arrow-down"></i> Egresos Totales</div>
+                    <div className="fg-kpi-head">
+                      <span className="fg-kpi-title"><i className="fas fa-arrow-down"></i> Egresos Operativos</span>
+                      <InfoTip titulo="Egresos Operativos">Gastos que registras a mano: nómina, servicios, mantenimiento, equipo y otros. <b>No</b> incluye el costo de la mercancía.</InfoTip>
+                    </div>
                     <div className="fg-kpi-value fg-kpi-value--egresos">{formatearDinero(resumen.totalEgresos)}</div>
                   </div>
+                  <div className="fg-kpi fg-kpi--cogs">
+                    <div className="fg-kpi-head">
+                      <span className="fg-kpi-title"><i className="fas fa-box-open"></i> Costo de Mercancía</span>
+                      <InfoTip titulo="Costo de Mercancía (COGS)">Lo que <b>te costaron</b> los productos que vendiste en el periodo. Sale del costo que capturas al dar de alta cada producto.</InfoTip>
+                    </div>
+                    <div className="fg-kpi-value fg-kpi-value--cogs">{formatearDinero(resumen.totalCostoMercancia)}</div>
+                  </div>
                   <div className="fg-kpi fg-kpi--balance">
-                    <div className="fg-kpi-title"><i className="fas fa-scale-balanced"></i> Balance (Utilidad)</div>
+                    <div className="fg-kpi-head">
+                      <span className="fg-kpi-title"><i className="fas fa-scale-balanced"></i> Balance (Utilidad)</span>
+                      <InfoTip titulo="Balance (Utilidad real)">Tu ganancia real del periodo: <b>Ingresos − Egresos operativos − Costo de mercancía</b>. Si es negativo, gastaste más de lo que entró.</InfoTip>
+                    </div>
                     <div className="fg-kpi-value fg-kpi-value--balance">{formatearDinero(resumen.balanceGeneral)}</div>
                   </div>
-
-                  {resumen.estadisticas && (
-                    <>
-                      <Link to="/gestion-finanzas" state={{ fromTab: 'semaforo' }} className="fg-kpi fg-kpi--clickable">
-                        <div className="fg-kpi-title"><i className="fas fa-users" style={{ color: 'var(--primary)' }}></i> Mensualidades Activas</div>
-                        <div className="fg-kpi-value fg-kpi-value--sm">
-                          {dashboardData?.estadoAtletas?.alDia ?? 0} <span className="fg-kpi-unit">atletas al día</span>
-                        </div>
-                      </Link>
-                      <div className="fg-kpi">
-                        <div className="fg-kpi-title"><i className="fas fa-shopping-bag" style={{ color: 'var(--accent)' }}></i> Operaciones en Tienda</div>
-                        <div className="fg-kpi-value fg-kpi-value--sm">{resumen.estadisticas.ventasTienda} <span className="fg-kpi-unit">ventas/abonos</span></div>
-                      </div>
-                      <div className="fg-kpi">
-                        <div className="fg-kpi-title"><i className="fas fa-plane-arrival" style={{ color: '#9b59b6' }}></i> Turistas / Drop-Ins</div>
-                        <div className="fg-kpi-value fg-kpi-value--sm">{resumen.estadisticas.dropIns} <span className="fg-kpi-unit">visitas</span></div>
-                      </div>
-                    </>
-                  )}
                 </div>
 
+                {/* KPIs secundarios (3, compactos) */}
+                {resumen.estadisticas && (
+                  <div className="fg-kpi-grid fg-kpi-grid--mini">
+                    <div
+                      className="fg-kpi fg-kpi--mini fg-kpi--clickable"
+                      role="link"
+                      tabIndex={0}
+                      onClick={() => navigate('/gestion-finanzas', { state: { fromTab: 'semaforo' } })}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/gestion-finanzas', { state: { fromTab: 'semaforo' } }); } }}
+                    >
+                      <div className="fg-kpi-head">
+                        <span className="fg-kpi-title"><i className="fas fa-users" style={{ color: 'var(--primary)' }}></i> Atletas al Día</span>
+                        <InfoTip titulo="Atletas al día (hoy)">Atletas con su mensualidad vigente <b>en este momento</b>. Es una foto actual: <b>no</b> cambia con el rango de fechas. Toca para abrir el semáforo.</InfoTip>
+                      </div>
+                      <div className="fg-kpi-value fg-kpi-value--mini">
+                        {dashboardData?.estadoAtletas?.alDia ?? '…'} <span className="fg-kpi-unit">al día · hoy</span>
+                      </div>
+                    </div>
+                    <div className="fg-kpi fg-kpi--mini">
+                      <div className="fg-kpi-head">
+                        <span className="fg-kpi-title"><i className="fas fa-shopping-bag" style={{ color: 'var(--accent)' }}></i> Operaciones en Tienda</span>
+                        <InfoTip titulo="Operaciones en Tienda">Ventas cobradas + abonos a fiados registrados <b>en el periodo seleccionado</b>. Cambia según el rango de fechas.</InfoTip>
+                      </div>
+                      <div className="fg-kpi-value fg-kpi-value--mini">{resumen.estadisticas.ventasTienda} <span className="fg-kpi-unit">ventas/abonos</span></div>
+                    </div>
+                    <div className="fg-kpi fg-kpi--mini">
+                      <div className="fg-kpi-head">
+                        <span className="fg-kpi-title"><i className="fas fa-plane-arrival" style={{ color: '#9b59b6' }}></i> Turistas / Drop-Ins</span>
+                        <InfoTip titulo="Turistas / Drop-Ins">Visitas de turistas/drop-ins <b>pagadas</b> en el periodo seleccionado.</InfoTip>
+                      </div>
+                      <div className="fg-kpi-value fg-kpi-value--mini">{resumen.estadisticas.dropIns} <span className="fg-kpi-unit">visitas</span></div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Desglose por fuente + Utilidad de tienda ── */}
                 <div className="fg-charts-grid">
                   <div className="fg-card">
-                    <div className="fg-card-title"><i className="fas fa-chart-pie" style={{ color: 'var(--success)' }}></i> Desglose de Ingresos</div>
+                    <div className="fg-card-title">
+                      <i className="fas fa-layer-group" style={{ color: 'var(--success)' }}></i> Ingresos por Fuente
+                      <InfoTip titulo="Ingresos por Fuente">De <b>dónde</b> vino tu dinero en el periodo y el porcentaje que aporta cada fuente. La barra muestra ese peso sobre el total.</InfoTip>
+                    </div>
+                    {fuentes.length > 0 ? (
+                      <div className="fg-fuente-list">
+                        {fuentes.map(f => {
+                          const meta = FUENTE_META[f.categoria] || { icon: 'fa-circle', color: '#888' };
+                          const pct = totalFuentes > 0 ? (f.total / totalFuentes) * 100 : 0;
+                          return (
+                            <div className="fg-fuente-row" key={f.categoria} style={{ '--f-color': meta.color }}>
+                              <span className="fg-fuente-icon"><i className={`fas ${meta.icon}`}></i></span>
+                              <div className="fg-fuente-main">
+                                <div className="fg-fuente-top">
+                                  <span className="fg-fuente-label">{f.categoria}</span>
+                                  <span className="fg-fuente-pct">{pct.toFixed(1)}%</span>
+                                </div>
+                                <div className="fg-fuente-bar"><div className="fg-fuente-bar-fill" style={{ width: `${pct}%` }} /></div>
+                              </div>
+                              <span className="fg-fuente-monto">{formatearDinero(f.total)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : <div className="fg-empty"><i className="fas fa-folder-open"></i><p>Sin ingresos en este periodo</p></div>}
+                  </div>
+
+                  <div className="fg-card">
+                    <div className="fg-card-title">
+                      <i className="fas fa-shopping-bag" style={{ color: 'var(--accent)' }}></i> Utilidad de Tienda
+                      <InfoTip titulo="Utilidad de Tienda">
+                        <b>Vendido (bruto):</b> lo que cobraste por los productos.{' '}
+                        <b>Costo mercancía:</b> lo que te costaron.{' '}
+                        <b>Utilidad neta:</b> la diferencia (tu ganancia).{' '}
+                        <b>Margen:</b> utilidad ÷ vendido, en %.
+                      </InfoTip>
+                    </div>
+                    {resumen.tienda && resumen.tienda.bruto > 0 ? (
+                      <>
+                        <div className="fg-tienda-grid">
+                          <div className="fg-tienda-stat">
+                            <div className="fg-tienda-stat-label">Vendido (bruto)</div>
+                            <div className="fg-tienda-stat-value fg-tienda-stat-value--bruto">{formatearDinero(resumen.tienda.bruto)}</div>
+                          </div>
+                          <div className="fg-tienda-stat">
+                            <div className="fg-tienda-stat-label">Costo mercancía</div>
+                            <div className="fg-tienda-stat-value fg-tienda-stat-value--costo">{formatearDinero(resumen.tienda.costo)}</div>
+                          </div>
+                          <div className="fg-tienda-stat">
+                            <div className="fg-tienda-stat-label">Utilidad neta</div>
+                            <div className="fg-tienda-stat-value fg-tienda-stat-value--utilidad">{formatearDinero(resumen.tienda.utilidad)}</div>
+                          </div>
+                        </div>
+                        <div className="fg-tienda-margen">
+                          <i className="fas fa-percentage"></i> Margen de ganancia: <b>{resumen.tienda.margen}%</b>
+                        </div>
+                      </>
+                    ) : <div className="fg-empty"><i className="fas fa-store-slash"></i><p>Sin ventas de tienda en este periodo</p></div>}
+                  </div>
+                </div>
+
+                {/* ── Gráficas: donut de fuentes + barras del periodo ── */}
+                <div className="fg-charts-grid">
+                  <div className="fg-card">
+                    <div className="fg-card-title"><i className="fas fa-chart-pie" style={{ color: 'var(--success)' }}></i> Distribución de Ingresos</div>
                     <div className="fg-chart fg-chart--pie">
-                      {resumen.ingresosPorCategoria.length > 0 ? (
+                      {fuentes.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
                             <Pie
-                              data={resumen.ingresosPorCategoria}
+                              data={fuentes}
                               dataKey="total"
                               nameKey="categoria"
                               cx="50%"
@@ -572,7 +766,7 @@ export default function AdminFinanzasGlobales() {
                               stroke="#1c1c26"
                               strokeWidth={2}
                             >
-                              {resumen.ingresosPorCategoria.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                              {fuentes.map((entry, index) => <Cell key={`cell-${index}`} fill={FUENTE_META[entry.categoria]?.color || COLORS[index % COLORS.length]} />)}
                             </Pie>
                             <Tooltip
                               formatter={(value, name) => [formatearDinero(value), name]}
@@ -596,14 +790,15 @@ export default function AdminFinanzasGlobales() {
                     <div className="fg-card-title"><i className="fas fa-scale-balanced" style={{ color: 'var(--accent-cool)' }}></i> Balance del Periodo</div>
                     <div className="fg-chart">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={[{ name: 'Periodo Actual', Ingresos: resumen.totalIngresos, Egresos: resumen.totalEgresos }]} margin={{ top: 15, right: 20, left: 10, bottom: 5 }}>
+                        <BarChart data={[{ name: 'Periodo Actual', Ingresos: resumen.totalIngresos, 'Egresos op.': resumen.totalEgresos, 'Costo merc.': resumen.totalCostoMercancia }]} margin={{ top: 15, right: 20, left: 10, bottom: 5 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
                           <XAxis dataKey="name" stroke="#ccc" fontSize={12} />
                           <YAxis type="number" stroke="#ccc" tickFormatter={(value) => `$${value}`} fontSize={12} />
                           <Tooltip formatter={(value) => formatearDinero(value)} cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: '#1e1e26', border: '1px solid #333', borderRadius: '8px' }} />
                           <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '0.8rem' }} />
-                          <Bar dataKey="Ingresos" fill="#2ecc71" radius={[4, 4, 0, 0]} barSize={55} />
-                          <Bar dataKey="Egresos" fill="#e74c3c" radius={[4, 4, 0, 0]} barSize={55} />
+                          <Bar dataKey="Ingresos" fill="#2ecc71" radius={[4, 4, 0, 0]} barSize={42} />
+                          <Bar dataKey="Egresos op." fill="#e74c3c" radius={[4, 4, 0, 0]} barSize={42} />
+                          <Bar dataKey="Costo merc." fill="#e67e22" radius={[4, 4, 0, 0]} barSize={42} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>

@@ -870,7 +870,7 @@ export default function HistorialVentas() {
                                 formatter={v => [`$${v.toFixed(2)}`, 'Ingreso']}
                               />
                               <ReferenceLine y={promedioDiario} stroke="var(--accent)" strokeDasharray="4 4" label={{ position: 'top', value: `Prom: $${promedioDiario.toFixed(0)}`, fill: 'var(--accent)', fontSize: 11 }} />
-                              <Bar dataKey="Total" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                              <Bar dataKey="Total" fill="var(--success)" radius={[4, 4, 0, 0]} />
                             </BarChart>
                           </ResponsiveContainer>
                         </div>

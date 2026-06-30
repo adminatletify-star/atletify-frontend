@@ -229,30 +229,49 @@
 .fg-kpi-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.85rem;
-  margin-bottom: 1.5rem;
+  gap: 0.7rem;
+  margin-bottom: 1rem;
 }
 
-@media (min-width: 576px) {
-  .fg-kpi-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
+/* 4 KPIs principales: 2 col en móvil/tablet, 4 col en desktop (aprovecha el ancho) */
+.fg-kpi-grid--main { grid-template-columns: repeat(2, 1fr); }
 @media (min-width: 992px) {
-  .fg-kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  .fg-kpi-grid--main { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* 3 KPIs secundarios compactos: 1 col en móvil, 3 col desde tablet */
+.fg-kpi-grid--mini { grid-template-columns: 1fr; margin-bottom: 1.4rem; }
+@media (min-width: 576px) {
+  .fg-kpi-grid--mini { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 360px) {
+  .fg-kpi-grid--main { grid-template-columns: 1fr; }
 }
 
 .fg-kpi {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-top: 3px solid var(--border);
-  border-radius: 16px;
-  padding: 1.25rem;
+  border-radius: 14px;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.45rem;
   transition: var(--transition);
   text-decoration: none;
 }
+
+/* Cabecera del KPI: título a la izquierda, botón (?) a la derecha */
+.fg-kpi-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+/* Variante compacta (KPIs secundarios) */
+.fg-kpi--mini { padding: 0.8rem 0.9rem; gap: 0.3rem; }
 
 .fg-kpi:hover {
   transform: translateY(-3px);
@@ -271,19 +290,21 @@
 
 .fg-kpi-title {
   font-family: var(--font-heading-alt);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
   font-weight: 700;
+  line-height: 1.25;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
+  min-width: 0;
 }
 
 .fg-kpi-value {
   font-family: var(--font-stats);
-  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  font-size: clamp(1.35rem, 4.2vw, 1.8rem);
   font-weight: 800;
   margin: 0;
   letter-spacing: -0.5px;
@@ -295,6 +316,7 @@
 .fg-kpi-value--egresos  { color: var(--danger); }
 .fg-kpi-value--balance  { color: var(--accent-cool); }
 .fg-kpi-value--sm { font-size: clamp(1.4rem, 4vw, 1.7rem); }
+.fg-kpi-value--mini { font-size: clamp(1.15rem, 3.6vw, 1.4rem); }
 
 .fg-kpi-unit {
   font-family: var(--font-body);
@@ -968,3 +990,227 @@ textarea.fg-input { resize: vertical; min-height: 80px; }
   .fg-kpi { padding: 1rem; }
   .fg-toolbar { padding: 0.8rem; gap: 0.7rem; }
 }
+
+/* ============================================
+   KPI: Costo de Mercancía (COGS)
+   ============================================ */
+.fg-kpi--cogs { border-top-color: #e67e22; }
+.fg-kpi-value--cogs { color: #e67e22; }
+
+/* ============================================
+   DESGLOSE DE INGRESOS POR FUENTE
+   ============================================ */
+.fg-fuente-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+}
+
+.fg-fuente-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fg-fuente-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  background: color-mix(in srgb, var(--f-color, var(--primary)) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--f-color, var(--primary)) 32%, transparent);
+  color: var(--f-color, var(--primary));
+}
+
+.fg-fuente-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.fg-fuente-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.fg-fuente-label {
+  font-family: var(--font-heading-alt);
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fg-fuente-pct {
+  font-family: var(--font-stats);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.fg-fuente-bar {
+  height: 7px;
+  border-radius: 6px;
+  background: var(--bg-input);
+  overflow: hidden;
+}
+
+.fg-fuente-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: var(--f-color, var(--primary));
+  transition: width 0.5s ease;
+}
+
+.fg-fuente-monto {
+  font-family: var(--font-stats);
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  justify-self: end;
+}
+
+/* ============================================
+   UTILIDAD DE TIENDA
+   ============================================ */
+.fg-tienda-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+}
+
+.fg-tienda-stat {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 0.6rem;
+  text-align: center;
+}
+
+.fg-tienda-stat-label {
+  font-family: var(--font-heading-alt);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.fg-tienda-stat-value {
+  font-family: var(--font-stats);
+  font-size: clamp(0.95rem, 3.2vw, 1.25rem);
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  line-height: 1.05;
+}
+
+.fg-tienda-stat-value--bruto    { color: var(--text-primary); }
+.fg-tienda-stat-value--costo    { color: var(--danger); }
+.fg-tienda-stat-value--utilidad { color: var(--success); }
+
+.fg-tienda-margen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-heading-alt);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.fg-tienda-margen b {
+  color: var(--success);
+  font-family: var(--font-stats);
+  font-size: 1rem;
+}
+
+@media (max-width: 380px) {
+  .fg-tienda-grid { gap: 0.45rem; }
+  .fg-tienda-stat { padding: 0.7rem 0.4rem; }
+}
+
+/* ============================================
+   BOTÓN (?) DE AYUDA + POPOVER EXPLICATIVO
+   ============================================ */
+.fg-info-btn {
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: var(--transition);
+  touch-action: manipulation;
+}
+
+.fg-info-btn:hover,
+.fg-info-btn[aria-expanded="true"] {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+/* En los títulos de tarjeta, el (?) se va a la derecha */
+.fg-card-title .fg-info-btn { margin-left: auto; }
+
+.fg-info-pop {
+  position: fixed;
+  z-index: 1200;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  animation: fg-fade-in 0.14s ease;
+}
+
+.fg-info-pop-title {
+  font-family: var(--font-heading-alt);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--primary);
+}
+
+.fg-info-pop-text {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.fg-info-pop-text b { font-weight: 700; }
