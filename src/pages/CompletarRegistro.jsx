@@ -36,6 +36,9 @@ export default function CompletarRegistro() {
   const token = searchParams.get('token');
   const correoParam = searchParams.get('correo');
   const API_URL = `${import.meta.env.VITE_API_URL}/api`;
+  // Registro con Google (Fase B): la cuenta se crea SIN contraseña (Google autentica).
+  // Ocultamos el paso de contraseña y lo saltamos en las validaciones.
+  const esGoogle = searchParams.get('google') === '1';
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -50,6 +53,22 @@ export default function CompletarRegistro() {
     peso: '',
     tallaPlayera: ''
   });
+
+  // Registro con Google: prefill de nombre/apellidos que dejó la pantalla de selección de box.
+  useEffect(() => {
+    if (!esGoogle) return;
+    try {
+      const raw = sessionStorage.getItem('googleRegPrefill');
+      if (!raw) return;
+      const p = JSON.parse(raw);
+      setFormData(prev => ({
+        ...prev,
+        nombre: prev.nombre || p.nombre || '',
+        apellidos: prev.apellidos || p.apellidos || ''
+      }));
+      sessionStorage.removeItem('googleRegPrefill');
+    } catch { /* noop */ }
+  }, [esGoogle]);
 
   const [alerts, setAlerts] = useState([]);
   const [modalExitoOpen, setModalExitoOpen] = useState(false);
@@ -279,8 +298,10 @@ export default function CompletarRegistro() {
     if (usernameEstado === 'taken')   return showAlert('El username ya está ocupado. Elige otro.');
     if (usernameEstado === 'short')   return showAlert('El username debe tener al menos 3 caracteres.');
     if (usernameEstado === 'invalid') return showAlert('Username inválido: solo letras, números, punto, guión y guión bajo.');
-    if (!reglasPassword.esValida)     return showAlert('La contraseña no cumple los requisitos de seguridad.');
-    if (formData.contrasena !== formData.confirmarContrasena) return showAlert('Las contraseñas no coinciden.');
+    if (!esGoogle) {
+      if (!reglasPassword.esValida)     return showAlert('La contraseña no cumple los requisitos de seguridad.');
+      if (formData.contrasena !== formData.confirmarContrasena) return showAlert('Las contraseñas no coinciden.');
+    }
 
     if (!formData.peso || Number(formData.peso) <= 0) return showAlert('Ingresa tu peso (kg).');
     if (!formData.tallaPlayera) return showAlert('Selecciona tu talla de playera.');
@@ -458,15 +479,16 @@ export default function CompletarRegistro() {
     ? true
     : (planSeleccionadoId !== null && metodoPago && (metodoPago !== 'Transferencia' || comprobanteB64));
 
-  const pasoSeguridadCompleto =
-    reglasPassword.esValida &&
-    formData.contrasena === formData.confirmarContrasena &&
-    formData.confirmarContrasena.length > 0;
+  const pasoSeguridadCompleto = esGoogle
+    ? true
+    : (reglasPassword.esValida &&
+       formData.contrasena === formData.confirmarContrasena &&
+       formData.confirmarContrasena.length > 0);
 
   const pasos = [
     { id: 'identidad', label: 'Tu identidad', icon: 'fa-user-circle', completo: pasoIdentidadCompleto },
     ...(requierePlan ? [{ id: 'plan', label: 'Plan y pago', icon: 'fa-id-badge', completo: pasoPlanCompleto }] : []),
-    { id: 'seguridad', label: 'Seguridad', icon: 'fa-lock', completo: pasoSeguridadCompleto }
+    ...(esGoogle ? [] : [{ id: 'seguridad', label: 'Seguridad', icon: 'fa-lock', completo: pasoSeguridadCompleto }])
   ];
 
   const usernameHint = (() => {
@@ -836,6 +858,7 @@ export default function CompletarRegistro() {
               </>
             )}
 
+            {!esGoogle && (<>
             {/* ── Seguridad ── */}
             <div className="cr-section-head">
               <span className="cr-section-num">{requierePlan ? '05' : '03'}</span>
@@ -909,6 +932,7 @@ export default function CompletarRegistro() {
                 </div>
               )}
             </div>
+            </>)}
 
             {/* Términos y Condiciones */}
             <div className="form-check mb-4 p-3 rounded" style={{ backgroundColor: 'rgba(231,76,60,0.05)', border: '1px solid rgba(231,76,60,0.2)' }}>
@@ -934,8 +958,7 @@ export default function CompletarRegistro() {
                 type="submit"
                 className="reg-btn-submit cr-btn-submit w-100"
                 disabled={
-                  !reglasPassword.esValida ||
-                  formData.contrasena !== formData.confirmarContrasena ||
+                  (!esGoogle && (!reglasPassword.esValida || formData.contrasena !== formData.confirmarContrasena)) ||
                   usernameEstado === 'taken' ||
                   usernameEstado === 'invalid' ||
                   usernameEstado === 'short' ||

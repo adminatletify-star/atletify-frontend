@@ -21,6 +21,7 @@ import BoxScopeGuard from './components/BoxScopeGuard';
 import CrearBox from './pages/CrearBox';
 import Dashboard from './pages/Dashboard';
 import CompletarRegistro from './pages/CompletarRegistro';
+import RegistroGoogle from './pages/RegistroGoogle';
 import RegistrarAdminBox from './pages/RegistrarAdminBox';
 import CorregirSolicitud from './pages/CorregirSolicitud';
 import RegistroManual from './pages/RegistroManual';
@@ -501,6 +502,7 @@ function App() {
             <Route path="/terminos" element={<TerminosCondiciones />} />
             <Route path="/politica-cookies" element={<PoliticaCookies />} />
             <Route path="/registro/:idBox" element={<Register />} />
+            <Route path="/registro-google" element={<RegistroGoogle />} />
             <Route path="/completar-registro" element={<CompletarRegistro />} />
             <Route path="/registrar-admin-box" element={<RegistrarAdminBox />} />
             <Route path="/portal-competencias/:id" element={<PortalCompetencias />} />

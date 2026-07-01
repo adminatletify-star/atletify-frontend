@@ -123,9 +123,10 @@ export default function Login() {
       if (response.ok) {
         procesarSesion(result);
       } else if (response.status === 404 && result.necesitaRegistro) {
-        // FASE B (registro con Google) aún no existe; por ahora va al registro normal.
-        alert(result.mensaje || 'Aún no tienes una cuenta en Atletify. Regístrate primero.');
-        navigate('/registro');
+        // FASE B: correo sin cuenta → registro con Google. Guardamos el id_token para el
+        // asistente (elegir box + completar perfil) y lo mandamos ahí.
+        sessionStorage.setItem('googleRegToken', idToken);
+        navigate('/registro-google');
       } else {
         alert(result.mensaje || 'No se pudo iniciar sesión con Google.');
       }
@@ -204,7 +205,7 @@ export default function Login() {
 
           <div className="login-footer">
             <p className="login-footer-text">¿No tienes cuenta?</p>
-            <Link to="/registro" className="login-link">Regístrate como Atleta</Link><br />
+            <Link to="/directorio-boxes" className="login-link">Regístrate como Atleta</Link><br />
             {isAddingAccount && usuario ? (
                <button onClick={() => {
                  const route = usuario.rol === 'Developer' ? '/dashboard'
