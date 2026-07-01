@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { COMPETENCIAS_ENDPOINT } from '../services/api';
 import AtletifyLoader from '../components/AtletifyLoader';
 import BackButton from '../components/BackButton';
@@ -10,6 +11,7 @@ import '../assets/css/AdminCompetencias.css';
 
 export default function AdminCompetenciasHistorial() {
   const navigate = useNavigate();
+  const { boxActivo } = useAuth();
   const [box, setBox] = useState(null);
   const [competencias, setCompetencias] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,14 +33,32 @@ export default function AdminCompetenciasHistorial() {
   const [loadingRoster, setLoadingRoster] = useState(false);
   const [compRosterActiva, setCompRosterActiva] = useState(null);
 
+  // Último idBox para el que ya cargamos competencias (evita recargas duplicadas cuando
+  // boxActivo pasa de null → id en el arranque del AuthContext).
+  const ultimoBoxCargado = useRef(undefined);
+
+  // Montaje: guard de acceso + usuario.
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));
     const u = JSON.parse(localStorage.getItem('usuario'));
     if (!b || (u?.rol !== 'AdminBox' && u?.rol !== 'Developer')) { navigate('/login'); return; }
-    setBox(b);
     setUser(u);
-    cargarCompetencias(b.idBox);
   }, [navigate]);
+
+  // Recarga el historial del box ACTIVO. Reacciona a boxActivo para que, al cambiar de box en el
+  // navbar (auditarBox actualiza boxActivo sin recargar), la lista muestre las competencias del box
+  // recién seleccionado en vez de quedarse con las del box anterior.
+  useEffect(() => {
+    const u = JSON.parse(localStorage.getItem('usuario') || 'null');
+    const b = JSON.parse(localStorage.getItem('box') || 'null');
+    if (!u || (u.rol !== 'AdminBox' && u.rol !== 'Developer')) return;
+    const idBox = b?.idBox || b?.IdBox;
+    if (!idBox || ultimoBoxCargado.current === idBox) return;
+    ultimoBoxCargado.current = idBox;
+    setBox(b);
+    setLoading(true);
+    cargarCompetencias(idBox);
+  }, [boxActivo]);
 
   const eliminarCompetencia = async (idComp, nombreComp) => {
     if (!await window.wpConfirm(`¿Eliminar en cascada "${nombreComp}"? Se borrarán todas sus categorías, inscripciones, pagos y scores. Acción IRREVERSIBLE.`)) return;

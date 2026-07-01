@@ -12,6 +12,7 @@ import TipoSangrePicker from '../components/TipoSangrePicker';
 import TallaPlayeraPicker from '../components/TallaPlayeraPicker';
 import MetodoPagoPicker from '../components/MetodoPagoPicker';
 import BotonSeguro from '../components/BotonSeguro';
+import AtletifyLoader from '../components/AtletifyLoader';
 
 const CountdownTimer = ({ targetDate, onExpire }) => {
   const calculateTimeLeft = () => {
@@ -127,6 +128,16 @@ export default function PortalCompetencias() {
   useEffect(() => {
     cargarCompetencias();
   }, [id]);
+
+  // Los avisos (validaciones, errores, info, éxito) se muestran como TOAST arriba a la derecha
+  // (sistema global GlobalAlertBridge), igual que en el resto de la app — no como banner inline.
+  // El código de equipo (mensaje.codigo) sigue abriendo su propio modal, así que ahí no se toastea.
+  useEffect(() => {
+    if (!mensaje.texto || mensaje.codigo) return;
+    const variant = mensaje.tipo === 'danger' ? 'error' : (mensaje.tipo === 'success' ? 'success' : 'info');
+    if (typeof window.wpToast === 'function') window.wpToast(mensaje.texto, variant);
+    else window.alert(mensaje.texto);
+  }, [mensaje]);
 
   // Genera la sesión de Stripe para un equipo (por su código) y redirige al checkout. Reutilizado por el
   // botón "Pagar en línea ahora" del correo y por el botón de reintento si el pago se canceló/rechazó.
@@ -414,8 +425,10 @@ export default function PortalCompetencias() {
     setEnviando(true);
     setMensaje({ tipo: '', texto: '', codigo: '' });
 
+    const metodoEf = getMetodoEfectivo();
+
     let urlFinalComprobante = '';
-    if (pagoForm.metodo === 'Transferencia' && comprobanteFile) {
+    if (metodoEf === 'Transferencia' && comprobanteFile) {
       const formData = new FormData();
       formData.append('file', comprobanteFile);
       try {
@@ -443,8 +456,8 @@ export default function PortalCompetencias() {
         nombreEquipo: catSeleccionada.esEquipo ? formEquipo.nombreEquipo : `${atletaForm.nombreCompleto} ${atletaForm.apellidos}`.trim(),
         boxOrigen: formEquipo.boxOrigen,
         capitan: atletaForm,
-        montoAbonado: parseFloat(pagoForm.monto) || 0,
-        metodoPago: pagoForm.metodo === 'EnLinea' ? 'Tarjeta' : pagoForm.metodo,
+        montoAbonado: metodoEf === 'EnLinea' ? getCostoFinal() : (parseFloat(pagoForm.monto) || 0),
+        metodoPago: metodoEf === 'EnLinea' ? 'Tarjeta' : metodoEf,
         comprobanteUrl: urlFinalComprobante
       };
     } else {
@@ -452,8 +465,8 @@ export default function PortalCompetencias() {
       payload = {
         codigoInvitacion: codigoInvitacion,
         atleta: atletaForm,
-        montoAbonado: parseFloat(pagoForm.monto) || 0,
-        metodoPago: pagoForm.metodo === 'EnLinea' ? 'Tarjeta' : pagoForm.metodo,
+        montoAbonado: metodoEf === 'EnLinea' ? getCostoFinal() : (parseFloat(pagoForm.monto) || 0),
+        metodoPago: metodoEf === 'EnLinea' ? 'Tarjeta' : metodoEf,
         comprobanteUrl: urlFinalComprobante
       };
     }
@@ -511,6 +524,24 @@ export default function PortalCompetencias() {
     return costoFinal;
   };
 
+  // Métodos de pago que realmente acepta la competencia.
+  const opcionesPagoPermitidas = () => {
+    if (!compActiva) return ['Transferencia'];
+    return [
+      ((compActiva.aceptarPagosEnLinea ?? compActiva.AceptarPagosEnLinea ?? true) && (compActiva.boxStripeListo ?? compActiva.BoxStripeListo ?? false)) ? 'EnLinea' : null,
+      (compActiva.aceptarTransferencias ?? compActiva.AceptarTransferencias ?? true) ? 'Transferencia' : null,
+      (compActiva.aceptarEfectivo ?? compActiva.AceptarEfectivo ?? true) ? 'Efectivo' : null
+    ].filter(Boolean);
+  };
+
+  // Método REAL a usar: si el guardado en el estado no está permitido (p. ej. "Transferencia"
+  // por defecto cuando la competencia solo acepta pago en línea), cae a la primera opción válida.
+  // Así el texto, el comprobante y el envío siempre coinciden con lo que se muestra.
+  const getMetodoEfectivo = () => {
+    const perm = opcionesPagoPermitidas();
+    return perm.includes(pagoForm.metodo) ? pagoForm.metodo : (perm[0] || pagoForm.metodo);
+  };
+
   const enviarInscripcion = async (e) => {
     if (e) e.preventDefault();
 
@@ -521,7 +552,7 @@ export default function PortalCompetencias() {
 
     const edadAtleta = calcularEdad(atletaForm.fechaNacimiento);
     if (edadAtleta < 18) {
-      setMensaje({ tipo: 'danger', texto: 'Debes ser mayor de 18 años para registrarte en línea. Si eres menor, acude a recepción para que la Coach autorice tu inscripción como caso especial.' });
+      setMensaje({ tipo: 'danger', texto: 'Debes ser mayor de 18 años para registrarte en línea. Si eres menor, acude a recepción para que el administrador del box autorice tu inscripción como caso especial.' });
       return;
     }
 
@@ -692,8 +723,8 @@ export default function PortalCompetencias() {
 
   if (loading) return (
     <div className="portal-loading">
-      <div className="portal-spinner"></div>
-      <p className="portal-loading-text">Cargando arena...</p>
+      <AtletifyLoader />
+      <p className="portal-loading-text">Cargando competencia...</p>
     </div>
   );
 
@@ -701,11 +732,11 @@ export default function PortalCompetencias() {
     <div className="portal-comp">
 
       {pagoCanceladoCodigo && (
-        <div className="portal-alert portal-alert-warning" style={{ margin: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+        <div className="pc-notice pc-notice--warning">
           <span><i className="fas fa-triangle-exclamation me-2"></i>Tu pago no se completó. El lugar de tu equipo no está asegurado hasta que pagues.</span>
-          <span className="d-flex gap-2">
-            <button className="btn btn-success btn-sm" onClick={() => iniciarPagoPorCodigo(pagoCanceladoCodigo)}><i className="fas fa-credit-card me-1"></i>Reintentar pago</button>
-            <button className="btn btn-outline-secondary btn-sm" onClick={() => setPagoCanceladoCodigo('')}>Cerrar</button>
+          <span className="pc-notice-actions">
+            <button className="pc-btn pc-btn--success pc-btn--sm" onClick={() => iniciarPagoPorCodigo(pagoCanceladoCodigo)}><i className="fas fa-credit-card"></i>Reintentar pago</button>
+            <button className="pc-btn pc-btn--ghost pc-btn--sm" onClick={() => setPagoCanceladoCodigo('')}>Cerrar</button>
           </span>
         </div>
       )}
@@ -730,17 +761,17 @@ export default function PortalCompetencias() {
       </nav>
 
       {pasadas.length > 0 && (
-        <section style={{ borderTop: '1px solid rgba(255,255,255,.08)', background: 'rgba(0,0,0,.25)' }}>
+        <section className="pc-past">
           <div className="container px-3 px-md-4" style={{ paddingTop: '16px', paddingBottom: '16px' }}>
-            <h3 style={{ color: '#fff', fontSize: '1rem', margin: '0 0 10px', opacity: .9 }}>
-              <i className="fas fa-clock-rotate-left me-2"></i>Resultados de ediciones pasadas
+            <h3 className="pc-past-title">
+              <i className="fas fa-clock-rotate-left"></i>Resultados de ediciones pasadas
             </h3>
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <div className="pc-past-grid">
               {pasadas.map(p => (
-                <Link key={p.idCompetencia} to={`/leaderboard/${p.idCompetencia}`} style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.04)', color: '#fff', textDecoration: 'none', minWidth: '180px' }}>
-                  <span style={{ fontWeight: 700 }}>{p.nombre}</span>
-                  <span style={{ fontSize: '.78rem', opacity: .7 }}>{p.fechaFin ? new Date(p.fechaFin).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : ''}</span>
-                  <span style={{ fontSize: '.8rem', color: '#e63946', fontWeight: 700, marginTop: '2px' }}><i className="fas fa-trophy me-1"></i>Ver resultados</span>
+                <Link key={p.idCompetencia} to={`/leaderboard/${p.idCompetencia}`} className="pc-past-card">
+                  <span className="nm">{p.nombre}</span>
+                  <span className="dt">{p.fechaFin ? new Date(p.fechaFin).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : ''}</span>
+                  <span className="rs"><i className="fas fa-trophy"></i>Ver resultados</span>
                 </Link>
               ))}
             </div>
@@ -898,14 +929,6 @@ export default function PortalCompetencias() {
                                 <tbody>
                                   {tabla.map((fila, i) => {
                                     const isStrong = i % 2 === 0;
-                                    // Azul fuerte y bajo
-                                    const bgH = isStrong ? '#0056b3' : '#4dabf7'; 
-                                    const colorH = isStrong ? '#ffffff' : '#000000';
-                                    
-                                    // Rosa fuerte y bajo
-                                    const bgM = isStrong ? '#c2185b' : '#ff8da1';
-                                    const colorM = isStrong ? '#ffffff' : '#000000';
-
                                     return (
                                       <tr key={i} style={{ backgroundColor: isStrong ? 'rgba(255,255,255,0.03)' : 'transparent' }}>
                                         <td className="text-start ps-4 portal-table-skill" style={{ fontWeight: isStrong ? '700' : '500' }}>{fila.movimiento}</td>
@@ -916,8 +939,8 @@ export default function PortalCompetencias() {
                                             if (typeof req === 'object') {
                                               displayVal = (
                                                 <div className="d-flex justify-content-center gap-2 align-items-center">
-                                                  <span className="badge shadow-sm" style={{ backgroundColor: bgH, color: colorH, padding: '0.45rem 0.6rem', letterSpacing: '0.5px' }}>H: {req.h || '-'}</span>
-                                                  <span className="badge shadow-sm" style={{ backgroundColor: bgM, color: colorM, padding: '0.45rem 0.6rem', letterSpacing: '0.5px' }}>M: {req.m || '-'}</span>
+                                                  <span className="portal-std-badge portal-std-badge--h">H: {req.h || '-'}</span>
+                                                  <span className="portal-std-badge portal-std-badge--m">M: {req.m || '-'}</span>
                                                 </div>
                                               );
                                             } else {
@@ -1069,14 +1092,6 @@ export default function PortalCompetencias() {
                     </div>
                   ) : (
                     <>
-                      {mensaje.texto && (
-                        <div className={`portal-alert portal-alert-${mensaje.tipo}`}>
-                          <i className={`fas ${mensaje.tipo === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} portal-alert-icon`}></i>
-                          <div className="portal-alert-body">
-                            <p className="portal-alert-text">{mensaje.texto}</p>
-                          </div>
-                        </div>
-                      )}
 
                       {!catSeleccionada ? (
                         <div className="portal-categorias-list">
@@ -1108,11 +1123,11 @@ export default function PortalCompetencias() {
                                     </span>
                                   </div>
                                 </div>
-                                <div className="d-flex align-items-center gap-2">
-                                  <button onClick={() => { setCategoriaInfo(cat); setMostrarInfo(true); }} className="btn btn-dark border border-secondary text-info rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }} title="Requisitos y Cupos">
+                                <div className="portal-categoria-actions">
+                                  <button type="button" onClick={() => { setCategoriaInfo(cat); setMostrarInfo(true); }} className="portal-cat-info-btn" aria-label="Requisitos y cupos">
                                     <i className="fas fa-info"></i>
                                   </button>
-                                  <button onClick={() => intentarElegirCategoria(cat)} className="portal-categoria-btn">
+                                  <button type="button" onClick={() => intentarElegirCategoria(cat)} className="portal-categoria-btn">
                                     Elegir<i className="fas fa-arrow-right ms-2"></i>
                                   </button>
                                 </div>
@@ -1121,7 +1136,7 @@ export default function PortalCompetencias() {
                           />
                         </div>
                       ) : (
-                        <div className="portal-form-wrap portal-fade-in">
+                        <div className="portal-form-wrap portal-fade-in" id="pc-form-top">
                           <div className="portal-inscripcion-header">
                             <button type="button" className="portal-btn-back" onClick={() => setCatSeleccionada(null)}>
                               <i className="fas fa-arrow-left"></i>
@@ -1154,18 +1169,21 @@ export default function PortalCompetencias() {
                           )}
 
                           {modoInscripcion === 'codigo' && (
-                            <div className="portal-form portal-fade-in text-center py-5">
-                              <i className="fas fa-search mb-3 text-primary" style={{fontSize: '3.5rem'}}></i>
-                              <h4 className="text-white mb-2">Busca tu Equipo</h4>
-                              <p className="text-secondary mb-4">Ingresa el código que te proporcionó tu capitán para ver los lugares disponibles.</p>
-                              <div className="d-flex justify-content-center flex-column align-items-center mb-4">
-                                <label className="portal-label text-start w-75 mb-2">Código de Invitación</label>
-                                <input type="text" className="portal-input w-75 text-center" style={{fontSize: '1.2rem', letterSpacing: '2px'}} placeholder="WOLF-XXXXXX" value={codigoInvitacion} onChange={e => setCodigoInvitacion(e.target.value.toUpperCase())} />
-                              </div>
-                              <div className="mt-2 d-flex justify-content-center gap-3">
-                                <button className="btn btn-outline-secondary px-4 py-2" onClick={() => setModoInscripcion(null)}>Regresar</button>
-                                <button className="btn btn-primary px-4 py-2 fw-bold" onClick={buscarEquipoPorCodigo} disabled={!codigoInvitacion || buscandoEquipo}>
-                                  {buscandoEquipo ? <><i className="fas fa-spinner fa-spin me-2"></i>Buscando...</> : <><i className="fas fa-search me-2"></i>Buscar Equipo</>}
+                            <div className="pc-search portal-fade-in">
+                              <i className="fas fa-magnifying-glass pc-search-icon"></i>
+                              <h4 className="pc-search-title">Busca tu Equipo</h4>
+                              <p className="pc-search-sub">Ingresa el código que te proporcionó tu capitán para ver los lugares disponibles.</p>
+                              <input
+                                type="text"
+                                className="pc-code-input"
+                                placeholder="ABC-123456"
+                                value={codigoInvitacion}
+                                onChange={e => setCodigoInvitacion(e.target.value.toUpperCase())}
+                              />
+                              <div className="pc-search-actions">
+                                <button type="button" className="pc-btn pc-btn--ghost" onClick={() => setModoInscripcion(null)}>Regresar</button>
+                                <button type="button" className="pc-btn pc-btn--primary" onClick={buscarEquipoPorCodigo} disabled={!codigoInvitacion || buscandoEquipo}>
+                                  {buscandoEquipo ? <><i className="fas fa-spinner fa-spin"></i>Buscando...</> : <><i className="fas fa-magnifying-glass"></i>Buscar Equipo</>}
                                 </button>
                               </div>
                             </div>
@@ -1173,27 +1191,29 @@ export default function PortalCompetencias() {
 
                           {/* Concurrencia: si otro compañero está registrándose, mostramos espera en vez del form. */}
                           {modoInscripcion === 'unirse' && plazaEsperaHasta && new Date(plazaEsperaHasta) > new Date() && (
-                            <div className="portal-form portal-fade-in text-center py-5">
-                              <i className="fas fa-hourglass-half mb-3" style={{ fontSize: '3rem', color: '#d97706' }}></i>
-                              <h4 className="text-white mb-2">Otro compañero se está registrando</h4>
-                              <p className="text-secondary mb-3">Para no descuadrar el equipo, solo una persona puede registrarse a la vez. Espera un momento e intenta de nuevo.</p>
-                              <CountdownTimer targetDate={plazaEsperaHasta} onExpire={() => setReservaTick(t => t + 1)} />
-                              <div className="mt-4">
-                                <button className="btn btn-outline-secondary px-4 py-2" onClick={() => setReservaTick(t => t + 1)}><i className="fas fa-rotate-right me-2"></i>Reintentar</button>
+                            <div className="pc-search pc-search--wait portal-fade-in">
+                              <i className="fas fa-hourglass-half pc-search-icon"></i>
+                              <h4 className="pc-search-title">Otro compañero se está registrando</h4>
+                              <p className="pc-search-sub">Para no descuadrar el equipo, solo una persona puede registrarse a la vez. Espera un momento e intenta de nuevo.</p>
+                              <div className="pc-search-countdown">
+                                <CountdownTimer targetDate={plazaEsperaHasta} onExpire={() => setReservaTick(t => t + 1)} />
+                              </div>
+                              <div className="pc-search-actions">
+                                <button type="button" className="pc-btn pc-btn--ghost" onClick={() => setReservaTick(t => t + 1)}><i className="fas fa-rotate-right"></i>Reintentar</button>
                               </div>
                             </div>
                           )}
 
                           {(!catSeleccionada.esEquipo || modoInscripcion === 'crear' || modoInscripcion === 'unirse') && !(modoInscripcion === 'unirse' && plazaEsperaHasta && new Date(plazaEsperaHasta) > new Date()) && (
-                            <form onSubmit={enviarInscripcion} className="portal-form portal-fade-in">
+                            <form onSubmit={(e) => e.preventDefault()} className="portal-form portal-fade-in">
 
                               {/* El código ahora se pide antes en el modo 'codigo', pero guardamos un hidden input por si acaso o simplemente mostramos el valor */}
                               {modoInscripcion === 'unirse' && equipoUnirseInfo && (
                                 <div className="portal-codigo-invite-wrap" style={{ opacity: 0.8 }}>
                                   <label className="portal-codigo-invite-label">
-                                    <i className="fas fa-check-circle text-success me-2"></i>Uniéndote al equipo: <strong className="text-white">{equipoUnirseInfo.nombre || equipoUnirseInfo.Nombre}</strong>
+                                    <i className="fas fa-check-circle pc-tone-success me-2"></i>Uniéndote al equipo: <strong>{equipoUnirseInfo.nombre || equipoUnirseInfo.Nombre}</strong>
                                   </label>
-                                  <input type="text" className="portal-codigo-invite-input text-success" disabled value={codigoInvitacion} />
+                                  <input type="text" className="portal-codigo-invite-input pc-tone-success" disabled value={codigoInvitacion} />
                                 </div>
                               )}
 
@@ -1302,7 +1322,7 @@ export default function PortalCompetencias() {
 
                               {modoInscripcion === 'unirse' ? (
                                 <div className="portal-pago-section">
-                                  <p className="portal-pago-title"><i className="fas fa-check-circle me-2" style={{ color: '#10b981' }}></i>Equipo ya pagado</p>
+                                  <p className="portal-pago-title"><i className="fas fa-check-circle me-2 pc-tone-success"></i>Equipo ya pagado</p>
                                   <p className="portal-pago-desc">El capitán ya cubrió la inscripción de tu equipo. Solo completa tus datos de atleta y confirma — no necesitas pagar nada.</p>
                                 </div>
                               ) : (
@@ -1312,30 +1332,26 @@ export default function PortalCompetencias() {
                                   <div className="row g-3">
                                     <div className="col-12 col-md-6">
                                       <label className="portal-label">Método de Pago</label>
-                                      <MetodoPagoPicker 
-                                        valor={pagoForm.metodo} 
+                                      <MetodoPagoPicker
+                                        valor={pagoForm.metodo}
                                         onCambiar={v => {
                                           const nuevoForm = { ...pagoForm, metodo: v };
                                           if (v === 'EnLinea') {
                                             nuevoForm.monto = getCostoFinal().toString();
                                           }
                                           setPagoForm(nuevoForm);
-                                        }} 
+                                        }}
                                         disabled={getCostoFinal() <= 0}
-                                        opcionesPermitidas={[
-                                          ((compActiva.aceptarPagosEnLinea ?? compActiva.AceptarPagosEnLinea ?? true) && (compActiva.boxStripeListo ?? compActiva.BoxStripeListo ?? false)) ? 'EnLinea' : null,
-                                          (compActiva.aceptarTransferencias ?? compActiva.AceptarTransferencias ?? true) ? 'Transferencia' : null,
-                                          (compActiva.aceptarEfectivo ?? compActiva.AceptarEfectivo ?? true) ? 'Efectivo' : null
-                                        ].filter(Boolean)} 
+                                        opcionesPermitidas={opcionesPagoPermitidas()}
                                       />
                                     </div>
                                     <div className="col-12 col-md-6">
                                       <label className="portal-label">Total a pagar</label>
-                                      <div className="portal-pago-monto d-flex align-items-center justify-content-center fw-bold" style={{ fontSize: '1.4rem', color: '#10b981' }}>${getCostoFinal()} MXN</div>
-                                      <small className="text-secondary mt-1 d-block"><i className="fas fa-info-circle me-1"></i>{pagoForm.metodo === 'EnLinea' ? 'Pagas ahora con tarjeta.' : 'Se cobra el total al confirmar tu pago en recepción.'}</small>
+                                      <div className="portal-pago-monto pc-tone-success d-flex align-items-center justify-content-center fw-bold" style={{ fontSize: '1.4rem' }}>${getCostoFinal()} MXN</div>
+                                      <small className="pc-tone-muted mt-1 d-block"><i className="fas fa-info-circle me-1"></i>{getMetodoEfectivo() === 'EnLinea' ? 'Pagas ahora con tarjeta.' : 'Se cobra el total al confirmar tu pago en recepción.'}</small>
                                     </div>
                                   </div>
-                                {pagoForm.metodo === 'Transferencia' && (
+                                {getMetodoEfectivo() === 'Transferencia' && (
                                   <div className="portal-comprobante-section">
                                     <label className="portal-comprobante-label">
                                       <i className="fas fa-camera me-1"></i>Subir Comprobante (Opcional)
@@ -1346,7 +1362,7 @@ export default function PortalCompetencias() {
                               </div>
                               )}
 
-                              <BotonSeguro type="submit" disabled={enviando} className="portal-submit-btn" tiempoBloqueo={3000}>
+                              <BotonSeguro type="button" onClick={enviarInscripcion} disabled={enviando} className="portal-submit-btn" tiempoBloqueo={3000}>
                                 <><i className="fas fa-check-circle me-2"></i>Confirmar Inscripción</>
                               </BotonSeguro>
                             </form>
@@ -1361,28 +1377,29 @@ export default function PortalCompetencias() {
               {/* ── ESTATUS ── */}
               {pestaña === 'estatus' && (
                 <div className="portal-estatus-section portal-fade-in py-4">
-                  <div className="text-center mb-5">
-                    <i className="fas fa-search text-info mb-3" style={{ fontSize: '3.5rem' }}></i>
-                    <h3 className="text-white mb-2" style={{ fontFamily: 'var(--font-heading)' }}>Consulta el Estatus de tu Equipo</h3>
-                    <p className="text-secondary">Ingresa el código que te proporcionó el sistema o tu capitán.</p>
-                    
-                    <form onSubmit={consultarEstatus} className="d-flex justify-content-center align-items-center flex-column mt-4">
-                      <input 
-                        type="text" 
-                        className="portal-input w-100 mb-3 text-center" 
-                        style={{ maxWidth: '400px', fontSize: '1.2rem', letterSpacing: '2px' }} 
-                        placeholder="WOLF-XXXXXX" 
-                        value={codigoEstatus} 
-                        onChange={e => setCodigoEstatus(e.target.value.toUpperCase())} 
+                  <div className="pc-search">
+                    <i className="fas fa-magnifying-glass pc-search-icon"></i>
+                    <h3 className="pc-search-title">Consulta el Estatus de tu Equipo</h3>
+                    <p className="pc-search-sub">Ingresa el código que te proporcionó el sistema o tu capitán.</p>
+
+                    <form onSubmit={consultarEstatus}>
+                      <input
+                        type="text"
+                        className="pc-code-input"
+                        placeholder="ABC-123456"
+                        value={codigoEstatus}
+                        onChange={e => setCodigoEstatus(e.target.value.toUpperCase())}
                       />
-                      <button type="submit" className="btn btn-info px-4 py-2 fw-bold" disabled={!codigoEstatus || buscandoEstatus}>
-                        {buscandoEstatus ? <><i className="fas fa-spinner fa-spin me-2"></i>Buscando...</> : <><i className="fas fa-search me-2"></i>Consultar Estatus</>}
-                      </button>
+                      <div className="pc-search-actions">
+                        <button type="submit" className="pc-btn pc-btn--info" disabled={!codigoEstatus || buscandoEstatus}>
+                          {buscandoEstatus ? <><i className="fas fa-spinner fa-spin"></i>Buscando...</> : <><i className="fas fa-magnifying-glass"></i>Consultar Estatus</>}
+                        </button>
+                      </div>
                     </form>
-                    
+
                     {errorEstatus && (
-                      <div className="alert alert-danger mt-4 d-inline-block text-start">
-                        <i className="fas fa-exclamation-triangle me-2"></i>{errorEstatus}
+                      <div className="pc-modal-alert pc-modal-alert--danger" style={{ maxWidth: '440px', margin: '1.25rem auto 0', textAlign: 'left' }}>
+                        <i className="fas fa-exclamation-triangle"></i>{errorEstatus}
                       </div>
                     )}
                   </div>
@@ -1427,65 +1444,64 @@ export default function PortalCompetencias() {
                     const colorEstatus = getEstatusColor(estatusEquipo);
 
                     return (
-                      <div className="portal-estatus-dashboard p-4 rounded bg-dark border border-secondary border-opacity-25 mt-4 portal-fade-in">
-                        <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25 flex-wrap gap-3">
+                      <div className="pc-est portal-fade-in">
+                        <div className="pc-est-head">
                           <div>
-                            <h4 className="text-white mb-1" style={{ fontFamily: 'var(--font-heading)' }}>{datosEstatus.nombre || datosEstatus.Nombre}</h4>
-                            <div className="d-flex flex-wrap gap-3 mt-1">
-                              <span className="text-secondary small">
-                                <i className="fas fa-tag me-1"></i>{(c.nombre || c.Nombre)} ({(c.esEquipo || c.EsEquipo) ? 'Equipo' : 'Individual'})
+                            <h4 className="pc-est-name">{datosEstatus.nombre || datosEstatus.Nombre}</h4>
+                            <div className="pc-est-meta">
+                              <span>
+                                <i className="fas fa-tag"></i>{(c.nombre || c.Nombre)} ({(c.esEquipo || c.EsEquipo) ? 'Equipo' : 'Individual'})
                               </span>
                               {(datosEstatus.fechaCreacion || datosEstatus.FechaCreacion) && (
-                                <span className="text-secondary small">
-                                  <i className="fas fa-calendar-alt me-1"></i>Creado: {new Date(datosEstatus.fechaCreacion || datosEstatus.FechaCreacion).toLocaleDateString('es-MX')}
+                                <span>
+                                  <i className="fas fa-calendar-alt"></i>Creado: {new Date(datosEstatus.fechaCreacion || datosEstatus.FechaCreacion).toLocaleDateString('es-MX')}
                                 </span>
                               )}
                               {(datosEstatus.fechaAprobacion || datosEstatus.FechaAprobacion) && estatusEquipo === 'Aprobado' && (
-                                <span className="text-success small">
-                                  <i className="fas fa-calendar-check me-1"></i>Aprobado: {new Date(datosEstatus.fechaAprobacion || datosEstatus.FechaAprobacion).toLocaleDateString('es-MX')}
+                                <span className="pc-tone-success">
+                                  <i className="fas fa-calendar-check"></i>Aprobado: {new Date(datosEstatus.fechaAprobacion || datosEstatus.FechaAprobacion).toLocaleDateString('es-MX')}
                                 </span>
                               )}
                             </div>
                           </div>
-                          <div className={`badge bg-${colorEstatus} bg-opacity-25 text-${colorEstatus} border border-${colorEstatus} px-3 py-2 fs-6`}>
-                            <i className={`fas fa-${colorEstatus === 'success' ? 'check-circle' : (colorEstatus === 'warning' ? 'clock' : 'times-circle')} me-2`}></i>
+                          <div className={`pc-status-pill pc-status-pill--${colorEstatus}`}>
+                            <i className={`fas fa-${colorEstatus === 'success' ? 'check-circle' : (colorEstatus === 'warning' ? 'clock' : (colorEstatus === 'danger' ? 'times-circle' : 'circle-question'))}`}></i>
                             {estatusEquipo.toUpperCase()}
                           </div>
                         </div>
 
-                        <div className="row g-4">
+                        <div className="pc-est-grid">
                           {/* Columna de Atletas */}
-                          <div className="col-12 col-lg-7">
-                            <h6 className="text-white mb-3"><i className="fas fa-users me-2 text-primary"></i>Atletas Inscritos ({a.length})</h6>
-                            <div className="d-flex flex-column gap-2 mb-4">
+                          <div>
+                            <h6 className="pc-est-subtitle"><i className="fas fa-users"></i>Atletas Inscritos ({a.length})</h6>
+                            <div className="pc-athlete-list">
                               {a.map((ath, i) => {
+                                const esHombre = (ath.genero || ath.Genero).toLowerCase() === 'hombre' || (ath.genero || ath.Genero).toLowerCase() === 'masculino';
                                 let badgeAdvertencia = null;
                                 if (!(c.esEquipo || c.EsEquipo)) {
                                   const athLvlStr = ath.nivelHabilidad || ath.NivelHabilidad;
                                   const catLvlStr = getCategoryLevelString(c);
                                   if (getLevelValue(athLvlStr) < getLevelValue(catLvlStr)) {
                                     badgeAdvertencia = (
-                                      <span className="badge bg-warning text-dark ms-2" title="El atleta compite en una categoría superior a su nivel personal.">
-                                        <i className="fas fa-level-up-alt me-1"></i>Asumió Nivel Superior
+                                      <span className="pc-chip pc-chip--warning" title="El atleta compite en una categoría superior a su nivel personal.">
+                                        <i className="fas fa-level-up-alt"></i>Asumió Nivel Superior
                                       </span>
                                     );
                                   }
                                 }
-                                
+
                                 return (
-                                  <div key={i} className="p-3 bg-black rounded border border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
-                                    <div className="d-flex align-items-center gap-3">
-                                      <div className="bg-secondary bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center text-secondary" style={{ width: '40px', height: '40px' }}>
-                                        <i className={`fas fa-${(ath.genero || ath.Genero).toLowerCase() === 'hombre' || (ath.genero || ath.Genero).toLowerCase() === 'masculino' ? 'male' : 'female'} fs-5`}></i>
-                                      </div>
-                                      <div>
-                                        <strong className="text-white d-block">{ath.nombreCompleto || ath.NombreCompleto} {ath.apellidos || ath.Apellidos}</strong>
-                                        <div className="d-flex align-items-center gap-2 mt-1">
-                                          <span className="small text-secondary">{ath.nivelHabilidad || ath.NivelHabilidad}</span>
-                                          {(ath.fechaRegistro || ath.FechaRegistro) && (
-                                            <span className="small text-secondary border-start border-secondary ps-2"><i className="fas fa-clock me-1"></i>Se unió: {new Date(ath.fechaRegistro || ath.FechaRegistro).toLocaleDateString('es-MX')}</span>
-                                          )}
-                                        </div>
+                                  <div key={i} className="pc-athlete-row">
+                                    <div className={`pc-athlete-avatar pc-athlete-avatar--${esHombre ? 'm' : 'f'}`}>
+                                      <i className={`fas fa-${esHombre ? 'mars' : 'venus'}`}></i>
+                                    </div>
+                                    <div className="pc-athlete-info">
+                                      <strong className="pc-athlete-name">{ath.nombreCompleto || ath.NombreCompleto} {ath.apellidos || ath.Apellidos}</strong>
+                                      <div className="pc-athlete-meta">
+                                        <span className="m">{ath.nivelHabilidad || ath.NivelHabilidad}</span>
+                                        {(ath.fechaRegistro || ath.FechaRegistro) && (
+                                          <span className="m"><i className="fas fa-clock"></i>Se unió: {new Date(ath.fechaRegistro || ath.FechaRegistro).toLocaleDateString('es-MX')}</span>
+                                        )}
                                         {badgeAdvertencia}
                                       </div>
                                     </div>
@@ -1493,25 +1509,25 @@ export default function PortalCompetencias() {
                                 );
                               })}
                               {a.length === 0 && (
-                                <p className="text-secondary small mb-0"><i className="fas fa-info-circle me-1"></i>Aún no hay atletas unidos.</p>
+                                <p className="pc-empty-line"><i className="fas fa-info-circle me-1"></i>Aún no hay atletas unidos.</p>
                               )}
                             </div>
 
                             {(c.esEquipo || c.EsEquipo) && (
                               <div className="mt-4">
-                                <h6 className="text-white mb-3"><i className="fas fa-user-plus me-2 text-warning"></i>Perfiles Faltantes</h6>
-                                <div className="d-flex flex-wrap gap-2">
-                                  {Math.max(0, rHombres) > 0 && <span className="badge bg-dark border border-secondary px-3 py-2 text-light">Falta(n) {rHombres} Hombre(s)</span>}
-                                  {Math.max(0, rMujeres) > 0 && <span className="badge bg-dark border border-secondary px-3 py-2 text-light">Falta(n) {rMujeres} Mujer(es)</span>}
-                                  {Math.max(0, rMaster) > 0 && <span className="badge bg-dark border border-warning text-warning px-3 py-2">Falta(n) {rMaster} Master</span>}
-                                  {Math.max(0, rAvanzado) > 0 && <span className="badge bg-dark border border-danger text-danger px-3 py-2">Falta(n) {rAvanzado} Avanzado/RX</span>}
-                                  {Math.max(0, rIntermedio) > 0 && <span className="badge bg-dark border border-primary text-primary px-3 py-2">Falta(n) {rIntermedio} Intermedio</span>}
-                                  {Math.max(0, rPrincipiante) > 0 && <span className="badge bg-dark border border-info text-info px-3 py-2">Falta(n) {rPrincipiante} Principiante</span>}
-                                  {Math.max(0, rNovato) > 0 && <span className="badge bg-dark border border-success text-success px-3 py-2">Falta(n) {rNovato} Novato</span>}
-                                  
+                                <h6 className="pc-est-subtitle pc-est-subtitle--warn"><i className="fas fa-user-plus"></i>Perfiles Faltantes</h6>
+                                <div className="pc-chips">
+                                  {Math.max(0, rHombres) > 0 && <span className="pc-chip pc-chip--info">Falta(n) {rHombres} Hombre(s)</span>}
+                                  {Math.max(0, rMujeres) > 0 && <span className="pc-chip pc-chip--danger">Falta(n) {rMujeres} Mujer(es)</span>}
+                                  {Math.max(0, rMaster) > 0 && <span className="pc-chip pc-chip--warning">Falta(n) {rMaster} Master</span>}
+                                  {Math.max(0, rAvanzado) > 0 && <span className="pc-chip pc-chip--danger">Falta(n) {rAvanzado} Avanzado/RX</span>}
+                                  {Math.max(0, rIntermedio) > 0 && <span className="pc-chip pc-chip--primary">Falta(n) {rIntermedio} Intermedio</span>}
+                                  {Math.max(0, rPrincipiante) > 0 && <span className="pc-chip pc-chip--info">Falta(n) {rPrincipiante} Principiante</span>}
+                                  {Math.max(0, rNovato) > 0 && <span className="pc-chip pc-chip--success">Falta(n) {rNovato} Novato</span>}
+
                                   {Math.max(0, rHombres) === 0 && Math.max(0, rMujeres) === 0 && Math.max(0, rMaster) === 0 && Math.max(0, rAvanzado) === 0 && Math.max(0, rIntermedio) === 0 && Math.max(0, rPrincipiante) === 0 && Math.max(0, rNovato) === 0 && (
-                                    <span className="badge bg-success bg-opacity-25 text-success border border-success px-3 py-2">
-                                      <i className="fas fa-check-circle me-1"></i>Equipo Completo
+                                    <span className="pc-chip pc-chip--success">
+                                      <i className="fas fa-check-circle"></i>Equipo Completo
                                     </span>
                                   )}
                                 </div>
@@ -1520,26 +1536,26 @@ export default function PortalCompetencias() {
                           </div>
 
                           {/* Columna de Finanzas */}
-                          <div className="col-12 col-lg-5">
-                            <h6 className="text-white mb-3"><i className="fas fa-wallet me-2 text-success"></i>Aportaciones Financieras</h6>
-                            <div className="p-3 bg-black rounded border border-secondary border-opacity-25 mb-4">
-                              <div className="d-flex justify-content-between align-items-center mb-2">
-                                <span className="text-secondary small">Costo Total:</span>
-                                <span className="text-white fw-bold">${c.costo || c.Costo} MXN</span>
+                          <div>
+                            <h6 className="pc-est-subtitle pc-est-subtitle--money"><i className="fas fa-wallet"></i>Aportaciones Financieras</h6>
+                            <div className="pc-fin-card">
+                              <div className="pc-fin-row">
+                                <span className="k">Costo Total:</span>
+                                <span className="v">${c.costo || c.Costo} MXN</span>
                               </div>
-                              <div className="d-flex justify-content-between align-items-center mb-2">
-                                <span className="text-secondary small">Abonado (Validado o Pendiente):</span>
-                                <span className="text-success fw-bold">${datosEstatus.MontoAbonadoTotal || datosEstatus.montoAbonadoTotal || 0} MXN</span>
+                              <div className="pc-fin-row">
+                                <span className="k">Abonado (Validado o Pendiente):</span>
+                                <span className="v ok">${datosEstatus.MontoAbonadoTotal || datosEstatus.montoAbonadoTotal || 0} MXN</span>
                               </div>
-                              <div className="d-flex justify-content-between align-items-center pt-2 border-top border-secondary border-opacity-25 mt-2">
-                                <span className="text-white small">Restante:</span>
-                                <span className="text-warning fw-bold">
+                              <div className="pc-fin-row pc-fin-row--total">
+                                <span className="k">Restante:</span>
+                                <span className="v warn">
                                   ${Math.max(0, (c.costo || c.Costo) - (datosEstatus.MontoAbonadoTotal || datosEstatus.montoAbonadoTotal || 0))} MXN
                                 </span>
                               </div>
                             </div>
 
-                            <div className="d-flex flex-column gap-2">
+                            <div className="pc-pay-list">
                               {p.map((pago, i) => {
                                 const estPago = pago.estatus || pago.Estatus;
                                 let color = 'secondary';
@@ -1549,31 +1565,29 @@ export default function PortalCompetencias() {
                                 else if (estPago === 'PendienteVerificacion' || estPago === 'Pendiente') { color = 'warning'; icon = 'hourglass-half'; }
 
                                 return (
-                                  <div key={i} className="p-2 bg-dark rounded border border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                                  <div key={i} className="pc-pay-row">
                                     <div>
-                                      <strong className="text-white d-block small">{pago.nombrePagador || pago.NombrePagador}</strong>
-                                      <div className="d-flex flex-column lh-sm mt-1">
-                                        <span className="text-secondary" style={{ fontSize: '0.75rem' }}>
-                                          Enviado: {pago.fechaPago || pago.FechaPago ? new Date(pago.fechaPago || pago.FechaPago).toLocaleDateString() : '—'}
+                                      <strong className="pc-pay-name">{pago.nombrePagador || pago.NombrePagador}</strong>
+                                      <span className="pc-pay-date">
+                                        Enviado: {pago.fechaPago || pago.FechaPago ? new Date(pago.fechaPago || pago.FechaPago).toLocaleDateString() : '—'}
+                                      </span>
+                                      {estPago === 'Aprobado' && (pago.fechaAprobacionPago || pago.FechaAprobacionPago) && (
+                                        <span className="pc-pay-date pc-tone-success">
+                                          <i className="fas fa-calendar-check me-1"></i>Aprobado: {new Date(pago.fechaAprobacionPago || pago.FechaAprobacionPago).toLocaleDateString('es-MX')} {new Date(pago.fechaAprobacionPago || pago.FechaAprobacionPago).toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'})}
                                         </span>
-                                        {estPago === 'Aprobado' && (pago.fechaAprobacionPago || pago.FechaAprobacionPago) && (
-                                          <span className="text-success mt-1" style={{ fontSize: '0.75rem' }}>
-                                            <i className="fas fa-calendar-check me-1"></i>Aprobado: {new Date(pago.fechaAprobacionPago || pago.FechaAprobacionPago).toLocaleDateString('es-MX')} {new Date(pago.fechaAprobacionPago || pago.FechaAprobacionPago).toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'})}
-                                          </span>
-                                        )}
-                                      </div>
+                                      )}
                                     </div>
-                                    <div className="text-end">
-                                      <strong className={`text-${color} d-block`}>${pago.montoAbonado || pago.MontoAbonado}</strong>
-                                      <span className={`badge bg-${color} bg-opacity-25 text-${color} border border-${color}`} style={{ fontSize: '0.65rem' }}>
-                                        <i className={`fas fa-${icon} me-1`}></i>{estPago}
+                                    <div>
+                                      <strong className={`pc-pay-amount pc-tone-${color === 'secondary' ? 'info' : color}`}>${pago.montoAbonado || pago.MontoAbonado}</strong>
+                                      <span className={`pc-chip pc-chip--${color === 'secondary' ? 'info' : color}`} style={{ marginTop: '0.3rem' }}>
+                                        <i className={`fas fa-${icon}`}></i>{estPago}
                                       </span>
                                     </div>
                                   </div>
                                 );
                               })}
                               {p.length === 0 && (
-                                <p className="text-secondary small text-center mb-0 mt-2">Aún no hay pagos registrados.</p>
+                                <p className="pc-empty-line">Aún no hay pagos registrados.</p>
                               )}
                             </div>
                           </div>
@@ -1581,84 +1595,28 @@ export default function PortalCompetencias() {
 
                         {/* SECCIÓN DE PAGO (Si hay deuda restante) */}
                         {(datosEstatus.deudaRestante > 0 || datosEstatus.DeudaRestante > 0) && (
-                          <div className="mt-4 pt-4 border-top border-secondary border-opacity-25">
-                            <h5 className="text-white mb-3"><i className="fas fa-hand-holding-usd me-2 text-info"></i>Liquidar Saldo Restante</h5>
-                            
+                          <div className="pc-liquidar">
+                            <h5 className="pc-liquidar-title"><i className="fas fa-hand-holding-usd"></i>Liquidar Saldo Restante</h5>
+
                             {(datosEstatus.pagoEnProceso || datosEstatus.PagoEnProceso) ? (
-                              <div className="alert alert-warning d-flex align-items-center justify-content-between">
+                              <div className="pc-lock-banner">
                                 <div>
-                                  <i className="fas fa-lock me-2 fs-4"></i>
+                                  <i className="fas fa-lock me-2"></i>
                                   <strong>Pago en Proceso.</strong> Un integrante del equipo está realizando el pago en línea. Por favor espera a que termine o expire la sesión.
                                 </div>
-                                <div className="text-center px-3 border-start border-warning ms-3">
-                                  <div className="small text-dark mb-1">Tiempo Restante</div>
-                                  <CountdownTimer 
-                                    targetDate={datosEstatus.pagoEnProcesoHasta || datosEstatus.PagoEnProcesoHasta} 
+                                <div className="pc-lock-banner-timer">
+                                  <span className="lbl">Tiempo Restante</span>
+                                  <CountdownTimer
+                                    targetDate={datosEstatus.pagoEnProcesoHasta || datosEstatus.PagoEnProcesoHasta}
                                     onExpire={() => {
                                       // Refrescar estatus automáticamente cuando acabe
                                       consultarEstatus({ preventDefault: () => {} });
-                                    }} 
+                                    }}
                                   />
                                 </div>
                               </div>
                             ) : (
-                              <form onSubmit={async (e) => {
-                                e.preventDefault();
-                                setEnviando(true);
-                                setMensaje({ tipo: '', texto: '', codigo: '' });
-
-                                let urlFinalComprobante = '';
-                                if (pagoForm.metodo === 'Transferencia' && comprobanteFile) {
-                                  const formData = new FormData();
-                                  formData.append('file', comprobanteFile);
-                                  try {
-                                    const resFoto = await fetch(`${COMPETENCIAS_ENDPOINT}/upload-comprobante`, { method: 'POST', body: formData });
-                                    if (resFoto.ok) {
-                                      const dataFoto = await resFoto.json();
-                                      urlFinalComprobante = dataFoto.url;
-                                    } else {
-                                      setMensaje({ tipo: 'danger', texto: 'Error al subir comprobante.' });
-                                      setEnviando(false); return;
-                                    }
-                                  } catch (err) {
-                                    setMensaje({ tipo: 'danger', texto: 'Error al subir comprobante.' });
-                                    setEnviando(false); return;
-                                  }
-                                }
-
-                                const payload = {
-                                  codigoInvitacion: codigoEstatus,
-                                  atleta: { nombreCompleto: "Abono", apellidos: "Deuda" }, // Dummy ya que no es un nuevo atleta
-                                  montoAbonado: parseFloat(pagoForm.monto) || 0,
-                                  metodoPago: pagoForm.metodo,
-                                  comprobanteUrl: urlFinalComprobante,
-                                  esSoloAbono: true // Bandera para backend
-                                };
-
-                                try {
-                                  const res = await fetch(`${COMPETENCIAS_ENDPOINT}/unirse-equipo`, {
-                                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-                                  });
-                                  const data = await res.json();
-                                  if (res.ok) {
-                                    if (data.requiresCheckout && data.sessionUrl) {
-                                       window.location.href = data.sessionUrl;
-                                       return;
-                                    }
-                                    setMensaje({ tipo: 'success', texto: 'Abono registrado con éxito.' });
-                                    setComprobanteFile(null);
-                                    consultarEstatus({ preventDefault: () => {} }); // Refresh
-                                  } else {
-                                    if (data.mensaje && data.mensaje.includes('proceso de pago activo')) {
-                                       setMensaje({ tipo: 'warning', texto: '⏳ ' + data.mensaje });
-                                       consultarEstatus({ preventDefault: () => {} }); // Refresh para ver el timer
-                                    } else {
-                                       setMensaje({ tipo: 'danger', texto: data.mensaje || 'Error al abonar.' });
-                                    }
-                                  }
-                                } catch (err) { setMensaje({ tipo: 'danger', texto: 'Error de conexión.' }); }
-                                finally { setEnviando(false); }
-                              }} className="portal-pago-section mt-0">
+                              <div className="portal-pago-section mt-0">
                                 <p className="portal-pago-desc">Puedes abonar al saldo del equipo aquí. Adeudo actual: <strong>${(datosEstatus.deudaRestante || datosEstatus.DeudaRestante)} MXN</strong></p>
                                 <div className="row g-3">
                                   <div className="col-12 col-md-6">
@@ -1698,7 +1656,7 @@ export default function PortalCompetencias() {
                                       }} 
                                     />
                                     {pagoForm.metodo === 'EnLinea' && (
-                                      <small className="text-info mt-1 d-block"><i className="fas fa-info-circle me-1"></i>Stripe requiere liquidar el total.</small>
+                                      <small className="pc-tone-info mt-1 d-block"><i className="fas fa-info-circle me-1"></i>Stripe requiere liquidar el total.</small>
                                     )}
                                   </div>
                                 </div>
@@ -1710,15 +1668,67 @@ export default function PortalCompetencias() {
                                     <input type="file" required className="portal-comprobante-input" accept="image/png, image/jpeg, image/jpg" onChange={(e) => setComprobanteFile(e.target.files[0])} />
                                   </div>
                                 )}
-                                
-                                {mensaje.texto && (
-                                  <div className={`alert alert-${mensaje.tipo} mt-3 mb-0 small`}>{mensaje.texto}</div>
-                                )}
 
-                                <BotonSeguro type="submit" disabled={enviando} className="btn btn-primary w-100 fw-bold mt-4 py-2" tiempoBloqueo={3000}>
-                                  <i className="fas fa-paper-plane me-2"></i>Enviar Abono
+
+                                <BotonSeguro type="button" disabled={enviando} className="pc-btn pc-btn--primary pc-btn--block" style={{ marginTop: '1.25rem' }} tiempoBloqueo={3000} onClick={async () => {
+                                  setEnviando(true);
+                                  setMensaje({ tipo: '', texto: '', codigo: '' });
+
+                                  let urlFinalComprobante = '';
+                                  if (pagoForm.metodo === 'Transferencia' && comprobanteFile) {
+                                    const formData = new FormData();
+                                    formData.append('file', comprobanteFile);
+                                    try {
+                                      const resFoto = await fetch(`${COMPETENCIAS_ENDPOINT}/upload-comprobante`, { method: 'POST', body: formData });
+                                      if (resFoto.ok) {
+                                        const dataFoto = await resFoto.json();
+                                        urlFinalComprobante = dataFoto.url;
+                                      } else {
+                                        setMensaje({ tipo: 'danger', texto: 'Error al subir comprobante.' });
+                                        setEnviando(false); return;
+                                      }
+                                    } catch (err) {
+                                      setMensaje({ tipo: 'danger', texto: 'Error al subir comprobante.' });
+                                      setEnviando(false); return;
+                                    }
+                                  }
+
+                                  const payload = {
+                                    codigoInvitacion: codigoEstatus,
+                                    atleta: { nombreCompleto: "Abono", apellidos: "Deuda" }, // Dummy ya que no es un nuevo atleta
+                                    montoAbonado: parseFloat(pagoForm.monto) || 0,
+                                    metodoPago: pagoForm.metodo,
+                                    comprobanteUrl: urlFinalComprobante,
+                                    esSoloAbono: true // Bandera para backend
+                                  };
+
+                                  try {
+                                    const res = await fetch(`${COMPETENCIAS_ENDPOINT}/unirse-equipo`, {
+                                      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                                    });
+                                    const data = await res.json();
+                                    if (res.ok) {
+                                      if (data.requiresCheckout && data.sessionUrl) {
+                                         window.location.href = data.sessionUrl;
+                                         return;
+                                      }
+                                      setMensaje({ tipo: 'success', texto: 'Abono registrado con éxito.' });
+                                      setComprobanteFile(null);
+                                      consultarEstatus({ preventDefault: () => {} }); // Refresh
+                                    } else {
+                                      if (data.mensaje && data.mensaje.includes('proceso de pago activo')) {
+                                         setMensaje({ tipo: 'warning', texto: '⏳ ' + data.mensaje });
+                                         consultarEstatus({ preventDefault: () => {} }); // Refresh para ver el timer
+                                      } else {
+                                         setMensaje({ tipo: 'danger', texto: data.mensaje || 'Error al abonar.' });
+                                      }
+                                    }
+                                  } catch (err) { setMensaje({ tipo: 'danger', texto: 'Error de conexión.' }); }
+                                  finally { setEnviando(false); }
+                                }}>
+                                  <i className="fas fa-paper-plane"></i>Enviar Abono
                                 </BotonSeguro>
-                              </form>
+                              </div>
                             )}
                           </div>
                         )}
@@ -1737,71 +1747,102 @@ export default function PortalCompetencias() {
       {/* === MODAL INFO CATEGORIA === */}
       {mostrarInfo && categoriaInfo && (() => {
         const cat = categoriaInfo;
-        const cuposRestantes = (cat.cupoMaximo || cat.CupoMaximo || 0) - (cat.inscritos || cat.Inscritos || 0);
+        const esEquipo = cat.esEquipo || cat.EsEquipo;
+        const max = cat.cupoMaximo || cat.CupoMaximo || 0;
+        const ocupados = cat.inscritos || cat.Inscritos || 0;
+        const cuposRestantes = max - ocupados;
+        const full = cuposRestantes <= 0;
+        const integrantes = cat.cantidadIntegrantes || cat.CantidadIntegrantes || 0;
+        const pct = max > 0 ? Math.min(100, Math.max(0, Math.round((ocupados / max) * 100))) : 0;
+        // Solo se listan los perfiles con cupo > 0.
+        const generos = [
+          { icon: 'fa-mars', label: 'Hombres', n: cat.cupoHombres || cat.CupoHombres || 0, tone: 'info' },
+          { icon: 'fa-venus', label: 'Mujeres', n: cat.cupoMujeres || cat.CupoMujeres || 0, tone: 'danger' },
+        ].filter(x => x.n > 0);
+        const niveles = [
+          { icon: 'fa-crown', label: 'Master', n: cat.cupoMaster || cat.CupoMaster || 0, tone: 'warning' },
+          { icon: 'fa-bolt', label: 'Avanzado / RX', n: cat.cupoAvanzado || cat.CupoAvanzado || 0, tone: 'danger' },
+          { icon: 'fa-layer-group', label: 'Intermedio', n: cat.cupoIntermedio || cat.CupoIntermedio || 0, tone: 'primary' },
+          { icon: 'fa-seedling', label: 'Principiante', n: cat.cupoPrincipiante || cat.CupoPrincipiante || 0, tone: 'info' },
+          { icon: 'fa-child', label: 'Novato', n: cat.cupoNovato || cat.CupoNovato || 0, tone: 'success' },
+        ].filter(x => x.n > 0);
+
         return (
-          <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1050 }} tabIndex="-1">
-            <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content text-light border-info" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border) !important' }}>
-                <div className="modal-header border-bottom border-secondary border-opacity-25">
-                  <h5 className="modal-title text-info" style={{ fontFamily: 'var(--font-heading)' }}>
-                    <i className="fas fa-info-circle me-2"></i>Información de Inscripción
-                  </h5>
-                  <button type="button" className="btn-close btn-close-white" onClick={() => setMostrarInfo(false)}></button>
+          <div className="pc-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setMostrarInfo(false); }}>
+            <div className="pc-modal">
+              <div className="pc-modal-header">
+                <h5 className="pc-modal-title pc-tone-info">
+                  <i className="fas fa-info-circle"></i>Información de Inscripción
+                </h5>
+                <button type="button" className="pc-modal-close" onClick={() => setMostrarInfo(false)} aria-label="Cerrar"><i className="fas fa-times"></i></button>
+              </div>
+              <div className="pc-modal-body">
+                <div className="pc-modal-center" style={{ marginBottom: '1.25rem' }}>
+                  <h4 className="pc-modal-sub">{cat.nombre || cat.Nombre}</h4>
+                  <span className="pc-modalidad">
+                    {esEquipo ? `Equipo de ${integrantes}` : 'Modalidad Individual'}
+                  </span>
                 </div>
-                <div className="modal-body">
-                  <div className="text-center mb-4">
-                    <h4 className="text-white mb-1" style={{ fontFamily: 'var(--font-heading)' }}>{cat.nombre || cat.Nombre}</h4>
-                    <span className="badge bg-secondary border border-secondary text-light">
-                      {(cat.esEquipo || cat.EsEquipo) ? 'Modalidad por Equipo' : 'Modalidad Individual'}
+
+                <div className={`pc-cupo ${full ? 'pc-cupo--full' : 'pc-cupo--ok'}`}>
+                  <div className="pc-cupo-top">
+                    <div>
+                      <span className="pc-cupo-label">Lugares disponibles</span>
+                      <div className="pc-cupo-num"><strong>{full ? 0 : cuposRestantes}</strong> <span>/ {max}</span></div>
+                    </div>
+                    <span className="pc-cupo-badge">
+                      <i className={`fas ${full ? 'fa-lock' : 'fa-door-open'}`}></i>{full ? 'Lleno' : 'Abierto'}
                     </span>
                   </div>
+                  <div className="pc-cupo-bar"><div className="pc-cupo-fill" style={{ width: `${pct}%` }}></div></div>
+                  <div className="pc-cupo-meta">
+                    <span><i className="fas fa-users"></i>{esEquipo ? `Equipo de ${integrantes}` : 'Individual'}</span>
+                    <span><i className="fas fa-ticket-alt"></i>{ocupados} de {max} inscritos</span>
+                  </div>
+                </div>
 
-                  <div className="row g-3 mb-4">
-                    <div className="col-4">
-                      <div className="p-3 bg-dark rounded border border-secondary border-opacity-25 text-center">
-                        <i className="fas fa-users text-secondary mb-2 fs-4"></i>
-                        <h6 className="mb-0 text-white">{(cat.cantidadIntegrantes || cat.CantidadIntegrantes)}</h6>
-                        <small className="text-muted">Integrantes</small>
-                      </div>
-                    </div>
-                    <div className="col-4">
-                      <div className="p-3 bg-dark rounded border border-secondary border-opacity-25 text-center">
-                        <i className="fas fa-ticket-alt text-secondary mb-2 fs-4"></i>
-                        <h6 className="mb-0 text-white">{(cat.cupoMaximo || cat.CupoMaximo)}</h6>
-                        <small className="text-muted">Lugares Máx.</small>
-                      </div>
-                    </div>
-                    <div className="col-4">
-                      <div className={`p-3 rounded border text-center ${cuposRestantes > 0 ? 'bg-success bg-opacity-10 border-success' : 'bg-danger bg-opacity-10 border-danger'}`}>
-                        <i className={`fas ${cuposRestantes > 0 ? 'fa-check-circle text-success' : 'fa-times-circle text-danger'} mb-2 fs-4`}></i>
-                        <h6 className={`mb-0 ${cuposRestantes > 0 ? 'text-success' : 'text-danger'}`}>{cuposRestantes > 0 ? cuposRestantes : 0}</h6>
-                        <small className={cuposRestantes > 0 ? 'text-success' : 'text-danger'}>Disponibles</small>
-                      </div>
+                {(generos.length > 0 || niveles.length > 0) && (
+                  <p className="pc-req-heading">Perfiles que componen la categoría</p>
+                )}
+
+                {generos.length > 0 && (
+                  <div className="pc-req-group">
+                    <p className="pc-req-group-label"><i className="fas fa-venus-mars"></i>Por género</p>
+                    <div className="pc-req-rows">
+                      {generos.map(g => (
+                        <div key={g.label} className={`pc-req-row pc-req-row--${g.tone}`}>
+                          <span className="pc-req-row-icon"><i className={`fas ${g.icon}`}></i></span>
+                          <span className="pc-req-row-label">{g.label}</span>
+                          <span className="pc-req-row-count">{g.n}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
+                )}
 
-                  <h6 className="text-secondary small fw-bold mb-3 border-bottom border-secondary border-opacity-25 pb-2 text-uppercase">Requisitos de Registro</h6>
-                  <div className="d-flex flex-wrap gap-2 mb-4">
-                    {(cat.cupoHombres > 0 || cat.CupoHombres > 0) && <span className="badge bg-info bg-opacity-25 text-info border border-info px-3 py-2"><i className="fas fa-male me-1"></i>Hombres: {cat.cupoHombres || cat.CupoHombres}</span>}
-                    {(cat.cupoMujeres > 0 || cat.CupoMujeres > 0) && <span className="badge bg-danger bg-opacity-25 text-danger border border-danger px-3 py-2"><i className="fas fa-female me-1"></i>Mujeres: {cat.cupoMujeres || cat.CupoMujeres}</span>}
-                    
-                    {(cat.cupoAvanzado > 0 || cat.CupoAvanzado > 0) && <span className="badge bg-secondary text-light border border-secondary px-3 py-2">Avanzado: {cat.cupoAvanzado || cat.CupoAvanzado}</span>}
-                    {(cat.cupoIntermedio > 0 || cat.CupoIntermedio > 0) && <span className="badge bg-secondary text-light border border-secondary px-3 py-2">Intermedio: {cat.cupoIntermedio || cat.CupoIntermedio}</span>}
-                    {(cat.cupoPrincipiante > 0 || cat.CupoPrincipiante > 0) && <span className="badge bg-secondary text-light border border-secondary px-3 py-2">Principiante: {cat.cupoPrincipiante || cat.CupoPrincipiante}</span>}
-                    {(cat.cupoNovato > 0 || cat.CupoNovato > 0) && <span className="badge bg-secondary text-light border border-secondary px-3 py-2">Novato: {cat.cupoNovato || cat.CupoNovato}</span>}
-                    {(cat.cupoMaster > 0 || cat.CupoMaster > 0) && <span className="badge bg-warning bg-opacity-25 text-warning border border-warning px-3 py-2">Master: {cat.cupoMaster || cat.CupoMaster}</span>}
-                  </div>
-
-                  {cuposRestantes <= 0 && (
-                    <div className="alert alert-danger p-2 text-center small mb-0">
-                      <i className="fas fa-exclamation-triangle me-2"></i>Esta categoría está llena.
+                {niveles.length > 0 && (
+                  <div className="pc-req-group">
+                    <p className="pc-req-group-label"><i className="fas fa-layer-group"></i>Por nivel</p>
+                    <div className="pc-req-rows">
+                      {niveles.map(l => (
+                        <div key={l.label} className={`pc-req-row pc-req-row--${l.tone}`}>
+                          <span className="pc-req-row-icon"><i className={`fas ${l.icon}`}></i></span>
+                          <span className="pc-req-row-label">{l.label}</span>
+                          <span className="pc-req-row-count">{l.n}</span>
+                        </div>
+                      ))}
                     </div>
-                  )}
+                  </div>
+                )}
 
-                </div>
-                <div className="modal-footer border-top border-secondary border-opacity-25">
-                  <button className="btn btn-secondary w-100" onClick={() => setMostrarInfo(false)}>Cerrar</button>
-                </div>
+                {full && (
+                  <div className="pc-modal-alert pc-modal-alert--danger" style={{ marginTop: '1.1rem' }}>
+                    <i className="fas fa-exclamation-triangle"></i>Esta categoría está llena.
+                  </div>
+                )}
+              </div>
+              <div className="pc-modal-footer">
+                <button type="button" className="pc-btn pc-btn--ghost pc-btn--block" onClick={() => setMostrarInfo(false)}>Cerrar</button>
               </div>
             </div>
           </div>
@@ -1810,36 +1851,32 @@ export default function PortalCompetencias() {
 
       {/* === MODAL REQUISITO CATEGORIA INDIVIDUAL === */}
       {modalRequisitoNivel && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1050 }} tabIndex="-1">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content text-light border-primary" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border) !important' }}>
-              <div className="modal-header border-bottom border-secondary border-opacity-25">
-                <h5 className="modal-title text-primary" style={{ fontFamily: 'var(--font-heading)' }}>
-                  <i className="fas fa-dumbbell me-2"></i>Requisito de Nivel
-                </h5>
-                <button type="button" className="btn-close btn-close-white" onClick={() => setModalRequisitoNivel(null)}></button>
-              </div>
-              <div className="modal-body text-center py-4">
-                <i className="fas fa-fire text-primary mb-3" style={{ fontSize: '3rem' }}></i>
-                <h5>Esta categoría requiere de un atleta:</h5>
-                <div className="d-flex justify-content-center align-items-center gap-3 my-3">
-                  <div className="d-flex flex-column align-items-center">
-                    <i className={`fas fa-${(modalRequisitoNivel.cupoHombres > 0 || modalRequisitoNivel.CupoHombres > 0) ? 'male text-info' : 'female'} fs-1`} style={{ color: (modalRequisitoNivel.cupoMujeres > 0 || modalRequisitoNivel.CupoMujeres > 0) ? '#ff7fa8' : '' }}></i>
-                    <span className="mt-2 fw-bold">{(modalRequisitoNivel.cupoHombres > 0 || modalRequisitoNivel.CupoHombres > 0) ? 'Hombre' : 'Mujer'}</span>
-                  </div>
-                  <i className="fas fa-plus text-secondary"></i>
-                  <div className="d-flex flex-column align-items-center">
-                    <h3 className="text-warning mb-0" style={{ fontFamily: 'var(--font-heading)' }}>
-                      {getCategoryLevelString(modalRequisitoNivel)}
-                    </h3>
-                  </div>
+        <div className="pc-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setModalRequisitoNivel(null); }}>
+          <div className="pc-modal">
+            <div className="pc-modal-header">
+              <h5 className="pc-modal-title pc-tone-primary">
+                <i className="fas fa-dumbbell"></i>Requisito de Nivel
+              </h5>
+              <button type="button" className="pc-modal-close" onClick={() => setModalRequisitoNivel(null)} aria-label="Cerrar"><i className="fas fa-times"></i></button>
+            </div>
+            <div className="pc-modal-body pc-modal-center">
+              <i className="fas fa-fire pc-modal-icon pc-tone-primary"></i>
+              <p className="pc-modal-lead">Esta categoría requiere de un atleta:</p>
+              <div className="pc-req-visual">
+                <div className="pc-req-visual-item">
+                  <i className={`fas fa-${(modalRequisitoNivel.cupoHombres > 0 || modalRequisitoNivel.CupoHombres > 0) ? 'mars' : 'venus'}`} style={{ color: (modalRequisitoNivel.cupoMujeres > 0 || modalRequisitoNivel.CupoMujeres > 0) ? '#ff8da1' : 'var(--accent-cool)' }}></i>
+                  <span className="cap">{(modalRequisitoNivel.cupoHombres > 0 || modalRequisitoNivel.CupoHombres > 0) ? 'Hombre' : 'Mujer'}</span>
                 </div>
-                <p className="text-secondary small mb-0 mt-4">Si tu nivel personal es superior al requerido, no podrás inscribirte para mantener la competencia justa (Anti-Cachirul).</p>
+                <i className="fas fa-plus pc-req-visual-plus"></i>
+                <div className="pc-req-visual-item">
+                  <span className="pc-req-visual-level">{getCategoryLevelString(modalRequisitoNivel)}</span>
+                </div>
               </div>
-              <div className="modal-footer border-top border-secondary border-opacity-25 d-flex justify-content-between">
-                <button className="btn btn-outline-secondary" onClick={() => setModalRequisitoNivel(null)}>Cancelar</button>
-                <button className="btn btn-primary fw-bold" onClick={() => seleccionarCategoria(modalRequisitoNivel)}>Siguiente <i className="fas fa-arrow-right ms-1"></i></button>
-              </div>
+              <p className="pc-modal-note">Si tu nivel personal es superior al requerido, no podrás inscribirte para mantener la competencia justa (Anti-Cachirul).</p>
+            </div>
+            <div className="pc-modal-footer pc-modal-footer--split">
+              <button type="button" className="pc-btn pc-btn--ghost" onClick={() => setModalRequisitoNivel(null)}>Cancelar</button>
+              <button type="button" className="pc-btn pc-btn--primary" onClick={() => seleccionarCategoria(modalRequisitoNivel)}>Siguiente <i className="fas fa-arrow-right"></i></button>
             </div>
           </div>
         </div>
@@ -1847,38 +1884,36 @@ export default function PortalCompetencias() {
 
       {/* === MODAL ADVERTENCIA DE NIVEL INFERIOR === */}
       {modalAdvertenciaNivel && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1060 }} tabIndex="-1">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content text-light border-warning" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border) !important' }}>
-              <div className="modal-header border-bottom border-secondary border-opacity-25">
-                <h5 className="modal-title text-warning" style={{ fontFamily: 'var(--font-heading)' }}>
-                  <i className="fas fa-exclamation-triangle me-2"></i>Advertencia de Nivel
-                </h5>
-                <button type="button" className="btn-close btn-close-white" onClick={() => setModalAdvertenciaNivel(null)}></button>
-              </div>
-              <div className="modal-body text-center py-4">
-                <p className="fs-5 mb-4">¿Estás seguro de escalar niveles?</p>
-                <div className="d-flex justify-content-center align-items-center gap-3 mb-4">
-                  <div className="text-end">
-                    <span className="d-block small text-secondary">Tu Nivel</span>
-                    <strong className="text-light">{modalAdvertenciaNivel.athLevel}</strong>
-                  </div>
-                  <i className="fas fa-arrow-right text-warning fs-4"></i>
-                  <div className="text-start">
-                    <span className="d-block small text-secondary">Categoría</span>
-                    <strong className="text-warning">{modalAdvertenciaNivel.catLevel}</strong>
-                  </div>
+        <div className="pc-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setModalAdvertenciaNivel(null); }}>
+          <div className="pc-modal">
+            <div className="pc-modal-header">
+              <h5 className="pc-modal-title pc-tone-warning">
+                <i className="fas fa-exclamation-triangle"></i>Advertencia de Nivel
+              </h5>
+              <button type="button" className="pc-modal-close" onClick={() => setModalAdvertenciaNivel(null)} aria-label="Cerrar"><i className="fas fa-times"></i></button>
+            </div>
+            <div className="pc-modal-body pc-modal-center">
+              <p className="pc-modal-lead">¿Estás seguro de escalar niveles?</p>
+              <div className="pc-level-flow">
+                <div className="pc-level-flow-box">
+                  <span className="lbl">Tu Nivel</span>
+                  <span className="val">{modalAdvertenciaNivel.athLevel}</span>
                 </div>
-                <p className="text-secondary small mb-0">Ya que niveles avanzados requieren más experiencia.</p>
+                <i className="fas fa-arrow-right pc-level-flow-arrow"></i>
+                <div className="pc-level-flow-box">
+                  <span className="lbl">Categoría</span>
+                  <span className="val pc-tone-warning">{modalAdvertenciaNivel.catLevel}</span>
+                </div>
               </div>
-              <div className="modal-footer border-top border-secondary border-opacity-25 d-flex justify-content-between">
-                <button className="btn btn-secondary" onClick={() => setModalAdvertenciaNivel(null)}>Cambiar Nivel</button>
-                <button className="btn btn-warning text-dark fw-bold" onClick={() => {
-                  setAtletaForm(prev => ({ ...prev, aceptoRiesgoNivel: true }));
-                  setModalAdvertenciaNivel(null);
-                  procesarInscripcionFinal();
-                }}>Asumir el Riesgo <i className="fas fa-check-circle ms-1"></i></button>
-              </div>
+              <p className="pc-modal-note">Los niveles avanzados requieren más experiencia.</p>
+            </div>
+            <div className="pc-modal-footer pc-modal-footer--split">
+              <button type="button" className="pc-btn pc-btn--ghost" onClick={() => setModalAdvertenciaNivel(null)}>Cambiar Nivel</button>
+              <button type="button" className="pc-btn pc-btn--warning" onClick={() => {
+                setAtletaForm(prev => ({ ...prev, aceptoRiesgoNivel: true }));
+                setModalAdvertenciaNivel(null);
+                procesarInscripcionFinal();
+              }}>Asumir el Riesgo <i className="fas fa-check-circle"></i></button>
             </div>
           </div>
         </div>
@@ -1886,29 +1921,25 @@ export default function PortalCompetencias() {
 
       {/* === MODAL CACHIRUL BLOQUEADO === */}
       {modalCachirul && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1060 }} tabIndex="-1">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content text-light border-danger" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border) !important' }}>
-              <div className="modal-header border-bottom border-secondary border-opacity-25">
-                <h5 className="modal-title text-danger" style={{ fontFamily: 'var(--font-heading)' }}>
-                  <i className="fas fa-ban me-2"></i>¡Cachirul Detectado!
-                </h5>
-                <button type="button" className="btn-close btn-close-white" onClick={() => setModalCachirul(null)}></button>
+        <div className="pc-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setModalCachirul(null); }}>
+          <div className="pc-modal">
+            <div className="pc-modal-header">
+              <h5 className="pc-modal-title pc-tone-danger">
+                <i className="fas fa-ban"></i>¡Cachirul Detectado!
+              </h5>
+              <button type="button" className="pc-modal-close" onClick={() => setModalCachirul(null)} aria-label="Cerrar"><i className="fas fa-times"></i></button>
+            </div>
+            <div className="pc-modal-body pc-modal-center">
+              <i className="fas fa-user-slash pc-modal-icon pc-tone-danger"></i>
+              <p className="pc-modal-lead">No puedes inscribirte a una categoría inferior a tu nivel actual.</p>
+
+              <div className="pc-callout pc-callout--danger">
+                <p>Tu Nivel Real: <strong>{modalCachirul.athLevel}</strong></p>
+                <p>Requisito: <strong>{modalCachirul.catLevel}</strong></p>
               </div>
-              <div className="modal-body text-center py-4">
-                <div className="mb-3">
-                  <i className="fas fa-user-slash text-danger" style={{ fontSize: '3.5rem' }}></i>
-                </div>
-                <h5 className="text-white mb-4">No puedes inscribirte a una categoría inferior a tu nivel actual.</h5>
-                
-                <div className="p-3 bg-dark rounded border border-danger border-opacity-25">
-                  <p className="mb-2">Tu Nivel Real: <strong>{modalCachirul.athLevel}</strong></p>
-                  <p className="mb-0">Requisito: <strong>{modalCachirul.catLevel}</strong></p>
-                </div>
-              </div>
-              <div className="modal-footer border-top border-secondary border-opacity-25">
-                <button className="btn btn-danger w-100 fw-bold" onClick={() => setModalCachirul(null)}>Aceptar y Regresar</button>
-              </div>
+            </div>
+            <div className="pc-modal-footer">
+              <button type="button" className="pc-btn pc-btn--primary pc-btn--block" onClick={() => setModalCachirul(null)}>Aceptar y Regresar</button>
             </div>
           </div>
         </div>
@@ -1916,121 +1947,168 @@ export default function PortalCompetencias() {
 
       {/* === MODAL CÓDIGO DE INVITACIÓN === */}
       {mensaje.codigo && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1070 }} tabIndex="-1">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content text-light border-success" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border) !important' }}>
-              <div className="modal-header border-bottom border-secondary border-opacity-25">
-                <h5 className="modal-title text-success" style={{ fontFamily: 'var(--font-heading)' }}>
-                  <i className="fas fa-check-circle me-2"></i>Inscripción Exitosa
-                </h5>
-                <button type="button" className="btn-close btn-close-white" onClick={() => setMensaje({ ...mensaje, codigo: '' })}></button>
-              </div>
-              <div className="modal-body text-center py-5">
-                <i className="fas fa-ticket-alt text-success mb-3" style={{ fontSize: '3.5rem' }}></i>
-                <h4 className="text-white mb-2">¡Tu equipo ha sido creado!</h4>
-                <p className="text-secondary mb-4">Comparte este código con tus compañeros para que puedan unirse a tu equipo.</p>
-                
-                <div className="p-4 bg-dark rounded border border-success border-opacity-50 mb-4" style={{ cursor: 'pointer' }} onClick={() => {
-                    navigator.clipboard.writeText(mensaje.codigo);
-                    setCopiadoCodigo(true);
-                    setTimeout(() => setCopiadoCodigo(false), 2000);
-                  }}>
-                  <p className="small text-success text-uppercase fw-bold mb-1">Código de Equipo</p>
-                  <h1 className="text-white mb-0" style={{ letterSpacing: '3px', fontFamily: 'monospace' }}>{mensaje.codigo}</h1>
-                </div>
+        <div className="pc-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setMensaje({ ...mensaje, codigo: '' }); }}>
+          <div className="pc-modal">
+            <div className="pc-modal-header">
+              <h5 className="pc-modal-title pc-tone-success">
+                <i className="fas fa-check-circle"></i>Inscripción Exitosa
+              </h5>
+              <button type="button" className="pc-modal-close" onClick={() => setMensaje({ ...mensaje, codigo: '' })} aria-label="Cerrar"><i className="fas fa-times"></i></button>
+            </div>
+            <div className="pc-modal-body pc-modal-center">
+              <i className="fas fa-ticket-alt pc-modal-icon pc-tone-success"></i>
+              <p className="pc-modal-lead">¡Tu equipo ha sido creado!</p>
+              <p className="pc-modal-note">Comparte este código con tus compañeros para que puedan unirse a tu equipo.</p>
 
-                <button
-                  type="button"
-                  className={`btn w-100 fw-bold ${copiadoCodigo ? 'btn-success text-dark' : 'btn-outline-success'}`}
-                  onClick={() => {
-                    navigator.clipboard.writeText(mensaje.codigo);
-                    setCopiadoCodigo(true);
-                    setTimeout(() => setCopiadoCodigo(false), 2000);
-                  }}
-                >
-                  <i className={`fas ${copiadoCodigo ? 'fa-check' : 'fa-copy'} me-2`}></i>
-                  {copiadoCodigo ? '¡Código Copiado!' : 'Copiar Código al Portapapeles'}
-                </button>
+              <div className="pc-codigo-box" onClick={() => {
+                  navigator.clipboard.writeText(mensaje.codigo);
+                  setCopiadoCodigo(true);
+                  setTimeout(() => setCopiadoCodigo(false), 2000);
+                }}>
+                <p className="lbl">Código de Equipo</p>
+                <p className="code">{mensaje.codigo}</p>
               </div>
-              <div className="modal-footer border-top border-secondary border-opacity-25">
-                <button className="btn btn-secondary w-100" onClick={() => setMensaje({ ...mensaje, codigo: '' })}>Entendido, Cerrar</button>
-              </div>
+
+              <button
+                type="button"
+                className={`pc-btn pc-btn--block ${copiadoCodigo ? 'pc-btn--success' : 'pc-btn--ghost'}`}
+                onClick={() => {
+                  navigator.clipboard.writeText(mensaje.codigo);
+                  setCopiadoCodigo(true);
+                  setTimeout(() => setCopiadoCodigo(false), 2000);
+                }}
+              >
+                <i className={`fas ${copiadoCodigo ? 'fa-check' : 'fa-copy'}`}></i>
+                {copiadoCodigo ? '¡Código Copiado!' : 'Copiar Código al Portapapeles'}
+              </button>
+            </div>
+            <div className="pc-modal-footer">
+              <button type="button" className="pc-btn pc-btn--ghost pc-btn--block" onClick={() => setMensaje({ ...mensaje, codigo: '' })}>Entendido, Cerrar</button>
             </div>
           </div>
         </div>
       )}
 
       {/* === MODAL REQUISITO EQUIPO (CREAR / UNIRSE) === */}
-      {modalRequisitoEquipo && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1050 }} tabIndex="-1">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content text-light border-primary" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border) !important' }}>
-              <div className="modal-header border-bottom border-secondary border-opacity-25">
-                <h5 className="modal-title text-primary" style={{ fontFamily: 'var(--font-heading)' }}>
-                  <i className="fas fa-users-cog me-2"></i>
-                  {modalRequisitoEquipo.tipo === 'crear' ? 'Requisitos del Equipo' : 'Lugares Disponibles'}
+      {modalRequisitoEquipo && (() => {
+        const r = modalRequisitoEquipo.restantes;
+        const esCrear = modalRequisitoEquipo.tipo === 'crear';
+        // Solo se muestran los perfiles con cupo > 0 (los de 0 no interesan).
+        const generos = [
+          { icon: 'fa-mars', label: 'Hombres', n: Math.max(0, r.mHombres), tone: 'info' },
+          { icon: 'fa-venus', label: 'Mujeres', n: Math.max(0, r.mMujeres), tone: 'danger' },
+        ].filter(x => x.n > 0);
+        const niveles = [
+          { icon: 'fa-crown', label: 'Master', n: Math.max(0, r.mMaster), tone: 'warning' },
+          { icon: 'fa-bolt', label: 'Avanzado / RX', n: Math.max(0, r.mAvanzado), tone: 'danger' },
+          { icon: 'fa-layer-group', label: 'Intermedio', n: Math.max(0, r.mIntermedio), tone: 'primary' },
+          { icon: 'fa-seedling', label: 'Principiante', n: Math.max(0, r.mPrincipiante), tone: 'info' },
+          { icon: 'fa-child', label: 'Novato', n: Math.max(0, r.mNovato), tone: 'success' },
+        ].filter(x => x.n > 0);
+        const totalGen = generos.reduce((s, x) => s + x.n, 0);
+        const totalLvl = niveles.reduce((s, x) => s + x.n, 0);
+        const total = Math.max(totalGen, totalLvl);
+        const sinVacantes = generos.length === 0 && niveles.length === 0;
+
+        const avanzar = () => {
+          const tipo = modalRequisitoEquipo.tipo;
+          setModalRequisitoEquipo(null);
+          setModoInscripcion(tipo);
+          // El formulario reemplaza en el sitio la selección de modo; lo traemos a la vista
+          // para que el avance sea evidente (evita la sensación de "no pasó nada").
+          setTimeout(() => {
+            const el = document.getElementById('pc-form-top');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            else window.scrollTo({ top: 0, behavior: 'smooth' });
+          }, 70);
+        };
+
+        return (
+          <div className="pc-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setModalRequisitoEquipo(null); }}>
+            <div className="pc-modal">
+              <div className="pc-modal-header">
+                <h5 className="pc-modal-title pc-tone-primary">
+                  <i className="fas fa-users-cog"></i>
+                  {esCrear ? 'Requisitos del Equipo' : 'Lugares Disponibles'}
                 </h5>
-                <button type="button" className="btn-close btn-close-white" onClick={() => setModalRequisitoEquipo(null)}></button>
+                <button type="button" className="pc-modal-close" onClick={() => setModalRequisitoEquipo(null)} aria-label="Cerrar"><i className="fas fa-times"></i></button>
               </div>
-              <div className="modal-body py-4">
-                {modalRequisitoEquipo.tipo === 'unirse' && (
-                  <div className="mb-4 text-center">
-                    <h5 className="text-white mb-1">Unirse a: <span className="text-success">{modalRequisitoEquipo.nombreEquipo}</span></h5>
-                    <p className="small text-secondary mb-0">Revisa si cumples con los perfiles faltantes.</p>
-                  </div>
-                )}
-                {modalRequisitoEquipo.tipo === 'crear' && (
-                  <div className="mb-4 text-center">
-                    <h5 className="text-white mb-1">Receta Completa del Equipo</h5>
-                    <p className="small text-secondary mb-0">Para formar este equipo, necesitarás juntar exactamente estos perfiles.</p>
-                  </div>
-                )}
-                
-                <div className="row g-3">
-                  <div className="col-6">
-                    <div className="p-3 bg-dark rounded border border-secondary border-opacity-25 text-center h-100">
-                      <i className="fas fa-venus-mars text-info mb-2 fs-4"></i>
-                      <h6 className="text-white mb-2">Géneros</h6>
-                      <div className="small text-secondary">
-                        Hombres: <strong className="text-white">{Math.max(0, modalRequisitoEquipo.restantes.mHombres)}</strong><br/>
-                        Mujeres: <strong className="text-white">{Math.max(0, modalRequisitoEquipo.restantes.mMujeres)}</strong>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-6">
-                    <div className="p-3 bg-dark rounded border border-secondary border-opacity-25 text-center h-100">
-                      <i className="fas fa-layer-group text-warning mb-2 fs-4"></i>
-                      <h6 className="text-white mb-2">Niveles</h6>
-                      <div className="small text-secondary">
-                        Master: <strong className="text-white">{Math.max(0, modalRequisitoEquipo.restantes.mMaster)}</strong><br/>
-                        Avanzado/RX: <strong className="text-white">{Math.max(0, modalRequisitoEquipo.restantes.mAvanzado)}</strong><br/>
-                        Intermedio: <strong className="text-white">{Math.max(0, modalRequisitoEquipo.restantes.mIntermedio)}</strong><br/>
-                        Principiante: <strong className="text-white">{Math.max(0, modalRequisitoEquipo.restantes.mPrincipiante)}</strong><br/>
-                        Novato: <strong className="text-white">{Math.max(0, modalRequisitoEquipo.restantes.mNovato)}</strong>
-                      </div>
-                    </div>
-                  </div>
+              <div className="pc-modal-body">
+                <div className="pc-modal-center" style={{ marginBottom: '1.1rem' }}>
+                  {esCrear ? (
+                    <>
+                      <h5 className="pc-modal-sub">Receta Completa del Equipo</h5>
+                      <p className="pc-modal-note">Para formar este equipo necesitarás reunir exactamente estos perfiles.</p>
+                    </>
+                  ) : (
+                    <>
+                      <h5 className="pc-modal-sub">Unirse a: <span className="pc-tone-success">{modalRequisitoEquipo.nombreEquipo}</span></h5>
+                      <p className="pc-modal-note">Estos son los perfiles que aún le faltan al equipo.</p>
+                    </>
+                  )}
                 </div>
 
-                <div className="mt-4 p-3 rounded text-center" style={{ backgroundColor: 'rgba(255, 193, 7, 0.1)', border: '1px solid rgba(255, 193, 7, 0.3)' }}>
-                  <i className="fas fa-exclamation-triangle text-warning mb-2 fs-5"></i>
-                  <p className="small text-warning mb-0"><strong>Validación Estricta:</strong> No se permite escalar posiciones (si pide un novato, debe ser un novato). Si tu perfil no encaja en las vacantes, no podrás inscribirte.</p>
-                </div>
+                {sinVacantes ? (
+                  <div className="pc-callout pc-callout--warning">
+                    <i className="fas fa-circle-info pc-tone-warning" style={{ fontSize: '1.4rem', display: 'block', marginBottom: '0.4rem' }}></i>
+                    <p className="pc-tone-warning" style={{ fontSize: '0.85rem' }}>Este equipo ya no tiene lugares disponibles.</p>
+                  </div>
+                ) : (
+                  <>
+                    {total > 0 && (
+                      <div className="pc-req-total">
+                        <span className="k">{esCrear ? 'Integrantes por reunir' : 'Lugares disponibles'}</span>
+                        <span className="v">{total}</span>
+                      </div>
+                    )}
 
+                    {generos.length > 0 && (
+                      <div className="pc-req-group">
+                        <p className="pc-req-group-label"><i className="fas fa-venus-mars"></i>Por género</p>
+                        <div className="pc-req-rows">
+                          {generos.map(g => (
+                            <div key={g.label} className={`pc-req-row pc-req-row--${g.tone}`}>
+                              <span className="pc-req-row-icon"><i className={`fas ${g.icon}`}></i></span>
+                              <span className="pc-req-row-label">{g.label}</span>
+                              <span className="pc-req-row-count">{g.n}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {niveles.length > 0 && (
+                      <div className="pc-req-group">
+                        <p className="pc-req-group-label"><i className="fas fa-layer-group"></i>Por nivel</p>
+                        <div className="pc-req-rows">
+                          {niveles.map(l => (
+                            <div key={l.label} className={`pc-req-row pc-req-row--${l.tone}`}>
+                              <span className="pc-req-row-icon"><i className={`fas ${l.icon}`}></i></span>
+                              <span className="pc-req-row-label">{l.label}</span>
+                              <span className="pc-req-row-count">{l.n}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="pc-modal-alert pc-modal-alert--warning" style={{ marginTop: '1.1rem' }}>
+                      <i className="fas fa-exclamation-triangle"></i>
+                      <span><strong>Validación estricta:</strong> no se permite escalar posiciones (si pide un novato, debe ser un novato). Si tu perfil no encaja en las vacantes, no podrás inscribirte.</span>
+                    </div>
+                  </>
+                )}
               </div>
-              <div className="modal-footer border-top border-secondary border-opacity-25 d-flex justify-content-between">
-                <button className="btn btn-outline-secondary" onClick={() => setModalRequisitoEquipo(null)}>Cancelar</button>
-                <button className="btn btn-primary fw-bold" onClick={() => {
-                  setModoInscripcion(modalRequisitoEquipo.tipo);
-                  setModalRequisitoEquipo(null);
-                }}>
-                  Entendido, Siguiente <i className="fas fa-arrow-right ms-1"></i>
+              <div className="pc-modal-footer pc-modal-footer--split">
+                <button type="button" className="pc-btn pc-btn--ghost" onClick={() => setModalRequisitoEquipo(null)}>Cancelar</button>
+                <button type="button" className="pc-btn pc-btn--primary" onClick={avanzar}>
+                  Entendido, Siguiente <i className="fas fa-arrow-right"></i>
                 </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
     </div>
   );

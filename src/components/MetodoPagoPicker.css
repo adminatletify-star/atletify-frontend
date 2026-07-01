@@ -20,9 +20,24 @@
   color: #F0F0F5;
 }
 
-.mpp-trigger:hover {
-  border-color: #E63946;
-  background: #1f1f2e;
+@media (hover: hover) {
+  .mpp-trigger:hover {
+    border-color: #E63946;
+    background: #1f1f2e;
+  }
+}
+
+/* Estado sin métodos habilitados (evita el crash y lo comunica) */
+.mpp-trigger--empty {
+  cursor: default;
+  color: #A8B2D1;
+  border-style: dashed;
+  border-color: rgba(245, 166, 35, 0.4);
+  background: rgba(245, 166, 35, 0.06);
+}
+
+.mpp-trigger--empty .mpp-trigger-left i {
+  color: #F5A623;
 }
 
 .mpp-trigger-left {

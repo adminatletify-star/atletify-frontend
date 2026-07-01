@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import './MetodoPagoPicker.css';
 
@@ -14,10 +14,31 @@ export default function MetodoPagoPicker({ valor, onCambiar, opcionesPermitidas 
   const opcionesMostradas = TODAS_LAS_OPCIONES.filter(o => opcionesPermitidas.includes(o.valor));
   const actual = opcionesMostradas.find(o => o.valor === valor) || opcionesMostradas[0];
 
+  // Si el valor del padre no está entre las opciones permitidas, el picker cae a la primera
+  // disponible. Sincronizamos el estado del padre para que UI y estado no queden desfasados
+  // (p. ej. muestra "Pago en Línea" pero el estado seguía en "Transferencia" y pedía comprobante).
+  useEffect(() => {
+    if (actual && actual.valor !== valor) {
+      onCambiar(actual.valor);
+    }
+  }, [actual, valor, onCambiar]);
+
   const seleccionar = (v) => {
     setAbierto(false);
     if (v !== valor) onCambiar(v);
   };
+
+  // Sin métodos habilitados: evita el crash (actual === undefined) y muestra un estado claro.
+  if (!actual) {
+    return (
+      <div className="mpp-trigger mpp-trigger--empty" aria-disabled="true">
+        <span className="mpp-trigger-left">
+          <i className="fas fa-triangle-exclamation"></i>
+          Sin métodos de pago habilitados
+        </span>
+      </div>
+    );
+  }
 
   return (
     <>

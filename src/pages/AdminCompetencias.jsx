@@ -1,5 +1,6 @@
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { COMPETENCIAS_ENDPOINT } from '../services/api';
 import AtletifyLoader from '../components/AtletifyLoader';
 import RedGrayDatePicker from '../components/RedGrayDatePicker';
@@ -13,6 +14,7 @@ import '../assets/css/AdminCompetencias.css';
 
 export default function AdminCompetencias() {
   const navigate = useNavigate();
+  const { boxActivo } = useAuth();
   const [user, setUser] = useState(null);
   const [box, setBox] = useState(null);
   const [configPublica, setConfigPublica] = useState(null);
@@ -58,12 +60,16 @@ export default function AdminCompetencias() {
   const [tipoNuevaComp, setTipoNuevaComp] = useState('Paquete'); // 'Paquete' (Tipo A) | 'Comision' (Tipo B / WodReps)
   const [metodoPagoModulo, setMetodoPagoModulo] = useState('Tarjeta'); // Tipo A: cómo paga el box el módulo (Tarjeta/Transferencia/Efectivo)
 
+  // Último idBox para el que ya cargamos competencias (evita recargas duplicadas cuando
+  // boxActivo pasa de null → id en el arranque del AuthContext).
+  const ultimoBoxCargado = useRef(undefined);
+
+  // Montaje: guard de acceso + usuario + config pública (los paquetes NO dependen del box).
   useEffect(() => {
     const b = JSON.parse(localStorage.getItem('box'));
     const u = JSON.parse(localStorage.getItem('usuario'));
     if (!b || (u?.rol !== 'AdminBox' && u?.rol !== 'Developer')) { navigate('/login'); return; }
     setUser(u);
-    setBox(b);
 
     // F2.4: cargar SIEMPRE la config pública (trae los paquetes de competencia y la comisión por atleta)
     // para que el formulario "Por paquete" liste los paquetes también para Developer / módulo activo.
@@ -71,16 +77,31 @@ export default function AdminCompetencias() {
       .then(res => res.json())
       .then(data => setConfigPublica(data))
       .catch(err => console.error('Error fetching public config', err));
+  }, [navigate]);
+
+  // Recarga las competencias del box ACTIVO. Reacciona a boxActivo para que, cuando el Developer
+  // cambie de box en el navbar (auditarBox actualiza boxActivo sin recargar), la lista se refresque
+  // con las competencias del box recién seleccionado en vez de quedarse con las del box anterior.
+  useEffect(() => {
+    const u = JSON.parse(localStorage.getItem('usuario') || 'null');
+    const b = JSON.parse(localStorage.getItem('box') || 'null');
+    if (!u || (u.rol !== 'AdminBox' && u.rol !== 'Developer')) return;
+    const idBox = b?.idBox || b?.IdBox;
+    if (!idBox || ultimoBoxCargado.current === idBox) return;
+    ultimoBoxCargado.current = idBox;
+    setBox(b);
 
     // Revisar si el módulo está inactivo (tanto camelCase como PascalCase)
     const isModuloInactivo = (b.moduloCompetenciasActivo === false || b.ModuloCompetenciasActivo === false);
 
     if (isModuloInactivo && u.rol !== 'Developer') {
+      setCompetencias([]);
       setLoading(false);
     } else {
-      cargarCompetencias(b.idBox);
+      setLoading(true);
+      cargarCompetencias(idBox);
     }
-  }, [navigate]);
+  }, [boxActivo]);
 
   const cargarCompetencias = async (idBox) => {
     try {
@@ -319,13 +340,21 @@ export default function AdminCompetencias() {
       alert('Selecciona un paquete o elige "Atletas ilimitados (comisión)".');
       return;
     }
+    // Box destino: el Developer no tiene box propio, así que la competencia se crea en el box que
+    // audita (el seleccionado en el navbar). El backend ignora este idBox para un AdminBox.
+    const idBoxDestino = box?.idBox || box?.IdBox || null;
+    if (!idBoxDestino) {
+      alert('Selecciona un box en el navbar antes de crear la competencia.');
+      return;
+    }
     setCreandoExpress(true);
     try {
       const token = localStorage.getItem('token');
       const baseUrl = window.location.href.split('?')[0];
       const payload = esComision
-        ? { nombreCompetencia: nombreCompetenciaExpress, modeloCobro: 'Comision' }
+        ? { idBox: idBoxDestino, nombreCompetencia: nombreCompetenciaExpress, modeloCobro: 'Comision' }
         : {
+            idBox: idBoxDestino,
             nombreCompetencia: nombreCompetenciaExpress,
             planNombre: planSeleccionado.nombre,
             diasPlan: planSeleccionado.dias,

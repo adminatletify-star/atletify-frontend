@@ -52,6 +52,15 @@ export default function GlobalAlertBridge() {
       setToasts((prev) => [...prev, { id, message: text, variant: resolveAlertVariant(text) }]);
     };
 
+    // Toast con variante explícita (para no depender de la deducción por texto).
+    // Variantes soportadas: 'error' | 'success' | 'info'.
+    window.wpToast = (message, variant) => {
+      const text = normalizeMessage(message);
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const v = ['error', 'success', 'info'].includes(variant) ? variant : resolveAlertVariant(text);
+      setToasts((prev) => [...prev, { id, message: text, variant: v }]);
+    };
+
     window.wpConfirm = (message) =>
       new Promise((resolve) => {
         const text = normalizeMessage(message);
@@ -76,6 +85,7 @@ export default function GlobalAlertBridge() {
       window.alert = nativeAlert;
       delete window.wpConfirm;
       delete window.wpPrompt;
+      delete window.wpToast;
     };
   }, []);
 
