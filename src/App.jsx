@@ -21,6 +21,8 @@ import BoxScopeGuard from './components/BoxScopeGuard';
 import CrearBox from './pages/CrearBox';
 import Dashboard from './pages/Dashboard';
 import CompletarRegistro from './pages/CompletarRegistro';
+import CompletarMigracion from './pages/CompletarMigracion';
+import AdminMigracion from './pages/AdminMigracion';
 import RegistroGoogle from './pages/RegistroGoogle';
 import RegistrarAdminBox from './pages/RegistrarAdminBox';
 import CorregirSolicitud from './pages/CorregirSolicitud';
@@ -504,6 +506,7 @@ function App() {
             <Route path="/registro/:idBox" element={<Register />} />
             <Route path="/registro-google" element={<RegistroGoogle />} />
             <Route path="/completar-registro" element={<CompletarRegistro />} />
+            <Route path="/completar-migracion" element={<CompletarMigracion />} />
             <Route path="/registrar-admin-box" element={<RegistrarAdminBox />} />
             <Route path="/portal-competencias/:id" element={<PortalCompetencias />} />
             <Route path="/leaderboard/:id" element={<PortalLeaderboard />} />
@@ -535,6 +538,7 @@ function App() {
               <Route path="/dashboard/faq" element={<ProtectedRoute allowedRoles={['Developer']}><PreguntasRespuestasDev /></ProtectedRoute>} />
               <Route path="/preguntas-frecuentes" element={<ProtectedRoute allowedRoles={['AdminBox', 'Coach', 'Atleta', 'Usuario', 'Developer']}><PreguntasFrecuentes /></ProtectedRoute>} />
               <Route path="/admin-preregistros" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AdminPreregistros /></ProtectedRoute>} />
+              <Route path="/admin-migracion" element={<ProtectedRoute allowedRoles={['Developer']}><AdminMigracion /></ProtectedRoute>} />
               <Route path="/admin-box/auditoria" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><BoxScopeGuard><AuditoriaBox /></BoxScopeGuard></ProtectedRoute>} />
               <Route path="/crear-box" element={<ProtectedRoute allowedRoles={['Developer']}><CrearBox /></ProtectedRoute>} />
               <Route path="/admin-competencias" element={<ProtectedRoute allowedRoles={['Developer', 'AdminBox']}><AdminCompetencias /></ProtectedRoute>} />
