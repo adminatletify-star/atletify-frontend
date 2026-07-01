@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import ModalFirmaReglamento from './ModalFirmaReglamento';
 import ModalExpedienteMedico from './ModalExpedienteMedico';
 import CommandPalette from './CommandPalette';
-import { esModuloCore } from '../config/modulosSaaS';
+import { esModuloCore, guardarBoxConEntitlements } from '../config/modulosSaaS';
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -71,9 +71,12 @@ export default function Layout() {
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data && (data.idBox || data.IdBox)) {
-          const updatedBox = { ...b, ...data };
-          localStorage.setItem('box', JSON.stringify(updatedBox));
-          setBox(updatedBox);
+          // ⚠️ Carrera con refrescarEntitlements(): ese efecto escribe box.modulos/limites/estatusSaaS
+          // desde /entitlements/me mientras ESTE fetch /box está en vuelo. Sobrescribir el box con lo de
+          // /box (que NO trae esos campos) borraría los módulos efectivos del plan → gating intermitente.
+          // El helper compartido re-lee el box actual y preserva los entitlements. Mismo criterio en
+          // AdminBoxPanel/UserPanel/EditarBox para no repetir el bug en cada refresco de box.
+          setBox(guardarBoxConEntitlements(data));
         }
       })
       .catch(err => console.error("Error refrescando box:", err));

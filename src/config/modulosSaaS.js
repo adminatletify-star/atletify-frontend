@@ -134,6 +134,30 @@ export async function refrescarEntitlements() {
   }
 }
 
+// Escribe en localStorage.box un objeto de box FRESCO (p. ej. de GET/PUT /api/box/{id}) mezclándolo
+// con lo que ya había, pero PRESERVANDO los entitlements (modulos/limites/estatusSaaS) que vienen de
+// /entitlements/me y que el endpoint /box NO devuelve. Sin esto, cualquier refresco de /box pisa los
+// módulos EFECTIVOS del plan con undefined y el gating (useModulos → ModuloGate) bloquea módulos
+// válidos de forma INTERMITENTE (carrera con refrescarEntitlements, que corre en paralelo). Devuelve
+// el box ya mezclado para actualizar también el estado de React. Úsalo en TODO sitio que refresque el
+// box del backend; para un cambio de cuenta/box completo usa setItem directo (ahí sí se reemplaza).
+export function guardarBoxConEntitlements(fresh) {
+  if (!fresh || typeof fresh !== 'object') return fresh;
+  let actual = {};
+  try {
+    let raw = JSON.parse(localStorage.getItem('box') || '{}');
+    if (typeof raw === 'string') raw = JSON.parse(raw);
+    if (raw && typeof raw === 'object') actual = raw;
+  } catch { actual = {}; }
+  const merged = { ...actual, ...fresh };
+  // Preservar SOLO cuando el box fresco no trae el campo (así un cambio de plan que sí lo incluya gana).
+  if (actual.modulos !== undefined && fresh.modulos === undefined) merged.modulos = actual.modulos;
+  if (actual.limites !== undefined && fresh.limites === undefined) merged.limites = actual.limites;
+  if (actual.estatusSaaS !== undefined && fresh.estatusSaaS === undefined) merged.estatusSaaS = actual.estatusSaaS;
+  localStorage.setItem('box', JSON.stringify(merged));
+  return merged;
+}
+
 export const esModuloCore = (clave) => _core().includes(clave);
 
 export const tierDeModulo = (clave) =>
@@ -150,6 +174,18 @@ export function leerModulosBox() {
     return Array.isArray(box?.modulos) ? box.modulos : [];
   } catch {
     return [];
+  }
+}
+
+// ¿Ya tenemos la respuesta DEFINITIVA de entitlements del box? box.modulos es un array real solo
+// después de /entitlements/me; el snapshot de login NO lo trae. Sirve para que el gating del front no
+// muestre el paywall ANTES de saber si el box tiene el módulo (evita el bloqueo falso intermitente).
+export function modulosCargados() {
+  try {
+    const box = JSON.parse(localStorage.getItem('box') || 'null');
+    return Array.isArray(box?.modulos);
+  } catch {
+    return false;
   }
 }
 

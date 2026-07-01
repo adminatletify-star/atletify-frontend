@@ -248,6 +248,7 @@ export default function GestionFinanzas() {
 
 
   const [semaforo, setSemaforo] = useState([]);
+  const [distribucionPlanes, setDistribucionPlanes] = useState(null); // desglose por plan (semáforo)
   const [busquedaSemaforo, setBusquedaSemaforo] = useState('');
   const [ordenSemaforo, setOrdenSemaforo] = useState('');
   const [filtroEstado, setFiltroEstado] = useState(location.state?.filterEstado || '');
@@ -325,17 +326,19 @@ export default function GestionFinanzas() {
   const cargarDatos = useCallback(async (idBox) => {
     setLoading(true);
     try {
-      const [resSemaforo, resPlanes, resDashboard, resDescuentos, resConfig] = await Promise.all([
+      const [resSemaforo, resPlanes, resDashboard, resDescuentos, resConfig, resDistrib] = await Promise.all([
         fetch(`${API_BASE}/semaforo/${idBox}`, { headers: headersGet }),
         fetch(`${API_BASE}/planes/${idBox}`, { headers: headersGet }),
         fetch(`${API_BASE}/dashboard/${idBox}`, { headers: headersGet }),
         fetch(`${API_BASE}/descuentos/${idBox}`, { headers: headersGet }),
         fetch(`${import.meta.env.VITE_API_URL}/api/configuracionbox/${idBox}`),
+        fetch(`${API_BASE}/distribucion-planes/${idBox}`, { headers: headersGet }),
       ]);
       if (resSemaforo.ok) setSemaforo(await resSemaforo.json());
       if (resPlanes.ok) setPlanes(await resPlanes.json());
       if (resDashboard.ok) setDashboardData(await resDashboard.json());
       if (resDescuentos.ok) setDescuentos(await resDescuentos.json());
+      if (resDistrib.ok) setDistribucionPlanes(await resDistrib.json());
       // Enriquecer el box con la configuración (costoDropIn, costoVisitaGym, etc.)
       if (resConfig.ok) {
         const configData = await resConfig.json();
@@ -565,6 +568,7 @@ export default function GestionFinanzas() {
   };
 
   const crearPlan = async (e) => {
+    e.preventDefault(); // sin esto el <form> recarga la página y aborta el POST (el plan no se guardaba)
     if (!formPlan.nombre || !formPlan.precio || (formPlan.nivelAcceso !== 'Visitas' && !formPlan.duracionDias)) return alert('Llena todos los campos');
     if (formPlan.nivelAcceso === 'Visitas' && !formPlan.limiteClasesMensual) return alert('Debes especificar el número de visitas incluidas para este paquete.');
     try {
@@ -619,6 +623,7 @@ export default function GestionFinanzas() {
   };
 
   const guardarEdicionPlan = async (e) => {
+    e.preventDefault(); // mismo fix: evita que el <form> recargue la página y aborte el PUT
     if (!formEditPlan.nombre || !formEditPlan.precio) return alert('Nombre y precio obligatorios');
     if (formEditPlan.nivelAcceso === 'Visitas' && !formEditPlan.limiteClasesMensual) return alert('Debes especificar el número de visitas incluidas para este paquete.');
 
@@ -1030,6 +1035,76 @@ export default function GestionFinanzas() {
                         )}
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {/* Distribución por Plan (cuántos atletas, esperado y cobrado de cada plan) */}
+                {distribucionPlanes && distribucionPlanes.planes && distribucionPlanes.planes.length > 0 && (
+                  <div className="finanzas-card">
+                    <div className="finanzas-card-titulo"><i className="fas fa-layer-group" style={{ color: 'var(--accent-cool)' }}></i> Distribución por Plan</div>
+                    <p className="finanzas-distrib-sub">Esperado/mes = activos × su plan · Cobrado = mensualidad cobrada del mes en curso</p>
+
+                    {/* Desktop: tabla */}
+                    <div className="d-none d-md-block">
+                      <table className="finanzas-distrib-tabla">
+                        <thead>
+                          <tr>
+                            <th>Plan</th>
+                            <th className="num">Al día</th>
+                            <th className="num">Vencidos</th>
+                            <th className="num">Congelados</th>
+                            <th className="num">Esperado/mes</th>
+                            <th className="num">Cobrado (mes)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {distribucionPlanes.planes.map(p => (
+                            <tr key={p.idPlan}>
+                              <td>
+                                <div className="finanzas-distrib-plan">{p.nombre}</div>
+                                <div className="finanzas-distrib-precio">${(p.precio || 0).toFixed(2)} /mes</div>
+                              </td>
+                              <td className="num"><span className="finanzas-distrib-badge finanzas-distrib-badge--verde">{p.alDia}</span></td>
+                              <td className="num"><span className="finanzas-distrib-badge finanzas-distrib-badge--rojo">{p.vencidos}</span></td>
+                              <td className="num"><span className="finanzas-distrib-badge finanzas-distrib-badge--azul">{p.congelados}</span></td>
+                              <td className="num finanzas-distrib-money">${(p.esperado || 0).toFixed(2)}</td>
+                              <td className="num finanzas-distrib-money finanzas-distrib-money--cobrado">${(p.cobrado || 0).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Móvil: tarjetas */}
+                    <div className="d-md-none finanzas-distrib-cards">
+                      {distribucionPlanes.planes.map(p => (
+                        <div key={p.idPlan} className="finanzas-distrib-card">
+                          <div className="finanzas-distrib-card-top">
+                            <div>
+                              <div className="finanzas-distrib-plan">{p.nombre}</div>
+                              <div className="finanzas-distrib-precio">${(p.precio || 0).toFixed(2)} /mes</div>
+                            </div>
+                            <div className="finanzas-distrib-money">${(p.esperado || 0).toFixed(2)}<span className="finanzas-distrib-money-tag">esperado</span></div>
+                          </div>
+                          <div className="finanzas-distrib-card-stats">
+                            <span className="finanzas-distrib-badge finanzas-distrib-badge--verde">{p.alDia} al día</span>
+                            <span className="finanzas-distrib-badge finanzas-distrib-badge--rojo">{p.vencidos} venc.</span>
+                            <span className="finanzas-distrib-badge finanzas-distrib-badge--azul">{p.congelados} cong.</span>
+                          </div>
+                          <div className="finanzas-distrib-card-foot">
+                            <span><i className="fas fa-cash-register"></i> Cobrado este mes</span>
+                            <strong className="finanzas-distrib-money--cobrado">${(p.cobrado || 0).toFixed(2)}</strong>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {(distribucionPlanes.exentos > 0 || distribucionPlanes.sinPlan > 0) && (
+                      <div className="finanzas-distrib-nota">
+                        {distribucionPlanes.exentos > 0 && <span><i className="fas fa-crown"></i> {distribucionPlanes.exentos} exento(s)/VIP · no facturan</span>}
+                        {distribucionPlanes.sinPlan > 0 && <span><i className="fas fa-user-slash"></i> {distribucionPlanes.sinPlan} sin plan activo</span>}
+                      </div>
+                    )}
                   </div>
                 )}
 

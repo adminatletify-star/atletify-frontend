@@ -339,6 +339,10 @@
   .fg-charts-grid { grid-template-columns: 1fr 1fr; }
 }
 
+/* Fila "desglose + utilidad": cada tarjeta toma SU propia altura (no se estiran a la
+   más alta), así la tarjeta corta no queda con espacio vacío cuando la lista crece. */
+.fg-charts-grid--top { align-items: start; }
+
 .fg-card {
   background: var(--bg-elevated);
   border: 1px solid var(--border);

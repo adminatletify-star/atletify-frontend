@@ -682,7 +682,7 @@ export default function AdminFinanzasGlobales() {
                 )}
 
                 {/* ── Desglose por fuente + Utilidad de tienda ── */}
-                <div className="fg-charts-grid">
+                <div className="fg-charts-grid fg-charts-grid--top">
                   <div className="fg-card">
                     <div className="fg-card-title">
                       <i className="fas fa-layer-group" style={{ color: 'var(--success)' }}></i> Ingresos por Fuente

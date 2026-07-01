@@ -147,6 +147,15 @@ export default function RegistroManual() {
     }
   }, [restante, formCobro.monto1]);
 
+  // Default inteligente de inscripción: al elegir plan, pre-activa "Cobrar Inscripción" SOLO si el
+  // plan la requiere (RequiereInscripcion). El admin puede togglearla a mano después; se re-evalúa al
+  // cambiar de plan. (Solo depende de planSeleccionado a propósito: agregar planAplicado, que es un
+  // .find() con referencia nueva cada render, dispararía el efecto en cada render y pisaría el toggle.)
+  useEffect(() => {
+    setFormCobro(prev => ({ ...prev, cobrarInscripcion: planAplicado?.requiereInscripcion ?? false }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planSeleccionado]);
+
   const verificarPasswordYGenerar = async (e) => {
     e.preventDefault();
     if (!passwordAdmin) {
@@ -276,6 +285,7 @@ export default function RegistroManual() {
           metodoPago2: esEquipoTrabajo && suscripcionPermanente ? null : (m2 > 0 ? formCobro.metodo2 : null),
           idDescuento: (!esEquipoTrabajo && descuentoSeleccionado) ? parseInt(descuentoSeleccionado) : null,
           cobrarInscripcion: esEquipoTrabajo && suscripcionPermanente ? false : formCobro.cobrarInscripcion,
+          montoInscripcion: (esEquipoTrabajo && suscripcionPermanente) ? null : (formCobro.cobrarInscripcion ? (parseFloat(formCobro.montoInscripcion) || 0) : null),
           notas: esEquipoTrabajo ? null : (formCobro.notas?.trim() || null),
           rol: esEquipoTrabajo ? rolEquipo : 'Atleta',
           exentoDePago: esEquipoTrabajo && suscripcionPermanente

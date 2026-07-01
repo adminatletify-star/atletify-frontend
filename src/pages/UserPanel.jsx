@@ -20,6 +20,7 @@ import { evaluarNivelClase } from '../utils/nivelClase';
 import { formatear12 } from '../components/HoraPicker';
 import ModalCompararPRs from '../components/ModalCompararPRs';
 import { api } from '../services/api';
+import { guardarBoxConEntitlements } from '../config/modulosSaaS';
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -309,8 +310,9 @@ export default function UserPanel() {
         .then(res => (res.ok ? res.json() : null))
         .then(fresh => {
           if (fresh && fresh.idBox) {
-            setBox(fresh);
-            localStorage.setItem('box', JSON.stringify(fresh));
+            // Preservar módulos/entitlements del plan (el endpoint /box no los devuelve) para no romper
+            // el gating por la carrera con refrescarEntitlements.
+            setBox(guardarBoxConEntitlements(fresh));
           }
         })
         .catch(() => { /* best-effort: si falla, se queda con el de localStorage */ });

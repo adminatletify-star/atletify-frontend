@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { esModuloCore, leerModulosBox, leerRolUsuario } from '../config/modulosSaaS';
+import { esModuloCore, leerModulosBox, leerRolUsuario, modulosCargados } from '../config/modulosSaaS';
 
 // Hook de gating de módulos por plan SaaS (capa frontend).
 // Lee los módulos efectivos del box desde localStorage.box.modulos (inyectados
@@ -12,11 +12,15 @@ import { esModuloCore, leerModulosBox, leerRolUsuario } from '../config/modulosS
 export function useModulos() {
   const [modulos, setModulos] = useState(leerModulosBox);
   const [rol, setRol] = useState(leerRolUsuario);
+  // ¿Ya sabemos los módulos EFECTIVOS del box? (false hasta que /entitlements/me responde). Sirve para
+  // no mostrar el paywall mientras aún no llega la respuesta → evita el bloqueo falso intermitente.
+  const [cargado, setCargado] = useState(modulosCargados);
 
   useEffect(() => {
     const refrescar = () => {
       setModulos(leerModulosBox());
       setRol(leerRolUsuario());
+      setCargado(modulosCargados());
     };
     window.addEventListener('storage', refrescar);
     window.addEventListener('box-actualizado', refrescar);
@@ -38,7 +42,7 @@ export function useModulos() {
     [modulos, esDeveloper]
   );
 
-  return { modulos, tieneModulo, esDeveloper };
+  return { modulos, tieneModulo, esDeveloper, cargado };
 }
 
 // Helper para disparar el refresco del gating tras actualizar localStorage.box

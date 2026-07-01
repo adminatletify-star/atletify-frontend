@@ -1188,3 +1188,131 @@
   border: 1px solid var(--border);
 }
 
+/* ============================================
+   DISTRIBUCIÓN POR PLAN (semáforo)
+   ============================================ */
+.finanzas-distrib-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: -0.4rem 0 1rem;
+}
+
+.finanzas-distrib-tabla {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+}
+.finanzas-distrib-tabla th {
+  color: var(--text-muted);
+  font-family: var(--font-heading-alt, inherit);
+  font-weight: 700;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0 0.9rem 0.4rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.finanzas-distrib-tabla th.num,
+.finanzas-distrib-tabla td.num { text-align: right; }
+.finanzas-distrib-tabla td {
+  background: var(--bg-card, rgba(255,255,255,0.02));
+  padding: 0.7rem 0.9rem;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+.finanzas-distrib-tabla tr td:first-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+.finanzas-distrib-tabla tr td:last-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+
+.finanzas-distrib-plan {
+  font-family: var(--font-heading-alt, inherit);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.finanzas-distrib-precio {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.finanzas-distrib-money {
+  font-family: var(--font-stats, inherit);
+  font-weight: 800;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.finanzas-distrib-money--cobrado { color: var(--success); }
+
+.finanzas-distrib-badge {
+  display: inline-block;
+  min-width: 30px;
+  text-align: center;
+  font-family: var(--font-stats, inherit);
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 8px;
+}
+.finanzas-distrib-badge--verde { background: rgba(46,204,113,0.14); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+.finanzas-distrib-badge--rojo  { background: rgba(231,76,60,0.14);  color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); }
+.finanzas-distrib-badge--azul  { background: rgba(79,195,247,0.14); color: #4fc3f7; border: 1px solid rgba(79,195,247,0.3); }
+
+/* Móvil: tarjetas por plan */
+.finanzas-distrib-cards { display: flex; flex-direction: column; gap: 0.7rem; }
+.finanzas-distrib-card {
+  background: var(--bg-card, rgba(255,255,255,0.02));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+}
+.finanzas-distrib-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.finanzas-distrib-card-top .finanzas-distrib-money {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 1rem;
+}
+.finanzas-distrib-money-tag {
+  font-family: var(--font-body, inherit);
+  font-weight: 500;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+.finanzas-distrib-card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+.finanzas-distrib-card-stats .finanzas-distrib-badge { min-width: 0; font-size: 0.72rem; }
+.finanzas-distrib-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.finanzas-distrib-card-foot strong { font-family: var(--font-stats, inherit); font-size: 0.95rem; }
+
+.finanzas-distrib-nota {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.2rem;
+  margin-top: 0.9rem;
+  padding-top: 0.7rem;
+  border-top: 1px dashed var(--border);
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+.finanzas-distrib-nota i { margin-right: 0.3rem; opacity: 0.8; }
+

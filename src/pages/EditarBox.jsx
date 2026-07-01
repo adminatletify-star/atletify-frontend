@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { BOXES_ENDPOINT } from '../services/api';
+import { guardarBoxConEntitlements } from '../config/modulosSaaS';
 import BackButton from '../components/BackButton';
 import BotonSeguro from '../components/BotonSeguro';
 import AtletifyLoader from '../components/AtletifyLoader';
@@ -465,8 +466,8 @@ export default function EditarBox() {
       if (!response.ok) throw new Error('No se pudo actualizar el box.');
 
       const updatedBox = await response.json();
-      localStorage.setItem('box', JSON.stringify(updatedBox));
-      setBoxLocal(updatedBox);
+      // Preservar módulos/entitlements del plan (el PUT /box no los devuelve) para no romper el gating.
+      setBoxLocal(guardarBoxConEntitlements(updatedBox));
       alert('¡Configuración del Box guardada con éxito!');
     } catch (err) { alert(err.message); }
     finally { setSaving(false); }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { USUARIOS_ENDPOINT } from '../services/api';
+import { guardarBoxConEntitlements } from '../config/modulosSaaS';
 import {
   AreaChart,
   Area,
@@ -140,8 +141,10 @@ export default function AdminBoxPanel() {
         .then(res => (res.ok ? res.json() : null))
         .then(fresh => {
           if (fresh && fresh.idBox) {
-            setBox(fresh);
-            localStorage.setItem('box', JSON.stringify(fresh));
+            // Preservar los módulos/entitlements del plan: el endpoint /box NO los devuelve, así que
+            // sobrescribir el box completo pisaría box.modulos y el gating bloquearía módulos válidos
+            // (p. ej. Finanzas Globales) de forma intermitente por la carrera con refrescarEntitlements.
+            setBox(guardarBoxConEntitlements(fresh));
           }
         })
         .catch(() => { /* si falla, se queda con el de localStorage */ });
