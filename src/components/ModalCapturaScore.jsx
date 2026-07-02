@@ -44,6 +44,7 @@ export default function ModalCapturaScore({ idWod, equipo, nombreJuez, juezToken
         tiebreakValor: valor.tiebreak?.valorNumerico ?? null,
         firmaAtletaUrl: firma || '',
         criteriosJson: JSON.stringify(valor.checklist || []),
+        intentos: valor.intentos ?? null, // F3: Max/1RM — el servidor recalcula el total
       };
       const headers = { 'Content-Type': 'application/json' };
       if (juezToken) headers['X-Juez-Token'] = juezToken;

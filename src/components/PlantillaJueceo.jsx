@@ -64,6 +64,8 @@ export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = fa
     amrapRepsPorRonda: derivarRepsPorRonda(wod?.movimientos),
     amrapParciales: '',
     peso: '',
+    intentos: [{ peso: '', valido: false, slot: 1 }],
+    esDupla: false,
     puntos: '',
     rrRondas: '',
     rrReps: '',
@@ -74,6 +76,10 @@ export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = fa
   }));
   const set = (campo, valor) => setSt((p) => ({ ...p, [campo]: valor }));
   const setCheck = (id, valor) => setSt((p) => ({ ...p, checklist: { ...p.checklist, [id]: valor } }));
+  // F3: intentos de Max/1RM
+  const setIntento = (idx, patch) => setSt((p) => ({ ...p, intentos: (p.intentos || []).map((it, i) => i === idx ? { ...it, ...patch } : it) }));
+  const addIntento = () => setSt((p) => ({ ...p, intentos: [...(p.intentos || []), { peso: '', valido: false, slot: 1 }] }));
+  const delIntento = (idx) => setSt((p) => ({ ...p, intentos: (p.intentos || []).filter((_, i) => i !== idx) }));
 
   const criteriosActivos = useMemo(
     () => (wod?.criterios || []).filter((c) => c.activo !== false).sort((a, b) => (a.orden || 0) - (b.orden || 0)),
@@ -128,11 +134,22 @@ export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = fa
       else if (total > 5000) { valido = false; adv.push('Reps irreales (>5000), verifica.'); }
       else { resultado = String(total); e.valorNumerico = total; }
     } else if (tipoScore === 'Carga') {
-      const p = toNum(st.peso);
-      e.peso = p; e.unidad = unidadPeso;
-      if (p === null || p <= 0) { valido = false; }
-      else if (p > 5000) { valido = false; adv.push('Peso irreal (>5000), verifica.'); }
-      else { resultado = String(p); e.valorNumerico = p; }
+      // Total = suma del MEJOR intento válido por atleta (slot). Individual = 1 slot.
+      const its = st.intentos || [];
+      const bySlot = {};
+      its.forEach((i) => {
+        if (!i.valido) return;
+        const pw = toNum(i.peso);
+        if (pw === null || pw <= 0) return;
+        const s = st.esDupla ? (i.slot || 1) : 1;
+        if (!bySlot[s] || pw > bySlot[s]) bySlot[s] = pw;
+      });
+      const total = Object.values(bySlot).reduce((a, b) => a + b, 0);
+      e.peso = total; e.unidad = unidadPeso;
+      e.intentos = its.map((i, idx) => ({ numeroIntento: idx + 1, atletaSlot: st.esDupla ? (i.slot || 1) : 1, peso: toNum(i.peso) || 0, valido: !!i.valido }));
+      if (total <= 0) { valido = false; }
+      else if (total > 10000) { valido = false; adv.push('Peso irreal, verifica.'); }
+      else { resultado = String(total); e.valorNumerico = total; }
     } else if (tipoScore === 'RondasReps') {
       const rRaw = toInt(st.rrRondas);
       const repsRaw = toInt(st.rrReps);
@@ -183,6 +200,7 @@ export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = fa
     return {
       resultado, nombreJuez, estructurado: e, tiebreak, checklist,
       dnf: st.dnf, advertencias: adv, esValido: st.dnf ? true : valido,
+      intentos: (tipoScore === 'Carga' && !st.dnf) ? (e.intentos || []) : null,
     };
   }, [wod, st, tipoScore, permiteCapReps, hayCap, cap, tiebreakTipo, nombreJuez, criteriosActivos]);
 
@@ -257,10 +275,51 @@ export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = fa
 
           {/* ── CARGA / RM ── (la unidad la fijó el AdminBox al crear el WOD; el juez NO la cambia) */}
           {tipoScore === 'Carga' && (
-            <label className="pj-field">
-              <span className="pj-label">Mejor levantamiento — en <b>{unidadPeso}</b> (unidad fija del WOD)</span>
-              <input inputMode="decimal" className="pj-input" disabled={dis} placeholder={`Ej: 102.5 ${unidadPeso}`} value={st.peso} onChange={(e) => set('peso', e.target.value)} />
-            </label>
+            <div className="pj-field">
+              <span className="pj-label">Intentos — en <b>{unidadPeso}</b> (unidad fija del WOD)</span>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '6px 0' }}>
+                <input type="checkbox" disabled={dis} checked={st.esDupla} onChange={(e) => set('esDupla', e.target.checked)} />
+                <span>Es dupla (suma el mejor válido de 2 atletas)</span>
+              </label>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                <thead>
+                  <tr style={{ opacity: 0.6, fontSize: 12, textAlign: 'left' }}>
+                    <th style={{ padding: '3px 4px' }}>#</th>
+                    {st.esDupla && <th style={{ padding: '3px 4px' }}>Atleta</th>}
+                    <th style={{ padding: '3px 4px' }}>Peso ({unidadPeso})</th>
+                    <th style={{ padding: '3px 4px', textAlign: 'center' }}>Válido</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(st.intentos || []).map((it, idx) => (
+                    <tr key={idx}>
+                      <td style={{ padding: '3px 4px', opacity: 0.7 }}>{idx + 1}</td>
+                      {st.esDupla && (
+                        <td style={{ padding: '3px 4px' }}>
+                          <select className="pj-input" disabled={dis} value={it.slot || 1} onChange={(e) => setIntento(idx, { slot: Number(e.target.value) })}>
+                            <option value={1}>Atleta 1</option>
+                            <option value={2}>Atleta 2</option>
+                          </select>
+                        </td>
+                      )}
+                      <td style={{ padding: '3px 4px' }}>
+                        <input inputMode="decimal" className="pj-input" disabled={dis} placeholder="Ej: 102.5" value={it.peso} onChange={(e) => setIntento(idx, { peso: e.target.value })} />
+                      </td>
+                      <td style={{ padding: '3px 4px', textAlign: 'center' }}>
+                        <input type="checkbox" disabled={dis} checked={!!it.valido} onChange={(e) => setIntento(idx, { valido: e.target.checked })} />
+                      </td>
+                      <td style={{ padding: '3px 4px', textAlign: 'center' }}>
+                        <button type="button" disabled={dis} onClick={() => delIntento(idx)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer' }} title="Quitar intento"><i className="fas fa-times"></i></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <button type="button" disabled={dis} onClick={addIntento} style={{ marginTop: 6, background: 'none', border: '1px dashed rgba(255,255,255,0.3)', color: 'inherit', borderRadius: 6, padding: '5px 10px', cursor: 'pointer' }}>
+                <i className="fas fa-plus"></i> Añadir intento
+              </button>
+            </div>
           )}
 
           {/* ── RONDAS + REPS ── */}
