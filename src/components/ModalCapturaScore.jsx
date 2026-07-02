@@ -13,6 +13,7 @@ export default function ModalCapturaScore({ idWod, equipo, nombreJuez, juezToken
   const [mostrarFirma, setMostrarFirma] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
+  const [verDef, setVerDef] = useState(false); // panel plegable con la definición del WOD (la "hoja")
 
   useEffect(() => {
     let activo = true;
@@ -68,6 +69,48 @@ export default function ModalCapturaScore({ idWod, equipo, nombreJuez, juezToken
           <button className="mcs-close" onClick={onCerrar}><i className="fas fa-times"></i></button>
         </div>
         <div className="mcs-body">
+          {wod && (
+            <div style={{ marginBottom: 12 }}>
+              <button type="button" className="mcs-btn-ghost" onClick={() => setVerDef(v => !v)}>
+                <i className={`fas fa-chevron-${verDef ? 'up' : 'down'}`}></i> {verDef ? 'Ocultar' : 'Ver'} definición del WOD
+              </button>
+              {verDef && (
+                <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: 12, marginTop: 8 }}>
+                  {wod.descripcion && <p style={{ margin: '0 0 8px', whiteSpace: 'pre-line', opacity: 0.9 }}>{wod.descripcion}</p>}
+                  {wod.movimientos?.length > 0 && (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead>
+                        <tr style={{ textAlign: 'left', opacity: 0.6, fontSize: 11 }}>
+                          <th style={{ padding: '3px 5px' }}>Movimiento</th>
+                          <th style={{ padding: '3px 5px' }}>Reps</th>
+                          <th style={{ padding: '3px 5px' }}>♀</th>
+                          <th style={{ padding: '3px 5px' }}>♂</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {wod.movimientos.map((m, i) => (
+                          <tr key={i} style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                            <td style={{ padding: '4px 5px' }}>
+                              {m.nombreEjercicio || m.nombreCustom}
+                              {m.notas ? <span style={{ display: 'block', fontSize: 10, opacity: 0.6 }}>{m.notas}</span> : null}
+                            </td>
+                            <td style={{ padding: '4px 5px' }}>{m.esquemaReps || '—'}</td>
+                            <td style={{ padding: '4px 5px' }}>{m.pesoMujer || '—'}</td>
+                            <td style={{ padding: '4px 5px' }}>{m.pesoHombre || '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                  {wod.tiebreakDescripcion && (
+                    <p style={{ margin: '8px 0 0', fontSize: 12, opacity: 0.7 }}>
+                      <i className="fas fa-stopwatch me-1"></i>Desempate: {wod.tiebreakDescripcion}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           {!wod ? <div className="mcs-loading"><i className="fas fa-spinner fa-spin"></i> Cargando hoja...</div> : (
             <PlantillaJueceo wod={wod} nombreJuez={nombreJuez} onChange={setValor} />
           )}

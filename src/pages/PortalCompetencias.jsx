@@ -82,6 +82,22 @@ export default function PortalCompetencias() {
   const [loading, setLoading] = useState(true);
   const [compActiva, setCompActiva] = useState(null);
   const [pestaña, setPestaña] = useState('info');
+  const [wodsPublicos, setWodsPublicos] = useState(null);
+  const [cargandoWods, setCargandoWods] = useState(false);
+
+  // Carga los WODs legibles (movimientos + pesos M/H) cuando se abre la pestaña "WODs".
+  useEffect(() => {
+    const idComp = compActiva?.idCompetencia || compActiva?.IdCompetencia;
+    if (pestaña !== 'wods' || !idComp) return;
+    let cancel = false;
+    setCargandoWods(true);
+    fetch(`${COMPETENCIAS_ENDPOINT}/${idComp}/wods-publicos`)
+      .then(r => r.json())
+      .then(d => { if (!cancel) setWodsPublicos(Array.isArray(d) ? d : []); })
+      .catch(() => { if (!cancel) setWodsPublicos([]); })
+      .finally(() => { if (!cancel) setCargandoWods(false); });
+    return () => { cancel = true; };
+  }, [pestaña, compActiva]);
   const [comprobanteFile, setComprobanteFile] = useState(null);
 
   const [catSeleccionada, setCatSeleccionada] = useState(null);
@@ -851,6 +867,9 @@ export default function PortalCompetencias() {
                 <button className={`portal-tab ${pestaña === 'estandares' ? 'active' : ''}`} onClick={() => setPestaña('estandares')}>
                   <i className="fas fa-dumbbell"></i><span>Estándares</span>
                 </button>
+                <button className={`portal-tab ${pestaña === 'wods' ? 'active' : ''}`} onClick={() => setPestaña('wods')}>
+                  <i className="fas fa-list-check"></i><span>WODs</span>
+                </button>
                 <button className={`portal-tab ${pestaña === 'horarios' ? 'active' : ''}`} onClick={() => setPestaña('horarios')}>
                   <i className="fas fa-clock"></i><span>Horarios</span>
                 </button>
@@ -889,6 +908,71 @@ export default function PortalCompetencias() {
                     <div className="portal-anuncios portal-fade-in">
                       <h5><i className="fas fa-bullhorn blink_me me-2"></i>Tablón de Anuncios Oficial</h5>
                       <div className="quill-content" dangerouslySetInnerHTML={{ __html: compActiva.anuncios || compActiva.Anuncios }} />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── WODS ── */}
+              {pestaña === 'wods' && (
+                <div className="portal-estandares-section portal-fade-in">
+                  <p className="portal-estandares-title">
+                    <i className="fas fa-list-check me-2"></i>WODs del evento
+                  </p>
+                  {cargandoWods && <p className="portal-estandares-empty">Cargando WODs…</p>}
+                  {!cargandoWods && (!wodsPublicos || wodsPublicos.length === 0) && (
+                    <p className="portal-estandares-empty">
+                      <i className="fas fa-hourglass-half d-block mb-2" style={{ fontSize: '2rem', opacity: 0.3 }}></i>
+                      Los WODs se publicarán pronto.
+                    </p>
+                  )}
+                  {!cargandoWods && wodsPublicos && wodsPublicos.length > 0 && (
+                    <div style={{ display: 'grid', gap: 16 }}>
+                      {wodsPublicos.map(w => {
+                        const tipo = ({ ForTime: 'For Time', AMRAP: 'AMRAP', Carga: 'Carga máxima', RondasReps: 'Rondas + reps', Puntos: 'Puntos' })[w.tipoScore] || w.tipoScore;
+                        return (
+                          <div key={w.idWodComp} style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid var(--border, rgba(255,255,255,0.12))', borderRadius: 10, padding: 16 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
+                              <h5 style={{ margin: 0 }}>{w.orden ? `E${w.orden} · ` : ''}{w.nombre}</h5>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: 1 }}>
+                                {tipo}{w.timeCapMinutos > 0 ? ` · Cap ${w.timeCapMinutos}'` : ''}
+                              </span>
+                            </div>
+                            {w.categoria && <p style={{ margin: '2px 0 0', fontSize: 12, opacity: 0.7 }}>Categoría: {w.categoria}</p>}
+                            {w.descripcion && <p style={{ margin: '8px 0 0', whiteSpace: 'pre-line', opacity: 0.9 }}>{w.descripcion}</p>}
+                            {w.movimientos?.length > 0 && (
+                              <table style={{ width: '100%', marginTop: 12, borderCollapse: 'collapse', fontSize: 14 }}>
+                                <thead>
+                                  <tr style={{ textAlign: 'left', opacity: 0.6, fontSize: 12 }}>
+                                    <th style={{ padding: '4px 6px' }}>Movimiento</th>
+                                    <th style={{ padding: '4px 6px' }}>Reps</th>
+                                    <th style={{ padding: '4px 6px' }}>♀</th>
+                                    <th style={{ padding: '4px 6px' }}>♂</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {w.movimientos.map((m, i) => (
+                                    <tr key={i} style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                                      <td style={{ padding: '5px 6px' }}>
+                                        {m.nombre}
+                                        {m.notas ? <span style={{ display: 'block', fontSize: 11, opacity: 0.6 }}>{m.notas}</span> : null}
+                                      </td>
+                                      <td style={{ padding: '5px 6px' }}>{m.esquemaReps || '—'}</td>
+                                      <td style={{ padding: '5px 6px' }}>{m.pesoMujer || '—'}</td>
+                                      <td style={{ padding: '5px 6px' }}>{m.pesoHombre || '—'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            )}
+                            {w.tiebreakActivo && w.tiebreakDescripcion && (
+                              <p style={{ margin: '10px 0 0', fontSize: 12, opacity: 0.7 }}>
+                                <i className="fas fa-stopwatch me-1"></i>Desempate: {w.tiebreakDescripcion}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
