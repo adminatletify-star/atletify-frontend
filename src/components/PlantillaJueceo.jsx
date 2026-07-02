@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import TimeInputMMSS from './TimeInputMMSS';
 import SimuladorBarraJuez from './SimuladorBarraJuez';
+import AmrapLadder from './AmrapLadder';
 import { COMPETENCIAS_ENDPOINT } from '../services/api';
 import './PlantillaJueceo.css';
 
@@ -65,6 +66,8 @@ export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = fa
     amrapRondas: '',
     amrapRepsPorRonda: derivarRepsPorRonda(wod?.movimientos),
     amrapParciales: '',
+    amrapTotal: 0,
+    amrapPalomeo: [],
     peso: '',
     intentos: [{ peso: '', valido: false, slot: 1 }],
     esDupla: false,
@@ -127,27 +130,37 @@ export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = fa
         else { resultado = formatMMSS(seg); e.valorNumerico = seg; if (hayCap && seg > cap * 60) adv.push('El tiempo supera el cap: ¿debió ser CAP+reps?'); }
       }
     } else if (tipoScore === 'AMRAP') {
-      let total;
-      if (st.amrapModo === 'rondas_reps') {
-        const r = toInt(st.amrapRondas);
-        const rpr = toInt(st.amrapRepsPorRonda);
-        const pp = toInt(st.amrapParciales);
-        if (r === null && pp === null) {
-          total = null; // sin datos => inválido (no inventar "0")
-        } else if ((r ?? 0) > 0 && !(rpr > 0)) {
-          total = null; adv.push('Indica las reps por ronda.');
-        } else {
-          total = (r ?? 0) * (rpr ?? 0) + (pp ?? 0);
-          e.rondasCompletas = r ?? 0; e.repsParciales = pp ?? 0; e.repsPorRonda = rpr ?? 0;
-          if (rpr > 0 && (pp ?? 0) >= rpr) adv.push('Las reps extra igualan/superan una ronda completa.');
-        }
+      if (wod?.movimientos?.length > 0) {
+        // F5: ladder dinámico — el total (round + reps) viene del palomeo (AmrapLadder).
+        const total = st.amrapTotal || 0;
+        e.repsTotales = total;
+        if (total <= 0) { valido = false; }
+        else if (total > 20000) { valido = false; adv.push('Reps irreales, verifica.'); }
+        else { resultado = String(total); e.valorNumerico = total; }
       } else {
-        total = toInt(st.amrapReps);
+        // Fallback manual (WOD sin movimientos definidos).
+        let total;
+        if (st.amrapModo === 'rondas_reps') {
+          const r = toInt(st.amrapRondas);
+          const rpr = toInt(st.amrapRepsPorRonda);
+          const pp = toInt(st.amrapParciales);
+          if (r === null && pp === null) {
+            total = null;
+          } else if ((r ?? 0) > 0 && !(rpr > 0)) {
+            total = null; adv.push('Indica las reps por ronda.');
+          } else {
+            total = (r ?? 0) * (rpr ?? 0) + (pp ?? 0);
+            e.rondasCompletas = r ?? 0; e.repsParciales = pp ?? 0; e.repsPorRonda = rpr ?? 0;
+            if (rpr > 0 && (pp ?? 0) >= rpr) adv.push('Las reps extra igualan/superan una ronda completa.');
+          }
+        } else {
+          total = toInt(st.amrapReps);
+        }
+        e.repsTotales = total;
+        if (total === null || total < 0) { valido = false; }
+        else if (total > 5000) { valido = false; adv.push('Reps irreales (>5000), verifica.'); }
+        else { resultado = String(total); e.valorNumerico = total; }
       }
-      e.repsTotales = total;
-      if (total === null || total < 0) { valido = false; }
-      else if (total > 5000) { valido = false; adv.push('Reps irreales (>5000), verifica.'); }
-      else { resultado = String(total); e.valorNumerico = total; }
     } else if (tipoScore === 'Carga') {
       // Total = suma del MEJOR intento válido por atleta (slot). Individual = 1 slot.
       const its = st.intentos || [];
@@ -216,6 +229,7 @@ export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = fa
       resultado, nombreJuez, estructurado: e, tiebreak, checklist,
       dnf: st.dnf, advertencias: adv, esValido: st.dnf ? true : valido,
       intentos: (tipoScore === 'Carga' && !st.dnf) ? (e.intentos || []) : null,
+      palomeo: (tipoScore === 'AMRAP' && !st.dnf && (wod?.movimientos?.length > 0)) ? (st.amrapPalomeo || []) : null,
     };
   }, [wod, st, tipoScore, permiteCapReps, hayCap, cap, tiebreakTipo, nombreJuez, criteriosActivos]);
 
@@ -267,7 +281,13 @@ export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = fa
           )}
 
           {/* ── AMRAP ── */}
-          {tipoScore === 'AMRAP' && (
+          {tipoScore === 'AMRAP' && ((wod?.movimientos?.length > 0) ? (
+            <AmrapLadder
+              movimientos={wod.movimientos}
+              disabled={dis}
+              onChange={(res) => setSt((p) => (p.amrapTotal === res.total && JSON.stringify(p.amrapPalomeo) === JSON.stringify(res.palomeo)) ? p : { ...p, amrapTotal: res.total, amrapPalomeo: res.palomeo })}
+            />
+          ) : (
             <>
               <div className="pj-seg">
                 <button type="button" disabled={dis} className={`pj-seg-btn${st.amrapModo === 'reps' ? ' pj-seg-btn--on' : ''}`} onClick={() => set('amrapModo', 'reps')}>Reps totales</button>
@@ -286,7 +306,7 @@ export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = fa
                 </div>
               )}
             </>
-          )}
+          ))}
 
           {/* ── CARGA / RM ── (la unidad la fijó el AdminBox al crear el WOD; el juez NO la cambia) */}
           {tipoScore === 'Carga' && (
