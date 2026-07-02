@@ -1186,7 +1186,7 @@ export default function PortalCompetencias() {
                             <p className="portal-cats-sub">Selecciona la división en la que deseas competir</p>
                           </div>
                           <AnimatedList
-                            items={compActiva.categorias || []}
+                            items={(compActiva.categorias || []).filter(c => (c.activo ?? c.Activo ?? true) && !(c.cerrada ?? c.Cerrada))}
                             keyExtractor={(cat) => cat.idCategoriaComp}
                             staggerDelay={0.08}
                             renderItem={(cat) => (

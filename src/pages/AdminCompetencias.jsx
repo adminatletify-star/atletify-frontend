@@ -9,6 +9,7 @@ import EstatusPickerModal from '../components/EstatusPickerModal';
 import FormatoCategoriaPicker from '../components/FormatoCategoriaPicker';
 import BotonSeguro from '../components/BotonSeguro';
 import PlanesModal from '../components/PlanesModal';
+import MatrizParametros from '../components/MatrizParametros';
 import '../assets/css/GestionClases.css';
 import '../assets/css/AdminCompetencias.css';
 
@@ -60,6 +61,7 @@ export default function AdminCompetencias() {
   const [tipoNuevaComp, setTipoNuevaComp] = useState('Paquete'); // 'Paquete' (Tipo A) | 'Comision' (Tipo B / WodReps)
   const [metodoPagoModulo, setMetodoPagoModulo] = useState('Tarjeta'); // Tipo A: cómo paga el box el módulo (Tarjeta/Transferencia/Efectivo)
   const [comisionExentaRegalo, setComisionExentaRegalo] = useState(false); // Developer: "regalar" (Tipo B sin comisión + métodos libres)
+  const [matrizComp, setMatrizComp] = useState(null); // competencia cuya matriz de parámetros se edita
 
   // Último idBox para el que ya cargamos competencias (evita recargas duplicadas cuando
   // boxActivo pasa de null → id en el arranque del AuthContext).
@@ -237,6 +239,27 @@ export default function AdminCompetencias() {
       if (res.ok) cargarCompetencias(box.idBox || box.IdBox);
       else { const errData = await res.json(); alert(errData.mensaje); }
     } catch (err) { alert('Error de conexión.'); }
+  };
+
+  const cerrarCategoria = async (idCategoria) => {
+    if (!await window.wpConfirm('¿Cerrar esta categoría? No admitirá más inscripciones (se puede reabrir).')) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${COMPETENCIAS_ENDPOINT}/categorias/${idCategoria}/cerrar`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) cargarCompetencias(box.idBox || box.IdBox);
+      else alert(d.mensaje || 'No se pudo cerrar.');
+    } catch { alert('Error de conexión.'); }
+  };
+
+  const reabrirCategoria = async (idCategoria) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${COMPETENCIAS_ENDPOINT}/categorias/${idCategoria}/reabrir`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) cargarCompetencias(box.idBox || box.IdBox);
+      else alert(d.mensaje || 'No se pudo reabrir.');
+    } catch { alert('Error de conexión.'); }
   };
 
   const iniciarWizardCategoria = (comp) => {
@@ -1030,6 +1053,9 @@ export default function AdminCompetencias() {
                       <button className="acomp-btn-add-cat" onClick={() => iniciarWizardCategoria(comp)}>
                         <i className="fas fa-plus"></i> Agregar
                       </button>
+                      <button className="acomp-btn-add-cat" onClick={() => setMatrizComp(comp)} title="Parámetros (Categoría × Skill)">
+                        <i className="fas fa-table-cells"></i> Parámetros
+                      </button>
                     </div>
 
                     {/* Categorías: tabla en ≥768px, tarjetas en móvil */}
@@ -1059,7 +1085,7 @@ export default function AdminCompetencias() {
                                 return (
                                   <tr key={idCat}>
                                     <td>
-                                      <div className="acomp-cat-nombre-text">{cat.nombre || cat.Nombre}</div>
+                                      <div className="acomp-cat-nombre-text">{cat.nombre || cat.Nombre}{(cat.cerrada || cat.Cerrada) && <span style={{ marginLeft: 6, fontSize: 11, color: '#f87171' }}>· cerrada</span>}</div>
                                       <div className="acomp-cat-tipo-text">
                                         {(cat.esEquipo || cat.EsEquipo) ? `Equipo · ${cat.cantidadIntegrantes || cat.CantidadIntegrantes} pers.` : 'Individual'}
                                       </div>
@@ -1070,6 +1096,9 @@ export default function AdminCompetencias() {
                                       <div className="acomp-cat-acciones">
                                         <button className="acomp-btn-accion acomp-btn-accion--ver" onClick={() => { setCategoriaDetalle(cat); setMostrarDetalles(true); }} title="Ver detalles"><i className="fas fa-eye"></i></button>
                                         <button className="acomp-btn-accion acomp-btn-accion--editar" onClick={() => iniciarEdicionCategoria(comp, cat)} title="Editar"><i className="fas fa-edit"></i></button>
+                                        {(cat.cerrada || cat.Cerrada)
+                                          ? <button className="acomp-btn-accion acomp-btn-accion--ver" onClick={() => reabrirCategoria(idCat)} title="Reabrir"><i className="fas fa-lock-open"></i></button>
+                                          : <button className="acomp-btn-accion acomp-btn-accion--editar" onClick={() => cerrarCategoria(idCat)} title="Cerrar categoría"><i className="fas fa-lock"></i></button>}
                                         <BotonSeguro className="acomp-btn-accion acomp-btn-accion--eliminar" onClick={() => eliminarCategoria(idCat)} title="Eliminar" textoProcesando=""><i className="fas fa-trash"></i></BotonSeguro>
                                       </div>
                                     </td>
@@ -1088,7 +1117,7 @@ export default function AdminCompetencias() {
                               <div key={idCat} className="acomp-cat-card">
                                 <div className="acomp-cat-card-top">
                                   <div className="min-w-0">
-                                    <div className="acomp-cat-nombre-text">{cat.nombre || cat.Nombre}</div>
+                                    <div className="acomp-cat-nombre-text">{cat.nombre || cat.Nombre}{(cat.cerrada || cat.Cerrada) && <span style={{ marginLeft: 6, fontSize: 11, color: '#f87171' }}>· cerrada</span>}</div>
                                     <div className="acomp-cat-tipo-text">
                                       {(cat.esEquipo || cat.EsEquipo) ? `Equipo · ${cat.cantidadIntegrantes || cat.CantidadIntegrantes} pers.` : 'Individual'}
                                     </div>
@@ -1125,6 +1154,14 @@ export default function AdminCompetencias() {
           </div>
         )}
       </div>
+
+      {/* === MODAL MATRIZ DE PARÁMETROS === */}
+      {matrizComp && (
+        <MatrizParametros
+          idCompetencia={matrizComp.idCompetencia || matrizComp.IdCompetencia}
+          onCerrar={() => setMatrizComp(null)}
+        />
+      )}
 
       {/* === MODAL WIZARD CATEGORÍA === */}
       {mostrarWizard && (
