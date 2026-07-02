@@ -59,6 +59,7 @@ export default function AdminCompetencias() {
   // F2.4: tipo de cobro de la NUEVA competencia + input del calculador (Tipo B)
   const [tipoNuevaComp, setTipoNuevaComp] = useState('Paquete'); // 'Paquete' (Tipo A) | 'Comision' (Tipo B / WodReps)
   const [metodoPagoModulo, setMetodoPagoModulo] = useState('Tarjeta'); // Tipo A: cómo paga el box el módulo (Tarjeta/Transferencia/Efectivo)
+  const [comisionExentaRegalo, setComisionExentaRegalo] = useState(false); // Developer: "regalar" (Tipo B sin comisión + métodos libres)
 
   // Último idBox para el que ya cargamos competencias (evita recargas duplicadas cuando
   // boxActivo pasa de null → id en el arranque del AuthContext).
@@ -352,7 +353,7 @@ export default function AdminCompetencias() {
       const token = localStorage.getItem('token');
       const baseUrl = window.location.href.split('?')[0];
       const payload = esComision
-        ? { idBox: idBoxDestino, nombreCompetencia: nombreCompetenciaExpress, modeloCobro: 'Comision' }
+        ? { idBox: idBoxDestino, nombreCompetencia: nombreCompetenciaExpress, modeloCobro: 'Comision', comisionExenta: comisionExentaRegalo }
         : {
             idBox: idBoxDestino,
             nombreCompetencia: nombreCompetenciaExpress,
@@ -386,6 +387,7 @@ export default function AdminCompetencias() {
         alert(data.mensaje || '¡Competencia creada con éxito!');
         setPlanSeleccionado(null);
         setNombreCompetenciaExpress('');
+        setComisionExentaRegalo(false);
         setMostrarFormComp(false);
         cargarCompetencias(box.idBox || box.IdBox);
       } else {
@@ -877,6 +879,19 @@ export default function AdminCompetencias() {
                       <strong> ${tarifaComision} MXN por atleta</strong> inscrito. No pagas nada por crear la competencia.
                       La <strong>calculadora de ganancias</strong> está dentro de la competencia, en su configuración de pagos.
                     </p>
+                    {user?.rol === 'Developer' && (
+                      <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                          <input type="checkbox" checked={comisionExentaRegalo} onChange={e => setComisionExentaRegalo(e.target.checked)} />
+                          <span><i className="fas fa-gift"></i> <strong>Regalar</strong> esta competencia — sin comisión y con métodos de pago libres</span>
+                        </label>
+                        {comisionExentaRegalo && (
+                          <p className="small mb-0 mt-2" style={{ color: 'var(--secondary)' }}>
+                            Comisión <strong>$0</strong> (ignora la tarifa de arriba). Podrás prender/apagar todos los métodos de pago en la configuración de la competencia.
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 

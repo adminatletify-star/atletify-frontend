@@ -44,6 +44,7 @@ export default function Dashboard() {
   const [configuracion, setConfiguracion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [guardandoConfig, setGuardandoConfig] = useState(false);
+  const [guardandoComision, setGuardandoComision] = useState(false);
   // Planes del Home (tabla PlanSaaS) — editables desde Developer
   const [planesHome, setPlanesHome] = useState([]);
   const [guardandoPlanId, setGuardandoPlanId] = useState(null);
@@ -411,6 +412,27 @@ export default function Dashboard() {
       console.error(error); alert("Error de red");
     } finally {
       setGuardandoConfig(false);
+    }
+  };
+
+  // Guarda SOLO la comisión de competencias (Tipo B) por su endpoint dedicado, para que el PUT
+  // general de configuración (redes/mantenimiento) no la resetee.
+  const guardarComision = async () => {
+    setGuardandoComision(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/developer/configuracion/comision-competencias`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ comisionPorAtletaWodReps: Number(configuracion.comisionPorAtletaWodReps) || 0 })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) alert(data.mensaje || 'Comisión actualizada.');
+      else alert(data.mensaje || 'No se pudo actualizar la comisión.');
+    } catch (error) {
+      console.error(error); alert('Error de red al guardar la comisión.');
+    } finally {
+      setGuardandoComision(false);
     }
   };
 
@@ -998,6 +1020,28 @@ export default function Dashboard() {
 
                 <form onSubmit={guardarConfiguracion}>
                   <div className="row g-4">
+
+                    {/* ── Comisión de competencias (Tipo B / WodReps) ── */}
+                    <div className="col-12">
+                      <div className="cfg-card cfg-card--accent">
+                        <div className="cfg-card-head">
+                          <div className="cfg-card-title"><i className="fas fa-hand-holding-dollar"></i> Comisión de competencias (Tipo B / WodReps)</div>
+                        </div>
+                        <p style={{ color: 'var(--secondary)', fontSize: 13, margin: '0 0 12px' }}>
+                          Comisión de Atletify por atleta inscrito (atletas ilimitados). Aplica a las competencias <strong>nuevas</strong>; las ya iniciadas conservan su tarifa congelada.
+                        </p>
+                        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <input type="number" min="0" step="0.5"
+                            style={{ maxWidth: 140, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'rgba(0,0,0,0.2)', color: 'inherit' }}
+                            value={configuracion.comisionPorAtletaWodReps ?? 10}
+                            onChange={e => setConfiguracion(prev => ({ ...prev, comisionPorAtletaWodReps: e.target.value }))} />
+                          <span style={{ color: 'var(--secondary)' }}>MXN por atleta</span>
+                          <button type="button" className="cfg-add-btn" disabled={guardandoComision} onClick={guardarComision}>
+                            {guardandoComision ? 'Guardando…' : 'Guardar comisión'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
 
                     {/* ── Planes de Competencias ── */}
                     <div className="col-12 col-lg-6">
