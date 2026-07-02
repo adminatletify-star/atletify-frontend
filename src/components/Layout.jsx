@@ -132,6 +132,7 @@ export default function Layout() {
             { label: 'Control SaaS y Planes', href: '/admin-saas' },
             { label: 'Crear Box', href: '/crear-box' },
             { label: 'Pre-registros', href: '/admin-preregistros' },
+            { label: 'Migración de Atletas', href: '/admin-migracion' },
             { label: 'Boxes Archivados', href: '/admin-archivadas' },
             { label: 'Gestión Competencias', href: '/admin-competencias' },
           ]
