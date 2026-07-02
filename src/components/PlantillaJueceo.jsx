@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import TimeInputMMSS from './TimeInputMMSS';
+import SimuladorBarraJuez from './SimuladorBarraJuez';
+import { COMPETENCIAS_ENDPOINT } from '../services/api';
 import './PlantillaJueceo.css';
 
 /*
@@ -80,6 +82,19 @@ export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = fa
   const setIntento = (idx, patch) => setSt((p) => ({ ...p, intentos: (p.intentos || []).map((it, i) => i === idx ? { ...it, ...patch } : it) }));
   const addIntento = () => setSt((p) => ({ ...p, intentos: [...(p.intentos || []), { peso: '', valido: false, slot: 1 }] }));
   const delIntento = (idx) => setSt((p) => ({ ...p, intentos: (p.intentos || []).filter((_, i) => i !== idx) }));
+
+  // F4: bumpers de ESTA competencia para el simulador de barra (solo WOD tipo Carga).
+  const [bumpersComp, setBumpersComp] = useState([]);
+  useEffect(() => {
+    const idComp = wod?.idCompetencia;
+    if (tipoScore !== 'Carga' || !idComp) return;
+    let vivo = true;
+    fetch(`${COMPETENCIAS_ENDPOINT}/${idComp}/bumpers`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => { if (vivo) setBumpersComp(Array.isArray(d) ? d : []); })
+      .catch(() => { if (vivo) setBumpersComp([]); });
+    return () => { vivo = false; };
+  }, [wod, tipoScore]);
 
   const criteriosActivos = useMemo(
     () => (wod?.criterios || []).filter((c) => c.activo !== false).sort((a, b) => (a.orden || 0) - (b.orden || 0)),
@@ -319,6 +334,7 @@ export default function PlantillaJueceo({ wod, nombreJuez = '', soloLectura = fa
               <button type="button" disabled={dis} onClick={addIntento} style={{ marginTop: 6, background: 'none', border: '1px dashed rgba(255,255,255,0.3)', color: 'inherit', borderRadius: 6, padding: '5px 10px', cursor: 'pointer' }}>
                 <i className="fas fa-plus"></i> Añadir intento
               </button>
+              <SimuladorBarraJuez bumpers={bumpersComp} unidad={unidadPeso} />
             </div>
           )}
 
